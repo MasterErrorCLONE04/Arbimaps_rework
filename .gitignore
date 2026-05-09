@@ -48,3 +48,5 @@ ubuntu/backend/resource/xtf_validation/reports/
 ubuntu/backend/resource/xtf_validation/debug/
 tmp/
 temp/
+
+*:Zone.Identifier
