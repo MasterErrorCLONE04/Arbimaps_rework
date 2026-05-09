@@ -1,0 +1,474 @@
+{
+  "slug": "administrativo",
+  "rule_count": 52,
+  "rules": [
+    {
+      "id": "1.1",
+      "description": "Los campos 22 a 30 del número predial nacional para predios con condición de propiedad NPH se estandarizan como \"000000000\"\nLos campos 22 a 30 del número predial nacional para predios con condición de propiedad bien de uso público se estandarizan como \"300000000\"\nLos campos 22 a 30 del número predial nacional para predios con condición de propiedad via se estandarizan como \"400000000\"\nLos campos 22 a 30 del número predial nacional para predios con condición de propiedad parque cementerio se estandarizan como \"700000000\"\nLos campos 22 a 30 del número predial nacional para predios con condición de Informal se estandarizan como \"200000000\"",
+      "classes": "ILC_Predio",
+      "variables": "Numero_Predial_Nacional\nCondicion_Predio",
+      "technical_rule": "ILC_Predio.Condicion_Predio es NPH entonces ILC_Predio.Numero_Predial_Nacional en  el Campo 22 es \"0\"  y en el Campo 23-30  es \"00000000\".\nILC_Predio.Condicion_Predio es Bien_Uso_Publico  entonces ILC_Predio.Numero_Predial_Nacional en  el Campo 22 es \"3\"  y en el Campo 23-30  es \"00000000\".\nILC_Predio.Condicion_Predio es Via  entonces ILC_Predio.Numero_Predial_Nacional en  el Campo 22 es \"4\"  y en el Campo 23-30  es \"00000000\".\nILC_Predio.Condicion_Predio es Parque_Cementerio.matriz o  Parque_Cementerio.Unidad_Predial entonces ILC_Predio.Numero_Predial_Nacional en  el Campo 22 es \"7\"  y en el Campo 23-30  es \"00000000\".\nILC_Predio.Condicion_Predio es Informal entonces ILC_Predio.Numero_Predial_Nacional en  el Campo 22 es \"2\"  y en el Campo 23-30  es \"00000000\".",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.10",
+      "description": "Los campos 3 a 5 de número predial debe corresponder al valor diligenciado en Municipio.",
+      "classes": "ILC_Predio",
+      "variables": "Numero_Predial_Nacional\nMunicipio",
+      "technical_rule": "El campo (3-5) de ILC_Predio.Numero_Predial_Nacional debe ser igual a ILC_Predio.Municipio",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.11",
+      "description": "En los registros de número predial no deben tener duplicados.",
+      "classes": "ILC_Predio",
+      "variables": "Numero_Predial_Nacional",
+      "technical_rule": "ILC_Predio.Numero_Predial_Nacional no debe estar duplicado",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.12",
+      "description": "El valor de Matricula_inmobiliaria no puede estar relacionado a más de un numero predial (FMI duplicados, pueden existir excepciones).",
+      "classes": "ILC_Predio",
+      "variables": "Matricula_Inmobiliaria",
+      "technical_rule": "Todo ILC_Predio.Matricula_Inmobiliaria debe  estar relacionado a solo 1 ILC_Predio.Numero_Predial_Nacional",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.13",
+      "description": "El valor registrado en Matricula_inmobiliaria debe ser lógico (codificación completa) y no contener ningún carácter alfabético.",
+      "classes": "ILC_Predio",
+      "variables": "Matricula_Inmobiliaria",
+      "technical_rule": "Todo ILC_Predio.Matricula_Inmobiliaria debe  ser un numero entre \"1\" y \"9999999\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.14",
+      "description": "El Codigo_ORIP asignado a cada una de las Matricula_inmobiliaria debe estar asociado al dato del círculo registral (Tres caracteres).",
+      "classes": "ILC_Predio",
+      "variables": "Codigo_ORIP",
+      "technical_rule": "Todo ILC_Predio.Codigo_ORIP debe  tener tres caracteres",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.15",
+      "description": "Para predios con destinación económica: Lote_Urbanizado_No_Construido ó Lote_Rural, no se deben relacionar ni ubicar espacialmente unidades de construcción.",
+      "classes": "ILC_Predio\nCR_UnidadConstruccion",
+      "variables": "Destinacion_Economica",
+      "technical_rule": "Si ILC_Predio.Destinacion_Economica es \"Lote_Urbanizado_No_Construido\"ó \"Lote_Rural\" no debe tener asociado(s) elemento(s) de CR_UnidadConstruccion",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.16",
+      "description": "Los predios con destinación económica \"Acuicola, Agricola, Agroindustrial, Agropecuario, Agroforestal, Forestal, Infraestructura asociada producción agropecuaria, Infraestructura de saneamiento básico, Minería Hidrocarburos, Pecuario y Lote rural\" deben estar relacionados a numeros prediales rurales; Por otra parte, los predios con destinación económica \"Lote urbanizable no urbanizado y Lote urbanizado no construido\" deben estar relacionados a numeros prediales urbanos. Así mismo los predios con destinación económica \"Lote_Rural\", no deben ubicar espacialmente unidades de construcción, no deben relacionar condición de PH o condominio. Debe tener un comportamiento urbano y normalmente se presenta en predios con un área menor a 500 m²,(para predios con mayor extensión, se verificará puntualmente).",
+      "classes": "ILC_Predio\nCR_UnidadConstruccion\nCR_Terreno",
+      "variables": "Destinacion_Economica\nNumero_Predial_Nacional\nCondicion_Predio\nGeometria",
+      "technical_rule": "Si ILC_Predio.Destinacion_Economica = \"Acuicola\", \"Agricola\", Agroindustrial\", \"Agropecuario\", Agroforestal\", \"Forestal\", \"Infraestructura_Asociada_Produccion_Agropecuaria\", \"Infraestructura_Saneamiento_Basico\", \"Mineria_Hidrocarburos\", \"Pecuario\" ó \"Lote_Rural\"  debe estar relacionado a predios que en sus dígitos 6-7 de ILC_Predio.Numero_Predial_Nacional = '00', adicionalmente para ILC_Predio.Destinacion_Economica = \"Lote_Rural\", no debe tener asociado(s) elemento(s) de CR_UnidadConstruccion, ni relacionar ILC_Predio.Condicion_Predio = \"PH_Matriz\" o \"PH.Unidad_Predial\" o \"Condominio_Matriz\" o \"Condominio_Unidad_Predial\" y CR_Terreno. geometria < '500'\n\nSi   ILC_Predio.Destinacion_Economica = \"Lote_Urbanizable_No_Urbanizado\" ó \"Lote_Urbanizado_No_Construido\" debe estar relacionado a predios que en sus digitos 6-7 de ILC_Predio.Numero_Predial_Nacional <> '00'",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.17",
+      "description": "Para predios con destinación económica: Comercial, Educativo, Habitacional, Industrial, Institucional y Salubridad debe relacionar espacialmente al menos una unidad de construcción (Aplican excepciones cuando existen unidades de construcción de predios informales sobre formales).",
+      "classes": "ILC_Predio\nCR_UnidadConstruccion",
+      "variables": "Destinacion_Economica",
+      "technical_rule": "Si ILC_Predio.Destinacion_Economica es \"Comercial, Educativo, Habitacional, Industrial, Institucional y Salubridad\"  deben tener asociado(s) elemento(s) de CR_UnidadConstruccion",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.18",
+      "description": "Si los campos Codigo_ORIP y Matricula_Inmobiliaria no estan diligenciados, entonces Area_Registral_M2 debe ser cero, de igual manera, si Area_Registral_M2 es mayor a cero, los campos Codigo_ORIP y Matricula_Inmobiliaria deben estar diligenciados.",
+      "classes": "ILC_Predio\nILC_DatosAdicionalesLevantamientoCatastral",
+      "variables": "Codigo_ORIP\nMatricula_Inmobiliaria\nArea_Registral_M2",
+      "technical_rule": "Si ILC_Predio.Codigo_ORIP <> NULL y ILC_Predio.Matricula_Inmobiliaria <> NULL entonces ILC_Predio.Area_Registral_M2 <> \"0\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.19",
+      "description": "Los predios asociados a condiciones de propiedad NPH ó PH.Matriz o Condominio.Matriz o Condominio.Unidad_Predial o Via o Bien_Uso_Publico o Parque_Cementerio, deben estar representados con un único elemento en la capa CR_Terreno excepto los que tienen asociado en novedades del levantamiento Cancelación, Cancelacion_por_Desenglobe o Cancelacion_por_Englobe. De igual forma todos los CR_Terreno deben estar asociados a un ILC_Predio con condiciones de propiedad NPH o PH.Matriz o Condominio.Matriz o Condominio.Unidad_Predial o Via o Bien_Uso_Publico sin novedad de Cancelación, Cancelacion_por_Desenglobe o Cancelacion_por_Englobe.",
+      "classes": "ILC_Predio\nCR_Terreno\nILC_DatosAdicionalesLevantamientoCatastral",
+      "variables": "Condicion_Predio\nNovedad_Numeros_Prediales",
+      "technical_rule": "Si ILC_Predio.CondicionPredio es NPH ó PH.Matriz o Condominio.Matriz o Condominio.Unidad_Predial o Via o Bien_Uso_Publico o Parque_Cementerio.Matriz debe tener asociado un único CR_Terreno excepto si ILC_DatosAdicionalesLevantamientoCatastral.Novedad_Numeros_Prediales es \"Cancelacion\" o \"Cancelacion_por_Desenglobe\" o \"Cancelacion_por_Englobe\"\n\nTodo CR_Terreno (excepto si ILC_DatosAdicionalesLevantamientoCatastral.Novedad_Numeros_Prediales es \"Cancelacion\" o \"Cancelacion_por_Desenglobe\" o \"Cancelacion_por_Englobe\") debe estar asociado a un único ILC_Predio.CondicionPredio = NPH o PH.Matriz o Condominio.Matriz o Condominio.Unidad_Predial o Via o Bien_Uso_Publico o Parque_Cementerio.Matriz",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.2",
+      "description": "El campo numero_predial debe contener 30 digitos tanto en ILC_Predio como en ILC_EstructuraNovedadNumeroPredial.\nPara el caso de numeros provisionales en ILC_Predio, las manzanas/veredas y terrenos deben iniciar en A001 y ser continuos",
+      "classes": "ILC_Predio\nILC_DatosAdicionalesLevantamientoCatastral",
+      "variables": "Numero_Predial_Nacional\nNovedad_Numeros_Prediales",
+      "technical_rule": "ILC_Predio.Numero_Predial_Nacional y ILC_DatosAdicionalesLevantamientoCatastral.Novedad_Numeros_Prediales = 30 caracteres",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.20",
+      "description": "Todos los predios con condición PH.Unidad_Predial o Condominio.Unidad_Predial deben tener un registro en la tabla de CR_Predio_Copropiedad y la sumatoria de los coeficientes de las unidades que los integran debe ser 1",
+      "classes": "ILC_Predio\nCR_Predio_Copropiedad",
+      "variables": "Condicion_Predio\nCoeficiente",
+      "technical_rule": "Si ILC_Predio.Condicion_Predio = \"PH.Unidad_Predial\" o \"Condominio.Unidad_Predial\", entonces CR_Predio_Copropiedad.Coeficiente > \"0\" y < \"1\" de tal manera que la suma de CR_Predio_Copropiedad.Coeficiente asociados a un mismo PH.Matriz o Condominio.Matriz = \"1\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.21",
+      "description": "La sumatoria de las áreas de coeficiente debe ser igual al área de terreno del predio matriz donde se ubican",
+      "classes": "CR_Predio_Copropiedad\nCR_Terreno",
+      "variables": "Area_Coeficiente\nGeometria",
+      "technical_rule": "La Σ de CR_Predio_Copropiedad.Area_Coeficiente asociados a un mismo predio matriz debe ser igual a CR_DatosPhCondominio.Area_Total_Terreno del predio matriz donde se ubican.",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.22",
+      "description": "Solo los predios con condición PH.Matriz o Condominio.Matriz (posición 22 a la 30 \"800000000\" y \"900000000\") deben tener un registro en la tabla de CR_DatosPHCondominio. En caso contrario no debe tener relacionado registro.",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio",
+      "variables": "Numero_Predial_Nacional\nArea_Total_Terreno\nArea_Total_Terreno_Privada\nArea_Total_Terreno_Comun\nArea_Total_Construida\nArea_Total_Construida_Privada\nArea_Total_Construida_Comun\nNumero_Torres\nTotal_Unidades_Privadas",
+      "technical_rule": "Si y solo si ILC_Predio.Numero_Predial_Nacional en el campo 22 al 30 = \"800000000\" o \"900000000\", entonces CR_DatosPHCondominio debe ser diligenciada. En casos diferentes no debe relacionar registro",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.23",
+      "description": "Una única unidad predial no puede constituir un PH o Condominio",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio",
+      "variables": "t_id\nILC_Predio\nNumero_Predial_Nacional",
+      "technical_rule": "Un ILC_Predio.Numero_Predial_Nacional que el campo 22 = '8' o '9' y los campos 23 a 30 <> \"00000000\" debe contar con al menos otro registro con el que comparta los campos del 1 al 22 del ILC_Predio.Numero_Predial_Nacional y que también tenga los campos 23 a 30 <> \"00000000\" en CR_DatosPHCondominio",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.24",
+      "description": "No se pueden tener unidades prediales de ph o condominio sin tener un predio matriz asociado.",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio",
+      "variables": "t_id\nILC_Predio\nNumero_Predial_Nacional",
+      "technical_rule": "Un ILC_Predio.Numero_Predial_Nacional que el campo 22 = '8' o '9' y los campos 23 a 30 <> \"00000000\" debe contar con otro registro con el que comparta los campos del 1 al 22 del ILC_Predio.Numero_Predial_Nacional y tenga los campos 23 a 30 = \"00000000\" en CR_DatosPHCondominio",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.25",
+      "description": "En la tabla datos de Ph o condominio, para los predios con condición PH.Matriz (posición 22 a la 30 \"900000000\"), el área total de terreno y área total terreno común del PH deben corresponder al área geográfica del predio matriz. El área total terreno privada debe ser cero (Aplican Excepciones cuando el área se encuentra dentro de las tolerancias definidas en la Res. 1040 de 2023).",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio\nCR_Terreno (COL_UnidadEspacial)",
+      "variables": "Numero_Predial_Nacional\n\nArea_Total_Terreno\nArea_Total_Terreno_Privada\nArea_Total_Terreno_Comun\n\nArea",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo 22 al 30 = \"900000000\", entonces CR_DatosPHCondominio.Area_Total_Terreno y CR_DatosPHCondominio.Area_Total_Terreno_Comun= \"CR_Terreno.Geometria\" del terreno asociado;\nCR_DatosPHCondominio.Area_Total_Terreno_Privada  = \"0\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.26",
+      "description": "En la tabla datos de Ph o condominio, para los predios con condición PH.Matriz (posición 22 a la 30 \"900000000\"), el área total construida debe ser la sumatoria de las áreas de la unidades de construcción asociadas a las unidades prediales y de las unidades de construcción asociadas al predio matríz.",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Numero_Predial_Nacional\n\nArea_Total_Construida\n\nArea_Construida",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo  22 a la 30 = \"900000000\", entonces \nCR_DatosPHCondominio.Area_Total_Construida = ILC.CaracteristicasUnidadConstruccion.Area_Privada_Construida de las unidades de construcción privadas asociadas a su correspondiente Matriz+ ILC.CaracteristicasUnidadConstruccion.Area_Construida de las unidades de PH.Matriz",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.27",
+      "description": "En la tabla datos de Ph o condominio, para los predios con condición PH.Matriz (posición 22 a la 30 \"900000000\"), el área total construida privada debe ser la sumatoria de las áreas de las unidades de construcción asociadas a las unidades prediales.",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Numero_Predial_Nacional\n\nArea_Total_Construida_Privada\n\nArea_Construida",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo  22 a la 30 = \"900000000\", entonces \nCR_DatosPHCondominio.Area_Total_Construida_Privada = ILC.CaracteristicasUnidadConstruccion.Area_Privada_Construida de las unidades de construcciónprivadas asociadas a su correspondiente matriz",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.28",
+      "description": "En la tabla datos de Ph o condominio, para los predios con condición PH.Matriz (posición 22 a la 30 \"900000000\"), el área total construida común debe ser la sumatoria de las áreas de las unidades de construcción del Ph matriz",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Numero_Predial_Nacional\n\nArea_Total_Construida_Comun\n\nArea_Construida",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo  22 a la 30 = \"900000000\", entonces \nCR_DatosPHCondominio.Area_Total_Construida_Comun = ∑ ILC.CaracteristicasUnidadConstruccion.Area_Construida de las unidades de construcción asociadas al PH.Matriz",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.29",
+      "description": "En la tabla datos de Ph o condominio, para los predios con condición PH.Matriz (posición 22 a la 30 \"900000000\"), el número de torres debe ser igual al número máximo indicado en la posiciones 25-26 del número predial de las unidades asociadas al PH",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio",
+      "variables": "Numero_Predial_Nacional\n\nNumero_Torres",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo 22 a la 30 = \"900000000\", entonces \nCR_DatosPHCondominio.Numero_Torres = al valor máximo de ILC_Predio.Numero_Predial_Nacional en los campos 25 al 26 de las unidades prediales asociadas al PH.Matriz",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.3",
+      "description": "Los campos 14 al 17 ni del 18 al 21 del número predial nacional pueden ser \"0000\"",
+      "classes": "ILC_Predio",
+      "variables": "Numero_Predial_Nacional",
+      "technical_rule": "ILC_Predio.Numero_Predial_Nacional en  los campos 14 al 17 y del 18 al 21 <> \"0000\".",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.30",
+      "description": "En la tabla datos de Ph o condominio, para los predios con condición PH.Matriz (posición 22 a la 30 \"900000000\"), el total de unidades privadas debe ser el conteo de predios asociados al PH",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio",
+      "variables": "Numero_Predial_Nacional\n\nTotal_Unidades_Privadas",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo 22 a la 30 = \"900000000\", entonces \nCR_DatosPHCondominio.Total_Unidades_Privadas = conteo de ILC_Predio.Numero_Predial_Nacional de las unidades prediales asociadas al PH",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.31",
+      "description": "En la tabla Datos de Ph o condominio, para los predios con condición Condominio.Matriz (posición 22 a la 30 \"800000000\"), el área total de terreno debe corresponder a la suma del área geográfica del terreno de Condominio.Matriz y las áreas geográficas de los terrenos de las unidades privadas asociadas",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio\nCR_Terreno (COL_UnidadEspacial)",
+      "variables": "Numero_Predial_Nacional\n\nArea_Total_Terreno\n\nArea",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo 22 a la 30 = \"800000000\", entonces CR_DatosPHCondominio.Area_Total_Terreno = Σ CR_Terreno.Geometria del Condominio_Matriz y CR_Terreno.Geometria de las unidades prediales asociadas al Condominio_Matriz",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.32",
+      "description": "En la tabla Datos de Ph o condominio, para los predios con condición Condominio_Matriz (posición 22 a la 30 \"800000000\"), el área total terreno_privada debe corresponder a la sumatoria de las áreas geográficas de las unidades privadas asociados al Condominio (Aplican Excepciones cuando el área se encuentra dentro de las tolerancias definidas en la Res. 1040 de 2023).",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio\nCR_Terreno (COL_UnidadEspacial)",
+      "variables": "Numero_Predial_Nacional\n\nArea_Total_Terreno_Privada\n\nArea",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo 22 a la 30 = \"800000000\", entonces CR_DatosPHCondominio.Area_Total_Terreno_Privada = Σ CR_Terreno.Geometria de las unidades prediales asociadas al Condominio_Matriz",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.33",
+      "description": "En la tabla Datos de Ph o condominio, para los predios con condición Condominio_Matriz (posición 22 a la 30 \"800000000\"), el área total terreno común del condominio debe corresponder al área geográfica del predio matriz (Aplican Excepciones cuando el área se encuentra dentro de las tolerancias definidas en la Res. 1040 de 2023).",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio\nCR_Terreno (COL_UnidadEspacial)",
+      "variables": "Numero_Predial_Nacional\n\nArea_Total_Terreno_Comun\n\nArea",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo 22 a la 30 = \"800000000\", entonces CR_DatosPHCondominio.Area_Total_Terreno_Comun = CR_Terreno.Geometria del Condominio_Matriz",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.34",
+      "description": "En la tabla Datos de Ph o condominio, para los predios con condición Condominio_Matriz (posición 22 a la 30 \"800000000\"), el área total construida debe ser la sumatoria de las áreas de las unidades de construcción asociadas a unidades prediales y al predio matríz",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Numero_Predial_Nacional\n\nArea_Total_Construida\n\nArea_Construida",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo  22 a la 30 = \"800000000\", entonces \nCR_DatosPHCondominio.Area_Total_Construida = Σ ILC.CaracteristicasUnidadConstruccion.Area_Privada_Construida de las unidades de construcción asociadas a las unidades prediales de un mismo condominio + ILC.CaracteristicasUnidadConstruccion.Area_Construida de las unidades de construcción asociadas al Condominio.Matriz",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.35",
+      "description": "En la tabla Datos de Ph o condominio, para los predios con condición Condominio_Matriz (posición 22 a la 30 \"800000000\"), el área total construida privada debe ser la sumatoria de las áreas de las unidades de construcción asociadas a las unidades prediales.",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Numero_Predial_Nacional\n\nArea_Total_Construida_Privada\n\nArea_Construida",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo  22 a la 30 = \"800000000\", entonces \nCR_DatosPHCondominio.Area_Total_Construida_Privada = Σ ILC.CaracteristicasUnidadConstruccion.Area_Privada_Construida de las unidades de construcción asociadas a las unidades prediales de un mismo condominio",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.36",
+      "description": "En la tabla Datos de Ph o condominio, para los predios con condición Condominio_Matriz (posición 22 a la 30 \"800000000\"), el área total construida común debe ser la sumatoria de las áreas de las unidades asociadas al Condominio Matriz",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Numero_Predial_Nacional\n\nArea_Total_Construida_Comun\n\nArea_Construida",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo 22 a la 30 = \"800000000\", entonces \nCR_DatosPHCondominio.Area_Total_Construida_Comun= Σ ILC.CaracteristicasUnidadConstruccion.Area_Construida de las unidades de construcción asociadas al Condominio.Matriz",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.37",
+      "description": "En la tabla Datos de Ph o condominio, para los predios con condición Condominio_Matriz (posición 22 a la 30 \"800000000\"), el número de torres debe ser 0",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio",
+      "variables": "Numero_Predial_Nacional\n\nNumero_Torres",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo 22 a la 30 = \"800000000\", entonces \nCR_DatosPHCondominio.Numero_Torres = \"0\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.38",
+      "description": "En la tabla Datos de Ph o condominio, para los predios con condición Condominio_Matriz (posición 22 a la 30 \"800000000\"), el total de unidades privadas debe ser el conteo de predios asociados al condominio",
+      "classes": "ILC_Predio\nCR_DatosPHCondominio",
+      "variables": "Numero_Predial_Nacional\n\nTotal_Unidades_Privadas",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional en el campo 22 a la 30 = \"800000000\", entonces \nCR_DatosPHCondominio.Total_Unidades_Privadas = conteo de ILC_Predio.Numero_Predial_Nacional de las unidades asociadas al Condominio",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.39",
+      "description": "Si el predio tiene más de una dirección asignada, solo una debe ser principal",
+      "classes": "ILC_Predio\nExtDireccion",
+      "variables": "Numero_Predial_Nacional\n\nEs_Direccion_Principal",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional solo tiene 1 registro en ExtDireccion, entonces Es_Direccion_Principal = \"Verdadero\"\n\nSi Lc_Predio.numero_predial tiene más de un registro en ExtDireccion, entonces solo un registro debe ser Es_Direccion_Principal = \"Verdadero\" y los demas Es_Direccion_Principal = \"Falso\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.4",
+      "description": "Los campos 22 a 30 del número predial nacional para predios con condición de propiedad PH matriz se estandarizan como \"900000000\".",
+      "classes": "ILC_Predio",
+      "variables": "Numero_Predial_Nacional\nCondicion_Predio",
+      "technical_rule": "ILC_Predio.Condicion_Predio es PH.Matriz entonces ILC_Predio.Numero_Predial_Nacional en el  Campo 22  es \"9\" y en el Campo 23-30  es \"00000000\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.40",
+      "description": "Si el tipo de dirección asociada a un predio es Estructurada, los campos Clase_Via_Principal, Valor_Via_Principal, Valor_Via_Generadora y Numero_Predio deben ir diligenciados. El campo Nombre_Predio no debe ir diligenciado",
+      "classes": "ExtDireccion",
+      "variables": "Tipo_Direccion\nClase_Via_Principal\nValor_Via_Principal\nValor_Via_Generadora\nNumero_Predio\nNombre_Predio",
+      "technical_rule": "Si ExtDireccion.Tipo_Direccion = \"Estructurada\", los campos Clase_Via_Principal, Valor_Via_Principal, Valor_Via_Generadora y Numero_Predio deben estar diligenciados y Nombre_Predio = \"NULL\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.41",
+      "description": "Si el tipo de dirección asociada a un predio es No estructurada, únicamente el campo Nombre_Predio debe ir diligenciado",
+      "classes": "ExtDireccion",
+      "variables": "Tipo_Direccion\nClase_Via_Principal\nValor_Via_Principal\nValor_Via_Generadora\nNumero_Predio\nNombre_Predio",
+      "technical_rule": "Si ExtDireccion.Tipo_Direccion = \"No_Estructurada\", los campos Clase_Via_Principal, Valor_Via_Principal, Valor_Via_Generadora y Numero_Predio deben ser = \"NULL\" y Nombre_Predio = \"Valor Alfanumérico\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.42",
+      "description": "Si los digitos 6 y 7 del numero predial nacional de la tabla ILC_Predio son diferentes de \"00\", la dirección debe ser estructurada. De igual manera, si los digitos 6 y 7 del numero predial nacional de la tabla ILC_Predio son igual a \"00\", la dirección debe ser no estructurada. (Aplican Excepciones en predios ubicados en zonas rurales con comportamiento urbano o en centros poblados rurales, los cuales podrian tener dirección estructurada).",
+      "classes": "ILC_Predio\nExtDireccion",
+      "variables": "Numero_Predial_Nacional\n\nTipo_Direccion",
+      "technical_rule": "Si los dígitos 6 y 7 del ILC_Predio.Numero_Predial_Nacional <> \"00\", entonces Extdireccion.Tipo_Direccion = \"Estructurada\"\n\nSi los dígitos 6 y 7 del ILC_Predio.Numero_Predial_Nacional = \"00\", entonces Extdireccion.Tipo_Direccion = \"No Estructurada\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.43",
+      "description": "En el caso de que una dirección estructurada tenga valores en Letra_Via_Principal y en Letra_Via_Generadora; estos datos deben ser alfabéticos",
+      "classes": "ExtDireccion",
+      "variables": "Tipo_Direccion\nLetra_Via_Principal\nLetra_Via_Generadora",
+      "technical_rule": "Si ExtDireccion.Tipo_Direccion = \"Estructurada\" y  ExtDireccion.Letra_Via_Principal y/o ExtDireccion.Letra_Via_Generadora <> \"NULL\", entonces ExtDireccion.Letra_Via_Principal y/o ExtDireccion.Letra_Via_Generadora = \"Valor alfabético\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.44",
+      "description": "Si existe registro en contacto visita, no puede relacionar tipo documento igual a NIT",
+      "classes": "ILC_ContactoVisita",
+      "variables": "Tipo_Documento_Quien_Atendio",
+      "technical_rule": "Si existe ILC_ContactoVisita, entonces ILC_ContactoVisita.Tipo_Documento_Quien_Atendio <> \"NIT\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.45",
+      "description": "Si existe registro en contacto visita, el número de documento de quien atendió debe contener solamente caracteres numéricos",
+      "classes": "ILC_ContactoVisita",
+      "variables": "Numero_Documento_Quien_Atendio",
+      "technical_rule": "Si existe ILC_ContactoVisita, entonces ILC_ContactoVisita.Numero_Documento_Quien_Atendio = \"Caracteres numéricos\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.46",
+      "description": "Si existe información en contacto visita y existe dato de correo electrónico, debe tener una estructura lógica (nombre del usuario@dominio)",
+      "classes": "ILC_ContactoVisita",
+      "variables": "Correo_Electronico",
+      "technical_rule": "Si ILC_ContactoVisita.Correo_Electronico esta diligenciado, entonces ILC_ContactoVisita.Correo_Electronico = \"nombre_usuario@dominio\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.47",
+      "description": "Si existe información en contacto de visita y el campo autoriza notificaciones es verdadero, entonces el campo celular y/o correo electrónico debe estar diligenciado",
+      "classes": "ILC_ContactoVisita",
+      "variables": "Autoriza_Notificaciones\nCelular\nCorreo_Electronico",
+      "technical_rule": "Si ILC_ContactoVisita.Autoriza_Notificaciones = \"Verdadero\", entonces ILC_ContactoVisita.Celular y/o ILC_ContactoVisita.Correo_Electronico debe estar diligenciado",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.48",
+      "description": "El campo Domicilio_Notificaciones de la tabla ILC_ContactoVisita debe contener al menos 7 caracteres",
+      "classes": "ILC_ContactoVisita",
+      "variables": "Domicilio_Notificaciones",
+      "technical_rule": "El campo ILC_ContactoVisita.Domicilio_Notificaciones debe tener lenght = > '7'",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.49",
+      "description": "Para  predios con condición PH.Unidad_Predial o Condominio.Unidad_Predial, la dirección asociada debe contener en el campo complemento al menos AP, BQ, BD, CS, ED, ET, GA, IN, L, LO, MZ, OF, PQ, PN, TO, UN, UR (Haciendo referencia al Apartamento, Bloque, Bodega,Casa, Edificio, Etapa, Garaje, Interior, Local, Lote, Manzana, Oficina, Parqueadero, Pent-House, Torre, Unidad, Urbanización)",
+      "classes": "ILC_Predio\nExtDireccion",
+      "variables": "Numero_Predial_Nacional \nComplemento",
+      "technical_rule": "Si ILC_Predio.Condicion_Predio  = \"PH.Unidad_Predial\" o \"Condominio.Unidad_Predial\", entonces ExtDireccion.Complemento debe contener \"AP\", \"BQ\", \"BD\", \"CS\", \"ED\", \"ET\", \"GA\", \"IN\", \"LO\", \"MZ\", \"OF\", \"PQ\", \"PN\", \"TO\", \"UN\", \"UR\", \"TO\" o \"AP\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.5",
+      "description": "El campo 22 del número predial para predios con condición de propiedad PH Unidad predial se estandariza como \"9\", los campo 23 a 24 no puede ser \"00\", los campo 25 a 26 no puede ser \"00\" y los campos 27 a 30 no pueden ser \"0000\".",
+      "classes": "ILC_Predio",
+      "variables": "Numero_Predial_Nacional\nCondicion_Predio",
+      "technical_rule": "ILC_Predio.Condicion_Predio es PH.Unidad_Predial entonces ILC_Predio.Numero_Predial_Nacional en el  Campo 22  es \"9\", campo 23-24 <> \"00\" , campo 25-26 <> \"00\" y campo 27-30 <> \"0000\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.50",
+      "description": "Todo predio informal debe relacionar un predio formal mediante la tabla ilc_predio_informalidad",
+      "classes": "ILC_Predio\nilc_predio_informalidad",
+      "variables": "Numero_Predial_Nacional\nigc_predio_formal\nigc_predio_informal",
+      "technical_rule": "Si el dígito 22 de ILC_Predio.Numero_Predial_Nacional = '2' debe estar relacionado mediante ilc_predio informalidad.igc_predio_informal a un ilc_predio informalidad.igc_predio_formal que en el digito 22 de ILC_Predio.Numero_Predial_Nacional <> '2'",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.51",
+      "description": "En la tabla ilc_predio_informalidad unicamente se deben relacionar predios formales en el campo igc_predio_formal y predios informales en el campo igc_predio_informal",
+      "classes": "ILC_Predio\nilc_predio_informalidad",
+      "variables": "Numero_Predial_Nacional\nigc_predio_formal\nigc_predio_informal",
+      "technical_rule": "ilc_predio_informalidad.igc_predio_formal solo debe relacionar numeros prediales con el digito 22 de  ILC_Predio.Numero_Predial_Nacional <> '2'\n\nilc_predio_informalidad.igc_predio_informal solo debe relacionar numeros prediales con el digito 22 de  ILC_Predio.Numero_Predial_Nacional = '2'",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.52",
+      "description": "Si se registra algún tipo de tramite de derecho territorial, el tramite y la entidad deben ser correspondientes.",
+      "classes": "ILC_TramitesDerechosTerritoriales",
+      "variables": "Entidad\nTramite",
+      "technical_rule": "Si  ILC_TremitesDerechoTerritorial.Tramite = \"Formalizacion_Territorios_Colectivos\" o \"Procedimientos_Agrarios\" o \"Territorios_Ancestrales_Tradicionales\" o \"Clarificacion_Vigencia_Legal_Coloniales_Republicanos\" entonces ILC_TremitesDerechoTerritorial.Entidad <> \"URT_Unidad_Restitucion_Tierras\" \n\nSi  ILC_TremitesDerechoTerritorial.Tramite = \"Restitucion_Derechos_Territoriales\" entonces ILC_TremitesDerechoTerritorial.Entidad <> \"ANT_Agencia_Nacional_Tierras\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.6",
+      "description": "Los campos 22 a 30 del número predial para predios con condición de propiedad Condominio matriz se estandarizan como \"800000000\".",
+      "classes": "ILC_Predio",
+      "variables": "Numero_Predial_Nacional\nCondicion_Predio",
+      "technical_rule": "ILC_Predio.Condicion_Predio es Condominio.Matriz entonces ILC_Predio.Numero_Predial_Nacional en el  Campo 22  es \"8\" y en el Campo 23-30  es \"00000000\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.7",
+      "description": "El campos 22 al 26 del número predial para predios con condición de propiedad  Condominio.Unidad_predial se estandariza como \"80000\" y los campos del 27 al 30 deben ser diferente a \"0000\".",
+      "classes": "ILC_Predio",
+      "variables": "Numero_Predial_Nacional\nCondicion_Predio",
+      "technical_rule": "ILC_Predio.Condicion_Predio es Condominio.Unidad_Predial entonces ILC_Predio.Numero_Predial_Nacional en el  Campo 22 al 26  es \"80000\"   y campo 27-30 <> \"0000\"",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.8",
+      "description": "Los campos 22 del número predial debe ser diferente a \"1\", \"5\" y \"6\".",
+      "classes": "ILC_Predio",
+      "variables": "Numero_Predial_Nacional",
+      "technical_rule": "ILC_Predio.Numero_Predial_Nacional en la posición 22 <> \"1\", \"5\" y \"6\".",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    },
+    {
+      "id": "1.9",
+      "description": "Los campos 1 y 2 de número predial debe corresponder al valor diligenciado en Departamento",
+      "classes": "ILC_Predio",
+      "variables": "Numero_Predial_Nacional\nDepartamento",
+      "technical_rule": "El campo (1-2) de ILC_Predio.Numero_Predial_Nacional debe ser igual a ILC_Predio.Departamento",
+      "component": "Administrativo",
+      "sheet_slug": "administrativo"
+    }
+  ]
+}

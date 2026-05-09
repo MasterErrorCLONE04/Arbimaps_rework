@@ -1,0 +1,636 @@
+{
+  "slug": "obligatorias",
+  "rule_count": 70,
+  "rules": [
+    {
+      "id": "11.1",
+      "description": "Código de departamento y municipio debe responder al divipola",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.2",
+      "description": "El predio no tiene dirección ",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.3",
+      "description": "El predio no tiene área catastral del terreno",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.4",
+      "description": "El predio no tienen número predial nacional",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.5",
+      "description": "El predio no tiene clasificación de tipo de predio",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.6",
+      "description": "El predio no tienen asignada una condición ",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.7",
+      "description": "El predio no tiene definida la destinación económica",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.8",
+      "description": "El predio no ha validado los datos de locacalización",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.9",
+      "description": "El predio no ha validado datos catastrales",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.10",
+      "description": "El predio no tiene resultado de la visita",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.11",
+      "description": "El predio no tiene comodato",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.12",
+      "description": "El predio no tiene beneficio de comunidades indígenas",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.13",
+      "description": "El predio no tiene datos de quien atendió la visita",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.14",
+      "description": "Predios sin información de autorización de notificacione",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.15",
+      "description": "La unidad de construcción no tiene asignado el tipo de planta",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.16",
+      "description": "La unidad de construcción no tiene la ubicación de la planta",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.17",
+      "description": "La altura de la unidad de construcción no está diligenciada",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.18",
+      "description": "La unidad de construcción no tiene geometría",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.19",
+      "description": "La propiedad horizontal no cuenta con el área del terreno",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.20",
+      "description": "La propiedad horizontal no cuenta con el área privada del terreno ",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.21",
+      "description": "La propiedad horizontal no cuenta con el área común del terreno",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.22",
+      "description": "La propiedad horizontal no tiene el área construida",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.23",
+      "description": "La propiedad horizontal no tiene el área construida privada",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.24",
+      "description": "La propiedad horizontal no tiene el área construida común",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.25",
+      "description": "La propiedad horizontal no tiene el número de torres",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.26",
+      "description": "La propiedad horizontal no tiene el total de unidades privadas",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.27",
+      "description": "El tipo de unidad de construcción no está diligenciado",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.28",
+      "description": "El total de plantas de la unidad de construcción no está diligenciado",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.29",
+      "description": "El uso de la unidad de construcción no está diligenciado",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.30",
+      "description": "El año de la unidad de construcción no está diligenciado",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.31",
+      "description": "El área construida de la unidad de construcción no está diligenciada",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.32",
+      "description": "El armazón no se encuentra calificado",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.33",
+      "description": "Los muros no se encuentran calificados",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.34",
+      "description": "La cubierta no se encuentra calificada",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.35",
+      "description": "La conservación de la estructura no se encuentra calificada",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.36",
+      "description": "La fachada no se encuentra calificada",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.37",
+      "description": "El cubrimiento de los muros no se encuentra calificado",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.38",
+      "description": "El piso no se encuentra calificado",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.39",
+      "description": "La conservación de los acabados no se encuentra calificada",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.40",
+      "description": "El mobiliario del baño no se encuentra calificado",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.41",
+      "description": "El mobiliario de la cocina no se encuentra calificado",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.42",
+      "description": "La calificación no tiene total asignado",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.43",
+      "description": "La entidad del trámite no se encuentra diligenciada",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.44",
+      "description": "Los derechos existentes no tienen un tipo definido",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.45",
+      "description": "Los derechos no tienen información sobre la posesión ancestral o tradicional",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.46",
+      "description": "Los derechos no tienen fecha de inicio de tenencia",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.47",
+      "description": "Las fuentes administrativas no tienen un tipo definido",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.48",
+      "description": "El interesado no tiene un tipo definido",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.49",
+      "description": "El interesado no tiene un tipo de documento definido",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.50",
+      "description": "El interesado no tiene documento de identidad",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.51",
+      "description": "El interesado no se reconoce como campesino",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.52",
+      "description": "El interesado no tiene relacionado un nombre del pueblo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.53",
+      "description": "El interesado no tiene información sobre la autorización de notificaciones vía correo electrónico",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.54",
+      "description": "El interesado no tiene información del departamento",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.55",
+      "description": "El interesado no tiene información del municipio",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.56",
+      "description": "El terreno no tiene asociada una geometría",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.57",
+      "description": "La característica de unidad de construcción no tiene información sobre el tipo de anexo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.58",
+      "description": "La característica de unidad de construcción no tiene información sobre la conservación del anexo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.59",
+      "description": "La característica de unidad de construcción no tiene información sobre el tipo de tipología",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.60",
+      "description": "La característica de unidad de construcción no tiene información sobre la conservación de la tipología",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.61",
+      "description": "El punto de referencia no tiene un tipo asociado",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.62",
+      "description": "El punto de referencia no tiene información sobre el método de producción",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.63",
+      "description": "El punto de referencia no una geometría asociada",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.64",
+      "description": "El punto de referencia no tiene información sobre el acuerdo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.65",
+      "description": "El punto no tiene información sobre el tipo de referencia",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.66",
+      "description": "El soporte de la fuente administrativa no se encuentra cargado en la plataforma TerraInfo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.67",
+      "description": "El soporte del interesado no se encuentra cargado en la plataforma TerraInfo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.68",
+      "description": "El soporte del punto de referencia no se encuentra cargado en la plataforma TerraInfo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.69",
+      "description": "El soporte del terreno no se encuentra cargado en la plataforma TerraInfo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    },
+    {
+      "id": "11.70",
+      "description": "El soporte de la unidad de construcción no se encuentra cargado en la plataforma TerraInfo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Obligatorias",
+      "sheet_slug": "obligatorias"
+    }
+  ]
+}

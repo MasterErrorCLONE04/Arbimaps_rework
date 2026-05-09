@@ -1,0 +1,150 @@
+{
+  "slug": "geografico",
+  "rule_count": 16,
+  "rules": [
+    {
+      "id": "6.1",
+      "description": "No se debe sobreponer ninguno de los elementos de la capa CR_Terreno informal asociado a la zona rural sobre un elemento de la capa CR_Terreno formal asociado a la zona urbana, de igual manera no se debe superponer ninguno de los elementos de la capa CR_Terreno informal asociado a la zona urbana sobre un elemento de la capa CR_Terreno formal asociado a la zona rural.",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.10",
+      "description": "Los primeros trece digitos del campo CC_Manzana.Codigo deben corresponder a CC_Barrio.Codigo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.11",
+      "description": "Los primeros 17 digitos del ILC_Predio.Numero_Predial_Nacional asociado al CR_Terreno debe corresponder a CC_Manzana.Codigo donde se ubican",
+      "classes": "Aplica para todos los predios asociados que en su código predial nacional en las posiciones 6 & 7 sea diferente de \"00\".",
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.12",
+      "description": "Los primeros 17 digitos del ILC_Predio.Numero_Predial_Nacional asociado al CR_Terreno deben corresponder a CC_Vereda.Codigo donde se ubican",
+      "classes": "Aplica para todos los predios asociados que en su código predial nacional en las posiciones 6 & 7 sea \"00\"",
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.13",
+      "description": "Para predios en LC_CondicionPredioTipo distintos a PH, el campo de LC_Predio.NumeroPredial asociado a LC_Construccion  debe corresponder a LC_Predio.NumeroPredial asociado a LC_Terreno donde se ubican",
+      "classes": "En los casos en los que se encuentre la superposición formal-informal en terrenos, las construcciones se validan siempre con el terreno informal.",
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.14",
+      "description": "Para predios en ILC_Predio.Condicion_Predio que contenga \"_PH\" ,  Los primeros 22  digitos del campo ILC_Predio.Numero_Predial_Nacional asociado a CR_UnidadConstruccion  debe corresponder a Los primeros 22  digitos del campo  ILC_Predio.Numero_Predial_Nacional asociado a CR_Terreno donde se ubican",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.15",
+      "description": "Todos los elementos de CR_UnidadConstruccion contenidos en un elemento de CR_Terreno debe estar asosiados al mismo ILC_Predio.Numero_Predial_Nacional.",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.16",
+      "description": "Un predio formal debe encontrar superposicion geográfica con los mismos predios informales que se relacionen a él en la tabla ilc_predio_informalidad",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.2",
+      "description": "Las primeras cinco posiciones de CC_PerimetroUrbano.codigo debe corresponder a CC_Limite_Municipio.Codigo_Departamento + CC_Limite_Municipio.Codigo_Municipio",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.3",
+      "description": "Las primeras cinco posiciones de CC_CentroPoblado.codigo debe corresponder a CC_Limite_Municipio.Codigo_Departamento + CC_Limite_Municipio.Codigo_Municipio",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.4",
+      "description": "Los primeros siete digitos del campo CC_Sector_Urbano.Codigo deben corresponder a CC_PerimetroUrbano.Codigo_Municipio + CC_PerimetroUrbano.Tipo_Avaluo",
+      "classes": "Se evalua dependiendo de la ubicación geografica del sector",
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.5",
+      "description": "Los primeros siete digitos del campo CC_Sector_Urbano.Codigo deben corresponder a CC_CentroPoblado.",
+      "classes": "Se evalua dependiendo de la ubicación geografica del sector",
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.6",
+      "description": "Los primeros cinco digitos del campo CC_Sector_Rural.Codigo deben corresponder a CC_Limite_Municipio.Codigo_Departamento + CC_Limite_Municipio.Codigo_Municipio",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.7",
+      "description": "Los primeros nueve digitos del campo CC_Localidad_Comuna.Codigo deben corresponder a CC_Sector_Urbano.Codigo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.8",
+      "description": "Los primeros once digitos del campo CC_Barrio.Codigo deben corresponder a CC_Localidad_Comuna.Codigo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    },
+    {
+      "id": "6.9",
+      "description": "Los primeros nueve digitos del campo CC_Vereda.Codigo junto con CC_Vereda.Codigo_Sector debe corresponder a CC_Sector_Rural.Codigo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": null,
+      "sheet_slug": "geografico"
+    }
+  ]
+}

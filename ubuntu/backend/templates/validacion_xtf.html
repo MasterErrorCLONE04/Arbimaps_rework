@@ -1,0 +1,1269 @@
+{% set rp = (rp if rp is defined else request.scope.get('root_path', '')).rstrip('/') %}
+{% set validacion_embed = validacion_embed if validacion_embed is defined else False %}
+{% set result = result if result is defined else None %}
+{% set error = error if error is defined else None %}
+{% set form_action = (rp if rp else '') + '/validacion/xtf/subir' %}
+{% if validacion_embed %}
+{%     set form_action = (rp if rp else '') + '/panel/validacion-xtf' %}
+{% endif %}
+{% set show_title = not validacion_embed %}
+
+{% set validation_summary = result.validation.quality.summary if result and result.validation and result.validation.quality and result.validation.quality.summary else None %}
+{% set schema_errors = result.validation.schema_errors if result and result.validation and result.validation.schema_errors else [] %}
+{% set rule_errors = result.validation.rule_errors if result and result.validation and result.validation.rule_errors else [] %}
+
+{% set total_schema_errors = schema_errors|length %}
+{% set total_rule_errors = rule_errors|length %}
+{% set total_errors = total_schema_errors + total_rule_errors %}
+{% set total_rules = validation_summary.total_rules if validation_summary else 0 %}
+{% set passed_rules = validation_summary.passed_rules if validation_summary else 0 %}
+{% set failed_rules = validation_summary.failed_rules if validation_summary else 0 %}
+{% set unimplemented_rules = validation_summary.unimplemented_rules if validation_summary else 0 %}
+
+{% set _validacion_styles %}
+<style>
+    :root {
+        --primary: #0b3a67;
+        --primary-2: #2f80ed;
+        --primary-3: #eef5ff;
+        --bg-page: #f4f7fb;
+        --card-bg: #ffffff;
+        --border: #d8e3f0;
+        --border-soft: #e8eef6;
+        --text: #123a63;
+        --muted: #7489a6;
+        --success-bg: #edf9f0;
+        --success-border: #b7e4c1;
+        --success-text: #1c7b3a;
+        --error-bg: #fff2f2;
+        --error-border: #f0c6c6;
+        --error-text: #b13c3c;
+        --warning-bg: #fff8ea;
+        --warning-border: #f4dd9b;
+        --warning-text: #8a6514;
+        --shadow: 0 10px 30px rgba(18, 58, 99, 0.07);
+        --radius-lg: 24px;
+        --radius-md: 18px;
+        --radius-sm: 14px;
+    }
+
+    body.validacion-xtf-standalone {
+        font-family: Arial, sans-serif;
+        margin: 24px;
+        background: var(--bg-page);
+        color: var(--text);
+    }
+
+    .validacion-xtf {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        color: var(--text);
+    }
+
+    .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        padding: 28px;
+        width: 100%;
+    }
+
+    .page-title {
+        margin: 0 0 10px;
+        font-size: 34px;
+        font-weight: 800;
+        line-height: 1.1;
+        color: var(--text);
+    }
+
+    .section-title {
+        margin: 0 0 8px;
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .subtitle {
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    .upload-shell {
+        max-width: 920px;
+        margin: 0 auto;
+    }
+
+    .upload-form {
+        margin-top: 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .dropzone {
+        position: relative;
+        border: 2px dashed #bfd1e8;
+        background: linear-gradient(180deg, #f8fbff 0%, #fdfefe 100%);
+        border-radius: 22px;
+        padding: 34px 28px;
+        text-align: center;
+        transition: all .2s ease;
+        cursor: pointer;
+    }
+
+    .dropzone.dragover {
+        border-color: var(--primary-2);
+        background: #eef6ff;
+        box-shadow: inset 0 0 0 1px rgba(47, 128, 237, 0.12);
+    }
+
+    .dropzone-icon {
+        font-size: 42px;
+        line-height: 1;
+        margin-bottom: 14px;
+    }
+
+    .dropzone-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 8px;
+    }
+
+    .dropzone-text {
+        font-size: 15px;
+        color: var(--muted);
+        line-height: 1.5;
+        margin-bottom: 16px;
+    }
+
+    .dropzone-file {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        border-radius: 999px;
+        background: var(--primary-3);
+        border: 1px solid #d8e7fb;
+        color: var(--primary-2);
+        font-weight: 700;
+        font-size: 14px;
+        min-height: 22px;
+    }
+
+    .dropzone-file.empty {
+        color: var(--muted);
+        background: #f5f8fc;
+        border-color: #e2eaf4;
+        font-weight: 600;
+    }
+
+    .dropzone-actions {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .hidden-file-input {
+        display: none;
+    }
+
+    .btn {
+        appearance: none;
+        border: none;
+        border-radius: 14px;
+        padding: 14px 24px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .18s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-primary {
+        background: var(--primary-2);
+        color: #fff;
+        box-shadow: 0 12px 24px rgba(47, 128, 237, 0.22);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background: #f4f7fb;
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+        background: #edf3fa;
+    }
+
+    .helper-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .helper-card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: #fbfdff;
+        padding: 18px;
+    }
+
+    .helper-card strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        color: var(--text);
+    }
+
+    .helper-card span {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .alert {
+        border-radius: 16px;
+        padding: 16px 18px;
+        font-weight: 600;
+    }
+
+    .alert-error {
+        background: var(--error-bg);
+        border: 1px solid var(--error-border);
+        color: var(--error-text);
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .status-banner {
+        border-radius: 16px;
+        padding: 16px 18px;
+        font-weight: 700;
+        line-height: 1.45;
+        margin-top: 18px;
+    }
+
+    .status-ok {
+        background: var(--success-bg);
+        border: 1px solid var(--success-border);
+        color: var(--success-text);
+    }
+
+    .status-error {
+        background: var(--error-bg);
+        border: 1px solid var(--error-border);
+        color: var(--error-text);
+    }
+
+    .status-warning {
+        background: var(--warning-bg);
+        border: 1px solid var(--warning-border);
+        color: var(--warning-text);
+    }
+
+    .meta-grid {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 14px;
+    }
+
+    .meta-chip {
+        border: 1px solid var(--border-soft);
+        background: #fbfdff;
+        border-radius: 16px;
+        padding: 14px 16px;
+    }
+
+    .meta-chip .label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        font-weight: 700;
+    }
+
+    .meta-chip .value {
+        font-size: 15px;
+        color: var(--text);
+        line-height: 1.45;
+        word-break: break-word;
+    }
+
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .kpi-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        padding: 24px;
+    }
+
+    .kpi-label {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        margin-bottom: 10px;
+    }
+
+    .kpi-value {
+        font-size: 42px;
+        line-height: 1;
+        font-weight: 800;
+        color: var(--primary-2);
+    }
+
+    .section-head {
+        margin-bottom: 14px;
+    }
+
+    .section-head p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.5;
+    }
+
+    .rule-status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 16px;
+    }
+
+    .rule-status-card {
+        border-radius: 18px;
+        background: #fff;
+        border: 1px solid var(--border);
+        padding: 18px;
+        box-shadow: 0 8px 18px rgba(18, 58, 99, 0.04);
+    }
+
+    .rule-status-card h4 {
+        margin: 0 0 8px;
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--text);
+    }
+
+    .rule-status-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    .rule-pill {
+        display: inline-flex;
+        margin-top: 14px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .rule-pill.ok {
+        background: var(--success-bg);
+        color: var(--success-text);
+        border: 1px solid var(--success-border);
+    }
+
+    .rule-pill.error {
+        background: var(--error-bg);
+        color: var(--error-text);
+        border: 1px solid var(--error-border);
+    }
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid var(--border-soft);
+        border-radius: 16px;
+    }
+
+    table.validation-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 720px;
+        background: #fff;
+    }
+
+    table.validation-table th,
+    table.validation-table td {
+        padding: 14px;
+        border-bottom: 1px solid var(--border-soft);
+        text-align: left;
+        vertical-align: top;
+    }
+
+    table.validation-table th {
+        background: #f7faff;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: .05em;
+        color: var(--muted);
+        font-weight: 800;
+    }
+
+    table.validation-table tr:nth-child(even) td {
+        background: #fcfdff;
+    }
+
+    .tag {
+        display: inline-flex;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: var(--primary-3);
+        color: var(--primary-2);
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid #d8e7fb;
+    }
+
+    .rule-message {
+        white-space: pre-wrap;
+        font-size: 14px;
+        color: var(--text);
+        line-height: 1.45;
+    }
+
+    tr.row-predio td {
+        background: #fffaf0 !important;
+    }
+
+    .muted {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    pre {
+        background: #f6f9fd;
+        padding: 14px;
+        border-radius: 12px;
+        white-space: pre-wrap;
+        line-height: 1.45;
+        margin: 8px 0 0;
+        border: 1px solid var(--border);
+        color: var(--text);
+    }
+
+    .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 27, 52, 0.72);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    padding: 20px;
+}
+
+.modal-backdrop.show {
+    display: flex;
+}
+
+.modal-card {
+    width: 100%;
+    max-width: 620px;
+    position: relative;
+    z-index: 100000;
+    background: #ffffff !important;
+    background-image: none !important;
+    border-radius: 28px;
+    border: none !important;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+    padding: 42px 36px;
+    text-align: center;
+    opacity: 1 !important;
+    overflow: hidden;
+    isolation: isolate;
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    mix-blend-mode: normal !important;
+}
+
+.modal-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    z-index: -1;
+}
+
+.modal-card.success {
+    max-width: 560px;
+}
+
+.modal-card h3 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    color: #0b2d57 !important;
+    line-height: 1.2;
+    position: relative;
+    z-index: 2;
+}
+
+.modal-card p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #5f718c !important;
+    position: relative;
+    z-index: 2;
+}
+
+.modal-card * {
+    position: relative;
+    z-index: 2;
+}
+
+.modal-actions {
+    margin-top: 26px;
+    display: flex;
+    justify-content: center;
+}
+
+.spinner {
+    width: 74px;
+    height: 74px;
+    border: 6px solid #dbe4f0;
+    border-top-color: #1f6fe5;
+    border-radius: 50%;
+    margin: 28px auto 0;
+    animation: giro 0.85s linear infinite;
+}
+
+.modal-icon {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 38px;
+    font-weight: 800;
+}
+
+.modal-icon.upload {
+    background: #eaf2ff;
+    color: #1f6fe5;
+}
+
+.modal-icon.success {
+    background: #e8f7ea;
+    color: #22a447;
+}
+
+.modal-divider {
+    width: 100%;
+    height: 1px;
+    background: #e8edf4;
+    margin: 18px 0 20px;
+}
+
+.modal-success-title {
+    margin-bottom: 12px !important;
+}
+
+.modal-success-text {
+    max-width: 360px;
+    margin: 0 auto !important;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .modal-card {
+        max-width: 95%;
+        padding: 30px 22px;
+        border-radius: 22px;
+    }
+
+    .modal-card h3 {
+        font-size: 24px;
+    }
+
+    .modal-icon {
+        width: 74px;
+        height: 74px;
+        font-size: 32px;
+    }
+
+    .spinner {
+        width: 62px;
+        height: 62px;
+    }
+}
+    @keyframes giro {
+        to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 1100px) {
+        .kpi-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 900px) {
+        .helper-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        body.validacion-xtf-standalone {
+            margin: 14px;
+        }
+
+        .card,
+        .kpi-card {
+            padding: 20px;
+        }
+
+        .page-title {
+            font-size: 28px;
+        }
+
+        .kpi-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dropzone {
+            padding: 24px 18px;
+        }
+
+        .dropzone-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+
+.rules-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.component-accordion {
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 8px 18px rgba(18, 58, 99, 0.04);
+}
+
+.component-accordion summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 20px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.component-accordion summary::-webkit-details-marker {
+    display: none;
+}
+
+.component-summary-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.component-summary-left h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.component-summary-left p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.component-summary-right {
+    color: var(--primary-2);
+    font-size: 22px;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.component-accordion[open] .component-summary-right {
+    transform: rotate(180deg);
+}
+
+.component-rules-body {
+    padding: 0 22px 20px;
+    border-top: 1px solid var(--border-soft);
+    background: #fcfdff;
+}
+
+.component-rule-item {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.component-rule-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.component-rule-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.component-rule-id {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+.component-rule-description {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 760px;
+}
+
+.component-rule-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.component-rule-errors {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    background: #f3f7fc;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 12px;
+}
+
+.empty-rules {
+    padding: 18px;
+    border: 1px dashed var(--border);
+    border-radius: 16px;
+    background: #fbfdff;
+    color: var(--muted);
+}
+
+</style>
+{% endset %}
+
+{% if not validacion_embed %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Validación XTF</title>
+    {{ _validacion_styles | safe }}
+</head>
+<body class="validacion-xtf-standalone">
+{% else %}
+{{ _validacion_styles | safe }}
+{% endif %}
+
+{% set rule_catalog = result.validation.quality.rule_catalog if result and result.validation and result.validation.quality and result.validation.quality.rule_catalog else {} %}
+
+{% set rules_by_component = {} %}
+{% if result and result.validation and result.validation.quality and result.validation.quality.rules %}
+    {% for item in result.validation.quality.rules %}
+        {% set catalog_item = rule_catalog.get(item.rule|string, {}) %}
+        {% set component_name = item.component_label or catalog_item.get('component_label') or item.component or catalog_item.get('component') or 'Sin componente' %}
+
+        {% if component_name not in rules_by_component %}
+            {% set _ = rules_by_component.update({component_name: []}) %}
+        {% endif %}
+        {% set _ = rules_by_component[component_name].append(item) %}
+    {% endfor %}
+{% endif %}
+
+<div class="validacion-xtf">
+
+    {% if not result %}
+    <div class="upload-shell">
+        <div class="card">
+            {% if show_title %}
+            <h1 class="page-title">Validación XTF</h1>
+            <p class="subtitle">
+                Sube un archivo XTF para iniciar la revisión y generar el resultado de validación.
+            </p>
+            {% else %}
+            <h2 class="section-title">Validación XTF</h2>
+            <p class="subtitle">
+                Selecciona o arrastra un archivo XTF dentro del panel.
+            </p>
+            {% endif %}
+
+            <form id="xtf-upload-form" class="upload-form" action="{{ form_action }}" method="post" enctype="multipart/form-data">
+                <input
+                    id="xtf-file-input"
+                    class="hidden-file-input"
+                    type="file"
+                    name="file"
+                    accept=".xtf"
+                    required
+                >
+
+                <div id="xtf-dropzone" class="dropzone">
+                    <div class="dropzone-icon">📄</div>
+                    <div class="dropzone-title">Arrastra tu archivo XTF aquí</div>
+                    <div class="dropzone-text">
+                        También puedes hacer clic para seleccionarlo desde tu equipo.
+                    </div>
+                    <div id="xtf-file-name" class="dropzone-file empty">
+                        Ningún archivo seleccionado
+                    </div>
+                </div>
+
+                <div class="dropzone-actions">
+                    <button id="xtf-select-btn" type="button" class="btn btn-secondary">
+                        Elegir archivo
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Subir archivo
+                    </button>
+                </div>
+
+                <div class="helper-grid">
+                    <div class="helper-card">
+                        <strong>Formato permitido</strong>
+                        <span>Solo archivos con extensión .xtf</span>
+                    </div>
+                    <div class="helper-card">
+                        <strong>Proceso</strong>
+                        <span>El sistema cargará el archivo y ejecutará la validación automáticamente.</span>
+                    </div>
+                    <div class="helper-card">
+                        <strong>Resultado</strong>
+                        <span>Al finalizar verás el resumen general, reglas y detalle de errores.</span>
+                    </div>
+                </div>
+            </form>
+
+            {% if error %}
+            <div class="alert alert-error" style="margin-top:18px;">
+                {{ error }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if result %}
+    <div id="resultado-anchor" class="card">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Resultado de validación</h1>
+                <p class="subtitle">
+                    Consulta el estado general del archivo y el detalle completo de la validación.
+                </p>
+
+                {% if result.validation %}
+                    {% if result.validation.status == 'success' %}
+                    <div class="status-banner status-ok">
+                        El archivo pasó la validación correctamente.
+                    </div>
+                    {% elif result.validation.status == 'invalid' %}
+                    <div class="status-banner status-error">
+                        Se detectaron errores durante la validación. Revisa el detalle por regla y por predio en las secciones inferiores.
+                    </div>
+                    {% else %}
+                    <div class="status-banner status-warning">
+                        No se pudo determinar correctamente el resultado de la validación.
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <div>
+                <a href="{{ (rp if rp else '') + ('/panel/validacion-xtf' if validacion_embed else '/validacion/xtf') }}" class="btn btn-secondary">
+                    Subir otro archivo
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Errores totales</div>
+            <div class="kpi-value">{{ total_errors }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Reglas evaluadas</div>
+            <div class="kpi-value">{{ total_rules }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Reglas cumplidas</div>
+            <div class="kpi-value">{{ passed_rules }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Reglas incumplidas</div>
+            <div class="kpi-value">{{ failed_rules }}</div>
+        </div>
+    </div>
+
+    {% if unimplemented_rules > 0 %}
+    <div class="card">
+        <div class="alert alert-error">
+            Se encontraron {{ unimplemented_rules }} reglas definidas en los archivos de configuración que aún no están implementadas en el motor de validación interna.
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="section-head">
+            <h2 class="section-title">Reglas evaluadas</h2>
+            <p>Agrupadas por componente.</p>
+        </div>
+
+        {% if rules_by_component %}
+        <div class="rules-accordion">
+            {% for component_name, component_rules in rules_by_component.items() %}
+                {% set total_component_rules = component_rules|length %}
+                {% set passed_component_rules = component_rules|selectattr('passed')|list|length %}
+                {% set failed_component_rules = total_component_rules - passed_component_rules %}
+                {% set component_label = component_name %}
+
+                <details class="component-accordion" {% if loop.first %}open{% endif %}>
+                    <summary>
+                        <div class="component-summary-left">
+                            <h3>{{ component_label }}</h3>
+                            <p>
+                                {{ total_component_rules }} reglas ·
+                                {{ passed_component_rules }} cumplidas ·
+                                {{ failed_component_rules }} incumplidas
+                            </p>
+                        </div>
+                        <div class="component-summary-right">⌃</div>
+                    </summary>
+
+                    <div class="component-rules-body">
+                        {% for item in component_rules %}
+                        <div class="component-rule-item">
+                            <div class="component-rule-top">
+                                <div>
+                                    {% set catalog_item = rule_catalog.get(item.rule|string, {}) %}
+                                    <div class="component-rule-id">Regla {{ item.rule }}</div>
+                                    <p class="component-rule-description">
+                                        {{ item.description or catalog_item.get('description') or 'Sin descripción disponible.' }}
+                                    </p>
+                                </div>
+
+                                <div class="component-rule-meta">
+                                    <span class="rule-pill {{ 'ok' if item.passed else 'error' }}">
+                                        {{ 'Cumplida' if item.passed else 'Incumplida' }}
+                                    </span>
+                                    <span class="component-rule-errors">
+                                        {{ item.issue_count }} errores
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </details>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-rules">
+            No hay información de reglas disponible para este resultado.
+        </div>
+        {% endif %}
+    </div>
+
+    {% if result.validation.quality and result.validation.quality.predio_summary %}
+    <div class="card">
+        <div class="section-head">
+            <h2 class="section-title">Resumen de errores por predio</h2>
+            <p>Distribución de hallazgos agrupados por predio o TID.</p>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="validation-table">
+                <thead>
+                    <tr>
+                        <th>Predio / TID</th>
+                        <th>Errores</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in result.validation.quality.predio_summary %}
+                    <tr>
+                        <td>{{ item.display_id or item.object_id or item.tid or 'Sin identificar' }}</td>
+                        <td>{{ item.issue_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if schema_errors %}
+    <div class="card">
+        <div class="section-head">
+            <h2 class="section-title">Errores estructurales del archivo XTF</h2>
+            <p>Se listan {{ schema_errors|length }} errores detectados por el validador del modelo.</p>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="validation-table">
+                <thead>
+                    <tr>
+                        <th>Predio / TID</th>
+                        <th>Clase</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for error in schema_errors %}
+                    <tr>
+                        <td>{{ error.display_id or error.object_id or error.tid or 'Sin identificar' }}</td>
+                        <td>
+                            {% if error.object_class %}
+                            <span class="tag">{{ error.object_class }}</span>
+                            {% else %}
+                            <span class="tag">Clase no declarada</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="rule-message">{{ error.message or 'Sin detalle adicional' }}</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if rule_errors %}
+    <div class="card">
+        <div class="section-head">
+            <h2 class="section-title">Reglas incumplidas</h2>
+            <p>Se listan {{ rule_errors|length }} hallazgos asociados a reglas de calidad o negocio.</p>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="validation-table">
+                <thead>
+                    <tr>
+                        <th>Predio / TID</th>
+                        <th>Clase</th>
+                        <th>Regla</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for error in rule_errors %}
+                    {% set is_predio = error.object_class and 'predio' in error.object_class|lower %}
+                    <tr class="{{ 'row-predio' if is_predio else '' }}">
+                        <td>{{ error.display_id or error.object_id or error.tid or 'Sin identificar' }}</td>
+                        <td>
+                            {% if error.object_class %}
+                            <span class="tag">{{ error.object_class }}</span>
+                            {% else %}
+                            <span class="tag">Clase no declarada</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ error.rule }}</td>
+                        <td>
+                            <div class="rule-message">{{ error.message or 'Sin detalle adicional' }}</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not schema_errors and not rule_errors and result.validation.status == 'invalid' %}
+    <div class="card">
+        <p class="muted">El informe no devolvió hallazgos detallados. Revisa el log interno para más información.</p>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+
+<div id="upload-loading-modal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-card">
+        <div class="modal-icon upload">⤴</div>
+        <h3>Subiendo</h3>
+        <p>Estamos cargando el archivo XTF.</p>
+        <p>Este proceso puede tardar unos segundos.</p>
+        <div class="spinner"></div>
+    </div>
+</div>
+
+<div id="upload-success-modal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal-card success">
+        <div class="modal-icon success">✓</div>
+        <h3 class="modal-success-title">Archivo cargado correctamente</h3>
+        <p class="modal-success-text">El archivo XTF se subió de forma exitosa.</p>
+        <p class="modal-success-text">Ahora verás el resultado de la validación.</p>
+        <div class="modal-divider"></div>
+        <div class="modal-actions">
+            <button id="upload-success-accept" type="button" class="btn btn-primary">Aceptar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var form = document.getElementById('xtf-upload-form');
+    var input = document.getElementById('xtf-file-input');
+    var dropzone = document.getElementById('xtf-dropzone');
+    var fileName = document.getElementById('xtf-file-name');
+    var selectBtn = document.getElementById('xtf-select-btn');
+    var loadingModal = document.getElementById('upload-loading-modal');
+    var successModal = document.getElementById('upload-success-modal');
+    var successAccept = document.getElementById('upload-success-accept');
+
+    function updateFileName() {
+        if (input && input.files && input.files.length > 0) {
+            fileName.textContent = input.files[0].name;
+            fileName.classList.remove('empty');
+        } else if (fileName) {
+            fileName.textContent = 'Ningún archivo seleccionado';
+            fileName.classList.add('empty');
+        }
+    }
+
+    if (selectBtn && input) {
+        selectBtn.addEventListener('click', function () {
+            input.click();
+        });
+    }
+
+    if (dropzone && input) {
+        dropzone.addEventListener('click', function () {
+            input.click();
+        });
+
+        dropzone.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', function () {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', function (e) {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                input.files = e.dataTransfer.files;
+                updateFileName();
+            }
+        });
+    }
+
+    if (input) {
+        input.addEventListener('change', updateFileName);
+    }
+
+    if (form && loadingModal) {
+        form.addEventListener('submit', function () {
+            if (input.files && input.files.length > 0) {
+                loadingModal.classList.add('show');
+                loadingModal.setAttribute('aria-hidden', 'false');
+                document.body.classList.add('modal-open');
+            }
+        });
+    }
+    const hasResult = "{{ 'true' if result else 'false' }}" === "true";
+
+    if (hasResult && successModal && successAccept) {
+        var app = document.querySelector('.validacion-xtf');
+
+        successModal.classList.add('show');
+        successModal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+
+        if (app) {
+            app.style.visibility = 'hidden';
+        }
+
+        successAccept.addEventListener('click', function () {
+            successModal.classList.remove('show');
+            successModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+
+            if (app) {
+                app.style.visibility = 'visible';
+            }
+
+            var anchor = document.getElementById('resultado-anchor');
+            if (anchor) {
+                anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    }
+})();
+</script>
+
+{% if not validacion_embed %}
+</body>
+</html>
+{% endif %}

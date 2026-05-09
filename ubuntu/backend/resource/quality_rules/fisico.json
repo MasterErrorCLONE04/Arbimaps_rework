@@ -1,0 +1,195 @@
+{
+  "slug": "fisico",
+  "rule_count": 21,
+  "rules": [
+    {
+      "id": "3.1",
+      "description": "Los predios asociados a condiciones de propiedad PH Unidad Predial deben tener asociada CR_UnidadConstruccion, exceptuando los parqueaderos o garajes descubiertos o unidades de PH no construidas.",
+      "classes": "ILC_Predio\nCR_UnidadConstruccion",
+      "variables": "CondicionPredio",
+      "technical_rule": "Para todo ILC_predio.ILC_CondicionPredio \"PH.Unidad_Predial\" debe tener minimo un LC_UnidadConstruccion excepto parqueaderos o garajes descubiertos o unidades de PH no construidas.",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.10",
+      "description": "Las unidades asociadas a tipos de unidades de construcción “Institucional” deben asociar solamente usos de construcción asociadas al dominio de “Institucional”",
+      "classes": "CR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Tipo_Unidad_Construccion\n\nUso",
+      "technical_rule": "ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion = “Institucional” entonces, ILC_CaracteristicasUnidadConstruccion.Uso debe corresponder al dominio de Institucional en CR_UsoUConsTipo <<Enumeration>>",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.11",
+      "description": "Las unidades asociadas a tipos de unidades de construcción “Residencial” deben asociar solamente usos de construcción asociadas al dominio de “Residencial”",
+      "classes": "CR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Tipo_Unidad_Construccion\n\nUso",
+      "technical_rule": "ILC_CaracteristicasUnidadConstruccionTipo_Unidad_Construccion = “Residencial” entonces, ILC_CaracteristicasUnidadConstruccion.Uso debe corresponder al dominio de Residencial en CR_UsoUConsTipo <<Enumeration>>",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.12",
+      "description": "La planta de ubicación de la unidad de construcción no puede ser cero (0) ni negativa.",
+      "classes": "CR_UnidadConstruccion",
+      "variables": "Planta_Ubicacion",
+      "technical_rule": "CR_UnidadConstruccion.Planta_Ubicacion > 0",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.13",
+      "description": "Los predios con destinación económica  habitacional deben tener minimo una unidad de tipo residencial y esta(s) deben ser predominantes en área construidas respecto a las demás (Aplican Excepciones en predios formales que no tienen asociada unidad de construcción pero existen unidades de construccion de predios informales).",
+      "classes": "ILC_predio\nCR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion\ncol_ueBaunit",
+      "variables": "Destinacion_economica\nt_id\nuso\ngeometria\nue(CR_UnidadConstruccion)\nbaunit",
+      "technical_rule": "Para todo predio asociado a ILC_Predio.destinacion_economica = Habitacional debe asociar al menos 1 CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Uso)  que contenga \"Residencial\" y CR_UnidadConstruccion.geometria de las unidades que cumplan con esta condición debe ser predominante dentro del predio asociado",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.14",
+      "description": "Los predios con destinación económica comercial  deben tener minimo una unidad de tipo comercial y esta(s) deben ser predominantes en área construidas respecto a las demás (Aplican Excepciones en predios formales que no tienen asociada unidad de construcción pero existen unidades de construccion de predios informales).",
+      "classes": "lc_predio\nCR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion\ncol_ueBaunit",
+      "variables": "Destinacion_economica\nt_id\nuso\ngeometria\nue(CR_UnidadConstruccion)\nbaunit",
+      "technical_rule": "Para todo predio asociado a ILC_Predio.destinacion_economica = Comercial debe asociar al menos 1 CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Uso)  que contenga \"Comercial\" y CR_UnidadConstruccion.geometria de las unidades que cumplan con esta condición debe ser predominante dentro del predio asociado",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.15",
+      "description": "Los predios con destinación económica industrial deben tener minimo una unidad de tipo industrial y esta(s) deben ser predominantes en área construidas respecto a las demás (Aplican Excepciones en predios formales que no tienen asociada unidad de construcción pero existen unidades de construccion de predios informales).",
+      "classes": "lc_predio\nCR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion\ncol_ueBaunit",
+      "variables": "Destinacion_economica\nt_id\nuso\ngeometria\nue(CR_UnidadConstruccion)\nbaunit",
+      "technical_rule": "Para todo predio asociado a ILC_Predio.destinacion_economica = Industrial debe asociar al menos 1 CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Uso)  que contenga \"Industrial\" y CR_UnidadConstruccion.geometria de las unidades que cumplan con esta condición debe ser predominante dentro del predio asociado",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.16",
+      "description": "Los predios con destinación económica Institucional ó cultural ó educativo ó religioso deben tener minimo una unidad de tipo Institucional y esta(s) deben ser predominantes en área construidas respecto a las demás (Aplican Excepciones en predios formales que no tienen asociada unidad de construcción pero existen unidades de construccion de predios informales).",
+      "classes": "lc_predio\nCR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion\ncol_ueBaunit",
+      "variables": "Destinacion_economica\nt_id\nuso\ngeometria\nue(CR_UnidadConstruccion)\nbaunit",
+      "technical_rule": "Para todo predio asociado a ILC_Predio.destinacion_economica = \"Institucional\" ó \"Cultural\" ó \"Eductaivo\" ó \"Religioso\" debe asociar al menos 1 CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Uso)  que contenga \"Institucional\" y CR_UnidadConstruccion.geometria de las unidades que cumplan con esta condición debe ser predominante dentro del predio asociado",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.17",
+      "description": "total plantas de la unidad debe estar diligenciada para todas las unidades identificadas y debe ser mayor a cero (0)",
+      "classes": "ILC_CaracteristicasUnidadConstruccion",
+      "variables": "Total_Plantas",
+      "technical_rule": "ILC_CaracteristicasUnidadConstruccion.Total_Plantas > 0",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.18",
+      "description": "Para PH unidad predial y Condominio unidad predial el área construida debe ser (0) y el área privada construida debe ser mayor a cero (0)",
+      "classes": "ILC_Predio\nCR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Condicion_Predio\nArea_Construida\nArea_Privada_Construida",
+      "technical_rule": "Si ILC_Predio.Condicion_Predio es PH.Unidad_Predial o Condominio.Unidad_Predial, entonces CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Area_Construida) = 0 y CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Area_privada_construida) > 0",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.19",
+      "description": "Para predio en condición diferente a PH unidad predial o condominio unidad predial, el área construida debe ser mayor a 0 y el área privada construida debe ser Null",
+      "classes": "ILC_Predio\nCR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Condicion_Predio\nArea_Construida\nArea_Privada_Construida",
+      "technical_rule": "Si ILC_Predio.Condicion_Predio es <> PH.Unidad_Predial o Condominio.Unidad_Predial, entonces CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Area_Construida)> 0 y CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Area_privada_construida)= NULL",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.2",
+      "description": "Para las unidades asociadas a predios en PH y condominio, las unidades convencionales calificadas deben relacionar usos establecidos específicamente para PH ó Depositos_Lockers",
+      "classes": "ILC_Predio\nCR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Condicion_Predio  Tipo_Unidad_Construccion",
+      "technical_rule": "ILC_Predio.Condicion_Predio= “PH” ó “Condominio”, entonces, CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion) “Residencial”, “Comercial”, “Institucional”ó “Industrial” debe corresponder a usos que contienen “_PH” ó \"Depositos_Lockers\"",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.20",
+      "description": "Para las unidades de construcción, el dato area_construida diligenciada y el área calculada del polígono debe ser igual.",
+      "classes": "CR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Area_construccion\nGeometria_area",
+      "technical_rule": "(ILC_CaracteristicasUnidadConstruccion.area_construida) - CR_UnidadConstruccion.geometria)/(ILC_CaracteristicasUnidadConstruccion.area_construida) <= 1",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.21",
+      "description": "Para cada unidad de construcción asociada a un número predial agrupada por su identificador, la suma de las áreas de los polígonos de cada registro debe ser igual al valor diligenciado en area_construida de Características Unidad de construcción; en caso del que el predio tenga condición PH o condominio se debe validar el valor de area_privada_construida.",
+      "classes": "ILC_Predio\nCR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Area_construida\nGeometria_area",
+      "technical_rule": "CR_UnidadConstruccion agrupada por ILC_CaracteristicasUnidadConstruccion.Identificador y ILC_Predio.numero_predial, los valores sumados CR_UnidadConstruccion.Geometria = ILC_CaracteristicasUnidadConstruccion.Area_Construida (con tolerancia 1%)\n\n Para ILC_Predio.Condicion_Predio = \"Ph_\" o \"Condominio_\", CRUnidadConstruccion.Geometria = ILC.CaracteristicasUnidadConstruccion.Area_Privada_Construidad (con tolerancia 1%)",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.3",
+      "description": "Para las unidades asociadas a predios con condición de propiedad diferente a PH o condominio, las unidades calificadas deben relacionar usos diferentes a PH.",
+      "classes": "ILC_Predio\nCR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Condicion_Predio  Tipo_Unidad_Construccion",
+      "technical_rule": "ILC_Predio.Condicion_Predio <> “PH” ó “Condominio”, entonces, CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion)“Residencial”, “Comercial”, “Institucional”ó “Industrial” debe corresponder a usos que no contienen “_PH”.",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.4",
+      "description": "Cada unidad espacial debe estar relacionada con solo un predio",
+      "classes": "CR_Terreno CR_UnidadConstruccion col_ueBaunit\nILC_Predio",
+      "variables": "t_id\nue_lc_terreno\nue_lc_unidadconstruccion\nbaunit",
+      "technical_rule": "Las unidades espaciales (CR_Terreno, CR_UnidadConstruccion) mediante col_ueBaunit deben relacionar unicamente un registro en la tabla ILC_Predio",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.5",
+      "description": "No deben haber poligonos de terreno menores a 2 m² (Aplican Excepciones que se deben verificar puntualmente).",
+      "classes": "CR_Terreno",
+      "variables": "Geometria",
+      "technical_rule": "El campo CR_Terreno.Geometria > '2'",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.6",
+      "description": "El identificador es la variable que unifica unidades de construcción con: usos de construcción, tipo de unidad de construcción, tipo de planta, total plantas de la unidad y calificación ó tipología de iguales características. Además de ser única para cada predio, debe existir una continuidad en la asignación alfabética del identificador, siempre empezando por la letra A a la Z y en caso de existir más unidades se reinicia en AA, AB y así sucesivamente.",
+      "classes": "CR_UnidadConstruccion\nILC_Predio\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Identificador\n Tipo_Unidad_Construccion Tipo_Planta\nUso\nAnio_Construccion",
+      "technical_rule": "Para todas las CR_UnidadConstruccion asociadas a un mismo ILC_Predio.Numero_Predial_Nacional, entonces ILC_CaracteristicasUnidadConstruccion.Identificador = \"Valor alfabetico consecutivo\" y único para cada predio (Debe empezar desde la A)",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.7",
+      "description": "Las unidades asociadas a tipos de unidades de construcción “Anexos” deben asociar solamente usos de construcción asociadas al dominio de “Anexo”",
+      "classes": "CR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Tipo_Unidad_Construccion\n\nUso",
+      "technical_rule": "ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion = “Anexo” entonces, ILC_CaracteristicasUnidadConstruccion.Uso debe corresponder al dominio de Anexos en CR_UsoUConsTipo <<Enumeration>>",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.8",
+      "description": "Las unidades asociadas a tipos de unidades de construcción “Comercial” deben asociar solamente usos de construcción asociadas al dominio de “Comercial”",
+      "classes": "CR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Tipo_Unidad_Construccion\n\nUso",
+      "technical_rule": "ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion = “Comercial” entonces, ILC_CaracteristicasUnidadConstruccion.Uso debe corresponder al dominio de Comercuial en CR_UsoUConsTipo <<Enumeration>>",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    },
+    {
+      "id": "3.9",
+      "description": "Las unidades asociadas a tipos de unidades de construcción “Industrial” deben asociar solamente usos de construcción asociadas al dominio de “Industrial”",
+      "classes": "CR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Tipo_Unidad_Construccion\n\nUso",
+      "technical_rule": "ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion = “Industrial” entonces, ILC_CaracteristicasUnidadConstruccion.Uso debe corresponder al dominio de Industrial en CR_UsoUConsTipo <<Enumeration>>",
+      "component": "Fisico",
+      "sheet_slug": "fisico"
+    }
+  ]
+}

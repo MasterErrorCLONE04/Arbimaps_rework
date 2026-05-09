@@ -1,0 +1,482 @@
+<div class="container usuarios-saas">
+  <div class="topbar">
+    <div class="title">
+      <h1>Administrar usuarios</h1>
+      <p>
+        Crea usuarios de aplicación. Las contraseñas se almacenan cifradas
+        en la base de datos. Los campos marcados con * son obligatorios.
+      </p>
+    </div>
+    <div class="pills">
+      <div class="pill">Usuarios de aplicación</div>
+      <div class="pill">Roles arbimaps_app</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- Formulario -->
+    <div class="card">
+      <div class="card-inner">
+        <h2>Crear / editar usuario</h2>
+        <p class="hint">Completa los datos básicos del usuario.</p>
+
+        <form id="formUsuario" class="form">
+          <label>
+            Username *
+            <input type="text" id="usrUsername" class="input" required>
+          </label>
+
+          <label>
+            Email
+            <input type="email" id="usrEmail" class="input">
+          </label>
+
+          <label>
+            Nombre *
+            <input type="text" id="usrFirstName" class="input" required>
+          </label>
+
+          <label>
+            Apellido *
+            <input type="text" id="usrLastName" class="input" required>
+          </label>
+
+          <label class="full">
+            Rol *
+            <select id="usrRol" class="input" required>
+              <option value="">Cargando...</option>
+            </select>
+          </label>
+
+          <label class="full">
+            Contraseña inicial
+            <input type="password" id="usrPassword" class="input" autocomplete="new-password"
+              placeholder="(opcional)">
+          </label>
+
+          <div class="form-actions full">
+            <button class="btn btn-primary" type="submit">
+              Guardar usuario
+            </button>
+            <button class="btn btn-ghost" type="button" id="usrResetBtn">Limpiar</button>
+          </div>
+        </form>
+
+        <div id="usrMsg" class="msg"></div>
+      </div>
+    </div>
+
+    <!-- Listado -->
+    <div class="card">
+      <div class="toolbar">
+        <div class="search">
+          <span class="ico">🔍</span>
+          <input id="usrSearch" placeholder="Buscar por username, email, nombre, rol..." />
+        </div>
+        <div class="meta">
+          <span id="usrListMsg" class="hint">Cargando usuarios...</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="tblUsuarios" style="display:none;">
+          <thead>
+            <tr>
+              <th style="width:80px;">ID</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Nombre</th>
+              <th>Apellido</th>
+              <th>Rol</th>
+              <th style="width:110px;">Activo</th>
+              <th style="width:170px;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyUsuarios"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const injectedRp = "{{ rp if rp is defined else '' }}";
+    const rp = injectedRp || (window.location.pathname.startsWith("/api/") ? "/api" : "");
+
+    const msg = document.getElementById("usrMsg");
+    const listMsg = document.getElementById("usrListMsg");
+    const tbody = document.getElementById("tbodyUsuarios");
+    const tbl = document.getElementById("tblUsuarios");
+    const form = document.getElementById("formUsuario");
+    const inputUsername = document.getElementById("usrUsername");
+    const inputFirstName = document.getElementById("usrFirstName");
+    const inputLastName = document.getElementById("usrLastName");
+    const selectRol = document.getElementById("usrRol");
+    const inputEmail = document.getElementById("usrEmail");
+    const inputPassword = document.getElementById("usrPassword");
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const resetBtn = document.getElementById("usrResetBtn");
+    const inputSearch = document.getElementById("usrSearch");
+
+    let usuariosCache = [];
+    let editingId = null;
+    let searchText = "";
+
+    async function cargarRoles() {
+      try {
+        selectRol.innerHTML = '<option value="">Cargando...</option>';
+
+        const r = await fetch(`${rp}/usuarios/roles`, { credentials: "include" });
+        const contentType = r.headers.get("content-type") || "";
+
+        if (!contentType.includes("application/json")) {
+          const text = await r.text();
+          throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 120)}`);
+        }
+
+        const roles = await r.json();
+        if (!r.ok) throw new Error(roles.detail || "No se pudo cargar roles.");
+
+        selectRol.innerHTML =
+          '<option value="">Selecciona...</option>' +
+          (roles || []).map(name => `<option value="${name}">${name}</option>`).join("");
+      } catch (err) {
+        console.error(err);
+        selectRol.innerHTML = '<option value="">Error cargando roles</option>';
+        msg.textContent = err.message || "Error cargando roles.";
+      }
+    }
+
+    function resetForm() {
+      editingId = null;
+      form.reset();
+      inputUsername.disabled = false;
+      submitBtn.textContent = "Guardar usuario";
+      inputPassword.value = "";
+    }
+
+    function renderUsuarios(list) {
+      tbody.innerHTML = "";
+
+      if (!list.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = '<td colspan="8" style="padding:18px;color:#64748b;">Sin resultados.</td>';
+        tbody.appendChild(tr);
+        tbl.style.display = "table";
+        return;
+      }
+
+      list.forEach(u => {
+        const tr = document.createElement("tr");
+        if (editingId === u.id_global) {
+          tr.classList.add("is-editing");
+        }
+
+        const rol = u.rol || "";
+        const rolLower = rol.toLowerCase();
+        let badgeClass = "badge-oper";
+        if (rolLower === "admin") badgeClass = "badge-admin";
+        else if (rolLower === "coordinador") badgeClass = "badge-super";
+
+        const rolHtml = rol
+          ? `<span class="badge ${badgeClass}">${rol}</span>`
+          : "";
+
+        tr.innerHTML = `
+          <td>${u.id_global ?? ""}</td>
+          <td><strong>${u.username ?? ""}</strong></td>
+          <td>${u.email ?? ""}</td>
+          <td>${u.first_name ?? ""}</td>
+          <td>${u.last_name ?? ""}</td>
+          <td>${rolHtml}</td>
+          <td>
+            <button type="button" class="toggle-btn btnUsrToggle" data-id="${u.id_global}" aria-pressed="${u.activo ? "true" : "false"}">
+              <span class="toggle" data-on="${u.activo ? "true" : "false"}"></span>
+            </button>
+          </td>
+          <td>
+            <div class="row-actions">
+              <button type="button" class="icon-btn btnUsrEdit" data-id="${u.id_global}">Editar</button>
+              <button type="button" class="icon-btn icon-danger btnUsrDelete" data-id="${u.id_global}">Eliminar</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      attachRowEvents();
+      tbl.style.display = "table";
+    }
+
+    function aplicarBusqueda() {
+      const q = (searchText || "").toLowerCase();
+      const base = usuariosCache || [];
+      const maxId = base.reduce((m, u) => {
+        const v = typeof u.id_global === "number" ? u.id_global : parseInt(u.id_global || "0", 10);
+        return Number.isFinite(v) && v > m ? v : m;
+      }, 0);
+  
+      if (!q) {
+        listMsg.textContent = maxId ? `Total: ${maxId}` : "Sin registros.";
+        renderUsuarios(base);
+        return;
+      }
+
+      const filtrados = base.filter(u => {
+        const texto = [
+          u.username,
+          u.email,
+          u.first_name,
+          u.last_name,
+          u.rol,
+          (u.activo ? "si" : "no"),
+          String(u.id_global)
+        ].join(" ").toLowerCase();
+        return texto.includes(q);
+      });
+  
+      listMsg.textContent = filtrados.length
+        ? `Mostrando ${filtrados.length} de ${maxId}`
+        : (maxId ? `Sin resultados (Total: ${maxId})` : "Sin registros.");
+      renderUsuarios(filtrados);
+    }
+
+    async function cargarUsuarios() {
+      listMsg.textContent = "Cargando usuarios...";
+      tbl.style.display = "none";
+      tbody.innerHTML = "";
+
+      try {
+        const r = await fetch(`${rp}/usuarios/`, { credentials: "include" });
+        const contentType = r.headers.get("content-type") || "";
+
+        if (!contentType.includes("application/json")) {
+          const text = await r.text();
+          throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 120)}`);
+        }
+
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.detail || "No se pudo cargar usuarios.");
+
+        usuariosCache = data || [];
+
+        if (!usuariosCache.length) {
+          listMsg.textContent = "Sin registros.";
+          renderUsuarios([]);
+          return;
+        }
+
+        aplicarBusqueda();
+      } catch (err) {
+        console.error(err);
+        listMsg.textContent = err.message || "Error cargando usuarios.";
+      }
+    }
+
+    function attachRowEvents() {
+      tbody.querySelectorAll(".btnUsrEdit").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = parseInt(btn.getAttribute("data-id"), 10);
+          startEditUsuario(id);
+        });
+      });
+      tbody.querySelectorAll(".btnUsrDelete").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = parseInt(btn.getAttribute("data-id"), 10);
+          deleteUsuario(id);
+        });
+      });
+      tbody.querySelectorAll(".btnUsrToggle").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = parseInt(btn.getAttribute("data-id"), 10);
+          toggleActivo(id);
+        });
+      });
+    }
+
+    async function toggleActivo(id) {
+      const u = usuariosCache.find(x => x.id_global === id);
+      if (!u) return;
+
+      const nuevoActivo = !u.activo;
+      msg.textContent = nuevoActivo
+        ? `Activando usuario ${u.username}...`
+        : `Desactivando usuario ${u.username}...`;
+
+      const payload = {
+        first_name: u.first_name || "",
+        last_name: u.last_name || "",
+        rol: u.rol || "",
+        email: u.email || null,
+        activo: nuevoActivo,
+        password: null,
+      };
+
+      try {
+        const r = await fetch(`${rp}/usuarios/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+
+        const contentType = r.headers.get("content-type") || "";
+        let data = {};
+        if (contentType.includes("application/json")) {
+          data = await r.json().catch(() => ({}));
+        } else if (!r.ok) {
+          const text = await r.text();
+          throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 120)}`);
+        }
+
+        if (!r.ok) {
+          throw new Error(data.detail || "No se pudo cambiar el estado del usuario.");
+        }
+
+        msg.textContent = nuevoActivo
+          ? `Usuario ${u.username} activado.`
+          : `Usuario ${u.username} desactivado.`;
+
+        // Actualizar cache y re-renderizar
+        const idx = usuariosCache.findIndex(x => x.id_global === id);
+        if (idx !== -1) {
+          usuariosCache[idx].activo = nuevoActivo;
+        }
+        aplicarBusqueda();
+      } catch (err) {
+        console.error(err);
+        msg.textContent = err.message || "Error cambiando el estado del usuario.";
+      }
+    }
+
+    function startEditUsuario(id) {
+      const u = usuariosCache.find(x => x.id_global === id);
+      if (!u) return;
+
+      editingId = id;
+      inputUsername.value = u.username || "";
+      inputUsername.disabled = true;
+      inputFirstName.value = u.first_name || "";
+      inputLastName.value = u.last_name || "";
+      selectRol.value = u.rol || "";
+      inputEmail.value = u.email || "";
+      inputPassword.value = "";
+
+      submitBtn.textContent = "Actualizar usuario";
+      msg.textContent = `Editando usuario ${u.username}.`;
+
+      aplicarBusqueda();
+    }
+
+    async function deleteUsuario(id) {
+      const u = usuariosCache.find(x => x.id_global === id);
+      const name = (u && u.username) || id;
+      if (!confirm(`¿Eliminar usuario ${name}?`)) return;
+
+      msg.textContent = "Eliminando usuario...";
+      try {
+        const r = await fetch(`${rp}/usuarios/${id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+
+        const contentType = r.headers.get("content-type") || "";
+        let data = {};
+        if (contentType.includes("application/json")) {
+          data = await r.json().catch(() => ({}));
+        } else if (!r.ok) {
+          const text = await r.text();
+          throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 120)}`);
+        }
+
+        if (!r.ok) throw new Error(data.detail || `No se pudo eliminar (HTTP ${r.status}).`);
+
+        msg.textContent = `Usuario ${name} eliminado.`;
+        if (editingId === id) resetForm();
+        cargarUsuarios();
+      } catch (err) {
+        console.error(err);
+        msg.textContent = err.message || "Error eliminando usuario.";
+      }
+    }
+
+    async function guardarUsuario(evt) {
+      evt.preventDefault();
+      const isEdit = editingId !== null;
+      msg.textContent = isEdit ? "Actualizando usuario..." : "Creando usuario...";
+
+      const payload = {
+        username: inputUsername.value.trim(),
+        first_name: inputFirstName.value.trim(),
+        last_name: inputLastName.value.trim(),
+        rol: selectRol.value,
+        email: inputEmail.value.trim() || null,
+        password: inputPassword.value || null,
+      };
+
+      if (!payload.username || !payload.first_name || !payload.last_name || !payload.rol) {
+        msg.textContent = "Completa los campos obligatorios.";
+        return;
+      }
+
+      try {
+        const url = isEdit ? `${rp}/usuarios/${editingId}` : `${rp}/usuarios/`;
+        const method = isEdit ? "PUT" : "POST";
+
+        const r = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+
+        const contentType = r.headers.get("content-type") || "";
+        let data = {};
+        if (contentType.includes("application/json")) {
+          data = await r.json().catch(() => ({}));
+        } else if (!r.ok) {
+          const text = await r.text();
+          throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 120)}`);
+        }
+
+        if (!r.ok) {
+          throw new Error(
+            data.detail ||
+            (isEdit ? "No se pudo actualizar el usuario." : "No se pudo crear el usuario.")
+          );
+        }
+
+        const usernameShown = data.username || payload.username;
+        msg.textContent = isEdit
+          ? `Usuario ${usernameShown} actualizado correctamente.`
+          : `Usuario ${usernameShown} creado correctamente.`;
+
+        resetForm();
+        cargarUsuarios();
+      } catch (err) {
+        console.error(err);
+        msg.textContent =
+          err.message || (isEdit ? "Error actualizando usuario." : "Error creando usuario.");
+      }
+    }
+
+    form.addEventListener("submit", guardarUsuario);
+    if (resetBtn) {
+      resetBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        resetForm();
+        msg.textContent = "Formulario limpio.";
+      });
+    }
+    if (inputSearch) {
+      inputSearch.addEventListener("input", () => {
+        searchText = inputSearch.value || "";
+        aplicarBusqueda();
+      });
+    }
+
+    cargarRoles();
+    cargarUsuarios();
+  })();
+</script>

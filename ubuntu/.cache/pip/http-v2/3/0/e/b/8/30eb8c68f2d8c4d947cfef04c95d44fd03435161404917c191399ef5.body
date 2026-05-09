@@ -1,0 +1,24 @@
+Metadata-Version: 2.4
+Name: pygeodiff
+Version: 2.2.0
+Summary: Python wrapper around GeoDiff library
+Home-page: https://github.com/MerginMaps/geodiff
+Author: Lutra Consulting Ltd.
+Author-email: info@merginmaps.com
+License: License :: OSI Approved :: MIT License
+Keywords: diff,gis,geo,geopackage,merge
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.7
+License-File: LICENSE
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-python
+Dynamic: summary
+
+Python wrapper around GeoDiff library

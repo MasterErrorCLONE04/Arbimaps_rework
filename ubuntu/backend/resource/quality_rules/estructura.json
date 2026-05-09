@@ -1,0 +1,24 @@
+{
+  "slug": "estructura",
+  "rule_count": 2,
+  "rules": [
+    {
+      "id": "9.1",
+      "description": "Ningun campo de tipo \"String\" debe contener caracteres especiales.",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Estructura",
+      "sheet_slug": "estructura"
+    },
+    {
+      "id": "9.2",
+      "description": "Ningun campo de la base de datos puede contener \"pipes\" (|).",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Estructura",
+      "sheet_slug": "estructura"
+    }
+  ]
+}

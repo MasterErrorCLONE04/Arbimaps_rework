@@ -1,0 +1,69 @@
+{
+  "slug": "topologico",
+  "rule_count": 7,
+  "rules": [
+    {
+      "id": "5.1",
+      "description": "No debe existir superposición espacial entre terrenos de tipo formal, es decir, aquellos asociados a predios con derecho de dominio.",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Topologico",
+      "sheet_slug": "topologico"
+    },
+    {
+      "id": "5.2",
+      "description": "No debe existir superposición espacial entre terrenos de tipo informal, es decir, aquellos asociados a predios con derechos de posesión y ocupación.",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Topologico",
+      "sheet_slug": "topologico"
+    },
+    {
+      "id": "5.3",
+      "description": "Todo terreno vinculado a un derecho de posesión no puede superponerse con un terreno asociado a un predio formal de tipo público.",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Topologico",
+      "sheet_slug": "topologico"
+    },
+    {
+      "id": "5.4",
+      "description": "Todo terreno vinculado a un derecho de ocupación no puede superponerse con un terreno asociado a un predio formal de tipo privado.",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Topologico",
+      "sheet_slug": "topologico"
+    },
+    {
+      "id": "5.5",
+      "description": "No debe existir superposición espacial entre unidades de construcción que compartan el mismo tipo de planta y la misma planta de ubicación.",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Topologico",
+      "sheet_slug": "topologico"
+    },
+    {
+      "id": "5.6",
+      "description": "Cada unidad de construcción con planta de ubicación 1 debe estar completamente contenida dentro del terreno asociado al predio.",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Topologico",
+      "sheet_slug": "topologico"
+    },
+    {
+      "id": "5.7",
+      "description": "La dirección debe estar completamente contenida dentro del terreno asociado al predio.",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Topologico",
+      "sheet_slug": "topologico"
+    }
+  ]
+}

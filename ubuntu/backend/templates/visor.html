@@ -1,0 +1,2153 @@
+﻿<div class="container-fluid page-wrapper">
+  <div class="d-flex align-items-center flex-wrap gap-2 mt-0 mb-4 pt-0">
+    <div class="content-title flex-grow-1 text-center">
+      <small class="title-main mb-0">Resumen del proyecto</small>
+      <p class="subtitle-main mb-0">Visor del proyecto y resumen de gestion</p>
+    </div>
+  </div>
+  <!-- <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-lg">
+      <div
+        class="contenido-card kpi-card primary-card h-100 p-3 d-flex flex-column"
+      >
+        <div class="d-flex justify-content-end mb-3">
+          <div
+            class="d-inline-flex justify-content-center align-items-center bg-white border rounded-3 p-1"
+          >
+            <i class="iconEdificioBlue bi bi-building"></i>
+          </div>
+        </div>
+        <div id="kpiPublicos" class="kpi_number text-center fw-bold">0</div>
+        <div class="kpi-label mt-2 text-uppercase fw-bold text-center">
+          Predios publicos
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg">
+      <div
+        class="contenido-card kpi-card kpi-accent-red h-100 p-3 d-flex flex-column"
+      >
+        <div class="d-flex justify-content-end mb-3">
+          <div
+            class="d-inline-flex justify-content-center align-items-center border rounded-3 p-1"
+            style="background-color: #eaeff5"
+          >
+            <i class="iconBlue bi bi-map"></i>
+          </div>
+        </div>
+        <div id="kpiPrivados" class="kpi-number text-center fw-bold">0</div>
+        <div class="kpi-label mt-2 text-uppercase fw-bold text-center">
+          Predios privados
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg">
+      <div
+        class="contenido-card kpi-card kpi-accent-yellow h-100 p-3 d-flex flex-column"
+      >
+        <div class="d-flex justify-content-end mb-3">
+          <div
+            class="d-inline-flex justify-content-center align-items-center border rounded-3 p-1"
+            style="background-color: #eaeff5"
+          >
+            <i class="iconBlue bi bi-crosshair"></i>
+          </div>
+        </div>
+        <div id="kpiNoPH" class="kpi-number text-center fw-bold">0</div>
+        <div class="kpi-label mt-2 text-uppercase fw-bold text-center">
+          No propiedad horizontal
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg">
+      <div
+        class="contenido-card kpi-card kpi-accent-yellow h-100 p-3 d-flex flex-column"
+      >
+        <div class="d-flex justify-content-end mb-3">
+          <div
+            class="d-inline-flex justify-content-center align-items-center border rounded-3 p-1"
+            style="background-color: #eaeff5"
+          >
+            <i class="iconBlue bi bi-geo-alt"></i>
+          </div>
+        </div>
+        <div id="kpiBaldios" class="kpi-number text-center fw-bold">0</div>
+        <div class="kpi-label mt-2 text-uppercase fw-bold text-center">
+          Baldios
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg">
+      <div
+        class="contenido-card kpi-card kpi-accent-primary h-100 p-3 d-flex flex-column"
+      >
+        <div class="d-flex justify-content-end mb-3">
+          <div
+            class="d-inline-flex justify-content-center align-items-center border rounded-3 p-1"
+            style="background-color: #eaeff5"
+          >
+            <i class="iconBlue bi bi-diagram-3"></i>
+          </div>
+        </div>
+        <div id="kpiInformales" class="kpi-number text-center fw-bold">0</div>
+        <div class="kpi-label mt-2 text-uppercase fw-bold text-center">
+          Informales
+        </div>
+      </div>
+    </div>
+  </div> -->
+
+  <div class="row g-3 mb-4 align-items-stretch">
+    <div class="col-12 col-xl-4">
+      <div class="panel-card">
+        <div class="px-2 pt-1 pb-2">
+          <div class="stats-tabs-block mb-3">
+            <div class="stats-pill-nav mb-3 mt-2">
+              <button
+                type="button"
+                class="stats-pill-btn active"
+                id="pillCondicion"
+              >
+                <i class="bi bi-house-gear-fill"></i>
+                <span>Condicion de predio</span>
+              </button>
+
+              <button type="button" class="stats-pill-btn" id="pillTipo">
+                <i class="bi bi-house-fill"></i>
+                <span>Tipo de predio</span>
+              </button>
+            </div>
+
+            <div
+              class="stats-group-label small fw-semibold text-uppercase text-secondary mb-2 text-center"
+            >
+              Tipo de grafica
+            </div>
+
+            <div class="d-flex justify-content-center mb-3">
+              <div
+                class="d-inline-flex align-items-center gap-1 p-1 rounded-pill border bg-light"
+              >
+                <button
+                  type="button"
+                  class="btn btn-sm rounded-pill px-3 py-1 text-white shadow-sm"
+                  id="pillDona"
+                  style="background-color: #032f57; border-color: #032f57"
+                >
+                  <i class="bi bi-circle me-1"></i>
+                  <span>Anillos</span>
+                </button>
+
+                <button
+                  type="button"
+                  class="btn btn-sm rounded-pill px-3 py-1 btn-light"
+                  id="pillArea"
+                  style="border-color: #dbe3ec"
+                >
+                  <i class="bi bi-bullseye me-1"></i>
+                  <span>Area</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="compact-chart-panels">
+            <div class="compact-chart-panel active" id="panelDonut">
+              <div class="summary-chart-wrap">
+                <canvas id="chartResumenCompacto"></canvas>
+              </div>
+            </div>
+
+            <div class="compact-chart-panel" id="panelArea">
+              <div class="summary-chart-wrap">
+                <canvas id="chartResumenArea"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div id="summaryLegend" class="summary-legend"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-8">
+      <div class="panel-card rounded-3 visor-card">
+        <div
+          class="card-header-pro d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-start gap-2"
+        >
+          <div class="text-center text-md-start w-100">
+            <h4 class="card-title-pro mb-0">Visor geografico</h4>
+            <p class="card-subtitle-pro mb-0 small">
+              Visualizacion espacial del proyecto
+            </p>
+          </div>
+
+          <div class="vm-toolbar d-inline-flex align-items-center gap-2 mx-auto mx-md-0">
+            <button id="vmOpenLayerPanel" class="vm-toolbar-btn" type="button">
+              <i class="bi bi-layers me-1"></i>
+              Capas
+            </button>
+            <button id="vmOpenBasemapPanel" class="vm-toolbar-btn vm-toolbar-btn-light" type="button">
+              <i class="bi bi-map me-1"></i>
+              Mapabase
+            </button>
+          </div>
+        </div>
+        <div class="map-panel-body vm-map-shell">
+          <div id="vmLayerPanel" class="vm-layer-panel hidden">
+            <div class="vm-layer-panel-head">
+              <strong>Capas</strong>
+              <button
+                id="vmCloseLayerPanel"
+                class="vm-panel-close"
+                type="button"
+                title="Ocultar panel"
+              >
+                x
+              </button>
+            </div>
+
+            <div class="vm-layer-panel-body">
+              <div class="vm-layer-block">
+                <div class="vm-layer-block-title">Capas visibles</div>
+                <div id="vmLayerList" class="vm-layer-list"></div>
+              </div>
+
+              <div class="vm-layer-actions">
+                <button id="vmZoomProject" class="vm-btn vm-btn-primary" type="button">
+                  Ver zona
+                </button>
+                <button id="vmHideLayers" class="vm-btn" type="button">
+                  Apagar capas
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="vmBasemapPanel" class="vm-layer-panel vm-layer-panel-basemap hidden">
+            <div class="vm-layer-panel-head">
+              <strong>Mapabase</strong>
+              <button
+                id="vmCloseBasemapPanel"
+                class="vm-panel-close"
+                type="button"
+                title="Ocultar panel"
+              >
+                x
+              </button>
+            </div>
+
+            <div class="vm-layer-panel-body">
+              <div class="vm-layer-block">
+                <div class="vm-layer-block-title">Seleccionar</div>
+                <select id="vmBasemapSelect" class="vm-select">
+                  <option value="osm">OpenStreetMap</option>
+                  <option value="sat">Satelite</option>
+                  <option value="none">Sin mapabase</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div id="map"></div>
+          <div class="vm-zoom-stack" aria-label="Controles de zoom">
+            <button id="vmZoomInBtn" class="vm-zoom-btn" type="button" title="Acercar">+</button>
+            <button id="vmZoomOutBtn" class="vm-zoom-btn" type="button" title="Alejar">-</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .vm-map-shell {
+        position: relative;
+      }
+
+      .vm-toolbar-btn {
+        border: 0;
+        background: #032f57;
+        color: #ffffff;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+      }
+
+      .vm-toolbar-btn-light {
+        background: #ffffff;
+        color: #163c62;
+        border: 1px solid rgba(15, 23, 42, 0.16);
+      }
+
+      .vm-layer-panel {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        left: auto;
+        z-index: 31;
+        width: 220px;
+        max-width: calc(100% - 24px);
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        border-radius: 16px;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
+        overflow: hidden;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+
+      .vm-layer-panel.hidden {
+        transform: translateY(-8px);
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .vm-layer-panel-basemap {
+        top: 66px;
+        width: 210px;
+      }
+
+      .vm-layer-panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+      }
+
+      .vm-layer-panel-head strong {
+        font-size: 13px;
+        color: #163c62;
+      }
+
+      .vm-panel-close {
+        border: 0;
+        background: transparent;
+        color: #6b7280;
+        font-size: 20px;
+        line-height: 1;
+        padding: 0 4px;
+      }
+
+      .vm-layer-panel-body {
+        padding: 10px;
+      }
+
+      .vm-layer-block + .vm-layer-block {
+        margin-top: 8px;
+      }
+
+      .vm-layer-block-title {
+        margin-bottom: 6px;
+        font-size: 11px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        font-weight: 800;
+        color: #6b7280;
+      }
+
+      .vm-select {
+        width: 100%;
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        border-radius: 10px;
+        background: #f4f6f8;
+        color: #1f2937;
+        padding: 8px 10px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .vm-layer-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .vm-layer-empty {
+        border: 1px dashed rgba(15, 23, 42, 0.2);
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 11px;
+        color: #6b7280;
+        background: #f8fafc;
+      }
+
+      .vm-layer-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        border-radius: 12px;
+        background: #f4f6f8;
+        padding: 8px 10px;
+        cursor: pointer;
+      }
+
+      .vm-layer-item.is-on {
+        border-color: rgba(37, 99, 235, 0.5);
+        background: #eef5ff;
+      }
+
+      .vm-layer-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #1f2937;
+        line-height: 1.2;
+      }
+
+      .vm-layer-label-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .vm-layer-toggle {
+        min-width: 48px;
+        height: 24px;
+        border-radius: 999px;
+        border: 1px solid rgba(15, 23, 42, 0.2);
+        background: #ffffff;
+        color: #374151;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 8px;
+      }
+
+      .vm-layer-toggle.is-on {
+        border-color: #2563eb;
+        background: #2563eb;
+        color: #ffffff;
+      }
+
+      .vm-layer-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .vm-btn {
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        background: #ffffff;
+        color: #1f2937;
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .vm-btn-primary {
+        background: #2563eb;
+        border-color: transparent;
+        color: #fff;
+      }
+
+      .vm-zoom-stack {
+        position: absolute;
+        right: 12px;
+        bottom: 64px;
+        z-index: 34;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .vm-zoom-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        background: rgba(255, 255, 255, 0.96);
+        color: #1f2937;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.15);
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Oculta el zoom nativo de OL para usar solo los botones personalizados */
+      .vm-map-shell .ol-zoom {
+        display: none !important;
+      }
+
+      #map .ol-zoom {
+        display: none !important;
+      }
+
+      @media (max-width: 991.98px) {
+        .vm-layer-panel {
+          top: 10px;
+          right: 10px;
+          left: auto;
+        }
+
+        .vm-layer-panel-basemap {
+          top: 62px;
+        }
+
+        .vm-zoom-stack {
+          right: 10px;
+          bottom: 70px;
+        }
+      }
+    </style>
+
+    <div class="col-12">
+      <div class="row g-3">
+        <div class="col-12 col-xl-8">
+          <div class="card-soft h-100">
+            <div
+              class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"
+            >
+              <div class="text-center w-100">
+                <h3 class="mb-1">Tabla de destinacion economica</h3>
+                <p class="sub mb-0">
+                  Detalle paginado por destinacion economica.
+                </p>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Destinacion economica</th>
+                    <th class="text-end">Total predios</th>
+                    <th class="text-end">Porcentaje</th>
+                  </tr>
+                </thead>
+                <tbody id="tablaDestinacionBody">
+                  <tr>
+                    <td colspan="4" class="text-center text-muted py-4">
+                      Cargando datos...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"
+            >
+              <small class="text-muted" id="tablaDestinacionInfo"
+                >Mostrando 0 a 0 de 0 registros</small
+              >
+
+              <nav aria-label="Paginacion destinacion economica">
+                <ul
+                  class="pagination pagination-sm mb-0"
+                  id="tablaDestinacionPagination"
+                ></ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+          <div class="card-soft h-100 text-center">
+            <h3>Tipo de planta</h3>
+            <p class="sub">Distribucion porcentual por tipo de planta.</p>
+
+            <div class="chart-box-full" style="height: 340px">
+              <canvas id="chartTipoPlantaLateral"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- <div class="dashboard-section">
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="card-soft">
+          <h3>Resumen del proyecto</h3>
+          <div id="resumenDatos" class="hint"></div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <div class="card-soft">
+          <h3>Condicion de predio</h3>
+          <p class="sub">Distribucion porcentual por condicion.</p>
+          <div class="chart-box-sm">
+            <canvas
+              id="chartCondicion"
+              style="width: 100%; height: 100%"
+            ></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-6">
+        <div class="card-soft">
+          <h3>Tipo de predio</h3>
+          <p class="sub">Distribucion porcentual por tipo.</p>
+          <div class="chart-box-sm">
+            <canvas id="chartTipo" style="width: 100%; height: 100%"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="card-soft">
+          <h3>Destinacion economica</h3>
+          <p class="sub">Distribucion por numero de predios.</p>
+          <div class="chart-box-full">
+            <canvas id="chartDestinacion"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12">
+        <div class="card-soft">
+          <h3>Tipo de planta</h3>
+          <p class="sub">Distribucion porcentual por tipo de planta.</p>
+          <div class="chart-box-full">
+            <canvas id="chartTipoPlanta"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div> -->
+</div>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+  rel="stylesheet"
+/>
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ol@9.2.4/dist/ol.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+  const rp = "{{ rp }}";
+
+  Chart.defaults.font.family = "'Poppins', sans-serif";
+  Chart.defaults.color = "#163c62";
+
+  let mapInstance = null;
+  let resumenCompactoChart = null;
+  let resumenAreaChart = null;
+  let chartCondicionInstance = null;
+  let chartTipoInstance = null;
+  let chartDestinacionInstance = null;
+  let chartTipoPlantaInstance = null;
+  let chartTipoPlantaLateralInstance = null;
+  let wmsLayerEntries = [];
+  let basemapEntries = {};
+  let activeBasemap = "osm";
+  let wmsCapabilitiesDoc = null;
+  let layerPanelBound = false;
+  let zoomButtonsBound = false;
+
+  let dashboardState = {
+    condicion: [],
+    tipo: [],
+    total: 0,
+    activeMode: "condicion",
+    activeChartTab: "donut",
+    visibility: {
+      condicion: [],
+      tipo: [],
+    },
+  };
+
+  let tablaDestinacionData = [];
+  let tablaDestinacionPage = 1;
+  const tablaDestinacionPageSize = 5;
+
+  const WMS_URL = `${rp}/proxy/wms`;
+  const parsedLayers = String(
+    {{ visor_geoserver_layers | default('A_Base_Principal:Base_Principal') | tojson }}
+  )
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+  const GEOSERVER_LAYERS = parsedLayers.length
+    ? parsedLayers
+    : ["A_Base_Principal:Base_Principal"];
+  const DEFAULT_EXTENT_9377 = [
+    3630797.8981345687,
+    1069522.7796902722,
+    5709687.44243233,
+    3346020.2810714217,
+  ];
+  let extent9377 = [...DEFAULT_EXTENT_9377];
+
+  const COLORS = [
+    "#2a8af7",
+    "#5aa8ff",
+    "#66c36d",
+    "#f7b733",
+    "#f45b69",
+    "#8e44ad",
+    "#16a085",
+    "#d35400",
+    "#7f8c8d",
+    "#e63946",
+    "#3a86ff",
+    "#8338ec",
+    "#ff006e",
+    "#fb5607",
+    "#2a9d8f",
+  ];
+
+  proj4.defs(
+    "EPSG:9377",
+    "+proj=tmerc +lat_0=4 +lon_0=-73 +k=0.9992 +x_0=5000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
+  );
+  ol.proj.proj4.register(proj4);
+
+  const projection = ol.proj.get("EPSG:9377");
+  projection.setExtent(extent9377);
+
+  function isValidExtent(extent) {
+    if (!Array.isArray(extent) || extent.length !== 4) return false;
+    const values = extent.map((v) => Number(v));
+    return (
+      values.every((v) => Number.isFinite(v)) &&
+      values[0] < values[2] &&
+      values[1] < values[3]
+    );
+  }
+
+  function setMapExtent(extent, duration = 300) {
+    if (!isValidExtent(extent)) return false;
+    extent9377 = extent.map((v) => Number(v));
+    projection.setExtent(extent9377);
+
+    if (mapInstance) {
+      mapInstance.getView().fit(extent9377, {
+        padding: [20, 20, 20, 20],
+        duration,
+      });
+    }
+    return true;
+  }
+
+  function layerTitleFromName(layerName) {
+    const raw = String(layerName || "").split(":").pop() || String(layerName || "");
+    const knownLabels = {
+      arb_terreno: "Terreno",
+      arb_terrenohistorico: "Terreno historico",
+      arb_construccion: "Construccion",
+      arb_unidadconstruccion: "Unidad construccion",
+      arb_direccion: "Direccion",
+    };
+    if (knownLabels[raw]) return knownLabels[raw];
+    return raw
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (m) => m.toUpperCase());
+  }
+
+  function setBasemap(name) {
+    const selected = name === "sat" || name === "none" ? name : "osm";
+    activeBasemap = selected;
+
+    if (basemapEntries.osm) basemapEntries.osm.setVisible(selected === "osm");
+    if (basemapEntries.sat) basemapEntries.sat.setVisible(selected === "sat");
+
+    const select = document.getElementById("vmBasemapSelect");
+    if (select && select.value !== selected) {
+      select.value = selected;
+    }
+  }
+
+  function getDirectChildText(node, tagName) {
+    if (!node) return "";
+    const expected = String(tagName || "").toLowerCase();
+    const child = Array.from(node.children || []).find(
+      (el) => {
+        const local = String(el.localName || "").toLowerCase();
+        const tag = String(el.tagName || "").toLowerCase();
+        return local === expected || tag === expected || tag.endsWith(`:${expected}`);
+      },
+    );
+    return String(child?.textContent || "").trim();
+  }
+
+  function getLayerNodes(xmlDoc) {
+    if (!xmlDoc) return [];
+    let nodes = [];
+    if (typeof xmlDoc.getElementsByTagNameNS === "function") {
+      nodes = Array.from(xmlDoc.getElementsByTagNameNS("*", "Layer"));
+    }
+    if (!nodes.length) {
+      nodes = Array.from(xmlDoc.getElementsByTagName("Layer"));
+    }
+    return nodes;
+  }
+
+  function findLayerNodeByName(xmlDoc, layerName) {
+    if (!xmlDoc || !layerName) return null;
+    const target = String(layerName).trim();
+    const layerNodes = getLayerNodes(xmlDoc);
+    return (
+      layerNodes.find(
+        (node) => getDirectChildText(node, "Name") === target,
+      ) || null
+    );
+  }
+
+  function collectLeafLayers(node) {
+    const leaves = [];
+
+    function walk(layerNode) {
+      const childLayers = Array.from(layerNode.children || []).filter(
+        (el) => {
+          const local = String(el.localName || "").toLowerCase();
+          const tag = String(el.tagName || "").toLowerCase();
+          return local === "layer" || tag === "layer" || tag.endsWith(":layer");
+        },
+      );
+      const name = getDirectChildText(layerNode, "Name");
+      const title = getDirectChildText(layerNode, "Title");
+
+      if (name && childLayers.length === 0) {
+        leaves.push({
+          name,
+          title: title || layerTitleFromName(name),
+        });
+        return;
+      }
+
+      childLayers.forEach(walk);
+    }
+
+    const topChildren = Array.from(node.children || []).filter(
+      (el) => {
+        const local = String(el.localName || "").toLowerCase();
+        const tag = String(el.tagName || "").toLowerCase();
+        return local === "layer" || tag === "layer" || tag.endsWith(":layer");
+      },
+    );
+    topChildren.forEach(walk);
+    return leaves;
+  }
+
+  async function getWmsCapabilitiesDoc() {
+    if (wmsCapabilitiesDoc) return wmsCapabilitiesDoc;
+    try {
+      const capUrl = `${WMS_URL}?SERVICE=WMS&VERSION=1.1.0&REQUEST=GetCapabilities`;
+      const r = await fetch(capUrl);
+      if (!r.ok) return null;
+      const xmlText = await r.text();
+      wmsCapabilitiesDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+      return wmsCapabilitiesDoc;
+    } catch (_err) {
+      return null;
+    }
+  }
+
+  function resolveNamespaceGroupLayers(xmlDoc, namespace) {
+    if (!xmlDoc || !namespace) return [];
+    const layerNodes = getLayerNodes(xmlDoc);
+    const names = layerNodes
+      .map((node) => ({
+        name: getDirectChildText(node, "Name"),
+        title: getDirectChildText(node, "Title"),
+      }))
+      .filter((row) => row.name && row.name.startsWith(`${namespace}:`));
+
+    if (!names.length) return [];
+
+    const desiredSuffixOrder = [
+      "arb_terreno",
+      "arb_terrenohistorico",
+      "arb_construccion",
+      "arb_unidadconstruccion",
+      "arb_direccion",
+    ];
+
+    const byName = new Map(
+      names.map((row) => [String(row.name).toLowerCase(), row]),
+    );
+    const preferred = desiredSuffixOrder
+      .map((suffix) => byName.get(`${namespace}:${suffix}`.toLowerCase()))
+      .filter(Boolean);
+
+    if (preferred.length >= 2) {
+      return preferred.map((row) => ({
+        name: row.name,
+        title: row.title || layerTitleFromName(row.name),
+      }));
+    }
+
+    return names.map((row) => ({
+      name: row.name,
+      title: row.title || layerTitleFromName(row.name),
+    }));
+  }
+
+  function listAvailableLayerNames(xmlDoc) {
+    const nodes = getLayerNodes(xmlDoc);
+    return new Set(
+      nodes
+        .map((node) => getDirectChildText(node, "Name"))
+        .filter(Boolean)
+        .map((name) => String(name).toLowerCase()),
+    );
+  }
+
+  function defaultBasePrincipalSubLayers(namespace) {
+    if (!namespace) return [];
+    const defs = [
+      { suffix: "arb_terreno", title: "Terreno" },
+      { suffix: "arb_terrenohistorico", title: "Terreno historico" },
+      { suffix: "arb_construccion", title: "Construccion" },
+      { suffix: "arb_unidadconstruccion", title: "Unidad construccion" },
+      { suffix: "arb_direccion", title: "Direccion" },
+    ];
+    return defs.map((d) => ({
+      name: `${namespace}:${d.suffix}`,
+      title: d.title,
+    }));
+  }
+
+  function expandConfiguredLayers(configuredLayers) {
+    const expanded = [];
+    const seen = new Set();
+
+    const add = (layer) => {
+      const key = String(layer?.name || "").toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      expanded.push(layer);
+    };
+
+    (configuredLayers || []).forEach((configuredName) => {
+      const clean = String(configuredName || "").trim();
+      if (!clean) return;
+      const [namespace, layerPart = ""] = clean.split(":");
+      const isBasePrincipalGroup = layerPart.toLowerCase() === "base_principal";
+
+      if (isBasePrincipalGroup) {
+        defaultBasePrincipalSubLayers(namespace).forEach(add);
+        return;
+      }
+
+      add({
+        name: clean,
+        title: layerTitleFromName(clean),
+      });
+    });
+
+    return expanded;
+  }
+
+  async function resolveLayerConfigsFromWms() {
+    const fallback = expandConfiguredLayers(GEOSERVER_LAYERS);
+
+    const xmlDoc = await getWmsCapabilitiesDoc();
+    if (!xmlDoc) return fallback;
+    const availableNames = listAvailableLayerNames(xmlDoc);
+
+    const resolved = [];
+    const seen = new Set();
+
+    const addLayer = (layer) => {
+      const key = String(layer?.name || "").toLowerCase();
+      if (!key || seen.has(key)) return;
+      seen.add(key);
+      resolved.push(layer);
+    };
+
+    GEOSERVER_LAYERS.forEach((configuredName) => {
+      const namespace = configuredName.includes(":")
+        ? configuredName.split(":")[0]
+        : "";
+      const layerPart = configuredName.includes(":")
+        ? configuredName.split(":")[1]
+        : configuredName;
+
+      // Forzamos el desglose de Base_Principal en subcapas operativas
+      if (String(layerPart || "").toLowerCase() === "base_principal") {
+        const defaults = defaultBasePrincipalSubLayers(namespace);
+        const existingDefaults = defaults.filter((l) =>
+          availableNames.has(String(l.name).toLowerCase()),
+        );
+        (existingDefaults.length ? existingDefaults : defaults).forEach(addLayer);
+        return;
+      }
+
+      const node = findLayerNodeByName(xmlDoc, configuredName);
+      if (!node) {
+        addLayer({
+          name: configuredName,
+          title: layerTitleFromName(configuredName),
+        });
+        return;
+      }
+
+      const namespaceLayers = resolveNamespaceGroupLayers(xmlDoc, namespace);
+      const leaves = collectLeafLayers(node);
+
+      if (namespaceLayers.length > leaves.length) {
+        namespaceLayers.forEach(addLayer);
+        return;
+      }
+
+      if (leaves.length) {
+        leaves.forEach(addLayer);
+        return;
+      }
+
+      if (namespaceLayers.length) {
+        namespaceLayers.forEach(addLayer);
+        return;
+      }
+
+      addLayer({
+        name: configuredName,
+        title:
+          getDirectChildText(node, "Title") ||
+          layerTitleFromName(configuredName),
+      });
+    });
+
+    return resolved.length ? resolved : fallback;
+  }
+
+  function renderLayerControls() {
+    const box = document.getElementById("vmLayerList");
+    if (!box) return;
+
+    box.innerHTML = "";
+    if (!wmsLayerEntries.length) {
+      box.innerHTML = "<div class='vm-layer-empty'>No hay capas configuradas.</div>";
+      return;
+    }
+
+    wmsLayerEntries.forEach((entry, idx) => {
+      const row = document.createElement("div");
+      row.className = "vm-layer-item";
+      const isOn = Boolean(entry.layer.getVisible());
+      row.classList.toggle("is-on", isOn);
+
+      const labelWrap = document.createElement("div");
+      labelWrap.className = "vm-layer-label-wrap";
+
+      const label = document.createElement("div");
+      label.className = "vm-layer-label";
+      label.textContent = entry.title;
+
+      const sw = document.createElement("button");
+      sw.type = "button";
+      sw.className = "vm-layer-toggle";
+      sw.classList.toggle("is-on", isOn);
+      sw.setAttribute("aria-pressed", isOn ? "true" : "false");
+      sw.textContent = isOn ? "ON" : "OFF";
+
+      const toggleLayer = () => {
+        const next = !Boolean(entry.layer.getVisible());
+        entry.layer.setVisible(next);
+        renderLayerControls();
+      };
+
+      sw.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleLayer();
+      });
+
+      row.addEventListener("click", () => {
+        toggleLayer();
+      });
+
+      labelWrap.appendChild(label);
+      row.appendChild(labelWrap);
+      row.appendChild(sw);
+      box.appendChild(row);
+    });
+
+    const hideBtn = document.getElementById("vmHideLayers");
+    if (hideBtn) {
+      const anyVisible = wmsLayerEntries.some((entry) => entry.layer.getVisible());
+      hideBtn.textContent = anyVisible ? "Apagar capas" : "Encender capas";
+    }
+  }
+
+  function bindLayerPanelControls() {
+    if (layerPanelBound) return;
+    layerPanelBound = true;
+
+    const layerPanel = document.getElementById("vmLayerPanel");
+    const basemapPanel = document.getElementById("vmBasemapPanel");
+    const openLayerBtn = document.getElementById("vmOpenLayerPanel");
+    const openBasemapBtn = document.getElementById("vmOpenBasemapPanel");
+    const closeLayerBtn = document.getElementById("vmCloseLayerPanel");
+    const closeBasemapBtn = document.getElementById("vmCloseBasemapPanel");
+    const hideBtn = document.getElementById("vmHideLayers");
+    const zoomBtn = document.getElementById("vmZoomProject");
+    const basemapSelect = document.getElementById("vmBasemapSelect");
+
+    const setExpanded = (layersOpen, basemapOpen) => {
+      openLayerBtn?.setAttribute("aria-expanded", layersOpen ? "true" : "false");
+      openBasemapBtn?.setAttribute("aria-expanded", basemapOpen ? "true" : "false");
+    };
+
+    const closeAllPanels = () => {
+      layerPanel?.classList.add("hidden");
+      basemapPanel?.classList.add("hidden");
+      setExpanded(false, false);
+    };
+
+    const togglePanel = (target) => {
+      if (!target) return;
+      const shouldOpen = target.classList.contains("hidden");
+      closeAllPanels();
+      if (shouldOpen) {
+        target.classList.remove("hidden");
+      }
+      setExpanded(
+        shouldOpen && target === layerPanel,
+        shouldOpen && target === basemapPanel,
+      );
+    };
+
+    openLayerBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      togglePanel(layerPanel);
+    });
+
+    openBasemapBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      togglePanel(basemapPanel);
+    });
+
+    closeLayerBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeAllPanels();
+    });
+
+    closeBasemapBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeAllPanels();
+    });
+
+    layerPanel?.addEventListener("click", (e) => e.stopPropagation());
+    basemapPanel?.addEventListener("click", (e) => e.stopPropagation());
+
+    document.addEventListener("click", () => {
+      closeAllPanels();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeAllPanels();
+      }
+    });
+
+    hideBtn?.addEventListener("click", () => {
+      const anyVisible = wmsLayerEntries.some((entry) => entry.layer.getVisible());
+      const targetVisible = !anyVisible;
+      wmsLayerEntries.forEach((entry) => entry.layer.setVisible(targetVisible));
+      renderLayerControls();
+    });
+
+    basemapSelect?.addEventListener("change", () => {
+      setBasemap(basemapSelect.value);
+    });
+
+    zoomBtn?.addEventListener("click", () => {
+      if (!mapInstance) return;
+      mapInstance.getView().fit(extent9377, {
+        padding: [20, 20, 20, 20],
+        duration: 300,
+      });
+      closeAllPanels();
+    });
+
+    setExpanded(false, false);
+  }
+
+  function bindCustomZoomButtons() {
+    if (zoomButtonsBound) return;
+    zoomButtonsBound = true;
+
+    const zoomInBtn = document.getElementById("vmZoomInBtn");
+    const zoomOutBtn = document.getElementById("vmZoomOutBtn");
+
+    zoomInBtn?.addEventListener("click", () => {
+      if (!mapInstance) return;
+      const view = mapInstance.getView();
+      const current = Number(view.getZoom() || 0);
+      view.animate({ zoom: current + 1, duration: 180 });
+    });
+
+    zoomOutBtn?.addEventListener("click", () => {
+      if (!mapInstance) return;
+      const view = mapInstance.getView();
+      const current = Number(view.getZoom() || 0);
+      view.animate({ zoom: current - 1, duration: 180 });
+    });
+  }
+
+  async function loadExtentFromWmsCapabilities() {
+    try {
+      const xml = await getWmsCapabilitiesDoc();
+      if (!xml) return false;
+
+      const namesToTry = Array.from(
+        new Set([
+          ...GEOSERVER_LAYERS,
+          ...wmsLayerEntries.map((entry) => entry.name),
+        ]),
+      );
+
+      for (const layerName of namesToTry) {
+        const match = findLayerNodeByName(xml, layerName);
+
+        if (!match) continue;
+
+        const bboxNodes = Array.from(match.getElementsByTagName("BoundingBox"));
+        const bbox9377 = bboxNodes.find((b) => {
+          const srs = b.getAttribute("SRS") || b.getAttribute("CRS") || "";
+          return srs.toUpperCase() === "EPSG:9377";
+        });
+
+        if (!bbox9377) continue;
+
+        const extent = [
+          Number(bbox9377.getAttribute("minx")),
+          Number(bbox9377.getAttribute("miny")),
+          Number(bbox9377.getAttribute("maxx")),
+          Number(bbox9377.getAttribute("maxy")),
+        ];
+
+        if (setMapExtent(extent, 300)) {
+          return true;
+        }
+      }
+      return false;
+    } catch (err) {
+      console.warn("[visor] No se pudo cargar extent desde GetCapabilities:", err);
+      return false;
+    }
+  }
+
+  async function loadProjectExtent() {
+    try {
+      const r = await fetch(`${rp}/visor/project-extent`);
+      if (!r.ok) {
+        await loadExtentFromWmsCapabilities();
+        return;
+      }
+
+      const data = await r.json();
+      if (!setMapExtent(data.extent, 300)) {
+        await loadExtentFromWmsCapabilities();
+      }
+    } catch (err) {
+      console.warn("[visor] No se pudo cargar el extent dinamico:", err);
+      await loadExtentFromWmsCapabilities();
+    }
+  }
+
+  async function initMap() {
+    if (mapInstance) return;
+
+    const layerConfigs = await resolveLayerConfigsFromWms();
+
+    wmsLayerEntries = layerConfigs.map((cfg) => {
+      const source = new ol.source.TileWMS({
+        url: WMS_URL,
+        params: { LAYERS: cfg.name, TILED: true, VERSION: "1.1.0" },
+        serverType: "geoserver",
+        crossOrigin: "anonymous",
+      });
+
+      source.on("tileloaderror", () => {
+        console.warn(
+          `[visor] Error cargando capa WMS (${cfg.name}). Verifica VISOR_GEOSERVER_LAYERS y WMS_BASE_URL.`,
+        );
+      });
+
+      return {
+        name: cfg.name,
+        title: cfg.title || layerTitleFromName(cfg.name),
+        layer: new ol.layer.Tile({ source, visible: true }),
+      };
+    });
+
+    basemapEntries = {
+      osm: new ol.layer.Tile({
+        source: new ol.source.OSM(),
+        visible: false,
+      }),
+      sat: new ol.layer.Tile({
+        source: new ol.source.XYZ({
+          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+          attributions: "Tiles (c) Esri",
+        }),
+        visible: false,
+      }),
+    };
+
+    const wmsLayers = wmsLayerEntries.map((entry) => entry.layer);
+
+    const mapOptions = {
+      target: "map",
+      layers: [basemapEntries.osm, basemapEntries.sat, ...wmsLayers],
+      view: new ol.View({
+        projection: projection,
+        center: ol.extent.getCenter(extent9377),
+        zoom: 2,
+      }),
+    };
+
+    // Compatibilidad entre builds de OpenLayers (algunas no exponen ol.control.defaults)
+    const defaultsFactory = ol?.control?.defaults;
+    if (typeof defaultsFactory === "function") {
+      mapOptions.controls = defaultsFactory({ zoom: false });
+    }
+
+    mapInstance = new ol.Map(mapOptions);
+
+    setBasemap(activeBasemap);
+    mapInstance.getView().fit(extent9377, { padding: [20, 20, 20, 20] });
+    renderLayerControls();
+    bindLayerPanelControls();
+    bindCustomZoomButtons();
+    setTimeout(() => {
+      mapInstance.updateSize();
+      mapInstance.renderSync();
+    }, 50);
+  }
+
+  function paintStatsPills() {
+    const pillCondicion = document.getElementById("pillCondicion");
+    const pillTipo = document.getElementById("pillTipo");
+    const pillDona = document.getElementById("pillDona");
+    const pillArea = document.getElementById("pillArea");
+
+    pillCondicion?.classList.toggle(
+      "active",
+      dashboardState.activeMode === "condicion",
+    );
+    pillTipo?.classList.toggle("active", dashboardState.activeMode === "tipo");
+
+    const donutActive = dashboardState.activeChartTab === "donut";
+    const areaActive = dashboardState.activeChartTab === "area";
+
+    if (pillDona) {
+      pillDona.className = donutActive
+        ? "btn btn-sm rounded-pill px-3 py-1 text-white shadow-sm"
+        : "btn btn-sm rounded-pill px-3 py-1 btn-light";
+      pillDona.style.backgroundColor = donutActive ? "#032F57" : "";
+      pillDona.style.borderColor = donutActive ? "#032F57" : "#dbe3ec";
+    }
+
+    if (pillArea) {
+      pillArea.className = areaActive
+        ? "btn btn-sm rounded-pill px-3 py-1 text-white shadow-sm"
+        : "btn btn-sm rounded-pill px-3 py-1 btn-light";
+      pillArea.style.backgroundColor = areaActive ? "#032F57" : "";
+      pillArea.style.borderColor = areaActive ? "#032F57" : "#dbe3ec";
+    }
+  }
+
+  function renderCompactChart(mode = "condicion") {
+    const canvas = document.getElementById("chartResumenCompacto");
+    if (!canvas) return;
+
+    if (resumenCompactoChart) {
+      resumenCompactoChart.destroy();
+    }
+
+    const isCondicion = mode === "condicion";
+    const items = isCondicion ? dashboardState.condicion : dashboardState.tipo;
+    const keyField = isCondicion ? "condicion_predio" : "tipo_predio";
+
+    if (
+      !dashboardState.visibility[mode] ||
+      !dashboardState.visibility[mode].length
+    ) {
+      dashboardState.visibility[mode] = items.map(() => true);
+    }
+
+    const visibility = dashboardState.visibility[mode];
+    const labels = items.map((i) => i[keyField] || "Sin dato");
+    const originalValues = items.map((i) => Number(i.total || 0));
+    const chartValues = originalValues.map((value, idx) =>
+      visibility[idx] === false ? 0 : value,
+    );
+    const bgColors = originalValues.map(
+      (_, idx) => COLORS[idx % COLORS.length],
+    );
+
+    const totalCategoriasTop = document.getElementById("totalCategoriasTop");
+    if (totalCategoriasTop) {
+      totalCategoriasTop.textContent = items.length;
+    }
+
+    resumenCompactoChart = new Chart(canvas.getContext("2d"), {
+      type: "doughnut",
+      data: {
+        labels,
+        datasets: [
+          {
+            data: chartValues,
+            backgroundColor: bgColors,
+            borderColor: "#ffffff",
+            borderWidth: 3,
+            hoverOffset: 8,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "62%",
+        animation: {
+          duration: 700,
+          easing: "easeOutQuart",
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
+          tooltip: {
+            backgroundColor: "#163c62",
+            titleColor: "#fff",
+            bodyColor: "#fff",
+            padding: 12,
+            callbacks: {
+              label: function (context) {
+                const value = Number(context.raw || 0);
+                const visibleTotal = chartValues.reduce(
+                  (acc, cur) => acc + cur,
+                  0,
+                );
+                const pct = visibleTotal
+                  ? ((value / visibleTotal) * 100).toFixed(1)
+                  : 0;
+                return ` ${context.label}: ${value} (${pct}%)`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  function renderCompactArea(mode = "condicion") {
+    const canvas = document.getElementById("chartResumenArea");
+    if (!canvas) return;
+
+    if (resumenAreaChart) {
+      resumenAreaChart.destroy();
+    }
+
+    const isCondicion = mode === "condicion";
+    const items = isCondicion ? dashboardState.condicion : dashboardState.tipo;
+    const keyField = isCondicion ? "condicion_predio" : "tipo_predio";
+    const visibility = dashboardState.visibility[mode] || [];
+
+    const visibleItems = items
+      .map((item, index) => ({
+        label: item[keyField] || "Sin dato",
+        value: Number(item.total || 0),
+        color: COLORS[index % COLORS.length],
+        visible: visibility[index] !== false,
+      }))
+      .filter((item) => item.visible);
+
+    const totalCategoriasTop = document.getElementById("totalCategoriasTop");
+    if (totalCategoriasTop) {
+      totalCategoriasTop.textContent = items.length;
+    }
+
+    if (!visibleItems.length) {
+      resumenAreaChart = new Chart(canvas.getContext("2d"), {
+        type: "polarArea",
+        data: {
+          labels: ["Sin datos visibles"],
+          datasets: [
+            {
+              data: [1],
+              backgroundColor: ["rgba(219, 230, 241, 0.8)"],
+              borderColor: ["#dbe6f1"],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false },
+          },
+          scales: {
+            r: {
+              ticks: { display: false },
+              grid: { color: "rgba(18, 58, 99, 0.08)" },
+              pointLabels: { display: false },
+            },
+          },
+        },
+      });
+      return;
+    }
+
+    resumenAreaChart = new Chart(canvas.getContext("2d"), {
+      type: "polarArea",
+      data: {
+        labels: visibleItems.map((i) => i.label),
+        datasets: [
+          {
+            data: visibleItems.map((i) => i.value),
+            backgroundColor: visibleItems.map((i) => `${i.color}CC`),
+            borderColor: visibleItems.map((i) => i.color),
+            borderWidth: 2,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 700,
+          easing: "easeOutQuart",
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
+          tooltip: {
+            backgroundColor: "#163c62",
+            titleColor: "#fff",
+            bodyColor: "#fff",
+            padding: 12,
+            callbacks: {
+              label: function (context) {
+                const value = Number(context.raw || 0);
+                const total = visibleItems.reduce(
+                  (acc, cur) => acc + cur.value,
+                  0,
+                );
+                const pct = total ? ((value / total) * 100).toFixed(1) : 0;
+                return ` ${context.label}: ${value} (${pct}%)`;
+              },
+            },
+          },
+        },
+        scales: {
+          r: {
+            beginAtZero: true,
+            ticks: {
+              backdropColor: "transparent",
+              color: "#6b7f93",
+              precision: 0,
+            },
+            grid: {
+              color: "rgba(18, 58, 99, 0.08)",
+            },
+            angleLines: {
+              color: "rgba(18, 58, 99, 0.08)",
+            },
+            pointLabels: {
+              display: false,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  function renderCompactLegend(mode = "condicion") {
+    const legend = document.getElementById("summaryLegend");
+    if (!legend) return;
+
+    const isCondicion = mode === "condicion";
+    const items = isCondicion ? dashboardState.condicion : dashboardState.tipo;
+    const keyField = isCondicion ? "condicion_predio" : "tipo_predio";
+    const visibility = dashboardState.visibility[mode] || [];
+
+    if (!items.length) {
+      legend.innerHTML = `<div class="text-muted small">Sin datos disponibles.</div>`;
+      return;
+    }
+
+    legend.innerHTML = `
+      <div class="summary-legend-meta mb-2">
+        Haz clic sobre una categoria para mostrarla u ocultarla en la grafica.
+      </div>
+      ${items
+        .map((item, index) => {
+          const name = item[keyField] || "Sin dato";
+          const value = Number(item.total || 0);
+          const color = COLORS[index % COLORS.length];
+          const isVisible = visibility[index] !== false;
+
+          return `
+            <div class="summary-legend-item ${!isVisible ? "is-hidden" : ""}" data-mode="${mode}" data-index="${index}">
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <div class="summary-legend-left">
+                  <span class="summary-dot" style="background:${color}"></span>
+                  <span class="summary-legend-name">${name}</span>
+                </div>
+                <span class="summary-legend-value">${value}</span>
+              </div>
+            </div>
+          `;
+        })
+        .join("")}
+    `;
+
+    legend.querySelectorAll(".summary-legend-item").forEach((el) => {
+      el.addEventListener("click", () => {
+        const itemMode = el.dataset.mode;
+        const index = Number(el.dataset.index);
+
+        if (!dashboardState.visibility[itemMode]) {
+          dashboardState.visibility[itemMode] = [];
+        }
+
+        const current = dashboardState.visibility[itemMode][index];
+        dashboardState.visibility[itemMode][index] =
+          current === false ? true : false;
+
+        renderActiveCompactChart();
+      });
+    });
+  }
+
+  function renderTablaDestinacion(itemsDest, total) {
+    const tbody = document.getElementById("tablaDestinacionBody");
+    if (!tbody) return;
+
+    if (!itemsDest || !itemsDest.length) {
+      tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center text-muted py-4">
+          Sin datos disponibles.
+        </td>
+      </tr>
+    `;
+      return;
+    }
+
+    tbody.innerHTML = itemsDest
+      .map((item, index) => {
+        const nombre = item.destinacion_economica || "Sin dato";
+        const cantidad = Number(item.total || 0);
+        const porcentaje = total
+          ? ((cantidad / total) * 100).toFixed(2)
+          : "0.00";
+
+        return `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${nombre}</td>
+          <td class="text-end fw-semibold">${cantidad}</td>
+          <td class="text-end">${porcentaje}%</td>
+        </tr>
+      `;
+      })
+      .join("");
+  }
+
+  function renderActiveCompactChart() {
+    const mode = dashboardState.activeMode || "condicion";
+    const tab = dashboardState.activeChartTab || "donut";
+
+    const panelDonut = document.getElementById("panelDonut");
+    const panelArea = document.getElementById("panelArea");
+
+    panelDonut?.classList.toggle("active", tab === "donut");
+    panelArea?.classList.toggle("active", tab === "area");
+
+    paintStatsPills();
+
+    if (tab === "donut") {
+      renderCompactChart(mode);
+    } else {
+      renderCompactArea(mode);
+    }
+
+    renderCompactLegend(mode);
+  }
+
+  function bindStatsPillNav() {
+    document.getElementById("pillCondicion")?.addEventListener("click", () => {
+      dashboardState.activeMode = "condicion";
+      renderActiveCompactChart();
+    });
+
+    document.getElementById("pillTipo")?.addEventListener("click", () => {
+      dashboardState.activeMode = "tipo";
+      renderActiveCompactChart();
+    });
+
+    document.getElementById("pillDona")?.addEventListener("click", () => {
+      dashboardState.activeChartTab = "donut";
+      renderActiveCompactChart();
+    });
+
+    document.getElementById("pillArea")?.addEventListener("click", () => {
+      dashboardState.activeChartTab = "area";
+      renderActiveCompactChart();
+    });
+  }
+
+  function getTotalByLabel(items, field, label) {
+    const found = (items || []).find(
+      (i) => normalizeText(i[field]) === normalizeText(label),
+    );
+    return Number(found?.total || 0);
+  }
+
+
+  function normalizeText(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function sumTotalsByKeyword(items, field, keyword) {
+    const needle = normalizeText(keyword);
+    return (items || []).reduce((acc, item) => {
+      const label = normalizeText(item?.[field]);
+      if (!label.includes(needle)) return acc;
+      return acc + Number(item?.total || 0);
+    }, 0);
+  }
+  function updateKpis(itemsCond, itemsTipo, total) {
+    const publicos = sumTotalsByKeyword(itemsCond, "condicion_predio", "public");
+    const privados = sumTotalsByKeyword(itemsCond, "condicion_predio", "privad");
+    const baldios = getTotalByLabel(itemsTipo, "tipo_predio", "Baldio");
+    const noPH = getTotalByLabel(
+      itemsTipo,
+      "tipo_predio",
+      "No propiedad horizontal",
+    );
+
+    const publicosEl = document.getElementById("kpiPublicos");
+    const privadosEl = document.getElementById("kpiPrivados");
+    const baldiosEl = document.getElementById("kpiBaldios");
+    const noPHEl = document.getElementById("kpiNoPH");
+    const informalesEl = document.getElementById("kpiInformales");
+    const totalPrediosTop = document.getElementById("totalPrediosTop");
+
+    if (publicosEl) publicosEl.textContent = publicos;
+    if (privadosEl) privadosEl.textContent = privados;
+    if (baldiosEl) baldiosEl.textContent = baldios;
+    if (noPHEl) noPHEl.textContent = noPH;
+    if (totalPrediosTop) totalPrediosTop.textContent = total;
+
+    const sumaConocida = publicos + privados;
+    const informales = total > sumaConocida ? total - sumaConocida : 0;
+
+    if (informalesEl) informalesEl.textContent = informales;
+  }
+
+  function renderTablaDestinacion(itemsDest, total) {
+    tablaDestinacionData = Array.isArray(itemsDest) ? itemsDest : [];
+    tablaDestinacionPage = 1;
+    pintarTablaDestinacion(total);
+    pintarPaginacionDestinacion(total);
+  }
+
+  function pintarTablaDestinacion(total) {
+    const tbody = document.getElementById("tablaDestinacionBody");
+    const info = document.getElementById("tablaDestinacionInfo");
+
+    if (!tbody) return;
+
+    if (!tablaDestinacionData.length) {
+      tbody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center text-muted py-4">
+          Sin datos disponibles.
+        </td>
+      </tr>
+    `;
+      if (info) {
+        info.textContent = "Mostrando 0 a 0 de 0 registros";
+      }
+      return;
+    }
+
+    const start = (tablaDestinacionPage - 1) * tablaDestinacionPageSize;
+    const end = start + tablaDestinacionPageSize;
+    const pageItems = tablaDestinacionData.slice(start, end);
+
+    tbody.innerHTML = pageItems
+      .map((item, index) => {
+        const nombre = item.destinacion_economica || "Sin dato";
+        const cantidad = Number(item.total || 0);
+        const porcentaje = total
+          ? ((cantidad / total) * 100).toFixed(2)
+          : "0.00";
+
+        return `
+        <tr>
+          <td>${start + index + 1}</td>
+          <td>${nombre}</td>
+          <td class="text-end fw-semibold">${cantidad}</td>
+          <td class="text-end">${porcentaje}%</td>
+        </tr>
+      `;
+      })
+      .join("");
+
+    if (info) {
+      info.textContent = `Mostrando ${start + 1} a ${Math.min(end, tablaDestinacionData.length)} de ${tablaDestinacionData.length} registros`;
+    }
+  }
+
+  function pintarPaginacionDestinacion(total) {
+    const pagination = document.getElementById("tablaDestinacionPagination");
+    if (!pagination) return;
+
+    const totalPages = Math.ceil(
+      tablaDestinacionData.length / tablaDestinacionPageSize,
+    );
+
+    if (!tablaDestinacionData.length || totalPages <= 1) {
+      pagination.innerHTML = "";
+      return;
+    }
+
+    let html = `
+    <li class="page-item ${tablaDestinacionPage === 1 ? "disabled" : ""}">
+      <button class="page-link" data-page="prev">Anterior</button>
+    </li>
+  `;
+
+    for (let i = 1; i <= totalPages; i++) {
+      html += `
+      <li class="page-item ${i === tablaDestinacionPage ? "active" : ""}">
+        <button class="page-link" data-page="${i}">${i}</button>
+      </li>
+    `;
+    }
+
+    html += `
+    <li class="page-item ${tablaDestinacionPage === totalPages ? "disabled" : ""}">
+      <button class="page-link" data-page="next">Siguiente</button>
+    </li>
+  `;
+
+    pagination.innerHTML = html;
+
+    pagination.querySelectorAll(".page-link").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const action = btn.dataset.page;
+        const totalPages = Math.ceil(
+          tablaDestinacionData.length / tablaDestinacionPageSize,
+        );
+
+        if (action === "prev" && tablaDestinacionPage > 1) {
+          tablaDestinacionPage--;
+        } else if (action === "next" && tablaDestinacionPage < totalPages) {
+          tablaDestinacionPage++;
+        } else if (!isNaN(Number(action))) {
+          tablaDestinacionPage = Number(action);
+        }
+
+        pintarTablaDestinacion(total);
+        pintarPaginacionDestinacion(total);
+      });
+    });
+  }
+
+  async function loadDashboard() {
+    const resumenEl = document.getElementById("resumenDatos");
+    const canvasCond = document.getElementById("chartCondicion");
+    const canvasTipo = document.getElementById("chartTipo");
+    const canvasDest = document.getElementById("chartDestinacion");
+    const canvasTipoPlanta = document.getElementById("chartTipoPlanta");
+    const canvasTipoPlantaLateral = document.getElementById(
+      "chartTipoPlantaLateral",
+    );
+
+    if (resumenEl) {
+      resumenEl.textContent = "Cargando resumen...";
+    }
+
+    try {
+      const r = await fetch(`${rp}/resumenp/proyecto`);
+      if (!r.ok) {
+        if (resumenEl) {
+          resumenEl.textContent = "No se pudo cargar el resumen (API).";
+        }
+        return;
+      }
+
+      const data = await r.json();
+
+      const itemsCond = data.condicion || [];
+      const itemsTipo = data.tipo || [];
+      const itemsDest = data.destinacion_economica || [];
+      const itemsTipoPlanta = data.tipo_planta || [];
+      const total = Number(data.total_predios || 0);
+
+      dashboardState = {
+        condicion: itemsCond,
+        tipo: itemsTipo,
+        total: total,
+        activeMode: "condicion",
+        activeChartTab: "donut",
+        visibility: {
+          condicion: itemsCond.map(() => true),
+          tipo: itemsTipo.map(() => true),
+        },
+      };
+
+      renderActiveCompactChart();
+
+      if (resumenEl) {
+        resumenEl.innerHTML = `
+        <div><b>Total predios:</b> ${total}</div>
+        <div style="margin-top:6px;">
+          El panel superior muestra una vista compacta e interactiva de los mismos datos de
+          <b>condicion de predio</b> y <b>tipo de predio</b>.
+        </div>
+      `;
+      }
+
+      if (canvasCond && itemsCond.length) {
+        if (chartCondicionInstance) chartCondicionInstance.destroy();
+
+        const labelsCond = itemsCond.map((i) => i.condicion_predio);
+        const valuesCond = itemsCond.map((i) => Number(i.total || 0));
+        const bgColorsCond = valuesCond.map(
+          (_, idx) => COLORS[idx % COLORS.length],
+        );
+
+        chartCondicionInstance = new Chart(canvasCond.getContext("2d"), {
+          type: "pie",
+          data: {
+            labels: labelsCond,
+            datasets: [
+              {
+                data: valuesCond,
+                backgroundColor: bgColorsCond,
+              },
+            ],
+          },
+          options: {
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+              },
+            },
+          },
+        });
+      }
+
+      if (canvasTipo && itemsTipo.length) {
+        if (chartTipoInstance) chartTipoInstance.destroy();
+
+        const labelsTipo = itemsTipo.map((i) => i.tipo_predio);
+        const valuesTipo = itemsTipo.map((i) => Number(i.total || 0));
+        const bgColorsTipo = valuesTipo.map(
+          (_, idx) => COLORS[(idx + 3) % COLORS.length],
+        );
+
+        chartTipoInstance = new Chart(canvasTipo.getContext("2d"), {
+          type: "pie",
+          data: {
+            labels: labelsTipo,
+            datasets: [
+              {
+                data: valuesTipo,
+                backgroundColor: bgColorsTipo,
+              },
+            ],
+          },
+          options: {
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+              },
+            },
+          },
+        });
+      }
+
+      if (canvasDest && itemsDest.length) {
+        if (chartDestinacionInstance) chartDestinacionInstance.destroy();
+
+        const labelsDest = itemsDest.map((i) => i.destinacion_economica);
+        const valuesDest = itemsDest.map((i) => Number(i.total || 0));
+        const bgColorsDest = valuesDest.map(
+          (_, idx) => COLORS[(idx + 5) % COLORS.length],
+        );
+
+        chartDestinacionInstance = new Chart(canvasDest.getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: labelsDest,
+            datasets: [
+              {
+                data: valuesDest,
+                backgroundColor: bgColorsDest,
+                borderRadius: 8,
+                borderSkipped: false,
+              },
+            ],
+          },
+          options: {
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            indexAxis: "y",
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: { precision: 0 },
+                title: { display: true, text: "Numero de predios" },
+              },
+              y: { ticks: { autoSkip: false } },
+            },
+          },
+        });
+      }
+
+      const labelsPlanta = itemsTipoPlanta.map(
+        (i) => i.tipo_planta || "Sin dato",
+      );
+      const valuesPlanta = itemsTipoPlanta.map((i) => Number(i.total || 0));
+      const bgColorsPlanta = valuesPlanta.map(
+        (_, idx) => COLORS[(idx + 2) % COLORS.length],
+      );
+
+      if (canvasTipoPlantaLateral && itemsTipoPlanta.length) {
+        if (chartTipoPlantaLateralInstance) {
+          chartTipoPlantaLateralInstance.destroy();
+        }
+
+        chartTipoPlantaLateralInstance = new Chart(
+          canvasTipoPlantaLateral.getContext("2d"),
+          {
+            type: "doughnut",
+            data: {
+              labels: labelsPlanta,
+              datasets: [
+                {
+                  data: valuesPlanta,
+                  backgroundColor: bgColorsPlanta,
+                  borderColor: "#ffffff",
+                  borderWidth: 3,
+                  hoverOffset: 8,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: "62%",
+              animation: {
+                duration: 700,
+                easing: "easeOutQuart",
+              },
+              plugins: {
+                legend: {
+                  position: "bottom",
+                  labels: {
+                    usePointStyle: true,
+                    pointStyle: "circle",
+                    padding: 16,
+                    color: "#163c62",
+                    font: {
+                      size: 12,
+                      weight: "600",
+                    },
+                  },
+                },
+                tooltip: {
+                  backgroundColor: "#163c62",
+                  titleColor: "#fff",
+                  bodyColor: "#fff",
+                  padding: 12,
+                  callbacks: {
+                    label: function (context) {
+                      const value = Number(context.raw || 0);
+                      const total = valuesPlanta.reduce(
+                        (acc, cur) => acc + cur,
+                        0,
+                      );
+                      const pct = total
+                        ? ((value / total) * 100).toFixed(1)
+                        : 0;
+                      return ` ${context.label}: ${value} (${pct}%)`;
+                    },
+                  },
+                },
+              },
+            },
+          },
+        );
+      }
+
+      if (canvasTipoPlanta && itemsTipoPlanta.length) {
+        if (chartTipoPlantaInstance) chartTipoPlantaInstance.destroy();
+
+        chartTipoPlantaInstance = new Chart(canvasTipoPlanta.getContext("2d"), {
+          type: "pie",
+          data: {
+            labels: labelsPlanta,
+            datasets: [
+              {
+                data: valuesPlanta,
+                backgroundColor: bgColorsPlanta,
+              },
+            ],
+          },
+          options: {
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+              },
+            },
+          },
+        });
+      }
+
+      updateKpis(itemsCond, itemsTipo, total);
+      renderTablaDestinacion(itemsDest, total);
+    } catch (_e) {
+      if (resumenEl) {
+        resumenEl.textContent = "Error cargando resumen (network).";
+      }
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    console.info("[visor] WMS_URL:", WMS_URL, "LAYERS:", GEOSERVER_LAYERS);
+    await initMap();
+    await loadProjectExtent();
+    bindStatsPillNav();
+    loadDashboard();
+  });
+</script>
+

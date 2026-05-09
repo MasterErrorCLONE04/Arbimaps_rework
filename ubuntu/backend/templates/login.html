@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+  <link rel="icon" type="image/png" href="{{ rp }}/static/icon.png" />
+
+  <style>
+    :root {
+      --card-bg: rgba(255, 255, 255, 0.22);
+      --card-border: rgba(255, 255, 255, 0.25);
+      --text: #ffffff;
+      --muted: rgba(255,255,255,0.75);
+      --primary: #1f5fbf;
+      --primary-hover: #184c97;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: url("{{ rp }}/static/bg.png") center center / cover no-repeat fixed;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: var(--text);
+    }
+
+    .card {
+      width: 420px;
+      max-width: 95vw;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 10px;
+      padding: 28px 28px 24px;
+      box-shadow: 0 20px 45px rgba(0,0,0,0.35);
+    }
+
+    .logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.15);
+      border: 2px solid rgba(255,255,255,0.35);
+      display: grid;
+      place-items: center;
+      margin: 0 auto 14px;
+      overflow: hidden;
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    h1 {
+      margin: 0;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      margin: 6px 0 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .error {
+      background: rgba(255, 0, 0, 0.15);
+      border: 1px solid rgba(255, 0, 0, 0.25);
+      color: #ffd2d2;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(0,0,0,0.15);
+      color: var(--text);
+      outline: none;
+    }
+
+    input::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap input[type="password"],
+    .password-wrap input[type="text"] {
+      padding-right: 40px;
+    }
+
+    .btn-eye-toggle {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      color: #5a5a5c;
+      cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+    }
+
+    .btn-eye-toggle svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+      fill: currentColor;
+    }
+
+    .btn-eye-toggle .eye-icon-closed {
+      display: none;
+    }
+
+    .btn-eye-toggle.is-open .eye-icon-open {
+      display: none;
+    }
+
+    .btn-eye-toggle.is-open .eye-icon-closed {
+      display: block;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 18px;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .footer {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255,255,255,0.65);
+    }
+  </style>
+</head>
+
+<body>
+  {% set rp = rp if rp is defined else request.scope.get('root_path','') %}
+  <div class="card">
+    <div class="logo">
+      <img src="{{ rp }}/static/logo_login.png" alt="Logo" />
+    </div>
+
+    <h1>Bienvenido</h1>
+    <div class="subtitle">Ingrese a su cuenta</div>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="{{ rp }}/login">
+      <label>Usuario</label>
+      <input type="text" name="username" placeholder="Usuario" required>
+
+      <label>Contrase&ntilde;a</label>
+      <div class="password-wrap">
+        <input id="loginPassword" type="password" name="password" placeholder="Contrase&ntilde;a" required>
+        <button
+          type="button"
+          class="btn-eye-toggle"
+          aria-label="Mostrar u ocultar contrase&ntilde;a">
+          <!-- ojo abierto -->
+          <svg class="eye-icon-open" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M2 12C4.5 7.5 7.9 5 12 5s7.5 2.5 10 7c-2.5 4.5-5.9 7-10 7S4.5 16.5 2 12z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle
+              cx="12"
+              cy="12"
+              r="3"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+          </svg>
+          <!-- ojo cerrado -->
+          <svg class="eye-icon-closed" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M3 15c2.2-1 4.5-1.5 7-1.5s4.8.5 7 1.5"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+            />
+            <path
+              d="M6 18l1.5-2.5M12 19v-3M18 18l-1.5-2.5"
+              stroke="currentColor"
+              stroke-width="2"
+              fill="none"
+              stroke-linecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div class="row">
+        <label style="margin:0; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" name="remember">
+          Recordar informaci&oacute;n
+        </label>
+      </div>
+
+      <button class="btn" type="submit">Ingresar</button>
+    </form>
+
+    <div class="footer">&copy; Copyright Arbitrium SAS &amp; ARBIMaps 2026</div>
+  </div>
+
+  <script>
+    (function () {
+      const pwdInput = document.getElementById("loginPassword");
+      const btnEye = document.querySelector(".btn-eye-toggle");
+      if (!pwdInput || !btnEye) return;
+
+      btnEye.addEventListener("click", () => {
+        const show = pwdInput.type === "password";
+        pwdInput.type = show ? "text" : "password";
+        btnEye.classList.toggle("is-open", show);
+      });
+    })();
+  </script>
+</body>
+</html>

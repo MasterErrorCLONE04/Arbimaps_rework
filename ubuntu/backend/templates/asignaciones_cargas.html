@@ -1,0 +1,754 @@
+<div class="content-section container-fluid px-2 px-md-3 pb-5">
+  <div class="section-title ms-0">
+    <div class="title-header">
+      <small class="text-title-header">MÓDULO DE ASIGNACIONES > CARGAS DE TRABAJO</small>
+    </div>
+
+    <div class="title-body mt-4">
+      <h4 class="fw-bold">Nueva Asignación</h4>
+      <p class="parrafo-title">
+        Realize una búsqueda de los predios que desea asignar,
+        verifique su estado. Distribuya la carga de trabajo
+        a los usuarios responsables.
+      </p>
+    </div>
+  </div>
+
+  <div class="section-body">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-12 col-xl-10 mt-5">
+        <div class="card card-busqueda border-0">
+          <div class="card-body p-3 p-md-4">
+            <small class="text-section-search d-block mb-3">
+              Realizar la búsqueda de los predios disponibles para crear asignación
+            </small>
+
+            <div class="content-text-search mb-2 mt-4">
+              <textarea id="txtPredios" class="form-control consultaInput textarea-predios" rows="5"
+                placeholder="Ingresa los números prediales"></textarea>
+            </div>
+
+            <div class="argumentation mb-3">
+              <small class="agumentation-text d-block">
+                Escribe los NPN separados por coma, espacio o salto de linea. Ejemplo: 11001, 11002, 11003...
+              </small>
+            </div>
+
+            <div class="consultaButtons d-flex justify-content-end">
+              <button class="btn buscar" id="btnBuscar" type="button">
+                <i class="bi bi-search me-2 icono-buscar"></i>
+                <span class="texto-buscar">Buscar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-4 section-dual-cards justify-content-center align-items-stretch">
+      <div class="col-12 col-xl-8">
+        <div id="cardEstadoInicial"
+          class="card card-panel card-estado-inicial d-flex justify-content-center align-items-center border-0">
+          <div class="card-body py-2 px-3 text-center w-100 d-flex justify-content-center align-items-center">
+            <p class="mensaje-estado-inicial mb-0 d-flex justify-content-center align-items-center flex-wrap">
+              <i class="bi bi-input-cursor-text icono-estado-inicial"></i>
+              <span class="texto-estado-inicial">
+                Ingresa los predios y click en buscar para verificar los predios disponibles para asignación.
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div id="cardSinResultados"
+          class="card card-panel card-estado-inicial card-sin-resultados d-none justify-content-center align-items-center border-0">
+          <div class="card-body py-2 px-3 w-100">
+            <div
+              class="mensaje-sin-resultados d-flex justify-content-center align-items-center flex-wrap flex-md-nowrap text-center gap-3">
+              <span class="icono-sin-resultados d-inline-flex justify-content-center align-items-center">
+                <i class="bi bi-exclamation-lg"></i>
+              </span>
+
+              <span class="texto-sin-resultados">
+                No se encontraron resultados para la búsqueda que realizaste
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div id="cardResultados" class="card card-panel border-0 h-100 d-none">
+          <div class="card-body p-3 p-md-3">
+            <div class="card-resultados-header">
+              <div>
+                <h5 class="card-panel-title mb-1">
+                  Inventario de predios disponibles
+                </h5>
+                <p class="parrafo-result mb-0">
+                  Selecciona los predios que se encuentran
+                  disponibles y que deseas asignar
+                </p>
+              </div>
+
+              <div id="asgMsg" class="contador-resultados-badge d-none">
+                <i class="bi bi-crosshair"></i>
+                <span id="asgMsgText">0 Resultados</span>
+              </div>
+            </div>
+
+            <div class="card-contador mt-4">
+              <div class="row align-items-center g-3">
+                <div class="col-12 col-lg-auto">
+                  <p class="parrafo-contador-card mb-0 text-center text-lg-start">
+                    Predios encontrados
+                  </p>
+                </div>
+
+                <div class="col-12 col-lg">
+                  <div class="row g-2 justify-content-center justify-content-lg-end">
+                    <div class="col-auto">
+                      <div id="badgeExisten" class="badge-contador-estado badge-contador-existen d-none">
+                        <i class="bi bi-patch-check-fill"></i>
+                        <span id="badgeExistenText">0 Existen</span>
+                      </div>
+                    </div>
+
+                    <div class="col-auto">
+                      <div id="badgeNoExisten" class="badge-contador-estado badge-contador-noexisten d-none">
+                        <i class="bi bi-x-octagon-fill"></i>
+                        <span id="badgeNoExistenText">0 No existen</span>
+                      </div>
+                    </div>
+
+                    <div class="col-auto">
+                      <div id="badgeAsignados" class="badge-contador-estado d-none">
+                        <i class="bi bi-person-check-fill"></i>
+                        <span id="badgeAsignadosText">0 Asignados</span>
+                      </div>
+                    </div>
+
+                    <div class="col-auto">
+                      <div id="badgeDisponibles" class="badge-contador-estado badge-contador-disponibles d-none">
+                        <i class="bi bi-node-plus-fill"></i>
+                        <span id="badgeDisponiblesText">0 Disponibles</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <hr class="my-3 border-2 opacity-100 separador-resultados">
+            </div>
+
+            <div id="asgHint" class="hint hint-resultados mt-3 d-none"></div>
+
+            <div class="tabla-datatable-wrap mt-3">
+              <div class="table-responsive">
+                <table id="tblResultados" class="table table-resultados nowrap mb-0" style="display:none; width:100%;">
+                  <thead>
+                    <tr>
+                      <th class="text-center">Numero predial</th>
+                      <th class="text-center">Existe</th>
+                      <th class="text-center">Estado</th>
+                      <th class="text-center">Asignado a</th>
+                      <th class="text-center">Asignado por</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyResultados"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-xl-4">
+        <div class="card card-panel card-panel-asignacion border-0 h-100">
+          <div class="card-body h-100 d-flex flex-column ps-3 ps-md-4 pe-3">
+            <div class="for-title mt-2 mt-md-3 d-flex align-items-center">
+              <i class="bi bi-sliders me-2"></i>
+              <small class="for-panel-title">Configuración de Asignación</small>
+            </div>
+
+            <label class="consultaLabel label-asignacion mt-4" for="inpNombreLote">
+              Nombre de la asignación
+            </label>
+            <input id="inpNombreLote" class="form-control consultaInput w-100 mt-2" placeholder="Lote-001">
+
+            <label class="consultaLabel label-asignacion mt-4" for="inpUsuarioDestino">
+              Selecciona usuario de destino
+            </label>
+
+            <input id="inpUsuarioDestino" class="form-control consultaInput w-100 mt-2" placeholder="Selecciona rol"
+              list="usuariosList">
+            <datalist id="usuariosList"></datalist>
+
+            <div class="for-noti mt-4">
+              <div class="for-noti-parrafo d-flex align-items-start gap-2">
+                <i class="bi bi-exclamation-diamond-fill mt-1"></i>
+                <p class="hint hint-asignacion mb-0">
+                  Al dar click en el botón de crear asignación crearás un paquete de carga de trabajo que será asignada
+                  al usuario seleccionado. Puedes reasignar más adelante a otro usuario.
+                </p>
+              </div>
+            </div>
+
+            <div class="consultaButtons consultaButtons-asignacion mt-4 d-flex justify-content-center">
+              <button class="btn crear-asignacion" id="btnAsignar" type="button">
+                <i class="bi bi-journals me-2"></i>
+                Crear asignación
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirmAsignacionWrapper" class="d-none w-100 mt-3 mb-4">
+      <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+          <div
+            class="confirm-asignacion-card d-flex flex-column flex-lg-row justify-content-between align-items-center gap-3 text-center text-lg-start">
+            <div
+              class="confirm-asignacion-info d-flex flex-column flex-md-row align-items-center justify-content-center justify-content-lg-start gap-4 w-100">
+              <div class="confirm-asignacion-item d-flex flex-column align-items-center align-items-lg-start">
+                <span class="confirm-label">Usuario a cargar</span>
+                <span id="confirmUsuarioText" class="confirm-value">-</span>
+              </div>
+
+              <div class="confirm-asignacion-item d-flex flex-column align-items-center align-items-lg-start">
+                <span class="confirm-label">Selección actual</span>
+                <span id="confirmSeleccionText" class="confirm-value">0 Predios Seleccionados</span>
+              </div>
+            </div>
+
+            <div
+              class="confirm-asignacion-actions d-flex flex-column flex-sm-row justify-content-center align-items-center gap-3 w-100 w-lg-auto">
+              <button type="button" class="btn btn-cancelar-confirm" id="btnCancelarConfirmacion">
+                Cancelar
+              </button>
+
+              <button type="button" class="btn btn-confirmar-asignacion" id="btnConfirmarAsignacion">
+                <i class="bi bi-send me-2"></i>
+                Confirmar Asignación
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  const injectedRp = "{{ rp if rp is defined else '' }}";
+  const rp = injectedRp || (window.location.pathname.startsWith("/api/") ? "/api" : "");
+
+  let dtResultados = null;
+  let ultimoResultadoBusqueda = null;
+  let asignacionEnProceso = false;
+
+  function parseNumeros(text) {
+    const tokens = (text || "")
+      .split(/[\s,;]+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const seen = new Set();
+    const out = [];
+
+    for (const t of tokens) {
+      if (!seen.has(t)) {
+        seen.add(t);
+        out.push(t);
+      }
+    }
+
+    return out;
+  }
+
+  function destruirDataTableResultados() {
+    if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable("#tblResultados")) {
+      $("#tblResultados").DataTable().clear().destroy();
+    }
+    dtResultados = null;
+  }
+
+  function inicializarDataTableResultados() {
+    if (!(window.jQuery && $.fn.DataTable)) {
+      console.warn("DataTables no está cargado.");
+      return;
+    }
+
+    dtResultados = $("#tblResultados").DataTable({
+      destroy: true,
+      autoWidth: false,
+      responsive: false,
+      scrollX: true,
+      searching: true,
+      paging: true,
+      info: true,
+      ordering: true,
+      lengthChange: true,
+      pageLength: 5,
+      lengthMenu: [
+        [5, 10, 25, 50, -1],
+        [5, 10, 25, 50, "Todos"]
+      ],
+      order: [],
+      stripeClasses: [],
+      columnDefs: [
+        { targets: "_all", className: "text-center align-middle", orderable: true }
+      ],
+      pagingType: "simple",
+      language: {
+        decimal: "",
+        emptyTable: "No hay datos disponibles en la tabla",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+        infoEmpty: "Mostrando 0 a 0 de 0 registros",
+        infoFiltered: "(filtrado de _MAX_ registros totales)",
+        infoPostFix: "",
+        thousands: ",",
+        lengthMenu: "Mostrar _MENU_ registros",
+        loadingRecords: "Cargando...",
+        processing: "Procesando...",
+        search: "Buscar:",
+        zeroRecords: "No se encontraron resultados",
+        paginate: {
+          first: "",
+          last: "",
+          next: '<i class="bi bi-chevron-right"></i>',
+          previous: '<i class="bi bi-chevron-left"></i>'
+        }
+      },
+      dom:
+        "<'datatable-top d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3'lf>" +
+        "rt" +
+        "<'datatable-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mt-3'ip>",
+      initComplete: function () {
+        setTimeout(() => {
+          this.api().columns.adjust();
+        }, 50);
+      },
+      drawCallback: function () {
+        const wrapper = document.querySelector("#tblResultados_wrapper");
+        if (wrapper) {
+          wrapper.querySelectorAll("input, select").forEach(el => {
+            el.classList.add("shadow-none");
+          });
+
+          const api = this.api();
+          const pageInfo = api.page.info();
+          let pageIndicator = wrapper.querySelector("#datatablePageIndicator");
+
+          if (!pageIndicator) {
+            pageIndicator = document.createElement("div");
+            pageIndicator.id = "datatablePageIndicator";
+            pageIndicator.className = "datatable-page-indicator mt-2 text-center text-muted";
+            wrapper.appendChild(pageIndicator);
+          }
+
+          pageIndicator.textContent = `Página ${pageInfo.page + 1} de ${pageInfo.pages}`;
+        }
+      }
+    });
+  }
+
+  function obtenerEstadoPredio(it) {
+    const estado = (it.estado || "").toString().trim().toLowerCase();
+
+    if (estado === "disponible") return "Disponible";
+    if (estado === "asignado") return "Asignado";
+
+    if (it.asignado_a || it.asignado_por) return "Asignado";
+
+    return "Disponible";
+  }
+
+  function renderEstadoBadge(it) {
+    const estadoTexto = obtenerEstadoPredio(it);
+    const esDisponible = estadoTexto.toLowerCase() === "disponible";
+
+    const badgeClass = esDisponible
+      ? "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-disponible"
+      : "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-asignado";
+
+    return `
+      <span class="${badgeClass}">
+        <span class="estado-badge-dot"></span>
+        <span>${estadoTexto}</span>
+      </span>
+    `;
+  }
+
+  function renderExisteBadge(it) {
+    const existe = !!it.existe;
+
+    const badgeClass = existe
+      ? "badge rounded-pill d-inline-flex align-items-center justify-content-center existe-badge existe-badge-si"
+      : "badge rounded-pill d-inline-flex align-items-center justify-content-center existe-badge existe-badge-no";
+
+    return `
+      <span class="${badgeClass}">
+        <span class="existe-badge-dot"></span>
+        <span>${existe ? "Sí" : "No"}</span>
+      </span>
+    `;
+  }
+
+  function cerrarTarjetaConfirmacion() {
+    const wrapper = document.getElementById("confirmAsignacionWrapper");
+    wrapper?.classList.add("d-none");
+  }
+
+  function abrirTarjetaConfirmacion() {
+    const txt = document.getElementById("txtPredios");
+    const userDest = document.getElementById("inpUsuarioDestino");
+    const msg = document.getElementById("asgHint");
+
+    const numeros = parseNumeros(txt.value);
+    const usernameDestino = (userDest.value || "").trim();
+
+    if (!numeros.length) {
+      msg.textContent = "Debes ingresar predios.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    if (!usernameDestino) {
+      msg.textContent = "Debes indicar el usuario destino.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    let totalSeleccionados = 0;
+
+    if (ultimoResultadoBusqueda && Array.isArray(ultimoResultadoBusqueda.items)) {
+      totalSeleccionados = ultimoResultadoBusqueda.items.filter(it => {
+        return obtenerEstadoPredio(it).toLowerCase() === "disponible";
+      }).length;
+    } else {
+      totalSeleccionados = numeros.length;
+    }
+
+    if (!totalSeleccionados) {
+      msg.textContent = "No hay predios disponibles para asignar.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    document.getElementById("confirmUsuarioText").textContent = usernameDestino;
+    document.getElementById("confirmSeleccionText").textContent =
+      `${totalSeleccionados} ${totalSeleccionados === 1 ? "Predio Seleccionado" : "Predios Seleccionados"}`;
+
+    const wrapper = document.getElementById("confirmAsignacionWrapper");
+    wrapper?.classList.remove("d-none");
+    wrapper?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  async function buscarPredios() {
+    const txt = document.getElementById("txtPredios");
+    const msg = document.getElementById("asgHint");
+    const badge = document.getElementById("asgMsg");
+    const badgeText = document.getElementById("asgMsgText");
+    const tbl = document.getElementById("tblResultados");
+    const tbody = document.getElementById("tbodyResultados");
+    const cardEstadoInicial = document.getElementById("cardEstadoInicial");
+    const cardSinResultados = document.getElementById("cardSinResultados");
+    const cardResultados = document.getElementById("cardResultados");
+    const badgeAsignados = document.getElementById("badgeAsignados");
+    const badgeAsignadosText = document.getElementById("badgeAsignadosText");
+    const badgeDisponibles = document.getElementById("badgeDisponibles");
+    const badgeDisponiblesText = document.getElementById("badgeDisponiblesText");
+    const badgeExisten = document.getElementById("badgeExisten");
+    const badgeExistenText = document.getElementById("badgeExistenText");
+    const badgeNoExisten = document.getElementById("badgeNoExisten");
+    const badgeNoExistenText = document.getElementById("badgeNoExistenText");
+
+    const numeros = parseNumeros(txt.value);
+
+    ultimoResultadoBusqueda = null;
+    cerrarTarjetaConfirmacion();
+    destruirDataTableResultados();
+    tbody.innerHTML = "";
+    tbl.style.display = "none";
+
+    if (!numeros.length) {
+      cardEstadoInicial.classList.remove("d-none");
+      cardEstadoInicial.classList.add("d-flex");
+
+      cardSinResultados.classList.add("d-none");
+      cardSinResultados.classList.remove("d-flex");
+
+      cardResultados.classList.add("d-none");
+
+      msg.textContent = "Debes ingresar al menos un número predial.";
+      msg.classList.remove("d-none");
+
+      badge.classList.add("d-none");
+      badgeAsignados.classList.add("d-none");
+      badgeDisponibles.classList.add("d-none");
+      badgeExisten.classList.add("d-none");
+      badgeNoExisten.classList.add("d-none");
+      return;
+    }
+
+    cardEstadoInicial.classList.add("d-none");
+    cardEstadoInicial.classList.remove("d-flex");
+
+    cardSinResultados.classList.add("d-none");
+    cardSinResultados.classList.remove("d-flex");
+
+    cardResultados.classList.remove("d-none");
+
+    msg.textContent = "Buscando en base de datos...";
+    msg.classList.remove("d-none");
+
+    badge.classList.add("d-none");
+    badgeAsignados.classList.add("d-none");
+    badgeDisponibles.classList.add("d-none");
+    badgeExisten.classList.add("d-none");
+    badgeNoExisten.classList.add("d-none");
+
+    try {
+      const r = await fetch(`${rp}/asignaciones/buscar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ numeros })
+      });
+
+      const data = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        msg.textContent = data.detail || "Error buscando predios.";
+        badge.classList.add("d-none");
+        badgeAsignados.classList.add("d-none");
+        badgeDisponibles.classList.add("d-none");
+        badgeExisten.classList.add("d-none");
+        badgeNoExisten.classList.add("d-none");
+        return;
+      }
+
+      ultimoResultadoBusqueda = data;
+
+      badgeText.textContent = `${data.total} Resultados`;
+      badge.classList.remove("d-none");
+
+      badgeExistenText.textContent = `${data.existen || 0} Existen`;
+      badgeNoExistenText.textContent = `${data.no_existen || 0} No existen`;
+      badgeAsignadosText.textContent = `${data.asignados || 0} Asignados`;
+      badgeDisponiblesText.textContent = `${data.disponibles || 0} Disponibles`;
+
+      badgeExisten.classList.remove("d-none");
+      badgeNoExisten.classList.remove("d-none");
+      badgeAsignados.classList.remove("d-none");
+      badgeDisponibles.classList.remove("d-none");
+
+      const items = data.items || [];
+      tbody.innerHTML = "";
+
+      items.forEach(it => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+        <td>${it.numero_predial_nacional || ""}</td>
+        <td>${renderExisteBadge(it)}</td>
+        <td>${renderEstadoBadge(it)}</td>
+        <td>${it.asignado_a || ""}</td>
+        <td>${it.asignado_por || ""}</td>
+      `;
+        tbody.appendChild(tr);
+      });
+
+      if (items.length) {
+        msg.textContent = "";
+        msg.classList.add("d-none");
+        tbl.style.display = "table";
+
+        cardResultados.classList.remove("d-none");
+        cardSinResultados.classList.add("d-none");
+        cardSinResultados.classList.remove("d-flex");
+
+        setTimeout(() => {
+          inicializarDataTableResultados();
+        }, 0);
+      } else {
+        msg.classList.add("d-none");
+        tbl.style.display = "none";
+
+        cardResultados.classList.add("d-none");
+        cardSinResultados.classList.remove("d-none");
+        cardSinResultados.classList.add("d-flex");
+
+        badge.classList.add("d-none");
+        badgeAsignados.classList.add("d-none");
+        badgeDisponibles.classList.add("d-none");
+        badgeExisten.classList.add("d-none");
+        badgeNoExisten.classList.add("d-none");
+      }
+    } catch (error) {
+      console.error(error);
+      msg.textContent = "Ocurrió un error inesperado buscando predios.";
+      msg.classList.remove("d-none");
+
+      cardSinResultados.classList.add("d-none");
+      cardSinResultados.classList.remove("d-flex");
+
+      badge.classList.add("d-none");
+      badgeAsignados.classList.add("d-none");
+      badgeDisponibles.classList.add("d-none");
+      badgeExisten.classList.add("d-none");
+      badgeNoExisten.classList.add("d-none");
+    }
+  }
+
+  async function asignarPredios(options = {}) {
+    const txt = document.getElementById("txtPredios");
+    const userDest = document.getElementById("inpUsuarioDestino");
+    const tituloInput = document.getElementById("inpNombreLote");
+    const msg = document.getElementById("asgHint");
+    const forceReassign = !!options.reasignar;
+
+    const numeros = parseNumeros(txt.value);
+    const username_destino = (userDest.value || "").trim();
+
+    if (!numeros.length) {
+      msg.textContent = "Debes ingresar predios.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    if (!username_destino) {
+      msg.textContent = "Debes indicar el usuario destino.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    msg.textContent = "Asignando predios...";
+    msg.classList.remove("d-none");
+
+    try {
+      const r = await fetch(`${rp}/asignaciones/asignar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          numeros,
+          username_destino,
+          titulo: tituloInput?.value || null,
+          forzar_reasignacion: forceReassign
+        })
+      });
+
+      const data = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        const detail = typeof data.detail === "object" ? data.detail : { message: data.detail };
+
+        if (r.status === 409 && detail?.conflictos?.length) {
+          if (forceReassign) {
+            msg.textContent = detail?.message || "No se pudieron reasignar los predios.";
+            return;
+          }
+
+          const lista = detail.conflictos
+            .map(c => `${c.numero_predial_nacional || ""}${c.usuario_asignado ? ` · asignado a ${c.usuario_asignado}` : ""}`)
+            .join("\n");
+
+          const confirmar = window.confirm(
+            `${detail.message || "Algunos predios ya están asignados."}\n${lista}\n¿Deseas reasignarlos?`
+          );
+
+          if (confirmar) {
+            return asignarPredios({ reasignar: true });
+          }
+        }
+
+        msg.textContent = detail?.message || data.detail || "Error asignando.";
+        return;
+      }
+
+      const id = data && data.id ? data.id : null;
+      let extraMsg = "";
+
+      if (data?.predios_reasignados) {
+        console.info(`Predios reasignados: ${data.predios_reasignados}`);
+        extraMsg = ` · Reasignados: ${data.predios_reasignados}`;
+      }
+
+      if (Array.isArray(data?.basket_tids) && data.basket_tids.length) {
+        console.info("Baskets exportados:", data.basket_tids.join(", "));
+      }
+
+      msg.textContent = `${data?.message || "Asignación creada."}${extraMsg}`;
+
+      if (id) {
+        window.location.href = `${rp}/panel/asignaciones/ver?id=${id}#asig-open`;
+      } else {
+        window.location.href = `${rp}/panel/asignaciones/ver#asig-open`;
+      }
+    } catch (error) {
+      console.error(error);
+      msg.textContent = "Ocurrió un error inesperado al asignar.";
+      msg.classList.remove("d-none");
+    }
+  }
+
+  async function confirmarAsignacionFinal() {
+    if (asignacionEnProceso) return;
+
+    try {
+      asignacionEnProceso = true;
+
+      const btn = document.getElementById("btnConfirmarAsignacion");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="bi bi-hourglass-split me-2"></i>Confirmando...`;
+      }
+
+      await asignarPredios();
+    } finally {
+      asignacionEnProceso = false;
+
+      const btn = document.getElementById("btnConfirmarAsignacion");
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-send me-2"></i>Confirmar Asignación`;
+      }
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("btnBuscar")?.addEventListener("click", buscarPredios);
+
+    document.getElementById("btnAsignar")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      abrirTarjetaConfirmacion();
+    });
+
+    document.getElementById("btnCancelarConfirmacion")?.addEventListener("click", cerrarTarjetaConfirmacion);
+    document.getElementById("btnConfirmarAsignacion")?.addEventListener("click", confirmarAsignacionFinal);
+
+    (async function cargarUsuarios() {
+      try {
+        const r = await fetch(`${rp}/asignaciones/usuarios-disponibles`);
+        if (!r.ok) return;
+
+        const users = await r.json();
+        const dl = document.getElementById("usuariosList");
+        dl.innerHTML = "";
+
+        users.forEach(u => {
+          const opt = document.createElement("option");
+          opt.value = u.username;
+          opt.text = u.first_name && u.last_name
+            ? `${u.first_name} ${u.last_name} (${u.username})`
+            : u.username;
+          dl.appendChild(opt);
+        });
+      } catch (e) {
+        console.warn("No se pudieron cargar usuarios", e);
+      }
+    })();
+  });
+</script>

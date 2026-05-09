@@ -1,0 +1,951 @@
+<div class="content-modulo-detalles container-fluid px-0 px-md-1 px-xl-2 mb-5">
+  <div class="row g-4 align-items-start">
+    <!-- IZQUIERDA -->
+    <div class="col-12 col-lg-7 col-xl-8">
+      <div class="section-title-one h-100">
+        <div class="indication">
+          <small class="title-detalle">
+            MÓDULO DE ASIGNACIONES > DETALLE DE ASIGNACIÓN
+          </small>
+        </div>
+
+        <div class="section-title-principal mt-3 mt-md-4">
+          <div class="content-title-principal">
+            <small class="title-principal-detalle d-block">
+              Detalle de asignación.
+            </small>
+          </div>
+
+          <div class="section-parrafo-principal mt-2">
+            <small class="parrafo-principal d-block">
+              Consulta la información detallada de la asignación
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DERECHA -->
+    <div class="col-12 col-lg-5 col-xl-4">
+      <div class="section-title-two w-100 h-100">
+        <div class="busqueda-asignaciones">
+          <small class="text-busqueda-asignaciones d-block">
+            Búsqueda de asignaciones
+          </small>
+          <small class="parraf-busqueda-asignaciones d-block mt-1">
+            Puedes realizar búsquedas de asignaciones mediante su ID
+          </small>
+        </div>
+
+        <div class="buscador mt-3 position-relative w-100">
+          <input class="input-buscador form-control border-0 shadow-none py-3 ps-3 pe-5 w-100" id="asigDetalleId"
+            type="number" min="1" placeholder="ID de asignación" />
+
+          <button id="btnCargarDetalle" type="button"
+            class="btn position-absolute top-50 end-0 translate-middle-y me-2 d-inline-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-pill circle-search border-0">
+            <i class="bi bi-search text-white"></i>
+            <small class="text-white text-circle-search">Buscar</small>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-content-body mt-4 mt-md-5 p-2 p-md-3 col-12 px-0 px-xl-1 mx-auto">
+    <div class="row align-items-stretch justify-content-center g-4 gx-xl-0 mx-auto">
+      <!-- TARJETA IZQUIERDA -->
+      <div class="col-12 col-xl-5">
+        <div class="card-content-information p-4 py-4 py-md-5 h-100 bg-white border rounded-5 shadow-sm">
+          <div class="d-flex justify-content-between align-items-start align-items-md-center flex-wrap gap-3 mb-4">
+            <div class="fw-bold mb-0 resumen-title-main">
+              Asignación: <span id="d_titulo">-</span> <span
+                class="text-muted"><!-- (#<span id="d_id">-</span>) --></span>
+            </div>
+
+            <div class="d-inline-flex align-items-center px-2 py-1 rounded-4 badge-estado-asignacion">
+              <span class="me-2 fw-bold badge-dot">•</span>
+              <small id="d_estado" class="fw-bold mb-0 badge-estado-texto">-</small>
+            </div>
+          </div>
+
+          <div class="row g-3 g-md-4 align-items-start align-items-md-center info-resumen-wrap mt-1 mt-md-3">
+            <div class="col-12 col-md">
+              <div class="d-flex align-items-center">
+                <div
+                  class="me-3 d-flex align-items-center justify-content-center rounded-circle icon-circle-user flex-shrink-0">
+                  <i class="bi bi-person-fill text-white icon-resumen"></i>
+                </div>
+
+                <div class="min-w-0">
+                  <small class="d-block fw-bold text-uppercase mb-1 resumen-label">
+                    USUARIO ENCARGADO
+                  </small>
+                  <small id="d_user" class="d-block mb-0 resumen-value">-</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-auto d-none d-md-flex justify-content-center">
+              <div class="separador-info-resumen"></div>
+            </div>
+
+            <div class="col-12 col-md">
+              <div class="d-flex align-items-center">
+                <div
+                  class="me-3 d-flex align-items-center justify-content-center rounded-circle icon-circle-date flex-shrink-0">
+                  <i class="bi bi-calendar-date-fill text-white icon-resumen"></i>
+                </div>
+
+                <div class="min-w-0">
+                  <small class="d-block fw-bold text-uppercase mb-1 resumen-label">
+                    FECHA DE ASIGNACIÓN
+                  </small>
+                  <small id="d_fecha" class="d-block mb-0 resumen-value">-</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEPARADOR SOLO XL -->
+      <div class="col-auto d-none d-xl-flex justify-content-center align-self-stretch px-0">
+        <div class="separador-tarjetas h-100"></div>
+      </div>
+
+      <!-- TARJETA DERECHA -->
+      <div class="col-12 col-xl-5">
+        <div class="card-content-cargue p-4 h-100 bg-white border rounded-5 shadow-sm">
+          <div class="row align-items-center justify-content-center justify-content-xl-between g-3 h-100">
+            <div class="col-12 col-lg-7 col-xl-7 d-flex">
+              <div class="section-cargue-xtf mx-auto w-100 d-flex">
+                <label for="asigRetornoFile"
+                  class="label-cargue-xtf d-flex flex-column justify-content-center align-items-center text-center mb-0 w-100">
+                  <i class="bi bi-cloud-arrow-up-fill icon-cargue-xtf"></i>
+                  <small class="text-cargue-xtf mt-3">
+                    Arrastra o selecciona el archivo XTF
+                    <br>
+                    para sincronizar
+                  </small>
+                  <span class="btn-cargue-xtf mt-3">
+                    Seleccionar XTF
+                  </span>
+                </label>
+                <input id="asigRetornoFile" type="file" accept=".xtf" class="d-none" />
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-5 col-xl-5 d-flex">
+              <div class="h-100 w-100 d-flex flex-column justify-content-center align-items-stretch">
+                <div id="xtfPreviewBox" class="xtf-preview-card d-none w-100 mb-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div id="xtfPreviewCheck"
+                      class="xtf-preview-check d-flex align-items-center justify-content-center flex-shrink-0">
+                      <i id="xtfPreviewIcon" class="bi bi-clock-history"></i>
+                    </div>
+
+                    <div class="flex-grow-1 min-w-0">
+                      <div id="xtfFileName" class="xtf-file-name text-truncate">archivo.xtf</div>
+                      <small id="xtfFileMeta" class="xtf-file-meta d-block">0 MB | listo para sincronizar</small>
+                    </div>
+
+                    <button id="btnRemoveXtf" type="button"
+                      class="btn p-0 border-0 bg-transparent xtf-remove-btn flex-shrink-0" aria-label="Quitar archivo">
+                      <i class="bi bi-trash3-fill"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <button id="btnImportarRetorno" type="button"
+                  class="btn-sync-xtf d-inline-flex align-items-center justify-content-center gap-2 align-self-stretch">
+                  <i class="bi bi-bezier2"></i>
+                  <span>Sincronizar XTF</span>
+                </button>
+                <button id="btnVerValidadores" type="button"
+                  class="btn btn-link p-0 mt-2 text-decoration-none align-self-start">
+                  <small>Ver validadores XTF</small>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-content-table mt-4 mt-md-5 p-2 p-md-2 p-xl-3 rounded-5 w-100">
+    <div class="container-title-table">
+      <small class="title-table fw-bold">Información básica de Asignación</small>
+    </div>
+
+    <!-- TARJETAS SUPERIORES -->
+    <div class="seccion-tarjet-table mt-4">
+      <div class="row justify-content-center">
+        <div class="col-12">
+          <div class="row justify-content-center justify-content-xl-between g-3 g-xl-4 info-basic-cards-row">
+
+            <!-- USUARIO -->
+            <div class="col-12 col-sm-10 col-md-6 col-lg-5 col-xl info-basic-card-col">
+              <div class="info-basic-user-card h-100 bg-white border border-3 border-dark rounded-4 shadow-sm">
+                <div class="card-body d-flex align-items-center h-100">
+                  <div
+                    class="me-3 d-flex align-items-center justify-content-center rounded-circle icon-circle-user flex-shrink-0">
+                    <i class="bi bi-person-fill text-white icon-resumen"></i>
+                  </div>
+
+                  <div class="min-w-0">
+                    <small class="text-taret-user d-block">Coordinador</small>
+                    <small id="d_coord" class="text-taret-parraf d-block text-truncate">-</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ASIGNADOS -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl info-basic-card-col">
+              <div
+                class="info-basic-stat-card stat-card-asignados h-100 bg-white border border-3 border-dark rounded-4 shadow-sm position-relative overflow-hidden">
+                <div class="card-body d-flex align-items-center justify-content-between gap-3 h-100">
+                  <div class="min-w-0">
+                    <small class="stat-card-label d-block">Predios Asignados</small>
+                    <div class="stat-card-value" id="d_asig">0</div>
+                  </div>
+
+                  <div class="stat-card-icon stat-card-icon-blue flex-shrink-0">
+                    <i class="bi bi-map-fill"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ELIMINADOS -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl info-basic-card-col">
+              <div
+                class="info-basic-stat-card stat-card-eliminados h-100 bg-white border border-3 border-dark rounded-4 shadow-sm position-relative overflow-hidden">
+                <div class="card-body d-flex align-items-center justify-content-between gap-3 h-100">
+                  <div class="min-w-0">
+                    <small class="stat-card-label d-block">Predios Eliminados</small>
+                    <div class="stat-card-value" id="d_elim">0</div>
+                  </div>
+
+                  <div class="stat-card-icon stat-card-icon-red flex-shrink-0">
+                    <i class="bi bi-map-fill"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- NUEVOS -->
+            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl info-basic-card-col">
+              <div
+                class="info-basic-stat-card stat-card-nuevos h-100 bg-white border border-3 border-dark rounded-4 shadow-sm position-relative overflow-hidden">
+                <div class="card-body d-flex align-items-center justify-content-between gap-3 h-100">
+                  <div class="min-w-0">
+                    <small class="stat-card-label d-block">Predios Nuevos</small>
+                    <div class="stat-card-value" id="d_new">0</div>
+                  </div>
+
+                  <div class="stat-card-icon stat-card-icon-green flex-shrink-0">
+                    <i class="bi bi-map-fill"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="info-basic-main-wrap mt-4 mt-md-5">
+      <div class="row g-4 align-items-stretch">
+
+        <!-- IZQUIERDA -->
+        <div class="col-12 col-xl-8">
+          <div class="info-basic-panel h-100">
+            <div class="d-flex align-items-start align-items-md-center justify-content-between gap-3 flex-wrap">
+              <div>
+                <h2 class="title mb-1">Desglose Predios</h2>
+                <p class="sub mb-0">
+                  Consulta los predios correspondiente a esta asignación
+                </p>
+              </div>
+
+              <button id="btnEdicionAlfanumerica" type="button"
+                class="btn btn-edicion-alfanumerica d-inline-flex align-items-center justify-content-center gap-2 rounded-4 px-3 px-md-4 py-2 border-0">
+                <i class="bi bi-pencil-fill"></i>
+                <small>Edición Alfanumérica</small>
+              </button>
+            </div>
+
+            <hr class="info-basic-divider my-4">
+
+            <div class="asigDetailPanel">
+              <div class="row g-4">
+                <div class="col-12">
+                  <div class="asigDetailTableWrap asig-table-light h-100">
+                    <div class="table-responsive">
+                      <table id="tablaPredios" class="asigDetailTable table mb-0">
+                        <thead>
+                          <tr>
+                            <th class="text-center"></th>
+                            <th class="text-center">Número predial</th>
+                            <th class="text-center">T_ID</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-center">Creado por</th>
+                          </tr>
+                        </thead>
+                        <tbody id="asigDetallePrediosBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3 mt-3">
+                <div class="col-12 col-md-6">
+                  <small class="d-block text-muted">Dataset principal</small>
+                  <small id="d_main" class="fw-semibold d-block">-</small>
+                </div>
+                <div class="col-12 col-md-6">
+                  <small class="d-block text-muted">Workspace</small>
+                  <small id="d_work" class="fw-semibold d-block">-</small>
+                </div>
+                <div class="col-12">
+                  <small class="d-block text-muted">Error</small>
+                  <small id="d_error" class="fw-semibold d-block">-</small>
+                </div>
+              </div>
+
+              <div id="asigDetailMsg" class="mt-3">Ingresa un id y presiona Buscar.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DERECHA -->
+        <div class="col-12 col-xl-4">
+          <div class="info-basic-panel history-panel h-100">
+            <div class="d-flex align-items-start gap-2 mb-2">
+              <i class="bi bi-arrow-counterclockwise history-title-icon"></i>
+              <div>
+                <h2 class="title-hisstorial mb-1">Historial de la asignación</h2>
+                <p class="sub mb-0">
+                  Consulta la información más relevante de los cambios que ha tenido esta asignación
+                </p>
+              </div>
+            </div>
+
+            <hr class="info-basic-divider my-4">
+
+            <div class="asigDetailTableWrap asig-table-history h-100">
+              <div class="table-responsive">
+                <table id="tablaHistorial" class="asigDetailTable asigDetailTable-history table mb-0">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Evento</th>
+                      <th>Descripción</th>
+                    </tr>
+                  </thead>
+                  <tbody id="asigDetalleEventosBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalValidadoresXtf" tabindex="-1" aria-labelledby="modalValidadoresXtfLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalValidadoresXtfLabel">Validadores XTF</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="validadoresXtfBody" class="small text-muted">Cargando validadores...</div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnRecargarValidadoresXtf" type="button"
+          class="btn btn-outline-secondary btn-sm">Actualizar</button>
+        <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+  let tablaPrediosDT;
+  let tablaHistorialDT;
+
+  $(document).ready(function () {
+    $.fn.DataTable.ext.pager.numbers_length = 3;
+
+    tablaPrediosDT = $('#tablaPredios').DataTable({
+      pageLength: 5,
+      lengthMenu: [[5, 10, 25, 50], [5, 10, 25, 50]],
+      ordering: true,
+      searching: true,
+      info: true,
+      paging: true,
+      pagingType: "simple_numbers",
+      responsive: false,
+      autoWidth: false,
+      scrollX: true,
+      language: {
+        lengthMenu: "Mostrar _MENU_ registros",
+        zeroRecords: "No se encontraron resultados",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+        infoEmpty: "Mostrando 0 a 0 de 0 registros",
+        infoFiltered: "(filtrado de _MAX_ registros totales)",
+        search: "Buscar:",
+        emptyTable: "Sin datos.",
+        paginate: {
+          next: "›",
+          previous: "‹"
+        }
+      }
+    });
+
+    tablaPrediosDT.on("draw", syncPredioSelectionUI);
+
+    tablaHistorialDT = $('#tablaHistorial').DataTable({
+      pageLength: 4,
+      lengthMenu: [[4, 8, 12], [4, 8, 12]],
+      ordering: true,
+      searching: true,
+      info: true,
+      paging: true,
+      responsive: false,
+      autoWidth: false,
+      scrollX: true,
+      language: {
+        lengthMenu: "Mostrar _MENU_ registros",
+        zeroRecords: "No se encontraron resultados",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+        infoEmpty: "Mostrando 0 a 0 de 0 registros",
+        infoFiltered: "(filtrado de _MAX_ registros totales)",
+        search: "Buscar:",
+        emptyTable: "Sin datos.",
+        paginate: {
+          first: "Primero",
+          last: "Último",
+          next: "›",
+          previous: "‹"
+        }
+      }
+    });
+  });
+</script>
+
+<script>
+  const rp = "{{ rp }}";
+  const params = new URLSearchParams(window.location.search);
+  const idFromUrl = params.get("id");
+  let predioSeleccionadoDetalleId = null;
+  let predioSeleccionadoTId = null;
+  let predioSeleccionadoNumero = null;
+  const fechaFmt = new Intl.DateTimeFormat("es-CO", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  const elId = document.getElementById("asigDetalleId");
+  const msg = document.getElementById("asigDetailMsg");
+  const prediosBody = document.getElementById("asigDetallePrediosBody");
+  const eventosBody = document.getElementById("asigDetalleEventosBody");
+
+  const fileInput = document.getElementById("asigRetornoFile");
+  const xtfPreviewBox = document.getElementById("xtfPreviewBox");
+  const xtfPreviewCheck = document.getElementById("xtfPreviewCheck");
+  const xtfPreviewIcon = document.getElementById("xtfPreviewIcon");
+  const xtfFileName = document.getElementById("xtfFileName");
+  const xtfFileMeta = document.getElementById("xtfFileMeta");
+  const btnRemoveXtf = document.getElementById("btnRemoveXtf");
+  const btnImportarRetorno = document.getElementById("btnImportarRetorno");
+  const btnVerValidadores = document.getElementById("btnVerValidadores");
+  const modalValidadoresXtf = document.getElementById("modalValidadoresXtf");
+  const validadoresXtfBody = document.getElementById("validadoresXtfBody");
+  const btnRecargarValidadoresXtf = document.getElementById("btnRecargarValidadoresXtf");
+  let retornoEnCurso = false;
+  let validadoresCargados = false;
+
+  function esc(value) {
+    if (value === null || value === undefined) return "";
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value ?? "-";
+  }
+
+  function syncPredioSelectionUI() {
+    document.querySelectorAll("#asigDetallePrediosBody .predio-check").forEach((checkbox) => {
+      const isSelected = predioSeleccionadoDetalleId !== null
+        && String(checkbox.dataset.asignacionPredioId) === String(predioSeleccionadoDetalleId);
+      checkbox.checked = isSelected;
+      checkbox.closest("tr")?.classList.toggle("table-active", isSelected);
+    });
+  }
+
+  function fmtDate(value) {
+    if (!value) return "-";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return fechaFmt.format(d);
+  }
+
+  function formatFileSize(bytes) {
+    if (!bytes || bytes <= 0) return "0 KB";
+    const units = ["B", "KB", "MB", "GB"];
+    let size = bytes;
+    let unitIndex = 0;
+
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+
+    const decimals = unitIndex === 0 ? 0 : 2;
+    return `${size.toFixed(decimals)} ${units[unitIndex]}`;
+  }
+
+  function renderXtfPreview(file) {
+    if (!file) {
+      xtfPreviewBox?.classList.add("d-none");
+      if (xtfPreviewBox) delete xtfPreviewBox.dataset.fileSize;
+      if (xtfFileName) xtfFileName.textContent = "";
+      if (xtfFileMeta) xtfFileMeta.textContent = "";
+      return;
+    }
+
+    if (xtfPreviewBox) xtfPreviewBox.dataset.fileSize = formatFileSize(file.size);
+    if (xtfFileName) xtfFileName.textContent = file.name;
+    xtfPreviewBox?.classList.remove("d-none");
+    setXtfSyncState("pending");
+  }
+
+  function setXtfSyncState(state, detail = "") {
+    if (!xtfPreviewBox || !xtfPreviewCheck || !xtfPreviewIcon || !xtfFileMeta) return;
+
+    const base = xtfPreviewBox.dataset.fileSize || "0 KB";
+    const suffix = detail ? ` | ${detail}` : "";
+    xtfPreviewIcon.className = "";
+    xtfPreviewCheck.style.background = "#ffffff";
+
+    if (state === "syncing") {
+      xtfPreviewIcon.className = "spinner-border spinner-border-sm";
+      xtfPreviewCheck.style.borderColor = "#0b5ed7";
+      xtfPreviewCheck.style.color = "#0b5ed7";
+      xtfFileMeta.textContent = `${base} | sincronizando...${suffix}`;
+      if (btnImportarRetorno) btnImportarRetorno.disabled = true;
+      if (btnRemoveXtf) btnRemoveXtf.disabled = true;
+      return;
+    }
+
+    if (state === "success") {
+      xtfPreviewIcon.className = "bi bi-check-lg";
+      xtfPreviewCheck.style.borderColor = "#22c55e";
+      xtfPreviewCheck.style.color = "#22c55e";
+      xtfFileMeta.textContent = `${base} | sincronizado${suffix}`;
+      if (btnImportarRetorno) btnImportarRetorno.disabled = false;
+      if (btnRemoveXtf) btnRemoveXtf.disabled = false;
+      return;
+    }
+
+    if (state === "error") {
+      xtfPreviewIcon.className = "bi bi-x-lg";
+      xtfPreviewCheck.style.borderColor = "#dc3545";
+      xtfPreviewCheck.style.color = "#dc3545";
+      xtfFileMeta.textContent = `${base} | error de sincronizacion${suffix}`;
+      if (btnImportarRetorno) btnImportarRetorno.disabled = false;
+      if (btnRemoveXtf) btnRemoveXtf.disabled = false;
+      return;
+    }
+
+    xtfPreviewIcon.className = "bi bi-clock-history";
+    xtfPreviewCheck.style.borderColor = "#94a3b8";
+    xtfPreviewCheck.style.color = "#64748b";
+    xtfFileMeta.textContent = `${base} | listo para sincronizar${suffix}`;
+    if (btnImportarRetorno) btnImportarRetorno.disabled = false;
+    if (btnRemoveXtf) btnRemoveXtf.disabled = false;
+  }
+
+  function formatBackendDetail(detail) {
+    if (!detail) return "";
+    return String(detail)
+      .replace(/^\[[^\]]+\]\s*/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function renderValidadoresXtf(data) {
+    if (!validadoresXtfBody) return;
+    const pipeline = Array.isArray(data?.pipeline) ? data.pipeline : [];
+    const qualityRules = Array.isArray(data?.quality_rules) ? data.quality_rules : [];
+    const ili = data?.ili2_validator || {};
+
+    const pipelineHtml = pipeline.length
+      ? `<ul class="mb-3">${pipeline.map((p) => `<li>${esc(p)}</li>`).join("")}</ul>`
+      : `<p class="mb-3 text-muted">No hay pipeline configurado.</p>`;
+
+    const qualityHtml = qualityRules.length
+      ? qualityRules.map((item) => {
+        const rules = Array.isArray(item?.rules) ? item.rules : [];
+        const rulesHtml = rules.length
+          ? `<ul class="mb-2">${rules.map((r) => `<li><strong>${esc(r.rule_id || "-")}:</strong> ${esc(r.description || "-")}</li>`).join("")}</ul>`
+          : `<p class="mb-2 text-muted">Sin reglas declaradas.</p>`;
+        return `
+          <div class="mb-3">
+            <div><strong>${esc(item.component || "-")}</strong> (${Number(item.total_rules || 0)} reglas)</div>
+            ${rulesHtml}
+          </div>
+        `;
+      }).join("")
+      : `<p class="mb-0 text-muted">No hay reglas internas configuradas.</p>`;
+
+    validadoresXtfBody.innerHTML = `
+      <div class="mb-3">
+        <div><strong>Pipeline de validacion</strong></div>
+        ${pipelineHtml}
+      </div>
+      <div class="mb-3">
+        <div><strong>ili2 validator</strong></div>
+        <ul class="mb-0">
+          <li><strong>JAR:</strong> ${esc(ili.jar_path || "-")}</li>
+          <li><strong>Modelos:</strong> ${esc(ili.models || "-")}</li>
+          <li><strong>Model dir:</strong> ${esc(ili.model_dir || "-")}</li>
+          <li><strong>Extra args:</strong> ${esc((ili.extra_args || []).join(" ") || "-")}</li>
+        </ul>
+      </div>
+      <div>
+        <div><strong>Reglas internas</strong></div>
+        ${qualityHtml}
+      </div>
+    `;
+  }
+
+  async function cargarValidadoresXtf(force = false) {
+    if (!validadoresXtfBody) return;
+    if (validadoresCargados && !force) return;
+
+    validadoresXtfBody.innerHTML = `<span class="text-muted">Cargando validadores...</span>`;
+    const resp = await fetch(`${rp}/asignaciones/validadores-xtf`, {
+      credentials: "same-origin",
+      headers: { "Accept": "application/json" }
+    });
+
+    let data = {};
+    try {
+      data = await resp.json();
+    } catch (_e) {
+      data = {};
+    }
+
+    if (!resp.ok) {
+      throw new Error(formatBackendDetail(data?.detail) || "No se pudieron cargar los validadores XTF.");
+    }
+
+    validadoresCargados = true;
+    renderValidadoresXtf(data);
+  }
+
+  async function cargarDetalle() {
+    if (!tablaPrediosDT || !tablaHistorialDT) {
+      msg.textContent = "Inicializando tablas...";
+      return;
+    }
+    const id = Number(elId.value);
+    if (!id || id < 1) {
+      msg.textContent = "Debes indicar un id valido.";
+      return;
+    }
+
+    msg.textContent = "Cargando detalle...";
+    predioSeleccionadoDetalleId = null;
+    tablaPrediosDT.clear().draw();
+    tablaHistorialDT.clear().draw();
+
+    try {
+      const [respDet, respEvt] = await Promise.all([
+        fetch(`${rp}/asignaciones/${encodeURIComponent(id)}/detalle`, { credentials: "same-origin" }),
+        fetch(`${rp}/asignaciones/${encodeURIComponent(id)}/eventos`, { credentials: "same-origin" })
+      ]);
+
+      const dataDet = await respDet.json().catch(() => ({}));
+      const dataEvt = await respEvt.json().catch(() => ([]));
+
+      if (!respDet.ok) throw new Error(dataDet?.detail || "No se pudo cargar el detalle.");
+      if (!respEvt.ok) throw new Error(dataEvt?.detail || "No se pudieron cargar los eventos.");
+
+      setText("d_id", dataDet.id);
+      setText("d_estado", dataDet.estado || "-");
+      setText("d_fecha", fmtDate(dataDet.fecha_creacion));
+      setText("d_coord", dataDet.coordinador || "-");
+      setText("d_user", dataDet.usuario_asignado || "-");
+      setText("d_titulo", dataDet.titulo || "-");
+      setText("d_main", dataDet.datasetname_main || "-");
+      setText("d_work", dataDet.work_datasetname || "-");
+      setText("d_error", dataDet.error_msg || "-");
+      setText("d_asig", dataDet.total_asignados ?? 0);
+      setText("d_elim", dataDet.total_eliminados ?? 0);
+      setText("d_new", dataDet.total_nuevos ?? 0);
+
+      const predios = Array.isArray(dataDet.predios) ? dataDet.predios : [];
+      tablaPrediosDT.clear();
+
+      if (predios.length) {
+        predios.forEach(p => {
+          tablaPrediosDT.row.add([
+            `
+              <div class="d-flex justify-content-center">
+                <input 
+                  type="checkbox" 
+                  class="predio-check form-check-input shadow-none"
+                  value="${esc(p.predio_t_id ?? "")}"
+                  data-asignacion-predio-id="${esc(p.id ?? "")}"
+                  data-predio-t-id="${esc(p.predio_t_id ?? "")}"
+                  data-numero-predial="${esc(p.numero_predial_nacional || "")}"
+                >
+              </div>
+            `,
+            esc(p.numero_predial_nacional || ""),
+            esc(p.predio_t_id ?? "-"),
+            `<span class="chip ${p.activo ? "ok" : "off"}">${p.activo ? "ACTIVO" : "INACTIVO"}</span>`,
+            esc(p.creado_por || "-")
+          ]);
+        });
+      }
+
+      tablaPrediosDT.draw();
+      syncPredioSelectionUI();
+
+      const eventos = Array.isArray(dataEvt) ? dataEvt : [];
+      tablaHistorialDT.clear();
+
+      if (eventos.length) {
+        eventos.slice().reverse().forEach(e => {
+          tablaHistorialDT.row.add([
+            esc(fmtDate(e.creado_en)),
+            esc(e.evento || "-"),
+            esc(e.mensaje || "-")
+          ]);
+        });
+      }
+
+      tablaHistorialDT.draw();
+
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set("id", String(id));
+      history.replaceState({}, "", newUrl.toString());
+      msg.textContent = `Detalle cargado para asignacion ${id}.`;
+    } catch (err) {
+      msg.textContent = err?.message || "Error cargando detalle.";
+      prediosBody.innerHTML = '<tr><td colspan="5">Error cargando predios.</td></tr>';
+      eventosBody.innerHTML = '<tr><td colspan="3">Error cargando eventos.</td></tr>';
+    }
+  }
+
+  async function importarRetorno() {
+    if (retornoEnCurso) return;
+
+    const id = Number(elId.value);
+    if (!id || id < 1) {
+      msg.textContent = "Debes indicar un id valido antes de importar.";
+      return;
+    }
+
+    const file = fileInput?.files?.[0];
+    if (!file) {
+      msg.textContent = "Selecciona primero un archivo .xtf.";
+      return;
+    }
+
+    const form = new FormData();
+    form.append("archivo", file);
+    msg.textContent = "Importando retorno XTF...";
+    setXtfSyncState("syncing");
+    retornoEnCurso = true;
+
+    try {
+      const resp = await fetch(`${rp}/asignaciones/${encodeURIComponent(id)}/retorno-xtf`, {
+        method: "POST",
+        body: form,
+        credentials: "same-origin",
+        headers: { "Accept": "application/json" }
+      });
+
+      const rawText = await resp.text().catch(() => "");
+      let data = {};
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText);
+        } catch (_e) {
+          data = {};
+        }
+      }
+
+      if (!resp.ok) {
+        const detail = formatBackendDetail(data?.detail || rawText);
+        const error = new Error(detail || "No se pudo importar el retorno XTF.");
+        error.status = resp.status;
+        error.detail = detail;
+        error.data = data;
+        error.rawText = rawText;
+        throw error;
+      }
+
+      const rulesWithIssues = Array.isArray(data?.validation_summary?.rules_with_issues)
+        ? data.validation_summary.rules_with_issues
+        : [];
+      const successSuffix = rulesWithIssues.length ? ` | reglas: ${rulesWithIssues.join(", ")}` : "";
+      setXtfSyncState("success", successSuffix);
+      msg.textContent = data?.message || "Retorno XTF importado.";
+      await cargarDetalle();
+    } catch (err) {
+      setXtfSyncState("error");
+      const detail = formatBackendDetail(err?.detail || err?.message);
+      msg.textContent = detail || "Error importando retorno XTF.";
+      console.error("retorno-xtf error", {
+        status: err?.status,
+        detail: err?.detail || err?.message,
+        data: err?.data,
+        rawText: err?.rawText || ""
+      });
+    } finally {
+      retornoEnCurso = false;
+    }
+  }
+
+  fileInput?.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      renderXtfPreview(null);
+      return;
+    }
+
+    const extensionValida = file.name.toLowerCase().endsWith(".xtf");
+    if (!extensionValida) {
+      msg.textContent = "El archivo seleccionado no es un .xtf valido.";
+      fileInput.value = "";
+      renderXtfPreview(null);
+      return;
+    }
+
+    renderXtfPreview(file);
+    msg.textContent = `Archivo seleccionado: ${file.name}`;
+  });
+
+  btnRemoveXtf?.addEventListener("click", () => {
+    if (fileInput) fileInput.value = "";
+    renderXtfPreview(null);
+    msg.textContent = "Archivo XTF removido.";
+  });
+
+  btnVerValidadores?.addEventListener("click", async () => {
+    try {
+      await cargarValidadoresXtf(false);
+      if (window.bootstrap && modalValidadoresXtf) {
+        window.bootstrap.Modal.getOrCreateInstance(modalValidadoresXtf).show();
+      }
+    } catch (err) {
+      msg.textContent = err?.message || "No se pudieron cargar los validadores XTF.";
+    }
+  });
+
+  btnRecargarValidadoresXtf?.addEventListener("click", async () => {
+    try {
+      validadoresCargados = false;
+      await cargarValidadoresXtf(true);
+    } catch (err) {
+      if (validadoresXtfBody) {
+        validadoresXtfBody.innerHTML = `<span class="text-danger">${esc(err?.message || "No se pudieron cargar los validadores.")}</span>`;
+      }
+    }
+  });
+
+
+
+  document.getElementById("btnEdicionAlfanumerica")?.addEventListener("click", () => {
+    const idActual = Number(elId?.value || idFromUrl);
+    const query = new URLSearchParams();
+
+    if (!idActual || idActual < 1) {
+      msg.textContent = "Debes cargar primero una asignacion.";
+      return;
+    }
+
+    if (!predioSeleccionadoTId) {
+      msg.textContent = "Selecciona un predio del Desglose Predios antes de abrir la edicion alfanumerica.";
+      return;
+    }
+
+    query.set("id", String(idActual));
+    query.set("subview", "editar_predio");
+    query.set("predio_t_id", String(predioSeleccionadoTId));
+
+    if (predioSeleccionadoDetalleId !== null && String(predioSeleccionadoDetalleId).trim() !== "") {
+      query.set("predio_id", String(predioSeleccionadoDetalleId));
+    }
+
+    if (predioSeleccionadoNumero) {
+      query.set("numero_predial_nacional", String(predioSeleccionadoNumero));
+    }
+
+    window.location.href = `${rp}/panel/asignaciones/edicion?${query.toString()}#asig-open`;
+  });
+
+
+
+  document.getElementById("btnCargarDetalle")?.addEventListener("click", cargarDetalle);
+  btnImportarRetorno?.addEventListener("click", importarRetorno);
+
+  $(document).ready(function () {
+    if (idFromUrl && /^\d+$/.test(idFromUrl)) {
+      elId.value = idFromUrl;
+      cargarDetalle();
+    }
+  });
+
+  elId?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      cargarDetalle();
+    }
+  });
+
+  document.getElementById("asigDetallePrediosBody")?.addEventListener("change", (event) => {
+    const checkbox = event.target.closest(".predio-check");
+    if (!checkbox) return;
+
+    if (checkbox.checked) {
+      predioSeleccionadoDetalleId = checkbox.dataset.asignacionPredioId || null;
+      predioSeleccionadoTId = checkbox.dataset.predioTId || checkbox.value || null;
+      predioSeleccionadoNumero = checkbox.dataset.numeroPredial || null;
+    } else {
+      predioSeleccionadoDetalleId = null;
+      predioSeleccionadoTId = null;
+      predioSeleccionadoNumero = null;
+    }
+
+    syncPredioSelectionUI();
+  });
+</script>

@@ -1,0 +1,44 @@
+<div class="container">
+    <h2>Documentos en Box</h2>
+
+    <div id="box-files"></div>
+</div>
+
+<script>
+
+async function cargarBox(){
+
+    const res = await fetch("/box/list")
+    const data = await res.json()
+
+    const container = document.getElementById("box-files")
+    container.innerHTML=""
+
+    data.items.forEach(item => {
+
+        const row = document.createElement("div")
+
+        if(item.type === "folder"){
+            row.innerHTML = "?? " + item.name
+        }else{
+            row.innerHTML = `<a href="#" onclick="abrirArchivo('${item.type}','${item.id}')">?? ${item.name}</a>`
+        }
+
+        container.appendChild(row)
+
+    })
+
+}
+
+async function abrirArchivo(type,id){
+
+    const res = await fetch(`/box/open?item_type=${type}&item_id=${id}`)
+    const data = await res.json()
+
+    window.open(data.web_url,"_blank")
+
+}
+
+cargarBox()
+
+</script>

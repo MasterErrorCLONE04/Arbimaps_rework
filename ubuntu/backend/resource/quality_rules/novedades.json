@@ -1,0 +1,249 @@
+{
+  "slug": "novedades",
+  "rule_count": 27,
+  "rules": [
+    {
+      "id": "8.1",
+      "description": "Los predios asociados al desenglobe deben tener folio de matricula",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio",
+      "variables": "Tipo_Novedad\nMatricula_Inmobiliaria",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Desenglobe_Venta_Parcial\" o \"Desenglobe_Division_Material\",  entonces ILC_Predio.Matricula_Inmobiliaria debe estar diligenciado y <> '0'",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.10",
+      "description": "Cuando el tramite corresponde a englobe y se genera un nuevo FMI, entonces debe tener al menos cuatro registros y cumplir lo siguiente: \n(1) Los número prediales que se van a englobar deben existir en el R1 (Registro 1) Inicial o periódico.\n(2) Todos los predios que se engloban deben registrar Englobe Nuevo FMI y Cancelación por englobe.\n(3) Los registros que relacionen la novedad de Englobe Nuevo FMI deben esta asociados a un mismo numero predial en LC_Predio, el cual en su posición 18 debe ser 9 o A-Z.",
+      "classes": "ILC_Predio",
+      "variables": "Numero_Predial\nNumero_Predial_Nacional\nTipo_Novedad",
+      "technical_rule": "Si el tramite es \"Englobe_Nuevo_FMI\", entonces debe tener al menos 4 registros y cumplir lo siguiente:\n(1)\n ILC_EstructuraNovedadNumeroPredial.Numero_predial =ILC_Predio.Numero_Predial_Nacional y ILC_Predio.Numero_Predial_Nacional = R1.Numero_Predial. \n(2)\nTodos los predios deben relacionar ILC_EstructuraNovedadNumeroPredial.tipo_novedad = \"Englobe_Nuevo_ FMI\" y ILC_EstructuraNovedadNumeroPredial.tipo_novedad = \"Cancelacion_por_Englobe\"\n(3) si  ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad = \"Englobe_Nuevo_FMI\" entonces deben relacionar el mismo LC_Predio.Numero_Predial_Nacional y El digito 18 de ILC_Predio.Numero_Predial_Nacional debe ser \"9\" o \"A\" - \"Z\"",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.11",
+      "description": "(1) El número predial del predio que se cancela no debe ser predio nuevo\n(2) El número predial del predio que se cancela no debe ser predio informal",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio",
+      "variables": "Numero_Predial\nTipo_Novedad",
+      "technical_rule": "Si \nILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Cancelacion\" o \"Cancelación_por_Desenglobe\" o \"Cancelacion_por_Englobe\", entonces \n(1) El digito 18 de ILC_EstructuraNovedadNumeroPredial.Numero_Predial debe ser numérico y  <> '9'\n(2) El digito 22 de ILC_EstructuraNovedadNumeroPredial.Numero_Predial debe ser <> \"2\"",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.12",
+      "description": "Debe ser el mismo número predial relacionado de la tabla ILC_Predio como de la tabla ILC_EstructuraNovedadNumeroPredial",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio",
+      "variables": "Numero_Predial\nNumero_Predial_Nacional",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Cancelacion\" o \"Cancelación_por_Desenglobe\" o \"Cancelacion_por_Englobe\", entonces ILC_Predio.Numero_Predial_Nacional  = ILC_EstructuraNovedadNumeroPredial.Numero_Predial",
+      "component": "Novedades",  
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.13",
+      "description": "Debe estar asociados a una observación que especifique el motivo de la misma",
+      "classes": "ILC_Predio\nILC_DatosAdicionalesLevantamientoCatastral",
+      "variables": "Tipo_Novedad\nObservaciones",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Cancelacion\", entonces\nILC_DatosAdicionalesLevantamientoCatastral.Observaciones debe tener la respectiva explicación",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.14",
+      "description": "Los predios cancelados no deben tener información espacial",
+      "classes": "ILC_Predio\nILC_EstructuraNovedadNumeroPredial\ncol_ueBaunit",
+      "variables": "Numero_Predial_Nacional\nTipo_Novedad",
+      "technical_rule": "Si ILC_Predio.Numero_Predial_Nacional tiene asociado ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad  = \"Cancelacion\" o \"Cancelación_por_Desenglobe\" o \"Cancelacion_por_Englobe\", entonces no debe asociar ningún registro en col_ueBaunit",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.15",
+      "description": "El numero predial relacionado de la tabla ILC_EstructuraNovedadNumeroPredial  debe ser diferente al de la  tabla ILC_Predio y a su vez el número predial de la tabla ILC_EstructuraNovedadNumeroPredial al cual se le realizó el cambio de número predial no debe estar en la tabla ILC_Predio",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio",
+      "variables": "Tipo_Novedad\nNumero_Predial\nNumero_Predial_Nacional",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a  \n\"Cambio_Numero_Predial​_Mejora_a_Informal\" o\n\"Cambio_Numero_Predial​_Mejora_a_Formal\" o\n\"Cambio_Numero_Predial​_NPH_a_Informal\" o\n\"Cambio_Numero_Predial​_NPH_a_Condominio\" o\n\"Cambio_Numero_Predial​_NPH_a_PH\" o\n\"Cambio_Numero_Predial​_NPH_a_Via\" o\n\"Cambio_Numero_Predial​_NPH_a_Bien_de_Uso_Publico\" o\n\"Cambio_Numero_Predial​_PH_a_Condominio\" o\n\"Cambio_Numero_Predial​_Condominio_a_PH\" o\n\"Cambio_Numero_Predial​_Condominio_a_NPH\" o\n\"Cambio_Numero_Predial​_Urbano_a_Rural\" o\n\"Cambio_Numero_Predial​_Rural_a_Urbano\" o\n\"Cambio_Numero_Predial​_Manzana_a_Manzana\" o\n\"Cambio_Numero_Predial​_Vereda_a_Vereda\" o\n\"Cambio_Numero_Predial​_municipio_a_municipio\", entonces \nILC_Predio.Numero_Predial_Nacional <> ILC_EstructuraNovedadNumeroPredial.Numero_Predial y ILC_EstructuraNovedadNumeroPredial.Numero_Predial no debe estar contenido en la tabla ILC_Predio.Numero_Predial_Nacional",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.16",
+      "description": "El número predial de la tabla ILC_EstructuraNovedadNumeroPredial no debe ser predio nuevo ni informal",
+      "classes": "ILC_EstructuraNovedadNumeroPredial",
+      "variables": "Numero_Predial\nTipo_Novedad",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a  \n\"Cambio_Numero_Predial​_Mejora_a_Informal\" o\n\"Cambio_Numero_Predial​_Mejora_a_Formal\" o\n\"Cambio_Numero_Predial​_NPH_a_Informal\" o\n\"Cambio_Numero_Predial​_NPH_a_Condominio\" o\n\"Cambio_Numero_Predial​_NPH_a_PH\" o\n\"Cambio_Numero_Predial​_NPH_a_Via\" o\n\"Cambio_Numero_Predial​_NPH_a_Bien_de_Uso_Publico\" o\n\"Cambio_Numero_Predial​_PH_a_Condominio\" o\n\"Cambio_Numero_Predial​_Condominio_a_PH\" o\n\"Cambio_Numero_Predial​_Condominio_a_NPH\" o\n\"Cambio_Numero_Predial​_Urbano_a_Rural\" o\n\"Cambio_Numero_Predial​_Rural_a_Urbano\" o\n\"Cambio_Numero_Predial​_Manzana_a_Manzana\" o\n\"Cambio_Numero_Predial​_Vereda_a_Vereda\" o\n\"Cambio_Numero_Predial​_municipio_a_municipio\", entonces \nEl digito 18 de ILC_EstructuraNovedadNumeroPredial.Numero_Predial debe ser numérico y <> 'A -Z' y/o el El digito 22 de ILC_EstructuraNovedadNumeroPredial.Numero_Predial debe ser <> '2'",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.17",
+      "description": "El número predial de la tabla ILC_predio no debe estar en el registro 1 de insumo inicial",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio\nR1",
+      "variables": "Tipo_Novedad\nNumero_Predial_Nacional\nR1",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a  \n\"Cambio_Numero_Predial​_Mejora_a_Informal\" o\n\"Cambio_Numero_Predial​_Mejora_a_Formal\" o\n\"Cambio_Numero_Predial​_NPH_a_Informal\" o\n\"Cambio_Numero_Predial​_NPH_a_Condominio\" o\n\"Cambio_Numero_Predial​_NPH_a_PH\" o\n\"Cambio_Numero_Predial​_NPH_a_Via\" o\n\"Cambio_Numero_Predial​_NPH_a_Bien_de_Uso_Publico\" o\n\"Cambio_Numero_Predial​_PH_a_Condominio\" o\n\"Cambio_Numero_Predial​_Condominio_a_PH\" o\n\"Cambio_Numero_Predial​_Condominio_a_NPH\" o\n\"Cambio_Numero_Predial​_Urbano_a_Rural\" o\n\"Cambio_Numero_Predial​_Rural_a_Urbano\" o\n\"Cambio_Numero_Predial​_Manzana_a_Manzana\" o\n\"Cambio_Numero_Predial​_Vereda_a_Vereda\" o\n\"Cambio_Numero_Predial​_municipio_a_municipio\", entonces\nILC_Predio.Numero_Predial_Nacional <> Registro 1 (R1) de insumo inicial o periódico",
+      "component": "Novedades",
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.18",
+      "description": "El número predial de la tabla ILC_Predio debe ser predio nuevo",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio",
+      "variables": "Tipo_Novedad Numero_Predial_Nacional",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a  \n\"Cambio_Numero_Predial​_Mejora_a_Informal\" o\n\"Cambio_Numero_Predial​_Mejora_a_Formal\" o\n\"Cambio_Numero_Predial​_NPH_a_Informal\" o\n\"Cambio_Numero_Predial​_NPH_a_Condominio\" o\n\"Cambio_Numero_Predial​_NPH_a_PH\" o\n\"Cambio_Numero_Predial​_NPH_a_Via\" o\n\"Cambio_Numero_Predial​_NPH_a_Bien_de_Uso_Publico\" o\n\"Cambio_Numero_Predial​_PH_a_Condominio\" o\n\"Cambio_Numero_Predial​_Condominio_a_PH\" o\n\"Cambio_Numero_Predial​_Condominio_a_NPH\" o\n\"Cambio_Numero_Predial​_Urbano_a_Rural\" o\n\"Cambio_Numero_Predial​_Rural_a_Urbano\" o\n\"Cambio_Numero_Predial​_Manzana_a_Manzana\" o\n\"Cambio_Numero_Predial​_Vereda_a_Vereda\" o\n\"Cambio_Numero_Predial​_municipio_a_municipio\"\nentonces: \nEl digito 18 de ILC_Predio.Numero_Predial_Nacional debe ser igual a \"A\" - \"Z\"",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.19",
+      "description": "El número predial de la tabla ILC_EstructuraNovedadNumeroPredial debe ser igual al número predial de la tabla ILC_Predio",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio",
+      "variables": "Tipo_Novedad\nNumero_Predial\nNumero_Predial_Nacional",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Predio_Nuevo\", entonces\nILC_EstructuraNovedadNumeroPredial.Numero_Predial = ILC_Predio.Numero_Predial_Nacional",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.2",
+      "description": "El número predial de la tabla ILC_EstructuraNovedadNumeroPredial debe existir en el registro 1 (R1) de insumo inicial o periódico",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nR1",
+      "variables": "Tipo_Novedad\nNumero_Predial\nR1",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Desenglobe_Venta_Parcial\" o \"Desenglobe_Division_Material\", entonces ILC_EstructuraNovedadNumeroPredial.Numero_Predial debe estar contenido en Registro 1 (R1) de insumo inicial o periódico.",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.20",
+      "description": "El número predial de la tabla ILC_EstructuraNovedadNumeroPredial y la tabla ILC_Predio debe ser predio nuevo",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio",
+      "variables": "Tipo_Novedad\nNumero_Predial\nNumero_Predial_Nacional",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Predio_Nuevo\", entonces\nEl digito 18 de LC_Predio.Numero_Predial_Nacional y ILC_EstructuraNovedadNumeroPredial.Numero_Predial debe ser igual a \"A\" - \"Z\"",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.21",
+      "description": "El número predial de la tabla ILC_Predio y el numero predial de la tabla ILC_EstructuraNovedadNumeroPredial no debe existir en el registro 1 (R1) de insumo inicial o periódico",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio\nR1",
+      "variables": "Tipo_Novedad\nNumero_Predial\nNumero_Predial_Nacional\nR1",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Predio_Nuevo\", entonces\nILC_EstructuraNovedadNumeroPredial.Numero_Predial <> Registro 1 (R1) de insumo inicial o periódico y ILC_Predio.Numero_Predial_Nacional <> Registro 1 (R1) de insumo inicial o periódico",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.22",
+      "description": "El número predial de la tabla ILC_EstructuraNovedadNumeroPredial no puede ser mejora",
+      "classes": "ILC_EstructuraNovedadNumeroPredial",
+      "variables": "Tipo_Novedad\nNumero_Predial",
+      "technical_rule": "Si \nILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Predio_Nuevo\", entonces el digito 22 de ILC_EstructuraNovedadNumeroPredial.Numero_Predial <> \"5\"",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.23",
+      "description": "Todos los predios del registro 1 (R1) de insumo inicial o periódico deben estar en la tabla ILC_EstructuraNovedadNumeroPredial o ILC_Predio",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio\nR1",
+      "variables": "Numero_Predial\nNumero_Predial_Nacional\nR1",
+      "technical_rule": "Todos los predios de Registro 1 (R1) de insumo inicial o periódico deben tener asociado un registro en  ILC_EstructuraNovedadNumeroPredial.Numero_Predial o en ILC_Predio.Numero_Predial_Nacional",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.24",
+      "description": "Un número predial no puede relacionar más de una vez una novedad de \"cambio de numero predial\"",
+      "classes": "ILC_EstructuraNovedadNumeroPredial",
+      "variables": "Numero_Predial\nTipo_Novedad",
+      "technical_rule": "Un mismo ILC_EstructuraNovedadNumeroPredial.Numero_Predial no puede tener dos registros con ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad = \"Cambio_Numero_Predial_%\"",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.25",
+      "description": "Un número predial de estructura NovedadNumeroPredial no puede relacionar simultaneamente:\n(1) una novedad de englobe y una de desenglobe.\n(2) Novedades y números prediales repetidos.",
+      "classes": "ILC_EstructuraNovedadNumeroPredial",
+      "variables": "Numero_Predial\nTipo_Novedad",
+      "technical_rule": "Un mismo ILC_EstructuraNovedadNumeroPredial.Numero_Predial no puede tener registro de ILC_EstructuraNovedadNumeroPredial.Tipo.novedad = \"Desenglobe_%\" y ILC_EstructuraNovedadNumeroPredial.Tipo.novedad = \"Englobe_%\"  asociados a un mismo ILC_Predio.Numero_Predial_Nacional \nsimultaneamente.\no \nILC_EstructuraNovedadNumeroPredial.Tipo.novedad = \"Desenglobe_%\" y ILC_EstructuraNovedadNumeroPredial.Tipo.novedad = \"Desenglobe_%\" asociados a un mismo ILC_Predio.Numero_Predial_Nacional  simultaneamente\no\nILC_EstructuraNovedadNumeroPredial.Tipo.novedad = \"Englobe_%\" y ILC_EstructuraNovedadNumeroPredial.Tipo.novedad = \"Englobe_%\" asociados a un mismo ILC_Predio.Numero_Predial_Nacional  simultaneamente\no\nILC_EstructuraNovedadNumeroPredial.Tipo.novedad = \"Cancelacion%\" y ILC_EstructuraNovedadNumeroPredial.Tipo.novedad = \"Cancelacion%\" asociados a un mismo ILC_Predio.Numero_Predial_Nacional  simultaneamente\no\nILC_EstructuraNovedadNumeroPredial.Tipo.novedad = \"Predio_Nuevo\" y ILC_EstructuraNovedadNumeroPredial.Tipo.novedad = \"Predio_Nuevo\" asociados a un mismo ILC_Predio.Numero_Predial_Nacional simultaneamente",
+      "component": "Novedades",
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.26",
+      "description": "A un número predial no se le puede relacionar simultaneamente una novedad de \"Cancelación\"  y una novedad de \"Predio nuevo\".",
+      "classes": "ILC_EstructuraNovedadNumeroPredial",
+      "variables": "Numero_Predial\nTipo_Novedad",
+      "technical_rule": "Un mismo ILC_EstructuraNovedadNumeroPredial.Numero_Predial no puede tener registro de ILC_EstructuraNovedadNumeroPredial.Tipo.novedad = \"Cancelacion%\" y ILC_EstructuraNovedadNumeroPredial.Tipo.Novedad = \"Predio_Nuevo\" simultaneamente",
+      "component": "Novedades",
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.27",
+      "description": "Todas las mejoras registradas en el archivo R1 deben asociar una novedad de \"Cambio de numero predial\" o una novedad de \"Cancelación\"",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nR1",
+      "variables": "Numero_Predial\nTipo_Novedad\nR1",
+      "technical_rule": "Todo R1.Numero_Predial que en su digito 22 contenga un 5 debe tener su correspondiente ILC_EstructuraNovedadNumeroPredial.Numero_Predial y registrar ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad = \"Cambio_Numero_Predial_Mejora_a%\"\no\nILC_EstructuraNovedadNumeroPredial.Tipo_Novedad = \"Cancelacion\"",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.3",
+      "description": "El número predial de la tabla ILC_EstructuraNovedadNumeroPredial y el numero predial nacional de la tabla ILC_Predio no debe ser un predio informal",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio",
+      "variables": "Tipo_Novedad\nNumero_Predial\nNumero_Predial_Nacional",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Desenglobe_Venta_Parcial\" o \"Desenglobe_Division_Material\", entonces ILC_Predio.Numero_Predial_Nacional  y  ILC_EstructuraNovedadNumeroPredial.Numero_Predial  en la posición 22 debe ser <> '2'",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.4",
+      "description": "Cuando sea por venta parcial:\n(1) De los registros asociados al predio solamente uno debe ser el mismo número predial de la tabla LC_EstructuraNovedadNumeroPredial y numero predial de la tabla LC_Predio con novedad de desenglobe.\n(2) Los registros restantes deben ser predios nuevos y con novedad de desenglobe.",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio",
+      "variables": "Tipo_Novedad\nNumero_Predial\nNumero_Predial_Nacional",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Desenglobe_Venta_Parcial\", entonces se deben tener almenos 2 registros de esta novedad asociados al mismo ILC_EstructuraNovedadNumeroPredial.Numero_Predial  de los cuales:\n(1) Uno de los registros debe ser ILC_Predio.Numero_Predial_Nacional  = ILC_EstructuraNovedadNumeroPredial.Numero_Predial  \n(2) En los demas registros El digito 18 de ILC_Predio.Numero_Predial_Nacional debe ser \"9\" o \"A\" - \"Z\"",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.5",
+      "description": "Cuando sea por división material: \n(1) De los registros asociados al predio, solamente uno debe tener el mismo valor de numero predial anterior y resultante y la novedad asociada debe ser cancelación. \n(2) Los registros restantes deben estar asociado a desenglobe división material.",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nR1",
+      "variables": "Tipo_Novedad\nNumero_Predial\nNumero_Predial_Nacional",
+      "technical_rule": "Si el tramite corresponde a un Desenglobe por division material, entonces se deben tener almenos 3 registros de la siguiente manera:\n(1) solo un registro debe ser  ILC_Predio.Numero_Predial_Nacional = R1.Numero_Predial de insumo inicial o periódico si y solo si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad=\"Cancelacion_por_Desenglobe\"\n(2) En los demas registros El digito 18 de ILC_Predio.Numero_Predial_Nacional debe ser \"9\" o \"A\" - \"Z\" y ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad=\"Desenglobe_Division_Material\"",
+      "component": "Novedades",
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.6",
+      "description": "Los predios asociados al englobe deben tener folio de matricula",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio",
+      "variables": "Tipo_Novedad\nMatricula_Inmobiliaria",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Englobe_Nuevo_FMI\" o \"Englobe_Mantiene_FMI\", entonces  ILC_Predio.Matricula_Inmobiliaria debe estar diligenciado y <> '0'",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.7",
+      "description": "El número predial de la tabla ILC_EstructuraNovedadNumeroPredial debe existir en el registro 1 (R1) de insumo inicial o periódico",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nR1",
+      "variables": "Tipo_Novedad\nNumero_Predial",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Englobe_Nuevo_FMI\" o \"Englobe_Mantiene_FMI\", entonces \nILC_EstructuraNovedadNumeroPredial.Numero_Predial debe estar contenido en Registro 1 (R1) de insumo inicial o periódico.",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.8",
+      "description": "El número predial de la tabla ILC_EstructuraNovedadNumeroPredial y el numero predial nacional de la tabla ILC_Predio no debe ser un predio informal",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio",
+      "variables": "Tipo_Novedad\nNumero_Predial\nNumero_Predial_Nacional",
+      "technical_rule": "Si ILC_EstructuraNovedadNumeroPredial.Tipo_Novedad corresponde a \"Englobe_Nuevo_FMI\" o \"Englobe_Mantiene_FMI\", entonces ILC_Predio.Numero_Predial_Nacional  y  ILC_EstructuraNovedadNumeroPredial.Numero_Predial   en su posición 22 de ber <> '2'",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    },
+    {
+      "id": "8.9",
+      "description": "Cuando el tramite corresponde a englobe y mantiene el FMI, entonces debe tener al menos tres registros y cumplir lo siguiente: \n(1) los número prediales que se van a englobar deben existir en el R1 (Registro 1) Inicial o periódico.\n(2) Todos los predios involucrados deben registrar Englobe Mantiene FMI y relacionarse a un mismo numero predial en LC_Predio (solo uno debe relacionar el mismo numero predial)\n(3) Los predios que no relacionen el mismo numero predial en LC_Predio, deben tener un segundo registro de novedad de cancelación por englobe.",
+      "classes": "ILC_EstructuraNovedadNumeroPredial\nILC_Predio\nR1",
+      "variables": "Numero_Predial\nNumero_Predial_Nacional\nTipo_Novedad\nR1",
+      "technical_rule": "Si el tramite es \"Englobe_Mantiene_FMI\", entonces debe tener al menos 3 registros y cumplir lo siguiente:\n(1)\n ILC_EstructuraNovedadNumeroPredial.Numero_predial =ILC_Predio.Numero_Predial_Nacional y ILC_Predio.Numero_Predial_Nacional = R1.Numero_Predial. \n(2)\nTodos los predios deben relacionar ILC_EstructuraNovedadNumeroPredial.tipo_novedad = \"Englobe_Mantiene_ FMI\" y relacionar un mismo ILC_Predio.Numero_Predial_Nacional y solo uno de ellos debe registrar ILC_EstructuraNovedadNumeroPredial.Numero_Predial = ILC_Predio.Numero_Predial_Nacional\n(3) si  ILC_EstructuraNovedadNumeroPredial.Numero_Predial  <> ILC_Predio.Numero_Predial_Nacional entonces se debe tener un segundo registro donde ILC_EstructuraNovedadNumeroPredial.tipo_novedad = \"Cancelacion_por _Englobe\"",
+      "component": "Novedades", 
+      "sheet_slug": "novedades"
+    }
+  ]
+}

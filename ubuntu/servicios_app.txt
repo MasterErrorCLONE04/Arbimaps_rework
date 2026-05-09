@@ -1,0 +1,19 @@
+/etc/systemd/system/arbitriumsas-api.service.d/zzzz-force-asig.conf:Environment="PATH=/usr/local/bin:/usr/bin:/bin:/home/ubuntu/backend/venv/bin"
+/etc/systemd/system/arbitriumsas-api.service.d/zz-ili2pg-fix.conf:Environment="PATH=/usr/local/bin:/usr/bin:/bin:/home/ubuntu/backend/venv/bin"
+/etc/systemd/system/arbitriumsas-api.service.d/.#override.conf0d196229db500bd3:# WorkingDirectory=/home/ubuntu/backend
+/etc/systemd/system/arbitriumsas-api.service.d/.#override.conf0d196229db500bd3:# Environment="PATH=/home/ubuntu/backend/venv/bin"
+/etc/systemd/system/arbitriumsas-api.service.d/.#override.conf0d196229db500bd3:# ExecStart=/home/ubuntu/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+/etc/systemd/system/backend.service:WorkingDirectory=/home/ubuntu/backend
+/etc/systemd/system/backend.service:EnvironmentFile=/home/ubuntu/backend/.env
+/etc/systemd/system/backend.service:Environment="PATH=/home/ubuntu/backend/venv/bin"
+/etc/systemd/system/backend.service:ExecStart=/home/ubuntu/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+/etc/systemd/system/multi-user.target.wants/ua-reboot-cmds.service:ExecStart=/usr/bin/python3 /usr/lib/ubuntu-advantage/reboot_cmds.py
+/etc/systemd/system/multi-user.target.wants/ubuntu-advantage.service:# The python script will wait until cloud-config.service is done
+/etc/systemd/system/multi-user.target.wants/ubuntu-advantage.service:ExecStart=/usr/bin/python3 /usr/lib/ubuntu-advantage/daemon.py
+/etc/systemd/system/multi-user.target.wants/backend.service:WorkingDirectory=/home/ubuntu/backend
+/etc/systemd/system/multi-user.target.wants/backend.service:EnvironmentFile=/home/ubuntu/backend/.env
+/etc/systemd/system/multi-user.target.wants/backend.service:Environment="PATH=/home/ubuntu/backend/venv/bin"
+/etc/systemd/system/multi-user.target.wants/backend.service:ExecStart=/home/ubuntu/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000
+/etc/systemd/system/arbitriumsas-api.service:WorkingDirectory=/home/ubuntu/backend
+/etc/systemd/system/arbitriumsas-api.service:Environment="PATH=/home/ubuntu/backend/venv/bin"
+/etc/systemd/system/arbitriumsas-api.service:ExecStart=/home/ubuntu/backend/venv/bin/uvicorn main:app --host 127.0.0.1 --port 8000

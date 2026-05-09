@@ -1,0 +1,372 @@
+/* estilos principales */
+.indication-text {
+    color: #032F57;
+    font-weight: 400;
+    font-size: 1rem;
+}
+
+.title-principal {
+    color: #032F57;
+    font-size: 2.074rem;
+    font-weight: 700;
+}
+
+.parrafo-principal {
+    font-size: 1rem;
+    color: #335977;
+}
+
+.asigVerShell {
+    background-color: #F4F5F7;
+    border-radius: 24px;
+    overflow: hidden;
+}
+
+.asig-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #032F57;
+    line-height: 1.2;
+}
+
+.asig-parraf {
+    font-size: 0.833rem;
+    color: #335977;
+    line-height: 1.4;
+}
+
+.btnExcel {
+    background-color: #032F57;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    width: 182px;
+    min-height: 46px;
+    font-size: 0.833rem;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+.btnExcel:hover,
+.btnExcel:focus,
+.btnExcel:active {
+    background-color: #032F57 !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.btnExcel:disabled {
+    opacity: .65;
+    background-color: #032F57;
+    color: #FFFFFF;
+}
+
+.asig-divider {
+    border-top: 1px solid rgba(3, 47, 87, 0.18);
+}
+
+/* controles */
+.asigControlLabel {
+    color: #032F57;
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+.asigControlInput {
+    height: 44px;
+    border: 1px solid rgba(3, 47, 87, 0.16);
+    border-radius: 12px;
+    background-color: #FFFFFF;
+    color: #032F57;
+    font-size: 0.92rem;
+    font-weight: 500;
+}
+
+.asigControlInput:focus {
+    border-color: #8EB7DC;
+    box-shadow: none;
+}
+
+.asigControlInput::placeholder {
+    color: #6C87A0;
+    opacity: 1;
+}
+
+.asigRowsSelect {
+    max-width: 100px;
+}
+
+/* tabla */
+.asigTable {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: transparent;
+    --bs-table-hover-bg: transparent;
+    color: #032F57;
+    min-width: 1180px;
+    margin-bottom: 0;
+}
+
+.asigTable thead th {
+    border-bottom: 0;
+    color: #032F57;
+    font-size: 0.98rem;
+    font-weight: 800;
+    padding-top: 1.25rem;
+    padding-bottom: 1.2rem;
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.asigTable tbody td {
+    border-top: 0;
+    color: #1E496E;
+    font-size: 0.833rem;
+    font-weight: 500;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+    vertical-align: middle;
+}
+
+.asigTable tbody tr {
+    height: 72px;
+}
+
+.asig-id-cell,
+.asig-counter-cell {
+    font-size: 0.833rem;
+    font-weight: 600;
+    color: #0A3863;
+}
+
+.asig-fecha-cell,
+.asig-person-cell,
+.asig-name-cell {
+    line-height: 1.5;
+}
+
+.asig-lote-title {
+    font-size: 0.833rem;
+    font-weight: 800;
+    color: #032F57;
+    line-height: 1.35;
+    text-transform: uppercase;
+}
+
+.asig-user-sub {
+    margin-top: 2px;
+    font-size: 0.833rem;
+    font-weight: 500;
+    color: #1E496E;
+    line-height: 1.35;
+}
+
+/* icono ojo */
+.btn-eye {
+    color: #032F57 !important;
+    text-decoration: none !important;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.btn-eye:hover,
+.btn-eye:focus {
+    color: #032F57 !important;
+}
+
+/* pill estado */
+.estado-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 70px;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.estado-trabajo {
+    background-color: #8EB7DC;
+    color: #032F57;
+}
+
+/* pills contador */
+.count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    height: 28px;
+    padding: 0 0.85rem;
+    background-color: #D9DEE5;
+    border-radius: 9px;
+    font-size: 0.833rem;
+    font-weight: 800;
+    color: #032F57;
+}
+
+/* botones exportar mini */
+.btn-export-mini {
+    width: 30px;
+    height: 30px;
+    border: none !important;
+    border-radius: 6px;
+    padding: 0;
+    font-size: 0.52rem;
+    font-weight: 600;
+    color: #FFFFFF !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none !important;
+}
+
+.btn-export-dark {
+    background-color: #032F57 !important;
+}
+
+.btn-export-mid {
+    background-color: #5B7C9D !important;
+}
+
+.btn-export-light {
+    background-color: #8EB7DC !important;
+}
+
+.btn-export-mini:hover,
+.btn-export-mini:focus,
+.btn-export-mini:active {
+    color: #FFFFFF !important;
+    transform: none;
+    box-shadow: none !important;
+}
+
+/* botón quitar */
+.btn-icon-delete {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 6px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #FF1F1F;
+    font-size: 0.72rem;
+    box-shadow: none;
+}
+
+.btn-icon-delete:hover,
+.btn-icon-delete:focus,
+.btn-icon-delete:active {
+    background-color: #FF1F1F !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* footer tabla */
+.asigResultsInfo {
+    color: #032F57;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* paginación */
+.asigPagination .page-item {
+    margin: 0 3px;
+}
+
+.asigPagination .page-link {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 6px !important;
+    border: none;
+    background-color: #032F57;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    box-shadow: none;
+}
+
+.asigPagination .page-item.active .page-link {
+    background-color: #032F57;
+    color: #FFFFFF;
+}
+
+.asigPagination .page-item.disabled .page-link {
+    opacity: .55;
+    background-color: #032F57;
+    color: #FFFFFF;
+}
+
+.asigPagination .page-link:hover,
+.asigPagination .page-link:focus {
+    background-color: #032F57;
+    color: #FFFFFF;
+    box-shadow: none;
+}
+
+.asigPagination .asig-page-dots {
+    pointer-events: none;
+    background-color: #032F57;
+    color: #FFFFFF;
+    opacity: 0.75;
+}
+
+/* estados vacíos */
+#asigVerEmpty,
+#asigVerError {
+    font-size: 0.95rem;
+    color: #335977;
+}
+
+/* responsive */
+@media (max-width: 1199.98px) {
+    .asigVerPanel {
+        padding: 1.5rem !important;
+    }
+
+    .asigTable {
+        min-width: 1120px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .title-principal {
+        font-size: 1.6rem;
+    }
+
+    .parrafo-principal,
+    .indication-text {
+        font-size: 0.92rem;
+    }
+
+    .btnExcel {
+        width: 100%;
+    }
+
+    .asigTableFooter {
+        align-items: stretch !important;
+    }
+
+    .asigPagination {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .asigRowsSelect {
+        max-width: 100%;
+    }
+}

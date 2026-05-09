@@ -1,0 +1,3466 @@
+<div class="module-information-predio">
+  <div class="container-header">
+    <div class="section-information-one">
+      <small class="text-indication d-block ms-2">CONSULTAR PREDIO > DETALLE DEL PREDIO</small>
+      <small class="text-principal d-block fw-bold">Información predio</small>
+    </div>
+  </div>
+
+  <div class="container-content">
+    <div class="container-fluid p-0 m-0 mt-4">
+      <div class="row g-3 align-items-stretch">
+
+        <!-- Columna izquierda -->
+        <div class="col-12 col-xl-8">
+          <div class="row g-3 h-100">
+
+            <!-- Tarjeta superior izquierda -->
+            <div class="col-12">
+              <div class="card border rounded-4 shadow-sm h-100 tarjeta-predio">
+                <div class="card-body d-flex flex-column gap-3">
+
+                  <!-- encabezado -->
+                  <div class="row g-3 align-items-start">
+                    <div class="col-12 col-md">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="section-icons mb-0">
+                          <div class="icons-bg">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                          </div>
+                        </div>
+                        <div class="section-title-card mb-0 fw-bold">Resumen predio</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-auto">
+                      <div class="mostrar-id-predio text-white text-center">
+                        <small class="text-white d-block text-id-predio">ID Operación:</small>
+                        <div id="resumenPredioId" class="num-id-predio">
+                          {{ predio_id if predio_id is defined else "" }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- contenido NPN + resumen -->
+                  <div class="row g-3 align-items-center">
+
+                    <!-- NPN -->
+                    <div class="col-12 col-lg-4">
+                      <div class="h-100 pe-lg-3 border-lg-end">
+                        <small class="d-block fw-semibold text-label-npn">Numero predial:</small>
+                        <div id="resumenPredioNpn" class="result-npn">
+                          {{ npn if npn is defined else "" }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- métricas -->
+                    <div class="col-12 col-lg-8">
+                      <div class="row g-2">
+
+                        <div class="col-12 col-sm-6 col-xl-4">
+                          <div class="d-flex align-items-center gap-2 resumen-interesado p-2 h-100">
+                            <div
+                              class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle">
+                              <i class="fa-solid fa-users-line"></i>
+                            </div>
+                            <div class="d-flex flex-column lh-sm">
+                              <small class="resumen-item-label">Interesados</small>
+                              <div id="resumenPredioInteresados" class="resumen-item-value">0</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6 col-xl-4">
+                          <div class="d-flex align-items-center gap-2 resumen-interesado p-2 h-100">
+                            <div
+                              class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle">
+                              <i class="fa-solid fa-building-circle-check"></i>
+                            </div>
+                            <div class="d-flex flex-column lh-sm">
+                              <small class="resumen-item-label">Construcciones</small>
+                              <div id="resumenPredioConstrucciones" class="resumen-item-value">0</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6 col-xl-4">
+                          <div class="d-flex align-items-center gap-2 resumen-interesado p-2 h-100">
+                            <div
+                              class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle">
+                              <i class="fa-solid fa-house-chimney"></i>
+                            </div>
+                            <div class="d-flex flex-column lh-sm">
+                              <small class="resumen-item-label">U. Construcción</small>
+                              <div id="resumenPredioUnidadConstruccion" class="resumen-item-value">0</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tarjeta inferior 1 -->
+            <div class="col-12">
+              <div class="card border rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
+                <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 mt-2">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
+                      <i class="fa-solid fa-house-chimney icono-predio"></i>
+                    </div>
+                    <div class="title-part-predio mb-0">
+                      Información tabla predio
+                    </div>
+                  </div>
+                  <button type="button"
+                    class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+                    data-bs-toggle="modal" data-bs-target="#modalInformacionPredio"
+                    aria-label="Ver información tabla predio">
+                    <i class="fa-regular fa-eye eye-icon-predio"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tarjeta inferior 2 -->
+            <div class="col-12">
+              <div class="card border rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
+                <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 mt-2">
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
+                      <i class="fa-solid fa-scale-unbalanced"></i>
+                    </div>
+                    <div class="title-part-predio mb-0">
+                      Información Jurídica
+                    </div>
+                  </div>
+
+                  <button type="button"
+                    class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+                    data-bs-toggle="modal" data-bs-target="#modalInformacionAdicional"
+                    aria-label="Ver información adicional">
+                    <i class="fa-regular fa-eye eye-icon-predio"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Columna derecha -->
+        <div class="col-12 col-xl-4">
+          <div class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio h-100 d-flex flex-column">
+            <div class="card-header border-0 p-0 rounded-top-4">
+              <div class="d-flex align-items-start gap-2 px-3 py-2">
+                <span class="lh-1 mt-2"><i class="bi bi-crosshair"></i></span>
+                <div class="lh-sm">
+                  <div class="fw-bold mb-0 text-visor">Visor predio</div>
+                  <small class="text-muted d-block text-visualizacion">Visualización espacial del predio</small>
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1 visor-mapa-top">
+              <div id="map" class="w-100 h-100 m-0 p-0"></div>
+              <div
+                class="vp-map-tools position-absolute top-0 end-0 mt-1 me-1 d-flex flex-column gap-1 align-items-end">
+                <button type="button" class="vp-map-btn btn btn-light btn-sm px-2 py-1 w-auto" id="btnZoomPredio">
+                  Zoom predio
+                </button>
+                <button type="button" class="vp-map-btn btn btn-light btn-sm px-2 py-1 w-auto" id="btnZoomProyecto">
+                  Ver proyecto
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección inferior -->
+        <div class="col-12 seccion-inferior-content">
+          <div class="row g-2">
+
+            <!-- Tarjeta: Información de construcciones -->
+            <div class="col-12 col-md-6 d-flex">
+              <div class="card border rounded-4 shadow-sm w-100 d-flex flex-column tarjeta-inferior-base">
+                <div class="card-body d-flex flex-column">
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <div class="d-flex align-items-start gap-2 flex-grow-1">
+                      <div
+                        class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 table-icon-circle">
+                        <i class="fa-solid fa-building-circle-check"></i>
+                      </div>
+                      <div class="d-flex flex-column lh-sm">
+                        <div class="fw-bold table-item-label">Información de construcciones</div>
+                        <div class="table-item-text">
+                          Clic en ver detalle para consultar las unidades de construcción asociadas
+                        </div>
+                      </div>
+                    </div>
+                    <button class="btn btn-sm border-0 shadow-none ms-2" type="button" data-bs-toggle="collapse"
+                      data-bs-target="#detalleConstrucciones" aria-expanded="false"
+                      aria-controls="detalleConstrucciones"
+                      onclick="this.querySelector('i').classList.toggle('rotate-180')">
+                      <i class="fa-solid fa-chevron-down transition"></i>
+                    </button>
+                  </div>
+
+                  <div class="collapse mt-2" id="detalleConstrucciones">
+                    <div class="tabla-construcciones-wrap mt-3 flex-grow-1">
+                      <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+                        <table class="table tabla-construcciones mb-0" id="tblConsCollapse" style="display:none;">
+                          <thead>
+                            <tr>
+                              <th class="text-center">Ver</th>
+                              <th class="text-center">Identificador</th>
+                              <th class="text-center">Tipo de construcción</th>
+                              <th class="text-center">Predio</th>
+                              <th class="text-center">U.C asociada</th>
+                            </tr>
+                          </thead>
+                          <tbody id="tbodyConsCollapse"></tbody>
+                        </table>
+                        <div id="emptyConsCollapse" class="small text-muted px-4 py-3" style="display:none;">
+                          No hay construcciones asociadas.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tarjeta: Unidad de construcción -->
+            <div class="col-12 col-md-6 d-flex">
+              <div class="card border rounded-4 shadow-sm w-100 d-flex flex-column tarjeta-inferior-base"
+                id="cardUnidadConstruccion">
+                <div class="card-body d-flex flex-column">
+                  <div class="encabezado-unidad-construccion">
+                    <div class="titulo-unidad-construccion">
+                      <div
+                        class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 table-icon-circle">
+                        <i class="fa-solid fa-house-chimney"></i>
+                      </div>
+                      <div>
+                        <div class="fw-bold table-item-label mb-0">Unidad de construcción</div>
+                      </div>
+                    </div>
+
+                    <div id="mensajeSinSeleccionUc" class="mensaje-sin-seleccion-uc-wrap">
+                      <div class="alert alert-information border-0 rounded-4 shadow-sm mensaje-seleccion-uc"
+                        role="alert"
+                        title="Selecciona una construcción para ver las unidades de construcción asociadas.">
+                        Selecciona una construcción para mostrar información
+                      </div>
+                    </div>
+
+                    <div id="contenedorBadgesUc" class="contenedor-badges-uc d-none">
+                      <div id="badgeConstruccionActiva" class="badge-construccion-activa d-none">
+                        <div class="badge-construccion-label">Construcción</div>
+                        <div id="badgeConstruccionValor" class="badge-construccion-valor"></div>
+                      </div>
+                      <div id="badgeUcActiva" class="badge-uc-activa d-none">
+                        <div id="badgeUcValor" class="badge-uc-valor"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="collapse mt-3" id="detalleUnidadConstruccionCard">
+                    <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+                      <table class="table table-hover mb-0 tabla-unidad-construccion align-middle"
+                        id="tblUnidadConstruccionCard">
+                        <thead class="table-light">
+                          <tr>
+                            <th class="text-center" style="width: 60px;">Ver</th>
+                            <th class="text-center">Planta ubicación</th>
+                            <th class="text-center" style="width: 90px;">Altura [m]</th>
+                            <th class="text-center">Tipo de U.C</th>
+                            <th class="text-center">Identificador</th>
+                          </tr>
+                        </thead>
+                        <tbody id="tbodyUnidadConstruccionCard"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- modal información predio -->
+<div class="modal fade" id="modalInformacionPredio" tabindex="-1" aria-labelledby="modalInformacionPredioLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-lg-down">
+    <div class="modal-content rounded-4 border-0 shadow modal-predio-content">
+
+      <div class="modal-header border-0 d-flex justify-content-between align-items-center"
+        style="background-color: #fff;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
+            <i class="fa-solid fa-house-chimney icono-predio"></i>
+          </div>
+          <div class="title-part-predio mb-0">
+            Información tabla predio
+          </div>
+        </div>
+
+        <button type="button"
+          class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+          data-bs-dismiss="modal" aria-label="Cerrar información tabla predio">
+          <i class="fa-regular fa-eye-slash eye-icon-predio"></i>
+        </button>
+      </div>
+
+      <div class="modal-body modal-predio-body">
+        <div class="container-fluid p-0">
+          <div class="row g-3 g-xl-0 align-items-stretch modal-predio-row">
+
+            <!-- tarjeta izquierda -->
+            <div class="col-12 col-xl">
+              <div class="card border-0 rounded-4 shadow-none h-100 tarjeta-modal-predio">
+                <div class="card-body p-0 m-0">
+                  <div class="part-ge w-50 p-2">
+                    <div class="tit-ge text-center fw-bold">Información general del predio</div>
+                  </div>
+                  <div class="row g-4 tarjet-row-pot ms-2 mt-1">
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Número predial anterior</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Código Orip</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Matrícula Inmobiliaria</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row g-4 tarjet-row-pot ms-2 mt-1">
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Estado de FMI</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Fecha de apertura de FMI</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Fecha de inscripción catastral</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row g-4 tarjet-row-pot ms-2 mt-1">
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Vigencia de actualización</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Área registral (m2)</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Área catastral de terreno (m2)</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row g-4 tarjet-row-pot ms-2 mt-1">
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Coeficiente de copropiedad</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Área de coeficiente de copropiedad</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Condición del predio</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row g-4 tarjet-row-pot ms-2 mt-1 mb-3">
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Tipo de predio</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column">
+                        <div class="fw-bold text-start tex-num">Destinación económica</div>
+                        <div class="text-start">----</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- separador -->
+            <div class="col-12 col-xl-auto d-none d-xl-flex justify-content-center px-3">
+              <div class="vr h-100 modal-predio-divider"></div>
+            </div>
+
+            <!-- tarjeta derecha -->
+            <div class="col-12 col-xl-auto">
+              <div class="card border-0 rounded-4 shadow-none h-100 tarjeta-modal-visita">
+                <div class="card-body p-0 m-0 d-flex flex-column align-items-start">
+                  <div class="part-juy p-3 d-flex align-items-center gap-2 w-100" data-bs-toggle="collapse"
+                    data-bs-target="#contenidoVisita" aria-expanded="false" aria-controls="contenidoVisita"
+                    onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-visita').classList.toggle('rotate-180')"
+                    style="cursor: pointer;">
+                    <i class="fa-solid fa-door-open text-white fs-5"></i>
+                    <div class="tit-iops fw-semibold">Información de la visita</div>
+                    <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-visita"></i>
+                  </div>
+
+                  <div class="collapse w-100" id="contenidoVisita">
+                    <div class="contenido-visita p-1">
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-7">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Fecha de visita predial</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Correo electrónico</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-7">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Resultado de visita predial</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Celular</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-7">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Tipo de documento de quien atendió</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Domicilio de notificaciones</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-7">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Número de documento de quien atendió</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">¿Autoriza notificaciones?</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-7">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Nombres y apellidos de quien atendió</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Tipo de captura</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita ms-3 mt-1">
+                        <div class="col-12 col-md-7">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Número de documento de quien atendió</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="part-juy p-3 d-flex align-items-center gap-2 w-100 mt-3" data-bs-toggle="collapse"
+                    data-bs-target="#contenidoJuridico" aria-expanded="false" aria-controls="contenidoJuridico"
+                    onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-juridico').classList.toggle('rotate-180')"
+                    style="cursor: pointer;">
+
+                    <i class="fa-solid fa-scale-balanced text-white fs-5"></i>
+                    <div class="tit-iops fw-semibold">Información jurídica predio</div>
+                    <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-juridico"></i>
+                  </div>
+
+                  <div class="collapse w-100" id="contenidoJuridico">
+                    <div class="contenido-visita p-1">
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Nombre</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Beneficio de comunidades indígenas</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Predio Matriz</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Control de calidad</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Comodato</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Cabida y Linderos</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Observación jurídica</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">¿Validó control de calidad?</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- modal información adicional -->
+<div class="modal fade" id="modalInformacionAdicional" tabindex="-1" aria-labelledby="modalInformacionAdicionalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-ancho-medio">
+    <div class="modal-content rounded-4 border-0 shadow modal-predio-content">
+      <div class="modal-header border-0 d-flex justify-content-between align-items-center"
+        style="background-color: #fff;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
+            <i class="fa-solid fa-circle-info icono-predio"></i>
+          </div>
+          <div class="title-part-predio mb-0">
+            Información adicional
+          </div>
+        </div>
+        <button type="button"
+          class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+          data-bs-dismiss="modal" aria-label="Cerrar información adicional">
+          <i class="fa-regular fa-eye-slash eye-icon-predio"></i>
+        </button>
+      </div>
+
+      <div class="modal-body modal-predio-body">
+        <div class="container-fluid p-0">
+          <div class="card border-0 rounded-4 shadow-none tarjeta-modal-predio">
+            <div class="card-body p-0 m-0">
+
+
+              <div class="table-responsive tabla-modal-interesados-wrap">
+                <table class="table align-middle mb-0 tabla-modal-interesados">
+                  <thead>
+                    <tr>
+                      <th>Interesado</th>
+                      <th>Sexo</th>
+                      <th>Cuota participación</th>
+                      <th>Tipo de persona</th>
+                      <th class="text-center">ver detalles</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyModalInteresados"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="offcanvas offcanvas-end m-3 rounded-4" tabindex="-1" id="panelDerechoPredio"
+  aria-labelledby="panelDerechoPredioLabel" style="--bs-offcanvas-width: 75vw;">
+
+  <!-- header -->
+  <div class="offcanvas-header-one border-0 p-4">
+    <div class="d-flex align-items-center justify-content-between w-100 gap-3 flex-wrap">
+      <button type="button" class="d-inline-flex align-items-center gap-2 border-0 px-3 py-2 text-white boton-jdk"
+        data-bs-dismiss="offcanvas" aria-label="Cerrar panel lateral" style="background-color: #032F57;">
+        <i class="fa-solid fa-arrow-left-long"></i>
+        <span>Volver</span>
+      </button>
+
+      <div class="d-flex align-items-center gap-3 flex-grow-1 justify-content-end">
+        <div id="panelDerechoPredioLabel" class="title-part-predio mb-0 text-center">
+          Información de derechos y fuente administrativa
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- body -->
+  <div class="offcanvas-body p-0">
+
+    <!-- bloque usuario -->
+    <div class="open-modal p-3 d-flex align-items-center gap-3">
+      <div class="icono-usuario-panel ms-3">
+        <i class="fa-solid fa-user"></i>
+      </div>
+      <div class="text-white">
+        <div id="nombreInteresadoPanel" class="text-white nombre-interesado-panel"></div>
+      </div>
+    </div>
+
+    <!-- contenido -->
+    <div class="container-fluid p-1 p-md-4">
+      <div class="row g-4 align-items-start">
+        <!-- encabezado secciones -->
+        <div class="content-hearder-ops py-4 overflow-hidden">
+          <div class="container-fluid px-0">
+            <div class="row align-items-center text-center gx-0 mx-0">
+              <div class="col-12 col-md-6">
+                <div class="fw-bold text-mdlo">Información de Derechos</div>
+              </div>
+
+              <div class="d-none d-md-flex col-md-1 justify-content-center">
+                <div class="vr opacity-100 h-100"></div>
+              </div>
+
+              <div class="col-12 col-md-5 mt-3 mt-md-0">
+                <div class="fw-bold text-mdlo">Información de fuente administrativa</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- columna izquierda -->
+        <div class="col-12 col-md-6">
+          <div class="card border-0 rounded-4 h-100">
+            <div class="card-body">
+
+              <div class="row g-4">
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Fecha inicio de tenencia</div>
+                    <div class="text-end">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Tipo de derecho</div>
+                    <div class="text-end">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Posesión ancestral o tradicional</div>
+                    <div class="text-end">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="border rounded-4 p-3 p-md-4">
+                    <div class="text-start tex-num mb-4">Descripción</div>
+
+                    <div class="d-flex justify-content-center align-items-center text-center py-4">
+                      <div class="fw-bold text-num">----</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- columna derecha -->
+        <div class="col-12 col-md-6">
+          <div class="card border-0 rounded-4 h-100">
+            <div class="card-body">
+
+              <div class="row g-4">
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Tipo de fuente administrativa</div>
+                    <div class="text-end">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Número fuente</div>
+                    <div class="text-end">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Ente Emisor</div>
+                    <div class="text-end">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Oficina de origen</div>
+                    <div class="text-end">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Nombre (Escritura)</div>
+                    <div class="text-end">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Ciudad de origen</div>
+                    <div class="text-end">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Estado disponibilidad</div>
+                    <div class="text-end">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="border rounded-4 p-3 p-md-4">
+                    <div class="text-start tex-num mb-4">Descripción de fuente</div>
+
+                    <div class="d-flex justify-content-center align-items-center text-center py-4">
+                      <div class="fw-bold text-num">----</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="border rounded-4 p-3 p-md-4">
+                    <div class="text-start tex-num mb-4">Observación de la fuente administrativa</div>
+
+                    <div class="d-flex justify-content-center align-items-center text-center py-4">
+                      <div class="fw-bold text-num">----</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OFFCANVAS U.C. CONVENCIONAL -->
+<div class="offcanvas offcanvas-end m-3 rounded-4" tabindex="-1" id="offcanvasUcConvencional"
+  aria-labelledby="offcanvasUcConvencionalLabel" style="--bs-offcanvas-width: 850px;">
+
+  <div class="offcanvas-header border-0 p-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icono-offcanvas-uc">
+        <i class="fa-solid fa-house-chimney"></i>
+      </div>
+      <div>
+        <div id="offcanvasUcConvencionalLabel" class="titulo-offcanvas-uc">
+          ID Unidad Construcción
+        </div>
+        <div class="subtitulo-offcanvas-uc p-1 text-center">
+          b
+        </div>
+      </div>
+    </div>
+
+    <button type="button"
+      class="d-inline-flex align-items-center gap-2 border-0 px-3 py-2 boton-jdk btn-volver-offcanvas-uc"
+      data-bs-dismiss="offcanvas" aria-label="Volver">
+      <i class="fa-solid fa-arrow-left-long"></i>
+      <span>Volver</span>
+    </button>
+  </div>
+
+  <div class="offcanvas-body p-4">
+    <div class="card border-0 rounded-4 card-offcanvas-uc">
+      <div class="card-body p-0 w-100">
+
+        <!-- Tarjeta desplegable -->
+        <div class="uc-accordion-card">
+          <button type="button"
+            class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
+            data-bs-toggle="collapse" data-bs-target="#contenidoUcConvencional" aria-expanded="false"
+            aria-controls="contenidoUcConvencional"
+            onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
+            <span class="uc-accordion-title">Característica de la unidad de construcción</span>
+            <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
+          </button>
+
+          <div class="collapse" id="contenidoUcConvencional">
+            <div class="uc-accordion-body">
+              <div class="row g-4">
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Tipo de calificación</div>
+                    <div class="uc-info-value" id="convencionalTipoCalificacion">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Tipo de unidad de construcción</div>
+                    <div class="uc-info-value" id="convencionalTipoUnidad">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Uso</div>
+                    <div class="uc-info-value" id="convencionalUso">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Total de plantas</div>
+                    <div class="uc-info-value" id="convencionalTotalPlantas">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Áño de construcción</div>
+                    <div class="uc-info-value" id="convencionalAnioConstruccion">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Área de construida [m2]</div>
+                    <div class="uc-info-value" id="convencionalAreaConstruida">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Área privada construida [m2]</div>
+                    <div class="uc-info-value" id="convencionalAreaPrivadaConstruida">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Usos tradicionales culturales</div>
+                    <div class="uc-info-value" id="convencionalUsosTradicionales">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="border rounded-4 overflow-hidden bg-white">
+                    <div class="px-3 py-3 border-bottom uc-info-label bg-light">
+                      Observaciones
+                    </div>
+                    <div class="px-3 py-4 text-start uc-info-value fw-normal" id="convencionalObservaciones">
+                      ----
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="uc-accordion-card mt-2">
+          <button type="button"
+            class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
+            data-bs-toggle="collapse" data-bs-target="#contenidoUcConvencionalDos" aria-expanded="false"
+            aria-controls="contenidoUcConvencionalDos"
+            onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
+            <span class="uc-accordion-title">Califiación unidad de construcción</span>
+            <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
+          </button>
+
+          <div class="collapse" id="contenidoUcConvencionalDos">
+            <div class="uc-accordion-body">
+              <div class="uc-calificacion-wrap">
+
+                <!-- fila superior -->
+                <div class="uc-calificacion-top-row">
+                  <div class="uc-calificacion-top-label">Tipo a calificar</div>
+                  <div class="uc-calificacion-top-value" id="convencionalTipoCalificar">----</div>
+                </div>
+
+                <!-- SECCI?N: ESTRUCTURA -->
+                <div class="uc-section-title">Estructura</div>
+
+                <div class="uc-two-col-grid">
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Armazón</div>
+                    <div class="uc-info-value" id="convencionalArmazon">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Muros</div>
+                    <div class="uc-info-value" id="convencionalMuros">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Cubierta</div>
+                    <div class="uc-info-value" id="convencionalCubierta">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Conservación de estructura</div>
+                    <div class="uc-info-value" id="convencionalConservacionEstructura">----</div>
+                  </div>
+                </div>
+
+                <!-- SECCI?N: ACABADOS -->
+                <div class="uc-section-title">Acabados principales</div>
+
+                <div class="uc-two-col-grid">
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Cubrimientos de muros</div>
+                    <div class="uc-info-value" id="convencionalCubrimientoMuros">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Fachada</div>
+                    <div class="uc-info-value" id="convencionalFachada">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Piso</div>
+                    <div class="uc-info-value" id="convencionalPiso">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Conservación de acabados</div>
+                    <div class="uc-info-value" id="convencionalConservacionAcabados">----</div>
+                  </div>
+                </div>
+
+                <!-- SECCI?N: BA?OS -->
+                <div class="uc-section-title">Información de baños</div>
+
+                <div class="uc-two-col-grid">
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Tamaño de baño</div>
+                    <div class="uc-info-value" id="convencionalTamanioBanio">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Enchape de baño</div>
+                    <div class="uc-info-value" id="convencionalEnchapeBanio">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Mobiliario de baño</div>
+                    <div class="uc-info-value" id="convencionalMobiliarioBanio">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Conservación de baño</div>
+                    <div class="uc-info-value" id="convencionalConservacionBanio">----</div>
+                  </div>
+                </div>
+
+                <!-- SECCI?N: COCINAS -->
+                <div class="uc-section-title">Información de cocinas</div>
+
+                <div class="uc-two-col-grid">
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Tamaño de cocina</div>
+                    <div class="uc-info-value" id="convencionalTamanioCocina">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Enchape de cocina</div>
+                    <div class="uc-info-value" id="convencionalEnchapeCocina">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Mobiliario de cocina</div>
+                    <div class="uc-info-value" id="convencionalMobiliarioCocina">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Conservación de cocina</div>
+                    <div class="uc-info-value" id="convencionalConservacionCocina">----</div>
+                  </div>
+                </div>
+
+                <!-- SECCI?N: CERCHAS -->
+                <div class="uc-section-title">Cerchas</div>
+
+                <div class="uc-two-col-grid">
+                  <div class="uc-pair">
+                    <div class="uc-info-label">Cerchas de complemento industrial</div>
+                    <div class="uc-info-value" id="convencionalCerchas">----</div>
+                  </div>
+
+                  <div class="uc-pair">
+                    <div class="uc-info-label">¿La altura de las cerchas es superior a 6m?</div>
+                    <div class="uc-info-value">
+                      <input class="form-check-input mt-0" type="checkbox" id="convencionalAlturaCerchas" disabled>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- TARJETAS RESUMEN -->
+                <div class="row g-3 mt-1">
+                  <div class="col-12 col-md-4">
+                    <div class="uc-mini-card">
+                      <div class="uc-mini-card-label">Total habitaciones</div>
+                      <div class="uc-mini-card-value">1</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-md-4">
+                    <div class="uc-mini-card">
+                      <div class="uc-mini-card-label">Total baños</div>
+                      <div class="uc-mini-card-value">1</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-md-4">
+                    <div class="uc-mini-card">
+                      <div class="uc-mini-card-label">Total locales</div>
+                      <div class="uc-mini-card-value">1</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- OBSERVACIONES -->
+                <div class="mt-3">
+                  <div class="border rounded-4 overflow-hidden bg-white">
+                    <div class="px-3 py-3 border-bottom uc-info-label bg-light">
+                      Observaciones
+                    </div>
+                    <div class="px-3 py-4 text-start uc-info-value fw-normal" style="min-height: 95px;"
+                      id="convencionalObsCalificacion">
+                      ----
+                    </div>
+                  </div>
+                </div>
+
+                <!-- TOTAL CALIFICACI?N -->
+                <div class="d-flex justify-content-end mt-3">
+                  <div class="uc-total-card">
+                    <span>Total calificación</span>
+                    <span id="convencionalTotalCalificacion">----</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OFFCANVAS U.C. NO CONVENCIONAL -->
+<div class="offcanvas offcanvas-end m-3 rounded-4" tabindex="-1" id="offcanvasUcNoConvencional"
+  aria-labelledby="offcanvasUcNoConvencionalLabel" style="--bs-offcanvas-width: 850px;">
+
+  <div class="offcanvas-header border-0 p-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icono-offcanvas-uc">
+        <i class="fa-solid fa-house-chimney"></i>
+      </div>
+      <div>
+        <div id="offcanvasUcNoConvencionalLabel" class="titulo-offcanvas-uc">
+          ID Unidad Construcción
+        </div>
+        <div class="subtitulo-offcanvas-uc p-1 text-center">
+          a
+        </div>
+      </div>
+    </div>
+
+    <button type="button"
+      class="d-inline-flex align-items-center gap-2 border-0 px-3 py-2 boton-jdk btn-volver-offcanvas-uc"
+      data-bs-dismiss="offcanvas" aria-label="Volver">
+      <i class="fa-solid fa-arrow-left-long"></i>
+      <span>Volver</span>
+    </button>
+  </div>
+
+  <div class="offcanvas-body p-4">
+    <div class="card border-0 rounded-4 card-offcanvas-uc">
+      <div class="card-body p-0 w-100">
+
+        <!-- TARJETA 1 -->
+        <div class="uc-accordion-card">
+          <button type="button"
+            class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
+            data-bs-toggle="collapse" data-bs-target="#contenidoUcNoConvencional" aria-expanded="false"
+            aria-controls="contenidoUcNoConvencional"
+            onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
+            <span class="uc-accordion-title">Característica de la unidad de construcción</span>
+            <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
+          </button>
+
+          <div class="collapse" id="contenidoUcNoConvencional">
+            <div class="uc-accordion-body">
+              <div class="row g-4">
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Tipo de calificación</div>
+                    <div class="uc-info-value">No Convencional</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Tipo de unidad de construcción</div>
+                    <div class="uc-info-value">Anexo</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Uso</div>
+                    <div class="uc-info-value">Albercas - Bañaderas</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Total de plantas</div>
+                    <div class="uc-info-value">1</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Año de construcción</div>
+                    <div class="uc-info-value">2015</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Área de construida [m2]</div>
+                    <div class="uc-info-value">5</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Área privada construida [m2]</div>
+                    <div class="uc-info-value">2</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Usos tradicionales culturales</div>
+                    <div class="uc-info-value">Null</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="border rounded-4 overflow-hidden bg-white">
+                    <div class="px-3 py-3 border-bottom uc-info-label bg-light">
+                      Observaciones
+                    </div>
+                    <div class="px-3 py-4 text-start uc-info-value fw-normal">
+                      La alberca se encuentra en muy buenas condiciones tiene enchape laminado en Oro.
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TARJETA 2 -->
+        <div class="uc-accordion-card mt-2">
+          <button type="button"
+            class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
+            data-bs-toggle="collapse" data-bs-target="#contenidoUcNoConvencionalDos" aria-expanded="false"
+            aria-controls="contenidoUcNoConvencionalDos"
+            onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
+            <span class="uc-accordion-title">Calificación unidad de construcción</span>
+            <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
+          </button>
+
+          <div class="collapse" id="contenidoUcNoConvencionalDos">
+            <div class="uc-accordion-body">
+              <div class="row g-4">
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Tipo de Anexo</div>
+                    <div class="uc-info-value">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">conservación del anexo</div>
+                    <div class="uc-info-value">----</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OFFCANVAS U.C. POR TIPOLOGÍA -->
+<div class="offcanvas offcanvas-end m-3 rounded-4" tabindex="-1" id="offcanvasUcTipologia"
+  aria-labelledby="offcanvasUcTipologiaLabel" style="--bs-offcanvas-width: 850px;">
+
+  <div class="offcanvas-header border-0 p-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icono-offcanvas-uc">
+        <i class="fa-solid fa-house-chimney"></i>
+      </div>
+      <div>
+        <div id="offcanvasUcTipologiaLabel" class="titulo-offcanvas-uc">
+          ID Unidad Construcción
+        </div>
+        <div class="subtitulo-offcanvas-uc p-1 text-center">
+          c
+        </div>
+      </div>
+    </div>
+
+    <button type="button"
+      class="d-inline-flex align-items-center gap-2 border-0 px-3 py-2 boton-jdk btn-volver-offcanvas-uc"
+      data-bs-dismiss="offcanvas" aria-label="Volver">
+      <i class="fa-solid fa-arrow-left-long"></i>
+      <span>Volver</span>
+    </button>
+  </div>
+
+  <div class="offcanvas-body p-4">
+    <div class="card border-0 rounded-4 card-offcanvas-uc">
+      <div class="card-body p-0 w-100">
+
+        <!-- TARJETA 1 -->
+        <div class="uc-accordion-card">
+          <button type="button"
+            class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
+            data-bs-toggle="collapse" data-bs-target="#contenidoUcTipologia" aria-expanded="false"
+            aria-controls="contenidoUcTipologia"
+            onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
+            <span class="uc-accordion-title">Característica de la unidad de construcción</span>
+            <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
+          </button>
+
+          <div class="collapse" id="contenidoUcTipologia">
+            <div class="uc-accordion-body">
+              <div class="row g-4">
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Tipo de calificación</div>
+                    <div class="uc-info-value">Por Tipología</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Tipo de unidad de construcción</div>
+                    <div class="uc-info-value">Anexo</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Uso</div>
+                    <div class="uc-info-value">Albercas - Bañaderas</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Total de plantas</div>
+                    <div class="uc-info-value">1</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Año de construcción</div>
+                    <div class="uc-info-value">2015</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Área de construida [m2]</div>
+                    <div class="uc-info-value">5</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Área privada construida [m2]</div>
+                    <div class="uc-info-value">2</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Usos tradicionales culturales</div>
+                    <div class="uc-info-value">Null</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="border rounded-4 overflow-hidden bg-white">
+                    <div class="px-3 py-3 border-bottom uc-info-label bg-light">
+                      Observaciones
+                    </div>
+                    <div class="px-3 py-4 text-start uc-info-value fw-normal">
+                      La alberca se encuentra en muy buenas condiciones tiene enchape laminado en Oro.
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TARJETA 2 -->
+        <div class="uc-accordion-card mt-2">
+          <button type="button"
+            class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
+            data-bs-toggle="collapse" data-bs-target="#contenidoUcTipologiaDos" aria-expanded="false"
+            aria-controls="contenidoUcTipologiaDos"
+            onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
+            <span class="uc-accordion-title">Calificación unidad de construcción</span>
+            <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
+          </button>
+
+          <div class="collapse" id="contenidoUcTipologiaDos">
+            <div class="uc-accordion-body">
+              <div class="row g-4">
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Tipo Tipología</div>
+                    <div class="uc-info-value">Residencial sencilla tipo 1</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">conservación de tipología</div>
+                    <div class="uc-info-value">Muy bueno - 1.5</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ol@9.2.4/dist/ol.js"></script>
+
+<script>
+  const rp = "{{ rp }}";
+  const predioId = {{ predio_id| int if predio_id is defined else 'null' }};
+
+  let mapInstance;
+  let highlightLayer;
+  let unitsLayer;
+  let currentTerrenoFeature = null;
+  let addressesLayer;
+  let selectedUnitLayer;
+  let unidadesData = [];
+  const unidadDetalleCache = new Map();
+  let unidadDetalleActual = null;
+  let interesadosModalData = [];
+  let volverAModalInformacionAdicional = false;
+
+  proj4.defs(
+    "EPSG:9377",
+    "+proj=tmerc +lat_0=4 +lon_0=-73 +k=0.9992 +x_0=5000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
+  );
+  ol.proj.proj4.register(proj4);
+
+  const projection = ol.proj.get("EPSG:9377");
+  const DEFAULT_PROJECT_EXTENT = [4508003.5, 1760960.25, 4532217.0, 1793534.0];
+  let projectExtent = [...DEFAULT_PROJECT_EXTENT];
+  const WMS_URL = `${rp}/proxy/wms`;
+  const GEOSERVER_LAYERS = String(
+    {{ visor_geoserver_layers | default('A_Base_Principal:Base_Principal') | tojson }}
+  )
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  function isValidExtent(extent) {
+    if (!Array.isArray(extent) || extent.length !== 4) return false;
+    const values = extent.map((v) => Number(v));
+    return (
+      values.every((v) => Number.isFinite(v)) &&
+      values[0] < values[2] &&
+      values[1] < values[3]
+    );
+  }
+
+  async function loadProjectExtent() {
+    try {
+      const r = await fetch(`${rp}/visor/project-extent`);
+      if (!r.ok) return;
+      const data = await r.json();
+      if (!isValidExtent(data.extent)) return;
+
+      projectExtent = data.extent.map((v) => Number(v));
+      if (mapInstance) {
+        mapInstance.getView().fit(projectExtent, {
+          padding: [40, 40, 40, 40],
+          duration: 300,
+        });
+      }
+    } catch (err) {
+      console.warn("[buscar_predio] No se pudo cargar extent dinámico:", err);
+    }
+  }
+
+  function initMap() {
+    highlightLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: "#3b82f6", width: 3 }),
+        fill: new ol.style.Fill({ color: "rgba(59, 130, 246, 0.2)" }),
+      }),
+    });
+
+    unitsLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: "#0ea5e9", width: 1.5 }),
+        fill: new ol.style.Fill({ color: "rgba(14, 165, 233, 0.15)" }),
+      }),
+    });
+
+    addressesLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      style: new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 5,
+          fill: new ol.style.Fill({ color: "#f97316" }),
+          stroke: new ol.style.Stroke({ color: "#7c2d12", width: 1 }),
+        }),
+      }),
+    });
+
+    selectedUnitLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: "#ef4444", width: 2.5 }),
+        fill: new ol.style.Fill({ color: "rgba(239, 68, 68, 0.18)" }),
+      }),
+    });
+
+    const wmsLayers = GEOSERVER_LAYERS.map(
+      (layerName) =>
+        new ol.layer.Tile({
+          source: new ol.source.TileWMS({
+            url: WMS_URL,
+            params: { LAYERS: layerName, TILED: true, VERSION: "1.1.0" },
+            serverType: "geoserver",
+            crossOrigin: "anonymous",
+          }),
+        })
+    );
+
+    mapInstance = new ol.Map({
+      target: "map",
+      layers: [...wmsLayers, unitsLayer, selectedUnitLayer, addressesLayer, highlightLayer],
+      view: new ol.View({
+        projection: projection,
+        center: ol.extent.getCenter(projectExtent),
+        zoom: 2,
+      }),
+    });
+  }
+
+  function zoomToProject() {
+    if (!mapInstance) return;
+    mapInstance.getView().fit(projectExtent, {
+      padding: [40, 40, 40, 40],
+      duration: 500,
+    });
+  }
+
+  function zoomToPredio() {
+    if (!mapInstance || !currentTerrenoFeature) return;
+    mapInstance.getView().fit(currentTerrenoFeature.getGeometry().getExtent(), {
+      padding: [40, 40, 40, 40],
+      duration: 500,
+    });
+  }
+
+  function renderRecords(containerId, data, badgeLabel, fields) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (!data || !data.length) {
+      container.innerHTML = "<p style='font-size:0.8rem; color:gray;'>No hay registros.</p>";
+      return;
+    }
+
+    container.innerHTML = "";
+
+    let localFields = fields;
+    if (containerId === "contFuentes") {
+      localFields = [
+        ["Tipo", "tipo_nombre"],
+        ["Ente emisor", "ente_emisor"],
+        ["Observacion", "observacion"],
+        ["Numero fuente", "numero_fuente"],
+        ["Estado disponibilidad", "estado_disponibilidad_nombre"],
+        ["Tipo principal", "tipo_principal"],
+        ["Fecha documento fuente", "fecha_documento_fuente"],
+        ["Titulares", "titulares"],
+      ];
+    }
+
+    data.forEach((item, index) => {
+      const card = document.createElement("div");
+      card.className = "vp-record-card";
+
+      let html = `<span class="vp-record-badge">${badgeLabel} #${index + 1}</span>`;
+      html += `<div class="vp-data-grid">`;
+
+      localFields.forEach(([label, key]) => {
+        const value = item[key] ?? "---";
+        html += `
+          <div class="vp-data-item">
+            <span class="vp-data-label">${label}</span>
+            <span class="vp-data-value">${value}</span>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      card.innerHTML = html;
+      container.appendChild(card);
+    });
+  }
+
+  function renderInteresadosModal(interesadosRaw) {
+    const tbody = document.getElementById("tbodyModalInteresados");
+    if (!tbody) return;
+
+    if (!interesadosRaw || !interesadosRaw.length) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center py-4 text-muted">
+            No hay interesados asociados.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const interesados = interesadosRaw.map((i) => {
+      const nombreCompuesto = [
+        i.primer_nombre,
+        i.segundo_nombre,
+        i.primer_apellido,
+        i.segundo_apellido,
+      ].filter(Boolean).join(" ");
+
+      const nombreMostrar =
+        i.nombre_completo ||
+        i.razon_social ||
+        nombreCompuesto ||
+        "---";
+
+      const partesNombre = nombreMostrar.trim().split(/\s+/);
+      const linea1 = partesNombre.slice(0, 2).join(" ") || nombreMostrar;
+      const linea2 = partesNombre.slice(2).join(" ");
+
+      const sexo = i.sexo_nombre || i.sexo || "---";
+
+      const cuotaBase =
+        i.cuota_participacion ??
+        i.porcentaje_participacion ??
+        i.fraccion ??
+        "---";
+
+      const cuotaTexto =
+        cuotaBase !== "---" && !String(cuotaBase).includes("%")
+          ? `${cuotaBase} %`
+          : String(cuotaBase);
+
+      const tipoPersona =
+        i.tipo_persona_nombre ||
+        i.tipo_persona ||
+        (i.razon_social ? "Persona Jurídica" : "Persona Natural");
+
+      return {
+        ...i,
+        linea1,
+        linea2,
+        sexo,
+        cuotaTexto,
+        tipoPersona
+      };
+    });
+
+    interesadosModalData = interesados;
+
+    tbody.innerHTML = interesados.map((item, index) => `
+      <tr class="fila-interesado-principal" data-detalle-id="detalleInteresado_${index}">
+        <td>
+          <div class="d-flex align-items-center gap-3">
+            <div class="icono-interesado-circle">
+              <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="info-interesado-nombre">
+              <div>${item.linea1 || "---"}</div>
+              <div>${item.linea2 || ""}</div>
+            </div>
+          </div>
+        </td>
+
+        <td class="columna-con-linea">
+          <span class="texto-tabla-interesado fw-semibold">${item.sexo || "---"}</span>
+        </td>
+
+        <td>
+          <span class="badge-cuota-participacion">${item.cuotaTexto || "---"}</span>
+        </td>
+
+        <td>
+          <span class="texto-tabla-interesado">${item.tipoPersona || "---"}</span>
+        </td>
+
+        <td class="text-center">
+          <button
+            type="button"
+            class="btn-detalle-tabla border-0 bg-transparent"
+            data-bs-toggle="collapse"
+            data-bs-target="#detalleInteresado_${index}"
+            aria-expanded="false"
+            aria-controls="detalleInteresado_${index}"
+          >
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+        </td>
+      </tr>
+
+      <tr class="fila-detalle-interesado">
+        <td colspan="5" class="p-0 border-0">
+          <div class="collapse" id="detalleInteresado_${index}">
+            <div class="p-4 border-top detalle-interesado-contenido">
+              <div class="tarjet-infop d-inline-block w-50 px-3 py-2 rounded-3">
+                <div class="text-white text-center mb-0 text-infort">Información personal</div>
+              </div>
+              <div class="row mt-4 w-100 mx-0">
+                <div class="col-12 col-md-6 pe-md-5">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Tipo de documento</div>
+                        <div class="text-end mb-0">${item.tipo_documento_nombre || "---"}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Documento de identidad</div>
+                        <div class="text-end mb-0">${item.documento_identidad || "---"}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Grupo étnico</div>
+                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Razón Social</div>
+                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6 ps-md-5">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Naturaleja Jurídica</div>
+                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Autorreconocimiento ?tnico</div>
+                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Código Naturaleza Jurídica</div>
+                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Autorreconocimiento campesino</div>
+                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="tarjet-infop d-inline-block w-50 px-3 py-2 rounded-3 mt-4">
+                <div class="text-white text-center mb-0 text-infort">Información de contacto</div>
+              </div>
+              <div class="row mt-4 w-100 mx-0">
+                <div class="col-12 col-md-6 pe-md-5">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Departamento</div>
+                        <div class="text-end mb-0">${item.documento_identidad || "---"}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Teléfono</div>
+                        <div class="text-end mb-0">${item.tipo_documento_nombre || "---"}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Municipio</div>
+                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Correo electrónico</div>
+                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-md-6 ps-md-5">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Domicilio de notificación</div>
+                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">¿Autoriza notificación de correo?</div>
+                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="fw-bold text-start text-lojh mb-0">Dirección de residencia</div>
+                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-end mt-4">
+                <button
+                  type="button"
+                  class="btn-gunmi d-inline-flex align-items-center gap-2 px-4 py-2"
+                  onclick="abrirPanelDerechoDesdeModal(${index})"
+                  aria-label="Abrir panel lateral derecho"
+                >
+                  <i class="fa-solid fa-arrow-right"></i>
+                  <span>Ver información completa</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `).join("");
+
+    tbody.querySelectorAll(".collapse").forEach((collapseEl) => {
+      collapseEl.addEventListener("show.bs.collapse", () => {
+        tbody.querySelectorAll(".collapse.show").forEach((openEl) => {
+          if (openEl.id !== collapseEl.id) {
+            const openInstance = bootstrap.Collapse.getOrCreateInstance(openEl, { toggle: false });
+            openInstance.hide();
+          }
+        });
+
+        tbody.querySelectorAll(".fila-interesado-principal").forEach((row) => {
+          row.classList.remove("fila-interesado-activa");
+          const icon = row.querySelector(".btn-detalle-tabla i");
+          if (icon) icon.classList.remove("rotate-180");
+        });
+
+        tbody.querySelectorAll(".fila-detalle-interesado").forEach((row) => {
+          row.classList.remove("fila-detalle-interesado-activa");
+        });
+
+        tbody.querySelectorAll(".detalle-interesado-contenido").forEach((box) => {
+          box.classList.remove("detalle-interesado-contenido-activo");
+        });
+
+        const detailRow = collapseEl.closest(".fila-detalle-interesado");
+        const principalRow = detailRow?.previousElementSibling;
+        const detailBox = collapseEl.querySelector(".detalle-interesado-contenido");
+
+        if (principalRow) {
+          principalRow.classList.add("fila-interesado-activa");
+          const icon = principalRow.querySelector(".btn-detalle-tabla i");
+          if (icon) icon.classList.add("rotate-180");
+        }
+
+        if (detailRow) {
+          detailRow.classList.add("fila-detalle-interesado-activa");
+        }
+
+        if (detailBox) {
+          detailBox.classList.add("detalle-interesado-contenido-activo");
+        }
+      });
+
+      collapseEl.addEventListener("hide.bs.collapse", () => {
+        const detailRow = collapseEl.closest(".fila-detalle-interesado");
+        const principalRow = detailRow?.previousElementSibling;
+        const detailBox = collapseEl.querySelector(".detalle-interesado-contenido");
+
+        if (principalRow) {
+          principalRow.classList.remove("fila-interesado-activa");
+          const icon = principalRow.querySelector(".btn-detalle-tabla i");
+          if (icon) icon.classList.remove("rotate-180");
+        }
+
+        if (detailRow) {
+          detailRow.classList.remove("fila-detalle-interesado-activa");
+        }
+
+        if (detailBox) {
+          detailBox.classList.remove("detalle-interesado-contenido-activo");
+        }
+      });
+    });
+  }
+
+  function updateUnitDetailSections(detailData) {
+    const unidad = detailData?.unidad || null;
+    const car = detailData?.caracteristicas || null;
+    const cal = detailData?.calificacion_convencional || null;
+    const tip = detailData?.tipologia_construccion || null;
+    const tipNc = detailData?.tipologia_no_convencional || null;
+
+    const fill = (containerId, data, fields) => {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      if (!data) {
+        container.innerHTML = "<p style='font-size:0.8rem; color:gray;'>Sin datos para esta sección.</p>";
+        return;
+      }
+
+      container.innerHTML = fields.map(([label, key]) => {
+        const value =
+          data[key] ??
+          data[`${key}_nombre`] ??
+          data[key.replace("_nombre", "")] ??
+          "---";
+
+        return `
+          <div class="vp-data-item">
+            <span class="vp-data-label">${label}</span>
+            <span class="vp-data-value">${value ?? "---"}</span>
+          </div>
+        `;
+      }).join("");
+    };
+
+    fill("unitDetalleUnidad", unidad, [
+      ["Tipo de planta", "tipo_planta_nombre"],
+      ["Planta ubicación", "planta_ubicacion"],
+      ["Altura", "altura"],
+      ["Dimensión", "dimension_nombre"],
+      ["Etiqueta", "etiqueta"],
+      ["Relación superficie", "relacion_superficie_nombre"],
+      ["Comienzo vida útil versión", "comienzo_vida_util_version"],
+    ]);
+
+    fill("unitDetalleCaracteristicas", car, [
+      ["Identificador", "identificador"],
+      ["Tipo unidad construcción", "tipo_unidad_construccion_nombre"],
+      ["Total plantas", "total_plantas"],
+      ["Uso", "uso_nombre"],
+      ["Año construcción", "anio_construccion"],
+      ["Área construida", "area_construida"],
+      ["Área privada construida", "area_privada_construida"],
+      ["Observaciones", "observaciones"],
+      ["Usos tradicionales culturales", "usos_tradicionales_culturales_nombre"],
+      ["Comienzo vida útil versión", "comienzo_vida_util_version"],
+    ]);
+
+    fill("unitDetalleCalificacion", cal, [
+      ["Tipo calificación", "tipo_calificacion_nombre"],
+      ["Armazón", "armazon_nombre"],
+      ["Muros", "muros_nombre"],
+      ["Cubierta", "cubierta_nombre"],
+      ["Conservación estructura", "conservacion_estructura_nombre"],
+      ["Fachada", "fachada_nombre"],
+      ["Cubrimiento muros", "cubrimiento_muros_nombre"],
+      ["Piso", "piso_nombre"],
+      ["Conservación acabados", "conservacion_acabados_nombre"],
+      ["Tamaño baño", "tamanio_banio_nombre"],
+      ["Enchape baño", "enchape_banio_nombre"],
+      ["Mobiliario baño", "mobiliario_banio_nombre"],
+      ["Conservación baño", "conservacion_banio_nombre"],
+      ["Tamaño cocina", "tamanio_cocina_nombre"],
+      ["Enchape cocina", "enchape_cocina_nombre"],
+      ["Mobiliario cocina", "mobiliario_cocina_nombre"],
+      ["Conservación cocina", "conservacion_cocina_nombre"],
+      ["Cerchas complemento industria", "cerchas_complemento_industria_nombre"],
+      ["Altura cerchas > 6m", "altura_cerchas_superior_6m"],
+      ["Total calificación", "total_calificacion"],
+    ]);
+
+    fill("unitDetalleTipologia", tip, [
+      ["Tipo tipología", "tipo_tipologia_nombre"],
+      ["Conservación", "conservacion_nombre"],
+    ]);
+
+    fill("unitDetalleTipologiaNC", tipNc, [
+      ["Tipo anexo", "tipo_anexo_nombre"],
+      ["Conservación anexo", "conservacion_anexo_nombre"],
+    ]);
+  }
+
+  function resolverEtiquetaUnidad(item = {}, detailData = {}) {
+    const unidad = detailData?.unidad || {};
+    const caracteristicas = detailData?.caracteristicas || {};
+
+    const tipoUc =
+      item?.tipo_unidad_construccion_nombre ||
+      item?.tipo_uc_nombre ||
+      item?.tipo_uc ||
+      caracteristicas?.tipo_unidad_construccion_nombre ||
+      caracteristicas?.tipo_uc_nombre ||
+      caracteristicas?.tipo_uc ||
+      "";
+
+    const etiquetaDirecta =
+      item?.etiqueta ??
+      item?.etiqueta_uc ??
+      unidad?.etiqueta ??
+      caracteristicas?.etiqueta;
+
+    if (etiquetaDirecta && String(etiquetaDirecta).trim() !== "") {
+      return etiquetaDirecta;
+    }
+
+    const identificador =
+      item?.identificador ??
+      item?.caracteristica_identificador ??
+      caracteristicas?.identificador ??
+      unidad?.identificador ??
+      item?.t_id ??
+      unidad?.t_id ??
+      "";
+
+    const mapaEtiquetaPorTipoUC = {
+      "RESIDENCIAL": "Residencial",
+      "COMERCIAL": "Comercial",
+      "INDUSTRIAL": "Industrial",
+      "BODEGA": "Bodega",
+      "PARQUEADERO": "Parqueadero",
+      "DEP?SITO": "Depósito",
+      "DEPOSITO": "Depósito",
+      "OFICINA": "Oficina"
+    };
+
+    const tipoNormalizado = String(tipoUc || "").trim().toUpperCase();
+    const etiquetaBase =
+      mapaEtiquetaPorTipoUC[tipoNormalizado] ||
+      (tipoUc ? String(tipoUc).trim() : "");
+
+    if (etiquetaBase && identificador) {
+      return `${etiquetaBase} ${identificador}`;
+    }
+
+    if (etiquetaBase) {
+      return etiquetaBase;
+    }
+
+    if (identificador) {
+      return identificador;
+    }
+
+    return "---";
+  }
+
+  function renderUnidadConstruccionCard(detailData) {
+    const tbody = document.getElementById("tbodyUnidadConstruccionCard");
+    if (!tbody) return;
+
+    const unidad = detailData?.unidad || null;
+    const unidadesReales = Array.isArray(detailData?.unidades)
+      ? detailData.unidades
+      : (unidad ? [unidad] : []);
+
+    const unidades = [...unidadesReales];
+
+    if (!unidades.length) {
+      tbody.innerHTML = `
+      <tr class="fila-vacia-unidad">
+        <td colspan="5" class="text-center text-muted py-3">
+          Sin información de unidad de construcción
+        </td>
+      </tr>
+    `;
+      actualizarBadgeUcDesdeTabla();
+      return;
+    }
+
+    tbody.innerHTML = unidades.map((item, index) => {
+      const rowId = `detalleFilaUnidadCard_${item?.t_id ?? item?.unidad_id ?? index}`;
+
+      const plantaUbicacion = item?.planta_ubicacion ?? "---";
+      const altura = item?.altura ?? "---";
+
+      const etiqueta = resolverEtiquetaUnidad(item, detailData);
+
+      const identificador =
+        item?.identificador ??
+        item?.caracteristica_identificador ??
+        "----";
+
+      const tipoPlanta = item?.tipo_planta_nombre ?? "---";
+      const relacionSuperficie = item?.relacion_superficie_nombre ?? "---";
+      const estadoUnidad =
+        item?.estado_unidad_construccion_nombre ??
+        item?.estado_construccion ??
+        "Vigente";
+      const observaciones = item?.observaciones ?? "----";
+
+      const tipoCalificacionModal = item?.tipo_calificacion_modal ?? null;
+
+      const unidadId = item?.t_id ?? item?.unidad_id ?? unidad?.t_id ?? null;
+
+      return `
+      <tr class="fila-registro-unidad fila-unidad-card-principal "
+          data-row-id="${rowId}"
+          data-unit-id="${unidadId ?? ""}">
+        <td class="text-center align-middle">
+          <button
+            class="btn btn-toggle-detalle-uc p-0 border-0 bg-transparent shadow-none"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#${rowId}"
+            aria-expanded="false"
+            aria-controls="${rowId}"
+          >
+            <i class="fa-solid fa-chevron-down icon-toggle-uc"></i>
+          </button>
+        </td>
+        <td class="text-center align-middle text-unidad-card">${plantaUbicacion}</td>
+        <td class="text-center align-middle text-unidad-card">${altura}</td>
+        <td class="text-center align-middle text-unidad-card">${etiqueta}</td>
+        <td class="text-center align-middle text-unidad-card">${identificador}</td>
+      </tr>
+
+      <tr class="fila-detalle-unidad-card ">
+        <td colspan="5" class="p-0 border-0">
+          <div class="collapse collapse-detalle-uc-card" id="${rowId}">
+            <div class="detalle-unidad-card-contenido px-4 px-md-4 px-lg-5 pt-3 pb-3">
+              <div class="row gy-4 gx-4 gx-lg-5 align-items-start">
+                <div class="col-12 col-md-7 col-lg-4">
+                  <div class="detalle-uc-label">Tipo de planta</div>
+                  <div class="detalle-uc-value">${tipoPlanta}</div>
+                </div>
+
+                <div class="col-12 col-md-7 col-lg-4">
+                  <div class="detalle-uc-label">Relación superficie</div>
+                  <div class="detalle-uc-value">${relacionSuperficie}</div>
+                </div>
+
+                <div class="col-12 col-md-7 col-lg-4">
+                  <div class="detalle-uc-label">Estado unidad construcción</div>
+                  <div class="detalle-uc-value">${estadoUnidad}</div>
+                </div>
+              </div>
+
+              <div class="row gy-3 gx-4 gx-lg-5 mt-1 align-items-end">
+                <div class="col-12 col-lg-4">
+                  <div class="detalle-uc-label">Etiqueta</div>
+                  <div class="detalle-uc-value">${etiqueta}</div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <div class="detalle-uc-label">Observaciones</div>
+                  <div class="detalle-uc-value">${observaciones}</div>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                  <div class="detalle-uc-acciones d-flex justify-content-lg-end">
+                    <button
+                      type="button"
+                      class="btn btn-caracteristicas-uc"
+                      onclick='event.stopPropagation(); abrirModalSegunTipoUc({
+                        identificador: ${JSON.stringify(identificador)},
+                        tipo: ${JSON.stringify(tipoCalificacionModal)},
+                        unidadId: ${JSON.stringify(unidadId)}
+                      })'
+                    >
+                      Ver características
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+    }).join("");
+
+    tbody.querySelectorAll(".fila-unidad-card-principal").forEach((row) => {
+      row.addEventListener("click", (event) => {
+        if (event.target.closest("button")) return;
+
+        const unitId = row.dataset.unitId;
+        if (unitId) {
+          selectUnit(unitId);
+        }
+
+        const rowId = row.dataset.rowId;
+        const collapseEl = document.getElementById(rowId);
+        if (!collapseEl) return;
+
+        const instance = bootstrap.Collapse.getOrCreateInstance(collapseEl, {
+          toggle: false
+        });
+
+        if (collapseEl.classList.contains("show")) {
+          instance.hide();
+        } else {
+          instance.show();
+        }
+      });
+    });
+
+    tbody.querySelectorAll(".collapse-detalle-uc-card").forEach((collapseEl) => {
+      collapseEl.addEventListener("show.bs.collapse", () => {
+        tbody.querySelectorAll(".collapse-detalle-uc-card.show").forEach((openEl) => {
+          if (openEl.id !== collapseEl.id) {
+            const openInstance = bootstrap.Collapse.getOrCreateInstance(openEl, {
+              toggle: false
+            });
+            openInstance.hide();
+          }
+        });
+
+        tbody.querySelectorAll(".fila-unidad-card-principal").forEach((row) => {
+          row.classList.remove("fila-unidad-card-activa");
+          const icon = row.querySelector(".icon-toggle-uc");
+          if (icon) {
+            icon.classList.remove("fa-chevron-up");
+            icon.classList.add("fa-chevron-down");
+          }
+        });
+
+        tbody.querySelectorAll(".fila-detalle-unidad-card").forEach((row) => {
+          row.classList.remove("fila-detalle-unidad-card-activa");
+        });
+
+        const detailRow = collapseEl.closest(".fila-detalle-unidad-card");
+        const principalRow = detailRow?.previousElementSibling;
+
+        if (principalRow) {
+          principalRow.classList.add("fila-unidad-card-activa");
+          const icon = principalRow.querySelector(".icon-toggle-uc");
+          if (icon) {
+            icon.classList.remove("fa-chevron-down");
+            icon.classList.add("fa-chevron-up");
+          }
+        }
+
+        if (detailRow) {
+          detailRow.classList.add("fila-detalle-unidad-card-activa");
+        }
+      });
+
+      collapseEl.addEventListener("hide.bs.collapse", () => {
+        const detailRow = collapseEl.closest(".fila-detalle-unidad-card");
+        const principalRow = detailRow?.previousElementSibling;
+
+        if (principalRow) {
+          principalRow.classList.remove("fila-unidad-card-activa");
+          const icon = principalRow.querySelector(".icon-toggle-uc");
+          if (icon) {
+            icon.classList.remove("fa-chevron-up");
+            icon.classList.add("fa-chevron-down");
+          }
+        }
+
+        if (detailRow) {
+          detailRow.classList.remove("fila-detalle-unidad-card-activa");
+        }
+      });
+    });
+
+    actualizarBadgeUcDesdeTabla();
+  }
+
+  function valorDominio(v) {
+    if (v === null || v === undefined) return "----";
+    const s = String(v).trim();
+    return s ? s : "----";
+  }
+
+  function setTextById(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = valorDominio(value);
+  }
+
+  function poblarOffcanvasConvencional(detalle = {}) {
+    const car = detalle?.caracteristicas || {};
+    const cal = detalle?.calificacion_convencional || {};
+
+    setTextById("convencionalTipoCalificacion", car?.tipo_calificacion_nombre || cal?.tipo_calificacion_nombre);
+    setTextById("convencionalTipoUnidad", car?.tipo_unidad_construccion_nombre);
+    setTextById("convencionalUso", car?.uso_nombre);
+    setTextById("convencionalTotalPlantas", car?.total_plantas);
+    setTextById("convencionalAnioConstruccion", car?.anio_construccion);
+    setTextById("convencionalAreaConstruida", car?.area_construida);
+    setTextById("convencionalAreaPrivadaConstruida", car?.area_privada_construida);
+    setTextById("convencionalUsosTradicionales", car?.usos_tradicionales_culturales_nombre ?? car?.usos_tradicionales_culturales);
+    setTextById("convencionalObservaciones", car?.observaciones);
+
+    setTextById("convencionalTipoCalificar", cal?.tipo_calificar_nombre);
+    setTextById("convencionalArmazon", cal?.armazon_nombre);
+    setTextById("convencionalMuros", cal?.muros_nombre);
+    setTextById("convencionalCubierta", cal?.cubierta_nombre);
+    setTextById("convencionalConservacionEstructura", cal?.conservacion_estructura_nombre);
+    setTextById("convencionalCubrimientoMuros", cal?.cubrimiento_muros_nombre);
+    setTextById("convencionalFachada", cal?.fachada_nombre);
+    setTextById("convencionalPiso", cal?.piso_nombre);
+    setTextById("convencionalConservacionAcabados", cal?.conservacion_acabados_nombre);
+    setTextById("convencionalTamanioBanio", cal?.tamanio_banio_nombre);
+    setTextById("convencionalEnchapeBanio", cal?.enchape_banio_nombre);
+    setTextById("convencionalMobiliarioBanio", cal?.mobiliario_banio_nombre);
+    setTextById("convencionalConservacionBanio", cal?.conservacion_banio_nombre);
+    setTextById("convencionalTamanioCocina", cal?.tamanio_cocina_nombre);
+    setTextById("convencionalEnchapeCocina", cal?.enchape_cocina_nombre);
+    setTextById("convencionalMobiliarioCocina", cal?.mobiliario_cocina_nombre);
+    setTextById("convencionalConservacionCocina", cal?.conservacion_cocina_nombre);
+    setTextById("convencionalCerchas", cal?.cerchas_complemento_industria_nombre ?? car?.cc_cerchas_complemento_industria);
+    setTextById("convencionalObsCalificacion", car?.observaciones);
+    setTextById("convencionalTotalCalificacion", cal?.total_calificacion);
+
+    const chkAlturaCerchas = document.getElementById("convencionalAlturaCerchas");
+    if (chkAlturaCerchas) {
+      const raw = cal?.altura_cerchas_superior_6m;
+      const normalized = String(raw ?? "").trim().toLowerCase();
+      chkAlturaCerchas.checked = raw === true || normalized === "t" || normalized === "true" || normalized === "1" || normalized === "si" || normalized === "sí";
+    }
+  }
+
+  function abrirModalSegunTipoUc(data = {}) {
+    const { identificador = "", tipo = null, unidadId = null } = data;
+    const detalle =
+      (unidadId !== null && unidadId !== undefined
+        ? unidadDetalleCache.get(String(unidadId))
+        : null) ||
+      unidadDetalleActual ||
+      {};
+
+    poblarOffcanvasConvencional(detalle);
+
+    const offcanvasConvencional = document.getElementById("offcanvasUcConvencional");
+    const offcanvasNoConvencional = document.getElementById("offcanvasUcNoConvencional");
+    const offcanvasTipologia = document.getElementById("offcanvasUcTipologia");
+    const tipoNormalizado = String(tipo || detalle?.unidad?.tipo_calificacion_modal || "").trim().toLowerCase();
+
+    const idMostrar = valorDominio(identificador || detalle?.caracteristicas?.identificador || detalle?.unidad?.identificador);
+    const lblConv = document.getElementById("offcanvasUcConvencionalLabel");
+    const lblNoConv = document.getElementById("offcanvasUcNoConvencionalLabel");
+    const lblTip = document.getElementById("offcanvasUcTipologiaLabel");
+    if (lblConv) lblConv.textContent = `ID Unidad Construcción ${idMostrar}`;
+    if (lblNoConv) lblNoConv.textContent = `ID Unidad Construcción ${idMostrar}`;
+    if (lblTip) lblTip.textContent = `ID Unidad Construcción ${idMostrar}`;
+
+    if (
+      (tipoNormalizado === "convencional" || tipoNormalizado.includes("convencional")) &&
+      !tipoNormalizado.includes("no") &&
+      offcanvasConvencional
+    ) {
+      bootstrap.Offcanvas.getOrCreateInstance(offcanvasConvencional).show();
+      return;
+    }
+
+    if (
+      (tipoNormalizado === "no_convencional" || tipoNormalizado.includes("no_convencional") || tipoNormalizado.includes("no convencional")) &&
+      offcanvasNoConvencional
+    ) {
+      bootstrap.Offcanvas.getOrCreateInstance(offcanvasNoConvencional).show();
+      return;
+    }
+
+    if ((tipoNormalizado === "tipologia" || tipoNormalizado.includes("tipolog")) && offcanvasTipologia) {
+      bootstrap.Offcanvas.getOrCreateInstance(offcanvasTipologia).show();
+      return;
+    }
+
+    if (offcanvasConvencional) {
+      bootstrap.Offcanvas.getOrCreateInstance(offcanvasConvencional).show();
+    }
+  }
+
+  async function loadUnidadExtra(unitId) {
+    try {
+      const resp = await fetch(`${rp}/predio/unidad_detalle?unidad_id=${unitId}`);
+      if (!resp.ok) {
+        console.error("Error HTTP detalle unidad:", resp.status);
+        return;
+      }
+
+      const data = await resp.json();
+      unidadDetalleActual = data;
+      unidadDetalleCache.set(String(data?.unidad?.t_id ?? unitId), data);
+
+      updateUnitDetailSections(data);
+      renderUnidadConstruccionCard(data);
+      animarActualizacionUnidad();
+
+      const detalleUnidadCard = document.getElementById("detalleUnidadConstruccionCard");
+      if (detalleUnidadCard && !detalleUnidadCard.classList.contains("show")) {
+        new bootstrap.Collapse(detalleUnidadCard, {
+          toggle: true
+        });
+      }
+
+      actualizarBadgeUcDesdeTabla();
+    } catch (e) {
+      console.error("Error cargando detalle de unidad:", e);
+    }
+  }
+
+  function selectUnit(unitId) {
+    if (!unidadesData || !unidadesData.length) return;
+
+    const unit = unidadesData.find((u) => String(u.t_id) === String(unitId));
+    const detalleUnidadCard = document.getElementById("detalleUnidadConstruccionCard");
+    const cardUnidadConstruccion = document.getElementById("cardUnidadConstruccion");
+    const tblUnidadConstruccionCard = document.getElementById("tblUnidadConstruccionCard");
+    const tbodyUnidadConstruccionCard = document.getElementById("tbodyUnidadConstruccionCard");
+
+    if (!detalleUnidadCard || !tbodyUnidadConstruccionCard) return;
+
+    if (!unit) {
+      if (cardUnidadConstruccion) {
+        cardUnidadConstruccion.classList.remove("has-selection");
+      }
+
+      const collapseInstance = bootstrap.Collapse.getInstance(detalleUnidadCard);
+      if (collapseInstance) {
+        collapseInstance.hide();
+      } else {
+        new bootstrap.Collapse(detalleUnidadCard, { toggle: false }).hide();
+      }
+
+      if (tblUnidadConstruccionCard) {
+        tblUnidadConstruccionCard.classList.remove("unidad-relacionada-activa");
+      }
+
+      tbodyUnidadConstruccionCard.classList.remove("unidad-relacionada-activa");
+      tbodyUnidadConstruccionCard.innerHTML = `
+        <tr class="fila-vacia-unidad">
+          <td colspan="5" class="text-center text-muted py-3">
+            Selecciona una unidad en la tabla de construcciones
+          </td>
+        </tr>
+      `;
+
+      actualizarBadgeConstruccion(null);
+      actualizarBadgeUcDesdeTabla();
+      return;
+    }
+
+    document.querySelectorAll("#tblConsCollapse tr.fila-detalle-unidad").forEach((row) => {
+      row.classList.remove("detalle-relacionado-activo");
+    });
+
+    const detailRow = document.querySelector(
+      `#tblConsCollapse tr.fila-unidad-collapse[data-unit-id="${unitId}"]`
+    )?.nextElementSibling;
+
+    if (detailRow && detailRow.classList.contains("fila-detalle-unidad")) {
+      detailRow.classList.add("detalle-relacionado-activo");
+    }
+
+    if (tblUnidadConstruccionCard) {
+      tblUnidadConstruccionCard.classList.remove("unidad-relacionada-activa");
+      void tblUnidadConstruccionCard.offsetWidth;
+      tblUnidadConstruccionCard.classList.add("unidad-relacionada-activa");
+    }
+
+    tbodyUnidadConstruccionCard.classList.remove("unidad-relacionada-activa");
+    void tbodyUnidadConstruccionCard.offsetWidth;
+    tbodyUnidadConstruccionCard.classList.add("unidad-relacionada-activa");
+
+    if (cardUnidadConstruccion) {
+      cardUnidadConstruccion.classList.add("has-selection");
+    }
+
+    actualizarBadgeConstruccion(unit);
+
+    const placeholders = [
+      "unitDetalleUnidad",
+      "unitDetalleCaracteristicas",
+      "unitDetalleCalificacion",
+      "unitDetalleTipologia",
+      "unitDetalleTipologiaNC",
+    ];
+
+    placeholders.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.innerHTML = "<p style='font-size:0.8rem; color:gray;'>Cargando detalle...</p>";
+      }
+    });
+
+    const collapseInstance = bootstrap.Collapse.getOrCreateInstance(detalleUnidadCard, {
+      toggle: false
+    });
+    collapseInstance.show();
+
+    if (selectedUnitLayer) {
+      const src = selectedUnitLayer.getSource();
+      src.clear();
+
+      if (unit.geom) {
+        try {
+          const format = new ol.format.GeoJSON();
+          const feature = format.readFeature(
+            {
+              type: "Feature",
+              geometry: unit.geom,
+            },
+            {
+              dataProjection: "EPSG:9377",
+              featureProjection: "EPSG:9377",
+            }
+          );
+
+          src.addFeature(feature);
+
+          if (mapInstance) {
+            mapInstance.getView().fit(feature.getGeometry().getExtent(), {
+              padding: [40, 40, 40, 40],
+              duration: 500,
+            });
+          }
+        } catch (e) {
+          console.error("Error resaltando unidad:", e);
+        }
+      }
+    }
+
+    loadUnidadExtra(unitId);
+  }
+
+  function updateDerechosCards(derechos) {
+    if (!derechos || !derechos.length) return;
+    const cont = document.getElementById("contDerechos");
+    if (!cont) return;
+    cont.innerHTML = "";
+
+    derechos.forEach((d, index) => {
+      const card = document.createElement("div");
+      card.className = "vp-record-card";
+
+      const rows = [
+        ["Tipo", d.tipo_nombre ?? d.tipo ?? ""],
+        ["Posesion ancestral y/o tradicional", d.posesion_ancestral_y_o_tradicional],
+        ["Fecha inicio tenencia", d.fecha_inicio_tenencia],
+        ["Descripcion", d.descripcion],
+        ["Unidad", d.unidad],
+        ["Comienzo vida util version", d.comienzo_vida_util_version],
+      ];
+
+      let html = `<span class="vp-record-badge">Derecho #${index + 1}</span><div class="vp-data-grid">`;
+
+      rows.forEach(([label, value]) => {
+        html += `
+          <div class="vp-data-item">
+            <span class="vp-data-label">${label}</span>
+            <span class="vp-data-value">${value ?? "---"}</span>
+          </div>`;
+      });
+
+      html += "</div>";
+      card.innerHTML = html;
+      cont.appendChild(card);
+    });
+  }
+
+  function _normText(value) {
+    return String(value ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function _pickValue(obj, keys) {
+    if (!obj) return null;
+    for (const key of keys) {
+      const value = obj[key];
+      if (value !== null && value !== undefined && String(value).trim() !== "") {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  function _fmtDate(value) {
+    if (value === null || value === undefined || String(value).trim() === "") return "----";
+    const raw = String(value);
+    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0, 10);
+    const dt = new Date(raw);
+    if (Number.isNaN(dt.getTime())) return raw;
+    return dt.toISOString().slice(0, 10);
+  }
+
+  function _fmtBool(value) {
+    if (value === null || value === undefined || String(value).trim() === "") return "----";
+    if (typeof value === "boolean") return value ? "Sí" : "No";
+    const v = String(value).trim().toLowerCase();
+    if (["1", "true", "si", "sí", "yes"].includes(v)) return "Sí";
+    if (["0", "false", "no"].includes(v)) return "No";
+    return String(value);
+  }
+
+  function _fmtText(value) {
+    if (value === null || value === undefined || String(value).trim() === "") return "----";
+    return String(value);
+  }
+
+  function _setModalFieldByLabel(root, label, value) {
+    if (!root) return;
+    const expected = _normText(label);
+    const labels = root.querySelectorAll(".tex-num");
+    labels.forEach((node) => {
+      if (!_normText(node.textContent).includes(expected)) return;
+      const parent = node.parentElement;
+      if (!parent) return;
+      for (const child of parent.children) {
+        if (child === node) continue;
+        if (child.classList.contains("text-start") || child.classList.contains("text-end")) {
+          child.textContent = value;
+        }
+      }
+    });
+  }
+
+  function populatePredioModalInfo(predio, data) {
+    const root = document.getElementById("modalInformacionPredio");
+    if (!root || !predio) return;
+
+    const datosAdicionales = (data?.datos_adicionales && data.datos_adicionales[0]) || {};
+    const contactoVisita = (data?.contacto_visita && data.contacto_visita[0]) || {};
+    const interesado0 = (data?.interesados && data.interesados[0]) || {};
+    const nombreInteresado = [
+      interesado0?.primer_nombre ?? interesado0?.i_primer_nombre,
+      interesado0?.segundo_nombre ?? interesado0?.i_segundo_nombre,
+      interesado0?.primer_apellido ?? interesado0?.i_primer_apellido,
+      interesado0?.segundo_apellido ?? interesado0?.i_segundo_apellido,
+    ].filter((v) => v !== null && v !== undefined && String(v).trim() !== "").join(" ");
+
+    const src = {
+      ...predio,
+      ...datosAdicionales,
+      ...contactoVisita,
+      ...interesado0,
+      _nombre_interesado_fallback:
+        interesado0?.nombre_completo ||
+        interesado0?.i_razon_social ||
+        interesado0?.razon_social ||
+        nombreInteresado ||
+        null,
+    };
+
+    _setModalFieldByLabel(root, "Numero predial anterior", _fmtText(_pickValue(src, ["numero_predial_anterior", "numero_predial_ant", "npn_anterior"])));
+    _setModalFieldByLabel(root, "Codigo Orip", _fmtText(_pickValue(src, ["codigo_orip", "codigo_ori"])));
+    _setModalFieldByLabel(root, "Matricula Inmobiliaria", _fmtText(_pickValue(src, ["matricula_inmobiliaria", "matricula"])));
+    _setModalFieldByLabel(root, "Estado de FMI", _fmtText(_pickValue(src, ["estado_fmi_nombre", "estado_fmi"])));
+    _setModalFieldByLabel(root, "Fecha de apertura de FMI", _fmtDate(_pickValue(src, ["fecha_apertura_fmi", "fecha_de_apertura_fmi"])));
+    _setModalFieldByLabel(root, "Fecha de inscripcion catastral", _fmtDate(_pickValue(src, ["fecha_inscripcion_catastral", "fecha_de_inscripcion_catastral"])));
+    _setModalFieldByLabel(root, "Vigencia de actualizacion", _fmtText(_pickValue(src, ["vigencia_actualizacion", "vigencia", "vigencia_catastral"])));
+    _setModalFieldByLabel(root, "Area registral (m2)", _fmtText(_pickValue(src, ["area_registral_m2", "area_registral"])));
+    _setModalFieldByLabel(root, "Area catastral de terreno (m2)", _fmtText(_pickValue(src, ["area_catastral_terreno", "area_catastral_terreno_m2", "area_terreno", "area_terreno_m2"])));
+    _setModalFieldByLabel(root, "Coeficiente de copropiedad", _fmtText(_pickValue(src, ["coeficiente_copropiedad", "coef_copropiedad"])));
+    _setModalFieldByLabel(root, "Area de coeficiente de copropiedad", _fmtText(_pickValue(src, ["area_coeficiente_copropiedad", "area_coeficiente", "area_coef_copropiedad"])));
+    _setModalFieldByLabel(root, "Condicion del predio", _fmtText(_pickValue(src, ["condicion_predio_nombre", "condicion_predio"])));
+    _setModalFieldByLabel(root, "Tipo de predio", _fmtText(_pickValue(src, ["tipo_nombre", "tipo"])));
+    _setModalFieldByLabel(root, "Destinacion economica", _fmtText(_pickValue(src, ["destinacion_economica_nombre", "destinacion_economica"])));
+
+    _setModalFieldByLabel(root, "Fecha de visita predial", _fmtDate(_pickValue(src, ["fecha_visita_predial"])));
+    _setModalFieldByLabel(root, "Correo electronico", _fmtText(_pickValue(src, ["correo_electronico", "email", "correo", "e_mail"])));
+    _setModalFieldByLabel(root, "Resultado de visita predial", _fmtText(_pickValue(src, ["resultado_visita_nombre", "resultado_visita"])));
+    _setModalFieldByLabel(root, "Celular", _fmtText(_pickValue(src, ["celular", "telefono_celular", "telefono", "numero_celular"])));
+    _setModalFieldByLabel(root, "Tipo de documento de quien atendio", _fmtText(_pickValue(src, ["tipo_documento_quien_atendio_nombre", "tipo_documento_quien_atendio"])));
+    _setModalFieldByLabel(root, "Domicilio de notificaciones", _fmtText(_pickValue(src, ["domicilio_notificaciones", "domicilio_notificacion", "direccion_notificacion"])));
+    _setModalFieldByLabel(root, "Numero de documento de quien atendio", _fmtText(_pickValue(src, ["numero_documento_quien_atendio", "documento_quien_atendio", "i_documento_identidad", "documento_identidad"])));
+    _setModalFieldByLabel(root, "Autoriza notificaciones", _fmtBool(_pickValue(src, ["autoriza_notificacion_correo", "autoriza_notificacion", "autoriza_notificaciones"])));
+    _setModalFieldByLabel(root, "Nombres y apellidos de quien atendio", _fmtText(_pickValue(src, ["nombre_quien_atendio", "nombres_apellidos_quien_atendio", "quien_atendio", "_nombre_interesado_fallback"])));
+    _setModalFieldByLabel(root, "Tipo de captura", _fmtText(_pickValue(src, ["tipo_captura_nombre", "tipo_captura"])));
+
+    _setModalFieldByLabel(root, "Nombre", _fmtText(_pickValue(src, ["nombre", "_nombre_interesado_fallback", "nombre_completo", "razon_social"])));
+    _setModalFieldByLabel(root, "Beneficio de comunidades indigenas", _fmtBool(_pickValue(src, ["beneficio_comunidades_indigenas"])));
+    _setModalFieldByLabel(root, "Predio Matriz", _fmtText(_pickValue(src, ["predio_matriz"])));
+    _setModalFieldByLabel(root, "Control de calidad", _fmtText(_pickValue(src, ["control_calidad", "control_de_calidad"])));
+    _setModalFieldByLabel(root, "Comodato", _fmtBool(_pickValue(src, ["comodato"])));
+    _setModalFieldByLabel(root, "Cabida y Linderos", _fmtText(_pickValue(src, ["cabida_linderos", "cabida_y_linderos"])));
+    _setModalFieldByLabel(root, "Observacion juridica", _fmtText(_pickValue(src, ["observacion_juridica", "observaciones_juridicas", "observaciones"])));
+    _setModalFieldByLabel(root, "Valido control de calidad", _fmtBool(_pickValue(src, ["valido_control_calidad", "valido_control", "valida_control_calidad"])));
+  }
+
+  async function loadPredioDetalle() {
+    if (!predioId) return;
+
+    try {
+      const response = await fetch(`${rp}/predio/detalle?predio_id=${predioId}`);
+      if (!response.ok) {
+        return;
+      }
+
+      const data = await response.json();
+
+      const predio = data?.predio;
+      const derechos = data?.derechos || [];
+      const unidades = data?.unidades_construccion || [];
+      const fuentes = data?.fuente_administrativa || [];
+      const interesadosRaw = data?.interesados || [];
+      const direcciones = data?.direcciones || [];
+      unidadesData = unidades || [];
+
+      updateDerechosCards(derechos);
+      populatePredioModalInfo(predio, data);
+
+      const gridPredio = document.getElementById("gridPredio");
+      const resumenPredioId = document.getElementById("resumenPredioId");
+      const resumenPredioInteresados = document.getElementById("resumenPredioInteresados");
+      const resumenPredioNpn = document.getElementById("resumenPredioNpn");
+      const resumenPredioConstrucciones = document.getElementById("resumenPredioConstrucciones");
+      const resumenPredioUnidadConstruccion = document.getElementById("resumenPredioUnidadConstruccion");
+
+      if (resumenPredioId) {
+        resumenPredioId.textContent = predio?.t_id ?? predioId ?? "";
+      }
+
+      if (resumenPredioInteresados) {
+        resumenPredioInteresados.textContent = interesadosRaw.length;
+      }
+
+      if (resumenPredioNpn) {
+        resumenPredioNpn.textContent = predio?.numero_predial_nacional ?? "-";
+      }
+
+      if (resumenPredioConstrucciones) {
+        resumenPredioConstrucciones.textContent = unidades.length;
+      }
+
+      if (resumenPredioUnidadConstruccion) {
+        resumenPredioUnidadConstruccion.textContent = unidades.length;
+      }
+
+      if (predio && gridPredio) {
+        const general = [
+          ["Matrícula", predio.matricula_inmobiliaria],
+          ["NPN", predio.numero_predial_nacional],
+          ["Nombre", predio.nombre],
+          ["Área m²", predio.area_catastral_terreno],
+          ["Codigo ORIP", predio.codigo_orip],
+          ["Condición", predio.condicion_predio_nombre ?? predio.condicion_predio],
+        ];
+
+        gridPredio.innerHTML = general.map(
+          ([label, value]) => `
+            <div class="vp-data-item">
+              <span class="vp-data-label">${label}</span>
+              <span class="vp-data-value">${value ?? "---"}</span>
+            </div>
+          `
+        ).join("");
+
+        const extra = [
+          [
+            "Departamento",
+            predio.departamento === 52 || predio.departamento === "52"
+              ? "52 - Nariño"
+              : predio.departamento,
+          ],
+          [
+            "Municipio",
+            predio.municipio === 405 || predio.municipio === "405"
+              ? "405 - Leiva"
+              : predio.municipio,
+          ],
+          ["Tipo", predio.tipo_nombre ?? predio.tipo],
+          ["Destinacion economica", predio.destinacion_economica_nombre ?? predio.destinacion_economica],
+          ["Area registral (m2)", predio.area_registral_m2],
+        ];
+
+        extra.forEach(([label, value]) => {
+          const div = document.createElement("div");
+          div.className = "vp-data-item";
+          div.innerHTML = `
+            <span class="vp-data-label">${label}</span>
+            <span class="vp-data-value">${value ?? "---"}</span>
+          `;
+          gridPredio.appendChild(div);
+        });
+      }
+
+      const interesados = interesadosRaw.map((i) => {
+        const nombreCompuesto = [
+          i.primer_nombre,
+          i.segundo_nombre,
+          i.primer_apellido,
+          i.segundo_apellido,
+        ].filter(Boolean).join(" ");
+
+        return {
+          ...i,
+          _nombre_mostrado: i.nombre_completo || i.razon_social || nombreCompuesto,
+        };
+      });
+
+      renderInteresadosModal(interesadosRaw);
+
+      renderRecords("contInteresados", interesados, "Interesado", [
+        ["Nombre", "_nombre_mostrado"],
+        ["Documento", "documento_identidad"],
+        ["Tipo doc.", "tipo_documento_nombre"],
+        ["Etnia", "grupo_etnico_nombre"],
+      ]);
+
+      renderRecords("contFuentes", fuentes, "Fuente", [
+        ["Derecho (ID)", "derecho_id"],
+        ["Tipo", "tipo_nombre"],
+        ["Número", "numero_fuente"],
+        ["Ente emisor", "ente_emisor"],
+      ]);
+
+      const datosAdicionales = data?.datos_adicionales || [];
+      const novedadNP = data?.estructura_novedad_np || [];
+      const novedadesFMI = data?.novedad_fmi || [];
+
+      renderRecords("contNovedadNP", novedadNP, "Novedad", [
+        ["Número predial", "numero_predial"],
+        ["Tipo novedad", "tipo_novedad_nombre"],
+      ]);
+
+      renderRecords("contNovedadFMI", novedadesFMI, "Novedad FMI", [
+        ["Código ORI", "codigo_ori"],
+        ["Número FMI", "numero_fmi"],
+        ["Tipo novedad FMI", "tipo_novedadfmi_nombre"],
+      ]);
+
+      renderRecords("contDatosAdicionales", datosAdicionales, "Datos", [
+        ["Observaciones", "observaciones"],
+        ["Fecha visita predial", "fecha_visita_predial"],
+        ["Resultado visita", "resultado_visita_nombre"],
+        ["Comodato", "comodato"],
+        ["Beneficio comunidades indígenas", "beneficio_comunidades_indigenas"],
+      ]);
+
+      if (unidades.length) {
+        const tbody = document.getElementById("tbodyCons");
+        const tbl = document.getElementById("tblCons");
+
+        const tbodyCollapse = document.getElementById("tbodyConsCollapse");
+        const tblCollapse = document.getElementById("tblConsCollapse");
+        const emptyCollapse = document.getElementById("emptyConsCollapse");
+
+        if (tbody) tbody.innerHTML = "";
+        if (tbodyCollapse) tbodyCollapse.innerHTML = "";
+
+        unidades.forEach((u) => {
+          let tipoCalifLabel = u.tipo_calificacion_clase;
+
+          if (tipoCalifLabel === "Convencional") {
+            tipoCalifLabel = "Calificación Convencional";
+          } else if (tipoCalifLabel === "Tipologia") {
+            tipoCalifLabel = "Calificación por Tipología";
+          } else if (tipoCalifLabel === "No Convencional") {
+            tipoCalifLabel = "Calificación por Tipología No Convencional";
+          } else if (u.tipo_calificacion_resumen) {
+            tipoCalifLabel = u.tipo_calificacion_resumen;
+          } else {
+            tipoCalifLabel = "";
+          }
+
+          const rowHtml = `
+            <td>${u.t_id ?? ""}</td>
+            <td>${u.caracteristica_identificador ?? ""}</td>
+            <td>${tipoCalifLabel}</td>
+          `;
+
+          if (tbody) {
+            const tr = document.createElement("tr");
+            tr.dataset.unitId = String(u.t_id);
+            tr.innerHTML = rowHtml;
+            tr.addEventListener("click", () => {
+              selectUnit(u.t_id);
+            });
+            tbody.appendChild(tr);
+          }
+
+          if (tbodyCollapse) {
+            const detailId = `detalleUnidad_${u.t_id}`;
+
+            const identificador = u.caracteristica_identificador ?? "A";
+            const tipoConstruccion = tipoCalifLabel || "Convencional";
+            const predioLabel =
+              predio?.numero_predial_nacional ??
+              predio?.t_id ??
+              predioId ??
+              "---";
+            const ucAsociada = u.unidades_asociadas ?? u.uc_asociada ?? "---";
+
+            const tipoDominio = u.tipo_dominio ?? "Privado";
+            const totalMezaninis = u.total_mezaninis ?? "----";
+            const etiqueta = u.etiqueta ?? identificador;
+
+            const totalPisos = u.total_plantas ?? "----";
+            const totalSemisotanos = u.total_semisotanos ?? "----";
+            const estadoConstruccion = u.estado_construccion ?? "Vigente";
+
+            const totalSotanos = u.total_sotanos ?? "----";
+            const totalConstruccion = u.total_construccion ?? "----";
+            const observacion = u.observaciones ?? "----";
+
+            const trCollapse = document.createElement("tr");
+            trCollapse.dataset.unitId = String(u.t_id);
+            trCollapse.className = "fila-unidad-collapse";
+            trCollapse.innerHTML = `
+              <td class="text-center align-middle py-3 border-0">
+                <button
+                  class="btn p-0 border-0 bg-transparent shadow-none"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#${detailId}"
+                  aria-expanded="false"
+                  aria-controls="${detailId}"
+                  onclick="event.stopPropagation();"
+                >
+                  <i class="fa-solid fa-chevron-down text-dark"></i>
+                </button>
+              </td>
+              <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${identificador}</td>
+              <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${tipoConstruccion}</td>
+              <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${predioLabel}</td>
+              <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${ucAsociada}</td>
+            `;
+
+            const trDetail = document.createElement("tr");
+            trDetail.className = "fila-detalle-unidad";
+            trDetail.innerHTML = `
+              <td colspan="5" class="p-0 border-0">
+                <div class="collapse" id="${detailId}">
+                  <div class="detalle-unidad-contenido px-5 pt-2 pb-4 ms-5">
+                    <div class="row gx-5 gy-4 mb-4">
+                      <div class="col-12 col-md-4">
+                        <div class="fw-bold mb-1 text-detalle-unidad">Tipo dominio</div>
+                        <div class="text-detalle-unidad">${tipoDominio}</div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <div class="fw-bold mb-1 text-detalle-unidad">Total mezaninis</div>
+                        <div class="text-detalle-unidad">${totalMezaninis}</div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <div class="fw-bold mb-1 text-detalle-unidad">Etiqueta</div>
+                        <div class="text-detalle-unidad">${etiqueta}</div>
+                      </div>
+                    </div>
+
+                    <div class="row gx-5 gy-4 mb-4">
+                      <div class="col-12 col-md-4">
+                        <div class="fw-bold mb-1 text-detalle-unidad">Total pisos</div>
+                        <div class="text-detalle-unidad">${totalPisos}</div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <div class="fw-bold mb-1 text-detalle-unidad">Total semisotanos</div>
+                        <div class="text-detalle-unidad">${totalSemisotanos}</div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <div class="fw-bold mb-1 text-detalle-unidad">Estado construccion</div>
+                        <div class="text-detalle-unidad">${estadoConstruccion}</div>
+                      </div>
+                    </div>
+
+                    <div class="row gx-5 gy-4">
+                      <div class="col-12 col-md-4">
+                        <div class="fw-bold mb-1 text-detalle-unidad">Total Sotanos</div>
+                        <div class="text-detalle-unidad">${totalSotanos}</div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <div class="fw-bold mb-1 text-detalle-unidad">Total construccion</div>
+                        <div class="text-detalle-unidad">${totalConstruccion}</div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <div class="fw-bold mb-1 text-detalle-unidad">Observación</div>
+                        <div class="text-detalle-unidad">${observacion}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            `;
+
+            const collapseEl = trDetail.querySelector(`#${detailId}`);
+            const icon = trCollapse.querySelector("i");
+
+            trCollapse.addEventListener("click", (event) => {
+              if (event.target.closest("button")) return;
+
+              const instance = bootstrap.Collapse.getOrCreateInstance(collapseEl, {
+                toggle: false
+              });
+
+              if (collapseEl.classList.contains("show")) {
+                instance.hide();
+              } else {
+                instance.show();
+              }
+            });
+
+            collapseEl.addEventListener("show.bs.collapse", () => {
+              document.querySelectorAll("#tbodyConsCollapse .collapse.show").forEach((openEl) => {
+                if (openEl.id !== detailId) {
+                  const openInstance = bootstrap.Collapse.getInstance(openEl) || new bootstrap.Collapse(openEl, { toggle: false });
+                  openInstance.hide();
+                }
+              });
+
+              document.querySelectorAll("#tbodyConsCollapse tr.fila-unidad-collapse").forEach((row) => {
+                row.classList.remove("detalle-activo");
+                const rowIcon = row.querySelector("i");
+                if (rowIcon) {
+                  rowIcon.classList.remove("fa-chevron-up");
+                  rowIcon.classList.add("fa-chevron-down");
+                }
+              });
+
+              document.querySelectorAll("#tbodyConsCollapse tr.fila-detalle-unidad").forEach((row) => {
+                row.classList.remove("detalle-activo");
+              });
+
+              trCollapse.classList.add("detalle-activo");
+              trDetail.classList.add("detalle-activo");
+              icon.classList.remove("fa-chevron-down");
+              icon.classList.add("fa-chevron-up");
+
+              selectUnit(u.t_id);
+            });
+
+            collapseEl.addEventListener("hide.bs.collapse", () => {
+              trCollapse.classList.remove("detalle-activo");
+              trDetail.classList.remove("detalle-activo");
+              trDetail.classList.remove("detalle-relacionado-activo");
+              icon.classList.remove("fa-chevron-up");
+              icon.classList.add("fa-chevron-down");
+
+              const tblUnidadConstruccionCard = document.getElementById("tblUnidadConstruccionCard");
+              const tbodyUnidadConstruccionCard = document.getElementById("tbodyUnidadConstruccionCard");
+              const detalleUnidadCard = document.getElementById("detalleUnidadConstruccionCard");
+
+              if (tblUnidadConstruccionCard) {
+                tblUnidadConstruccionCard.classList.remove("unidad-relacionada-activa");
+              }
+
+              if (tbodyUnidadConstruccionCard) {
+                tbodyUnidadConstruccionCard.classList.remove("unidad-relacionada-activa");
+                tbodyUnidadConstruccionCard.innerHTML = `
+                  <tr class="fila-vacia-unidad">
+                    <td colspan="5" class="text-center text-muted py-3">
+                      Selecciona una unidad en la tabla de construcciones
+                    </td>
+                  </tr>
+                `;
+              }
+
+              if (detalleUnidadCard) {
+                const collapseUc = bootstrap.Collapse.getInstance(detalleUnidadCard);
+                if (collapseUc) {
+                  collapseUc.hide();
+                }
+              }
+
+              actualizarBadgeConstruccion(null);
+              actualizarBadgeUcDesdeTabla();
+            });
+
+            tbodyCollapse.appendChild(trCollapse);
+            tbodyCollapse.appendChild(trDetail);
+          }
+        });
+
+        if (tbl) tbl.style.display = "table";
+        if (tblCollapse) tblCollapse.style.display = "table";
+        if (emptyCollapse) emptyCollapse.style.display = "none";
+      } else {
+        const tblCollapse = document.getElementById("tblConsCollapse");
+        const emptyCollapse = document.getElementById("emptyConsCollapse");
+
+        if (tblCollapse) tblCollapse.style.display = "none";
+        if (emptyCollapse) emptyCollapse.style.display = "block";
+      }
+
+      if (predio?.terreno_geom && mapInstance && highlightLayer) {
+        const format = new ol.format.GeoJSON();
+        currentTerrenoFeature = format.readFeature(
+          {
+            type: "Feature",
+            geometry: predio.terreno_geom,
+          },
+          {
+            dataProjection: "EPSG:9377",
+            featureProjection: "EPSG:9377",
+          }
+        );
+
+        highlightLayer.getSource().clear();
+        highlightLayer.getSource().addFeature(currentTerrenoFeature);
+        mapInstance.getView().fit(currentTerrenoFeature.getGeometry().getExtent(), {
+          padding: [50, 50, 50, 50],
+          duration: 800,
+        });
+      }
+
+      if (unitsLayer) {
+        const src = unitsLayer.getSource();
+        src.clear();
+
+        if (unidades.length) {
+          const format = new ol.format.GeoJSON();
+
+          unidades.forEach((u) => {
+            if (!u.geom) return;
+            try {
+              const f = format.readFeature(
+                {
+                  type: "Feature",
+                  geometry: u.geom,
+                },
+                {
+                  dataProjection: "EPSG:9377",
+                  featureProjection: "EPSG:9377",
+                }
+              );
+              src.addFeature(f);
+            } catch (e) {
+              console.error("Error leyendo geometría de unidad:", e);
+            }
+          });
+        }
+      }
+
+      if (addressesLayer) {
+        const src = addressesLayer.getSource();
+        src.clear();
+
+        if (direcciones.length) {
+          const format = new ol.format.GeoJSON();
+
+          direcciones.forEach((d) => {
+            if (!d.geom) return;
+            try {
+              const f = format.readFeature(
+                {
+                  type: "Feature",
+                  geometry: d.geom,
+                },
+                {
+                  dataProjection: "EPSG:9377",
+                  featureProjection: "EPSG:9377",
+                }
+              );
+              src.addFeature(f);
+            } catch (e) {
+              console.error("Error leyendo geometría de dirección:", e);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Error cargando detalle de predio:", e);
+    }
+  }
+
+  document.addEventListener("click", (event) => {
+    const header = event.target.closest(".vp-acc-header");
+    if (header) {
+      const card = header.parentElement;
+      const wasOpen = card.classList.contains("open");
+      document.querySelectorAll(".vp-acc-card").forEach((c) => c.classList.remove("open"));
+      if (!wasOpen) {
+        card.classList.add("open");
+      }
+    }
+
+    const subHeader = event.target.closest(".vp-sub-acc-trigger");
+    if (subHeader) {
+      const sub = subHeader.parentElement;
+      const wasOpen = sub.classList.contains("open");
+      sub.parentElement.querySelectorAll(".vp-sub-acc").forEach((s) => s.classList.remove("open"));
+      if (!wasOpen) {
+        sub.classList.add("open");
+      }
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    initMap();
+    loadProjectExtent();
+    loadPredioDetalle();
+
+    const btnPredio = document.getElementById("btnZoomPredio");
+    const btnProyecto = document.getElementById("btnZoomProyecto");
+
+    if (btnPredio) {
+      btnPredio.addEventListener("click", () => zoomToPredio());
+    }
+
+    if (btnProyecto) {
+      btnProyecto.addEventListener("click", () => zoomToProject());
+    }
+  });
+
+  function animarActualizacionUnidad() {
+    const card = document.getElementById("cardUnidadConstruccion");
+    const tabla = document.getElementById("tblUnidadConstruccionCard");
+    const tbody = document.getElementById("tbodyUnidadConstruccionCard");
+
+    [card, tabla, tbody].forEach((el) => {
+      if (!el) return;
+      el.classList.remove("animar-actualizacion-unidad");
+      void el.offsetWidth;
+      el.classList.add("animar-actualizacion-unidad");
+    });
+  }
+
+  function actualizarBadgeUcDesdeTabla() {
+    const badge = document.getElementById("badgeUcActiva");
+    const badgeValor = document.getElementById("badgeUcValor");
+    const tbody = document.getElementById("tbodyUnidadConstruccionCard");
+    const mensajeSinSeleccionUc = document.getElementById("mensajeSinSeleccionUc");
+    const contenedorBadgesUc = document.getElementById("contenedorBadgesUc");
+
+    if (!badge || !badgeValor || !tbody) return;
+
+    const filas = tbody.querySelectorAll("tr.fila-unidad-card-principal").length;
+
+    if (!filas) {
+      badge.classList.add("d-none");
+      badgeValor.textContent = "";
+
+      if (contenedorBadgesUc) {
+        contenedorBadgesUc.classList.add("d-none");
+      }
+
+      if (mensajeSinSeleccionUc) {
+        mensajeSinSeleccionUc.classList.remove("d-none");
+      }
+
+      return;
+    }
+
+    badgeValor.textContent = `${filas}UC`;
+    badge.classList.remove("d-none");
+
+    if (contenedorBadgesUc) {
+      contenedorBadgesUc.classList.remove("d-none");
+    }
+
+    if (mensajeSinSeleccionUc) {
+      mensajeSinSeleccionUc.classList.add("d-none");
+    }
+  }
+
+  function actualizarBadgeConstruccion(unitData) {
+    const badge = document.getElementById("badgeConstruccionActiva");
+    const badgeValor = document.getElementById("badgeConstruccionValor");
+    const contenedorBadgesUc = document.getElementById("contenedorBadgesUc");
+    const mensajeSinSeleccionUc = document.getElementById("mensajeSinSeleccionUc");
+
+    if (!badge || !badgeValor) return;
+
+    if (!unitData) {
+      badge.classList.add("d-none");
+      badgeValor.textContent = "";
+
+      if (contenedorBadgesUc) {
+        const badgeUcActiva = document.getElementById("badgeUcActiva");
+        const hayUcVisible = badgeUcActiva && !badgeUcActiva.classList.contains("d-none");
+        if (!hayUcVisible) {
+          contenedorBadgesUc.classList.add("d-none");
+        }
+      }
+
+      if (mensajeSinSeleccionUc) {
+        mensajeSinSeleccionUc.classList.remove("d-none");
+      }
+
+      return;
+    }
+
+    const identificador =
+      unitData.caracteristica_identificador ??
+      unitData.identificador ??
+      unitData.etiqueta ??
+      unitData.t_id ??
+      "---";
+
+    badgeValor.textContent = identificador;
+    badge.classList.remove("d-none");
+
+    if (contenedorBadgesUc) {
+      contenedorBadgesUc.classList.remove("d-none");
+    }
+
+    if (mensajeSinSeleccionUc) {
+      mensajeSinSeleccionUc.classList.add("d-none");
+    }
+  }
+
+  function abrirPanelDerechoDesdeModal(index) {
+    const modalEl = document.getElementById("modalInformacionAdicional");
+    const panelEl = document.getElementById("panelDerechoPredio");
+    const nombreEl = document.getElementById("nombreInteresadoPanel");
+
+    if (!modalEl || !panelEl || !nombreEl) return;
+
+    const interesado = interesadosModalData[index];
+    if (interesado) {
+      const nombreConSalto = `${interesado.linea1 || ""}<br>${interesado.linea2 || ""}`;
+      nombreEl.innerHTML = nombreConSalto;
+    } else {
+      nombreEl.textContent = "---";
+    }
+
+    volverAModalInformacionAdicional = true;
+
+    const modalInstance =
+      bootstrap.Modal.getInstance(modalEl) ||
+      bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    modalEl.addEventListener(
+      "hidden.bs.modal",
+      function handleOpenPanel() {
+        const offcanvasInstance =
+          bootstrap.Offcanvas.getOrCreateInstance(panelEl);
+
+        offcanvasInstance.show();
+        modalEl.removeEventListener("hidden.bs.modal", handleOpenPanel);
+      },
+      { once: true }
+    );
+
+    modalInstance.hide();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const panelEl = document.getElementById("panelDerechoPredio");
+    const modalEl = document.getElementById("modalInformacionAdicional");
+
+    if (panelEl && modalEl) {
+      panelEl.addEventListener("hidden.bs.offcanvas", () => {
+        if (!volverAModalInformacionAdicional) return;
+
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+
+        volverAModalInformacionAdicional = false;
+      });
+    }
+  });
+
+  function abrirModalCaracteristicasUc(identificador = "") {
+    const label = document.getElementById("offcanvasCaracteristicasUcLabel");
+
+    if (label) {
+      label.textContent = identificador
+        ? `Características U.C. - ${identificador}`
+        : "Características U.C.";
+    }
+
+    const offcanvasEl = document.getElementById("offcanvasCaracteristicasUc");
+    if (!offcanvasEl) return;
+
+    const instance = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+    instance.show();
+  }
+</script>
+

@@ -1,0 +1,69 @@
+{
+  "slug": "topografico",
+  "rule_count": 7,
+  "rules": [
+    {
+      "id": "7.1",
+      "description": "Los Punto lindero sobre drenajes debe estar clasificado en CR_PuntoTipo como Catastro.Dinamico",
+      "classes": "ILC_Predio\nCR_PuntoLindero",
+      "variables": "Catastro.Dinamico \nCondicion_Predio \nPuntoTipo",
+      "technical_rule": "Si ILC_Predio.Condicion_Predio = Bien_Uso_Publico y este corresponde a un drenaje, entonces los CR_PuntoLindero.PuntoTipo = Punto_Dinamico",
+      "component": null,
+      "sheet_slug": "topografico"
+    },
+    {
+      "id": "7.2",
+      "description": "Si el número predial en la posición 6 y 7 corresponde a valores entre 01 y 99, entonces la exactitud horizontal del punto lindero debe ser mayor a cero y menor a 1,04",
+      "classes": "CR_Predio\nCR_PuntoLindero",
+      "variables": "Exactitud_Horizontal\nNumero_predial",
+      "technical_rule": "Si COL_Punto.Metodo_Produccion = \"Metodo_Indirecto\" o \"Metodo_Declarativo_Y_Colaborativo\" y ILC_Predio.Numero_predial_Nacional en la posición 6 y 7 Tiene valores entre 01 y 99, entonces CR_PuntoLindero.Exactitud_Horizontal > 0 y < 1,04",
+      "component": null,
+      "sheet_slug": "topografico"
+    },
+    {
+      "id": "7.3",
+      "description": "Si el número predial en la posición 6 y 7 corresponde a valores de 00, entonces la exactitud horizontal del punto lindero debe ser mayor a  cero y menor a 5,2",
+      "classes": "ILC_Predio\nCR_PuntoLindero",
+      "variables": "Exactitud_Horizontal\nNumero_predial",
+      "technical_rule": "Si COL_Punto.Metodo_Produccion = \"Metodo_Indirecto\" o \"Metodo_Declarativo_Y_Colaborativo\" y ILC_Predio.Numero_Predial_Nacional en la posición 6 y 7 = 00, entonces CR_PuntoLindero.Exactitud_Horizontal > 0 y < 5,2",
+      "component": null,
+      "sheet_slug": "topografico"
+    },
+    {
+      "id": "7.4",
+      "description": "Si existe minimo un punto lindero Metodo directo, debe existir minimo 1 punto control",
+      "classes": "CR_PuntoLindero\nCR_PuntoControl",
+      "variables": "Metodo_produccion",
+      "technical_rule": "Si CR_PuntoLindero.Metodo_produccion = Metodo_directo, entonces debe existir al menos un registro en CR_PuntoControl",
+      "component": null,
+      "sheet_slug": "topografico"
+    },
+    {
+      "id": "7.5",
+      "description": "Si el metodo de levantamiento del punto es indirecto o colaborativo, se debe indicar en fotoidentificacion si es visible o estimado",
+      "classes": "COL_Punto\nLC_PuntoLindero",
+      "variables": "Metodo_Produccion\nFotoidentificacionTipo",
+      "technical_rule": "Si CR_PuntoLindero.Metodo_Produccion = \"Metodo_Indirecto\" o \"Metodo_Declarativo_Y_Colaborativo\", entonces  CR_PuntoLindero.Fotoidentificacion = \"Visible\" o \"Estimado\"",
+      "component": null,
+      "sheet_slug": "topografico"
+    },
+    {
+      "id": "7.6",
+      "description": "Si el metodo de levantamiento es directo, el campo de fotoidentificacion deber ser nulo",
+      "classes": "COL_Punto\nLC_PuntoLindero",
+      "variables": "Metodo_Produccion LC_FotoidentificacionTipo",
+      "technical_rule": "Si CR_PuntoLindero.Metodo_Produccion = \"Metodo_directo\", entonces  CR_PuntoLindero.Fotoidentificacion = Null",
+      "component": null,
+      "sheet_slug": "topografico"
+    },
+    {
+      "id": "7.7",
+      "description": "La longitud del lindero debe ser mayor a cero",
+      "classes": "CR_Lindero",
+      "variables": "Longitud",
+      "technical_rule": "CR_Lindero.Longitud > 0",
+      "component": null,
+      "sheet_slug": "topografico"
+    }
+  ]
+}

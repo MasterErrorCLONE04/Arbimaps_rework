@@ -1,0 +1,692 @@
+<div class="content-modulo-ver container-fluid px-1 px-md-2 px-xl-2">
+  <div class="section-title-head ms-0 ms-md-3 ms-xl-4">
+    <div class="indication">
+      <small class="indication-text">
+        MÓDULO DE ASIGNACIONES > PANEL GENERAL
+      </small>
+    </div>
+
+    <div class="section-title-principal">
+      <div class="content-title-principal mt-4">
+        <small class="title-principal">
+          Panel general de Asignaciones
+        </small>
+      </div>
+
+      <div class="section-parrafo-principal">
+        <small class="parrafo-principal">
+          Consulta, revisa y exporta las asignaciones creadas.
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-section-table mt-5 mb-5">
+    <div class="row">
+      <div class="col-12">
+        <div class="asigVerShell shadow-sm">
+          <div class="asigVerPanel p-4 p-md-4 p-xl-5" id="asigVerPanel">
+            <div
+              class="asigVerToolbar d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+              <div class="asig-section-title">
+                <div class="asig-title mb-1">Listado de Asignaciones</div>
+                <div class="asig-parraf">Consulta la lista de asignaciones por orden de creación</div>
+                {% if not asig_supports_package_export %}
+                <div class="asig-parraf mt-1">
+                  La exportación XTF, GDB y GPKG aún no está disponible para el modelo {{ asig_model_name }}.
+                </div>
+                {% endif %}
+              </div>
+
+              <div class="asigVerActions ms-md-auto">
+                <button id="btnExportarExcel" type="button"
+                  class="btn btnExcel d-inline-flex align-items-center justify-content-center px-3 py-2" disabled>
+                  <i class="bi bi-arrow-up-right-square-fill me-2"></i>
+                  Exportar a excel
+                </button>
+              </div>
+            </div>
+
+            <div class="asig-divider my-4"></div>
+
+            <div class="row g-3 align-items-end mb-4 asigTableControls">
+              <div class="col-12 col-md-4 col-lg-2">
+                <label for="asigRowsPerPage" class="form-label asigControlLabel mb-2">
+                  Mostrar registros
+                </label>
+                <select id="asigRowsPerPage" class="form-select asigControlInput asigRowsSelect shadow-none">
+                  <option value="4">4</option>
+                  <option value="8">8</option>
+                  <option value="10">10</option>
+                  <option value="15">15</option>
+                  <option value="20">20</option>
+                </select>
+              </div>
+
+              <div class="col-12 col-md-8 col-lg-4 ms-lg-auto">
+                <label for="asigSearchInput" class="form-label asigControlLabel mb-2">
+                  Buscar
+                </label>
+                <input type="text" id="asigSearchInput" class="form-control asigControlInput shadow-none"
+                  placeholder="Buscar por ID, estado, coordinador, encargado..." />
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table align-middle mb-0 asigTable">
+                <thead>
+                  <tr>
+                    <th class="text-center">Detalle</th>
+                    <th class="text-center">ID</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Fecha de creación</th>
+                    <th class="text-center">Coordinador</th>
+                    <th class="text-center">Nombre de asignación / Encargado</th>
+                    <th class="text-center">Asignados</th>
+                    <th class="text-center">Eliminados</th>
+                    <th class="text-center">Nuevos</th>
+                    <th class="text-center">Exportar</th>
+                    <th class="text-center">Quitar</th>
+                  </tr>
+                </thead>
+
+                <tbody id="tbodyVerAsignaciones">
+                  <tr>
+                    <td colspan="11" class="text-center py-5 text-secondary">
+                      Cargando asignaciones...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div
+              class="asigTableFooter d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3 mt-4">
+              <div class="asigResultsInfo" id="asigResultsInfo">
+                Mostrando 0 de 0 resultados
+              </div>
+
+              <nav aria-label="Paginación asignaciones" class="w-100 w-lg-auto">
+                <ul class="pagination asigPagination mb-0 justify-content-start justify-content-lg-end flex-wrap"
+                  id="asigPagination">
+                </ul>
+              </nav>
+            </div>
+
+            <div id="asigVerEmpty" class="d-none mt-4">No hay asignaciones creadas todavía.</div>
+            <div id="asigVerError" class="d-none mt-4"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const rp = "{{ rp }}";
+  const asigModelName = {{ asig_model_name | tojson }};
+  const asigSchemaWork = {{ asig_schema_work | tojson }};
+  const asigSupportsPackageExport = {{ asig_supports_package_export | tojson }};
+  const tbodyAsignaciones = document.getElementById("tbodyVerAsignaciones");
+  const btnExportar = document.getElementById("btnExportarExcel");
+  const emptyMsg = document.getElementById("asigVerEmpty");
+  const errorMsg = document.getElementById("asigVerError");
+  const resultsInfo = document.getElementById("asigResultsInfo");
+  const pagination = document.getElementById("asigPagination");
+  const searchInput = document.getElementById("asigSearchInput");
+  const rowsPerPageSelect = document.getElementById("asigRowsPerPage");
+
+  const fechaFmt = new Intl.DateTimeFormat("es-CO", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  let cacheAsignaciones = [];
+  let filteredAsignaciones = [];
+  let currentPage = 1;
+  let rowsPerPage = Number(rowsPerPageSelect?.value || 4);
+
+  function esc(value) {
+    if (value === null || value === undefined) return "";
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function renderFecha(value) {
+    if (!value) return "—";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return esc(value);
+
+    const texto = fechaFmt.format(d);
+    const partes = texto.split(",");
+    if (partes.length >= 2) {
+      return `${partes[0]}, ${partes.slice(1).join(",").trim()}`;
+    }
+    return texto;
+  }
+
+  function normalizarTexto(value) {
+    return String(value ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function getSearchableText(item) {
+    return normalizarTexto([
+      item.id,
+      item.estado,
+      item.coordinador,
+      item.usuario_asignado,
+      item.titulo,
+      renderFecha(item.fecha_creacion),
+      item.total_asignados,
+      item.total_eliminados,
+      item.total_nuevos
+    ].join(" "));
+  }
+
+  function buildRow(item) {
+    const fecha = renderFecha(item.fecha_creacion);
+    const asignados = item.total_asignados ?? "0";
+    const eliminados = item.total_eliminados ?? "0";
+    const nuevos = item.total_nuevos ?? "0";
+    const id = item.id ?? "—";
+    const coordinador = item.coordinador || "—";
+    const encargado = item.usuario_asignado || "—";
+    const titulo = item.titulo || "SIN NOMBRE";
+    const estado = item.estado || "—";
+    const isClosed = String(estado).toUpperCase() === "CERRADA";
+
+    const estadoUpper = String(estado).toUpperCase();
+    const estadoClass =
+      estadoUpper === "EN_TRABAJO"
+        ? "estado-chip estado-trabajo"
+        : "estado-chip";
+
+    const closeBtn = isClosed
+      ? `<span class="d-inline-block" style="width:24px;height:24px;"></span>`
+      : `
+        <button
+          type="button"
+          class="btn btn-danger btn-icon-delete"
+          title="Quitar asignación"
+          data-action="cerrar"
+          data-id="${esc(id)}">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      `;
+
+    const exportButtons = asigSupportsPackageExport
+      ? `
+        <div class="d-flex justify-content-center align-items-center gap-2 flex-nowrap">
+          <button
+            type="button"
+            class="btn btn-export-mini btn-export-dark"
+            title="Descargar XTF"
+            data-action="descargar"
+            data-id="${esc(id)}">
+            XTF
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-export-mini btn-export-mid"
+            title="Descargar GDB"
+            data-action="descargar-gdb"
+            data-id="${esc(id)}">
+            GDB
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-export-mini btn-export-light"
+            title="Descargar GPKG"
+            data-action="descargar-gpkg"
+            data-id="${esc(id)}">
+            GPKG
+          </button>
+        </div>
+      `
+      : `
+        <div class="d-flex justify-content-center align-items-center gap-2 flex-nowrap">
+          <button type="button" class="btn btn-export-mini btn-export-dark" disabled title="No disponible para el modelo ${esc(asigModelName)}">XTF</button>
+          <button type="button" class="btn btn-export-mini btn-export-mid" disabled title="No disponible para el modelo ${esc(asigModelName)}">GDB</button>
+          <button type="button" class="btn btn-export-mini btn-export-light" disabled title="No disponible para el modelo ${esc(asigModelName)}">GPKG</button>
+        </div>
+      `;
+
+    return `
+      <tr>
+        <td class="text-center">
+          <button
+            type="button"
+            class="btn btn-link p-0 btn-eye"
+            title="Abrir detalle"
+            data-action="detalle"
+            data-id="${esc(id)}">
+            <i class="bi bi-eye-fill"></i>
+          </button>
+        </td>
+
+        <td class="text-center asig-id-cell">${esc(id)}</td>
+
+        <td class="text-center">
+          <span class="${estadoClass}">
+            ${esc(estado)}
+          </span>
+        </td>
+
+        <td class="text-center asig-fecha-cell">
+          ${esc(fecha)}
+        </td>
+
+        <td class="text-center asig-person-cell">
+          <div>${esc(coordinador)}</div>
+        </td>
+
+        <td class="text-center asig-name-cell">
+          <div class="asig-lote-title">${esc(titulo)}</div>
+          <div class="asig-user-sub">${esc(encargado)}</div>
+        </td>
+
+        <td class="text-center">
+          <span class="count-pill">${esc(asignados)}</span>
+        </td>
+
+        <td class="text-center asig-counter-cell">${esc(eliminados)}</td>
+
+        <td class="text-center asig-counter-cell">${esc(nuevos)}</td>
+
+        <td class="text-center">
+          ${exportButtons}
+        </td>
+
+        <td class="text-center">
+          ${closeBtn}
+        </td>
+      </tr>
+    `;
+  }
+
+  function getVisiblePages(totalPages, currentPage) {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    if (currentPage === 1) {
+      return [1, 2, "dots-right", totalPages];
+    }
+
+    if (currentPage === totalPages) {
+      return [1, "dots-left", totalPages - 1, totalPages];
+    }
+
+    return [1, "dots-left", currentPage, "dots-right", totalPages];
+  }
+
+  function renderPagination(totalRows) {
+    const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+    pagination.innerHTML = "";
+
+    if (totalRows <= 0) return;
+
+    const visiblePages = getVisiblePages(totalPages, currentPage);
+
+    pagination.innerHTML += `
+      <li class="page-item ${currentPage === 1 ? "disabled" : ""}">
+        <button class="page-link" data-page="prev" type="button" aria-label="Anterior">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+      </li>
+    `;
+
+    visiblePages.forEach((page) => {
+      if (page === "dots-left" || page === "dots-right") {
+        pagination.innerHTML += `
+          <li class="page-item disabled">
+            <span class="page-link asig-page-dots">...</span>
+          </li>
+        `;
+        return;
+      }
+
+      pagination.innerHTML += `
+        <li class="page-item ${page === currentPage ? "active" : ""}">
+          <button class="page-link" data-page="${page}" type="button">${page}</button>
+        </li>
+      `;
+    });
+
+    pagination.innerHTML += `
+      <li class="page-item ${currentPage === totalPages ? "disabled" : ""}">
+        <button class="page-link" data-page="next" type="button" aria-label="Siguiente">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </li>
+    `;
+  }
+
+  function applyFilters() {
+    const term = normalizarTexto(searchInput?.value || "");
+
+    if (!term) {
+      filteredAsignaciones = [...cacheAsignaciones];
+    } else {
+      filteredAsignaciones = cacheAsignaciones.filter(item =>
+        getSearchableText(item).includes(term)
+      );
+    }
+
+    const totalPages = Math.ceil(filteredAsignaciones.length / rowsPerPage) || 1;
+
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+  }
+
+  function renderTable() {
+    applyFilters();
+
+    if (!cacheAsignaciones.length) {
+      tbodyAsignaciones.innerHTML = "";
+      resultsInfo.textContent = "Mostrando 0 de 0 resultados";
+      pagination.innerHTML = "";
+      emptyMsg.classList.remove("d-none");
+      btnExportar.disabled = true;
+      return;
+    }
+
+    if (!filteredAsignaciones.length) {
+      tbodyAsignaciones.innerHTML = `
+        <tr>
+          <td colspan="11" class="text-center py-5 text-secondary">
+            No se encontraron resultados para la búsqueda realizada.
+          </td>
+        </tr>
+      `;
+      resultsInfo.textContent = "Mostrando 0 de 0 resultados";
+      pagination.innerHTML = "";
+      emptyMsg.classList.add("d-none");
+      btnExportar.disabled = false;
+      return;
+    }
+
+    emptyMsg.classList.add("d-none");
+    btnExportar.disabled = false;
+
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const pageRows = filteredAsignaciones.slice(start, end);
+
+    tbodyAsignaciones.innerHTML = pageRows.map(buildRow).join("");
+    resultsInfo.textContent = `Mostrando ${start + 1} a ${Math.min(end, filteredAsignaciones.length)} de ${filteredAsignaciones.length} resultados`;
+    renderPagination(filteredAsignaciones.length);
+  }
+
+  async function cargarAsignaciones() {
+    emptyMsg.classList.add("d-none");
+    errorMsg.classList.add("d-none");
+    btnExportar.disabled = true;
+
+    tbodyAsignaciones.innerHTML = `
+      <tr>
+        <td colspan="11" class="text-center py-5 text-secondary">
+          Cargando asignaciones...
+        </td>
+      </tr>
+    `;
+
+    try {
+      const resp = await fetch(`${rp}/asignaciones/listado`, { credentials: "same-origin" });
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        throw new Error(data?.detail || "No se pudo cargar el listado de asignaciones.");
+      }
+
+      cacheAsignaciones = Array.isArray(data) ? data : [];
+      filteredAsignaciones = [...cacheAsignaciones];
+      currentPage = 1;
+      renderTable();
+
+    } catch (err) {
+      console.error(err);
+      tbodyAsignaciones.innerHTML = "";
+      errorMsg.textContent = err.message || "Error inesperado cargando asignaciones.";
+      errorMsg.classList.remove("d-none");
+      resultsInfo.textContent = "Mostrando 0 de 0 resultados";
+      pagination.innerHTML = "";
+    }
+  }
+
+  function exportarAsignaciones() {
+    if (!cacheAsignaciones.length) return;
+
+    const headers = [
+      "Fecha de creación",
+      "Coordinador",
+      "Nombre de asignación",
+      "Encargado",
+      "Asignados",
+      "Eliminados",
+      "Nuevos",
+      "Estado",
+      "Id"
+    ];
+
+    const rows = cacheAsignaciones.map(item => [
+      renderFecha(item.fecha_creacion),
+      item.coordinador || "",
+      item.titulo || "",
+      item.usuario_asignado || "",
+      item.total_asignados ?? "",
+      item.total_eliminados ?? "",
+      item.total_nuevos ?? "",
+      item.estado || "",
+      item.id || ""
+    ]);
+
+    const csv = [
+      headers.join(","),
+      ...rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
+    ].join("\r\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `asignaciones_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function descargarPaqueteAsincrono(id, formato, btn) {
+    const labelOriginal = btn?.textContent || formato.toUpperCase();
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = `${labelOriginal}...`;
+    }
+
+    try {
+      const createResp = await fetch(
+        `${rp}/asignaciones/${encodeURIComponent(id)}/paquete/jobs?formato=${encodeURIComponent(formato)}`,
+        {
+          method: "POST",
+          credentials: "same-origin",
+        }
+      );
+
+      const createData = await createResp.json().catch(() => ({}));
+
+      if (!createResp.ok) {
+        throw new Error(createData?.detail || "No se pudo iniciar el job de exportación.");
+      }
+
+      const jobId = createData?.job_id;
+      if (!jobId) {
+        throw new Error("No se recibió job_id de exportación.");
+      }
+
+      for (let i = 0; i < 180; i += 1) {
+        await sleep(2000);
+
+        const statusResp = await fetch(`${rp}/asignaciones/export-jobs/${encodeURIComponent(jobId)}`, {
+          credentials: "same-origin",
+        });
+
+        const statusData = await statusResp.json().catch(() => ({}));
+
+        if (!statusResp.ok) {
+          throw new Error(statusData?.detail || "No se pudo consultar el estado del job.");
+        }
+
+        const estado = String(statusData?.estado || "").toUpperCase();
+        const progreso = Number(statusData?.progreso || 0);
+
+        if (btn) {
+          const pct = Number.isFinite(progreso) ? Math.max(0, Math.min(100, progreso)) : 0;
+          btn.textContent = `${labelOriginal} ${pct}%`;
+        }
+
+        if (estado === "DONE") {
+          window.location.href = `${rp}/asignaciones/export-jobs/${encodeURIComponent(jobId)}/download`;
+          return;
+        }
+
+        if (estado === "ERROR") {
+          throw new Error(statusData?.error_msg || statusData?.mensaje || "El job de exportación falló.");
+        }
+      }
+
+      throw new Error("La exportación sigue en proceso. Revisa nuevamente en unos minutos.");
+
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = labelOriginal;
+      }
+    }
+  }
+
+  pagination?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-page]");
+    if (!btn || btn.closest(".disabled")) return;
+
+    const totalPages = Math.ceil(filteredAsignaciones.length / rowsPerPage) || 1;
+    const page = btn.getAttribute("data-page");
+
+    if (page === "prev" && currentPage > 1) {
+      currentPage--;
+    } else if (page === "next" && currentPage < totalPages) {
+      currentPage++;
+    } else if (!isNaN(Number(page))) {
+      currentPage = Number(page);
+    }
+
+    renderTable();
+  });
+
+  rowsPerPageSelect?.addEventListener("change", () => {
+    rowsPerPage = Number(rowsPerPageSelect.value || 4);
+    currentPage = 1;
+    renderTable();
+  });
+
+  searchInput?.addEventListener("input", () => {
+    currentPage = 1;
+    renderTable();
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    cargarAsignaciones();
+
+    btnExportar?.addEventListener("click", exportarAsignaciones);
+
+    tbodyAsignaciones?.addEventListener("click", async (ev) => {
+      const btn = ev.target.closest("[data-action]");
+      if (!btn) return;
+
+      ev.preventDefault();
+
+      const id = btn.getAttribute("data-id");
+      if (!id) return;
+
+      const action = btn.getAttribute("data-action");
+      if (!action) return;
+
+      if (!asigSupportsPackageExport && (
+        action === "descargar" ||
+        action === "descargar-gdb" ||
+        action === "descargar-gpkg"
+      )) {
+        alert(`La exportación de paquetes aún no está disponible para el modelo ${asigModelName}.`);
+        return;
+      }
+
+      if (action === "descargar") {
+        if (!confirm("La exportación XTF se ejecutará en segundo plano y puede tardar varios minutos. ¿Deseas continuar?")) return;
+        try {
+          await descargarPaqueteAsincrono(id, "xtf", btn);
+        } catch (err) {
+          alert(err?.message || "No se pudo exportar XTF.");
+        }
+
+      } else if (action === "descargar-gdb") {
+        if (!confirm("La exportación GDB se ejecutará en segundo plano y puede tardar varios minutos. ¿Deseas continuar?")) return;
+        try {
+          await descargarPaqueteAsincrono(id, "gdb", btn);
+        } catch (err) {
+          alert(err?.message || "No se pudo exportar GDB.");
+        }
+
+      } else if (action === "descargar-gpkg") {
+        if (!confirm("La exportación GPKG se ejecutará en segundo plano y puede tardar varios minutos. ¿Deseas continuar?")) return;
+        try {
+          await descargarPaqueteAsincrono(id, "gpkg", btn);
+        } catch (err) {
+          alert(err?.message || "No se pudo exportar GPKG.");
+        }
+
+      } else if (action === "cerrar") {
+        const workspaceName = asigSchemaWork || "workspace";
+        if (!confirm(`Cerrar esta asignación liberará predios y eliminará su workspace en ${workspaceName}. ¿Continuar?`)) return;
+        try {
+          const resp = await fetch(`${rp}/asignaciones/${encodeURIComponent(id)}/cerrar`, {
+            method: "POST",
+            credentials: "same-origin",
+          });
+
+          const data = await resp.json().catch(() => ({}));
+
+          if (!resp.ok) {
+            throw new Error(data?.detail || "No se pudo cerrar la asignación.");
+          }
+
+          await cargarAsignaciones();
+
+        } catch (err) {
+          alert(err?.message || "No se pudo cerrar la asignación.");
+        }
+
+      } else if (action === "workspace" || action === "detalle") {
+        window.location.href = `${rp}/panel/asignaciones/detalle?id=${encodeURIComponent(id)}#asig-open`;
+      }
+    });
+  });
+</script>

@@ -1,0 +1,478 @@
+{% set rp = rp if rp is defined else request.scope.get('root_path','') %}
+{% set view = view if view is defined else 'visor' %}
+{% set limited_assignment_role = effective_role in ['digitalizador', 'reconocedor'] %}
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>Panel de administración</title>
+
+  <link rel="icon" type="image/png" href="{{ rp }}/static/icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@9.2.4/ol.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+
+  {% if view == 'usuarios' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_saas.css" />
+  {% endif %}
+  {% if view == 'visor' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/visor/visor.css?v=1" />
+  {% endif %}
+  {% if view == 'buscar' or view == 'buscar_predio' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/buscar/buscar.css" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/buscar/informacion_predio.css" />
+  {% endif %}
+  {% if view == 'asignaciones' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/cargas_trabajo.css" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/ver_asignaciones.css" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/asignaciones_detalles.css" />
+  {% if asig_tab == 'edicion' or asig_tab == 'editar_predio' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/edicion_asignacion/edicion_asignacion.css" />
+  {% if asig_tab == 'editar_predio' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/edicion_asignacion/editar.css" />
+  {% endif %}
+  {% endif %}
+  {% endif %}
+  {% if view == 'edicion_asignaciones' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/edicion_asignacion/edicion_asignacion.css" />
+  {% if predio is defined and predio %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/edicion_asignacion/editar.css" />
+  {% endif %}
+  {% endif %}
+
+  <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel.css?v=7" />
+</head>
+
+<body class="panel-body">
+
+  <div class="container-fluid panel-wrapper px-2 py-2">
+    <div class="row g-2 vh-100">
+      <aside class="col-lg-3 col-xl-2 d-none d-lg-block h-100 pb-2 pb-xl-4">
+        <div class="sidebar d-flex flex-column mt-1 h-100">
+          <div class="sidebar-top d-flex flex-column h-100">
+            <div class="card-info mt-4 d-flex justify-content-center align-items-center text-center">
+              <div class="card-info-img me-0">
+                <img src="{{ rp }}/static/img/PNG/logoArbi.png" alt="Logo Arbimaps" class="logo-sidebar" />
+              </div>
+
+              <div class="card-info-title text-start">
+                <span class="title-arbi text-white fw-bold d-block mb-0">ARBIMaps</span>
+                <span class="text-white d-block mb-0 fw-normal" style="font-size: 0.633rem; line-height: 1.1;">
+                  Aplicativo de Gestión Catastral
+                </span>
+              </div>
+            </div>
+
+            <div class="px-3">
+              <hr class="border-light opacity-25 mt-3 mb-0" />
+            </div>
+
+            <nav class="menu sidebar-nav d-flex flex-column gap-2 mt-2">
+              <span class="titleHerr text-white mb-2">Herramientas principales</span>
+
+              {% if not limited_assignment_role %}
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'visor' else '' }}" href="{{ rp }}/panel">
+                <i class="bi bi-house-fill"></i>
+                <span>Inicio</span>
+              </a>
+              {% endif %}
+
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'buscar' else '' }}" href="{{ rp }}/panel/buscar">
+                <i class="bi bi-search"></i>
+                <span>Consultar predio</span>
+              </a>
+
+              {% if can_access_asignaciones %}
+              <div class="accordion" id="asignacionesAccordionDesktop">
+                <div class="accordion-item bg-transparent border-0 p-0">
+                  <h2 class="accordion-header">
+                    <button
+                      class="accordion-button collapsed menuBtn sidebar-toggle-custom {{ 'active' if view == 'asignaciones' else '' }}"
+                      type="button" data-bs-toggle="collapse" data-bs-target="#collapseAsignacionesDesktop"
+                      aria-expanded="{{ 'true' if view == 'asignaciones' else 'false' }}"
+                      aria-controls="collapseAsignacionesDesktop">
+                      <span class="sidebar-group-main">
+                        <span class="sidebar-group-left">
+                          <i class="bi bi-journal-check"></i>
+                          <span>Asignaciones</span>
+                        </span>
+                      </span>
+                    </button>
+                  </h2>
+
+                  <div id="collapseAsignacionesDesktop"
+                    class="accordion-collapse collapse {% if view == 'asignaciones' %}show{% endif %}"
+                    data-bs-parent="#asignacionesAccordionDesktop">
+                    <div class="accordion-body p-2">
+                      {% if not limited_assignment_role %}
+                      <a class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
+                        href="{{ rp }}/panel/asignaciones/cargas#asig-open">
+                        <img src="{{ rp }}/static/img/PNG/cargaicon.png" alt="logo cargas" class="logo-submenu" />
+                        <span>Cargas de trabajo</span>
+                      </a>
+                      {% endif %}
+
+                      <a class="popupItem {% if asig_tab == 'ver' %}active{% endif %}"
+                        href="{{ rp }}/panel/asignaciones/ver#asig-open">
+                        <i class="bi bi-person-workspace"></i>
+                        <span>Ver asignaciones</span>
+                      </a>
+
+                      {% if not limited_assignment_role %}
+                      <a class="popupItem {% if asig_tab == 'detalle' %}active{% endif %}"
+                        href="{{ rp }}/panel/asignaciones/detalle#asig-open">
+                        <i class="bi bi-binoculars"></i>
+                        <span>Detalles Asignación</span>
+                      </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'validacion_xtf' else '' }}"
+                href="{{ rp }}/panel/validacion-xtf">
+                <i class="bi bi-check-circle"></i>
+                <span>Validación XTF</span>
+              </a>
+
+              {% if not limited_assignment_role %}
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}"
+                href="{{ rp }}/panel/usuarios">
+                <i class="bi bi-people"></i>
+                <span>Usuarios</span>
+              </a>
+              {% endif %}
+
+              {% if not limited_assignment_role %}
+              <a class="menuBtn sidebar-link">
+                <i class="bi bi-slash-circle"></i>
+                <span>Restricción de predios</span>
+              </a>
+              {% endif %}
+
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'box_explorer' else '' }}"
+                href="{{ rp }}/panel/soportes/explorar">
+                <i class="bi bi-folder"></i>
+                <span>Documentos</span>
+              </a>
+
+              {% if not limited_assignment_role %}
+              <a class="menuBtn sidebar-link">
+                <i class="bi bi-arrow-down-up"></i>
+                <span>Reporte SINIC</span>
+              </a>
+              {% endif %}
+            </nav>
+
+            <div class="px-3 mt-auto">
+              <hr class="border-light opacity-25 my-3" />
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CONTENIDO -->
+      <div class="col-12 col-lg-9 col-xl-10 h-100">
+        <div class="h-100 d-flex flex-column panel-content-column">
+
+          <nav class="panel-topbar d-flex align-items-center justify-content-between flex-shrink-0 px-3 px-md-4 mb-2 mb-md-3">
+            <div class="d-flex align-items-center min-w-0">
+              <button
+                class="btn text-white d-inline-flex d-lg-none align-items-center justify-content-center me-2 mobile-sidebar-toggle"
+                type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar"
+                aria-label="Abrir menú">
+                <i class="bi bi-filter fs-4"></i>
+              </button>
+
+              <div class="topbar-content-title">
+                <a href="{{ rp }}/panel" class="topbar-brand">Dirección de Gestión Catastral</a>
+                <p class="topbar-title-pri">Información de base</p>
+              </div>
+            </div>
+
+            <div class="dropdown">
+              <button class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false">
+                <div class="topbar-user-meta d-none d-md-block">
+                  <div class="name">
+                    ¡Bienvenido!,<br />
+                    {{ user }}
+                  </div>
+                </div>
+                <div class="user-badge">{{ user[0]|upper if user else "A" }}</div>
+              </button>
+
+              <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 user-dropdown">
+                <li class="px-3 py-2 border-bottom">
+                  <div class="fw-semibold text-dark">{{ user }}</div>
+                  <div class="small text-muted">Panel de administración</div>
+                </li>
+                <li>
+                  <a class="dropdown-item d-flex align-items-center gap-2" href="{{ rp }}/logout-app">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Cerrar sesión</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </nav>
+
+          <div class="page-shell d-flex flex-column">
+            <main class="main flex-grow-1">
+              <div class="content-shell h-100 overflow-auto px-0 px-md-1 px-xl-2 pt-1 pb-0">
+                <div class="page-header {% if view == 'visor' %}d-none{% endif %}">
+                  <div>
+                    <div class="page-title">
+                      {% if view == 'usuarios' %}Usuarios
+                      {% elif view == 'validacion_xtf' %}Validación XTF
+                      {% elif view == 'box_explorer' %}Documentos
+                      {% endif %}
+                    </div>
+
+                    <div class="page-subtitle">
+                      {% if view == 'usuarios' %}Administración de usuarios del sistema
+                      {% elif view == 'validacion_xtf' %}Revisión y validación de archivos XTF
+                      {% elif view == 'box_explorer' %}Exploración de soportes y documentos
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <section>
+                  {% if view == 'visor' %}
+                  {% include "visor.html" %}
+                  {% elif view == 'buscar' %}
+                  {% include "buscar.html" %}
+                  {% elif view == 'buscar_predio' %}
+                  {% include "buscar_predio.html" %}
+                  {% elif view == 'asignaciones' %}
+                  {% if asig_tab == 'ver' %}
+                  {% include "asignaciones_ver.html" %}
+                  {% elif asig_tab == 'detalle' %}
+                  {% include "asignaciones_detalle.html" %}
+                  {% elif asig_tab == 'edicion' %}
+                  {% include "edicion_asignaciones.html" %}
+                  {% elif asig_tab == 'editar_predio' %}
+                  {% include "editar_predio.html" %}
+                  {% else %}
+                  {% include "asignaciones_cargas.html" %}
+                  {% endif %}
+                  {% elif view == 'usuarios' %}
+                  {% include "usuarios.html" %}
+                  {% elif view == 'validacion_xtf' %}
+                  {% set validacion_embed = True %}
+                  {% include "validacion_xtf.html" %}
+                  {% set validacion_embed = False %}
+                  {% elif view == 'box_explorer' %}
+                  {% include "box_explorer.html" %}
+                  {% elif view == 'error' %}
+                  <div class="card p-3">
+                    <h6 class="mb-2">No se pudo cargar la vista solicitada.</h6>
+                    <p class="sub mb-0">{{ error_msg if error_msg is defined else 'Error no especificado.' }}</p>
+                  </div>
+                  {% elif view == 'edicion_asignaciones' %}
+                  {% if predio is defined and predio %}
+                  {% include "editar_predio.html" %}
+                  {% else %}
+                  {% include "edicion_asignaciones.html" %}
+                  {% endif %}
+                  {% else %}
+                  <div class="card">
+                    <p class="sub">Vista no disponible.</p>
+                  </div>
+                  {% endif %}
+                </section>
+              </div>
+            </main>
+
+            <footer
+              class="footer-simple app-footer flex-shrink-0 d-flex flex-column justify-content-center align-items-center gap-1 px-2 py-2 rounded-2 shadow-sm text-center">
+              <div class="small fw-medium">© 2026 Gestión Catastral</div>
+            </footer>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR MÓVIL -->
+  <div class="offcanvas offcanvas-start d-lg-none mobile-offcanvas-sidebar" tabindex="-1" id="mobileSidebar"
+    aria-labelledby="mobileSidebarLabel">
+    <div class="offcanvas-header border-bottom border-light border-opacity-25">
+      <div class="d-flex align-items-center gap-2">
+        <img src="{{ rp }}/static/img/PNG/logoArbi.png" alt="Logo Arbimaps" class="logo-sidebar" />
+        <div>
+          <div class="fw-bold text-white">ARBIMaps</div>
+          <small class="text-white">Aplicativo de Gestión Catastral</small>
+        </div>
+      </div>
+
+      <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="offcanvas"
+        aria-label="Cerrar menú">
+      </button>
+    </div>
+
+    <div class="offcanvas-body">
+      <nav class="menu sidebar-nav d-flex flex-column gap-2">
+        <span class="titleHerr text-white mb-2">Herramientas principales</span>
+
+        {% if not limited_assignment_role %}
+        <a class="menuBtn sidebar-link {{ 'active' if view == 'visor' else '' }}" href="{{ rp }}/panel">
+          <i class="bi bi-house-fill"></i>
+          <span>Inicio</span>
+        </a>
+        {% endif %}
+
+        <a class="menuBtn sidebar-link {{ 'active' if view == 'buscar' else '' }}" href="{{ rp }}/panel/buscar">
+          <i class="bi bi-search"></i>
+          <span>Consultar predio</span>
+        </a>
+
+        {% if can_access_asignaciones %}
+        <div class="accordion" id="asignacionesAccordionMobile">
+          <div class="accordion-item bg-transparent border-0 p-0">
+            <h2 class="accordion-header">
+              <button
+                class="accordion-button collapsed menuBtn sidebar-toggle-custom {{ 'active' if view == 'asignaciones' else '' }}"
+                type="button" data-bs-toggle="collapse" data-bs-target="#collapseAsignacionesMobile"
+                aria-expanded="{{ 'true' if view == 'asignaciones' else 'false' }}"
+                aria-controls="collapseAsignacionesMobile">
+                <span class="sidebar-group-main">
+                  <span class="sidebar-group-left">
+                    <i class="bi bi-journal-check"></i>
+                    <span>Asignaciones</span>
+                  </span>
+                </span>
+              </button>
+            </h2>
+
+            <div id="collapseAsignacionesMobile"
+              class="accordion-collapse collapse {% if view == 'asignaciones' %}show{% endif %}"
+              data-bs-parent="#asignacionesAccordionMobile">
+              <div class="accordion-body p-2">
+                {% if not limited_assignment_role %}
+                <a class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
+                  href="{{ rp }}/panel/asignaciones/cargas#asig-open">
+                  <img src="{{ rp }}/static/img/PNG/cargaicon.png" alt="logo cargas" class="logo-submenu" />
+                  <span>Cargas de trabajo</span>
+                </a>
+                {% endif %}
+
+                <a class="popupItem {% if asig_tab == 'ver' %}active{% endif %}"
+                  href="{{ rp }}/panel/asignaciones/ver#asig-open">
+                  <i class="bi bi-person-workspace"></i>
+                  <span>Ver asignaciones</span>
+                </a>
+
+                {% if not limited_assignment_role %}
+                <a class="popupItem {% if asig_tab == 'detalle' %}active{% endif %}"
+                  href="{{ rp }}/panel/asignaciones/detalle#asig-open">
+                  <i class="bi bi-binoculars"></i>
+                  <span>Detalles Asignación</span>
+                </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <a class="menuBtn sidebar-link {{ 'active' if view == 'validacion_xtf' else '' }}"
+          href="{{ rp }}/panel/validacion-xtf">
+          <i class="bi bi-check-circle"></i>
+          <span>Validación XTF</span>
+        </a>
+
+        {% if not limited_assignment_role %}
+        <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}" href="{{ rp }}/panel/usuarios">
+          <i class="bi bi-people"></i>
+          <span>Usuarios</span>
+        </a>
+        {% endif %}
+
+        {% if not limited_assignment_role %}
+        <a class="menuBtn sidebar-link">
+          <i class="bi bi-slash-circle"></i>
+          <span>Restricción de predios</span>
+        </a>
+        {% endif %}
+
+        <a class="menuBtn sidebar-link {{ 'active' if view == 'box_explorer' else '' }}"
+          href="{{ rp }}/panel/soportes/explorar">
+          <i class="bi bi-folder"></i>
+          <span>Documentos</span>
+        </a>
+
+        {% if not limited_assignment_role %}
+        <a class="menuBtn sidebar-link">
+          <i class="bi bi-arrow-down-up"></i>
+          <span>Reporte SINIC</span>
+        </a>
+        {% endif %}
+      </nav>
+    </div>
+  </div>
+
+  <script>
+    async function loadSidebarTotalPredios() {
+      const totalEl = document.getElementById("sidebarTotalPredios");
+      if (!totalEl) return;
+
+      try {
+        const r = await fetch(`${rp}/resumenp/proyecto`);
+        if (!r.ok) {
+          totalEl.textContent = "0";
+          return;
+        }
+
+        const data = await r.json();
+        totalEl.textContent = Number(data.total_predios || 0).toLocaleString("es-CO");
+      } catch (e) {
+        totalEl.textContent = "0";
+      }
+    }
+
+    function syncFixedPanelBars() {
+      const panelColumn = document.querySelector(".panel-content-column");
+      const topbar = document.querySelector(".panel-topbar");
+      const footer = document.querySelector(".footer-simple");
+      if (!panelColumn || !topbar || !footer) return;
+
+      const rect = panelColumn.getBoundingClientRect();
+      const styles = getComputedStyle(panelColumn);
+      const padLeft = parseFloat(styles.paddingLeft) || 0;
+      const padRight = parseFloat(styles.paddingRight) || 0;
+      const left = Math.max(rect.left + padLeft, 0);
+      const width = Math.max(rect.width - padLeft - padRight, 0);
+
+      document.documentElement.style.setProperty("--panel-fixed-left", `${left}px`);
+      document.documentElement.style.setProperty("--panel-fixed-width", `${width}px`);
+      document.documentElement.style.setProperty("--panel-topbar-height", `${Math.ceil(topbar.offsetHeight)}px`);
+      document.documentElement.style.setProperty("--panel-footer-height", `${Math.ceil(footer.offsetHeight)}px`);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadSidebarTotalPredios();
+      syncFixedPanelBars();
+    });
+
+    window.addEventListener("resize", syncFixedPanelBars);
+    window.addEventListener("load", syncFixedPanelBars);
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

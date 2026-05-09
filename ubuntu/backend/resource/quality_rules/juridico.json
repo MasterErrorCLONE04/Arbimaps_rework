@@ -1,0 +1,294 @@
+{
+  "slug": "juridico",
+  "rule_count": 32,
+  "rules": [
+    {
+      "id": "2.30",
+      "description": "Para los interesados que sus nombres y apellidos o razón social son iguales, y presentan diferente número de documento, debe verificarse (Excepción Homónimos). (mismo nombre de propietario, diferente cedula)",
+      "classes": "ILC_Interesado",
+      "variables": "Primer_nombre\nSegundo_nombre\nPrimer_apellido\nSegundo_apellido\nRazon_social\nDocumento_Identidad",
+      "technical_rule": "Si existen 2 o más registros en ILC_Interesado con mismo ILC_Interesado .Primer_nombre y/o ILC_Interesado .Segundo_nombre y/o ILC_Interesado .Primer_apellido y/o ILC_Interesado .Segundo_apellido y/o ILC_Interesado.Razon_social pero con  ILC_Interesado .Documento_Identidad diferente, entonces se debe verificar.",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.1",
+      "description": "La fecha de inicio de tenencia relacionada en el derecho debe ser mayor a cero (0) y menor a la fecha de la visita al predio. (Para los casos en los que un predio con derecho de dominio no cuenta con FMI, la fecha de inicio de tenencia debe ser 04/12/1936 en lo rural y 31/12/1959 en lo urbano).",
+      "classes": "ILC_Derecho",
+      "variables": "Tipo\nFecha_Inicio_Tenencia",
+      "technical_rule": "Para cualquier valor asociado en ILC_Derecho.Fecha_Inicio_Tenencia=dd/mm/aaaa >=0 y <= ILC.DatosAdicionalesLevantamientoCatastral.Fecha_Visita_predial\n\nSi ILC_Derecho.Tipo = \"Dominio\" , ILC_Predio.Matricula_Inmobiliaria = NULL y ILC_Predio.Numero_Predial_Nacional en su posición 6 y 7 = \"00\" entonces ILC_Derecho.Fecha_Inicio_Tenencia= \"04/12/1936\"\n\nSi ILC_Derecho.Tipo = \"Dominio\" , ILC_Predio.Matricula_Inmobiliaria = NULL y ILC_Predio.Numero_Predial_Nacional en su posición 6 y 7 = \"01\" a \"99\" entonces ILC_Derecho.Fecha_Inicio_Tenencia= \"31/12/1959\"",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.10",
+      "description": "Para los predios que son vía o de uso público el tipo de predio es “Uso Público” y el tipo de derecho relacionado es dominio.",
+      "classes": "ILC_Predio\nILC_Derecho",
+      "variables": "Condicion_predio\nTipo\nTipo",
+      "technical_rule": "ILC_Predio.Condicion_Predio= “Vía” ó  “Bien_Uso_Publico” entonces, ILC_predio.Tipo es “Predio.Publico.Uso_Publico” y ILC_Derecho.Tipo es “Dominio”",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.11",
+      "description": "Para los predios con folio de matrícula inmobiliaria, la fecha de inicio de tenencia asociada al derecho debe ser mayor o igual a la fecha del título (Documento fuente)",
+      "classes": "ILC_Predio\nILC_Derecho\nCOL_Fuente",
+      "variables": "Matricula_inmobiliaria\n\nTipo\nFecha_Inicio_Tenencia\n\nFecha_Documento_Fuente",
+      "technical_rule": "Para ILC_Predio.Matricula_Inmobiliaria diferente a Nulo o cero (0)  y ILC_Derecho.Tipo es \"Dominio\", ILC_Derecho.Fecha_Inicio_Tenencia debe ser mayor o igual a ILC_FuenteAdministrativa.Fecha_Documento_Fuente",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.12",
+      "description": "Si el predio tiene folio de matrícula en la tabla ILC_Predio, entonces debe tener registrada una fecha de documento fuente, tipo de fuente administrativa, numero de fuente administrativa y ente emisor. El valor registrado en fecha de documento fuente no puede ser posterior a la fecha de levantamiento",
+      "classes": "ILC_Predio\nILC_FuenteAdministrativa",
+      "variables": "Matricula_Inmobiliaria\n\nFecha_Documento_Fuente\nTipo\nNumero_Fuente\nEnte_emisor",
+      "technical_rule": "Si ILC_Predio.Matricula_Inmobiliaria esta diligenciado entonces debe tener registrado ILC_FuenteAdministrativa.(Fecha_documento_fuente,Tipo,Numero_Fuente, Ente_Emisor)  y ILC_Fuente.Fecha_documento_fuente no puede ser posterior a ILC.DatosAdicionalesLevantamientoCatastral.Fecha_Visita_predial",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.13",
+      "description": "Los interesados de tipo “Persona_Jurídica” deben asociar solamente en tipo de documento NIT o número secuencial (este secuencial solamente se utiliza en el caso de los interesados que no fue posible encontrar su documento de identidad).",
+      "classes": "ILC_Interesado",
+      "variables": "Tipo\nTipo_Documento",
+      "technical_rule": "ILC_Interesado.Tipo es “Persona_Jurídica” entonces,  ILC_Interesado.Tipo_Documento= “NIT” ó “Secuencial”.",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.14",
+      "description": "Los interesados de tipo “Persona_Natural” deben asociar solamente en tipo de documento “Cedula de Ciudadanía” o \"Pasaporte\" o “Cédula de Extranjería” o “Tarjeta de identidad” o “Registro Civil” o número secuencial (este secuencial solamente se utilizará en el caso de los interesados que no fue posible encontrar su documento de identidad)",
+      "classes": "ILC_Interesado",
+      "variables": "Tipo\nTipo_Documento",
+      "technical_rule": "ILC_Interesado.Tipo es “Persona_Natural”entonces,  ILC_TipoDocumento <> \"NIT\"",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.15",
+      "description": "Si el tipo de documento asociado al interesado es \"Cédula de ciudadanía” o “Cedula de Extranjería” o “Tarjeta de identidad” o “Registro Civil”, el número de documento de identidad debe ser diferente de “cero” o vacío. La opción de secuencial se usa en el caso de interesados en los cuales no fue posible encontrar documento de identificación, al no existir otra opción",
+      "classes": "ILC_Interesado",
+      "variables": "Tipo_Documento\nDocumento_Identidad",
+      "technical_rule": "ILC_Interesad.TipoDocumento es <> \"NIT\" entonces,  ILC_Interesado.Documento_identidad > 0 sin letras ni caracteres especiales y no debe ser consecutivos",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.16",
+      "description": "Si el tipo de documento del interesado es “NIT”, entonces el numero de indentidad debe ser mayor a 0, sin letras ni caracteres especiales exceptuando guion \"-\" y no debe ser consecutivo (12345678-9). Antes del guion solo numérico y después del guion únicamente un entero, entre 0 y 9.",
+      "classes": "ILC_Interesado",
+      "variables": "Tipo_documento\nDocumento_identidad",
+      "technical_rule": "ILC_Interesado.Tipo_documento es “NIT” entonces,  ILC_Interesado.documento_identidad > 0  sin letras ni caracteres especiales (Excepto \"-\"). debe cumplir la estructura (\"000000000\"-\"0\")",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.17",
+      "description": "El atributo de primer nombre, segundo nombre, primer apellido y segundo apellido en interesado solo será usado para aquellos que correspondan a “Personas naturales” y no debe ser numérico ni contener caracteres especiales",
+      "classes": "ILC_Interesado",
+      "variables": "Tipo\nPrimer_nombre\nPrimer_apellido\nSegundo_Nombre\nSegundo_apellido",
+      "technical_rule": "ILC_Interesado.Tipo es “Persona_Natural” entonces, ILC_Interesado.(Primer_Nombre, Primer_apellido) <> NULL y no deben ser numéricos ni tener caracteres especiales\n\nILC_Interesado.(Segundo_Nombre, Segundo_apellido) no son obligatorios pero en caso de estar diligenciados no deben ser numéricos ni tener caracteres especiales",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.18",
+      "description": "El atributo de primer nombre, segundo nombre, primer apellido y segundo apellido no será usado para interesados que correspondan a “Personas jurídicas”.",
+      "classes": "ILC_Interesado",
+      "variables": "Tipo\nPrimer_nombre\nSegundo_Nombre\nPrimer_apellido\nSegundo_apellido",
+      "technical_rule": "ILC_Interesado.Tipo es “Persona_Juridica” entonces, ILC_Interesado.Primer_Nombre = NULL \nILC_Interesado.Segundo_Nombre = NULL \nILC_Interesado.Primer_Apellido = NULL \nILC_Interesado.Segundo_Apellido = NULL",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.19",
+      "description": "En las bases catastrales vigentes se pueden encontrar palabras asociadas a “SUC” (Sucesiones ilíquidas) que no deben asociarse en los campos de nombre para personas naturales ni asociar números en sus campos",
+      "classes": "ILC_Interesado",
+      "variables": "Tipo\nSegundo_nombre",
+      "technical_rule": "ILC_Interesado.Tipo es “Persona_Natural” entonces, ILC_Interesado.Primer_Nombre, ILC_Interesado.Segundo_Nombre, ILC_Interesado.Primer_Apellido, ILC_Interesado.Segundo_Apellido No deben contener \"SUC\"",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.2",
+      "description": "Un predio formal de tipo privado con Derecho de tipo \"Dominio\" debe tener Matricula inmobiliaria. De igual manera, un predio informal con Derecho de tipo \"Posesión\" u \"Ocupación\" no debe tener Matricula Inmobiliaria asociada (Aplican Excepciones en la existencia de algunos predios informales con FMI).",
+      "classes": "ILC_Derecho\nILC_Predio",
+      "variables": "Tipo\nTipo\n\nMatricula_Inmobiliaria",
+      "technical_rule": "ILC_Predio.Tipo = “Privado” y  ILC_Derecho.Tipo = “Dominio” entonces, ILC_Predio.Matricula_Inmobiliaria <> NULL \n\nLC_Derecho.Tipo = “Posesion” o \"Ocupacion\" entonces, ILC_Predio.Matricula_Inmobiliaria = NULL",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.20",
+      "description": "Para los interesados asociados a personas jurídicas, solamente se debe diligenciar el campo de razón social",
+      "classes": "ILC_Interesado",
+      "variables": "Tipo\nPrimer_nombre\nSegundo_nombre\nPrimer_apellido\nSegundo_apellido\nRazon_social",
+      "technical_rule": "ILC_Interesado.Tipo es “Persona_Juridica” entonces, ILC_Interesado.(Primer_ Nombre ,Segundo_Nombre, Primer_Apellido y Segundo_Apellido) = NULL y Razon_Social <> NULL",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.21",
+      "description": "El atributo de Sexo en interesado solo será usado para aquellos que correspondan a Personas naturales.",
+      "classes": "ILC_Interesado",
+      "variables": "Tipo\nSexo",
+      "technical_rule": "ILC_Interesado.Sexo <> NULL entonces, ILC_Interesado.Tipo = “Persona_natural”",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.22",
+      "description": "Los interesados relacionados a Personas Naturales, no deben asociar personas jurídicas en los campos respectivos para identificar su nombre.",
+      "classes": "ILC_Interesado",
+      "variables": "Tipo\nPrimer_nombre\nSegundo_nombre\nPrimer_apellido\nSegundo_apellido",
+      "technical_rule": "ILC_Interesado.Tipo es “Persona_Natural” entonces, ILC.Interesado.(Primer_Nombre, Segundo_Nombre, Primer_Apellido, Segundo_Apellido) no debe contener (LTDA, S.A., SA, & Cia, S., EN C., S.C.A., SCA, S.A.S., SAS)",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.23",
+      "description": "Si la agrupación de interesados de un predio está conformada por personas naturales y jurídicas, el tipo de agrupación debe ser Grupo_Mixto",
+      "classes": "CR_AgrupacionInteresados\n\nILC_Interesado",
+      "variables": "Tipo\n\nTipo",
+      "technical_rule": "Si CR_AgrupacionInteresados esta conformado por ILC_Interesado.Tipo = \"Persona_natural\" y \"Persona_juridica\" entonces COL_AgrupacionInteresados =  \"Grupo_Mixto\"",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.24",
+      "description": "Si la agrupación de interesados de un predio está conformada por personas naturales, el tipo de agrupación debe ser Grupo_Civil",
+      "classes": "COL_AgrupacionInteresados\n\nILC_Interesado",
+      "variables": "Tipo\n\nTipo",
+      "technical_rule": "Si CR_AgrupacionInteresados esta conformado por ILC_Interesado.Tipo = \"Persona_natural\", entonces COL_AgrupacionInteresados.Tipo =  \"Grupo_Civil\"",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.25",
+      "description": "Si la agrupación de interesados de un predio está conformada por personas jurídicas el tipo de agrupación debe ser Grupo_Empresarial",
+      "classes": "COL_AgrupacionInteresados\n\nILC_Interesado",
+      "variables": "Tipo\n\nTipo",
+      "technical_rule": "Si CR_AgrupacionInteresados esta conformado por ILC_Interesado.Tipo = \"Persona_juridica\" , entonces COL_AgrupacionInteresados.Tipo =  \"Grupo_Empresarial\"",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.26",
+      "description": "La suma de los valores de participación de la tabla col_miembros debe sumar 1 para los interesados asociados a una misma agrupación (En predios que cuente con FMI y que ellos se detalle el porcentaje de participación); de lo contrario esta suma debe ser cero o Null.",
+      "classes": "COL_miembros",
+      "variables": "Participación",
+      "technical_rule": "Σ de COL_miembros.participacion de los interesados pertenecientes a una misma agrupación = '1' cero o 'Null'",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.27",
+      "description": "El registro de un dato en ente emisor, numero de fuente y fecha de documento debe ser congruente con el tipo de fuente administrativa asignado.",
+      "classes": "ILC_FuenteAdministrativa\nCOL_FuenteAdministrativa\nCOL_Fuente",
+      "variables": "Tipo\nEnte_emisor\nNumero_fuente\nFecha_Documento_Fuente\nObservacion",
+      "technical_rule": "Si ILC_FuenteAdministrativa.Tipo es igual a \"Escritura pública\" o \"Sentencia_judicial\" o \"Acto_administrativo\" entonces en ILC_FuenteAdministrativa.Ente_Emisor, COL_FuenteAdministrativa.Numero_Fuente y COL_Fuente.Fecha_Documento_Fuente <> \"NULL\"\n\nSi ILC_FuenteAdministrativa.Tipo es igual a \"Documento_Privado\" entonces  ILC_FuenteAdministrativa.Ente_Emisor  = \"NULL\" COL_FuenteAdministrativa.Numero_Fuente  = \"NULL\" y  COL_Fuente.Fecha_Documento_Fuente, OL_FuenteAdministrativa.Observacion  <> \"NULL\"\n\nSi ILC_FuenteAdministrativa.Tipo es igual a \"Sin_documento\" entonces en ILC_FuenteAdministrativa.Ente_Emisor , COL_FuenteAdministrativa.Numero_Fuente y COL_Fuente.Fecha_Documento_Fuente = \"NULL\"",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.28",
+      "description": "El ente emisor debe corresponder al  tipo de fuente administrativa diligenciado.",
+      "classes": "ILC_FuenteAdministrativa",
+      "variables": "Tipo\nEnte_emisor",
+      "technical_rule": "Si ILC_FuenteAdministrativa.Tipo = \"Escritura pública\" entonces en ILC_FuenteAdministrativa.Ente_Emisor debe contener \"Notaría\"\n\nSi ILC_FuenteAdministrativa.Tipo = \"Sentencia_judicial\" entonces en ILC_FuenteAdministrativa.Ente_Emisor debe contener \"Juzgado\"\n\nSi ILC_FuenteAdministrativa.Tipo = \"Acto_Administrativo\" entonces en ILC_FuenteAdministrativa.Ente_Emisor debe contener \"Alcaldía\" o \"ANT\" o \"INCODER\" o \"INCORA\" o \"Ministerio\"",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.29",
+      "description": "Todo predio debe tener asociado un interesado o agrupación de interesados.",
+      "classes": "ILC_Predio\nILC_Interesado",
+      "variables": "N/A",
+      "technical_rule": "Todo ILC_Predio debe relacionar un ILC_Interesado o una CR_AgrupacionInteresados",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.3",
+      "description": "Los predios asociados a tipos de derecho de “posesión” deben ser tipo de predios “Privados”",
+      "classes": "ILC_Derecho\nILC_Predio",
+      "variables": "Tipo\nTipo",
+      "technical_rule": "ILC_Derecho.Tipo = “Posesion”  entonces ILC_predio.Tipo = “Privado”",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.31",
+      "description": "No deben existir dos intersados con el mismo numero de documento",
+      "classes": "ILC_Interesado",
+      "variables": "Documento_Identidad\nPrimer_Nombre\nPrimer_Apellido\nSegundo_Nombre\nSegundo_Apellido",
+      "technical_rule": "ILC_Interesado.Documento_Identidad  no debe tener registros duplicados",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.32",
+      "description": "Si el interesado se autorreconoce dentro de un grupo etnico indigena debe asociar un registro en ILC_IdentificacionEtnica",
+      "classes": "ILC_Interesado\nILC_IdentificacionEtnica",
+      "variables": "Grupo_Etnico\nNombre_Pueblo",
+      "technical_rule": "Si ILC_Interesado.Grupo_Etnico = \"Etnico.Indigena\" entonces ILC_IdentificacionEtnica.Nombre_Pueblo <> \"NULL",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.4",
+      "description": "Los predios con tipo de predio: Privado no deben estar asociados a derechos de “ocupación”",
+      "classes": "ILC_Derecho\nILC_Predio",
+      "variables": "Tipo\nTipo",
+      "technical_rule": "ILC_Predio.Tipo = “Privado”  entonces  ILC_Derecho.Tipo <> “Ocupación”",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.5",
+      "description": "Para los predios asociados a tipo de predio público, el tipo de derecho no puede ser posesión",
+      "classes": "ILC_Derecho\nILC_Predio",
+      "variables": "Tipo\nTipo",
+      "technical_rule": "ILC_Predio.Tipo = “Publico.Baldio.Baldio” ó “Publico.Baldio.Reserva_Indigena”, ó“Publico.Fiscal_Patrimonial” ó “Publico.Uso_Publico” o “Publico.Presunto_Baldio\" entonces ILC_Derecho.Tipo <> “Posesion”",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.6",
+      "description": "En los predios baldíos y asociados a tipo de derecho dominio, el interesado relacionado debe corresponder a la Nación o Municipio o Agencia Nacional de Tierras",
+      "classes": "ILC_Derecho\nILC_Predio\nILC_Interesado",
+      "variables": "Tipo\nTipo\nRazon_social",
+      "technical_rule": "ILC_Predio.Tipo = “Publico.Baldio.Baldio” o “Publico.Presunto_Baldio\" ó “Publico.Baldio.Reserva_Indigena”, y ILC_Derecho.Tipo = “Dominio” entonces ILC_Interesado.Razon_social debe contener  “La Nación”  o \"Municipio\" o \"Agencia Nacional de Tierras\"",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.7",
+      "description": "Si el predio es catalogado como Privado colectivo, el interesado debe tener diligenciado el campo Grupo_Etnico y debe ser distinto a \"Ninguno\"",
+      "classes": "ILC_Predio\nILC_Interesado",
+      "variables": "Tipo\n\nGrupo_Etnico",
+      "technical_rule": "Si  ILC_Predio.Tipo es Predio.Privado.Colectivo,  el ILC_Interesado.Grupo_Etnico debe ser diferente a Ninguno",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.8",
+      "description": "Para los predios presuntos baldíos que el derecho tipo asociado es ocupación, el interesado relacionado no debe ser La Nación o Municipio o Agencia Nacional de Tierras",
+      "classes": "ILC_Derecho\nILC_Predio\nILC_Interesado",
+      "variables": "Tipo\nTipo\nRazon_social",
+      "technical_rule": "ILC_Predio.Tipo = “Publico.Baldio.Baldio” o “Publico.Baldio.Reserva_Indigena” o “Publico.Presunto_Baldio\" y ILC_Derecho.Tipo = “Ocupacion” entonces ILC_Interesado.Razon_Social no debe contener  “La Nación” o \"Municipio\" ó \"Agencia Nacional de Tierras\"",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    },
+    {
+      "id": "2.9",
+      "description": "Para los predios asociados a públicos (fiscales, patrimoniales o de uso público) que están relacionados con tipo de derecho dominio, el interesado relacionado debe ser una persona jurídica.",
+      "classes": "ILC_Derecho\nILC_Predio\nILC_Interesado",
+      "variables": "Tipo\nTipo\nTipo",
+      "technical_rule": "ILC_Predio.Tipo = “Publico.Fiscal_Patrimonial” ó “Publico.Uso_Publico” y  ILC_Derecho.Tipo = “Dominio”  entonces, ILC_Interesado.Tipo es “Persona_Juridica”",
+      "component": "Juridico",
+      "sheet_slug": "juridico"
+    }
+  ]
+}

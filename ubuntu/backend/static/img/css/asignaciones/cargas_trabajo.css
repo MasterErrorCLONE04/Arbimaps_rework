@@ -1,0 +1,1016 @@
+.section-title {
+    width: 953px;
+    max-width: 100%;
+}
+
+.text-title-header {
+    font-size: 0.833rem;
+    color: #032F57;
+    font-weight: 400;
+}
+
+.title-body {
+    margin-top: 20px;
+}
+
+.parrafo-title {
+    font-size: 0.833rem;
+    color: #4f667a;
+    line-height: 1.5;
+}
+
+.section-body {
+    width: 100%;
+}
+
+.text-section-search {
+    color: #032F57;
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+.card-busqueda {
+    border-radius: 30px !important;
+    overflow: hidden;
+    background-color: #F0F6FB !important;
+    box-shadow: 0 4px 14px rgba(3, 47, 87, 0.08);
+}
+
+.card-busqueda .card-body {
+    background-color: #F0F6FB !important;
+}
+
+.textarea-predios {
+    width: 100%;
+    min-height: 73px;
+    padding: 12px 14px;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    resize: none;
+    color: #1f2d3d !important;
+    border-radius: 15px;
+    display: block;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.textarea-predios:hover,
+.textarea-predios:focus,
+.textarea-predios:active {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: #1f2d3d !important;
+}
+
+.textarea-predios::placeholder {
+    color: #032e57c8 !important;
+    font-size: 0.833rem;
+    opacity: 1;
+}
+
+.consultaInput {
+    border-radius: 10px !important;
+    padding: 15px !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: #FFFFFF;
+}
+
+textarea.consultaInput,
+textarea.textarea-predios {
+    background-color: #ffffff !important;
+}
+
+.consultaInput:focus {
+    border: none !important;
+    box-shadow: 0 0 0 0.12rem rgba(121, 169, 216, 0.18) !important;
+}
+
+.buscar {
+    background-color: #032F57 !important;
+    color: #fff !important;
+    min-height: 40px;
+    width: 270px;
+    border-radius: 10px !important;
+    font-size: 1rem;
+    border: none !important;
+}
+
+.buscar:hover,
+.buscar:focus {
+    background-color: #6AA4D4 !important;
+    color: #fff !important;
+    opacity: 0.8;
+}
+
+.icono-buscar {
+    font-size: 12px;
+}
+
+.texto-buscar {
+    font-size: 1rem;
+}
+
+.agumentation-text {
+    font-size: 0.733rem;
+    font-style: italic;
+    color: #A9B9C6;
+}
+
+.section-dual-cards {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.card-panel {
+    border-radius: 20px !important;
+    overflow: hidden;
+    background-color: #F0F6FB !important;
+    border: none;
+    box-shadow: 0 4px 14px rgba(3, 47, 87, 0.08);
+}
+
+.card-panel-asignacion {
+    background-color: #D1E3F2 !important;
+    min-height: 606px;
+}
+
+.for-panel-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #032F57;
+}
+
+.label-asignacion {
+    color: #032F57;
+    margin-top: 10px;
+    font-size: 1rem;
+}
+
+#inpNombreLote::placeholder,
+#inpUsuarioDestino::placeholder {
+    font-size: 0.833rem;
+    color: #032F57;
+}
+
+.for-noti {
+    background-color: #F0F6FB;
+    border-radius: 20px;
+    padding: 15px;
+}
+
+.hint-asignacion {
+    margin-top: 0;
+    font-size: 0.833rem;
+    line-height: 1.5;
+    color: #3e5c76;
+}
+
+.consultaButtons-asignacion {
+    margin-top: 10px;
+}
+
+.crear-asignacion {
+    background-color: #6AA4D4 !important;
+    color: #fff !important;
+    min-height: 40px;
+    width: 270px;
+    border-radius: 10px !important;
+    font-size: 1rem;
+    border: none !important;
+}
+
+.table-resultados {
+    margin-bottom: 0 !important;
+    width: 100% !important;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 10px;
+}
+
+.table-resultados thead th {
+    background-color: #D1E3F2 !important;
+    color: #032F57 !important;
+    font-size: 1rem;
+    font-weight: 600;
+    border-bottom: none !important;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.table-resultados tbody td {
+    font-size: 0.833rem;
+    color: #1f2d3d;
+    background-color: #FFFFFF !important;
+    vertical-align: middle;
+    text-align: center;
+    border-color: rgba(176, 191, 202, 0.45);
+}
+
+.table-resultados> :not(caption)>*>* {
+    padding: 0.75rem 0.65rem;
+}
+
+.card-estado-inicial {
+    border-radius: 15px !important;
+    border: none;
+    background-color: #F0F6FB !important;
+    box-shadow: 0 4px 14px rgba(3, 47, 87, 0.08);
+    min-height: 119px !important;
+}
+
+.icono-estado-inicial {
+    margin-right: 8px;
+    color: #032F57;
+}
+
+.texto-estado-inicial {
+    font-weight: 700;
+}
+
+.mensaje-estado-inicial {
+    color: #032F57;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.parrafo-result {
+    font-size: 0.533rem;
+    color: #5c6f82;
+}
+
+.card-resultados-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.contador-resultados-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background-color: #032F57;
+    color: #fff;
+    border-radius: 14px;
+    padding: 8px 16px;
+    font-size: 0.833rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    min-height: 38px;
+    box-shadow: 0 4px 12px rgba(3, 47, 87, 0.18);
+}
+
+.contador-resultados-badge i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    line-height: 1;
+    margin: 0;
+}
+
+.contador-resultados-badge span {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.733rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+    margin: 0;
+}
+
+.badge-contador-estado {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    background-color: #5E7890;
+    color: #fff;
+    min-height: 34px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.badge-contador-estado i {
+    color: #fff;
+    font-size: 0.72rem;
+    line-height: 1;
+}
+
+.badge-contador-estado span {
+    color: #fff;
+    font-size: 0.70rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.badge-contador-disponibles {
+    background-color: #79A9D8;
+}
+
+.parrafo-contador-card {
+    font-size: 1rem;
+    color: #20496A;
+}
+
+.separador-resultados {
+    color: #B0BFCA;
+}
+
+.hint-resultados {
+    font-size: 0.83rem;
+    color: #5c6f82;
+}
+
+.estado-badge {
+    min-height: 30px;
+    padding: 0.42rem 0.95rem;
+    border-radius: 999px !important;
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1;
+    border: none;
+    gap: 0.45rem;
+    white-space: nowrap;
+}
+
+.estado-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex: 0 0 6px;
+}
+
+.estado-badge-disponible {
+    background-color: #d8e6f3 !important;
+    color: #032F57 !important;
+}
+
+.estado-badge-disponible .estado-badge-dot {
+    background-color: #032F57;
+}
+
+.estado-badge-asignado {
+    background-color: #dce3ea !important;
+    color: #4f667a !important;
+}
+
+.estado-badge-asignado .estado-badge-dot {
+    background-color: #4f667a;
+}
+
+/* DATATABLE */
+#tblResultados_wrapper {
+    margin-top: 0.25rem;
+    width: 100%;
+}
+
+#tblResultados_wrapper .datatable-top,
+#tblResultados_wrapper .datatable-bottom {
+    width: 100%;
+}
+
+#tblResultados_wrapper .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+#tblResultados_wrapper .col-sm-12,
+#tblResultados_wrapper .col-md-6,
+#tblResultados_wrapper .col-md-12 {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+#tblResultados_wrapper .dataTables_length,
+#tblResultados_wrapper .dataTables_filter,
+#tblResultados_wrapper .dataTables_info,
+#tblResultados_wrapper .dataTables_paginate {
+    margin: 0;
+}
+
+#tblResultados_wrapper .dataTables_length label,
+#tblResultados_wrapper .dataTables_filter label,
+#tblResultados_wrapper .dataTables_info,
+#tblResultados_wrapper .dataTables_paginate {
+    font-size: 0.82rem;
+    color: #20496A !important;
+}
+
+#tblResultados_wrapper .dataTables_length label,
+#tblResultados_wrapper .dataTables_filter label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#tblResultados_wrapper .dataTables_length select {
+    min-width: 78px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid #B0BFCA;
+    background-color: #fff;
+    color: #032F57;
+    padding: 0.375rem 2rem 0.375rem 0.75rem;
+    box-shadow: none !important;
+    margin-left: 0 !important;
+}
+
+#tblResultados_wrapper .dataTables_filter input {
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid #B0BFCA;
+    background-color: #fff;
+    color: #032F57;
+    padding: 0.375rem 0.75rem;
+    box-shadow: none !important;
+    margin-left: 0 !important;
+}
+
+#tblResultados_wrapper .dataTables_filter input:focus,
+#tblResultados_wrapper .dataTables_length select:focus {
+    border-color: #79A9D8;
+    outline: none;
+    box-shadow: 0 0 0 0.12rem rgba(121, 169, 216, 0.18) !important;
+}
+
+#tblResultados_wrapper .dataTables_paginate {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+#tblResultados_wrapper .dataTables_paginate .paginate_button {
+    min-width: 34px !important;
+    height: 34px;
+    padding: 0.35rem 0.65rem !important;
+    margin: 0 2px !important;
+    border-radius: 10px !important;
+    border: 1px solid #B0BFCA !important;
+    background: #fff !important;
+    color: #032F57 !important;
+    line-height: 1.2 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+#tblResultados_wrapper .dataTables_paginate .paginate_button.current,
+#tblResultados_wrapper .dataTables_paginate .paginate_button.current:hover {
+    border: 1px solid #032F57 !important;
+    background: #032F57 !important;
+    color: #fff !important;
+}
+
+#tblResultados_wrapper .dataTables_paginate .paginate_button.disabled,
+#tblResultados_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+    opacity: 0.45;
+    background: #fff !important;
+    color: #5E7890 !important;
+    border: 1px solid #B0BFCA !important;
+}
+
+#tblResultados_wrapper table.dataTable {
+    width: 100% !important;
+    margin: 0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+#tblResultados_wrapper table.dataTable thead th,
+#tblResultados_wrapper table.dataTable thead td {
+    border-bottom: none !important;
+    background-color: #D1E3F2 !important;
+    color: #032F57 !important;
+    box-shadow: none !important;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+#tblResultados_wrapper table.dataTable thead th.sorting,
+#tblResultados_wrapper table.dataTable thead th.sorting_asc,
+#tblResultados_wrapper table.dataTable thead th.sorting_desc {
+    background-image: none !important;
+}
+
+#tblResultados_wrapper table.dataTable thead th.sorting:before,
+#tblResultados_wrapper table.dataTable thead th.sorting:after,
+#tblResultados_wrapper table.dataTable thead th.sorting_asc:before,
+#tblResultados_wrapper table.dataTable thead th.sorting_asc:after,
+#tblResultados_wrapper table.dataTable thead th.sorting_desc:before,
+#tblResultados_wrapper table.dataTable thead th.sorting_desc:after {
+    display: none !important;
+}
+
+#tblResultados_wrapper table.dataTable.no-footer {
+    border-bottom: none !important;
+}
+
+#tblResultados_wrapper table.dataTable tbody tr,
+#tblResultados_wrapper table.dataTable tbody tr.odd,
+#tblResultados_wrapper table.dataTable tbody tr.even {
+    background-color: transparent !important;
+}
+
+#tblResultados_wrapper table.dataTable tbody td {
+    background-color: #FFFFFF !important;
+    box-shadow: none !important;
+    border-top: 1px solid rgba(176, 191, 202, 0.45) !important;
+}
+
+#tblResultados_wrapper table.dataTable tbody tr:first-child td {
+    border-top: none !important;
+}
+
+#tblResultados_wrapper table.dataTable tbody tr:hover,
+#tblResultados_wrapper table.dataTable tbody tr:hover td {
+    background-color: #FFFFFF !important;
+}
+
+#tblResultados_wrapper .dataTables_processing {
+    border-radius: 12px;
+    border: 1px solid #B0BFCA;
+    color: #032F57;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(3, 47, 87, 0.08);
+}
+
+#cardResultados .table-responsive,
+#cardResultados .tabla-datatable-wrap,
+#tblResultados_wrapper .dataTables_scrollBody {
+    overflow-y: hidden !important;
+}
+
+#cardResultados .table-responsive::-webkit-scrollbar,
+#cardResultados .tabla-datatable-wrap::-webkit-scrollbar {
+    height: 8px;
+}
+
+#cardResultados .table-responsive::-webkit-scrollbar-thumb,
+#cardResultados .tabla-datatable-wrap::-webkit-scrollbar-thumb {
+    background-color: rgba(3, 47, 87, 0.25);
+    border-radius: 10px;
+}
+
+#datatablePageIndicator {
+    font-size: 0.82rem;
+    color: #20496A;
+    font-weight: 600;
+}
+
+#tblResultados_wrapper .dataTables_paginate .paginate_button.current,
+#tblResultados_wrapper .dataTables_paginate .paginate_button.current:hover,
+#tblResultados_wrapper .dataTables_paginate .paginate_button.current:focus,
+#tblResultados_wrapper .dataTables_paginate .paginate_button.current a,
+#tblResultados_wrapper .dataTables_paginate .paginate_button.current:hover a,
+#tblResultados_wrapper .dataTables_paginate .paginate_button.current:focus a {
+    color: #fff !important;
+}
+
+#tblResultados_wrapper .dataTables_paginate .page-link {
+    color: #032F57 !important;
+    background: #fff !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+#tblResultados_wrapper .dataTables_paginate .page-link:hover,
+#tblResultados_wrapper .dataTables_paginate .page-link:focus {
+    color: #fff !important;
+    background: #032F57 !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+}
+
+#tblResultados_wrapper .dataTables_paginate .page-item.active .page-link,
+#tblResultados_wrapper .dataTables_paginate .page-item.active .page-link:hover,
+#tblResultados_wrapper .dataTables_paginate .page-item.active .page-link:focus {
+    color: #fff !important;
+    background: #032F57 !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+}
+
+#tblResultados_wrapper .dataTables_paginate .page-item.disabled .page-link,
+#tblResultados_wrapper .dataTables_paginate .page-item.disabled .page-link:hover,
+#tblResultados_wrapper .dataTables_paginate .page-item.disabled .page-link:focus {
+    color: #5E7890 !important;
+    background: #fff !important;
+    border-radius: 10px !important;
+    box-shadow: none !important;
+}
+
+.confirm-asignacion-card {
+    width: 100%;
+    background-color: #032F57;
+    border-radius: 20px;
+    padding: 20px 26px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    box-shadow: 0 4px 14px rgba(3, 47, 87, 0.12);
+    animation: fadeSlideDown 0.22s ease-out;
+}
+
+.confirm-asignacion-info {
+    display: flex;
+    align-items: center;
+    gap: 42px;
+    flex-wrap: wrap;
+}
+
+.confirm-asignacion-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 170px;
+}
+
+.confirm-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    line-height: 1.1;
+}
+
+.confirm-value {
+    font-size: 0.86rem;
+    color: #DCEAF7;
+    margin-top: 6px;
+    line-height: 1.2;
+}
+
+.confirm-asignacion-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.btn-cancelar-confirm {
+    min-width: 145px;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    background-color: #BFD5EA;
+    color: #032F57;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.btn-cancelar-confirm:hover {
+    background-color: #BFD5EA;
+    color: #032F57;
+    opacity: 0.9;
+}
+
+.btn-confirmar-asignacion {
+    min-width: 220px;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    background-color: #FFFFFF;
+    color: #032F57;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.btn-confirmar-asignacion:hover {
+    background-color: #FFFFFF;
+    color: #032F57;
+    opacity: 0.92;
+}
+
+.card-sin-resultados {
+    min-height: 100px !important;
+}
+
+.mensaje-sin-resultados {
+    min-height: 56px;
+}
+
+.icono-sin-resultados {
+    width: 20px;
+    height: 20px;
+    background-color: #032F57;
+    color: #fff;
+    border-radius: 3px;
+    flex: 0 0 20px;
+    font-size: 0.8rem;
+    line-height: 1;
+}
+
+.texto-sin-resultados {
+    color: #032F57;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.badge-contador-existen {
+    background-color: #3E8B6F;
+}
+
+.badge-contador-noexisten {
+    background-color: #9AA9B5;
+}
+
+/* BADGE EXISTE */
+.existe-badge {
+    min-height: 30px;
+    padding: 0.42rem 0.95rem;
+    border-radius: 999px !important;
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1;
+    border: none;
+    gap: 0.45rem;
+    white-space: nowrap;
+}
+
+.existe-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex: 0 0 6px;
+}
+
+.existe-badge-si {
+    background-color: #d8f0e6 !important;
+    color: #1F6B4F !important;
+}
+
+.existe-badge-si .existe-badge-dot {
+    background-color: #1F6B4F;
+}
+
+.existe-badge-no {
+    background-color: #e3e8ed !important;
+    color: #5E7890 !important;
+}
+
+.existe-badge-no .existe-badge-dot {
+    background-color: #5E7890;
+}
+
+@keyframes fadeSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 1199.98px) {
+    .card-panel-asignacion {
+        min-height: auto;
+    }
+
+    .card-panel {
+        border-radius: 22px !important;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .section-title {
+        width: 100%;
+    }
+
+    .confirm-asignacion-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .confirm-asignacion-info {
+        gap: 18px;
+    }
+
+    .confirm-asignacion-actions {
+        justify-content: stretch;
+    }
+
+    .btn-cancelar-confirm,
+    .btn-confirmar-asignacion {
+        width: 100%;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .section-title {
+        width: 100%;
+    }
+
+    .text-title-header {
+        font-size: 0.80rem;
+        line-height: 1.4;
+    }
+
+    .title-body {
+        margin-top: 14px;
+    }
+
+    .title-body h4 {
+        font-size: 1.4rem;
+    }
+
+    .parrafo-title {
+        font-size: 0.92rem;
+        line-height: 1.5;
+    }
+
+    .card-busqueda {
+        border-radius: 20px !important;
+    }
+
+    .card-panel,
+    .card-panel-asignacion {
+        border-radius: 20px !important;
+    }
+
+    .text-section-search {
+        font-size: 0.92rem;
+        line-height: 1.45;
+    }
+
+    .textarea-predios {
+        min-height: 95px;
+    }
+
+    .buscar,
+    .buscar:hover {
+        width: 100%;
+    }
+
+    .consultaButtons {
+        justify-content: stretch !important;
+    }
+
+    .card-resultados-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .contador-resultados-badge {
+        align-self: flex-start;
+        max-width: 100%;
+    }
+
+    /* Mantener scroll SOLO en la tabla */
+    .tabla-datatable-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    #cardResultados .table-responsive {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-resultados,
+    #tblResultados {
+        min-width: 650px;
+    }
+
+    #tblResultados_wrapper .dataTables_length {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+    #tblResultados_wrapper .dataTables_length label {
+        justify-content: center !important;
+        width: auto;
+        max-width: 100%;
+    }
+
+    /* Evitar que el top del datatable desborde la tarjeta */
+    #tblResultados_wrapper {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    #tblResultados_wrapper .datatable-top,
+    #tblResultados_wrapper .datatable-bottom {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px;
+        width: 100%;
+        max-width: 100%;
+    }
+
+
+    #tblResultados_wrapper .dataTables_filter,
+    #tblResultados_wrapper .dataTables_length,
+    #tblResultados_wrapper .dataTables_info,
+    #tblResultados_wrapper .dataTables_paginate {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #tblResultados_wrapper .dataTables_filter label,
+    #tblResultados_wrapper .dataTables_length label {
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        flex-wrap: nowrap;
+    }
+
+    #tblResultados_wrapper .dataTables_filter label {
+        justify-content: space-between;
+    }
+
+    #tblResultados_wrapper .dataTables_length label {
+        justify-content: center !important;
+        width: auto;
+        max-width: 100%;
+    }
+
+    #tblResultados_wrapper .dataTables_filter input {
+        flex: 1 1 auto;
+        width: auto !important;
+        min-width: 0;
+        max-width: 100%;
+        margin-left: 0 !important;
+        margin-top: 0;
+    }
+
+    #tblResultados_wrapper .dataTables_length select {
+        width: 72px !important;
+        min-width: 72px;
+        max-width: 72px;
+        margin-top: 0;
+        margin-left: 0 !important;
+        padding-right: 1.75rem;
+    }
+
+    #tblResultados_wrapper .dataTables_paginate {
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        padding-bottom: 4px;
+        flex-wrap: nowrap;
+        justify-content: center !important;
+    }
+
+    .confirm-asignacion-card {
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    .card-sin-resultados {
+        min-height: 88px !important;
+    }
+
+    .mensaje-sin-resultados {
+        flex-direction: column;
+        gap: 0.75rem !important;
+    }
+
+    .texto-sin-resultados {
+        font-size: 0.86rem;
+    }
+
+    .badge-contador-estado {
+        padding: 5px 10px;
+        min-height: 32px;
+        border-radius: 9px;
+    }
+
+    .badge-contador-estado span {
+        font-size: 0.68rem;
+    }
+
+    .badge-contador-estado i {
+        font-size: 0.68rem;
+    }
+}

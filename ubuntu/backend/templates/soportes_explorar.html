@@ -1,0 +1,27 @@
+<div class="card">
+  <h2 style="margin:0 0 6px;">?? Explorador de Box</h2>
+  <p class="sub" style="margin-top:0;">Navega carpetas del repositorio ARBIMAPS_REPO (Box).</p>
+
+  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:10px 0;">
+    <button class="btn nuevo" id="btnUp">? Subir nivel</button>
+    <span class="sub" style="margin:0;">Ruta: <b id="pathLbl">/</b></span>
+  </div>
+
+  <div class="results">
+    <p class="hint" id="statusLbl">Cargando...</p>
+    <table id="tbl" style="display:none;">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Nombre</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const rp = "{{ rp }}";  // root_path
+  let stack = [];         // historial de navegaci

@@ -1,0 +1,114 @@
+{
+  "slug": "economico",
+  "rule_count": 12,
+  "rules": [
+    {
+      "id": "4.1",
+      "description": "Para unidades residenciales, en caso de usos de calificación por tipologías, solamente se pueden asociar tipologías residenciales. (Aplican Excepciones en casos puntuales cuando a estos usos se pueden adaptar otro tipo de tipologías).",
+      "classes": "CR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Tipo_unidad_construccion",
+      "technical_rule": "CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion) = “Residencial\" entonces, se debe diligenciar conforme a los dominios estipulados para “Residencial” en CUC_TipologiaTipo <<Enumeration>>\n\nSi  CUC_TipologiaTipo = Conservacion. (Residencial_Sencilla_Tipo_1_4014011, Residencial_Sencilla_Tipo_2_4024022, Residencial_Tipo_3_Restaurada_4024023) o ED.(ED_Multifamiliar_VIP_5_Pisos_9016551, ED_Multifamiliar_Vivienda_VIS_Serie_2_Pisos_9011122, ED_Multifamiliar_VIS_Hasta_12_Pisos_9016194, ED_Multifamiliar_Medio_9026505) entonces CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion) = “Residencial\"",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.10",
+      "description": "En la base catastral final (producto de la actualizacion catastral) el avaluo comercial registrado debe corresponder a la sumatoria del avalúo comercial de terreno mas el avaluo comercial total de las unidades de construcción y este valor debe se mayor a \"0\".",
+      "classes": "ILC_EstructuraAvaluo",
+      "variables": "Valor_Comercial\nValor_Comercial_Terreno\nValor_Comercial_Total_UnidadesConstruccion",
+      "technical_rule": "En la base catastral final (producto de la actualizacion catastral) ILC_EstructuraAvaluo.Valor_Comercial = ILC_EstructuraAvaluo.Valor_Comercial_Terreno + ILC_EstructuraAvaluo.Valor_Comercial_Total_UnidadesConstruccion y > \"0\"",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.11",
+      "description": "En la base catastral final (producto de la actualizacion catastral) el avaluo catastral registrado debe corresponder a la sumatoria del avalúo catastral de terreno mas el avaluo catastral total de las unidade de construcción  y este valor debe se mayor a \"0\".",
+      "classes": "ILC_EstructuraAvaluo",
+      "variables": "Valor_Catastral\nValor_Catastral_Terreno\nValor_Catastral_Total_UnidadesConstruccion",
+      "technical_rule": "En la base catastral final (producto de la actualizacion catastral) ILC_EstructuraAvaluo.Valor_Catastral = ILC_EstructuraAvaluo.Valor_Catastral_Terreno + ILC_EstructuraAvaluo.Valor_Catastral_Total_UnidadesConstruccion > \"0\"",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.12",
+      "description": "En la base catastral final (producto de la actualizacion catastral) los campos de ILC_EstructuraAvaluo referentes a avalúo comercial, deben ser mayores a los de avalúo catastral  y este valor debe se mayor a \"0\".",
+      "classes": "ILC_EstructuraAvaluo",
+      "variables": "Valor_Comercial\nValor_Comercial_Terreno\nValor_Comercial_Total_UnidadesConstruccion\nValor_Catastral\nValor_Catastral_Terreno\nValor_Catastral_Total_UnidadesConstruccion",
+      "technical_rule": "En la base catastral final (producto de la actualizacion catastral)\nILC_EstructuraAvaluo.Valor_Comercial > ILC_EstructuraAvaluo.Valor_Catastral\nILC_EstructuraAvaluo.Valor_Catastral > 60% de ILC_EstructuraAvaluo.Valor_Comercial\nILC_EstructuraAvaluo.Valor_Comercial_Terreno > ILC_EstructuraAvaluo.Valor_Catastral_Terreno\nILC_EstructuraAvaluo.Valor_Comercial_Total_UnidadesConstruccion > ILC_EstructuraAvaluo.Valor_Catastral_Total_UnidadesConstruccion\n\nLos valores (ILC_EstructuraAvaluo.Valor_Comercial, ILC_EstructuraAvaluo.Valor_Catastral, ILC_EstructuraAvaluo.Valor_Comercial_Terreno, ILC_EstructuraAvaluo.Valor_Catastral_Terreno, ILC_EstructuraAvaluo.Valor_Comercial_Total_UnidadesConstruccion, ILC_EstructuraAvaluo.Valor_Catastral_Total_UnidadesConstruccion) > \"0\"",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.2",
+      "description": "Para unidades comerciales, en caso de usos de calificación por tipologías, solamente se pueden asociar tipologías comerciales. (Aplican Excepciones en casos puntuales cuando a estos usos se pueden adaptar otro tipo de tipologías).",
+      "classes": "CR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Tipo_unidad_construccion",
+      "technical_rule": "CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion) = “Comercial\" entonces, se debe diligenciar conforme a los dominios estipulados para “Comercial” en CUC_TipologiaTipo <<Enumeration>>\n\nSi  CUC_TipologiaTipo = Conservacion. (Construccion_Tipo_4_Restaurada_4034024, Construccion_Tipo_5_Restaurada_Con_Reforzamiento_4031035, Construccion_Tipo_6_Restaurada_Con_Reforzamiento_4031036) o ED.ED_Servicios_Tipo_1_9026547 entonces CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion) = “Comercial\"",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.3",
+      "description": "Para unidades  industriales, en caso de usos de calificación por tipologías, solamente se pueden asociar tipologías industriales. (Aplican Excepciones en casos puntuales cuando a estos usos se pueden adaptar otro tipo de tipologías).",
+      "classes": "CR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Tipo_unidad_construccion",
+      "technical_rule": "CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion) = “Industrial\" entonces, se debe diligenciar conforme a los dominios estipulados para “Industrial” en CUC_TipologiaTipo <<Enumeration>>",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.4",
+      "description": "Para unidades institucionales, en caso de usos de calificación por tipologías, solamente se pueden asociar tipologías institucionales. (Aplican Excepciones en casos puntuales cuando a estos usos se pueden adaptar otro tipo de tipologías).",
+      "classes": "CR_UnidadConstruccion\nILC_CaracteristicasUnidadConstruccion",
+      "variables": "Tipo_unidad_construccion",
+      "technical_rule": "CR_UnidadConstruccion(ILC_CaracteristicasUnidadConstruccion.Tipo_Unidad_Construccion) = “Institucional\" entonces, se debe diligenciar conforme a los dominios estipulados para “Institucional” en CUC_TipologiaTipo <<Enumeration>>",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.5",
+      "description": "Para unidades de construccion calificadas por método de calificacion convencional\nSi tipo de calificación es igual a \"Industrial\"  no debe tener diligenciado ningun atributo para baño o cocina  y debe tener relacionado algún atributo en \"Cerchas_Complemento Industria\"",
+      "classes": "CUC_CalificacionConvencional",
+      "variables": "Tipo_Calificacion\nObjetoConstruccionTipo",
+      "technical_rule": "Si CUC_CalificacionConvencional.Tipo_Calificacion = \"Industrial\", entonces no debe relacionar ningun valor en CUC_CalificacionConvencional.(_Banio o _Cocina) y debe tener diligenciado CUC_CalificacionConvencional.Cerchas_Complemento_Industria",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.6",
+      "description": "Para unidades de construccion calificadas por método de calificacion convencional:\nSi tipo de calificación es igual a \"Residencial\" y tiene atributos para, \"Baño\" o \"Cocina\", entonces debe tener asociado un estado de conservación para \"Baño\" o \"Cocina\"",
+      "classes": "CUC_CalificacionConvencional",
+      "variables": "Tipo_Calificacion\nConservacion_Estructura\n_Baño\n_Cocina",
+      "technical_rule": "Si CUC_CalificacionConvencional.Tipo_Calificacion = \"Residencial\" y CUC_CalificacionConvencional.(_Banio o _Cocina) esta diligenciado, entonces CUC_CalificacionConvencional.Conservacion_(Banio o Cocina) <> Null",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.7",
+      "description": "Para unidades de construccion calificadas por método de calificacion convencional:\nSi tipo de calificación es igual a \"Comercial\" y dicha unidad cuenta con \"Banio\" o \"Cocina\", entonces solo debe tener asociado un valor en \"Mobiliario_Banio\" o \"Mobiliario_Cocina\", los demas campos asociados a Baño y Cocina deben ser nulos.",
+      "classes": "CUC_CalificacionConvencional",
+      "variables": "Tipo_Calificacion\nMobiliario_Banio\nMobiliario_Cocina",
+      "technical_rule": "Si CUC_CalificacionConvencional.Tipo_Calificacion = \"Comercial\" y dicha unidad cuenta con Baño o Cocina entonces solo debe ir diligenciado CUC_CalificacionConvencional.Mobiliario_Banio o _Cocina.",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.8",
+      "description": "El total calificación debe ser igual a la sumatoria de los puntos para cada uno de los atributos asignados a Armazon, Muros, Cubierta, Fachada, Cubrimiento Muros, Piso, Tamaño baño, Enchape baño, Mobiliario Baño, Tamaño Cocina, Enchape cocina, Mobiliario cocina, Cerchas complemento Industria y Conservación(Estructura, Acabados, Baño, Cocina) Según el instructivo de levantamiento predial; y diferente de Cero(0). Dicha sumatoria no debe ser mayor a 100",
+      "classes": "CUC_CalificacionConvencional",
+      "variables": "Total_Calificacion",
+      "technical_rule": "CUC_CalificacionConvencional.Total_Calificación = Σ de los valores obtenidos en (Armazon, Muros, Cubierta, Conservacion_estructura,Fachada, Cubrimiento_Muros, Piso, Conservacion_Acabados, Tamanio_Banio, Conservacion_Banio, Enchape_Banio,Mobiliario_Banio, Tamanio_Cocina, Enchape_Cocina, Mobiliario_Cocina,Conservacion_Cocina,Cerchas_Complemento_Industria) < 100 teniendo en cuenta cada CUC_CalificacionConvencional.Tipo_Calificacion y según el correspondiente valor descrito en el instructivo de levantamiento.",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.9",
+      "description": "En la base catastral final (producto de la actualizacion catastral) se debe registrar el avalúo del predio exceptuando los predios cancelados",
+      "classes": "ILC_DatosAdicionalesLevantamientoCatastral\nILC_Predio",
+      "variables": "Novedad_Numeros_Prediales\nAvaluo",
+      "technical_rule": "En la base catastral final, si un predio no registra ILC_DatosAdicionalesLevantamientoCatastral.Novedad_Numeros_Prediales =  \"Cancelacion\" o \"Cancelación_por_Desenglobe\" o \"Cancelacion_por_Englobe\" debe tener un registro en la tabla ILC_EstructuraAvaluo",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    }
+  ]
+}

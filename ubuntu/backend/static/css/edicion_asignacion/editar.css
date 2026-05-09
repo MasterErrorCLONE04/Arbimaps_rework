@@ -1,0 +1,3319 @@
+.title-indication-editar {
+    font-size: 1rem;
+}
+
+.card-id-operacion {
+    background-color: #F0F6FB;
+    border-radius: 10px;
+}
+
+.card.p-1.ms-auto,
+.card-asignacion-small {
+    background-color: #88B6DD;
+}
+
+.text-tarjet-name {
+    color: #002F55;
+    font-size: 0.833rem;
+}
+
+.text-result-name {
+    font-size: 0.833rem;
+    color: #00213C;
+    font-weight: 800;
+}
+
+.btn-volver-editar {
+    background-color: #E6EAEE;
+}
+
+.btn-volver-editar:hover {
+    background-color: #d2deea;
+}
+
+.card-header-editar {
+    background-color: #F0F6FB;
+}
+
+.title-asignacion-editar {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.btn-boton-save {
+    background-color: #002B4D;
+    border-radius: 10px;
+}
+
+.btn-boton-save:hover {
+    background-color: #014376;
+    border-radius: 10px;
+}
+
+.btn-boton-abort {
+    background-color: #54748D;
+    border-radius: 10px;
+}
+
+.btn-boton-abort:hover {
+    background-color: #648ba8;
+    border-radius: 10px;
+}
+
+/* botones del carrusel */
+#opciones-tab .nav-link {
+    background-color: #FFFFFF;
+    color: #002F55;
+    border: 1px solid #D9E2EC;
+    border-radius: 15px;
+    font-size: 0.833rem;
+}
+
+#opciones-tab .nav-link.active {
+    background: #00213C;
+    color: #fff;
+    font-size: 0.833rem;
+    border-color: #00213C;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.tabs-scroll-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.opciones-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    flex: 1;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    min-width: 0;
+}
+
+.opciones-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+#opciones-tab {
+    flex-wrap: nowrap;
+    width: max-content;
+    margin-bottom: 0 !important;
+}
+
+#opciones-tab .nav-item {
+    flex: 0 0 auto;
+}
+
+.btn-scroll-tabs {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: #F0F6FB;
+    border: 1px solid #D9E2EC;
+    color: #00213C;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.btn-scroll-tabs:hover {
+    background-color: #dceaf5;
+    color: #00213C;
+}
+
+.btn-scroll-tabs.d-none {
+    display: none !important;
+}
+
+/* estilo para la tarjeta de informacion */
+.title-tarjet-information {
+    font-size: 0.833rem;
+    color: #002F55;
+    font-weight: 700;
+    border-left: 5px solid #7FAFD6;
+    padding-left: 8px;
+}
+
+.form-label-information {
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 400;
+}
+
+.result-information {
+    background-color: #F0F6FB;
+    font-size: 0.833rem;
+    border: none;
+    color: #00213C;
+    min-height: 42px;
+}
+
+.result-information[contenteditable="true"] {
+    cursor: text;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+.result-information.result-information-editable-empty {
+    color: #6c7d8d;
+}
+
+.result-information:hover,
+.result-information:focus,
+.result-information:active,
+.result-information.show {
+    background-color: #F0F6FB !important;
+    color: #00213C !important;
+    box-shadow: none !important;
+}
+
+.result-information.result-information-editable-empty:hover,
+.result-information.result-information-editable-empty:focus,
+.result-information.result-information-editable-empty:active {
+    color: #6c7d8d !important;
+}
+
+/* dropdowns */
+.custom-dropdown-menu {
+    border-radius: 12px;
+    border: 1px solid #D9E2EC;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    padding: 0.5rem;
+}
+
+/* scroll para dropdowns largos */
+.dropdown-menu-scroll {
+    max-height: 240px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #c7d3df transparent;
+}
+
+.dropdown-menu-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdown-menu-scroll::-webkit-scrollbar-thumb {
+    background-color: #c7d3df;
+    border-radius: 10px;
+}
+
+.dropdown-menu-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-dropdown-menu .dropdown-item {
+    border-radius: 10px;
+    font-size: 0.833rem;
+    padding: 0.5rem 0.75rem;
+    white-space: normal;
+}
+
+.custom-dropdown-menu .dropdown-item:hover {
+    background-color: #F0F6FB;
+    color: #00213C;
+}
+
+.result-information::after {
+    display: none !important;
+}
+
+.icon-dropdown-arrow {
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
+}
+
+.result-information[aria-expanded="true"] .icon-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+/* responsive sin cambiar el diseño */
+.card-madre-edicion {
+    min-width: 0;
+}
+
+.card-body-edicion-left,
+.tab-content,
+.tab-pane {
+    min-width: 0;
+}
+
+/* ajustes para que los botones no se amontonen en pantallas pequeñas */
+.field-check-custom {
+    background-color: #ffff;
+}
+
+.text-field-check {
+    color: #002F55;
+    font-size: 0.683rem;
+}
+
+.text-field-check-campesino {
+    color: #002F55;
+    font-size: 0.833rem;
+}
+
+.text-field-check-etnico {
+    color: #002F55;
+    font-size: 0.833rem;
+}
+
+.check-custom {
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 1px solid #002F55;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+.check-custom:focus {
+    box-shadow: none;
+    border-color: #002F55;
+}
+
+.editar-predio-visor-wrap {
+    background-color: #F0F6FB;
+}
+
+.editar-predio-map-empty {
+    max-width: 240px;
+    font-size: 0.833rem;
+    color: #54748D;
+    line-height: 1.4;
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* estilos para los dropdowns de la segunda pestaña */
+.btn-add-form-dropdown {
+    background-color: #9BC2E2;
+    color: #002F55;
+    border: 1px solid #D9E2EC;
+    border-radius: 10px;
+    font-size: 0.833rem;
+    padding: 0.45rem 0.9rem;
+    font-weight: 600;
+}
+
+.btn-add-form-dropdown:hover,
+.btn-add-form-dropdown:focus,
+.btn-add-form-dropdown:active {
+    background-color: #F0F6FB !important;
+    color: #002F55 !important;
+    border-color: #D9E2EC !important;
+    box-shadow: none !important;
+}
+
+#btnToggleReferenciaRegistral[aria-expanded="true"] {
+    background-color: #D1E3F2 !important;
+    border-bottom-color: transparent !important;
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 0 !important;
+    position: relative;
+    z-index: 2;
+}
+
+.input-form-dropdown {
+    background-color: #F0F6FB;
+    border: 1px solid #D9E2EC;
+    border-radius: 10px;
+    font-size: 0.833rem;
+    color: #00213C;
+    min-height: 42px;
+}
+
+.input-form-dropdown:focus {
+    background-color: #F0F6FB;
+    border-color: #D9E2EC;
+    box-shadow: none;
+    color: #00213C;
+}
+
+.content-form-collapse {
+    background-color: #D1E3F2;
+}
+
+.content-form-collapse-dos {
+    background-color: #F0F6FB;
+}
+
+#formNumeroPredialCollapse {
+    margin-top: -1px;
+}
+
+#formNumeroPredialCollapse .content-form-collapse {
+    border-radius: 0 12px 12px 12px !important;
+}
+
+#cardReferenciaRegistral[data-definido="true"] {
+    background-color: #FFFFFF;
+}
+
+.form-label-information-text {
+    font-size: 0.833rem;
+    font-weight: 800;
+    color: #002F55;
+}
+
+.content-text-label {
+    font-size: 0.833rem;
+}
+
+.btn-boton-save {
+    background-color: #9BC2E2;
+    color: #00213C;
+    font-weight: 600;
+}
+
+.btn-boton-save:hover {
+    background-color: #89b7dd;
+}
+
+.btn-referencia-registral-delete {
+    background-color: #F2D1D1;
+    color: #CD2023;
+    border: 1px solid #CD2023;
+}
+
+.btn-referencia-registral-delete:hover,
+.btn-referencia-registral-delete:focus,
+.btn-referencia-registral-delete:active {
+    background-color: #eec1c1 !important;
+    color: #CD2023 !important;
+}
+
+#cardReferenciaRegistral[data-definido="true"] #dropdownTipoReferenciaRegistral.dropdown-readonly {
+    pointer-events: none;
+    opacity: 1;
+    background-color: #F0F6FB !important;
+    color: #00213C !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+
+.btn-boton-editar-geo {
+    color: #27AE45;
+    font-size: 0.733rem;
+    font-weight: 600;
+    background-color: #D1F2D1;
+    border: 1px solid #03A025;
+}
+
+.btn-boton-editar-geo:hover {
+    color: #27AE45;
+    font-size: 0.833rem;
+    font-weight: 600;
+    background-color: #bfeebf;
+    border: 1px solid #03A025;
+}
+
+.icon-pencil-edit-geo {
+    color: #27AE45;
+}
+
+.content-text-edit-geo {
+    font-size: 0.833rem;
+    color: #002F55;
+}
+
+.result-information-edit-geo {
+    background-color: #D1E3F2;
+}
+
+.title-tarjet-information-geo {
+    font-size: 1rem;
+    color: #002F55;
+    font-weight: 700;
+    border-left: 4px solid #7FAFD6;
+    padding-left: 8px;
+}
+
+.result-information-white {
+    background-color: #FFFFFF !important;
+    border: 1px solid #D9E2EC !important;
+    border-radius: 12px !important;
+}
+
+.result-information-white:hover,
+.result-information-white:focus,
+.result-information-white:active,
+.result-information-white.show {
+    background-color: #FFFFFF !important;
+    color: #00213C !important;
+    box-shadow: none !important;
+}
+
+.input-form-white {
+    background-color: #FFFFFF !important;
+    border: 1px solid #D9E2EC !important;
+}
+
+.input-form-white:focus {
+    background-color: #FFFFFF !important;
+    border-color: #D9E2EC !important;
+    box-shadow: none !important;
+    color: #00213C;
+}
+
+#btnToggleAdjuntoDocumento[aria-expanded="true"] {
+    background-color: #FFFFFF !important;
+    border-radius: 12px 12px 0 0 !important;
+    border-bottom: 1px solid transparent !important;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 0 !important;
+}
+
+.content-form-adjunto-unido {
+    border-color: #D9E2EC !important;
+    border-radius: 0 0 12px 12px !important;
+    margin-top: -1px;
+}
+
+.text-file-geo {
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 700;
+}
+
+.input-label-doc {
+    background-color: #D1E3F2;
+}
+
+/* estilo para la tarjeta de la tercera pestaña */
+#btnToggleMatriculaInmobiliaria {
+    margin-bottom: 0 !important;
+    border-radius: 12px !important;
+    position: relative;
+    z-index: 3;
+}
+
+#btnToggleMatriculaInmobiliaria[aria-expanded="true"] {
+    border-radius: 12px 12px 0 0 !important;
+    border-bottom: 1px solid transparent !important;
+}
+
+#formMatriculaInmobiliariaCollapse {
+    margin-top: -2px !important;
+    padding-top: 0 !important;
+}
+
+.content-form-matricula-unido {
+    background-color: #F0F6FB;
+    border: 1px solid #D9E2EC !important;
+    border-top: 0 !important;
+    border-radius: 0 0 12px 12px !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    overflow: hidden;
+}
+
+/* PANEL INTERNO: Adjuntos */
+#btnToggleAdjuntoDocumento {
+    margin-bottom: 0 !important;
+    position: relative;
+    z-index: 3;
+}
+
+#btnToggleAdjuntoDocumento[aria-expanded="true"] {
+    border-radius: 12px 12px 0 0 !important;
+    border-bottom: 1px solid transparent !important;
+}
+
+#formAdjuntoDocumentoCollapse {
+    margin-top: -2px !important;
+    padding-top: 0 !important;
+}
+
+.content-form-adjunto-unido {
+    border: 1px solid #D9E2EC !important;
+    border-top: 0 !important;
+    border-radius: 0 0 12px 12px !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    overflow: hidden;
+}
+
+.campo-adjunto-con-linea {
+    border-left: 2px solid #032F57 !important;
+}
+
+
+.adjunto-observacion-box {
+    border: 1px solid #7FA0BF;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #D1E3F2;
+}
+
+.adjunto-observacion-header {
+    background-color: #D1E3F2;
+    color: #032F57;
+    font-size: 0.833rem;
+    font-weight: 500;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid #9CB3C8;
+}
+
+.adjunto-observacion-body {
+    background-color: #fff;
+    color: #032F57;
+    font-size: 0.833rem;
+    min-height: 96px;
+    padding: 1rem 0.75rem;
+}
+
+.btn-boton-eliminar-geo {
+    background-color: #F2D1D1;
+    color: #CD2023;
+    border: 1px solid #CD2023 !important;
+    border-radius: 10px;
+}
+
+.btn-boton-save-adjunto {
+    background-color: #3A5A75;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 0.833rem;
+    font-weight: 600;
+}
+
+.btn-boton-save-adjunto:hover {
+    background-color: #3A5A75;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 0.833rem;
+    font-weight: 600;
+}
+
+.btn-añadir-terreno {
+    background-color: #9BC2E2;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 700;
+}
+
+.btn-añadir-terreno:hover {
+    background-color: #81aacc;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 700;
+}
+
+
+/* estilo de el select tercera vista campo tipo de direccion */
+.result-information-geo {
+    background-color: #D1E3F2;
+    font-size: 0.833rem;
+    border: none;
+    color: #00213C;
+    min-height: 42px;
+}
+
+.result-information-geo[contenteditable="true"] {
+    cursor: text;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+.result-information-geo.result-information-geo-editable-empty {
+    color: #6c7d8d;
+}
+
+.result-information-geo:hover,
+.result-information-geo:focus,
+.result-information-geo:active,
+.result-information-geo.show {
+    background-color: #D1E3F2 !important;
+    color: #00213C !important;
+    box-shadow: none !important;
+}
+
+.result-information-geo.result-information-editable-empty:hover,
+.result-information-geo.result-information-editable-empty:focus,
+.result-information-geo.result-information-editable-empty:active {
+    color: #6c7d8d !important;
+}
+
+#formPredialAsociadoTab3Collapse .result-information-geo {
+    min-height: 42px;
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
+    display: flex;
+    align-items: center;
+}
+
+#formPredialAsociadoTab3Collapse .dropdown>.btn.result-information-geo {
+    height: 42px;
+}
+
+.btn-boton-dat-dele {
+    background-color: #F2D1D1;
+    color: #CD2023;
+    font-weight: 700;
+    border-radius: 10px;
+    border: 1px solid #CD2023;
+}
+
+.btn-boton-dat-dele:hover {
+    background-color: #F2D1D1;
+    color: #CD2023;
+    font-weight: 700;
+    border-radius: 10px;
+    border: 1px solid #CD2023;
+}
+
+.btn-boton-save-direccion {
+    background-color: #9BC2E2;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 700;
+    border-radius: 8px;
+}
+
+.btn-boton-save-direccion:hover {
+    background-color: #9BC2E2;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 700;
+    border-radius: 8px;
+}
+
+.subtabs-opcion4 .nav-link {
+    background-color: #F0F6FB;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 600;
+    padding: 0.55rem 1rem;
+    transition: all 0.25s ease;
+    border-top-left-radius: 13px;
+    border-top-right-radius: 13px;
+    border-bottom-left-radius: 1px;
+    border-bottom-right-radius: 1px;
+}
+
+.subtabs-opcion4 .nav-link:hover {
+    background-color: #CFE2F1;
+    color: #00213C;
+    border-color: #AFC7DB;
+}
+
+/* pestaña activa */
+.subtabs-opcion4 .nav-link.active {
+    background-color: #D1E3F2;
+    /* fondo activo */
+    color: #002F55;
+    /* texto activo */
+    border-color: #002F55;
+    box-shadow: 0 4px 10px rgba(0, 47, 85, 0.18);
+    border-top-left-radius: 13px;
+    border-top-right-radius: 13px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+/* hover cuando está activa */
+.subtabs-opcion4 .nav-link.active:hover {
+    background-color: #D1E3F2;
+    color: #002F55;
+    border-color: #014376;
+}
+
+/* enfoque */
+.subtabs-opcion4 .nav-link:focus {
+    box-shadow: none;
+}
+
+#subTabsPersonasContenidoOpcion4 .tab-pane {
+    background-color: #F0F6FB;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+/* cuando esté activo */
+#subTabsPersonasContenidoOpcion4 .tab-pane.show.active {
+    background-color: #F0F6FB;
+}
+
+.title-tarjet-derecho {
+    font-size: 0.833rem;
+    color: #002F55;
+    font-weight: 700;
+    border-left: 4px solid #7FAFD6;
+    padding-left: 8px;
+}
+
+.campo-fecha-tendencia-wrap {
+    overflow: hidden;
+}
+
+.campo-fecha-tendencia-icono-wrap {
+    position: relative;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+}
+
+.campo-fecha-tendencia-icono {
+    color: #002F55;
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.campo-fecha-tendencia-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    border: 0;
+    width: 100%;
+    height: 100%;
+    min-width: 24px;
+    min-height: 24px;
+    background: transparent;
+    z-index: 2;
+}
+
+.campo-fecha-tendencia-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+/* estilo de la segunda tarejeta de la pestaña de interesados */
+.title-tarjet-interesados {
+    font-size: 0.833rem;
+    color: #002F55;
+    font-weight: 700;
+    border-left: 5px solid #7FAFD6;
+    padding-left: 8px;
+}
+
+/* estilos para la seccion de adjuntos en la pestaña de interesados */
+.adjunto-interesado-card {
+    background-color: #F0F6FB;
+    border-left: 3px solid #ADCDE7;
+}
+
+.adjunto-interesado-toggle {
+    background-color: #F0F6FB !important;
+    color: #002F55 !important;
+}
+
+.adjunto-interesado-toggle:hover,
+.adjunto-interesado-toggle:focus,
+.adjunto-interesado-toggle:active {
+    background-color: #F0F6FB !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+.adjunto-interesado-title {
+    font-size: 0.833rem;
+    font-weight: 700;
+    color: #002F55;
+}
+
+.adjunto-interesado-icon,
+.adjunto-interesado-file-icon {
+    color: #002F55;
+    font-size: 0.95rem;
+}
+
+.adjunto-interesado-arrow {
+    color: #7A96AF;
+    font-size: 0.95rem;
+    transition: transform 0.3s ease;
+}
+
+.adjunto-interesado-toggle[aria-expanded="true"] .adjunto-interesado-arrow {
+    transform: rotate(180deg);
+}
+
+.adjunto-interesado-file {
+    background-color: #CFE0EE;
+    color: #002F55;
+}
+
+.adjunto-interesado-observacion {
+    border: 1px solid #8FB1CC;
+    background-color: #D1E3F2;
+}
+
+.adjunto-interesado-observacion-header {
+    background-color: #D1E3F2;
+    color: #002F55;
+    font-size: 0.833rem;
+    border-bottom: 1px solid #9CB3C8;
+}
+
+.adjunto-interesado-observacion-body {
+    background-color: #F0F6FB;
+    color: #002F55;
+    font-size: 0.833rem;
+    min-height: 96px;
+}
+
+.adjunto-interesado-btn-eliminar {
+    background-color: #F2D1D1;
+    color: #CD2023;
+    border: 1px solid #CD2023;
+    border-radius: 10px;
+    font-size: 0.833rem;
+    font-weight: 700;
+}
+
+.adjunto-interesado-btn-eliminar:hover,
+.adjunto-interesado-btn-eliminar:focus,
+.adjunto-interesado-btn-eliminar:active {
+    background-color: #eec1c1 !important;
+    color: #CD2023 !important;
+    border-color: #CD2023 !important;
+    box-shadow: none !important;
+}
+
+.form-label-archivo {
+    font-size: 0.833rem;
+}
+
+.text-truncate {
+    font-size: 0.833rem;
+}
+
+.btn-boton-save-adjunto-for {
+    background-color: #9BC2E2;
+    border-radius: 10px;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 700;
+}
+
+.btn-boton-save-adjunto-for:hover {
+    background-color: #9BC2E2;
+    border-radius: 10px;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 700;
+}
+
+.campo-fecha-documento-fuente-wrap {
+    overflow: hidden;
+}
+
+.campo-fecha-documento-fuente-icono-wrap {
+    position: relative;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+}
+
+.campo-fecha-documento-fuente-btn {
+    width: 24px;
+    height: 24px;
+}
+
+.campo-fecha-documento-fuente-icono {
+    color: #8EA3B5;
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.campo-fecha-documento-fuente-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    border: 0;
+    width: 100%;
+    height: 100%;
+    min-width: 24px;
+    min-height: 24px;
+    background: transparent;
+    z-index: 2;
+}
+
+.campo-fecha-documento-fuente-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+
+/* altura fija y scroll para las 3 tarjetas de la pestaña 4 */
+.card-fixed-opcion4 {
+    height: 720px;
+    min-height: 720px;
+    max-height: 720px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.card-body-scroll-opcion4 {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: #c7d3df transparent;
+}
+
+.card-body-scroll-opcion4::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-body-scroll-opcion4::-webkit-scrollbar-thumb {
+    background-color: #c7d3df;
+    border-radius: 10px;
+}
+
+.card-body-scroll-opcion4::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
+
+@media (max-width: 991.98px) {
+
+    .btn-boton-save,
+    .btn-boton-abort {
+        width: auto;
+    }
+
+    .card-fixed-opcion4 {
+        height: 620px;
+        min-height: 620px;
+        max-height: 620px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .title-asignacion-editar {
+        width: 100%;
+    }
+
+    .tabs-scroll-wrapper {
+        gap: 8px;
+    }
+
+    .btn-scroll-tabs {
+        width: 34px;
+        height: 34px;
+    }
+
+    .custom-dropdown-menu {
+        max-width: 100%;
+    }
+
+    .card-fixed-opcion4 {
+        height: auto;
+        min-height: auto;
+        max-height: none;
+    }
+
+    .card-body-scroll-opcion4 {
+        overflow-y: visible;
+        padding-right: 0;
+    }
+}
+
+/* altura fija y scroll para las tarjetas de la pestaña 5 */
+.card-fixed-opcion5 {
+    height: 520px;
+    min-height: 520px;
+    max-height: 520px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.card-body-scroll-opcion5 {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.opcion5-card-content {
+    min-height: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.opcion5-scroll-area {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.45rem;
+    scrollbar-width: thin;
+    scrollbar-color: #c7d3df transparent;
+}
+
+.opcion5-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.opcion5-scroll-area::-webkit-scrollbar-thumb {
+    background-color: #c7d3df;
+    border-radius: 10px;
+}
+
+.opcion5-scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.opcion5-card-actions {
+    flex: 0 0 auto;
+}
+
+#contenedorListadoConstruccionesOpcion5 {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.construccion-acordeon-item {
+    margin-bottom: 0 !important;
+}
+
+.construccion-acordeon-toggle {
+    background: #F0F6FB;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.833rem;
+    color: #123B63;
+    font-weight: 500;
+    padding: 0.45rem 1rem;
+    min-height: auto;
+    box-shadow: none !important;
+    margin-bottom: 0;
+}
+
+.construccion-acordeon-toggle:hover,
+.construccion-acordeon-toggle:focus {
+    background: #F0F6FB;
+    color: #123B63;
+    box-shadow: none !important;
+}
+
+.construccion-acordeon-toggle-open {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.construccion-acordeon-item .collapse {
+    margin-top: 0 !important;
+}
+
+.construccion-acordeon-item .collapsing {
+    margin-top: 0 !important;
+}
+
+.construccion-acordeon-body {
+    background-color: #F0F6FB;
+    border-radius: 0 0 12px 12px;
+    padding: 0.3rem 0.5rem 0.5rem 0.5rem;
+    margin-top: 0 !important;
+}
+
+.result-information-construccion {
+    background-color: #D1E3F2;
+    color: #204c78;
+    font-size: 0.833rem;
+    font-weight: 500;
+    border: none;
+}
+
+.result-information-construccion:hover {
+    background-color: #D1E3F2;
+    color: #123B63;
+    font-size: 0.833rem;
+    font-weight: 500;
+    border: none;
+}
+
+.adjunto-construccion-card {
+    background: #F8FAFC;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.adjunto-construccion-toggle {
+    background: #FFFFFF;
+    color: #123B63;
+    border-radius: 2px;
+    box-shadow: none !important;
+    font-size: 0.833rem;
+    border-left: #00213C;
+    border-left: 2px solid #032F57 !important;
+}
+
+.adjunto-construccion-toggle:hover,
+.adjunto-construccion-toggle:focus {
+    background: #FFFFFF;
+    color: #123B63;
+    box-shadow: none !important;
+    border-left: 2px solid #032F57 !important;
+}
+
+.adjunto-construccion-icon,
+.adjunto-construccion-arrow,
+.adjunto-construccion-title {
+    color: #123B63;
+}
+
+.adjunto-construccion-file {
+    background: #D1E3F2;
+    color: #123B63;
+    font-size: 0.833rem;
+}
+
+.adjunto-construccion-observacion {
+    background: #FFFFFF;
+    border: 1px solid #D9E2EC;
+}
+
+.adjunto-construccion-observacion-header {
+    background: #D1E3F2;
+    color: #123B63;
+    font-weight: 400;
+    font-size: 0.833rem;
+}
+
+.adjunto-construccion-observacion-body {
+    color: #123B63;
+    min-height: 70px;
+    font-size: 0.833rem;
+}
+
+.adjunto-construccion-btn-eliminar {
+    background: #F2D1D1;
+    font-size: 0.833rem;
+    color: #CD2023;
+    font-weight: 600;
+    border: 1px solid #CD2023;
+}
+
+.adjunto-construccion-btn-eliminar:hover {
+    background: #F2D1D1;
+    color: #CD2023;
+    font-weight: 600;
+    font-size: 0.833rem;
+    border: 1px solid #CD2023;
+}
+
+.boton-uc-quinto {
+    background-color: #00213C;
+    color: #fff;
+    font-size: 0.733rem;
+    font-weight: 700;
+    border-radius: 10px;
+}
+
+.boton-uc-quinto:hover {
+    background-color: #00213C;
+    color: #fff;
+    font-size: 0.733rem;
+    font-weight: 700;
+    border-radius: 10px;
+}
+
+.seccion-boton-five {
+    background-color: #00213C;
+}
+
+.seccion-caracteristicas-uc-wrap {
+    background-color: #00213C;
+}
+
+.caracteristicas-uc-id {
+    font-size: 0.95rem;
+}
+
+.caracteristicas-uc-title {
+    font-size: 0.733rem;
+}
+
+.caracteristicas-uc-tabs {
+    border-bottom: 0 !important;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 0 !important;
+
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 0.01rem;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.caracteristicas-uc-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.caracteristicas-uc-tabs .nav-item {
+    flex: 0 0 auto;
+}
+
+.caracteristicas-uc-tabs .nav-link {
+    background-color: #D9D9D9;
+    color: #123B63;
+    font-size: 0.833rem;
+    font-weight: 700;
+    border: none !important;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 0.55rem 0.833rem;
+    box-shadow: none !important;
+
+    white-space: nowrap;
+    min-height: 48px;
+}
+
+.caracteristicas-uc-tabs .nav-link:hover,
+.caracteristicas-uc-tabs .nav-link:focus {
+    background-color: #E7E7E7;
+    color: #123B63;
+    box-shadow: none !important;
+}
+
+.caracteristicas-uc-tabs .nav-link.active {
+    background-color: #F8F8F8 !important;
+    color: #123B63 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.caracteristicas-uc-tab-content {
+    position: relative;
+    z-index: 1;
+}
+
+.caracteristicas-uc-card-body {
+    background-color: #F8F8F8;
+    border-radius: 0 16px 16px 16px;
+    padding-top: 1rem;
+}
+
+/* estilos para los select de la segunda pestaña (NO CONVENCIONAL) */
+/* Select Tipo de Anexo como desplegable interno, no flotante */
+.tipo-anexo-uc-select {
+    position: relative;
+}
+
+.tipo-anexo-uc-toggle {
+    border-radius: 10px !important;
+}
+
+.tipo-anexo-uc-toggle[aria-expanded="true"] {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.tipo-anexo-uc-toggle[aria-expanded="true"] .icon-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.tipo-anexo-uc-opciones {
+    margin-top: 0;
+}
+
+.tipo-anexo-uc-lista {
+    background-color: #D1E3F2;
+    border-radius: 0 0 10px 10px;
+    max-height: 260px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.25rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: #9fb8cc transparent;
+}
+
+.tipo-anexo-uc-lista::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tipo-anexo-uc-lista::-webkit-scrollbar-thumb {
+    background-color: #9fb8cc;
+    border-radius: 10px;
+}
+
+.tipo-anexo-uc-lista::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tipo-anexo-uc-opcion {
+    background-color: transparent;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 0;
+    padding: 0.45rem 0.65rem;
+    white-space: normal;
+}
+
+.tipo-anexo-uc-opcion:hover,
+.tipo-anexo-uc-opcion:focus,
+.tipo-anexo-uc-opcion:active {
+    background-color: #BFD8EB !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+/* Select Conservación Anexo como desplegable interno */
+.conservacion-anexo-uc-select {
+    position: relative;
+}
+
+.conservacion-anexo-uc-toggle {
+    border-radius: 10px !important;
+}
+
+.conservacion-anexo-uc-toggle[aria-expanded="true"] {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.conservacion-anexo-uc-toggle[aria-expanded="true"] .icon-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.conservacion-anexo-uc-opciones {
+    margin-top: 0;
+}
+
+.conservacion-anexo-uc-lista {
+    background-color: #D1E3F2;
+    border-radius: 0 0 10px 10px;
+    max-height: 260px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.25rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: #9fb8cc transparent;
+}
+
+.conservacion-anexo-uc-lista::-webkit-scrollbar {
+    width: 6px;
+}
+
+.conservacion-anexo-uc-lista::-webkit-scrollbar-thumb {
+    background-color: #9fb8cc;
+    border-radius: 10px;
+}
+
+.conservacion-anexo-uc-lista::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.conservacion-anexo-uc-opcion {
+    background-color: transparent;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 0;
+    padding: 0.45rem 0.65rem;
+    white-space: normal;
+}
+
+.conservacion-anexo-uc-opcion:hover,
+.conservacion-anexo-uc-opcion:focus,
+.conservacion-anexo-uc-opcion:active {
+    background-color: #BFD8EB !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+/* fin estilos para los select de la segunda pestaña (NO CONVENCIONAL) */
+
+
+/* estilo para los select de la segunda pestaña tipo de calificacion (CONVENCIONAL) */
+/* Select Tipo a calificar como desplegable interno */
+.tipo-a-calificar-uc-select {
+    position: relative;
+}
+
+.tipo-a-calificar-uc-toggle {
+    border-radius: 10px !important;
+}
+
+.tipo-a-calificar-uc-toggle[aria-expanded="true"] {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.tipo-a-calificar-uc-toggle[aria-expanded="true"] .icon-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.tipo-a-calificar-uc-opciones {
+    margin-top: 0;
+}
+
+.tipo-a-calificar-uc-lista {
+    background-color: #D1E3F2;
+    border-radius: 0 0 10px 10px;
+    max-height: 260px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.25rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: #9fb8cc transparent;
+}
+
+.tipo-a-calificar-uc-lista::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tipo-a-calificar-uc-lista::-webkit-scrollbar-thumb {
+    background-color: #9fb8cc;
+    border-radius: 10px;
+}
+
+.tipo-a-calificar-uc-lista::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tipo-a-calificar-uc-opcion {
+    background-color: transparent;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 0;
+    padding: 0.45rem 0.65rem;
+    white-space: normal;
+}
+
+.tipo-a-calificar-uc-opcion:hover,
+.tipo-a-calificar-uc-opcion:focus,
+.tipo-a-calificar-uc-opcion:active {
+    background-color: #BFD8EB !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+
+/* campos de estructura en calificación convencional */
+.estructura-convencional-uc-select {
+    position: relative;
+}
+
+.estructura-convencional-uc-toggle {
+    border-radius: 10px !important;
+}
+
+.estructura-convencional-uc-toggle[aria-expanded="true"] {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.estructura-convencional-uc-toggle[aria-expanded="true"] .icon-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.estructura-convencional-uc-opciones {
+    margin-top: 0;
+}
+
+.estructura-convencional-uc-lista {
+    background-color: #D1E3F2;
+    border-radius: 0 0 10px 10px;
+    max-height: 260px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.25rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: #9fb8cc transparent;
+}
+
+.estructura-convencional-uc-lista::-webkit-scrollbar {
+    width: 6px;
+}
+
+.estructura-convencional-uc-lista::-webkit-scrollbar-thumb {
+    background-color: #9fb8cc;
+    border-radius: 10px;
+}
+
+.estructura-convencional-uc-lista::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.estructura-convencional-uc-opcion {
+    background-color: transparent;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 0;
+    padding: 0.45rem 0.65rem;
+    white-space: normal;
+}
+
+.estructura-convencional-uc-opcion:hover,
+.estructura-convencional-uc-opcion:focus,
+.estructura-convencional-uc-opcion:active {
+    background-color: #BFD8EB !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+/* FIN estilo para los select de la segunda pestaña tipo de calificacion (CONVENCIONAL) */
+
+/* estilos para los select y seccion de cerchas */
+.total-calificacion-cerchas-wrap {
+    width: 165px;
+}
+
+.total-calificacion-cerchas-box {
+    background-color: #002f55;
+    color: #ffffff;
+    min-height: 41px;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    outline: none;
+}
+
+.total-calificacion-cerchas-box:focus {
+    box-shadow: 0 0 0 0.15rem rgba(0, 47, 85, 0.2);
+}
+
+/* estilos para los select y seccion de cerchas */
+/* estilos para los selects de la pestaña Tipología */
+.tipologia-uc-select,
+.conservacion-tipologia-uc-select {
+    position: relative;
+}
+
+.tipologia-uc-toggle,
+.conservacion-tipologia-uc-toggle {
+    border-radius: 10px !important;
+}
+
+.tipologia-uc-toggle[aria-expanded="true"],
+.conservacion-tipologia-uc-toggle[aria-expanded="true"] {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.tipologia-uc-toggle[aria-expanded="true"] .icon-dropdown-arrow,
+.conservacion-tipologia-uc-toggle[aria-expanded="true"] .icon-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.tipologia-uc-opciones,
+.conservacion-tipologia-uc-opciones {
+    margin-top: 0;
+}
+
+.tipologia-uc-lista,
+.conservacion-tipologia-uc-lista {
+    background-color: #D1E3F2;
+    border-radius: 0 0 10px 10px;
+    max-height: 260px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.25rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: #9fb8cc transparent;
+}
+
+.tipologia-uc-lista::-webkit-scrollbar,
+.conservacion-tipologia-uc-lista::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tipologia-uc-lista::-webkit-scrollbar-thumb,
+.conservacion-tipologia-uc-lista::-webkit-scrollbar-thumb {
+    background-color: #9fb8cc;
+    border-radius: 10px;
+}
+
+.tipologia-uc-lista::-webkit-scrollbar-track,
+.conservacion-tipologia-uc-lista::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tipologia-uc-opcion,
+.conservacion-tipologia-uc-opcion {
+    background-color: transparent;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 0;
+    padding: 0.45rem 0.65rem;
+    white-space: normal;
+}
+
+.tipologia-uc-opcion:hover,
+.tipologia-uc-opcion:focus,
+.tipologia-uc-opcion:active,
+.conservacion-tipologia-uc-opcion:hover,
+.conservacion-tipologia-uc-opcion:focus,
+.conservacion-tipologia-uc-opcion:active {
+    background-color: #BFD8EB !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+/* ajuste de alineación para campos dobles de características U.C. */
+.campo-uc-mitad {
+    display: flex;
+    flex-direction: column;
+}
+
+.campo-uc-mitad>div {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0 !important;
+}
+
+.campo-uc-mitad .form-label-information {
+    min-height: 38px;
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 0.35rem !important;
+    line-height: 1.15;
+}
+
+.campo-uc-mitad .result-information-construccion {
+    min-height: 40px;
+    height: 40px;
+    width: 100%;
+    display: flex !important;
+    align-items: center;
+}
+
+.campo-uc-mitad .campo-fecha-tendencia-wrap,
+.campo-uc-mitad .campo-fecha-documento-fuente-wrap {
+    min-height: 40px;
+    height: 40px;
+}
+
+/* Select Usos tradicionales culturales como desplegable interno */
+.usos-tradicionales-culturales-uc-select {
+    position: relative;
+}
+
+.usos-tradicionales-culturales-uc-toggle {
+    border-radius: 10px !important;
+}
+
+.usos-tradicionales-culturales-uc-toggle[aria-expanded="true"] {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.usos-tradicionales-culturales-uc-toggle[aria-expanded="true"] .icon-dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.usos-tradicionales-culturales-uc-opciones {
+    margin-top: 0;
+}
+
+.usos-tradicionales-culturales-uc-lista {
+    background-color: #D1E3F2;
+    border-radius: 0 0 10px 10px;
+    max-height: 285px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.25rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: #9fb8cc transparent;
+}
+
+.usos-tradicionales-culturales-uc-lista::-webkit-scrollbar {
+    width: 6px;
+}
+
+.usos-tradicionales-culturales-uc-lista::-webkit-scrollbar-thumb {
+    background-color: #9fb8cc;
+    border-radius: 10px;
+}
+
+.usos-tradicionales-culturales-uc-lista::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.usos-tradicionales-culturales-uc-opcion {
+    background-color: transparent;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 0;
+    padding: 0.45rem 0.65rem;
+    white-space: normal;
+}
+
+.usos-tradicionales-culturales-uc-opcion:hover,
+.usos-tradicionales-culturales-uc-opcion:focus,
+.usos-tradicionales-culturales-uc-opcion:active {
+    background-color: #BFD8EB !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+/* Estado vacío de Listado de U.C. */
+.estado-vacio-uc-opcion5 {
+    width: 100%;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 800;
+    text-align: center;
+    margin-top: 0.35rem;
+    margin-bottom: 1.2rem;
+}
+
+#btnAccionUnidadConstruccionOpcion5 {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 40px;
+    border-radius: 8px;
+}
+
+/* visor tercera tarjeta pestaña 5 - construcciones */
+.visor-construcciones-opcion5 {
+    height: 520px;
+}
+
+#mapEditarPredioTab5 {
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+}
+
+
+/* Mostrar características UC encima de los campos normales */
+.unidad-construccion-detalle-wrap {
+    position: relative;
+}
+
+.uc-detalle-normal,
+.uc-detalle-caracteristicas {
+    width: 100%;
+}
+
+/* Botón X de cerrar características */
+.btn-cerrar-caracteristicas-uc {
+    background-color: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 0.25rem 0.35rem;
+    box-shadow: none !important;
+}
+
+.btn-cerrar-caracteristicas-uc:hover,
+.btn-cerrar-caracteristicas-uc:focus,
+.btn-cerrar-caracteristicas-uc:active {
+    background-color: transparent !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+
+/* Transición suave entre detalle normal y características UC */
+.uc-detalle-normal,
+.uc-detalle-caracteristicas {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity 0.22s ease,
+        transform 0.22s ease;
+}
+
+.uc-detalle-caracteristicas {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.uc-detalle-caracteristicas.uc-panel-activo {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.uc-panel-saliendo {
+    opacity: 0 !important;
+    transform: translateY(-8px) !important;
+}
+
+@media (max-width: 1199.98px) {
+
+    .card-fixed-opcion5,
+    .visor-construcciones-opcion5 {
+        height: 500px;
+        min-height: 500px;
+        max-height: 500px;
+    }
+}
+
+@media (max-width: 767.98px) {
+
+    .card-fixed-opcion5,
+    .visor-construcciones-opcion5 {
+        height: 460px;
+        min-height: 460px;
+        max-height: 460px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .card-header-editar .d-flex {
+        align-items: stretch !important;
+    }
+
+    .card-header-editar .btn-boton-save,
+    .card-header-editar .btn-boton-abort {
+        width: 100%;
+    }
+
+    #opciones-tab .nav-link {
+        font-size: 0.78rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .title-tarjet-information {
+        font-size: 0.95rem;
+    }
+
+    .form-label-information,
+    .result-information,
+    .custom-dropdown-menu .dropdown-item,
+    .text-tarjet-name,
+    .text-result-name {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .caracteristicas-uc-tabs {
+        gap: 0.25rem;
+    }
+
+    .caracteristicas-uc-tabs .nav-link {
+        font-size: 0.76rem;
+        padding: 0.65rem 0.85rem;
+        min-height: 44px;
+    }
+
+    .caracteristicas-uc-card-body {
+        border-radius: 0 12px 12px 12px;
+        padding-top: 0.85rem;
+    }
+}
+
+
+/* ? ESTILOS PARA LA PESTAÑA 6 */
+/* estilos para el campo del calendario de la pestaña 6 */
+.campo-fecha-visita-predial {
+    background-color: #F0F6FB;
+    color: #00213C;
+    font-size: 0.833rem;
+    min-height: 42px;
+    border: none;
+    overflow: hidden;
+}
+
+.campo-fecha-visita-predial:hover,
+.campo-fecha-visita-predial:focus-within {
+    background-color: #F0F6FB;
+    color: #00213C;
+    box-shadow: none;
+}
+
+.campo-fecha-visita-predial-icono-wrap {
+    position: relative;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.campo-fecha-visita-predial-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    box-shadow: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.campo-fecha-visita-predial-btn:hover,
+.campo-fecha-visita-predial-btn:focus,
+.campo-fecha-visita-predial-btn:active {
+    background-color: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+.campo-fecha-visita-predial-icono {
+    color: #8EA3B5;
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.campo-fecha-visita-predial-input {
+    position: absolute;
+    inset: 0;
+    width: 24px;
+    height: 24px;
+    opacity: 0;
+    border: 0;
+    cursor: pointer;
+    background: transparent;
+    z-index: 3;
+}
+
+.campo-fecha-visita-predial-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    display: block;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+
+/* estilos para el scroll de las tarjetas de la pestaña 6 */
+/* altura fija y scroll para las tarjetas de la pestaña 6 */
+#opcion6 .card-opcion6 {
+    height: 420px;
+    min-height: 420px;
+    max-height: 420px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+#opcion6 .card-opcion6>.card-body {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.65rem;
+    scrollbar-width: thin;
+    scrollbar-color: #c7d3df transparent;
+}
+
+#opcion6 .card-opcion6>.card-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+#opcion6 .card-opcion6>.card-body::-webkit-scrollbar-thumb {
+    background-color: #c7d3df;
+    border-radius: 10px;
+}
+
+#opcion6 .card-opcion6>.card-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* responsive pestaña 6 */
+@media (max-width: 1199.98px) {
+    #opcion6 .card-opcion6 {
+        height: 400px;
+        min-height: 400px;
+        max-height: 400px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    #opcion6 .card-opcion6 {
+        height: 380px;
+        min-height: 380px;
+        max-height: 380px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    #opcion6 .card-opcion6 {
+        height: auto;
+        min-height: auto;
+        max-height: none;
+    }
+
+    #opcion6 .card-opcion6>.card-body {
+        overflow-y: visible;
+        padding-right: 1rem;
+    }
+}
+
+/* ? FIN ESTILOS PARA LA PESTAÑA 6 */
+
+/* ! ESTILOS PARA LA PESTAÑA 7 */
+.card-fixed-opcion7 {
+    height: 420px;
+    min-height: 420px;
+    max-height: 420px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.card-body-scroll-opcion7 {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: #c7d3df transparent;
+}
+
+.card-body-scroll-opcion7::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-body-scroll-opcion7::-webkit-scrollbar-thumb {
+    background-color: #c7d3df;
+    border-radius: 10px;
+}
+
+.card-body-scroll-opcion7::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.punto-referencia-item {
+    background-color: #F0F6FB;
+    color: #002F55;
+    min-height: 35px;
+    transition: all 0.2s ease;
+}
+
+.punto-referencia-item:hover,
+.punto-referencia-item.active {
+    background-color: #D1E3F2;
+}
+
+.punto-referencia-icon {
+    color: #002F55;
+    font-size: 0.95rem;
+}
+
+.punto-referencia-id {
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 800;
+}
+
+.btn-add-punto-referencia {
+    background-color: #9BC2E2;
+    color: #002F55;
+    border-radius: 8px;
+    font-size: 0.733rem;
+    font-weight: 800;
+    border: none;
+}
+
+.btn-add-punto-referencia:hover,
+.btn-add-punto-referencia:focus,
+.btn-add-punto-referencia:active {
+    background-color: #89b7dd !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+.punto-referencia-empty,
+.estado-vacio-punto-referencia-opcion7 {
+    color: #002F55;
+    font-size: 0.95rem;
+    font-weight: 400;
+}
+
+.visor-punto-referencia-opcion7 {
+    height: 420px;
+    min-height: 420px;
+    max-height: 420px;
+}
+
+#mapEditarPredioTab7 {
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+}
+
+.btn-ver-proyecto-opcion7 {
+    background-color: #D1E3F2 !important;
+    color: #002F55 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 0.833rem;
+    font-weight: 800;
+    box-shadow: none !important;
+}
+
+.btn-ver-proyecto-opcion7:hover,
+.btn-ver-proyecto-opcion7:focus,
+.btn-ver-proyecto-opcion7:active {
+    background-color: #bfd8eb !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+.campo-predio-seven {
+    background-color: #BAD5EB;
+    border-radius: 10px;
+}
+
+.form-label-information-seven {
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 400;
+}
+
+.campo-predio-asociado-seven {
+    min-height: 40px;
+    height: 40px;
+    font-weight: 700;
+    line-height: 1.2;
+    display: flex !important;
+    align-items: center !important;
+    overflow: hidden;
+}
+
+.campo-predio-asociado-seven:focus {
+    outline: none;
+}
+
+/* Adjuntos pestaña 7 - Punto de referencia */
+#opcion7 .adjunto-punto-referencia-card {
+    background-color: #F0F6FB;
+    border: 1px solid transparent;
+}
+
+#opcion7 .adjunto-punto-referencia-card-activo {
+    border-color: #8DBAE0;
+}
+
+#opcion7 .adjunto-punto-referencia-toggle {
+    background-color: #F0F6FB !important;
+    color: #002F55 !important;
+    border-radius: 8px;
+}
+
+#opcion7 .adjunto-punto-referencia-toggle:hover,
+#opcion7 .adjunto-punto-referencia-toggle:focus,
+#opcion7 .adjunto-punto-referencia-toggle:active {
+    background-color: #F0F6FB !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+#opcion7 .adjunto-punto-referencia-title {
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 800;
+}
+
+#opcion7 .adjunto-punto-referencia-icon,
+#opcion7 .adjunto-punto-referencia-file-icon {
+    color: #002F55;
+    font-size: 0.95rem;
+}
+
+#opcion7 .adjunto-punto-referencia-arrow {
+    color: #8EA3B5;
+    font-size: 0.95rem;
+    transition: transform 0.3s ease;
+}
+
+#opcion7 .adjunto-punto-referencia-toggle[aria-expanded="true"] .adjunto-punto-referencia-arrow {
+    transform: rotate(180deg);
+}
+
+#opcion7 .adjunto-punto-referencia-file {
+    background-color: #CFE0EE;
+    color: #002F55;
+    font-size: 0.833rem;
+    min-height: 40px;
+}
+
+#opcion7 .adjunto-punto-referencia-observacion {
+    border: 1px solid #8FB1CC;
+    background-color: #D1E3F2;
+}
+
+#opcion7 .adjunto-punto-referencia-observacion-header {
+    background-color: #D1E3F2;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 400;
+    border-bottom: 1px solid #9CB3C8;
+}
+
+#opcion7 .adjunto-punto-referencia-observacion-body {
+    background-color: #F0F6FB;
+    color: #002F55;
+    font-size: 0.833rem;
+    min-height: 96px;
+    outline: none;
+}
+
+#opcion7 .adjunto-punto-referencia-btn-eliminar {
+    background-color: #F2D1D1;
+    color: #CD2023;
+    border: 1px solid #CD2023;
+    border-radius: 10px;
+    font-size: 0.833rem;
+    font-weight: 700;
+}
+
+#opcion7 .adjunto-punto-referencia-btn-eliminar:hover,
+#opcion7 .adjunto-punto-referencia-btn-eliminar:focus,
+#opcion7 .adjunto-punto-referencia-btn-eliminar:active {
+    background-color: #eec1c1 !important;
+    color: #CD2023 !important;
+    border-color: #CD2023 !important;
+    box-shadow: none !important;
+}
+
+/* Ojo de abrir/cerrar punto de referencia */
+#opcion7 .punto-referencia-item {
+    background-color: #F0F6FB;
+    color: #002F55;
+    cursor: default;
+    transition:
+        background-color 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s ease;
+}
+
+#opcion7 .punto-referencia-item.active {
+    background-color: #D1E3F2;
+    box-shadow: 0 4px 10px rgba(0, 47, 85, 0.12);
+}
+
+#opcion7 .btn-toggle-punto-referencia {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 9px;
+    background-color: #D1E3F2;
+    color: #002F55;
+    border: 0;
+    box-shadow: none !important;
+    transition:
+        background-color 0.25s ease,
+        transform 0.25s ease;
+}
+
+#opcion7 .btn-toggle-punto-referencia:hover,
+#opcion7 .btn-toggle-punto-referencia:focus,
+#opcion7 .btn-toggle-punto-referencia:active {
+    background-color: #BFD8EB !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+#opcion7 .btn-toggle-punto-referencia[aria-expanded="true"] {
+    background-color: #CFE0EE;
+}
+
+#opcion7 .punto-referencia-icon {
+    font-size: 0.95rem;
+    color: #002F55;
+    transition:
+        opacity 0.22s ease,
+        transform 0.22s ease;
+}
+
+#opcion7 .btn-toggle-punto-referencia[aria-expanded="true"] .punto-referencia-icon {
+    transform: scale(1.05);
+}
+
+#opcion7 .punto-referencia-id {
+    flex: 1;
+    text-align: end;
+    font-size: 0.833rem;
+    font-weight: 700;
+    color: #002F55;
+}
+
+/* Transición suave de la información general */
+#opcion7 .detalle-punto-referencia-panel {
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+        opacity 0.28s ease,
+        transform 0.28s ease;
+}
+
+#opcion7 .detalle-punto-referencia-panel-activo {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#opcion7 .punto-referencia-empty {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
+}
+
+/* Transición al cambiar entre puntos de referencia */
+#opcion7 .detalle-punto-referencia-panel {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity 0.22s ease,
+        transform 0.22s ease,
+        filter 0.22s ease;
+}
+
+#opcion7 .detalle-punto-referencia-panel-entrando {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(2px);
+}
+
+#opcion7 .detalle-punto-referencia-panel-activo {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+}
+
+#opcion7 .detalle-punto-referencia-panel-saliendo {
+    opacity: 0;
+    transform: translateY(-10px);
+    filter: blur(2px);
+}
+
+@media (max-width: 1199.98px) {
+
+    .card-fixed-opcion7,
+    .visor-punto-referencia-opcion7 {
+        height: 400px;
+        min-height: 400px;
+        max-height: 400px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .card-fixed-opcion7 {
+        height: auto;
+        min-height: 360px;
+        max-height: none;
+    }
+
+    .card-body-scroll-opcion7 {
+        overflow-y: visible;
+        padding-right: 0;
+    }
+
+    .visor-punto-referencia-opcion7 {
+        height: 380px;
+        min-height: 380px;
+        max-height: 380px;
+    }
+}
+
+
+/* ! FIN ESTILOS PARA LA PESTAÑA 7 */
+
+
+/* TODO: estilos para la pestaña 8 general */
+.subtabs-opcion8 {
+    border-bottom: 0 !important;
+    position: relative;
+    z-index: 2;
+    margin-bottom: 0 !important;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    gap: 1.25rem !important;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+}
+
+.subtabs-opcion8::-webkit-scrollbar {
+    display: none;
+}
+
+.subtabs-opcion8 .nav-item {
+    flex: 0 0 auto;
+}
+
+.subtabs-opcion8 .nav-link {
+    background-color: #F0F6FB;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 500;
+    border: none !important;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 0.8rem 1.35rem;
+    min-height: 54px;
+    box-shadow: none !important;
+    white-space: nowrap;
+    margin-right: 0 !important;
+}
+
+.subtabs-opcion8 .nav-link i {
+    color: #002F55;
+    font-size: 1rem;
+}
+
+.subtabs-opcion8 .nav-link:hover,
+.subtabs-opcion8 .nav-link:focus {
+    background-color: #DDECF8;
+    color: #002F55;
+    box-shadow: none !important;
+}
+
+.subtabs-opcion8 .nav-link.active {
+    background-color: #D1E3F2 !important;
+    color: #002F55 !important;
+    font-weight: 800;
+    box-shadow: none !important;
+}
+
+.contenido-subtabs-opcion8 {
+    background-color: #F0F6FB;
+    border-radius: 0 10px 10px 10px;
+    padding: 1.8rem;
+}
+
+.card-fixed-opcion8 {
+    height: 500px;
+    min-height: 500px;
+    max-height: 500px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.card-body-scroll-opcion8 {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: #c7d3df transparent;
+}
+
+.card-body-scroll-opcion8::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-body-scroll-opcion8::-webkit-scrollbar-thumb {
+    background-color: #c7d3df;
+    border-radius: 10px;
+}
+
+.card-body-scroll-opcion8::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.item-listado-opcion8 {
+    background-color: #D1E3F2;
+    color: #002F55;
+    min-height: 40px;
+    border-radius: 8px;
+    font-size: 0.833rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.item-listado-opcion8:hover,
+.item-listado-opcion8.item-listado-opcion8-activo {
+    background-color: #B8D5EC;
+}
+
+.btn-add-opcion8 {
+    background-color: #9BC2E2;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 800;
+    border-radius: 8px;
+    border: none;
+}
+
+.btn-add-opcion8:hover,
+.btn-add-opcion8:focus,
+.btn-add-opcion8:active {
+    background-color: #89B7DD !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+.campo-principal-opcion8 {
+    background-color: #B8D5EC;
+    border-radius: 8px;
+}
+
+.campo-principal-opcion8 .result-information {
+    background-color: #F0F6FB !important;
+    font-weight: 800;
+}
+
+.campo-fecha-opcion8 {
+    background-color: #F0F6FB;
+    color: #00213C;
+    font-size: 0.833rem;
+    min-height: 42px;
+    border: none;
+    overflow: hidden;
+}
+
+.campo-fecha-opcion8-icono-wrap {
+    position: relative;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.campo-fecha-opcion8-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    box-shadow: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.campo-fecha-opcion8-icono {
+    color: #8EA3B5;
+    font-size: 0.95rem;
+    pointer-events: none;
+}
+
+.campo-fecha-opcion8-input {
+    position: absolute;
+    inset: 0;
+    width: 24px;
+    height: 24px;
+    opacity: 0;
+    border: 0;
+    cursor: pointer;
+    background: transparent;
+    z-index: 3;
+}
+
+.campo-fecha-opcion8-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    display: block;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.visor-opcion8 {
+    height: 500px;
+}
+
+#mapEditarPredioTab8,
+#mapEditarPredioTab8Fmi,
+#mapEditarPredioTab8NumeroPredial,
+#mapEditarPredioTab8Tramites {
+    width: 100%;
+    height: 100%;
+    min-height: 320px;
+}
+
+
+/* Estado vacío segunda tarjeta pestaña 8 */
+#opcion8 .estado-sin-seleccion-opcion8 {
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    color: #54748D;
+    font-size: 0.833rem;
+    text-align: center;
+    line-height: 1.4;
+
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease;
+}
+
+#opcion8 .estado-sin-seleccion-opcion8 i {
+    font-size: 1.5rem;
+    color: #7FAFD6;
+}
+
+/* Transición para la información de marca predial */
+#opcion8 .detalle-marca-predial-opcion8 {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(2px);
+    transition:
+        opacity 0.28s ease,
+        transform 0.28s ease,
+        filter 0.28s ease;
+}
+
+#opcion8 .detalle-marca-predial-opcion8-activo {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+}
+
+@media (max-width: 1199.98px) {
+
+    .card-fixed-opcion8,
+    .visor-opcion8 {
+        height: 480px;
+        min-height: 480px;
+        max-height: 480px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .contenido-subtabs-opcion8 {
+        padding: 1rem;
+    }
+
+    .card-fixed-opcion8,
+    .visor-opcion8 {
+        height: 440px;
+        min-height: 440px;
+        max-height: 440px;
+    }
+}
+
+@media (max-width: 575.98px) {
+
+    .card-fixed-opcion8,
+    .visor-opcion8 {
+        height: auto;
+        min-height: auto;
+        max-height: none;
+    }
+
+    .card-body-scroll-opcion8 {
+        overflow-y: visible;
+        padding-right: 0;
+    }
+
+    .subtabs-opcion8 .nav-link {
+        font-size: 0.78rem;
+        padding: 0.65rem 1rem;
+    }
+}
+
+/* estilos para la subpestaña tres de la pestaña 8 novedad numero predial */
+/* Subpestaña 3 - Novedad número predial */
+#novedad-numero-predial-opcion8 .novedad-numero-predial-layout-opcion8 {
+    min-height: 420px;
+}
+
+#novedad-numero-predial-opcion8 .card-fixed-opcion8 {
+    height: 500px;
+    min-height: 500px;
+    max-height: 500px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+#novedad-numero-predial-opcion8 .card-novedad-numero-predial-opcion8 {
+    border: 1px solid #D9E2EC;
+    box-shadow: 0 2px 6px rgba(0, 33, 60, 0.08);
+}
+
+#novedad-numero-predial-opcion8 .card-body-scroll-opcion8 {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: #c7d3df transparent;
+}
+
+#novedad-numero-predial-opcion8 .card-body-scroll-opcion8::-webkit-scrollbar {
+    width: 6px;
+}
+
+#novedad-numero-predial-opcion8 .card-body-scroll-opcion8::-webkit-scrollbar-thumb {
+    background-color: #c7d3df;
+    border-radius: 10px;
+}
+
+#novedad-numero-predial-opcion8 .card-body-scroll-opcion8::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#novedad-numero-predial-opcion8 .item-listado-novedad-numero-predial {
+    background-color: #CFE0EE;
+    color: #002F55;
+    min-height: 40px;
+    border-radius: 7px;
+    font-size: 0.833rem;
+    font-weight: 800;
+}
+
+#novedad-numero-predial-opcion8 .btn-ojo-novedad-numero-predial {
+    color: #002F55;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+#novedad-numero-predial-opcion8 .btn-ojo-novedad-numero-predial:hover,
+#novedad-numero-predial-opcion8 .btn-ojo-novedad-numero-predial:focus,
+#novedad-numero-predial-opcion8 .btn-ojo-novedad-numero-predial:active {
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+#novedad-numero-predial-opcion8 .id-listado-novedad-numero-predial {
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 800;
+}
+
+#novedad-numero-predial-opcion8 .btn-add-novedad-numero-predial-opcion8 {
+    background-color: #9BC2E2;
+    color: #002F55;
+    border-radius: 8px;
+    font-size: 0.833rem;
+    font-weight: 800;
+    border: none;
+}
+
+#novedad-numero-predial-opcion8 .btn-add-novedad-numero-predial-opcion8:hover,
+#novedad-numero-predial-opcion8 .btn-add-novedad-numero-predial-opcion8:focus,
+#novedad-numero-predial-opcion8 .btn-add-novedad-numero-predial-opcion8:active {
+    background-color: #89b7dd !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+#novedad-numero-predial-opcion8 .campo-principal-novedad-numero-predial {
+    background-color: #B8D6EE;
+}
+
+#novedad-numero-predial-opcion8 .titulo-crear-novedad-numero-predial-opcion8 {
+    color: #002F55;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+#novedad-numero-predial-opcion8 .cuadro-superior-novedad-numero-predial {
+    width: 21px;
+    height: 21px;
+    background-color: #E4E9EE;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+#novedad-numero-predial-opcion8 .btn-crear-novedad-numero-predial-opcion8 {
+    background-color: #9BC2E2;
+    color: #002F55;
+    border: 1px solid #002F55;
+    border-radius: 8px;
+    font-size: 0.833rem;
+    font-weight: 800;
+}
+
+#novedad-numero-predial-opcion8 .btn-crear-novedad-numero-predial-opcion8:hover,
+#novedad-numero-predial-opcion8 .btn-crear-novedad-numero-predial-opcion8:focus,
+#novedad-numero-predial-opcion8 .btn-crear-novedad-numero-predial-opcion8:active {
+    background-color: #89b7dd !important;
+    color: #002F55 !important;
+    border-color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+#novedad-numero-predial-opcion8 .btn-cancelar-novedad-numero-predial-opcion8 {
+    background-color: #F2D1D1;
+    color: #CD2023;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 0.833rem;
+    font-weight: 800;
+}
+
+#novedad-numero-predial-opcion8 .btn-cancelar-novedad-numero-predial-opcion8:hover,
+#novedad-numero-predial-opcion8 .btn-cancelar-novedad-numero-predial-opcion8:focus,
+#novedad-numero-predial-opcion8 .btn-cancelar-novedad-numero-predial-opcion8:active {
+    background-color: #eec1c1 !important;
+    color: #CD2023 !important;
+    box-shadow: none !important;
+}
+
+#novedad-numero-predial-opcion8 .panel-novedad-numero-predial-cerrado {
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#novedad-numero-predial-opcion8 .estado-cerrado-novedad-numero-predial {
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 400;
+}
+
+#novedad-numero-predial-opcion8 .opcion8-panel-suave {
+    animation: opcion8FadeUp 0.22s ease both;
+}
+
+#novedad-numero-predial-opcion8 .dropdown-novedad-numero-predial-opcion8 {
+    max-height: 385px;
+}
+
+#novedad-numero-predial-opcion8 .visor-opcion8,
+#novedad-numero-predial-opcion8 .tarjeta-visor-predio-edit {
+    height: 500px;
+    min-height: 500px;
+    max-height: 500px;
+    border-radius: 14px;
+}
+
+@media (max-width: 1199.98px) {
+
+    #novedad-numero-predial-opcion8 .card-fixed-opcion8,
+    #novedad-numero-predial-opcion8 .visor-opcion8,
+    #novedad-numero-predial-opcion8 .tarjeta-visor-predio-edit {
+        height: 460px;
+        min-height: 460px;
+        max-height: 460px;
+    }
+}
+
+@media (max-width: 767.98px) {
+
+    #novedad-numero-predial-opcion8 .card-fixed-opcion8,
+    #novedad-numero-predial-opcion8 .visor-opcion8,
+    #novedad-numero-predial-opcion8 .tarjeta-visor-predio-edit {
+        height: auto;
+        min-height: auto;
+        max-height: none;
+    }
+
+    #novedad-numero-predial-opcion8 .card-body-scroll-opcion8 {
+        overflow-y: visible;
+    }
+}
+
+/* fin estilos para la subpestaña tres de la pestaña 8 novedad numero predial */
+
+/* estilos para la sub pestaña 4 de la pestaña 8 tramites */
+/* =========================================================
+   SUBPESTAÑA 4 - TRÁMITES - OPCIÓN 8
+   ========================================================= */
+
+#tramites-opcion8 .tramites-layout-opcion8 {
+    min-height: 420px;
+}
+
+/* Tarjetas principales */
+#tramites-opcion8 .card-fixed-opcion8 {
+    height: 500px;
+    min-height: 500px;
+    max-height: 500px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+#tramites-opcion8 .card-tramite-opcion8 {
+    border: 1px solid #D9E2EC;
+    box-shadow: 0 2px 6px rgba(0, 33, 60, 0.08);
+}
+
+#tramites-opcion8 .card-body-scroll-opcion8 {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: #c7d3df transparent;
+}
+
+#tramites-opcion8 .card-body-scroll-opcion8::-webkit-scrollbar {
+    width: 6px;
+}
+
+#tramites-opcion8 .card-body-scroll-opcion8::-webkit-scrollbar-thumb {
+    background-color: #c7d3df;
+    border-radius: 10px;
+}
+
+#tramites-opcion8 .card-body-scroll-opcion8::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* =========================================================
+   TARJETA 1 - LISTADO DE TRÁMITES
+   ========================================================= */
+
+#tramites-opcion8 .item-listado-tramite {
+    background-color: #CFE0EE;
+    color: #002F55;
+    min-height: 40px;
+    border-radius: 7px;
+    font-size: 0.833rem;
+    font-weight: 800;
+}
+
+#tramites-opcion8 .btn-ojo-tramite {
+    color: #002F55;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+#tramites-opcion8 .btn-ojo-tramite:hover,
+#tramites-opcion8 .btn-ojo-tramite:focus,
+#tramites-opcion8 .btn-ojo-tramite:active {
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+#tramites-opcion8 .btn-ojo-tramite i {
+    transition:
+        transform 0.2s ease,
+        opacity 0.2s ease;
+}
+
+#tramites-opcion8 .btn-ojo-tramite:hover i {
+    transform: scale(1.08);
+}
+
+#tramites-opcion8 .id-listado-tramite {
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 800;
+}
+
+#tramites-opcion8 .btn-add-tramite-opcion8 {
+    background-color: #9BC2E2;
+    color: #002F55;
+    border-radius: 8px;
+    font-size: 0.833rem;
+    font-weight: 800;
+    border: none;
+}
+
+#tramites-opcion8 .btn-add-tramite-opcion8:hover,
+#tramites-opcion8 .btn-add-tramite-opcion8:focus,
+#tramites-opcion8 .btn-add-tramite-opcion8:active {
+    background-color: #89b7dd !important;
+    color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+/* =========================================================
+   TARJETA 2 - INFORMACIÓN DEL TRÁMITE
+   ========================================================= */
+
+#tramites-opcion8 .badge-tramite-opcion8 {
+    background-color: #E4E9EE;
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 500;
+    border-radius: 6px;
+    padding: 0.25rem 0.65rem;
+    line-height: 1.2;
+}
+
+#tramites-opcion8 .campo-principal-tramite {
+    background-color: #B8D6EE;
+    border-radius: 10px;
+}
+
+/* Dropdowns de Entidad y Trámite */
+#tramites-opcion8 .dropdown-tramite-opcion8 {
+    max-height: 385px;
+}
+
+/* =========================================================
+   CAMPO FECHA DE RADICACIÓN CON ICONO CALENDARIO
+   IMPORTANTE:
+   Este contenedor NO debe tener la clase result-information,
+   porque habilitarCamposEditables() borra el contenido interno.
+   ========================================================= */
+
+#tramites-opcion8 .campo-fecha-tramite-opcion8 {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 42px;
+    background-color: #F0F6FB;
+    color: #00213C;
+    font-size: 0.833rem;
+    border: none;
+    padding-right: 42px !important;
+    overflow: hidden;
+}
+
+#tramites-opcion8 .campo-fecha-tramite-opcion8:hover,
+#tramites-opcion8 .campo-fecha-tramite-opcion8:focus-within {
+    background-color: #F0F6FB;
+    color: #00213C;
+    box-shadow: none;
+}
+
+#tramites-opcion8 .texto-fecha-tramite-opcion8 {
+    display: block;
+    width: 100%;
+    color: #002F55;
+    font-size: 0.833rem;
+    line-height: 1.2;
+    outline: none;
+    user-select: none;
+}
+
+#tramites-opcion8 .btn-calendario-tramite-opcion8 {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    box-shadow: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4;
+    cursor: pointer;
+}
+
+#tramites-opcion8 .btn-calendario-tramite-opcion8:hover,
+#tramites-opcion8 .btn-calendario-tramite-opcion8:focus,
+#tramites-opcion8 .btn-calendario-tramite-opcion8:active {
+    background-color: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+#tramites-opcion8 .campo-fecha-tramite-icono {
+    color: #8EA3B5;
+    font-size: 0.95rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+#tramites-opcion8 .campo-fecha-tramite-input {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 5;
+    border: 0;
+    background: transparent;
+    padding: 0;
+}
+
+#tramites-opcion8 .campo-fecha-tramite-input::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    display: block;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+
+/* =========================================================
+   CHECK ¿ESTÁ RESUELTA?
+   ========================================================= */
+
+#tramites-opcion8 .check-custom {
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 1px solid #002F55;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+#tramites-opcion8 .check-custom:focus {
+    box-shadow: none;
+    border-color: #002F55;
+}
+
+/* =========================================================
+   OBSERVACIÓN
+   ========================================================= */
+
+#tramites-opcion8 .observacion-tramite-opcion8 {
+    min-height: 112px;
+    display: block;
+}
+
+/* =========================================================
+   BOTONES FINALES
+   ========================================================= */
+
+#tramites-opcion8 .acciones-tramite-opcion8 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+}
+
+#tramites-opcion8 .acciones-tramite-opcion8 .btn {
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#tramites-opcion8 .btn-generar-tramite-opcion8 {
+    background-color: #9BC2E2;
+    color: #002F55;
+    border: 1px solid #002F55;
+    border-radius: 8px;
+    font-size: 0.833rem;
+    font-weight: 800;
+    min-height: 44px;
+}
+
+#tramites-opcion8 .btn-generar-tramite-opcion8:hover,
+#tramites-opcion8 .btn-generar-tramite-opcion8:focus,
+#tramites-opcion8 .btn-generar-tramite-opcion8:active {
+    background-color: #89b7dd !important;
+    color: #002F55 !important;
+    border-color: #002F55 !important;
+    box-shadow: none !important;
+}
+
+#tramites-opcion8 .btn-cancelar-tramite-opcion8 {
+    background-color: #F2D1D1;
+    color: #CD2023;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 0.833rem;
+    font-weight: 800;
+    min-height: 44px;
+}
+
+#tramites-opcion8 .btn-cancelar-tramite-opcion8:hover,
+#tramites-opcion8 .btn-cancelar-tramite-opcion8:focus,
+#tramites-opcion8 .btn-cancelar-tramite-opcion8:active {
+    background-color: #eec1c1 !important;
+    color: #CD2023 !important;
+    box-shadow: none !important;
+}
+
+/* =========================================================
+   ESTADO CERRADO
+   ========================================================= */
+
+#tramites-opcion8 .panel-tramite-cerrado {
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#tramites-opcion8 .estado-cerrado-tramite {
+    color: #002F55;
+    font-size: 0.833rem;
+    font-weight: 400;
+}
+
+/* =========================================================
+   ANIMACIÓN SUAVE
+   ========================================================= */
+
+#tramites-opcion8 .opcion8-panel-suave {
+    animation: opcion8FadeUp 0.22s ease both;
+}
+
+@keyframes opcion8FadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================================
+   TARJETA 3 - VISOR PREDIO
+   ========================================================= */
+
+#tramites-opcion8 .visor-opcion8,
+#tramites-opcion8 .tarjeta-visor-predio-edit {
+    height: 500px;
+    min-height: 500px;
+    max-height: 500px;
+    border-radius: 14px;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1199.98px) {
+
+    #tramites-opcion8 .card-fixed-opcion8,
+    #tramites-opcion8 .visor-opcion8,
+    #tramites-opcion8 .tarjeta-visor-predio-edit {
+        height: 460px;
+        min-height: 460px;
+        max-height: 460px;
+    }
+}
+
+@media (max-width: 767.98px) {
+
+    #tramites-opcion8 .card-fixed-opcion8,
+    #tramites-opcion8 .visor-opcion8,
+    #tramites-opcion8 .tarjeta-visor-predio-edit {
+        height: auto;
+        min-height: auto;
+        max-height: none;
+    }
+
+    #tramites-opcion8 .card-body-scroll-opcion8 {
+        overflow-y: visible;
+    }
+
+    #tramites-opcion8 .acciones-tramite-opcion8 {
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+}
+
+/* fin estilos para la sub pestaña 4 de la pestaña 8 tramites */
+/* TODO: fin estilos para la pestaña 8 general */

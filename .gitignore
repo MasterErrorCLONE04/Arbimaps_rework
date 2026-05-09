@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+.venv/
+ENV/
+
+# Docker
+.docker_data/
+*.log
+
+# Sensitive Files (IMPORTANT)
+.env
+*.env
+auth.json
+*.pem
+*.key
+
+# IDEs
+.vscode/
+.idea/
+
+# Local data / Temp
+ubuntu/backend/resource/xtf_validation/uploads/
+ubuntu/backend/resource/xtf_validation/logs/
+ubuntu/backend/resource/xtf_validation/reports/
+ubuntu/backend/resource/xtf_validation/debug/
+tmp/
+temp/

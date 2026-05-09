@@ -1,0 +1,42 @@
+{
+  "slug": "complementarias",
+  "rule_count": 4,
+  "rules": [
+    {
+      "id": "10.1",
+      "description": "Existen marcas prediales sin resolver, toda marca predial debe estar resuelta para garantizar la calidad de los datos.",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Complementarias",
+      "sheet_slug": "complementarias"
+    },
+    {
+      "id": "10.2",
+      "description": "El número predial debe contener un carácter alfabético en la posición 18 cuando en la posición 22 tenga el valor \"2\" y esté asociado a una novedad de tipo Predio Nuevo",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Complementarias",
+      "sheet_slug": "complementarias"
+    },
+    {
+      "id": "10.3",
+      "description": "La unidad de construcción ubicada en la planta superior no se superpone con ninguna unidad en la planta inferior inmediata. Esta condición es inconsistente espacialmente",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Complementarias",
+      "sheet_slug": "complementarias"
+    },
+    {
+      "id": "10.4",
+      "description": "Todo predio que tenga un carácter alfabético en la posición 18 del número predial debe estar asociado a una novedad de número predial",
+      "classes": null,
+      "variables": null,
+      "technical_rule": null,
+      "component": "Complementarias",
+      "sheet_slug": "complementarias"
+    }
+  ]
+}
