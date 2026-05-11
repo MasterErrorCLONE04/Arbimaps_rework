@@ -222,7 +222,43 @@ git pull
 
 ### `permission denied while trying to connect to docker.sock`
 
-**Solución:** Verificar que **Docker Desktop esté abierto** y en ejecución.
+Este error indica que el usuario de Ubuntu no tiene permisos para acceder al socket de Docker (`/var/run/docker.sock`), que por defecto es propiedad del usuario `root`.
+
+> [!WARNING]
+> Este error es frecuente cuando un colaborador configura el entorno por primera vez.
+
+**Solución paso a paso:**
+
+**1. Verificar que Docker Desktop esté abierto** y en ejecución en Windows.
+
+**2. Añadir tu usuario al grupo Docker** dentro de Ubuntu:
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+**3. Aplicar los cambios de grupo.** Es necesario cerrar sesión y volver a abrirla. Como alternativa rápida, puedes ejecutar:
+
+```bash
+newgrp docker
+```
+
+**4. Verificar los permisos:**
+
+```bash
+docker info
+```
+
+Si todo está bien configurado, este comando no generará errores de permisos.
+
+**5. Ejecutar nuevamente:**
+
+```bash
+docker compose up --build
+```
+
+> [!TIP]
+> Después de ejecutar `sudo usermod -aG docker $USER`, si `newgrp docker` no es suficiente, cierra completamente la terminal de Ubuntu y ábrela de nuevo con `wsl -d Ubuntu`.
 
 ### `docker command not found`
 
