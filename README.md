@@ -128,6 +128,28 @@ cp -r /mnt/c/Users/TU_USUARIO/Desktop/Develop ~/Develop/
 
 ---
 
+## 🗄️ Configuración de la Base de Datos
+
+El repositorio no incluye los datos de la base de datos por razones de peso y seguridad. Sigue estos pasos para cargar la información inicial:
+
+### 1. Obtener el archivo SQL
+Descarga el archivo de respaldo (ej. `SERVIDOR_AWS_FREE_08-05.sql`) desde la fuente proporcionada por el administrador.
+
+### 2. Importar los datos a Docker
+> [!IMPORTANT]
+> Los contenedores de Docker **deben estar encendidos** para realizar la importación.
+
+Desde tu terminal de **Ubuntu**, ejecuta el siguiente comando (ajusta la ruta según donde hayas guardado el archivo):
+
+```bash
+# Ejemplo si el archivo está en las Descargas de Windows:
+cat "/mnt/c/Users/TU_USUARIO/Downloads/SERVIDOR_AWS_FREE_08-05.sql" | docker exec -i arbitriumsas-db psql -U postgres -d programacion
+```
+
+*(Te pedirá la contraseña de la base de datos definida en tu archivo `.env`)*.
+
+---
+
 ## 🚀 Ejecutar el Proyecto
 
 ### Abrir Ubuntu
