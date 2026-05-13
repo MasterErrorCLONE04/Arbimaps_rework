@@ -12,8 +12,8 @@ from routers.box_client import create_folder, upload_file
 
 router = APIRouter()
 
-load_dotenv("/home/ubuntu/backend/.env")
-load_dotenv("/home/ubuntu/mergin_sync/.env")
+load_dotenv("/app/.env")
+load_dotenv("/mergin_sync/.env")
 
 # estado global
 progress = {
@@ -46,7 +46,7 @@ def run_carpeteo():
         # ✅ Aquí le dejas el root nuevo
         ROOT_FOLDER_ID = os.getenv("BOX_ROOT_FOLDER_ID", "377319267695")
         TARGET_WORKSPACE = "Reconocimiento Predial"
-        TEMP_BASE = "/home/ubuntu/mergin_sync/temp_carpeteo"
+        TEMP_BASE = "/mergin_sync/temp_carpeteo"
 
         os.makedirs(TEMP_BASE, exist_ok=True)
 
@@ -155,13 +155,13 @@ def sync_projects():
             progress["total"] = 1
             progress["project"] = "Ejecutando sincronización..."
 
-            with open("/home/ubuntu/mergin_sync/sync.log", "w") as stdout_file, \
-                 open("/home/ubuntu/mergin_sync/sync_error.log", "w") as stderr_file:
+            with open("/mergin_sync/sync.log", "w") as stdout_file, \
+                 open("/mergin_sync/sync_error.log", "w") as stderr_file:
 
                 result = subprocess.run(
                     [
-                        "/home/ubuntu/backend/venv/bin/python",
-                        "/home/ubuntu/mergin_sync/download_project.py"
+                        "python",
+                        "/mergin_sync/download_project.py"
                     ],
                     stdout=stdout_file,
                     stderr=stderr_file,

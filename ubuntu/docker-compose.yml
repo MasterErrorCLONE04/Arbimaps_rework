@@ -8,6 +8,7 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./mergin_sync:/mergin_sync
       # Exclude local venv from container to avoid conflicts
       - /app/venv
     env_file:

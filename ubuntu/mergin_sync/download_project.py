@@ -1,7 +1,6 @@
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), "../backend"))
-
 import os
+sys.path.append("/app")
 import shutil
 
 from routers.box_client import create_folder, upload_file
@@ -13,7 +12,7 @@ print("🚀 INICIO SCRIPT")
 # ==============================
 # 🔐 CONFIG
 # ==============================
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+load_dotenv("/app/.env")
 
 MERGIN_URL = os.getenv("MERGIN_URL")
 MERGIN_USERNAME = os.getenv("MERGIN_USERNAME")
