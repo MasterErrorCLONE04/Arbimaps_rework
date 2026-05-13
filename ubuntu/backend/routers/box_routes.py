@@ -1,14 +1,14 @@
 import os
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from dotenv import load_dotenv
-from routers.box_client import get_client
+from routers.box_client import get_client, clean_box_id
 
-load_dotenv("/home/ubuntu/backend/.env")
+load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
 
 router = APIRouter(prefix="/box", tags=["box"])
 
 # raíz configurada
-BOX_ROOT_FOLDER_ID = os.getenv("BOX_ROOT_FOLDER_ID", "376705885660")
+BOX_ROOT_FOLDER_ID = clean_box_id(os.getenv("BOX_ROOT_FOLDER_ID", "369427324549"))
 
 
 # ===============================
@@ -19,7 +19,7 @@ def list_files(folder_id: str = ""):
     client = get_client()
 
     try:
-        effective_folder_id = folder_id or BOX_ROOT_FOLDER_ID
+        effective_folder_id = clean_box_id(folder_id or BOX_ROOT_FOLDER_ID)
         folder = client.folder(folder_id=effective_folder_id).get()
 
         items = []
@@ -52,7 +52,7 @@ async def upload_file(
     client = get_client()
 
     try:
-        effective_folder_id = folder_id or BOX_ROOT_FOLDER_ID
+        effective_folder_id = clean_box_id(folder_id or BOX_ROOT_FOLDER_ID)
         folder = client.folder(effective_folder_id)
 
         uploaded = folder.upload_stream(
@@ -114,7 +114,7 @@ def mkdir(
         raise HTTPException(status_code=400, detail="Falta 'name'")
 
     try:
-        effective_parent_id = parent_id or BOX_ROOT_FOLDER_ID
+        effective_parent_id = clean_box_id(parent_id or BOX_ROOT_FOLDER_ID)
 
         folder = client.folder(folder_id=effective_parent_id).create_subfolder(name.strip())
 
@@ -137,6 +137,7 @@ def share_file(file_id: str):
     client = get_client()
 
     try:
+        file_id = clean_box_id(file_id)
         f = client.file(file_id).get()
 
         if getattr(f, "shared_link", None) and f.shared_link:
@@ -168,6 +169,7 @@ def rename_item(
     client = get_client()
 
     try:
+        item_id = clean_box_id(item_id)
         if item_type == "file":
             obj = client.file(item_id).update_info(data={"name": new_name})
         elif item_type == "folder":
@@ -192,6 +194,7 @@ def open_item(item_type: str, item_id: str):
     client = get_client()
 
     try:
+        item_id = clean_box_id(item_id)
         if item_type == "file":
             obj = client.file(item_id).get()
         elif item_type == "folder":

@@ -1,5 +1,5 @@
 import sys
-sys.path.append("/home/ubuntu/backend")
+sys.path.append(os.path.join(os.path.dirname(__file__), "../backend"))
 
 import os
 import shutil
@@ -13,14 +13,14 @@ print("🚀 INICIO SCRIPT")
 # ==============================
 # 🔐 CONFIG
 # ==============================
-load_dotenv("/home/ubuntu/mergin_sync/.env")
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 MERGIN_URL = os.getenv("MERGIN_URL")
 MERGIN_USERNAME = os.getenv("MERGIN_USERNAME")
 MERGIN_PASSWORD = os.getenv("MERGIN_PASSWORD")
 
-ROOT_FOLDER_ID = "376705885660"  # ID de la carpeta raíz en Box donde se crearán los proyectos
-TEMP_BASE = "/home/ubuntu/mergin_sync/temp"
+ROOT_FOLDER_ID = "369427324549"  # ID de la carpeta raíz en Box
+TEMP_BASE = os.path.join(os.path.dirname(__file__), "temp")
 
 TARGET_WORKSPACE = "Reconocimiento Predial"
 

@@ -8,6 +8,18 @@ BOX_CONFIG_FILE = os.getenv("BOX_CONFIG_FILE", "/home/ubuntu/backend/box_config.
 BOX_TOKENS_FILE = os.getenv("BOX_TOKENS_FILE", "/home/ubuntu/backend/tokens/box_oauth_tokens.json")
 
 
+def clean_box_id(item_id: str) -> str:
+    """Elimina prefijos como 'd_' o 'f_' de los IDs de Box y asegura que sea numérico."""
+    if not item_id:
+        return item_id
+    s_id = str(item_id)
+    if s_id.startswith('d_') or s_id.startswith('f_'):
+        s_id = s_id[2:]
+    
+    # Retornamos solo los dígitos por si hay espacios o caracteres invisibles
+    return "".join(filter(str.isdigit, s_id))
+
+
 def save_tokens(access_token, refresh_token):
     print("🔄 Nuevo access token generado")
     print("🔄 Nuevo refresh token generado")
@@ -59,6 +71,7 @@ def get_client():
 def create_folder(parent_folder_id, folder_name):
     import time
 
+    parent_folder_id = clean_box_id(parent_folder_id)
     for intento in range(3):
         try:
             folder = client.folder(parent_folder_id).create_subfolder(folder_name)
@@ -92,6 +105,7 @@ def create_folder(parent_folder_id, folder_name):
 
 
 def upload_file(folder_id, file_path):
+    folder_id = clean_box_id(folder_id)
     file_name = os.path.basename(file_path)
 
     try:
@@ -119,6 +133,7 @@ def upload_file(folder_id, file_path):
 
 
 def list_folder_items(folder_id):
+    folder_id = clean_box_id(folder_id)
     try:
         items = client.folder(folder_id).get_items(limit=1000)
 
@@ -138,6 +153,7 @@ def list_folder_items(folder_id):
 
 
 def download_file(file_id, output_path):
+    file_id = clean_box_id(file_id)
     try:
         with open(output_path, "wb") as f:
             client.file(file_id).download_to(f)

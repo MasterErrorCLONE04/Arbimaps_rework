@@ -8,14 +8,14 @@ from dotenv import load_dotenv
 # ==============================
 # 🔐 CONFIG
 # ==============================
-load_dotenv("/home/ubuntu/backend/.env")
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 MERGIN_URL = os.getenv("MERGIN_URL")
 MERGIN_USERNAME = os.getenv("MERGIN_USERNAME")
 MERGIN_PASSWORD = os.getenv("MERGIN_PASSWORD")
 
 ROOT_FOLDER_ID = "372108448311"  # ID de la carpeta raíz en Box donde se crearán los proyectos
-TEMP_BASE = "/home/ubuntu/mergin_sync/temp"
+TEMP_BASE = os.path.join(os.path.dirname(__file__), "mergin_sync/temp")
 
 TARGET_WORKSPACE = "Reconocimiento Predial"
 
