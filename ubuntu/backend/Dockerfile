@@ -9,7 +9,7 @@ ENV APP_HOME /app
 # Set working directory
 WORKDIR $APP_HOME
 
-# Install system dependencies
+# Install system dependencies (includes Java JRE for ili2pg and ilivalidator)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
@@ -17,10 +17,30 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgeos-dev \
     libproj-dev \
     curl \
+    unzip \
+    default-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
+# Install ili2pg 5.1.0 (INTERLIS ↔ PostgreSQL transfer tool)
+# Required by: /panel/asignaciones/cargas (assignment workload imports/exports)
+# Source: https://github.com/claeis/ili2db
+RUN curl -fsSL https://downloads.interlis.ch/ili2pg/ili2pg-5.1.0.zip -o /tmp/ili2pg.zip \
+    && mkdir -p /opt/ili2pg \
+    && unzip -o /tmp/ili2pg.zip -d /opt/ili2pg \
+    && rm /tmp/ili2pg.zip \
+    && echo "ili2pg 5.1.0 installed at /opt/ili2pg"
+
+# Install ilivalidator 1.14.1 (INTERLIS XTF/ITF validation tool)
+# Required by: /panel/validacion-xtf (XTF file validation)
+# Source: https://github.com/claeis/ilivalidator
+# Note: Version 1.14.1 matches the iox-ili-1.22.x / ili2c-5.4.x stack used by ili2pg 5.1.0
+RUN curl -fsSL https://downloads.interlis.ch/ilivalidator/ilivalidator-1.14.1.zip -o /tmp/ilivalidator.zip \
+    && mkdir -p /opt/ilivalidator \
+    && unzip -o /tmp/ilivalidator.zip -d /opt/ilivalidator \
+    && rm /tmp/ilivalidator.zip \
+    && echo "ilivalidator 1.14.1 installed at /opt/ilivalidator"
+
 # Copy requirements file
-# Note: I'm creating a new requirements.txt inside the backend directory
 COPY requirements.txt .
 
 # Install Python dependencies

@@ -64,168 +64,186 @@ def ensure_asignacion_tables(conn, *, force: bool = False) -> None:
 
     with conn.cursor() as cur:
         # Nunca esperar indefinidamente por locks de DDL.
-        cur.execute("SET LOCAL lock_timeout = '2s'")
-        cur.execute("SET LOCAL statement_timeout = '30s'")
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_predio (
-                id SERIAL PRIMARY KEY,
-                asignacion_id BIGINT REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
-                numero_predial_nacional TEXT NOT NULL,
-                predio_t_id BIGINT,
-                activo BOOLEAN DEFAULT TRUE,
-                creado_por TEXT,
-                creado_en TIMESTAMPTZ DEFAULT now()
+        cur.execute("SET LOCAL lock_timeout = '10s'")
+        cur.execute("SET LOCAL statement_timeout = '60s'")
+        try:
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_predio (
+                    id SERIAL PRIMARY KEY,
+                    asignacion_id BIGINT REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
+                    numero_predial_nacional TEXT NOT NULL,
+                    predio_t_id BIGINT,
+                    activo BOOLEAN DEFAULT TRUE,
+                    creado_por TEXT,
+                    creado_en TIMESTAMPTZ DEFAULT now()
+                )
+                """
             )
-            """
-        )
-        cur.execute(
-            """
-            ALTER TABLE IF EXISTS arbimaps_app.asignacion_predio
-            ADD COLUMN IF NOT EXISTS creado_por TEXT
-            """
-        )
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_event_log (
-                id SERIAL PRIMARY KEY,
-                asignacion_id BIGINT REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
-                evento TEXT,
-                usuario TEXT,
-                mensaje TEXT,
-                creado_en TIMESTAMPTZ DEFAULT now()
+            cur.execute(
+                """
+                ALTER TABLE IF EXISTS arbimaps_app.asignacion_predio
+                ADD COLUMN IF NOT EXISTS creado_por TEXT
+                """
             )
-            """
-        )
-        cur.execute(
-            """
-            ALTER TABLE IF EXISTS arbimaps_app.asignacion
-            ADD COLUMN IF NOT EXISTS work_datasetname TEXT
-            """
-        )
-        cur.execute(
-            """
-            ALTER TABLE IF EXISTS arbimaps_app.asignacion
-            ADD COLUMN IF NOT EXISTS predios_soporte_extra INTEGER NOT NULL DEFAULT 0
-            """
-        )
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_export_job (
-                id BIGSERIAL PRIMARY KEY,
-                asignacion_id BIGINT NOT NULL REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
-                formato TEXT NOT NULL,
-                estado TEXT NOT NULL DEFAULT 'PENDING',
-                progreso INTEGER NOT NULL DEFAULT 0,
-                mensaje TEXT,
-                error_msg TEXT,
-                archivo_path TEXT,
-                archivo_nombre TEXT,
-                archivo_size BIGINT,
-                created_by TEXT,
-                creado_en TIMESTAMPTZ DEFAULT now(),
-                iniciado_en TIMESTAMPTZ,
-                finalizado_en TIMESTAMPTZ,
-                expira_en TIMESTAMPTZ
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_event_log (
+                    id SERIAL PRIMARY KEY,
+                    asignacion_id BIGINT REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
+                    evento TEXT,
+                    usuario TEXT,
+                    mensaje TEXT,
+                    creado_en TIMESTAMPTZ DEFAULT now()
+                )
+                """
             )
-            """
-        )
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_retorno (
-                id BIGSERIAL PRIMARY KEY,
-                asignacion_id BIGINT NOT NULL REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
-                version INTEGER NOT NULL,
-                datasetname_retorno TEXT NOT NULL,
-                archivo_nombre_original TEXT,
-                archivo_nombre_guardado TEXT,
-                archivo_sha256 TEXT,
-                correlation_id TEXT,
-                estado TEXT NOT NULL DEFAULT 'CARGADO',
-                resultado_validacion TEXT,
-                removed_predios INTEGER NOT NULL DEFAULT 0,
-                synced_predios INTEGER NOT NULL DEFAULT 0,
-                creado_por TEXT,
-                creado_en TIMESTAMPTZ DEFAULT now(),
-                sincronizado_en TIMESTAMPTZ,
-                error_msg TEXT
+            cur.execute(
+                """
+                ALTER TABLE IF EXISTS arbimaps_app.asignacion
+                ADD COLUMN IF NOT EXISTS work_datasetname TEXT
+                """
             )
-            """
-        )
-        # Indices para acelerar busquedas/joins criticos de asignaciones y exportacion.
-        cur.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_asignacion_predio_asignacion
-            ON arbimaps_app.asignacion_predio (asignacion_id)
-            """
-        )
-        cur.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_asignacion_predio_numero
-            ON arbimaps_app.asignacion_predio (numero_predial_nacional)
-            """
-        )
-        cur.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_asignacion_predio_asig_num_activo
-            ON arbimaps_app.asignacion_predio (asignacion_id, numero_predial_nacional)
-            WHERE activo IS DISTINCT FROM FALSE
-            """
-        )
-        cur.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_asignacion_event_log_asignacion_id
-            ON arbimaps_app.asignacion_event_log (asignacion_id, id)
-            """
-        )
-        cur.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_asignacion_estado_usuario
-            ON arbimaps_app.asignacion (estado, usuario_asignado)
-            """
-        )
-        cur.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_asig_export_job_asig_formato_estado
-            ON arbimaps_app.asignacion_export_job (asignacion_id, formato, estado, id)
-            """
-        )
-        cur.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_asig_export_job_estado_id
-            ON arbimaps_app.asignacion_export_job (estado, id)
-            """
-        )
-        cur.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_asig_export_job_expira
-            ON arbimaps_app.asignacion_export_job (expira_en)
-            """
-        )
-        cur.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_asig_retorno_asignacion_id
-            ON arbimaps_app.asignacion_retorno (asignacion_id, id)
-            """
-        )
-        cur.execute(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS uq_asig_retorno_asig_version
-            ON arbimaps_app.asignacion_retorno (asignacion_id, version)
-            """
-        )
-        cur.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_asig_retorno_estado_id
-            ON arbimaps_app.asignacion_retorno (estado, id)
-            """
-        )
-        cur.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_asig_retorno_sha_asig
-            ON arbimaps_app.asignacion_retorno (asignacion_id, archivo_sha256)
-            """
-        )
+            cur.execute(
+                """
+                ALTER TABLE IF EXISTS arbimaps_app.asignacion
+                ADD COLUMN IF NOT EXISTS predios_soporte_extra INTEGER NOT NULL DEFAULT 0
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_export_job (
+                    id BIGSERIAL PRIMARY KEY,
+                    asignacion_id BIGINT NOT NULL REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
+                    formato TEXT NOT NULL,
+                    estado TEXT NOT NULL DEFAULT 'PENDING',
+                    progreso INTEGER NOT NULL DEFAULT 0,
+                    mensaje TEXT,
+                    error_msg TEXT,
+                    archivo_path TEXT,
+                    archivo_nombre TEXT,
+                    archivo_size BIGINT,
+                    created_by TEXT,
+                    creado_en TIMESTAMPTZ DEFAULT now(),
+                    iniciado_en TIMESTAMPTZ,
+                    finalizado_en TIMESTAMPTZ,
+                    expira_en TIMESTAMPTZ
+                )
+                """
+            )
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_retorno (
+                    id BIGSERIAL PRIMARY KEY,
+                    asignacion_id BIGINT NOT NULL REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
+                    version INTEGER NOT NULL,
+                    datasetname_retorno TEXT NOT NULL,
+                    archivo_nombre_original TEXT,
+                    archivo_nombre_guardado TEXT,
+                    archivo_sha256 TEXT,
+                    correlation_id TEXT,
+                    estado TEXT NOT NULL DEFAULT 'CARGADO',
+                    resultado_validacion TEXT,
+                    removed_predios INTEGER NOT NULL DEFAULT 0,
+                    synced_predios INTEGER NOT NULL DEFAULT 0,
+                    creado_por TEXT,
+                    creado_en TIMESTAMPTZ DEFAULT now(),
+                    sincronizado_en TIMESTAMPTZ,
+                    error_msg TEXT
+                )
+                """
+            )
+            # Indices para acelerar busquedas/joins criticos de asignaciones y exportacion.
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_asignacion_predio_asignacion
+                ON arbimaps_app.asignacion_predio (asignacion_id)
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_asignacion_predio_numero
+                ON arbimaps_app.asignacion_predio (numero_predial_nacional)
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_asignacion_predio_asig_num_activo
+                ON arbimaps_app.asignacion_predio (asignacion_id, numero_predial_nacional)
+                WHERE activo IS DISTINCT FROM FALSE
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_asignacion_event_log_asignacion_id
+                ON arbimaps_app.asignacion_event_log (asignacion_id, id)
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_asignacion_estado_usuario
+                ON arbimaps_app.asignacion (estado, usuario_asignado)
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_asig_export_job_asig_formato_estado
+                ON arbimaps_app.asignacion_export_job (asignacion_id, formato, estado, id)
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_asig_export_job_estado_id
+                ON arbimaps_app.asignacion_export_job (estado, id)
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_asig_export_job_expira
+                ON arbimaps_app.asignacion_export_job (expira_en)
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_asig_retorno_asignacion_id
+                ON arbimaps_app.asignacion_retorno (asignacion_id, id)
+                """
+            )
+            cur.execute(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS uq_asig_retorno_asig_version
+                ON arbimaps_app.asignacion_retorno (asignacion_id, version)
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_asig_retorno_estado_id
+                ON arbimaps_app.asignacion_retorno (estado, id)
+                """
+            )
+            # Ensure newer columns exist on legacy tables that predate them.
+            cur.execute(
+                """
+                ALTER TABLE IF EXISTS arbimaps_app.asignacion_retorno
+                ADD COLUMN IF NOT EXISTS archivo_sha256 TEXT
+                """
+            )
+            cur.execute(
+                """
+                ALTER TABLE IF EXISTS arbimaps_app.asignacion_retorno
+                ADD COLUMN IF NOT EXISTS correlation_id TEXT
+                """
+            )
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_asig_retorno_sha_asig
+                ON arbimaps_app.asignacion_retorno (asignacion_id, archivo_sha256)
+                """
+            )
+        except Exception as exc:
+            # Si falla por timeout de lock, logeamos y seguimos (puede que ya este migrado).
+            # psycopg2.errors.LockNotAvailable
+            logger.warning("ensure_asignacion_tables: DDL omitido/fallido por contencion de locks: %s", exc)
     _ASIG_TABLES_ENSURED = True
 
 

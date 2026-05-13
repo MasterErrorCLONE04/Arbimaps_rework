@@ -8,7 +8,7 @@ import uuid
 import glob
 from typing import List, Optional
 
-from core.asignaciones import ASIG_MODEL_CONTEXT
+from core.asignaciones import ASIG_MODEL_CONTEXT, ILI2PG_TIMEOUT_SEC
 from core.db import db_conn, get_db_params
 
 
@@ -239,7 +239,16 @@ def _run_stage(stage: str, fn, *args, **kwargs):
         raise ExportServiceError(status_code=500, detail=_stage_error_detail(stage, exc)) from exc
 
 
-def run_ili2pg(args: list[str], *, ili2pg_cmd: str = "", timeout_sec: int = 600) -> None:
+def _resolve_model_dir() -> Optional[str]:
+    # El directorio de modelos está en backend/resource/model
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = os.path.join(base_dir, "resource", "model")
+    if os.path.exists(path):
+        return path
+    return None
+
+
+def run_ili2pg(args: list[str], *, ili2pg_cmd: str = "", timeout_sec: int = ILI2PG_TIMEOUT_SEC) -> None:
     cmd_text = _resolve_ili2pg_cmd(ili2pg_cmd)
     _ensure_ili2pg_runtime_available(cmd_text)
     if cmd_text:
@@ -3067,9 +3076,10 @@ def ili2pg_export(
     xtf_path: str,
     *,
     ili2pg_cmd: str = "",
-    timeout_sec: int = 600,
+    timeout_sec: int = ILI2PG_TIMEOUT_SEC,
 ):
     db = db_env()
+    model_dir = _resolve_model_dir()
     basket_list = [
         str(b).strip()
         for b in (basket_ids or [])
@@ -3078,26 +3088,31 @@ def ili2pg_export(
     if not basket_list:
         raise ExportServiceError(status_code=400, detail="No se definieron baskets para exportar.")
     baskets_arg = ";".join(basket_list)
+    
+    cmd_args = [
+        "ili2pg",
+        "--export",
+        "--dbhost",
+        db["host"],
+        "--dbport",
+        db["port"],
+        "--dbusr",
+        db["user"],
+        "--dbpwd",
+        db["password"],
+        "--dbdatabase",
+        db["dbname"],
+        "--dbschema",
+        schema,
+        "--baskets",
+        baskets_arg,
+    ]
+    if model_dir:
+        cmd_args.extend(["--modeldir", model_dir])
+    cmd_args.append(xtf_path)
+    
     run_ili2pg(
-        [
-            "ili2pg",
-            "--export",
-            "--dbhost",
-            db["host"],
-            "--dbport",
-            db["port"],
-            "--dbusr",
-            db["user"],
-            "--dbpwd",
-            db["password"],
-            "--dbdatabase",
-            db["dbname"],
-            "--dbschema",
-            schema,
-            "--baskets",
-            baskets_arg,
-            xtf_path,
-        ],
+        cmd_args,
         ili2pg_cmd=ili2pg_cmd,
         timeout_sec=timeout_sec,
     )
@@ -3352,26 +3367,31 @@ def ili2pg_export_by_dataset(
     if not datasetname:
         raise ExportServiceError(status_code=400, detail="Dataset no definido para exportar.")
     db = db_env()
+    model_dir = _resolve_model_dir()
+    cmd_args = [
+        "ili2pg",
+        "--export",
+        "--dbhost",
+        db["host"],
+        "--dbport",
+        db["port"],
+        "--dbusr",
+        db["user"],
+        "--dbpwd",
+        db["password"],
+        "--dbdatabase",
+        db["dbname"],
+        "--dbschema",
+        schema,
+        "--dataset",
+        datasetname,
+    ]
+    if model_dir:
+        cmd_args.extend(["--modeldir", model_dir])
+    cmd_args.append(xtf_path)
+
     run_ili2pg(
-        [
-            "ili2pg",
-            "--export",
-            "--dbhost",
-            db["host"],
-            "--dbport",
-            db["port"],
-            "--dbusr",
-            db["user"],
-            "--dbpwd",
-            db["password"],
-            "--dbdatabase",
-            db["dbname"],
-            "--dbschema",
-            schema,
-            "--dataset",
-            datasetname,
-            xtf_path,
-        ],
+        cmd_args,
         ili2pg_cmd=ili2pg_cmd,
         timeout_sec=timeout_sec,
     )
@@ -3558,27 +3578,32 @@ def ili2pg_import(
         _arb_disable_workspace_unique_constraints(schema)
 
     db = db_env()
+    model_dir = _resolve_model_dir()
+    cmd_args = [
+        "ili2pg",
+        "--replace",
+        "--dbhost",
+        db["host"],
+        "--dbport",
+        db["port"],
+        "--dbusr",
+        db["user"],
+        "--dbpwd",
+        db["password"],
+        "--dbdatabase",
+        db["dbname"],
+        "--dbschema",
+        schema,
+        "--dataset",
+        datasetname,
+        "--disableValidation",
+    ]
+    if model_dir:
+        cmd_args.extend(["--modeldir", model_dir])
+    cmd_args.append(xtf_path)
+
     run_ili2pg(
-        [
-            "ili2pg",
-            "--replace",
-            "--dbhost",
-            db["host"],
-            "--dbport",
-            db["port"],
-            "--dbusr",
-            db["user"],
-            "--dbpwd",
-            db["password"],
-            "--dbdatabase",
-            db["dbname"],
-            "--dbschema",
-            schema,
-            "--dataset",
-            datasetname,
-            "--disableValidation",
-            xtf_path,
-        ],
+        cmd_args,
         ili2pg_cmd=ili2pg_cmd,
         timeout_sec=timeout_sec,
     )

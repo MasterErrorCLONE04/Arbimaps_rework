@@ -12,28 +12,29 @@ services:
       - /app/venv
     env_file:
       - .env
-    # Fallback environment variables if .env is missing or doesn't have them
     environment:
-      - DB_HOST=${DB_HOST:-localhost}
+      - DB_HOST=${DB_HOST:-db}
       - DB_PORT=${DB_PORT:-5432}
-      - DB_NAME=${DB_NAME:-postgres}
+      - DB_NAME=${DB_NAME:-programacion}
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-Arbitrium2026*}
       - DB_SSLMODE=${DB_SSLMODE:-prefer}
+    depends_on:
+      - db
     restart: always
 
-# Optional: To include a local database, uncomment the following:
-#  db:
-#    image: postgres:15
-#    container_name: arbitriumsas-db
-#    environment:
-#      POSTGRES_USER: postgres
-#      POSTGRES_PASSWORD: password
-#      POSTGRES_DB: arbitriumsas
-#    ports:
-#      - "5432:5432"
-#    volumes:
-#      - postgres_data:/var/lib/postgresql/data
-#
-# volumes:
-#   postgres_data:
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: arbitriumsas-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Arbitrium2026*
+      POSTGRES_DB: programacion
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  postgres_data:

@@ -49,4 +49,21 @@ ubuntu/backend/resource/xtf_validation/debug/
 tmp/
 temp/
 
+# Server tools (installed via Dockerfile, not tracked in Git)
+opt/
+
 *:Zone.Identifier
+
+# Bases de Datos y Dumps (Para que no subas el SQL gigante)
+*.sql
+.ilicache/
+# Archivos de reporte y diagnóstico local
+cookies.txt
+paquetes_instalados.txt
+servicios_app.txt
+servicios_corriendo.txt
+servicios_systemd.txt
+test.txt
+
+# Docker local data
+postgres_data/
