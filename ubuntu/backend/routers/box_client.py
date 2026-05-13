@@ -9,15 +9,16 @@ BOX_TOKENS_FILE = os.getenv("BOX_TOKENS_FILE", "/home/ubuntu/backend/tokens/box_
 
 
 def clean_box_id(item_id: str) -> str:
-    """Elimina prefijos como 'd_' o 'f_' de los IDs de Box y asegura que sea numérico."""
+    """Elimina cualquier prefijo o carácter no numérico de los IDs de Box."""
     if not item_id:
         return item_id
-    s_id = str(item_id)
-    if s_id.startswith('d_') or s_id.startswith('f_'):
-        s_id = s_id[2:]
     
-    # Retornamos solo los dígitos por si hay espacios o caracteres invisibles
-    return "".join(filter(str.isdigit, s_id))
+    s_id = str(item_id).strip()
+    # Filtramos para dejar ÚNICAMENTE los números
+    cleaned_id = "".join(filter(str.isdigit, s_id))
+    
+    print(f"DEBUG: ID Original: '{item_id}' -> ID Limpio: '{cleaned_id}'")
+    return cleaned_id
 
 
 def save_tokens(access_token, refresh_token):
