@@ -20,12 +20,14 @@ Configurar un entorno de desarrollo que:
 
 | Componente | Rol |
 |---|---|
-| **Windows** | El proyecto vive físicamente aquí. Se edita con VSCode. |
-| **Ubuntu / WSL2** | Actúa como entorno Linux para ejecutar Docker. |
-| **Docker Desktop** | Usa WSL2 como motor Linux. |
-| **Contenedores** | Se ejecutan dentro del subsistema Ubuntu. |
+| **Ubuntu / WSL2** | El proyecto vive físicamente aquí (en `/home/usuario`). Es mucho más rápido. |
+| **Windows** | Se edita desde aquí usando VSCode con la extensión **WSL**. |
+| **Docker Desktop** | Usa WSL2 como motor Linux nativo. |
+| **Contenedores** | Se ejecutan con acceso directo al sistema de archivos de Linux. |
 
-> Esto permite que el backend funcione exactamente igual que en AWS.
+> [!TIP]
+> Trabajar dentro del sistema de archivos de Ubuntu (`/home/...`) evita errores de latencia en la base de datos y hace que `docker compose` sea hasta 10 veces más rápido.
+
 
 ---
 
@@ -104,19 +106,24 @@ Debe mostrar algo como: `Docker version XX.X.X`
 ## 📦 Clonar el Repositorio
 
 > [!IMPORTANT]
-> El repositorio **NO** debe copiarse a Ubuntu. El proyecto debe permanecer en Windows.
+> Para el mejor rendimiento, el repositorio **DEBE** clonarse directamente dentro de la terminal de Ubuntu.
 
-Abrir PowerShell:
+1. Abrir la terminal de **Ubuntu**.
+2. Ir a tu carpeta personal:
+   ```bash
+   cd ~
+   mkdir -p Develop && cd Develop
+   ```
+3. Clonar el repositorio:
+   ```bash
+   git clone https://github.com/MasterErrorCLONE04/Develop.git
+   ```
 
-```powershell
-cd Desktop
-git clone https://github.com/MasterErrorCLONE04/Develop.git
-```
-
-Esto creará la carpeta:
-
-```
-C:\Users\USUARIO\Desktop\Develop
+### 💡 ¿Ya lo tienes en Windows? Muévelo así:
+Si ya clonaste el proyecto en el escritorio de Windows, muévelo a Ubuntu para que vuele:
+```bash
+# Dentro de la terminal de Ubuntu
+cp -r /mnt/c/Users/TU_USUARIO/Desktop/Develop ~/Develop/
 ```
 
 ---
@@ -129,13 +136,12 @@ C:\Users\USUARIO\Desktop\Develop
 wsl -d Ubuntu
 ```
 
-### Acceder al proyecto desde Ubuntu
-
 ```bash
-cd /mnt/c/Users/USUARIO/Desktop/Develop/ubuntu
+cd ~/Develop/ubuntu
 ```
 
-> WSL monta automáticamente el disco `C:` en `/mnt/c`, por lo que Ubuntu accede directamente a los archivos de Windows. **No es necesario** copiar el proyecto a `/home/usuario`.
+> [!NOTE]
+> Al estar dentro de `/home`, Docker tiene acceso nativo al disco, eliminando errores de "Workspace" o latencia en PostGIS.
 
 ### Iniciar los contenedores
 
@@ -275,14 +281,26 @@ find . -name "*:Zone.Identifier" -delete
 
 ---
 
+## ☁️ Despliegue en AWS (Estandarizado)
+
+Para llevar este entorno a producción o pruebas en la nube, seguimos esta arquitectura:
+
+1. **Base de Datos:** AWS RDS (PostgreSQL 15 + PostGIS).
+2. **Servidor:** EC2 Ubuntu t3.micro (Dockerizado).
+
+### Pasos de Despliegue:
+1. Clonar el repo en el servidor EC2.
+2. Configurar el `.env` con el `DB_HOST` apuntando al endpoint de RDS.
+3. Asegurar que el **Security Group** de RDS permita el tráfico desde el SG del EC2.
+4. Ejecutar `docker compose up -d --build`.
+
+---
+
 ## 📌 Ventajas de esta Arquitectura
 
-- ✅ No se duplican archivos entre Windows y Linux.
-- ✅ Docker funciona igual que en AWS.
-- ✅ El entorno Linux permanece intacto.
-- ✅ VSCode funciona directamente sobre Windows.
-- ✅ Todo el equipo utiliza la misma arquitectura.
-- ✅ Compatible con backend Linux y despliegue en AWS.
+- ✅ **Rendimiento Nativo:** Al usar `/home` en Ubuntu, el I/O de disco es inmediato.
+- ✅ **Paridad con Producción:** El entorno es idéntico a AWS.
+- ✅ **VSCode Remote:** Puedes usar VSCode en Windows conectándote a WSL para editar los archivos "dentro" de Linux.
 
 ---
 
