@@ -32,6 +32,9 @@
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/buscar.css" />
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/informacion_predio.css" />
   {% endif %}
+  {% if view == 'panel_control' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel_control.css" />
+  {% endif %}
   {% if view == 'asignaciones' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/cargas_trabajo.css" />
   <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/ver_asignaciones.css" />
@@ -60,17 +63,19 @@
       <aside class="col-lg-3 col-xl-2 d-none d-lg-block h-100 pb-2 pb-xl-4">
         <div class="sidebar d-flex flex-column mt-1 h-100">
           <div class="sidebar-top d-flex flex-column h-100">
-            <div class="card-info mt-4 d-flex justify-content-center align-items-center text-center">
+
+            <div class="card-info  mt-4 d-flex justify-content-center align-items-center text-center">
               <div class="card-info-img me-0">
                 <img src="{{ rp }}/static/img/PNG/logoArbi.png" alt="Logo Arbimaps" class="logo-sidebar" />
               </div>
 
               <div class="card-info-title text-start">
-                <span class="title-arbi text-white fw-bold d-block mb-0">ARBIMaps</span>
+                <span class="title-arbi text-white fw-bold d-block mb-0">ARBIMaaps</span>
                 <span class="text-white d-block mb-0 fw-normal" style="font-size: 0.633rem; line-height: 1.1;">
                   Aplicativo de Gestión Catastral
                 </span>
               </div>
+
             </div>
 
             <div class="px-3">
@@ -78,7 +83,7 @@
             </div>
 
             <nav class="menu sidebar-nav d-flex flex-column gap-2 mt-2">
-              <span class="titleHerr text-white mb-2">Herramientas principales</span>
+              <span class="titleHerr text-white ">Herramientas principales</span>
 
               {% if not limited_assignment_role %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'visor' else '' }}" href="{{ rp }}/panel">
@@ -174,11 +179,23 @@
                 <span>Reporte SINIC</span>
               </a>
               {% endif %}
+
+              <div class="px-3">
+                <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
+              </div>
+
+              <span class="titleHerr text-white ">Seguimiento</span>
+
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'panel_control' else '' }}"
+                href="{{ rp }}/panel/panel_control">
+                <i class="bi bi-columns-gap"></i>
+                <span>Panel de control</span>
+              </a>
+
             </nav>
 
-            <div class="px-3 mt-auto">
-              <hr class="border-light opacity-25 my-3" />
-            </div>
+
+
           </div>
         </div>
       </aside>
@@ -187,7 +204,8 @@
       <div class="col-12 col-lg-9 col-xl-10 h-100">
         <div class="h-100 d-flex flex-column panel-content-column">
 
-          <nav class="panel-topbar d-flex align-items-center justify-content-between flex-shrink-0 px-3 px-md-4 mb-2 mb-md-3">
+          <nav
+            class="panel-topbar d-flex align-items-center justify-content-between flex-shrink-0 px-3 px-md-4 mb-2 mb-md-3">
             <div class="d-flex align-items-center min-w-0">
               <button
                 class="btn text-white d-inline-flex d-lg-none align-items-center justify-content-center me-2 mobile-sidebar-toggle"
@@ -198,7 +216,7 @@
 
               <div class="topbar-content-title">
                 <a href="{{ rp }}/panel" class="topbar-brand">Dirección de Gestión Catastral</a>
-                <p class="topbar-title-pri">Información de base</p>
+                <p class="topbar-title-pri mt-2">Información de base</p>
               </div>
             </div>
 
@@ -251,6 +269,7 @@
                 </div>
 
                 <section>
+
                   {% if view == 'visor' %}
                   {% include "visor.html" %}
                   {% elif view == 'buscar' %}
@@ -269,6 +288,8 @@
                   {% else %}
                   {% include "asignaciones_cargas.html" %}
                   {% endif %}
+                  {% elif view == 'panel_control' %}
+                  {% include "panel_control.html" %}
                   {% elif view == 'usuarios' %}
                   {% include "usuarios.html" %}
                   {% elif view == 'validacion_xtf' %}
@@ -293,6 +314,8 @@
                     <p class="sub">Vista no disponible.</p>
                   </div>
                   {% endif %}
+
+
                 </section>
               </div>
             </main>

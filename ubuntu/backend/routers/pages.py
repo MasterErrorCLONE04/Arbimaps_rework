@@ -597,3 +597,20 @@ def debug_me(request: Request):
         "user": user,
         "effective_role": role
     }
+
+# -------------------------------------------------
+# PANEL DE CONTROL DE SEGUIMIENTO
+# -------------------------------------------------
+
+@router.get("/panel/panel_control")
+def panel_panel_control(request: Request):
+
+    user = get_user(request)
+
+    if not user:
+        return RedirectResponse(
+            url=with_root_path(request, "/login"),
+            status_code=302
+        )
+
+    return _render_panel(request, user, view="panel_control")

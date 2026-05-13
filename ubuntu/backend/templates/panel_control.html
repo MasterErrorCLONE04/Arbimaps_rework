@@ -1,0 +1,882 @@
+<main class="content-section container-fluid d-flex flex-column gap-4 px-0">
+
+    <div class="d-flex flex-column flex-md-row gap-3 align-items-center justify-content-between ">
+        <div class="d-flex flex-column">
+            <h5>
+                Panel general de seguimiento
+            </h5>
+            <small style="color: #335977;">
+                Consulta la información de avance del proyecto, estado de las asignaciones y proyección de entrega.
+            </small>
+        </div>
+
+        <button class="btn text-white ms-md-auto d-flex align-items-center btn_exportar"
+            style="background-color: #002f55;">
+            <i class="bi bi-arrow-up-right-square-fill "></i>
+            Generar Reporte
+        </button>
+
+    </div>
+
+    <section class="container-fluid">
+        <div class="row">
+
+            <div class="col-12 col-lg p-2 ">
+                <div class="card card-dashboard">
+                    <div class="card-body p-3 d-flex flex-column ">
+                        <p style="color: #002f55; font-weight: 800;">
+                            Avance general del proyecto
+                        </p>
+
+                        <div class="d-flex  gap-2 py-2">
+
+                            <div class="d-flex justify-content-center align-items-center w-50 ">
+                                <div class="p-2 text-white rounded-5 d-flex justify-content-center align-items-center"
+                                    style="background-color: #6aa4d4; width: 35px; height: 35px;">
+                                    <i class="bi bi-calendar-date"></i>
+                                </div>
+                                <div class="d-flex flex-column ms-2">
+                                    <small class=" fw-bold" style="color: #002f55; font-size: 12px;">Fecha de
+                                        inicio</small>
+                                    <small class="fw-light" style="color: #002f55; font-size: 12px;">01/01/2024</small>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-center align-items-center w-50">
+                                <div class="p-2 text-white rounded-5 d-flex justify-content-center align-items-center"
+                                    style="background-color: #002f55; width: 35px; height: 35px;">
+                                    <i class="bi bi-calendar-x-fill"></i>
+                                </div>
+                                <div class="d-flex flex-column ms-2">
+                                    <small class=" fw-bold" style="color: #002f55; font-size: 12px;">Fecha de
+                                        finalización</small>
+                                    <small class="fw-light" style="color: #002f55; font-size: 12px;">01/01/2024
+                                        (Estimado)</small>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex flex-column  align-items-center justify-content-center gap-2 py-3">
+                            <div class="d-flex justify-content-center align-items-center grafico-torta"
+                                style="width: 60%">
+                                <canvas id="myChart" width="100%" height="200"></canvas>
+                            </div>
+
+                            <div class="predios-info w-100">
+                                <div class="predios-header">
+                                    <small>Total de predios</small>
+                                    <small class="fw-bold">7562</small>
+                                </div>
+
+                                <div class="predios-list">
+                                    <div class="predios-item">
+                                        <span class="dot dot-green"></span>
+                                        <small>Predios sincronizados</small>
+                                        <small class="fw-bold">281</small>
+                                        <small>(25%)</small>
+                                    </div>
+
+                                    <div class="predios-item">
+                                        <span class="dot dot-blue"></span>
+                                        <small>Predios asignados</small>
+                                        <small class="fw-bold">3381</small>
+                                        <small>(50%)</small>
+                                    </div>
+
+                                    <div class="predios-item">
+                                        <span class="dot dot-light"></span>
+                                        <small>Predios sin asignar</small>
+                                        <small class="fw-bold">3900</small>
+                                        <small>(50%)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="predios-date">
+                            Última actualización 10/06/12 2:00 p.m.
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg p-2">
+                <div class="card card-dashboard h-100">
+                    <div class="card-body p-3 d-flex flex-column justify-content-center  ">
+
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <p class="mb-0" style="color: #002f55; font-weight: 800;">
+                                Estado de las asignaciones
+                            </p>
+                            <div class="rounded-2 p-1 px-2"
+                                style="background-color: #6AA4D4;  color: #003456; font-weight: 800;">
+                                <small class="fw-bold text-white">47 Asignaciones</small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column  align-items-center justify-content-center gap-2 py-3">
+                            <div class="d-flex justify-content-center align-items-center grafico-torta"
+                                style="width: 50%">
+                                <canvas id="myChart2" width="100%" height="180"></canvas>
+                            </div>
+
+                            <div class="predios-info w-100 ">
+                                <!-- <div class="predios-header">
+                                    <small>Total de predios</small>
+                                    <small class="fw-bold">7562</small>
+                                </div> -->
+
+                                <div class="predios-list">
+                                    <div class="predios-item">
+                                        <span class="dot" style="background-color: #6aa4d4;"></span>
+                                        <small>Predios en campo</small>
+                                        <small class="fw-bold ">512</small>
+                                        <small>(12%)</small>
+                                    </div>
+
+                                    <div class="predios-item">
+                                        <span class="dot" style="background-color: #f4c344;"></span>
+                                        <small>Predios en control de calidad</small>
+                                        <small class="fw-bold">485</small>
+                                        <small>(21%)</small>
+                                    </div>
+
+                                    <div class="predios-item">
+                                        <span class="dot" style="background-color: #d92c2c;"></span>
+                                        <small>Predios devueltos a campo</small>
+                                        <small class="fw-bold">321</small>
+                                        <small>(8%)</small>
+                                    </div>
+
+                                    <div class="predios-item">
+                                        <span class="dot" style="background-color: #f07b22;"></span>
+                                        <small>Predios en aprobación</small>
+                                        <small class="fw-bold">897</small>
+                                        <small>(32%)</small>
+                                    </div>
+
+                                    <div class="predios-item">
+                                        <span class="dot" style="background-color: #003456;"></span>
+                                        <small>Predios en sincronización</small>
+                                        <small class="fw-bold">689</small>
+                                        <small>(29%)</small>
+                                    </div>
+
+                                    <div class="predios-item">
+                                        <span class="dot" style="background-color: #00a82d;"></span>
+                                        <small>Predios sincronizados</small>
+                                        <small class="fw-bold">281</small>
+                                        <small>(7%)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="predios-date">
+                            Última actualización 10/06/12 2:00 p.m.
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg p-2">
+                <div class="card card-dashboard mapa-proyecto h-100">
+                    <div class="card-header p-3 text-white"
+                        style="background-color: var(--azulprincipal-500); border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                        <div class="d-flex gap-2 align-items-center">
+                            <i class="bi bi-crosshair2 fs-4"></i>
+                            <div class="d-flex flex-column text-white">
+                                <p class="fw-bold mb-0 text-white">Visor de predios</p>
+                                <small class="fw-light text-white">Visualización espacial de predios</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0 m-0 position-relative overflow-hidden d-flex flex-column"
+                        style="border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;">
+                        <div id="map" class="w-100 h-100 m-0 p-0" style="min-height: 400px; "></div>
+                        <div class="vp-map-tools position-absolute  bottom-0 end-0 mb-2 me-2 d-flex flex-column gap-2 align-items-end"
+                            style="z-index: 1000;">
+                            <button type="button" class="btn btn-sm shadow-sm border-0 fw-bold px-3 mt-auto"
+                                id="btnZoomProyecto">
+                                <i class=" bi bi-eye-fill me-1 "></i> Ver proyecto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- col-12: Avance por coordinador -->
+            <div class="col-12 p-2">
+                <div class="row ">
+
+                    <!-- ======== PANEL IZQUIERDO: tabla ======== -->
+                    <div class="col-12 col-lg-7 d-flex flex-column">
+
+                        <div class=" card card-dashboard h-100">
+                            <!-- Header azul oscuro -->
+                            <div
+                                class="card-header bg-azulprincipal-500 d-flex align-items-center justify-content-between flex-wrap gap-2 px-4 py-3">
+                                <div>
+                                    <p class="mb-0 fw-bold text-white">Avance por coordinador</p>
+                                    <small class="text-white fw-light">Consulta el avance
+                                        del proyecto por cada coordinador</small>
+                                </div>
+
+                                <div class="rounded-2 p-1 px-2"
+                                    style="background-color: #6AA4D4;  color: #003456; font-weight: 800;">
+                                    <small id="coordCount" class="fw-bold text-white"></small>
+                                </div>
+                            </div>
+
+                            <!-- Buscador -->
+                            <div class="d-flex align-items-center justify-content-end px-4 py-2"
+                                style="border-bottom:1px solid #eef5fb; background-color: #ffffff;">
+                                <label class=" me-2" style="color:#335977; font-size:0.82rem; white-space:nowrap;">
+                                    Buscar</label>
+                                <input id="coordSearch" type="text" class="form-control form-control-sm coord-search"
+                                    placeholder="" style="max-width:180px;">
+                            </div>
+
+                            <!-- Tabla -->
+                            <div class="coord-table-wrapper flex-grow-1" style="background-color: #ffffff;">
+                                <table class="coord-table w-100" id="coordTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Coordinador</th>
+                                            <th class="text-center">Reconocedores</th>
+                                            <th class="text-center">Asignaciones</th>
+                                            <th>Avance</th>
+                                            <th class="text-center">Predios</th>
+                                            <th class="text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="coordTableBody">
+                                        <!-- Renderizado por JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Paginación -->
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 px-4 py-2"
+                                style="border-top:1px solid #eef5fb; ">
+                                <small style="color:#335977;" id="coordPagInfo"></small>
+                                <div class="d-flex gap-1 align-items-center" id="coordPagBtns"></div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ======== PANEL DERECHO: distribución ======== -->
+                    <div class="col-12 col-lg-5 d-flex flex-column ">
+
+                        <div class="card-dashboard ">
+                            <!-- Header derecho -->
+                            <div class="card-header p-4">
+                                <p class="mb-0 fw-bold text-white" style=" font-size:0.95rem;">Distribución del
+                                    avance
+                                    por coordinador</p>
+                            </div>
+
+                            <!-- Barras por coordinador -->
+                            <div class="flex-grow-1 px-4 py-3 d-flex flex-column gap-4" id="coordDistPanel">
+                                <!-- Renderizado por JS -->
+                            </div>
+
+                            <!-- Leyenda -->
+                            <div class="px-4 pb-3 pt-1 coord-leyenda" id="coordLeyenda">
+                                <div class="d-flex flex-wrap gap-2 gap-y-2">
+                                    <span class="leyenda-item"><span class="leyenda-dot"
+                                            style="background:#6aa4d4;"></span>En campo</span>
+                                    <span class="leyenda-item"><span class="leyenda-dot"
+                                            style="background:#f4c344;"></span>En control de calidad</span>
+                                    <span class="leyenda-item"><span class="leyenda-dot"
+                                            style="background:#d92c2c;"></span>Devuelta a campo</span>
+                                </div>
+                                <div class="d-flex flex-wrap gap-2 mt-1">
+                                    <span class="leyenda-item"><span class="leyenda-dot"
+                                            style="background:#f07b22;"></span>En aprobación</span>
+                                    <span class="leyenda-item"><span class="leyenda-dot"
+                                            style="background:#003456;"></span>En sincronización</span>
+                                    <span class="leyenda-item"><span class="leyenda-dot"
+                                            style="background:#00a82d;"></span>Sicronizado</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div><!-- /row g-0 -->
+            </div><!-- /col-12 -->
+
+        </div>
+    </section>
+</main>
+
+<!-- ============================================================
+     MODAL: DETALLE COORDINADOR (ESTADO ASIGNACIONES)
+     ============================================================ -->
+<div class="modal fade" id="modalDetalleCoord" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content modal-coord-content">
+            <div class="modal-body modal-coord-body">
+                <div class="row g-4">
+
+                    <!-- LADO IZQUIERDO: Gráfico y Estados -->
+                    <div class="col-12 col-lg-8">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h5 class="fw-bold mb-0">Estado de las asignaciones</h5>
+                            <span class="badge rounded-pill px-3 py-2"
+                                style="background:#6AA4D4; color:#fff; font-weight:700;" id="modalAsignacionesTotal">0
+                                Asignaciones</span>
+                        </div>
+
+                        <!-- Tarjeta sub-header info coord -->
+                        <div class="modal-coord-info-card">
+                            <div class="d-flex align-items-center gap-3">
+                                <div id="modalCoordAvatar" class="coord-avatar"
+                                    style="width:45px; height:45px; font-size:1rem;">--</div>
+                                <div>
+                                    <h6 class="fw-bold mb-0" id="modalCoordNombre">Cargando...</h6>
+                                    <div class="coord-role-badge mt-1" id="modalCoordRol">Rol</div>
+                                </div>
+                            </div>
+                            <div class="rounded-pill px-3 py-2"
+                                style="background:#003456; color:#fff; font-size:0.85rem; font-weight:700;"
+                                id="modalCoordReconocedoresCount">
+                                0 Reconocedores
+                            </div>
+                        </div>
+
+                        <!-- Layout dona + leyenda -->
+                        <div class="row align-items-center">
+                            <div class="col-12 col-md-6 d-flex justify-content-center">
+                                <div class="modal-chart-container">
+                                    <canvas id="chartModalAsignaciones"></canvas>
+                                    <div class="modal-chart-center-text">
+                                        <h4 class="fw-bold mb-0" id="modalChartTotalCenter">0</h4>
+                                        <small class="text-muted" style="font-size:0.65rem;">Predios asignados</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div id="modalLeyendaDetallada" class="pe-3">
+                                    <!-- Renderizado por JS -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-center mt-4">
+                            <small class="text-muted italic" style="font-size:0.75rem;" id="modalLastUpdate">Última
+                                actualización --/--/-- --:--</small>
+                        </div>
+                    </div>
+
+                    <!-- LADO DERECHO: Listado de Reconocedores -->
+                    <div class="col-12 col-lg-4">
+                        <div class="reconocedores-panel d-flex flex-column gap-2">
+                            <div class="p-2 px-3"
+                                style="background-color: var( --azulsecundario-200); border-radius: 10px;">
+                                <small class="fw-bold ">Listado de reconocedores</small>
+                            </div>
+
+                            <div class="flex-grow-1 overflow-auto" style="max-height: 400px;"
+                                id="modalListaReconocedores">
+                                <!-- Renderizado por JS -->
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="button"
+                                    class="btn btn-cerrar-modal d-inline-flex align-items-center gap-2"
+                                    data-bs-dismiss="modal">
+                                    <span>Cerrar</span>
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /row -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ol@9.2.4/dist/ol.js"></script>
+
+<!-- script para de gráficos de donas -->
+<script>
+    const rp = "{{ rp }}";
+
+    function initPanelControlChart() {
+        const canvas1 = document.getElementById('myChart');
+        const canvas2 = document.getElementById('myChart2');
+        if (typeof Chart === 'undefined') return;
+
+        // --- Chart 1 ---
+        if (canvas1) {
+            const completedPercent = 25;
+            const centerTextPlugin1 = {
+                id: 'centerTextPlugin1',
+                afterDraw(chart) {
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return;
+
+                    const centerX = (chartArea.left + chartArea.right) / 2;
+                    const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#003456';
+                    ctx.font = '800 28px Poppins, Arial, sans-serif';
+                    ctx.fillText(`${completedPercent} %`, centerX, centerY - 13);
+                    ctx.font = '500 12px Poppins, Arial, sans-serif';
+                    ctx.fillText('Completado', centerX, centerY + 15);
+                    ctx.restore();
+                }
+            };
+
+            requestAnimationFrame(() => {
+                new Chart(canvas1, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            label: 'Total de Predios',
+                            data: [281, 3381, 3900],
+                            backgroundColor: ['#00A82D', '#003456', '#DCECF8'],
+                            borderColor: ['#00A82D', '#003456', '#DCECF8'],
+                            borderWidth: 1,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true,
+                            duration: 1200,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (tooltipItem) {
+                                        return tooltipItem.raw + ' (' + ((tooltipItem.raw / 7562) * 100).toFixed(2) + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [centerTextPlugin1]
+                });
+            });
+        }
+
+        // --- Chart 2 ---
+        if (canvas2) {
+            const asignadosTotal = 3381;
+            const centerTextPlugin2 = {
+                id: 'centerTextPlugin2',
+                afterDraw(chart) {
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return;
+
+                    const centerX = (chartArea.left + chartArea.right) / 2;
+                    const centerY = (chartArea.top + chartArea.bottom) / 2;
+
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#003456';
+                    ctx.font = '800 25px Poppins, Arial, sans-serif';
+                    ctx.fillText(`${asignadosTotal}`, centerX, centerY - 13);
+                    ctx.font = '500 11px Poppins, Arial, sans-serif';
+                    ctx.fillText('Predios asignados', centerX, centerY + 15);
+                    ctx.restore();
+                }
+            };
+
+            requestAnimationFrame(() => {
+                new Chart(canvas2, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            label: 'Estado de asignaciones',
+                            data: [512, 485, 321, 897, 689, 281],
+                            backgroundColor: ['#6aa4d4', '#f4c344', '#d92c2c', '#f07b22', '#003456', '#00a82d'],
+                            borderColor: ['#6aa4d4', '#f4c344', '#d92c2c', '#f07b22', '#003456', '#00a82d'],
+                            borderWidth: 1,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true,
+                            duration: 1200,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (tooltipItem) {
+                                        return tooltipItem.raw + ' (' + ((tooltipItem.raw / asignadosTotal) * 100).toFixed(2) + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [centerTextPlugin2]
+                });
+            });
+        }
+    }
+
+    function initDashboardMap() {
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer || typeof ol === 'undefined') return;
+
+        const WMS_URL = `${rp}/proxy/wms`;
+        const GEOSERVER_LAYERS = String(
+            {{ visor_geoserver_layers | default('A_Base_Principal:Base_Principal') | tojson }}
+        ).split(',').map(n => n.trim()).filter(Boolean);
+
+    const DEFAULT_EXTENT = [3630797.89, 1069522.77, 5709687.44, 3346020.28];
+
+    proj4.defs(
+        "EPSG:9377",
+        "+proj=tmerc +lat_0=4 +lon_0=-73 +k=0.9992 +x_0=5000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
+    );
+    ol.proj.proj4.register(proj4);
+    const projection = ol.proj.get("EPSG:9377");
+
+    const wmsLayers = GEOSERVER_LAYERS.map(layerName =>
+        new ol.layer.Tile({
+            source: new ol.source.TileWMS({
+                url: WMS_URL,
+                params: { 'LAYERS': layerName, 'TILED': true, 'VERSION': '1.1.0' },
+                serverType: 'geoserver',
+                crossOrigin: 'anonymous'
+            })
+        })
+    );
+
+    const osmLayer = new ol.layer.Tile({
+        source: new ol.source.OSM(),
+        visible: true
+    });
+
+    const map = new ol.Map({
+        target: 'map',
+        layers: [osmLayer, ...wmsLayers],
+        view: new ol.View({
+            projection: projection,
+            center: ol.extent.getCenter(DEFAULT_EXTENT),
+            zoom: 2
+        }),
+        controls: []
+    });
+
+    // Zoom al proyecto
+    const btnZoom = document.getElementById('btnZoomProyecto');
+    if (btnZoom) {
+        btnZoom.addEventListener('click', () => {
+            map.getView().fit(DEFAULT_EXTENT, {
+                padding: [20, 20, 20, 20],
+                duration: 600
+            });
+        });
+    }
+
+    // Cargar extent dinámico si existe
+    fetch(`${rp}/visor/project-extent`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            if (data && data.extent) {
+                map.getView().fit(data.extent, { padding: [20, 20, 20, 20], duration: 1000 });
+            }
+        })
+        .catch(err => console.warn("No se pudo cargar extent dinámico", err));
+    }
+
+    // ================================================================
+    // AVANCE POR COORDINADOR — Datos estáticos
+    // TODO: reemplazar COORD_DATA con fetch(`${rp}/api/coordinadores/`)
+    // ================================================================
+
+    // ================================================================
+    // AVANCE POR COORDINADOR — Datos estáticos
+    // TODO: reemplazar COORD_DATA con fetch(`${rp}/api/coordinadores/`)
+    // ================================================================
+
+    const COORD_DATA = [
+        {
+            nombre: 'Alex Calderón', rol: 'Coordinador1', iniciales: 'AC',
+            reconocedores: 2, asignaciones: 12, predios: 1200, avance: 78,
+            dist: { campo: 240, calidad: 120, devueltos: 60, aprobacion: 60, sincronizacion: 60, sincronizado: 660 },
+            recs: [
+                { nombre: 'Carlos Vallarta', rol: 'Reconocedor', iniciales: 'CV' },
+                { nombre: 'Camilo Forero', rol: 'Reconocedor', iniciales: 'CR' }
+            ]
+        },
+        {
+            nombre: 'Juanita Rodriguez', rol: 'Coordinador2', iniciales: 'JR',
+            reconocedores: 4, asignaciones: 18, predios: 1895, avance: 26,
+            dist: { campo: 758, calidad: 284, devueltos: 95, aprobacion: 95, sincronizacion: 95, sincronizado: 568 },
+            recs: [
+                { nombre: 'Andrés López', rol: 'Reconocedor', iniciales: 'AL' },
+                { nombre: 'Marta Díaz', rol: 'Reconocedor', iniciales: 'MD' },
+                { nombre: 'Pedro Ortiz', rol: 'Reconocedor', iniciales: 'PO' },
+                { nombre: 'Elena Ruiz', rol: 'Reconocedor', iniciales: 'ER' }
+            ]
+        },
+        {
+            nombre: 'Juan Camilo Terán', rol: 'Coordinador3', iniciales: 'JC',
+            reconocedores: 8, asignaciones: 17, predios: 986, avance: 59,
+            dist: { campo: 247, calidad: 148, devueltos: 79, aprobacion: 99, sincronizacion: 68, sincronizado: 345 },
+            recs: [
+                { nombre: 'Samuel G.', rol: 'Reconocedor', iniciales: 'SG' },
+                { nombre: 'Lucía M.', rol: 'Reconocedor', iniciales: 'LM' }
+            ]
+        },
+        {
+            nombre: 'María Fernanda López', rol: 'Coordinador4', iniciales: 'ML',
+            reconocedores: 5, asignaciones: 14, predios: 1540, avance: 45,
+            dist: { campo: 385, calidad: 231, devueltos: 77, aprobacion: 154, sincronizacion: 77, sincronizado: 616 },
+            recs: [
+                { nombre: 'Felipe S.', rol: 'Reconocedor', iniciales: 'FS' },
+                { nombre: 'Clara J.', rol: 'Reconocedor', iniciales: 'CJ' }
+            ]
+        },
+        {
+            nombre: 'Carlos Andrés Reyes', rol: 'Coordinador5', iniciales: 'CR',
+            reconocedores: 3, asignaciones: 10, predios: 870, avance: 62,
+            dist: { campo: 174, calidad: 130, devueltos: 52, aprobacion: 87, sincronizacion: 87, sincronizado: 340 },
+            recs: [
+                { nombre: 'Héctor B.', rol: 'Reconocedor', iniciales: 'HB' }
+            ]
+        }
+    ];
+
+    const DIST_COLORS = [
+        { key: 'campo', color: '#6aa4d4', label: 'En campo' },
+        { key: 'calidad', color: '#f4c344', label: 'En control de calidad' },
+        { key: 'devueltos', color: '#d92c2c', label: 'Devuelta a campo' },
+        { key: 'aprobacion', color: '#f07b22', label: 'En aprobación' },
+        { key: 'sincronizacion', color: '#003456', label: 'En sincronización' },
+        { key: 'sincronizado', color: '#00a82d', label: 'Sicronizado' },
+    ];
+
+    const COORD_ROWS_PER_PAGE = 3;
+    let coordPage = 1;
+    let coordSearch = '';
+    let chartModalInstance = null;
+
+    function getCoordFiltered() {
+        if (!coordSearch) return COORD_DATA.map((c, i) => ({ ...c, originalIndex: i }));
+        const q = coordSearch.toLowerCase();
+        return COORD_DATA
+            .map((c, i) => ({ ...c, originalIndex: i }))
+            .filter(c => c.nombre.toLowerCase().includes(q) || c.rol.toLowerCase().includes(q));
+    }
+
+    function buildSegmentedBar(dist, height) {
+        const total = Object.values(dist).reduce((a, b) => a + b, 0);
+        if (total === 0) return '';
+        return DIST_COLORS.map(({ key, color }) => {
+            const pct = (dist[key] / total) * 100;
+            return pct > 0
+                ? `<div style="width:${pct.toFixed(2)}%; background:${color}; height:${height}px; display:inline-block; vertical-align:top;"></div>`
+                : '';
+        }).join('');
+    }
+
+    function renderCoordTable(page) {
+        const data = getCoordFiltered();
+        const total = data.length;
+        const totalPages = Math.max(1, Math.ceil(total / COORD_ROWS_PER_PAGE));
+        page = Math.min(page, totalPages);
+        coordPage = page;
+
+        const start = (page - 1) * COORD_ROWS_PER_PAGE;
+        const slice = data.slice(start, start + COORD_ROWS_PER_PAGE);
+
+        const badge = document.getElementById('coordCount');
+        if (badge) badge.textContent = `${COORD_DATA.length} Coordinadores`;
+
+        const tbody = document.getElementById('coordTableBody');
+        if (tbody) {
+            tbody.innerHTML = slice.map(c => `
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="coord-avatar">${c.iniciales}</div>
+                            <div class="d-flex flex-column">
+                                <span style="font-weight:700; color:#002f55; font-size:0.83rem;">${c.nombre}</span>
+                                <small style="color:#6aa4d4; font-size:0.72rem;">${c.rol}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center" style="color:#002f55; font-weight:600;">${c.reconocedores}</td>
+                    <td class="text-center" style="color:#002f55; font-weight:600;">${c.asignaciones}</td>
+                    <td class="text-center">
+                        <span style="color:#002f55; font-weight:700; font-size:0.82rem; white-space:nowrap;">${c.avance}%</span>
+                    </td>
+                    <td class="text-center" style="color:#002f55; font-weight:600;">${c.predios.toLocaleString('es-CO')}</td>
+                    <td class="text-center">
+                        <button class="coord-action-btn" title="Ver detalle" onclick="openCoordModal(${c.originalIndex})">
+                            <i class="bi bi-eye-fill"></i>
+                        </button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        const info = document.getElementById('coordPagInfo');
+        if (info) {
+            const end = Math.min(start + COORD_ROWS_PER_PAGE, total);
+            info.textContent = `Mostrando ${start + 1}–${end} de ${total} resultados`;
+        }
+
+        const pagEl = document.getElementById('coordPagBtns');
+        if (pagEl) {
+            let html = `<button class="coord-pag-btn coord-pag-arrow" data-page="${Math.max(1, page - 1)}" ${page === 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
+            html += Array.from({ length: totalPages }, (_, p) => `<button class="coord-pag-btn ${p + 1 === page ? 'activo' : ''}" data-page="${p + 1}">${p + 1}</button>`).join('');
+            html += `<button class="coord-pag-btn coord-pag-arrow" data-page="${Math.min(totalPages, page + 1)}" ${page === totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
+            pagEl.innerHTML = html;
+            pagEl.querySelectorAll('.coord-pag-btn').forEach(btn => btn.addEventListener('click', () => !btn.disabled && renderCoordTable(parseInt(btn.dataset.page))));
+        }
+        renderDistPanel(data);
+    }
+
+    function renderDistPanel(data) {
+        const panel = document.getElementById('coordDistPanel');
+        if (!panel) return;
+        panel.innerHTML = data.map(c => {
+            const segBar = buildSegmentedBar(c.dist, 14);
+            return `
+            <div>
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <span style="font-weight:700; color:#002f55; font-size:0.83rem;">${c.nombre}</span>
+                    <span style="font-weight:700; color:#002f55; font-size:0.83rem;">${c.avance}%</span>
+                </div>
+                <div class="coord-dist-bar-wrap">${segBar}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function openCoordModal(index) {
+        const c = COORD_DATA[index];
+        if (!c) return;
+
+        // Info básica
+        document.getElementById('modalCoordNombre').textContent = c.nombre;
+        document.getElementById('modalCoordRol').textContent = c.rol;
+        document.getElementById('modalCoordAvatar').textContent = c.iniciales;
+        document.getElementById('modalAsignacionesTotal').textContent = `${c.asignaciones} Asignaciones`;
+        document.getElementById('modalCoordReconocedoresCount').textContent = `${c.reconocedores} Reconocedores`;
+        document.getElementById('modalChartTotalCenter').textContent = c.predios.toLocaleString('es-CO');
+        document.getElementById('modalLastUpdate').textContent = `Última actualización ${new Date().toLocaleDateString()} 2:00 p.m.`;
+
+        // Leyenda detallada
+        const totalPredios = Object.values(c.dist).reduce((a, b) => a + b, 0);
+        const leyendaEl = document.getElementById('modalLeyendaDetallada');
+        leyendaEl.innerHTML = DIST_COLORS.map(d => {
+            const val = c.dist[d.key] || 0;
+            const pct = totalPredios > 0 ? Math.round((val / totalPredios) * 100) : 0;
+            return `
+            <div class="leyenda-modal-item">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="leyenda-dot" style="background:${d.color};"></span>
+                    <span>${d.label}</span>
+                </div>
+                <span class="fw-bold">${val} <small class="text-muted fw-normal">(${pct}%)</small></span>
+            </div>`;
+        }).join('');
+
+        // Lista de reconocedores
+        const listaEl = document.getElementById('modalListaReconocedores');
+        listaEl.innerHTML = (c.recs || []).map(r => `
+            <div class="reconocedor-item">
+                <div class="rec-avatar">${r.iniciales}</div>
+                <div class="d-flex flex-column">
+                    <span class="fw-bold" style="font-size:0.82rem;">${r.nombre}</span>
+                    <small class="text-muted" style="font-size:0.7rem;">${r.rol}</small>
+                </div>
+
+                <div class="d-flex flex-column coord-action-btn ms-auto" style="cursor: pointer; " onclick="verReconocedor()">
+                    <i class="bi bi-eye-fill"></i>
+                </div>
+
+            </div>`).join('');
+
+        // Gráfico Dona
+        const ctx = document.getElementById('chartModalAsignaciones');
+        if (ctx && typeof Chart !== 'undefined') {
+            if (chartModalInstance) chartModalInstance.destroy();
+            chartModalInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: DIST_COLORS.map(d => d.label),
+                    datasets: [{
+                        data: DIST_COLORS.map(d => c.dist[d.key] || 0),
+                        backgroundColor: DIST_COLORS.map(d => d.color),
+                        borderWidth: 0,
+                        cutout: '75%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('modalDetalleCoord'));
+        modal.show();
+    }
+
+    function initCoordinadores() {
+        const searchInput = document.getElementById('coordSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                coordSearch = searchInput.value.trim();
+                coordPage = 1;
+                renderCoordTable(1);
+            });
+        }
+        renderCoordTable(1);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            initPanelControlChart();
+            initDashboardMap();
+            initCoordinadores();
+        });
+    } else {
+        initPanelControlChart();
+        initDashboardMap();
+        initCoordinadores();
+    }
+
+    function verReconocedor(id) {
+        console.log("Ir a vista de usuarios con el id del reconocedor   " + id);
+    }
+</script>
