@@ -11,14 +11,13 @@ p {
 }
 
 h5 {
-    color: #032F57;
+    color: #032f57;
     font-size: 1.44rem;
     font-weight: 700;
 }
 
-
 .title-principal {
-    color: #032F57;
+    color: #032f57;
     font-size: 2.074rem;
     font-weight: 700;
 }
@@ -34,7 +33,6 @@ h5 {
     background-color: #6095c1 !important;
     transform: scale(1.02);
 }
-
 
 .card-dashboard {
     border-radius: 15px;
@@ -344,7 +342,7 @@ h5 {
     padding: 18px 18px 12px;
     background: #ffffff;
     border-radius: 12px;
-    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-family: "Inter", "Segoe UI", sans-serif;
     color: #0b3152;
 }
 
@@ -533,7 +531,7 @@ h5 {
 .tabla-operadores {
     border-collapse: collapse;
     font-size: 0.82rem;
-    font-family: 'Poppins', 'Inter', sans-serif;
+    font-family: "Poppins", "Inter", sans-serif;
     min-width: 640px;
 }
 
@@ -712,7 +710,7 @@ h5 {
 .coord-table {
     border-collapse: collapse;
     font-size: 0.82rem;
-    font-family: 'Poppins', 'Inter', sans-serif;
+    font-family: "Poppins", "Inter", sans-serif;
     min-width: 560px;
 }
 
@@ -749,15 +747,15 @@ h5 {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background-color: #eef5fb;
-    color: #6aa4d4;
+    background-color: #ffffff;
+    color: var(--azulprincipal-600);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.72rem;
     font-weight: 800;
     flex-shrink: 0;
-    border: 2px solid #d1e3f2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Barra segmentada en la tabla (avance) */
@@ -781,15 +779,16 @@ h5 {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    border: 1px solid #d1e3f2;
-    background: #f0f6fb;
-    color: #6aa4d4;
+    border: none;
+    background: var(--azulsecundario-100);
+    color: var(--azulprincipal-500);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.18s;
     font-size: 0.9rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .coord-action-btn:hover {
@@ -839,7 +838,7 @@ h5 {
 /* Panel derecho: barra de distribución */
 .coord-dist-bar-wrap {
     width: 100%;
-    height: 14px;
+    height: 10px;
     border-radius: 6px;
     overflow: hidden;
     display: flex;
@@ -908,7 +907,6 @@ h5 {
     transition: transform 0.2s;
 }
 
-
 .rec-avatar {
     width: 38px;
     height: 38px;
@@ -937,13 +935,13 @@ h5 {
 
 .coord-role-badge {
     background: #fff;
-    border: 1px solid #f07b22;
+    border-left: 3px solid #f07b22;
     color: #f07b22;
     border-radius: 8px;
-    padding: 2px 12px;
+    padding: 3px 10px;
     font-size: 0.75rem;
     font-weight: 600;
-    box-shadow: 0 2px 4px rgba(240, 123, 34, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Gráfico y Leyenda */
@@ -982,4 +980,170 @@ h5 {
 .btn-cerrar-modal:hover {
     background-color: #00253d;
     transform: scale(1.02);
+}
+
+/* ============================================
+   DETALLES DE ASIGNACIÓN (TABLA)
+   ============================================ */
+
+.assignment-table {
+    border-collapse: separate;
+    border-spacing: 0 1px;
+    width: 100%;
+    font-family: "Poppins", sans-serif;
+}
+
+.assignment-table thead th {
+    padding: 12px 15px;
+    color: var(--azulprincipal-500);
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: none;
+    text-align: center;
+}
+
+.assignment-table tbody tr {
+    background-color: #fff;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.assignment-table tbody td {
+    padding: 15px;
+    vertical-align: middle;
+    text-align: center;
+    color: #335977;
+    font-size: 0.85rem;
+}
+
+/* Coordinator Pill */
+.coord-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #eef5fb;
+    border-left: 3px solid #f07b22;
+    font-weight: 600;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Reconocedor Component */
+.rec-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+}
+
+.rec-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f0f6fb;
+    border: 1px solid #d1e3f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #002f55;
+}
+
+.rec-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.rec-info strong {
+    font-size: 0.85rem;
+    color: #002f55;
+    display: block;
+}
+
+.rec-info small {
+    font-size: 0.7rem;
+    color: #8a9fb1;
+}
+
+/* Status Pills */
+.badge-status {
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    display: inline-block;
+    min-width: 120px;
+    border: 1px solid transparent;
+}
+
+.status-campo { background: #eef5fb; color: #6aa4d4; border: 1px solid #6aa4d4; }
+.status-calidad { background: #fffdf5; color: #f4c344; border: 1px solid #f4c344; }
+.status-devuelta { background: #fff5f5; color: #d92c2c; border: 1px solid #d92c2c; }
+.status-aprobacion { background: #fffaf5; color: #f07b22; border: 1px solid #f07b22; }
+.status-sincronizacion { background: #eef5fb; color: #003456; border: 1px solid #003456; }
+.status-sincronizado { background: #f5fff8; color: #00a82d; border: 1px solid #00a82d; }
+
+/* Time Pills */
+.badge-time {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    display: inline-block;
+    min-width: 80px;
+}
+
+.time-blue { background: #eef5fb; color: #6aa4d4; }
+.time-red { background: #fff5f5; color: #d92c2c; }
+.time-pink { background: #fff5f8; color: #f06292; }
+.time-green { background: #f5fff8; color: #00a82d; }
+
+/* Filter Bar */
+.assignment-filters {
+    background: #fff;
+    padding: 15px 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-limpiar:hover{
+    background-color: var(--azulsecundario-500);
+    color: var(--azulprincipal-500);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-group label {
+    font-size: 0.82rem;
+    color: #335977;
+    white-space: nowrap;
+}
+
+.filter-select {
+    border: 1px solid #d1e3f2;
+    border-radius: 8px;
+    /* padding: 10px 12px; */
+    font-size: 0.85rem;
+    color: #335977;
+    background-color: #f8fbfe;
+    /* min-width: 160px; */
+}
+
+.filter-input {
+    border: 1px solid #d1e3f2;
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-size: 0.85rem;
+    color: #335977;
+    max-width: 180px;
 }

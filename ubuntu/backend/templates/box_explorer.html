@@ -1,357 +1,485 @@
-<div class="card">
+<!-- 
+  ==========================================================================
+  NUEVO DISEÑO PREMIUM - EXPLORADOR BOX
+  ==========================================================================
+  Este archivo ha sido rediseñado para coincidir con la identidad visual del proyecto.
+  Se ha mantenido el código original comentado al final del archivo para referencia.
+-->
 
-  <h2 style="margin-bottom:10px;">Explorador Box</h2>
-
-  <p class="sub" style="margin-bottom:10px;">
-    Navega por la carpeta raíz configurada (BOX_ROOT_FOLDER_ID).
-  </p>
-
-  <!-- BARRA SUPERIOR -->
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-
-    <div style="display:flex; gap:10px; align-items:center;">
-
-      <label style="background:#f5f7fa; padding:6px 12px; border-radius:6px; border:1px solid #ddd; cursor:pointer;">
-        📄 Seleccionar archivo
-        <input type="file" id="fileUpload" style="display:none;">
-      </label>
-
-      <button class="btn btn-success" id="btnUpload">⬆ Subir</button>
-      <button class="btn btn-secondary" id="btnBack">⬅ Atrás</button>
-      <button class="btn btn-primary" id="btnNewFolder">📁 Nueva carpeta</button>
-      <button class="btn btn-warning" id="btnSync">🔄 Sincronizar</button>
-      <button class="btn btn-info" id="btnCarpeteo">📁 Crear Carpeteo</button>
-
-      <div id="syncContainer" style="margin-top:10px; display:none;">
-
-        <div style="font-size:13px; margin-bottom:4px;">
-          <span id="syncText">Iniciando...</span>
-        </div>
-
-        <div style="width:100%; background:#eee; border-radius:6px; overflow:hidden;">
-          <div id="syncBar" style="width:0%; height:20px; background:#28a745;"></div>
-        </div>
-
-      </div>
-
+<!-- CABECERA DE LA PÁGINA: Documentos -->
+<div class="d-flex flex-column flex-md-row gap-3 align-items-center justify-content-between mb-4">
+    <div class="d-flex flex-column">
+        <h2 class="fw-bold mb-1" style="color: #002b49;">Documentos</h2>
+        <small style="color: #335977">
+            Consulta la información de avance del proyecto, estado de las asignaciones y proyección de entrega
+        </small>
     </div>
 
-    <span class="hint" id="crumb">Ruta: (root)</span>
-
-  </div>
-
-  <!-- CONTENIDO -->
-  <div style="display:flex; gap:16px; height:650px;">
-
-    <!-- LISTA -->
-    <div style="width:40%; border-right:1px solid #eee; padding-right:10px; overflow:auto;">
-
-      <p id="status">Cargando...</p>
-
-      <table class="table" id="tbl" style="display:none;">
-        <thead>
-          <tr>
-            <th></th>
-            <th>Nombre</th>
-            <th>ID</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-
+    <div class="d-flex gap-2">
+        <!-- Botón Crear Carpeteo FTP (Anteriormente btnCarpeteo) -->
+        <button class="btn text-white d-flex align-items-center gap-2 px-3 py-2" id="btnCarpeteo" style="background-color: #002b49; border-radius: 8px;">
+            <i class="bi bi-folder-plus"></i>
+            <span>Crear carpeteo FTP</span>
+        </button>
+        <!-- Botón Sincronizar desde mergin (Anteriormente btnSync) -->
+        <button class="btn d-flex align-items-center gap-2 px-3 py-2" id="btnSync" style="background-color: #8ae6b1; color: #002b49; border-radius: 8px; font-weight: 600;">
+            <i class="bi bi-arrow-repeat"></i>
+            <span>Sincronizar desde mergin</span>
+        </button>
     </div>
-
-    <!-- VISOR -->
-    <div style="width:60%; padding-left:10px;">
-
-      <div style="font-weight:700; margin-bottom:6px;">Vista previa</div>
-
-      <div style="border:1px solid #ddd; border-radius:10px; overflow:hidden; height:600px;">
-        <iframe id="viewer" style="width:100%; height:100%; border:none;"></iframe>
-      </div>
-
-    </div>
-
-  </div>
-
 </div>
 
+<!-- CONTENEDOR PRINCIPAL: Explorador BOX -->
+<div class="card border-0 shadow-sm mb-4 " style="border-radius: 15px; overflow: hidden;">
+    <!-- Card Header Estilo Premium -->
+    <div class="card-header border-0 py-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2" 
+    style="background-color: #002f55; border-radius: 10px;">
+        <div>
+            <h4 class="text-white fw-bold mb-1">Explorador BOX</h4>
+            <small class="text-white" style="font-weight: 100 !important;">Consulta archivos adjuntos y carpetas del proyecto</small>
+        </div>
+        <div class="d-flex gap-2">
+            <!-- Botones de Acción Secundaria -->
+            <button class="btn text-white border-none d-flex align-items-center gap-2 px-3" id="btnNewFolder" 
+            style="border-radius: 8px; font-size: 0.9rem; background-color: #6aa4d4;">
+                <i class="bi bi-folder-plus"></i>
+                Crear nueva carpeta
+            </button>
+            <label class="btn text-white border-2 d-flex align-items-center gap-2 px-3 mb-0"
+             style="border-radius: 8px; font-size: 0.9rem; background-color: #6aa4d4; cursor: pointer;">
+                <i class="bi bi-cloud-upload"></i>
+                Agregar nuevo archivo
+                <input type="file" id="fileUpload" style="display:none;">
+            </label>
+            <!-- Botón oculto para disparar la subida después de seleccionar -->
+            <button id="btnUpload" style="display:none;"></button>
+        </div>
+    </div>
+
+    <div class="card-body p-4 bg-white">
+        <!-- Indicador de Progreso de Sincronización -->
+        <div id="syncContainer" class="mb-4 p-3 rounded-3" style="display:none; background-color: #f8fbfe; border: 1px solid #eef5fb;">
+            <div class="d-flex justify-content-between mb-2">
+                <span id="syncText" class="fw-bold text-primary small">Iniciando...</span>
+                <span id="syncPercent" class="fw-bold small">0%</span>
+            </div>
+            <div class="progress" style="height: 10px; border-radius: 5px;">
+                <div id="syncBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- COLUMNA IZQUIERDA: Lista de Archivos -->
+            <div class="col-lg-5">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h6 class="fw-bold mb-0" style="color: #002b49;">Lista de archivos</h6>
+                        <small class="text-muted" id="status">Elementos: 0</small>
+                    </div>
+                    <button class="btn btn-sm d-flex align-items-center gap-2 px-3" id="btnBack" style="background-color: #002b49; color: white; border-radius: 8px;">
+                        <i class="bi bi-arrow-left"></i>
+                        Volver
+                    </button>
+                </div>
+
+                <!-- Buscador -->
+                <div class="input-group mb-3 shadow-sm" style="border-radius: 10px; overflow: hidden;">
+                    <input type="text" id="fileSearch" class="form-control border-0 bg-light px-3" placeholder="Buscar archivo o carpeta" style="height: 45px; font-size: 0.95rem;">
+                    <span class="input-group-text border-0 bg-light px-3" style="background-color: #002b49 !important; color: white;">
+                        <i class="bi bi-search"></i>
+                    </span>
+                </div>
+
+                <!-- Tabla de Archivos -->
+                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                    <table class="table table-hover align-middle" id="tbl">
+                        <thead class="sticky-top bg-white">
+                            <tr style="border-bottom: 2px solid #f8fbfe;">
+                                <th class="py-3" style="color: #002b49; font-size: 0.9rem;">Nombre</th>
+                                <th class="py-3" style="color: #002b49; font-size: 0.9rem;">id</th>
+                                <th class="py-3 text-end" style="color: #002b49; font-size: 0.9rem;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody">
+                            <!-- Los items se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA: Previsualización -->
+            <div class="col-lg-7">
+                <h6 class="fw-bold mb-3" style="color: #002b49;">Previsualización</h6>
+                
+                <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden; height: 600px; background-color: #f8fbfe;">
+                    
+                    <!-- Cuerpo del Visor -->
+                    <div class="card-body p-0 d-flex align-items-center justify-content-center bg-white" style="position: relative;">
+                        <iframe id="viewer" style="width: 100%; height: 100%; border: none;"></iframe>
+                        <div id="viewerPlaceholder" class="text-center text-muted">
+                            <i class="bi bi-file-earmark-text" style="font-size: 4rem; opacity: 0.1;"></i>
+                            <p class="mt-2 small">Vista previa no disponible</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
-  #tbody tr:hover {
-    background: #f5f7fa;
-    cursor: pointer;
-  }
+    /* Estilos para la tabla y efectos de hover */
+    #tbody tr {
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border-bottom: 1px solid #f8fbfe;
+    }
+    #tbody tr:hover {
+        background-color: #f8fbfe !important;
+        transform: translateX(4px);
+    }
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        border: none;
+    }
+    .action-btn:hover {
+        transform: scale(1.1);
+    }
+    .btn-view { background-color: #28a745; color: white; }
+    .btn-edit { background-color: #002b49; color: white; }
+    .btn-sync { background-color: #3498db; color: white; }
+    
+    /* Scrollbar personalizado */
+    .table-responsive::-webkit-scrollbar { width: 6px; }
+    .table-responsive::-webkit-scrollbar-track { background: #f1f1f1; }
+    .table-responsive::-webkit-scrollbar-thumb { background: #002b49; border-radius: 10px; }
+    
+    /* Ruta breadcrumb */
+    #crumb { font-size: 0.8rem; color: #666; }
 </style>
 
-
 <script>
+    /**
+     * Lógica del Explorador Box - Versión Rediseñada
+     */
+    const apiBase = "/api";
+    let stack = [];
+    let currentFolderId = "";
+    let allItems = []; // Almacén para búsqueda local
 
-  const apiBase = "/api";
+    const elStatus = document.getElementById("status");
+    const elBody = document.getElementById("tbody");
+    const elViewer = document.getElementById("viewer");
+    const elFileName = document.getElementById("viewerFileName");
+    const elPlaceholder = document.getElementById("viewerPlaceholder");
+    const elSearch = document.getElementById("fileSearch");
 
-  let stack = [];
-  let currentFolderId = "";
-
-  const elStatus = document.getElementById("status");
-  const elTbl = document.getElementById("tbl");
-  const elBody = document.getElementById("tbody");
-  const elCrumb = document.getElementById("crumb");
-
-  async function fetchJson(url) {
-    const res = await fetch(url);
-    if (!res.ok) {
-      const txt = await res.text();
-      throw new Error(txt);
+    /**
+     * Función genérica para peticiones API
+     */
+    async function fetchJson(url) {
+        const res = await fetch(url);
+        if (!res.ok) {
+            const txt = await res.text();
+            throw new Error(txt);
+        }
+        return await res.json();
     }
-    return await res.json();
-  }
 
-  async function load(folderId = "") {
+    /**
+     * Determina el icono Bootstrap coherente según el tipo/extensión
+     */
+    function getFileIcon(it) {
+        if (it.type === 'folder') {
+            return '<i class="bi bi-folder-fill me-2" style="color: #002b49;"></i>';
+        }
+        const name = it.name.toLowerCase();
+        if (name.endsWith('.pdf')) return '<i class="bi bi-file-earmark-pdf-fill me-2 text-danger"></i>';
+        if (name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg')) return '<i class="bi bi-file-earmark-image-fill me-2 text-success"></i>';
+        if (name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv')) return '<i class="bi bi-file-earmark-spreadsheet-fill me-2 text-success"></i>';
+        return '<i class="bi bi-file-earmark-fill me-2 text-secondary"></i>';
+    }
 
-    currentFolderId = folderId;
+    /**
+     * Carga el contenido de una carpeta
+     */
+    async function load(folderId = "") {
+        currentFolderId = folderId;
+        elStatus.textContent = "Cargando...";
+        elBody.innerHTML = '<tr><td colspan="3" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
 
-    elStatus.textContent = "Cargando...";
-    elTbl.style.display = "none";
-    elBody.innerHTML = "";
+        const url = folderId
+            ? `${apiBase}/box/list?folder_id=${encodeURIComponent(folderId)}`
+            : `${apiBase}/box/list`;
 
-    const url = folderId
-      ? `${apiBase}/box/list?folder_id=${encodeURIComponent(folderId)}`
-      : `${apiBase}/box/list`;
+        try {
+            const data = await fetchJson(url);
+            allItems = data.items || [];
+            renderTable(allItems);
+            elStatus.textContent = `Elementos: ${allItems.length}`;
+        } catch (e) {
+            elStatus.textContent = "Error: " + e.message;
+            elBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-4">${e.message}</td></tr>`;
+        }
+    }
 
-    try {
-
-      const data = await fetchJson(url);
-
-      elCrumb.textContent = `Ruta: ${data.folder}`;
-
-      const items = data.items || [];
-
-      if (!items.length) {
-        elStatus.textContent = "Carpeta vacía.";
-        return;
-      }
-
-      elStatus.textContent = `Items: ${items.length}`;
-      elTbl.style.display = "";
-
-      for (const it of items) {
-
-        const tr = document.createElement("tr");
-
-        tr.onclick = async () => {
-          if (it.type === "folder") {
-            stack.push(currentFolderId);
-            load(it.id);
-          } else {
-            const openData = await fetchJson(
-              `${apiBase}/box/open?item_type=file&item_id=${it.id}`
-            );
-            document.getElementById("viewer").src = openData.preview_url;
-          }
-        };
-
-        const tdIcon = document.createElement("td");
-        tdIcon.innerHTML = it.type === "folder" ? "📁" : "📄";
-
-        const tdName = document.createElement("td");
-        tdName.innerHTML = `<b>${it.name}</b>`;
-
-        const tdId = document.createElement("td");
-        tdId.textContent = it.id;
-
-        const tdAct = document.createElement("td");
-
-        if (it.type === "folder") {
-          const btn = document.createElement("button");
-          btn.className = "btn btn-sm btn-primary";
-          btn.textContent = "Entrar";
-
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            stack.push(currentFolderId);
-            load(it.id);
-          };
-
-          tdAct.appendChild(btn);
-
-        } else {
-          const btn = document.createElement("button");
-          btn.className = "btn btn-sm btn-success";
-          btn.textContent = "Ver";
-
-          btn.onclick = async (e) => {
-            e.stopPropagation();
-            const openData = await fetchJson(
-              `${apiBase}/box/open?item_type=file&item_id=${it.id}`
-            );
-            document.getElementById("viewer").src = openData.preview_url;
-          };
-
-          tdAct.appendChild(btn);
+    /**
+     * Renderiza las filas de la tabla según los items proporcionados (soporta filtrado)
+     */
+    function renderTable(items) {
+        elBody.innerHTML = "";
+        if (!items.length) {
+            elBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">No se encontraron elementos</td></tr>';
+            return;
         }
 
-        const btnRename = document.createElement("button");
-        btnRename.className = "btn btn-sm btn-warning";
-        btnRename.textContent = "✏️";
+        items.forEach(it => {
+            const tr = document.createElement("tr");
+            
+            // Acción al hacer click en la fila
+            tr.onclick = async () => {
+                if (it.type === "folder") {
+                    stack.push(currentFolderId);
+                    load(it.id);
+                } else {
+                    openFile(it);
+                }
+            };
 
-        btnRename.onclick = async (e) => {
-          e.stopPropagation();
+            const iconHtml = getFileIcon(it);
+            
+            tr.innerHTML = `
+                <td class="py-3">
+                    <div class="d-flex align-items-center">
+                        ${iconHtml}
+                        <span class="fw-bold" style="color: #002b49; font-size: 0.9rem;">${it.name}</span>
+                    </div>
+                </td>
+                <td class="text-muted small py-3">${it.id}</td>
+                <td class="text-end py-3">
+                    <div class="d-flex justify-content-end gap-1">
+                        ${it.type === 'folder' 
+                            ? `<button class="action-btn btn-view" title="Abrir"><i class="bi bi-box-arrow-in-right"></i></button>`
+                            : `<button class="action-btn btn-view btn-ver-archivo" data-id="${it.id}" title="Ver"><i class="bi bi-eye-fill"></i></button>`
+                        }
+                        <button class="action-btn btn-edit btn-rename" data-id="${it.id}" data-name="${it.name}" data-type="${it.type}" title="Renombrar"><i class="bi bi-pencil-fill"></i></button>
+                        <button class="action-btn btn-sync" title="Acciones"><i class="bi bi-share-fill"></i></button>
+                    </div>
+                </td>
+            `;
 
-          const newName = prompt("Nuevo nombre:", it.name);
-          if (!newName || !newName.trim()) return;
+            // Prevenir propagación en botones de acción
+            tr.querySelectorAll('.action-btn').forEach(btn => {
+                btn.onclick = (e) => e.stopPropagation();
+            });
 
-          const formData = new FormData();
-          formData.append("item_type", it.type);
-          formData.append("item_id", it.id);
-          formData.append("new_name", newName);
+            // Evento para Ver (Solo archivos)
+            const btnVer = tr.querySelector('.btn-ver-archivo');
+            if (btnVer) {
+                btnVer.onclick = (e) => {
+                    e.stopPropagation();
+                    openFile(it);
+                };
+            }
 
-          const res = await fetch(`${apiBase}/box/rename`, {
-            method: "POST",
-            body: formData
-          });
+            // Evento para Renombrar
+            tr.querySelector('.btn-rename').onclick = async (e) => {
+                e.stopPropagation();
+                const newName = prompt("Nuevo nombre:", it.name);
+                if (!newName || !newName.trim()) return;
 
-          if (!res.ok) {
-            alert(await res.text());
-            return;
-          }
+                const formData = new FormData();
+                formData.append("item_type", it.type);
+                formData.append("item_id", it.id);
+                formData.append("new_name", newName);
 
-          alert("Renombrado");
-          load(currentFolderId);
-        };
+                try {
+                    const res = await fetch(`${apiBase}/box/rename`, { method: "POST", body: formData });
+                    if (!res.ok) throw new Error(await res.text());
+                    load(currentFolderId);
+                } catch (err) { alert(err.message); }
+            };
 
-        tdAct.appendChild(btnRename);
-
-        tr.appendChild(tdIcon);
-        tr.appendChild(tdName);
-        tr.appendChild(tdId);
-        tr.appendChild(tdAct);
-
-        elBody.appendChild(tr);
-      }
-
-    } catch (e) {
-      elStatus.textContent = "Error: " + e.message;
+            elBody.appendChild(tr);
+        });
     }
-  }
 
-  // =========================
-  // BOTONES BASE
-  // =========================
-
-  document.getElementById("btnBack").onclick = () => {
-    const prev = stack.pop();
-    load(prev || "");
-  };
-
-  document.getElementById("btnUpload").onclick = async () => {
-    const file = document.getElementById("fileUpload").files[0];
-    if (!file) return alert("Seleccione archivo");
-
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("folder_id", currentFolderId);
-
-    const res = await fetch(`${apiBase}/box/upload`, {
-      method: "POST",
-      body: fd
-    });
-
-    if (!res.ok) return alert(await res.text());
-
-    alert("Subido");
-    load(currentFolderId);
-  };
-
-  document.getElementById("btnNewFolder").onclick = async () => {
-    const name = prompt("Nombre carpeta:");
-    if (!name) return;
-
-    const fd = new FormData();
-    fd.append("name", name);
-    fd.append("parent_id", currentFolderId);
-
-    const res = await fetch(`${apiBase}/box/mkdir`, {
-      method: "POST",
-      body: fd
-    });
-
-    if (!res.ok) return alert(await res.text());
-
-    load(currentFolderId);
-  };
-
-  // =========================
-  // PROCESOS (SYNC + CARPETEO)
-  // =========================
-
-  let syncInterval = null;
-
-  function startProgress(text) {
-    document.getElementById("syncContainer").style.display = "block";
-    document.getElementById("syncBar").style.width = "0%";
-    document.getElementById("syncText").textContent = text;
-  }
-
-  function startPolling() {
-    if (syncInterval) clearInterval(syncInterval);
-    syncInterval = setInterval(updateSyncStatus, 2000);
-  }
-
-  // 🔄 SYNC
-  document.getElementById("btnSync").onclick = async () => {
-    startProgress("Iniciando sincronización...");
-    await fetch(`${apiBase}/sync-projects`, { method: "POST" });
-    startPolling();
-  };
-
-  // 📁 CARPETEO
-  document.getElementById("btnCarpeteo").onclick = async () => {
-
-    currentFolderId = "";  // 🔥 RESET
-
-    startProgress("Iniciando carpeteo...");
-
-    await fetch(`${apiBase}/create-carpeteo`, { method: "POST" });
-
-    startPolling();
-  };
-
-  // 📊 STATUS
-  async function updateSyncStatus() {
-    try {
-      const res = await fetch(`${apiBase}/sync-status`);
-      const data = await res.json();
-
-      if (data.status === "idle") return;
-
-      const percent = data.total > 0
-        ? Math.round((data.current / data.total) * 100)
-        : 0;
-
-      document.getElementById("syncBar").style.width = percent + "%";
-
-      document.getElementById("syncText").textContent =
-        `${data.project || "Procesando..."} (${data.current}/${data.total}) - ${percent}%`;
-
-      if (data.status === "done") {
-        clearInterval(syncInterval);
-        document.getElementById("syncText").textContent = "✅ Proceso completado";
-        load(currentFolderId);
-      }
-
-      if (data.status === "error") {
-        clearInterval(syncInterval);
-        document.getElementById("syncText").textContent =
-          "❌ Error: " + data.project;
-      }
-
-    } catch (e) {
-      console.error("Error:", e);
+    /**
+     * Abre un archivo en el visor
+     */
+    async function openFile(it) {
+        try {
+            elFileName.textContent = it.name;
+            elViewer.style.display = "none";
+            elPlaceholder.innerHTML = '<div class="spinner-border text-primary"></div>';
+            
+            const openData = await fetchJson(`${apiBase}/box/open?item_type=file&item_id=${it.id}`);
+            elViewer.src = openData.preview_url;
+            elViewer.style.display = "block";
+            elPlaceholder.innerHTML = "";
+        } catch (e) {
+            elPlaceholder.innerHTML = `<i class="bi bi-exclamation-triangle text-danger"></i><p class="small mt-2">${e.message}</p>`;
+        }
     }
-  }
 
-  // INIT
-  load();
+    /**
+     * Filtrado en tiempo real (Búsqueda local)
+     */
+    elSearch.oninput = () => {
+        const query = elSearch.value.toLowerCase().trim();
+        const filtered = allItems.filter(it => it.name.toLowerCase().includes(query));
+        renderTable(filtered);
+    };
 
+    /**
+     * Eventos de Botones Principales
+     */
+    document.getElementById("btnBack").onclick = () => {
+        const prev = stack.pop();
+        load(prev || "");
+    };
+
+    document.getElementById("fileUpload").onchange = () => {
+        document.getElementById("btnUpload").click();
+    };
+
+    document.getElementById("btnUpload").onclick = async () => {
+        const file = document.getElementById("fileUpload").files[0];
+        if (!file) return;
+
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("folder_id", currentFolderId);
+
+        try {
+            const res = await fetch(`${apiBase}/box/upload`, { method: "POST", body: fd });
+            if (!res.ok) throw new Error(await res.text());
+            load(currentFolderId);
+        } catch (err) { alert(err.message); }
+    };
+
+    document.getElementById("btnNewFolder").onclick = async () => {
+        const name = prompt("Nombre carpeta:");
+        if (!name) return;
+        const fd = new FormData();
+        fd.append("name", name);
+        fd.append("parent_id", currentFolderId);
+        try {
+            const res = await fetch(`${apiBase}/box/mkdir`, { method: "POST", body: fd });
+            if (!res.ok) throw new Error(await res.text());
+            load(currentFolderId);
+        } catch (err) { alert(err.message); }
+    };
+
+    // --- PROCESOS SYNC Y CARPETEO ---
+    let syncInterval = null;
+
+    function startPolling() {
+        if (syncInterval) clearInterval(syncInterval);
+        syncInterval = setInterval(updateSyncStatus, 2000);
+    }
+
+    document.getElementById("btnSync").onclick = async () => {
+        document.getElementById("syncContainer").style.display = "block";
+        document.getElementById("syncBar").style.width = "0%";
+        document.getElementById("syncText").textContent = "Iniciando sincronización...";
+        await fetch(`${apiBase}/sync-projects`, { method: "POST" });
+        startPolling();
+    };
+
+    document.getElementById("btnCarpeteo").onclick = async () => {
+        currentFolderId = "";
+        document.getElementById("syncContainer").style.display = "block";
+        document.getElementById("syncBar").style.width = "0%";
+        document.getElementById("syncText").textContent = "Iniciando carpeteo...";
+        await fetch(`${apiBase}/create-carpeteo`, { method: "POST" });
+        startPolling();
+    };
+
+    async function updateSyncStatus() {
+        try {
+            const res = await fetch(`${apiBase}/sync-status`);
+            const data = await res.json();
+            if (data.status === "idle") return;
+
+            const percent = data.total > 0 ? Math.round((data.current / data.total) * 100) : 0;
+            document.getElementById("syncBar").style.width = percent + "%";
+            document.getElementById("syncPercent").textContent = percent + "%";
+            document.getElementById("syncText").textContent = `${data.project || "Procesando..."} (${data.current}/${data.total})`;
+
+            if (data.status === "done") {
+                clearInterval(syncInterval);
+                document.getElementById("syncText").textContent = "✅ Proceso completado";
+                load(currentFolderId);
+                setTimeout(() => { document.getElementById("syncContainer").style.display = "none"; }, 3000);
+            }
+            if (data.status === "error") {
+                clearInterval(syncInterval);
+                document.getElementById("syncText").textContent = "❌ Error: " + data.project;
+            }
+        } catch (e) { console.error("Error:", e); }
+    }
+
+    // Inicialización
+    load();
 </script>
+
+<!-- 
+  ==========================================================================
+  CÓDIGO ORIGINAL COMENTADO (PARA REFERENCIA)
+  ==========================================================================
+  
+  <div class="card">
+    <h2 style="margin-bottom:10px;">Explorador Box</h2>
+    <p class="sub" style="margin-bottom:10px;">
+      Navega por la carpeta raíz configurada (BOX_ROOT_FOLDER_ID).
+    </p>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div style="display:flex; gap:10px; align-items:center;">
+        <label style="background:#f5f7fa; padding:6px 12px; border-radius:6px; border:1px solid #ddd; cursor:pointer;">
+          📄 Seleccionar archivo
+          <input type="file" id="fileUpload" style="display:none;">
+        </label>
+        <button class="btn btn-success" id="btnUpload">⬆ Subir</button>
+        <button class="btn btn-secondary" id="btnBack">⬅ Atrás</button>
+        <button class="btn btn-primary" id="btnNewFolder">📁 Nueva carpeta</button>
+        <button class="btn btn-warning" id="btnSync">🔄 Sincronizar</button>
+        <button class="btn btn-info" id="btnCarpeteo">📁 Crear Carpeteo</button>
+        <div id="syncContainer" style="margin-top:10px; display:none;">
+          <div style="font-size:13px; margin-bottom:4px;">
+            <span id="syncText">Iniciando...</span>
+          </div>
+          <div style="width:100%; background:#eee; border-radius:6px; overflow:hidden;">
+            <div id="syncBar" style="width:0%; height:20px; background:#28a745;"></div>
+          </div>
+        </div>
+      </div>
+      <span class="hint" id="crumb">Ruta: (root)</span>
+    </div>
+    <div style="display:flex; gap:16px; height:650px;">
+      <div style="width:40%; border-right:1px solid #eee; padding-right:10px; overflow:auto;">
+        <p id="status">Cargando...</p>
+        <table class="table" id="tbl" style="display:none;">
+          <thead>
+            <tr><th></th><th>Nombre</th><th>ID</th><th></th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div style="width:60%; padding-left:10px;">
+        <div style="font-weight:700; margin-bottom:6px;">Vista previa</div>
+        <div style="border:1px solid #ddd; border-radius:10px; overflow:hidden; height:600px;">
+          <iframe id="viewer" style="width:100%; height:100%; border:none;"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  (Script original omitido en este comentario por brevedad, ver historial de versiones)
+-->

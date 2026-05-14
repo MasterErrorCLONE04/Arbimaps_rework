@@ -21,10 +21,58 @@
 
   <section class="container-fluid">
     <div class="row">
-      <div class="col-lg-7 border">
+      <div class="col-12 col-lg-5 p-2">
+        <div class="card card-dashboard mapa-proyecto h-100">
+          <div
+            class="card-header p-3 text-white"
+            style="
+              background-color: var(--azulprincipal-500);
+              border-top-left-radius: 15px;
+              border-top-right-radius: 15px;
+            "
+          >
+            <div class="d-flex gap-2 align-items-center">
+              <i class="bi bi-crosshair2 fs-4"></i>
+              <div class="d-flex flex-column text-white">
+                <p class="fw-bold mb-0 text-white">Visor de predios</p>
+                <small class="fw-light text-white"
+                  >Visualización espacial de predios</small
+                >
+              </div>
+            </div>
+          </div>
+          <div
+            class="card-body p-0 m-0 position-relative overflow-hidden d-flex flex-column"
+            style="
+              border-bottom-left-radius: 15px;
+              border-bottom-right-radius: 15px;
+            "
+          >
+            <div
+              id="map"
+              class="w-100 h-100 m-0 p-0"
+              style="min-height: 400px"
+            ></div>
+            <div
+              class="vp-map-tools position-absolute bottom-0 end-0 mb-2 me-2 d-flex flex-column gap-2 align-items-end"
+              style="z-index: 1000"
+            >
+              <button
+                type="button"
+                class="btn btn-sm shadow-sm border-0 fw-bold px-3 mt-auto"
+                id="btnZoomProyecto"
+              >
+                <i class="bi bi-eye-fill me-1"></i> Ver proyecto
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7 px-0">
         <div class="container-fluid">
-          <div class="row ">
-            <div class="col-12  p-2">
+          <div class="row">
+            <div class="col-12 col-md-6 p-2">
               <div class="card card-dashboard">
                 <div class="card-body p-3 d-flex flex-column">
                   <p style="color: #002f55; font-weight: 800">
@@ -49,7 +97,7 @@
                         <small
                           class="fw-bold"
                           style="color: #002f55; font-size: 12px"
-                          >Fecha de inicio</small
+                          >Inicio</small
                         >
                         <small
                           class="fw-light"
@@ -76,23 +124,23 @@
                         <small
                           class="fw-bold"
                           style="color: #002f55; font-size: 12px"
-                          >Fecha de finalización</small
+                          >Finalización</small
                         >
                         <small
                           class="fw-light"
                           style="color: #002f55; font-size: 12px"
-                          >01/01/2024 (Estimado)</small
+                          >01/01/2024 (Aprox)</small
                         >
                       </div>
                     </div>
                   </div>
 
                   <div
-                    class="d-flex  align-items-center justify-content-center gap-2 py-3"
+                    class="d-flex flex-column align-items-center justify-content-center gap-2 py-3"
                   >
                     <div
                       class="d-flex justify-content-center align-items-center grafico-torta"
-                      style="width: 60%"
+                      style="width: 50%"
                     >
                       <canvas id="myChart" width="100%" height="200"></canvas>
                     </div>
@@ -135,7 +183,7 @@
               </div>
             </div>
 
-            <div class="col-12 col-lg p-2">
+            <div class="col-12 col-md-6 p-2">
               <div class="card card-dashboard h-100">
                 <div
                   class="card-body p-3 d-flex flex-column justify-content-center"
@@ -154,7 +202,11 @@
                         font-weight: 800;
                       "
                     >
-                      <small class="fw-bold text-white">47 Asignaciones</small>
+                      <small
+                        class="fw-bold text-white"
+                        style="font-size: 0.7rem !important"
+                        >47
+                      </small>
                     </div>
                   </div>
 
@@ -248,55 +300,6 @@
         </div>
       </div>
 
-      <div class="col-12 col-lg-5 p-2">
-        <div class="card card-dashboard mapa-proyecto h-100">
-          <div
-            class="card-header p-3 text-white"
-            style="
-              background-color: var(--azulprincipal-500);
-              border-top-left-radius: 15px;
-              border-top-right-radius: 15px;
-            "
-          >
-            <div class="d-flex gap-2 align-items-center">
-              <i class="bi bi-crosshair2 fs-4"></i>
-              <div class="d-flex flex-column text-white">
-                <p class="fw-bold mb-0 text-white">Visor de predios</p>
-                <small class="fw-light text-white"
-                  >Visualización espacial de predios</small
-                >
-              </div>
-            </div>
-          </div>
-          <div
-            class="card-body p-0 m-0 position-relative overflow-hidden d-flex flex-column"
-            style="
-              border-bottom-left-radius: 15px;
-              border-bottom-right-radius: 15px;
-            "
-          >
-            <div
-              id="map"
-              class="w-100 h-100 m-0 p-0"
-              style="min-height: 400px"
-            ></div>
-            <div
-              class="vp-map-tools position-absolute bottom-0 end-0 mb-2 me-2 d-flex flex-column gap-2 align-items-end"
-              style="z-index: 1000"
-            >
-              <button
-                type="button"
-                class="btn btn-sm shadow-sm border-0 fw-bold px-3 mt-auto"
-                id="btnZoomProyecto"
-              >
-                <i class="bi bi-eye-fill me-1"></i> Ver proyecto
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- col-12: Avance por coordinador -->
       <div class="col-12 p-2">
         <div class="row">
           <!-- ======== PANEL IZQUIERDO: tabla ======== -->
@@ -360,7 +363,7 @@
                 <table class="coord-table w-100" id="coordTable">
                   <thead>
                     <tr>
-                      <th>Coordinador</th>
+                      <th class="text-center">Coordinador</th>
                       <th class="text-center">Reconocedores</th>
                       <th class="text-center">Asignaciones</th>
                       <th>Avance</th>
@@ -460,7 +463,127 @@
         </div>
         <!-- /row g-0 -->
       </div>
-      <!-- /col-12 -->
+
+      <div class="col-12 p-2">
+        <div class="card card-dashboard h-100">
+          <!-- Header -->
+          <div
+            class="card-header bg-azulprincipal-500 d-flex align-items-center justify-content-between flex-wrap gap-2 px-4 py-3"
+          >
+            <div>
+              <p class="mb-0 fw-bold text-white">Detalles de asignación</p>
+              <small class="text-white fw-light"
+                >Consulta información del avance del proyecto por
+                asignación</small
+              >
+            </div>
+
+            <div
+              class="rounded-2 p-1 px-2"
+              style="
+                background-color: #6aa4d4;
+                color: #003456;
+                font-weight: 800;
+              "
+            >
+              <small id="assignCount" class="fw-bold text-white"
+                >0 Asignaciones</small
+              >
+            </div>
+          </div>
+
+          <!-- Filtros -->
+          <div class="assignment-filters">
+            <div class="filter-group">
+              <label>Buscar</label>
+              <input id="assignSearch" type="text" class="filter-input" />
+            </div>
+
+            <div class="d-flex justify-content-center gap-3">
+              <div class="filter-group">
+                <select
+                  id="assignFilterStatus"
+                  class="filter-select form-select"
+                >
+                  <option value="" selected disabled>Filtrar por estado</option>
+                  <option value="En campo">En campo</option>
+                  <option value="Control_calidad">Control calidad</option>
+                  <option value="Devuelta a campo">Devuelta a campo</option>
+                  <option value="En aprobación">En aprobación</option>
+                  <option value="En sincronización">En sincronización</option>
+                  <option value="Sincronizado">Sincronizado</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <select
+                  id="assignFilterCoord"
+                  class="filter-select form-select"
+                >
+                  <option value="" selected disabled>
+                    Filtrar por Coordinador
+                  </option>
+                  <option value="Coordinador1">Coordinador 1</option>
+                  <option value="Coordinador2">Coordinador 2</option>
+                  <option value="Coordinador3">Coordinador 3</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <button
+                  id="btnResetAssignFilters"
+                  class="btn btn-sm d-flex align-items-center gap-2 text-white btn-limpiar"
+                  title="Limpiar filtros"
+                  style="
+                    border-radius: 8px;
+                    padding: 5px 12px;
+                    height: 31px;
+                    background-color: var(--azulprincipal-500);
+                  "
+                >
+                  <i class="bi bi-arrow-counterclockwise"></i>
+                  <span style="font-size: 0.82rem">Limpiar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla -->
+          <div
+            class="table-responsive px-4 pb-3"
+            style="background-color: #f8fbfe"
+          >
+            <table class="assignment-table">
+              <thead>
+                <tr>
+                  <th>Asignación</th>
+                  <th>Coordinador</th>
+                  <th>Reconocedor</th>
+                  <th>Estado</th>
+                  <th>Fecha de creación</th>
+                  <th>Fecha de entrega</th>
+                  <th>Tiempo restante</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="assignTableBody">
+                <!-- Renderizado por JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Footer -->
+          <div
+            class="d-flex align-items-center justify-content-between flex-wrap gap-2 px-4 py-3"
+            style="border-top: 1px solid #eef5fb"
+          >
+            <small id="assignPagInfo" style="color: #335977"></small>
+            <div id="assignPagBtns" class="d-flex gap-1 align-items-center">
+              <!-- Renderizado por JS -->
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
@@ -468,6 +591,7 @@
 <!-- ============================================================
      MODAL: DETALLE COORDINADOR (ESTADO ASIGNACIONES)
      ============================================================ -->
+
 <div class="modal fade" id="modalDetalleCoord" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content modal-coord-content">
@@ -477,11 +601,16 @@
           <div class="col-12 col-lg-8">
             <div class="d-flex align-items-center justify-content-between mb-3">
               <h5 class="fw-bold mb-0">Estado de las asignaciones</h5>
-              <span
+              <small
                 class="badge rounded-pill px-3 py-2"
-                style="background: #6aa4d4; color: #fff; font-weight: 700"
+                style="
+                  background: #6aa4d4;
+                  color: #fff;
+                  font-weight: 700;
+                  border-radius: 10px !important;
+                "
                 id="modalAsignacionesTotal"
-                >0 Asignaciones</span
+                >0 Asignaciones</small
               >
             </div>
 
@@ -509,6 +638,7 @@
                 style="
                   background: #003456;
                   color: #fff;
+                  border-radius: 10px !important;
                   font-size: 0.85rem;
                   font-weight: 700;
                 "
@@ -593,326 +723,326 @@
 
 <!-- script para de gráficos de donas -->
 <script>
-  const rp = "{{ rp }}";
+    const rp = "{{ rp }}";
 
-  function initPanelControlChart() {
-      const canvas1 = document.getElementById('myChart');
-      const canvas2 = document.getElementById('myChart2');
-      if (typeof Chart === 'undefined') return;
+    function initPanelControlChart() {
+        const canvas1 = document.getElementById('myChart');
+        const canvas2 = document.getElementById('myChart2');
+        if (typeof Chart === 'undefined') return;
 
-      // --- Chart 1 ---
-      if (canvas1) {
-          const completedPercent = 25;
-          const centerTextPlugin1 = {
-              id: 'centerTextPlugin1',
-              afterDraw(chart) {
-                  const { ctx, chartArea } = chart;
-                  if (!chartArea) return;
+        // --- Chart 1 ---
+        if (canvas1) {
+            const completedPercent = 25;
+            const centerTextPlugin1 = {
+                id: 'centerTextPlugin1',
+                afterDraw(chart) {
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return;
 
-                  const centerX = (chartArea.left + chartArea.right) / 2;
-                  const centerY = (chartArea.top + chartArea.bottom) / 2;
+                    const centerX = (chartArea.left + chartArea.right) / 2;
+                    const centerY = (chartArea.top + chartArea.bottom) / 2;
 
-                  ctx.save();
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'middle';
-                  ctx.fillStyle = '#003456';
-                  ctx.font = '800 28px Poppins, Arial, sans-serif';
-                  ctx.fillText(`${completedPercent} %`, centerX, centerY - 13);
-                  ctx.font = '500 12px Poppins, Arial, sans-serif';
-                  ctx.fillText('Completado', centerX, centerY + 15);
-                  ctx.restore();
-              }
-          };
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#003456';
+                    ctx.font = '800 28px Poppins, Arial, sans-serif';
+                    ctx.fillText(`${completedPercent} %`, centerX, centerY - 13);
+                    ctx.font = '500 12px Poppins, Arial, sans-serif';
+                    ctx.fillText('Completado', centerX, centerY + 15);
+                    ctx.restore();
+                }
+            };
 
-          requestAnimationFrame(() => {
-              new Chart(canvas1, {
-                  type: 'doughnut',
-                  data: {
-                      datasets: [{
-                          label: 'Total de Predios',
-                          data: [281, 3381, 3900],
-                          backgroundColor: ['#00A82D', '#003456', '#DCECF8'],
-                          borderColor: ['#00A82D', '#003456', '#DCECF8'],
-                          borderWidth: 1,
-                          hoverOffset: 10
-                      }]
-                  },
-                  options: {
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      cutout: '75%',
-                      animation: {
-                          animateRotate: true,
-                          animateScale: true,
-                          duration: 1200,
-                          easing: 'easeInOutQuart'
-                      },
-                      plugins: {
-                          legend: {
-                              display: false
-                          },
-                          tooltip: {
-                              callbacks: {
-                                  label: function (tooltipItem) {
-                                      return tooltipItem.raw + ' (' + ((tooltipItem.raw / 7562) * 100).toFixed(2) + '%)';
-                                  }
-                              }
-                          }
-                      }
-                  },
-                  plugins: [centerTextPlugin1]
-              });
-          });
-      }
+            requestAnimationFrame(() => {
+                new Chart(canvas1, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            label: 'Total de Predios',
+                            data: [281, 3381, 3900],
+                            backgroundColor: ['#00A82D', '#003456', '#DCECF8'],
+                            borderColor: ['#00A82D', '#003456', '#DCECF8'],
+                            borderWidth: 1,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true,
+                            duration: 1200,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (tooltipItem) {
+                                        return tooltipItem.raw + ' (' + ((tooltipItem.raw / 7562) * 100).toFixed(2) + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [centerTextPlugin1]
+                });
+            });
+        }
 
-      // --- Chart 2 ---
-      if (canvas2) {
-          const asignadosTotal = 3381;
-          const centerTextPlugin2 = {
-              id: 'centerTextPlugin2',
-              afterDraw(chart) {
-                  const { ctx, chartArea } = chart;
-                  if (!chartArea) return;
+        // --- Chart 2 ---
+        if (canvas2) {
+            const asignadosTotal = 3381;
+            const centerTextPlugin2 = {
+                id: 'centerTextPlugin2',
+                afterDraw(chart) {
+                    const { ctx, chartArea } = chart;
+                    if (!chartArea) return;
 
-                  const centerX = (chartArea.left + chartArea.right) / 2;
-                  const centerY = (chartArea.top + chartArea.bottom) / 2;
+                    const centerX = (chartArea.left + chartArea.right) / 2;
+                    const centerY = (chartArea.top + chartArea.bottom) / 2;
 
-                  ctx.save();
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'middle';
-                  ctx.fillStyle = '#003456';
-                  ctx.font = '800 25px Poppins, Arial, sans-serif';
-                  ctx.fillText(`${asignadosTotal}`, centerX, centerY - 13);
-                  ctx.font = '500 11px Poppins, Arial, sans-serif';
-                  ctx.fillText('Predios asignados', centerX, centerY + 15);
-                  ctx.restore();
-              }
-          };
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#003456';
+                    ctx.font = '800 25px Poppins, Arial, sans-serif';
+                    ctx.fillText(`${asignadosTotal}`, centerX, centerY - 13);
+                    ctx.font = '500 11px Poppins, Arial, sans-serif';
+                    ctx.fillText('Predios asignados', centerX, centerY + 15);
+                    ctx.restore();
+                }
+            };
 
-          requestAnimationFrame(() => {
-              new Chart(canvas2, {
-                  type: 'doughnut',
-                  data: {
-                      datasets: [{
-                          label: 'Estado de asignaciones',
-                          data: [512, 485, 321, 897, 689, 281],
-                          backgroundColor: ['#6aa4d4', '#f4c344', '#d92c2c', '#f07b22', '#003456', '#00a82d'],
-                          borderColor: ['#6aa4d4', '#f4c344', '#d92c2c', '#f07b22', '#003456', '#00a82d'],
-                          borderWidth: 1,
-                          hoverOffset: 10
-                      }]
-                  },
-                  options: {
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      cutout: '75%',
-                      animation: {
-                          animateRotate: true,
-                          animateScale: true,
-                          duration: 1200,
-                          easing: 'easeInOutQuart'
-                      },
-                      plugins: {
-                          legend: {
-                              display: false
-                          },
-                          tooltip: {
-                              callbacks: {
-                                  label: function (tooltipItem) {
-                                      return tooltipItem.raw + ' (' + ((tooltipItem.raw / asignadosTotal) * 100).toFixed(2) + '%)';
-                                  }
-                              }
-                          }
-                      }
-                  },
-                  plugins: [centerTextPlugin2]
-              });
-          });
-      }
-  }
+            requestAnimationFrame(() => {
+                new Chart(canvas2, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            label: 'Estado de asignaciones',
+                            data: [512, 485, 321, 897, 689, 281],
+                            backgroundColor: ['#6aa4d4', '#f4c344', '#d92c2c', '#f07b22', '#003456', '#00a82d'],
+                            borderColor: ['#6aa4d4', '#f4c344', '#d92c2c', '#f07b22', '#003456', '#00a82d'],
+                            borderWidth: 1,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '75%',
+                        animation: {
+                            animateRotate: true,
+                            animateScale: true,
+                            duration: 1200,
+                            easing: 'easeInOutQuart'
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (tooltipItem) {
+                                        return tooltipItem.raw + ' (' + ((tooltipItem.raw / asignadosTotal) * 100).toFixed(2) + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    plugins: [centerTextPlugin2]
+                });
+            });
+        }
+    }
 
-  function initDashboardMap() {
-      const mapContainer = document.getElementById('map');
-      if (!mapContainer || typeof ol === 'undefined') return;
+    function initDashboardMap() {
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer || typeof ol === 'undefined') return;
 
-      const WMS_URL = `${rp}/proxy/wms`;
-      const GEOSERVER_LAYERS = String(
-          {{ visor_geoserver_layers | default('A_Base_Principal:Base_Principal') | tojson }}
+        const WMS_URL = `${rp}/proxy/wms`;
+        const GEOSERVER_LAYERS = String(
+            {{ visor_geoserver_layers | default('A_Base_Principal:Base_Principal') | tojson }}
       ).split(',').map(n => n.trim()).filter(Boolean);
 
-  const DEFAULT_EXTENT = [3630797.89, 1069522.77, 5709687.44, 3346020.28];
+    const DEFAULT_EXTENT = [3630797.89, 1069522.77, 5709687.44, 3346020.28];
 
-  proj4.defs(
-      "EPSG:9377",
-      "+proj=tmerc +lat_0=4 +lon_0=-73 +k=0.9992 +x_0=5000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
-  );
-  ol.proj.proj4.register(proj4);
-  const projection = ol.proj.get("EPSG:9377");
+    proj4.defs(
+        "EPSG:9377",
+        "+proj=tmerc +lat_0=4 +lon_0=-73 +k=0.9992 +x_0=5000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
+    );
+    ol.proj.proj4.register(proj4);
+    const projection = ol.proj.get("EPSG:9377");
 
-  const wmsLayers = GEOSERVER_LAYERS.map(layerName =>
-      new ol.layer.Tile({
-          source: new ol.source.TileWMS({
-              url: WMS_URL,
-              params: { 'LAYERS': layerName, 'TILED': true, 'VERSION': '1.1.0' },
-              serverType: 'geoserver',
-              crossOrigin: 'anonymous'
-          })
-      })
-  );
+    const wmsLayers = GEOSERVER_LAYERS.map(layerName =>
+        new ol.layer.Tile({
+            source: new ol.source.TileWMS({
+                url: WMS_URL,
+                params: { 'LAYERS': layerName, 'TILED': true, 'VERSION': '1.1.0' },
+                serverType: 'geoserver',
+                crossOrigin: 'anonymous'
+            })
+        })
+    );
 
-  const osmLayer = new ol.layer.Tile({
-      source: new ol.source.OSM(),
-      visible: true
-  });
+    const osmLayer = new ol.layer.Tile({
+        source: new ol.source.OSM(),
+        visible: true
+    });
 
-  const map = new ol.Map({
-      target: 'map',
-      layers: [osmLayer, ...wmsLayers],
-      view: new ol.View({
-          projection: projection,
-          center: ol.extent.getCenter(DEFAULT_EXTENT),
-          zoom: 2
-      }),
-      controls: []
-  });
+    const map = new ol.Map({
+        target: 'map',
+        layers: [osmLayer, ...wmsLayers],
+        view: new ol.View({
+            projection: projection,
+            center: ol.extent.getCenter(DEFAULT_EXTENT),
+            zoom: 2
+        }),
+        controls: []
+    });
 
-  // Zoom al proyecto
-  const btnZoom = document.getElementById('btnZoomProyecto');
-  if (btnZoom) {
-      btnZoom.addEventListener('click', () => {
-          map.getView().fit(DEFAULT_EXTENT, {
-              padding: [20, 20, 20, 20],
-              duration: 600
-          });
-      });
+    // Zoom al proyecto
+    const btnZoom = document.getElementById('btnZoomProyecto');
+    if (btnZoom) {
+        btnZoom.addEventListener('click', () => {
+            map.getView().fit(DEFAULT_EXTENT, {
+                padding: [20, 20, 20, 20],
+                duration: 600
+            });
+        });
+    }
+
+    // Cargar extent dinámico si existe
+    fetch(`${rp}/visor/project-extent`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            if (data && data.extent) {
+                map.getView().fit(data.extent, { padding: [20, 20, 20, 20], duration: 1000 });
+            }
+        })
+        .catch(err => console.warn("No se pudo cargar extent dinámico", err));
   }
 
-  // Cargar extent dinámico si existe
-  fetch(`${rp}/visor/project-extent`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-          if (data && data.extent) {
-              map.getView().fit(data.extent, { padding: [20, 20, 20, 20], duration: 1000 });
-          }
-      })
-      .catch(err => console.warn("No se pudo cargar extent dinámico", err));
-  }
+    // ================================================================
+    // AVANCE POR COORDINADOR — Datos estáticos
+    // TODO: reemplazar COORD_DATA con fetch(`${rp}/api/coordinadores/`)
+    // ================================================================
 
-  // ================================================================
-  // AVANCE POR COORDINADOR — Datos estáticos
-  // TODO: reemplazar COORD_DATA con fetch(`${rp}/api/coordinadores/`)
-  // ================================================================
+    // ================================================================
+    // AVANCE POR COORDINADOR — Datos estáticos
+    // TODO: reemplazar COORD_DATA con fetch(`${rp}/api/coordinadores/`)
+    // ================================================================
 
-  // ================================================================
-  // AVANCE POR COORDINADOR — Datos estáticos
-  // TODO: reemplazar COORD_DATA con fetch(`${rp}/api/coordinadores/`)
-  // ================================================================
+    const COORD_DATA = [
+        {
+            nombre: 'Alex Calderón', rol: 'Coordinador1', iniciales: 'AC',
+            reconocedores: 2, asignaciones: 12, predios: 1200, avance: 78,
+            dist: { campo: 240, calidad: 120, devueltos: 60, aprobacion: 60, sincronizacion: 60, sincronizado: 660 },
+            recs: [
+                { nombre: 'Carlos Vallarta', rol: 'Reconocedor', iniciales: 'CV' },
+                { nombre: 'Camilo Forero', rol: 'Reconocedor', iniciales: 'CR' }
+            ]
+        },
+        {
+            nombre: 'Juanita Rodriguez', rol: 'Coordinador2', iniciales: 'JR',
+            reconocedores: 4, asignaciones: 18, predios: 1895, avance: 26,
+            dist: { campo: 758, calidad: 284, devueltos: 95, aprobacion: 95, sincronizacion: 95, sincronizado: 568 },
+            recs: [
+                { nombre: 'Andrés López', rol: 'Reconocedor', iniciales: 'AL' },
+                { nombre: 'Marta Díaz', rol: 'Reconocedor', iniciales: 'MD' },
+                { nombre: 'Pedro Ortiz', rol: 'Reconocedor', iniciales: 'PO' },
+                { nombre: 'Elena Ruiz', rol: 'Reconocedor', iniciales: 'ER' }
+            ]
+        },
+        {
+            nombre: 'Juan Camilo Terán', rol: 'Coordinador3', iniciales: 'JC',
+            reconocedores: 8, asignaciones: 17, predios: 986, avance: 59,
+            dist: { campo: 247, calidad: 148, devueltos: 79, aprobacion: 99, sincronizacion: 68, sincronizado: 345 },
+            recs: [
+                { nombre: 'Samuel G.', rol: 'Reconocedor', iniciales: 'SG' },
+                { nombre: 'Lucía M.', rol: 'Reconocedor', iniciales: 'LM' }
+            ]
+        },
+        {
+            nombre: 'María Fernanda López', rol: 'Coordinador4', iniciales: 'ML',
+            reconocedores: 5, asignaciones: 14, predios: 1540, avance: 45,
+            dist: { campo: 385, calidad: 231, devueltos: 77, aprobacion: 154, sincronizacion: 77, sincronizado: 616 },
+            recs: [
+                { nombre: 'Felipe S.', rol: 'Reconocedor', iniciales: 'FS' },
+                { nombre: 'Clara J.', rol: 'Reconocedor', iniciales: 'CJ' }
+            ]
+        },
+        {
+            nombre: 'Carlos Andrés Reyes', rol: 'Coordinador5', iniciales: 'CR',
+            reconocedores: 3, asignaciones: 10, predios: 870, avance: 62,
+            dist: { campo: 174, calidad: 130, devueltos: 52, aprobacion: 87, sincronizacion: 87, sincronizado: 340 },
+            recs: [
+                { nombre: 'Héctor B.', rol: 'Reconocedor', iniciales: 'HB' }
+            ]
+        }
+    ];
 
-  const COORD_DATA = [
-      {
-          nombre: 'Alex Calderón', rol: 'Coordinador1', iniciales: 'AC',
-          reconocedores: 2, asignaciones: 12, predios: 1200, avance: 78,
-          dist: { campo: 240, calidad: 120, devueltos: 60, aprobacion: 60, sincronizacion: 60, sincronizado: 660 },
-          recs: [
-              { nombre: 'Carlos Vallarta', rol: 'Reconocedor', iniciales: 'CV' },
-              { nombre: 'Camilo Forero', rol: 'Reconocedor', iniciales: 'CR' }
-          ]
-      },
-      {
-          nombre: 'Juanita Rodriguez', rol: 'Coordinador2', iniciales: 'JR',
-          reconocedores: 4, asignaciones: 18, predios: 1895, avance: 26,
-          dist: { campo: 758, calidad: 284, devueltos: 95, aprobacion: 95, sincronizacion: 95, sincronizado: 568 },
-          recs: [
-              { nombre: 'Andrés López', rol: 'Reconocedor', iniciales: 'AL' },
-              { nombre: 'Marta Díaz', rol: 'Reconocedor', iniciales: 'MD' },
-              { nombre: 'Pedro Ortiz', rol: 'Reconocedor', iniciales: 'PO' },
-              { nombre: 'Elena Ruiz', rol: 'Reconocedor', iniciales: 'ER' }
-          ]
-      },
-      {
-          nombre: 'Juan Camilo Terán', rol: 'Coordinador3', iniciales: 'JC',
-          reconocedores: 8, asignaciones: 17, predios: 986, avance: 59,
-          dist: { campo: 247, calidad: 148, devueltos: 79, aprobacion: 99, sincronizacion: 68, sincronizado: 345 },
-          recs: [
-              { nombre: 'Samuel G.', rol: 'Reconocedor', iniciales: 'SG' },
-              { nombre: 'Lucía M.', rol: 'Reconocedor', iniciales: 'LM' }
-          ]
-      },
-      {
-          nombre: 'María Fernanda López', rol: 'Coordinador4', iniciales: 'ML',
-          reconocedores: 5, asignaciones: 14, predios: 1540, avance: 45,
-          dist: { campo: 385, calidad: 231, devueltos: 77, aprobacion: 154, sincronizacion: 77, sincronizado: 616 },
-          recs: [
-              { nombre: 'Felipe S.', rol: 'Reconocedor', iniciales: 'FS' },
-              { nombre: 'Clara J.', rol: 'Reconocedor', iniciales: 'CJ' }
-          ]
-      },
-      {
-          nombre: 'Carlos Andrés Reyes', rol: 'Coordinador5', iniciales: 'CR',
-          reconocedores: 3, asignaciones: 10, predios: 870, avance: 62,
-          dist: { campo: 174, calidad: 130, devueltos: 52, aprobacion: 87, sincronizacion: 87, sincronizado: 340 },
-          recs: [
-              { nombre: 'Héctor B.', rol: 'Reconocedor', iniciales: 'HB' }
-          ]
-      }
-  ];
+    const DIST_COLORS = [
+        { key: 'campo', color: '#6aa4d4', label: 'En campo' },
+        { key: 'calidad', color: '#f4c344', label: 'En control de calidad' },
+        { key: 'devueltos', color: '#d92c2c', label: 'Devuelta a campo' },
+        { key: 'aprobacion', color: '#f07b22', label: 'En aprobación' },
+        { key: 'sincronizacion', color: '#003456', label: 'En sincronización' },
+        { key: 'sincronizado', color: '#00a82d', label: 'Sicronizado' },
+    ];
 
-  const DIST_COLORS = [
-      { key: 'campo', color: '#6aa4d4', label: 'En campo' },
-      { key: 'calidad', color: '#f4c344', label: 'En control de calidad' },
-      { key: 'devueltos', color: '#d92c2c', label: 'Devuelta a campo' },
-      { key: 'aprobacion', color: '#f07b22', label: 'En aprobación' },
-      { key: 'sincronizacion', color: '#003456', label: 'En sincronización' },
-      { key: 'sincronizado', color: '#00a82d', label: 'Sicronizado' },
-  ];
+    const COORD_ROWS_PER_PAGE = 3;
+    let coordPage = 1;
+    let coordSearch = '';
+    let chartModalInstance = null;
 
-  const COORD_ROWS_PER_PAGE = 3;
-  let coordPage = 1;
-  let coordSearch = '';
-  let chartModalInstance = null;
+    function getCoordFiltered() {
+        if (!coordSearch) return COORD_DATA.map((c, i) => ({ ...c, originalIndex: i }));
+        const q = coordSearch.toLowerCase();
+        return COORD_DATA
+            .map((c, i) => ({ ...c, originalIndex: i }))
+            .filter(c => c.nombre.toLowerCase().includes(q) || c.rol.toLowerCase().includes(q));
+    }
 
-  function getCoordFiltered() {
-      if (!coordSearch) return COORD_DATA.map((c, i) => ({ ...c, originalIndex: i }));
-      const q = coordSearch.toLowerCase();
-      return COORD_DATA
-          .map((c, i) => ({ ...c, originalIndex: i }))
-          .filter(c => c.nombre.toLowerCase().includes(q) || c.rol.toLowerCase().includes(q));
-  }
+    function buildSegmentedBar(dist, height) {
+        const total = Object.values(dist).reduce((a, b) => a + b, 0);
+        if (total === 0) return '';
+        return DIST_COLORS.map(({ key, color }) => {
+            const pct = (dist[key] / total) * 100;
+            return pct > 0
+                ? `<div style="width:${pct.toFixed(2)}%; background:${color}; height:${height}px; display:inline-block; vertical-align:top;"></div>`
+                : '';
+        }).join('');
+    }
 
-  function buildSegmentedBar(dist, height) {
-      const total = Object.values(dist).reduce((a, b) => a + b, 0);
-      if (total === 0) return '';
-      return DIST_COLORS.map(({ key, color }) => {
-          const pct = (dist[key] / total) * 100;
-          return pct > 0
-              ? `<div style="width:${pct.toFixed(2)}%; background:${color}; height:${height}px; display:inline-block; vertical-align:top;"></div>`
-              : '';
-      }).join('');
-  }
+    function renderCoordTable(page) {
+        const data = getCoordFiltered();
+        const total = data.length;
+        const totalPages = Math.max(1, Math.ceil(total / COORD_ROWS_PER_PAGE));
+        page = Math.min(page, totalPages);
+        coordPage = page;
 
-  function renderCoordTable(page) {
-      const data = getCoordFiltered();
-      const total = data.length;
-      const totalPages = Math.max(1, Math.ceil(total / COORD_ROWS_PER_PAGE));
-      page = Math.min(page, totalPages);
-      coordPage = page;
+        const start = (page - 1) * COORD_ROWS_PER_PAGE;
+        const slice = data.slice(start, start + COORD_ROWS_PER_PAGE);
 
-      const start = (page - 1) * COORD_ROWS_PER_PAGE;
-      const slice = data.slice(start, start + COORD_ROWS_PER_PAGE);
+        const badge = document.getElementById('coordCount');
+        if (badge) badge.textContent = `${COORD_DATA.length} Coordinadores`;
 
-      const badge = document.getElementById('coordCount');
-      if (badge) badge.textContent = `${COORD_DATA.length} Coordinadores`;
-
-      const tbody = document.getElementById('coordTableBody');
-      if (tbody) {
-          tbody.innerHTML = slice.map(c => `
+        const tbody = document.getElementById('coordTableBody');
+        if (tbody) {
+            tbody.innerHTML = slice.map(c => `
               <tr>
                   <td>
                       <div class="d-flex align-items-center gap-2">
                           <div class="coord-avatar">${c.iniciales}</div>
                           <div class="d-flex flex-column">
                               <span style="font-weight:700; color:#002f55; font-size:0.83rem;">${c.nombre}</span>
-                              <small style="color:#6aa4d4; font-size:0.72rem;">${c.rol}</small>
+                              <small style="color:var(--azulprincipal-500); font-size:0.72rem;">${c.rol}</small>
                           </div>
                       </div>
                   </td>
@@ -928,31 +1058,31 @@
                       </button>
                   </td>
               </tr>`).join('');
-      }
+        }
 
-      const info = document.getElementById('coordPagInfo');
-      if (info) {
-          const end = Math.min(start + COORD_ROWS_PER_PAGE, total);
-          info.textContent = `Mostrando ${start + 1}–${end} de ${total} resultados`;
-      }
+        const info = document.getElementById('coordPagInfo');
+        if (info) {
+            const end = Math.min(start + COORD_ROWS_PER_PAGE, total);
+            info.textContent = `Mostrando ${start + 1}–${end} de ${total} resultados`;
+        }
 
-      const pagEl = document.getElementById('coordPagBtns');
-      if (pagEl) {
-          let html = `<button class="coord-pag-btn coord-pag-arrow" data-page="${Math.max(1, page - 1)}" ${page === 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
-          html += Array.from({ length: totalPages }, (_, p) => `<button class="coord-pag-btn ${p + 1 === page ? 'activo' : ''}" data-page="${p + 1}">${p + 1}</button>`).join('');
-          html += `<button class="coord-pag-btn coord-pag-arrow" data-page="${Math.min(totalPages, page + 1)}" ${page === totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
-          pagEl.innerHTML = html;
-          pagEl.querySelectorAll('.coord-pag-btn').forEach(btn => btn.addEventListener('click', () => !btn.disabled && renderCoordTable(parseInt(btn.dataset.page))));
-      }
-      renderDistPanel(data);
-  }
+        const pagEl = document.getElementById('coordPagBtns');
+        if (pagEl) {
+            let html = `<button class="coord-pag-btn coord-pag-arrow" data-page="${Math.max(1, page - 1)}" ${page === 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
+            html += Array.from({ length: totalPages }, (_, p) => `<button class="coord-pag-btn ${p + 1 === page ? 'activo' : ''}" data-page="${p + 1}">${p + 1}</button>`).join('');
+            html += `<button class="coord-pag-btn coord-pag-arrow" data-page="${Math.min(totalPages, page + 1)}" ${page === totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
+            pagEl.innerHTML = html;
+            pagEl.querySelectorAll('.coord-pag-btn').forEach(btn => btn.addEventListener('click', () => !btn.disabled && renderCoordTable(parseInt(btn.dataset.page))));
+        }
+        renderDistPanel(data);
+    }
 
-  function renderDistPanel(data) {
-      const panel = document.getElementById('coordDistPanel');
-      if (!panel) return;
-      panel.innerHTML = data.map(c => {
-          const segBar = buildSegmentedBar(c.dist, 14);
-          return `
+    function renderDistPanel(data) {
+        const panel = document.getElementById('coordDistPanel');
+        if (!panel) return;
+        panel.innerHTML = data.map(c => {
+            const segBar = buildSegmentedBar(c.dist, 14);
+            return `
           <div>
               <div class="d-flex align-items-center justify-content-between mb-1">
                   <span style="font-weight:700; color:#002f55; font-size:0.83rem;">${c.nombre}</span>
@@ -960,29 +1090,29 @@
               </div>
               <div class="coord-dist-bar-wrap">${segBar}</div>
           </div>`;
-      }).join('');
-  }
+        }).join('');
+    }
 
-  function openCoordModal(index) {
-      const c = COORD_DATA[index];
-      if (!c) return;
+    function openCoordModal(index) {
+        const c = COORD_DATA[index];
+        if (!c) return;
 
-      // Info básica
-      document.getElementById('modalCoordNombre').textContent = c.nombre;
-      document.getElementById('modalCoordRol').textContent = c.rol;
-      document.getElementById('modalCoordAvatar').textContent = c.iniciales;
-      document.getElementById('modalAsignacionesTotal').textContent = `${c.asignaciones} Asignaciones`;
-      document.getElementById('modalCoordReconocedoresCount').textContent = `${c.reconocedores} Reconocedores`;
-      document.getElementById('modalChartTotalCenter').textContent = c.predios.toLocaleString('es-CO');
-      document.getElementById('modalLastUpdate').textContent = `Última actualización ${new Date().toLocaleDateString()} 2:00 p.m.`;
+        // Info básica
+        document.getElementById('modalCoordNombre').textContent = c.nombre;
+        document.getElementById('modalCoordRol').textContent = c.rol;
+        document.getElementById('modalCoordAvatar').textContent = c.iniciales;
+        document.getElementById('modalAsignacionesTotal').textContent = `${c.asignaciones} Asignaciones`;
+        document.getElementById('modalCoordReconocedoresCount').textContent = `${c.reconocedores} Reconocedores`;
+        document.getElementById('modalChartTotalCenter').textContent = c.predios.toLocaleString('es-CO');
+        document.getElementById('modalLastUpdate').textContent = `Última actualización ${new Date().toLocaleDateString()} 2:00 p.m.`;
 
-      // Leyenda detallada
-      const totalPredios = Object.values(c.dist).reduce((a, b) => a + b, 0);
-      const leyendaEl = document.getElementById('modalLeyendaDetallada');
-      leyendaEl.innerHTML = DIST_COLORS.map(d => {
-          const val = c.dist[d.key] || 0;
-          const pct = totalPredios > 0 ? Math.round((val / totalPredios) * 100) : 0;
-          return `
+        // Leyenda detallada
+        const totalPredios = Object.values(c.dist).reduce((a, b) => a + b, 0);
+        const leyendaEl = document.getElementById('modalLeyendaDetallada');
+        leyendaEl.innerHTML = DIST_COLORS.map(d => {
+            const val = c.dist[d.key] || 0;
+            const pct = totalPredios > 0 ? Math.round((val / totalPredios) * 100) : 0;
+            return `
           <div class="leyenda-modal-item">
               <div class="d-flex align-items-center gap-2">
                   <span class="leyenda-dot" style="background:${d.color};"></span>
@@ -990,11 +1120,11 @@
               </div>
               <span class="fw-bold">${val} <small class="text-muted fw-normal">(${pct}%)</small></span>
           </div>`;
-      }).join('');
+        }).join('');
 
-      // Lista de reconocedores
-      const listaEl = document.getElementById('modalListaReconocedores');
-      listaEl.innerHTML = (c.recs || []).map(r => `
+        // Lista de reconocedores
+        const listaEl = document.getElementById('modalListaReconocedores');
+        listaEl.innerHTML = (c.recs || []).map(r => `
           <div class="reconocedor-item">
               <div class="rec-avatar">${r.iniciales}</div>
               <div class="d-flex flex-column">
@@ -1008,58 +1138,176 @@
 
           </div>`).join('');
 
-      // Gráfico Dona
-      const ctx = document.getElementById('chartModalAsignaciones');
-      if (ctx && typeof Chart !== 'undefined') {
-          if (chartModalInstance) chartModalInstance.destroy();
-          chartModalInstance = new Chart(ctx, {
-              type: 'doughnut',
-              data: {
-                  labels: DIST_COLORS.map(d => d.label),
-                  datasets: [{
-                      data: DIST_COLORS.map(d => c.dist[d.key] || 0),
-                      backgroundColor: DIST_COLORS.map(d => d.color),
-                      borderWidth: 0,
-                      cutout: '75%'
-                  }]
-              },
-              options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: { legend: { display: false } }
-              }
-          });
-      }
+        // Gráfico Dona
+        const ctx = document.getElementById('chartModalAsignaciones');
+        if (ctx && typeof Chart !== 'undefined') {
+            if (chartModalInstance) chartModalInstance.destroy();
+            chartModalInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: DIST_COLORS.map(d => d.label),
+                    datasets: [{
+                        data: DIST_COLORS.map(d => c.dist[d.key] || 0),
+                        backgroundColor: DIST_COLORS.map(d => d.color),
+                        borderWidth: 0,
+                        cutout: '75%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
 
-      const modal = new bootstrap.Modal(document.getElementById('modalDetalleCoord'));
-      modal.show();
-  }
+        const modal = new bootstrap.Modal(document.getElementById('modalDetalleCoord'));
+        modal.show();
+    }
 
-  function initCoordinadores() {
-      const searchInput = document.getElementById('coordSearch');
-      if (searchInput) {
-          searchInput.addEventListener('input', () => {
-              coordSearch = searchInput.value.trim();
-              coordPage = 1;
-              renderCoordTable(1);
-          });
-      }
-      renderCoordTable(1);
-  }
+    // ================================================================
+    // DETALLES DE ASIGNACIÓN — Datos estáticos y renderizado
+    // ================================================================
 
-  if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
-          initPanelControlChart();
-          initDashboardMap();
-          initCoordinadores();
-      });
-  } else {
-      initPanelControlChart();
-      initDashboardMap();
-      initCoordinadores();
-  }
+    const ASSIGN_DATA = [
+        { asignacion: 'Lote 27', coordinador: { nombre: 'Coordinador1', class: 'coord-1' }, reconocedor: { nombre: 'Carlos Vallarta', iniciales: 'CV', rol: 'Reconocedor' }, estado: { label: 'En campo', class: 'status-campo' }, fechaCreacion: '26/12/2026 2:30 p.m.', fechaEntrega: '01/20/2026', tiempoRestante: { label: '15 días', class: 'time-blue' } },
+        { asignacion: 'Lote 27_C', coordinador: { nombre: 'Coordinador2', class: 'coord-2' }, reconocedor: { nombre: 'Emanuel Trujillo', iniciales: 'AC', rol: 'Reconocedor' }, estado: { label: 'Control_calidad', class: 'status-calidad' }, fechaCreacion: '26/12/2026 1:30 p.m.', fechaEntrega: '07/20/2026', tiempoRestante: { label: '15 días', class: 'time-blue' } },
+        { asignacion: 'Lote 87_B', coordinador: { nombre: 'Coordinador3', class: 'coord-3' }, reconocedor: { nombre: 'Sergi Roberto', iniciales: 'AC', rol: 'reconocedor' }, estado: { label: 'Devuelta a campo', class: 'status-devuelta' }, fechaCreacion: '26/12/2026 12:30 p.m.', fechaEntrega: '09/20/2026', tiempoRestante: { label: '3 días', class: 'time-red' } },
+        { asignacion: 'Lote 87_B', coordinador: { nombre: 'Coordinador3', class: 'coord-3' }, reconocedor: { nombre: 'Alberto Bastidas', iniciales: 'AC', rol: 'reconocedor' }, estado: { label: 'En aprobación', class: 'status-aprobacion' }, fechaCreacion: '26/12/2026 08:30 p.m.', fechaEntrega: '12/20/2026', tiempoRestante: { label: '1 día', class: 'time-red' } },
+        { asignacion: 'Lote 87_B', coordinador: { nombre: 'Coordinador1', class: 'coord-1' }, reconocedor: { nombre: 'Camilo Rodriguez', iniciales: 'AC', rol: 'reconocedor' }, estado: { label: 'En sincronización', class: 'status-sincronizacion' }, fechaCreacion: '26/12/2026 10:30 a.m.', fechaEntrega: '8/20/2026', tiempoRestante: { label: 'hoy', class: 'time-pink' } },
+        { asignacion: 'Lote 87_B', coordinador: { nombre: 'Coordinador2', class: 'coord-2' }, reconocedor: { nombre: 'Sebastian Forero', iniciales: 'AC', rol: 'reconocedor' }, estado: { label: 'Sincronizado', class: 'status-sincronizado' }, fechaCreacion: '26/12/2026 2:50 a.m.', fechaEntrega: '10/20/2026', tiempoRestante: { label: 'Entregado', class: 'time-green' } },
+        { asignacion: 'Lote 90_A', coordinador: { nombre: 'Coordinador1', class: 'coord-1' }, reconocedor: { nombre: 'Andrés López', iniciales: 'AL', rol: 'Reconocedor' }, estado: { label: 'En campo', class: 'status-campo' }, fechaCreacion: '27/12/2026 11:00 a.m.', fechaEntrega: '02/15/2026', tiempoRestante: { label: '20 días', class: 'time-blue' } },
+        { asignacion: 'Lote 90_B', coordinador: { nombre: 'Coordinador2', class: 'coord-2' }, reconocedor: { nombre: 'Marta Díaz', iniciales: 'MD', rol: 'Reconocedor' }, estado: { label: 'Sincronizado', class: 'status-sincronizado' }, fechaCreacion: '27/12/2026 09:00 a.m.', fechaEntrega: '11/10/2026', tiempoRestante: { label: 'Entregado', class: 'time-green' } },
+    ];
 
-  function verReconocedor(id) {
-      console.log("Ir a vista de usuarios con el id del reconocedor   " + id);
-  }
+    const ASSIGN_ROWS_PER_PAGE = 6;
+    let assignPage = 1;
+    let assignSearchText = '';
+    let assignStatusFilter = '';
+    let assignCoordFilter = '';
+
+    function getAssignFiltered() {
+        return ASSIGN_DATA.filter(item => {
+            const matchesSearch = item.asignacion.toLowerCase().includes(assignSearchText.toLowerCase()) ||
+                item.reconocedor.nombre.toLowerCase().includes(assignSearchText.toLowerCase());
+            const matchesStatus = assignStatusFilter === '' || item.estado.label === assignStatusFilter;
+            const matchesCoord = assignCoordFilter === '' || item.coordinador.nombre === assignCoordFilter;
+            return matchesSearch && matchesStatus && matchesCoord;
+        });
+    }
+
+    function renderAssignmentTable(page = 1) {
+        const data = getAssignFiltered();
+        const total = data.length;
+        const totalPages = Math.max(1, Math.ceil(total / ASSIGN_ROWS_PER_PAGE));
+        page = Math.min(page, totalPages);
+        assignPage = page;
+
+        const start = (page - 1) * ASSIGN_ROWS_PER_PAGE;
+        const slice = data.slice(start, start + ASSIGN_ROWS_PER_PAGE);
+
+        const badge = document.getElementById('assignCount');
+        if (badge) badge.textContent = `${total} Asignaciones`;
+
+        const tbody = document.getElementById('assignTableBody');
+        if (tbody) {
+            tbody.innerHTML = slice.map(item => `
+                <tr>
+                    <td>${item.asignacion}</td>
+                    <td><span class="coord-pill ${item.coordinador.class}">${item.coordinador.nombre}</span></td>
+                    <td>
+                        <div class="rec-cell">
+                            <div class="rec-avatar-small">${item.reconocedor.iniciales}</div>
+                            <div class="rec-info">
+                                <strong>${item.reconocedor.nombre}</strong>
+                                <small>${item.reconocedor.rol}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="badge-status ${item.estado.class}">${item.estado.label}</span></td>
+                    <td>${item.fechaCreacion}</td>
+                    <td>${item.fechaEntrega}</td>
+                    <td><span class="badge-time ${item.tiempoRestante.class}">${item.tiempoRestante.label}</span></td>
+                    <td><button class="coord-action-btn"><i class="bi bi-eye-fill"></i></button></td>
+                </tr>
+            `).join('');
+        }
+
+        const info = document.getElementById('assignPagInfo');
+        if (info) {
+            const end = Math.min(start + ASSIGN_ROWS_PER_PAGE, total);
+            info.textContent = total > 0 ? `Mostrando ${start + 1}–${end} de ${total} resultados` : 'Sin resultados';
+        }
+
+        const pagBtns = document.getElementById('assignPagBtns');
+        if (pagBtns) {
+            let html = `<button class="coord-pag-btn coord-pag-arrow" data-page="${Math.max(1, page - 1)}" ${page === 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
+            for (let p = 1; p <= totalPages; p++) {
+                html += `<button class="coord-pag-btn ${p === page ? 'activo' : ''}" data-page="${p}">${p}</button>`;
+            }
+            html += `<button class="coord-pag-btn coord-pag-arrow" data-page="${Math.min(totalPages, page + 1)}" ${page === totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
+            pagBtns.innerHTML = html;
+
+            pagBtns.querySelectorAll('.coord-pag-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (!btn.disabled) renderAssignmentTable(parseInt(btn.dataset.page));
+                });
+            });
+        }
+    }
+
+    function initAssignments() {
+        const search = document.getElementById('assignSearch');
+        const status = document.getElementById('assignFilterStatus');
+        const coord = document.getElementById('assignFilterCoord');
+        const btnReset = document.getElementById('btnResetAssignFilters');
+
+        if (search) search.addEventListener('input', () => { assignSearchText = search.value; renderAssignmentTable(1); });
+        if (status) status.addEventListener('change', () => { assignStatusFilter = status.value; renderAssignmentTable(1); });
+        if (coord) coord.addEventListener('change', () => { assignCoordFilter = coord.value; renderAssignmentTable(1); });
+
+        if (btnReset) {
+            btnReset.addEventListener('click', () => {
+                if (search) search.value = '';
+                if (status) status.selectedIndex = 0;
+                if (coord) coord.selectedIndex = 0;
+                assignSearchText = '';
+                assignStatusFilter = '';
+                assignCoordFilter = '';
+                renderAssignmentTable(1);
+            });
+        }
+
+        renderAssignmentTable(1);
+    }
+
+    function initCoordinadores() {
+        const searchInput = document.getElementById('coordSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                coordSearch = searchInput.value.trim();
+                coordPage = 1;
+                renderCoordTable(1);
+            });
+        }
+        renderCoordTable(1);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            initPanelControlChart();
+            initDashboardMap();
+            initCoordinadores();
+            initAssignments();
+        });
+    } else {
+        initPanelControlChart();
+        initDashboardMap();
+        initCoordinadores();
+        initAssignments();
+    }
+
+    function verReconocedor(id) {
+        console.log("Ir a vista de usuarios con el id del reconocedor   " + id);
+    }
 </script>
