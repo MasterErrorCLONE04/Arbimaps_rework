@@ -1,0 +1,82 @@
+{
+  "municipalities": [
+    {
+      "code": "sucre",
+      "name": "Sucre",
+      "active": true,
+      "db": {
+        "host": "programacion.c50icuy2yrx4.us-east-2.rds.amazonaws.com",
+        "port": 5432,
+        "db_name": "programacion",
+        "user": "postgres",
+        "password": "change-me",
+        "sslmode": "require"
+      },
+      "schemas": {
+        "app": "arbimaps_app",
+        "main": "a_base_principal",
+        "work": "b_asignaciones_arb",
+        "history": "c_base_historico"
+      },
+      "wms_base_url": "",
+      "geoserver_layers": ""
+    },
+    {
+      "code": "saravena",
+      "name": "Saravena",
+      "active": true,
+      "db": {
+        "host": "programacion.c50icuy2yrx4.us-east-2.rds.amazonaws.com",
+        "port": 5432,
+        "db_name": "saravena",
+        "user": "postgres",
+        "password": "change-me",
+        "sslmode": "require"
+      },
+      "schemas": {
+        "app": "arbimaps_app",
+        "main": "a_base_principal",
+        "work": "b_asignaciones_arb",
+        "history": "c_base_historico"
+      }
+    },
+    {
+      "code": "almaguer",
+      "name": "Almaguer",
+      "active": true,
+      "db": {
+        "host": "programacion.c50icuy2yrx4.us-east-2.rds.amazonaws.com",
+        "port": 5432,
+        "db_name": "almaguer",
+        "user": "postgres",
+        "password": "change-me",
+        "sslmode": "require"
+      },
+      "schemas": {
+        "app": "arbimaps_app",
+        "main": "a_base_principal",
+        "work": "b_asignaciones_arb",
+        "history": "c_base_historico"
+      }
+    },
+    {
+      "code": "neiva",
+      "name": "Neiva",
+      "active": true,
+      "db": {
+        "host": "programacion.c50icuy2yrx4.us-east-2.rds.amazonaws.com",
+        "port": 5432,
+        "db_name": "neiva",
+        "user": "postgres",
+        "password": "change-me",
+        "sslmode": "require"
+      },
+      "schemas": {
+        "app": "arbimaps_app",
+        "main": "a_base_principal",
+        "work": "b_asignaciones_arb",
+        "history": "c_base_historico"
+      }
+    }
+  ]
+}

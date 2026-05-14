@@ -1,20 +1,75 @@
-import os
+import logging
+import re
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from psycopg2.extras import RealDictCursor
 
-from routers.auth import require_user
-from routers.db import db_conn, t
+from routers.auth import get_current_tenant, get_current_user
+from tenants import TenantContext, get_tenant_db_connection
 
 router = APIRouter(prefix="/visor", tags=["visor"])
-VISOR_DATA_SCHEMA = os.getenv("VISOR_DATA_SCHEMA", os.getenv("DATA_SCHEMA", "leiva"))
+logger = logging.getLogger(__name__)
+
+IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _quoted_identifier(name: str) -> str:
+    value = (name or "").strip()
+    if not IDENT_RE.match(value):
+        raise HTTPException(status_code=500, detail="Schema tenant invalido.")
+    return value
+
+
+def _table_name(tenant: TenantContext, table: str) -> str:
+    schema = _quoted_identifier(tenant.schemas.main)
+    table_name = _quoted_identifier(table)
+    return f"{schema}.{table_name}"
+
+
+def _execute_fetchone(conn, sql: str, params: tuple[Any, ...] = ()) -> dict[str, Any] | None:
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(sql, params)
+            return cur.fetchone()
+    except Exception as exc:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        logger.exception("Error ejecutando consulta readonly de visor")
+        raise HTTPException(
+            status_code=500,
+            detail="Error consultando informacion del visor.",
+        ) from exc
+
+
+def _execute_fetchall(conn, sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(sql, params)
+            return cur.fetchall()
+    except Exception as exc:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        logger.exception("Error ejecutando consulta readonly de visor")
+        raise HTTPException(
+            status_code=500,
+            detail="Error consultando informacion del visor.",
+        ) from exc
 
 
 @router.get("/project-extent")
-def project_extent(_user: str = Depends(require_user)):
+def project_extent(
+    _user: Annotated[dict[str, Any], Depends(get_current_user)],
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+    conn=Depends(get_tenant_db_connection),
+):
     """
-    Extensión espacial del proyecto basada en arb_terreno.
+    Extension espacial del proyecto basada en arb_terreno.
     Se usa para centrar el mapa sin depender de un bbox fijo.
     """
     sql = f"""
@@ -23,14 +78,11 @@ def project_extent(_user: str = Depends(require_user)):
       MIN(ST_YMin(geometria)) AS ymin,
       MAX(ST_XMax(geometria)) AS xmax,
       MAX(ST_YMax(geometria)) AS ymax
-    FROM {t('arb_terreno', schema=VISOR_DATA_SCHEMA)}
+    FROM {_table_name(tenant, 'arb_terreno')}
     WHERE geometria IS NOT NULL;
     """
 
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(sql)
-            row = cur.fetchone()
+    row = _execute_fetchone(conn, sql)
 
     if not row:
         return JSONResponse({"error": "No se encontro extension espacial"}, status_code=404)
@@ -49,7 +101,9 @@ def project_extent(_user: str = Depends(require_user)):
 @router.get("/terreno/detalle")
 def terreno_detalle(
     terreno_id: int = Query(...),
-    _user: str = Depends(require_user),
+    _user: Annotated[dict[str, Any], Depends(get_current_user)] = None,
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)] = None,
+    conn=Depends(get_tenant_db_connection),
 ):
     """
     Ficha para visor al seleccionar un terreno:
@@ -68,18 +122,15 @@ def terreno_detalle(
       c.dispname AS condicion_predio_nombre,
       p.tipo,
       p.destinacion_economica
-    FROM {t('arb_terreno', schema=VISOR_DATA_SCHEMA)} t
-    LEFT JOIN {t('arb_predio', schema=VISOR_DATA_SCHEMA)} p ON p.t_id = t.predio
-    LEFT JOIN {t('arb_condicionprediotipo', schema=VISOR_DATA_SCHEMA)} c
+    FROM {_table_name(tenant, 'arb_terreno')} t
+    LEFT JOIN {_table_name(tenant, 'arb_predio')} p ON p.t_id = t.predio
+    LEFT JOIN {_table_name(tenant, 'arb_condicionprediotipo')} c
       ON c.t_id::text = p.condicion_predio::text
     WHERE t.t_id = %s
     LIMIT 1;
     """
 
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(sql, (terreno_id,))
-            row = cur.fetchone()
+    row = _execute_fetchone(conn, sql, (terreno_id,))
 
     if not row:
         return JSONResponse({"error": "Terreno no encontrado"}, status_code=404)
@@ -88,7 +139,11 @@ def terreno_detalle(
 
 
 @router.get("/dashboard/condicion-predio")
-def dashboard_condicion_predio(_user: str = Depends(require_user)):
+def dashboard_condicion_predio(
+    _user: Annotated[dict[str, Any], Depends(get_current_user)],
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+    conn=Depends(get_tenant_db_connection),
+):
     """
     Conteo agregado para dashboard por condicion de predio.
     """
@@ -96,16 +151,13 @@ def dashboard_condicion_predio(_user: str = Depends(require_user)):
     SELECT
       COALESCE(c.dispname, 'SIN_DATO') AS condicion_predio,
       COUNT(*)::bigint AS total
-    FROM {t('arb_predio', schema=VISOR_DATA_SCHEMA)} p
-    LEFT JOIN {t('arb_condicionprediotipo', schema=VISOR_DATA_SCHEMA)} c
+    FROM {_table_name(tenant, 'arb_predio')} p
+    LEFT JOIN {_table_name(tenant, 'arb_condicionprediotipo')} c
       ON c.t_id::text = p.condicion_predio::text
     GROUP BY 1
     ORDER BY total DESC;
     """
 
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(sql)
-            rows = cur.fetchall()
+    rows = _execute_fetchall(conn, sql)
 
     return {"items": rows}

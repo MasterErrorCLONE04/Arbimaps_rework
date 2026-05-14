@@ -21,6 +21,7 @@ from routers.visor_queries import router as visor_queries_router
 from routers.visor_tortas import router as resumenp_router
 from routers.auth import require_user, get_user_role
 from routers.sync_routes import router as sync_router
+from tenants import ConnectionManager, init_connection_manager, init_municipality_registry
 
 # importacion para el archivo de edicion del predio
 from routers.editar_predio_queries import router as editar_predio_queries_router
@@ -58,6 +59,30 @@ def _load_optional_router(module_path: str):
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title=settings.app_name, version=settings.app_version)
+
+    @app.on_event("startup")
+    def _startup_registry() -> None:
+        registry = init_municipality_registry(app)
+        manager = ConnectionManager()
+        init_connection_manager(app, manager)
+        logger.info(
+            "Municipality registry loaded: total=%s active=%s codes=%s pool=%s-%s",
+            len(registry.all()),
+            len(registry.active()),
+            ",".join(registry.codes()),
+            manager.minconn,
+            manager.maxconn,
+        )
+
+    @app.on_event("shutdown")
+    def _shutdown_connection_manager() -> None:
+        manager = getattr(app.state, "tenant_connection_manager", None)
+        if manager is None:
+            return
+        try:
+            manager.close_all()
+        except Exception as exc:
+            logger.warning("ConnectionManager shutdown warning: %s", exc)
 
     # 🔥 CORS (CORRECTO)
     app.add_middleware(

@@ -1,0 +1,28 @@
+# Databases
+*.sql
+*.sqlite
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# App specific
+tokens/
+cookies.txt
+mergin_sync/

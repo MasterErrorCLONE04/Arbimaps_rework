@@ -1,13 +1,11 @@
-import json
 import os
 import logging
 from decimal import Decimal
 from typing import Any
 
-from fastapi import APIRouter, Form, Request, UploadFile, File
+from fastapi import APIRouter, Form, HTTPException, Request, UploadFile, File
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from psycopg2.extras import RealDictCursor
 
 from core.asignaciones import (
     ASIG_MODEL_CONTEXT,
@@ -15,10 +13,20 @@ from core.asignaciones import (
     is_assignment_internal_rollout_active,
     is_assignment_internal_user,
 )
-from routers.auth import COOKIE_NAME, DEFAULT_ROLE, get_user, get_user_role, normalize_role, signer
-from routers.db import db_conn
-from routers.security import verify_password
+from routers.auth import (
+    DEFAULT_ROLE,
+    build_session_payload,
+    clear_session_cookie,
+    get_current_tenant_from_session,
+    get_user,
+    get_user_role,
+    normalize_role,
+    set_session_cookie,
+    sign_session_payload,
+)
+from services.session_auth import authenticate_user_for_tenant
 from services.xtf_validation_service import XTFValidationService
+from tenants import TenantContext, get_connection_manager, get_registry
 
 
 router = APIRouter()
@@ -28,7 +36,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 xtf_service = XTFValidationService()
 
-# si alg�n d�a usas /api
+# si algn da usas /api
 BASE_PATH = os.getenv("APP_BASE_PATH", "").rstrip("/")
 ASIGNACIONES_ROLES = {"admin", "coordinador"}
 
@@ -109,6 +117,7 @@ def _render_panel(
     """
     role = _effective_role(user)
     can_access_asignaciones = _can_access_asignaciones(user)
+    tenant = _safe_get_current_tenant(request)
     context: dict[str, object] = {
         "request": request,
         "user": user.get("username") or user.get("email") or "usuario",
@@ -123,15 +132,50 @@ def _render_panel(
         "asig_supports_retorno_xtf": ASIG_MODEL_CONTEXT.name in {"leiva", "arb"},
         "asig_internal_rollout_active": is_assignment_internal_rollout_active(ASIG_MODEL_CONTEXT.name),
         "asig_internal_access_granted": is_assignment_internal_user(user, role=role),
-        "visor_geoserver_layers": os.getenv(
-            "VISOR_GEOSERVER_LAYERS",
-            "A_Base_Principal:Base_Principal",
+        "visor_geoserver_layers": (
+            tenant.geoserver_layers
+            if tenant and tenant.geoserver_layers
+            else os.getenv("VISOR_GEOSERVER_LAYERS", "A_Base_Principal:Base_Principal")
         ),
+        "current_municipality_code": user.get("municipality_code"),
+        "current_municipality_name": user.get("municipality_name"),
     }
 
     context.update(extra_context)
 
     return templates.TemplateResponse("panel.html", context, status_code=status_code)
+
+
+def _active_municipalities(request: Request) -> list[dict[str, str]]:
+    registry = get_registry(request.app)
+    return [
+        {"code": config.code, "name": config.name}
+        for config in registry.active()
+    ]
+
+
+def _login_template_context(
+    request: Request,
+    *,
+    error: str = "",
+    municipality_code: str = "",
+    username: str = "",
+) -> dict[str, Any]:
+    return {
+        "request": request,
+        "error": error,
+        "rp": get_base_path(request),
+        "municipalities": _active_municipalities(request),
+        "municipality_code": municipality_code,
+        "username": username,
+    }
+
+
+def _safe_get_current_tenant(request: Request) -> TenantContext | None:
+    try:
+        return get_current_tenant_from_session(request)
+    except Exception:
+        return None
 
 
 # -------------------------------------------------
@@ -151,11 +195,7 @@ def home(request: Request):
 
     return templates.TemplateResponse(
         "login.html",
-        {
-            "request": request,
-            "error": "",
-            "rp": get_base_path(request)
-        }
+        _login_template_context(request)
     )
 
 
@@ -172,95 +212,103 @@ def login_get(request: Request):
 
     return templates.TemplateResponse(
         "login.html",
-        {
-            "request": request,
-            "error": "",
-            "rp": get_base_path(request)
-        }
+        _login_template_context(request)
     )
 
 
 @router.post("/login")
 def login_post(
     request: Request,
+    municipality_code: str = Form(...),
     username: str = Form(...),
     password: str = Form(...),
     remember: str | None = Form(None),
 ):
+    municipality_code = (municipality_code or "").strip().lower()
     username = (username or "").strip()
     password = password or ""
-    user = None
+    registry = get_registry(request.app)
+
     try:
-        with db_conn() as conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(
-                    """
-                    SELECT
-                      u.id_global,
-                      u.username,
-                      u.email,
-                      u.first_name,
-                      u.last_name,
-                      u.password_hash,
-                      u.activo,
-                      r.itf_code AS role_code
-                    FROM arbimaps_app.users u
-                    JOIN arbimaps_app.roles r ON r.t_id = u.rol_id
-                    WHERE u.username = %s
-                    """,
-                    (username,),
-                )
-                user = cur.fetchone()
+        municipality = registry.require_active(municipality_code)
+        tenant = TenantContext.from_config(municipality)
     except Exception:
-        logger.exception("Login DB connection error for username=%s", username)
         return templates.TemplateResponse(
             "login.html",
-            {
-                "request": request,
-                "error": "Error de conexion. Intenta nuevamente en unos minutos.",
-                "rp": get_base_path(request),
-            },
+            _login_template_context(
+                request,
+                error="Municipio invalido o inactivo.",
+                municipality_code=municipality_code,
+                username=username,
+            ),
+            status_code=400,
+        )
+
+    manager = get_connection_manager(request.app)
+    if manager is None:
+        logger.error("ConnectionManager no inicializado durante login")
+        return templates.TemplateResponse(
+            "login.html",
+            _login_template_context(
+                request,
+                error="Servicio de autenticacion no disponible.",
+                municipality_code=municipality_code,
+                username=username,
+            ),
+            status_code=500,
+        )
+    user = None
+    try:
+        user = authenticate_user_for_tenant(
+            request,
+            tenant,
+            username=username,
+            password=password,
+        )
+    except HTTPException as exc:
+        if exc.status_code != 503:
+            raise
+        logger.exception(
+            "Login DB connection error municipality=%s username=%s",
+            municipality_code,
+            username,
+        )
+        return templates.TemplateResponse(
+            "login.html",
+            _login_template_context(
+                request,
+                error="Error de conexion. Intenta nuevamente en unos minutos.",
+                municipality_code=municipality_code,
+                username=username,
+            ),
             status_code=503,
         )
 
-    if not user or not user["activo"]:
+    if not user:
         return templates.TemplateResponse(
             "login.html",
-            {
-                "request": request,
-                "error": "Usuario o password invalidos",
-                "rp": get_base_path(request),
-            },
-            status_code=401,
-        )
-
-    try:
-        valid_password = bool(user["password_hash"]) and verify_password(password, user["password_hash"])
-    except Exception:
-        valid_password = False
-
-    if not valid_password:
-        return templates.TemplateResponse(
-            "login.html",
-            {
-                "request": request,
-                "error": "Usuario o password invalidos",
-                "rp": get_base_path(request),
-            },
+            _login_template_context(
+                request,
+                error="Usuario o password invalidos",
+                municipality_code=municipality_code,
+                username=username,
+            ),
             status_code=401,
         )
 
     role_code = (user["role_code"] or DEFAULT_ROLE).strip() or DEFAULT_ROLE
 
-    session_user = {
-        "id_global": _session_json_safe(user.get("id_global")),
-        "username": _session_json_safe(user.get("username")),
-        "email": _session_json_safe(user.get("email")),
-        "first_name": _session_json_safe(user.get("first_name")),
-        "last_name": _session_json_safe(user.get("last_name")),
-        "role": role_code,
-        "auth_source": "local",
-    }
+    session_user = build_session_payload(
+        user_id=_session_json_safe(user.get("id_global")),
+        username=_session_json_safe(user.get("username")),
+        email=_session_json_safe(user.get("email")),
+        first_name=_session_json_safe(user.get("first_name")),
+        last_name=_session_json_safe(user.get("last_name")),
+        role=role_code,
+        municipality_code=tenant.municipality_code,
+        municipality_name=tenant.municipality_name,
+        remember=bool(remember),
+    )
 
     resp = RedirectResponse(
         url=with_root_path(request, "/panel"),
@@ -268,25 +316,20 @@ def login_post(
     )
 
     try:
-        signed = signer.sign(json.dumps(session_user).encode("utf-8")).decode("utf-8")
+        signed = sign_session_payload(session_user)
     except Exception:
         return templates.TemplateResponse(
             "login.html",
-            {
-                "request": request,
-                "error": "Error interno al crear la sesion. Intenta nuevamente.",
-                "rp": get_base_path(request),
-            },
+            _login_template_context(
+                request,
+                error="Error interno al crear la sesion. Intenta nuevamente.",
+                municipality_code=municipality_code,
+                username=username,
+            ),
             status_code=500,
         )
 
-    resp.set_cookie(
-        COOKIE_NAME,
-        signed,
-        httponly=True,
-        samesite="lax",
-        path="/",
-    )
+    set_session_cookie(resp, signed, remember=bool(remember))
 
     return resp
 
@@ -299,7 +342,7 @@ def logout(request: Request):
         status_code=302
     )
 
-    resp.delete_cookie(COOKIE_NAME, path="/")
+    clear_session_cookie(resp)
 
     return resp
 
@@ -595,7 +638,9 @@ def debug_me(request: Request):
 
     return {
         "user": user,
-        "effective_role": role
+        "effective_role": role,
+        "municipality_code": user.get("municipality_code"),
+        "municipality_name": user.get("municipality_name"),
     }
 
 # -------------------------------------------------

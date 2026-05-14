@@ -1,17 +1,64 @@
-﻿from fastapi import APIRouter, Depends, Query
+import logging
+import re
+from typing import Annotated, Any
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from psycopg2.extras import RealDictCursor
-import logging
-import os
-import re
 
-from routers.auth import require_user
-from routers.db import db_conn
+from routers.auth import get_current_tenant, get_current_user
+from tenants import TenantContext, get_tenant_db_connection
 
-SCHEMA_WORK = (os.getenv("VISOR_DATA_SCHEMA") or "a_base_principal").strip().strip('"') or "a_base_principal"
 logger = logging.getLogger(__name__)
-
 router = APIRouter(prefix="", tags=["buscar_predio"])
+
+IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _validated_identifier(name: str) -> str:
+    value = (name or "").strip()
+    if not IDENT_RE.match(value):
+        raise HTTPException(status_code=500, detail="Identificador tenant invalido.")
+    return value
+
+
+def _schema_name(tenant: TenantContext) -> str:
+    return _validated_identifier(tenant.schemas.main)
+
+
+def _qualified_table(tenant: TenantContext, table_name: str) -> str:
+    return f"{_schema_name(tenant)}.{_validated_identifier(table_name)}"
+
+
+def _quote_ident(name: str) -> str:
+    return '"' + str(name).replace('"', '""') + '"'
+
+
+def _rollback_safely(conn) -> None:
+    try:
+        conn.rollback()
+    except Exception:
+        pass
+
+
+def _execute_fetchone(conn, sql: str, params: tuple[Any, ...] = ()) -> dict[str, Any] | None:
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(sql, params)
+            return cur.fetchone()
+    except Exception as exc:
+        _rollback_safely(conn)
+        raise exc
+
+
+def _execute_fetchall(conn, sql: str, params: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(sql, params)
+            return cur.fetchall()
+    except Exception as exc:
+        _rollback_safely(conn)
+        raise exc
 
 
 def _table_exists(cur, schema: str, table_name: str) -> bool:
@@ -33,17 +80,14 @@ def _table_columns(cur, schema: str, table_name: str) -> set[str]:
     return {r.get("column_name") for r in (cur.fetchall() or []) if r.get("column_name")}
 
 
-def _quote_ident(name: str) -> str:
-    return '"' + str(name).replace('"', '""') + '"'
-
-
 def _resolve_domain_label(cur, schema: str, table_name: str, pk_value) -> str | None:
     if pk_value is None:
         return None
-    if not _table_exists(cur, schema, table_name):
+    table = _validated_identifier(table_name)
+    if not _table_exists(cur, schema, table):
         return None
 
-    cols = _table_columns(cur, schema, table_name)
+    cols = _table_columns(cur, schema, table)
     if not cols:
         return None
 
@@ -65,7 +109,7 @@ def _resolve_domain_label(cur, schema: str, table_name: str, pk_value) -> str | 
     select_sql = ", ".join(f"t.{_quote_ident(c)} AS {_quote_ident(c)}" for c in selected)
     sql = (
         f"SELECT {select_sql} "
-        f"FROM {_quote_ident(schema)}.{_quote_ident(table_name)} t "
+        f"FROM {_quote_ident(schema)}.{_quote_ident(table)} t "
         "WHERE t.t_id::text = %s::text "
         "LIMIT 1;"
     )
@@ -85,6 +129,36 @@ def _resolve_domain_label(cur, schema: str, table_name: str, pk_value) -> str | 
     return None
 
 
+def _normalize_derechos_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    for row in rows:
+        primer_nombre = row.get("i_primer_nombre") or row.get("primer_nombre")
+        segundo_nombre = row.get("i_segundo_nombre") or row.get("segundo_nombre")
+        primer_apellido = row.get("i_primer_apellido") or row.get("primer_apellido")
+        segundo_apellido = row.get("i_segundo_apellido") or row.get("segundo_apellido")
+        razon_social = row.get("i_razon_social") or row.get("razon_social")
+        documento_identidad = row.get("i_documento_identidad") or row.get("documento_identidad")
+
+        nombre_persona = " ".join(
+            str(v).strip()
+            for v in (primer_nombre, second_nombre, primer_apellido, segundo_apellido)
+            if v is not None and str(v).strip()
+        )
+        row["nombre_completo"] = razon_social or nombre_persona or documento_identidad or ""
+        row["documento_identidad"] = documento_identidad
+        row["tipo_nombre"] = row.get("d_tipo_nombre") or row.get("tipo_nombre") or row.get("d_tipo")
+        row["tipo_documento_nombre"] = (
+            row.get("i_tipo_documento_nombre")
+            or row.get("tipo_documento_nombre")
+            or row.get("i_tipo_documento")
+        )
+        row["grupo_etnico_nombre"] = (
+            row.get("i_grupo_etnico_nombre")
+            or row.get("grupo_etnico_nombre")
+            or row.get("i_grupo_etnico")
+        )
+    return rows
+
+
 @router.get("/predio/buscar")
 def predio_buscar(
     numero_predial: str | None = Query(None),
@@ -92,17 +166,17 @@ def predio_buscar(
     direccion: str | None = Query(None),
     documento: str | None = Query(None),
     nombre: str | None = Query(None),
-    _user: str = Depends(require_user),
+    _user: Annotated[dict[str, Any], Depends(get_current_user)] = None,
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)] = None,
+    conn=Depends(get_tenant_db_connection),
 ):
     numero_predial = (numero_predial or "").strip() or None
     matricula = (matricula or "").strip() or None
     direccion = (direccion or "").strip() or None
     documento = (documento or "").strip() or None
     nombre = (nombre or "").strip() or None
+    schema = _schema_name(tenant)
 
-    # Validamos que llegue al menos UN criterio de bÃºsqueda.
-    # Solo consideramos "no enviado" cuando el valor es None (no cuando es "")
-    # para evitar falsos negativos.
     if not any((numero_predial, matricula, direccion, documento, nombre)):
         return JSONResponse(
             {
@@ -117,7 +191,6 @@ def predio_buscar(
     where: list[str] = []
     params: list[object] = []
     join_ext = False
-    join_interesado = False
 
     if numero_predial:
         where.append("(BTRIM(p.numero_predial::text) = BTRIM(%s::text))")
@@ -129,13 +202,10 @@ def predio_buscar(
 
     if direccion:
         join_ext = True
-        # Evita 500 por variaciones de nombres de campos en arb_direccion.
         where.append("(to_jsonb(dx)::text ILIKE %s)")
         params.append(f"%{direccion}%")
 
     if documento:
-        # Busca directo en el campo oficial del modelo ARB:
-        # arb_derechointeresadofuente.i_documento_identidad
         documento_norm = re.sub(r"[^0-9a-zA-Z]+", "", documento).lower()
         if documento_norm:
             where.append(
@@ -151,8 +221,7 @@ def predio_buscar(
                           'g'
                         ) LIKE %s
                 )
-                """.strip()
-                .format(schema=SCHEMA_WORK)
+                """.strip().format(schema=schema)
             )
             params.append(f"%{documento_norm}%")
         else:
@@ -164,8 +233,7 @@ def predio_buscar(
                   WHERE di.predio::text = p.t_id::text
                     AND di.i_documento_identidad::text ILIKE %s
                 )
-                """.strip()
-                .format(schema=SCHEMA_WORK)
+                """.strip().format(schema=schema)
             )
             params.append(f"%{documento}%")
 
@@ -176,8 +244,6 @@ def predio_buscar(
 
         sub_clauses: list[str] = []
         for palabra in palabras:
-            like = f"%{palabra}%"
-            # Evita acoplamiento fuerte a columnas i_* o sin prefijo.
             sub_clauses.append(
                 """
                 EXISTS (
@@ -186,21 +252,17 @@ def predio_buscar(
                   WHERE di.predio::text = p.t_id::text
                     AND to_jsonb(di)::text ILIKE %s
                 )
-                """.strip()
-                .format(schema=SCHEMA_WORK)
+                """.strip().format(schema=schema)
             )
-            params.append(like)
+            params.append(f"%{palabra}%")
 
-        # Todas las palabras deben aparecer al menos en uno de los campos
         where.append(f"({' AND '.join(sub_clauses)})")
 
     join_ext_sql = ""
     if join_ext:
         join_ext_sql = f"""
-    LEFT JOIN {SCHEMA_WORK}.arb_direccion dx ON dx.arb_predio_direccion = p.t_id
+    LEFT JOIN {_qualified_table(tenant, 'arb_direccion')} dx ON dx.arb_predio_direccion = p.t_id
     """
-
-    join_interesado_sql = ""
 
     sql = f"""
     SELECT
@@ -210,33 +272,32 @@ def predio_buscar(
       uat.dispname AS tipo_nombre,
       c.dispname AS condicion_predio_nombre,
       de.dispname AS destinacion_economica_nombre
-    FROM {SCHEMA_WORK}.arb_predio p
-    LEFT JOIN {SCHEMA_WORK}.arb_prediotipo uat
+    FROM {_qualified_table(tenant, 'arb_predio')} p
+    LEFT JOIN {_qualified_table(tenant, 'arb_prediotipo')} uat
       ON uat.t_id::text = p.tipo::text
-    LEFT JOIN {SCHEMA_WORK}.arb_condicionprediotipo c
+    LEFT JOIN {_qualified_table(tenant, 'arb_condicionprediotipo')} c
       ON c.t_id::text = p.condicion_predio::text
-    LEFT JOIN {SCHEMA_WORK}.arb_destinacioneconomicatipo de
+    LEFT JOIN {_qualified_table(tenant, 'arb_destinacioneconomicatipo')} de
       ON de.t_id::text = p.destinacion_economica::text
-    {join_ext_sql}{join_interesado_sql}
+    {join_ext_sql}
     WHERE {" OR ".join(where)}
     ORDER BY COALESCE(NULLIF(BTRIM(p.numero_predial::text), ''), p.t_id::text), p.t_id DESC
     LIMIT 20;
     """
 
     try:
-        with db_conn() as conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(sql, params)
-                rows = cur.fetchall()
+        rows = _execute_fetchall(conn, sql, tuple(params))
     except Exception as exc:
-        logger.exception("Error en /predio/buscar con schema=%s", SCHEMA_WORK)
+        logger.exception(
+            "Error en /predio/buscar municipality=%s schema=%s",
+            tenant.municipality_code,
+            schema,
+        )
         return JSONResponse(
             {"error": f"Error consultando predios: {exc}"},
             status_code=500,
         )
 
-    # Devolvemos toda la informacion del predio como propiedades.
-    # La geometria no se usa en la tabla de "Consultar Predio", por eso va como null.
     features = [
         {
             "type": "Feature",
@@ -245,16 +306,17 @@ def predio_buscar(
         }
         for r in rows
     ]
-
     return {"type": "FeatureCollection", "features": features}
 
 
 @router.get("/predio/detalle")
 def predio_detalle(
     predio_id: int = Query(..., gt=0),
-    _user: str = Depends(require_user),
+    _user: Annotated[dict[str, Any], Depends(get_current_user)] = None,
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)] = None,
+    conn=Depends(get_tenant_db_connection),
 ):
-    # Predio + nombres legibles + terreno asociado (ARB base)
+    schema = _schema_name(tenant)
     sql_base = f"""
     SELECT
       p.*,
@@ -268,26 +330,26 @@ def predio_detalle(
       efmi.dispname AS estado_fmi_nombre,
       terr.terreno_id,
       terr.terreno_geom
-    FROM {SCHEMA_WORK}.arb_predio p
-    LEFT JOIN {SCHEMA_WORK}.arb_prediotipo tp
+    FROM {_qualified_table(tenant, 'arb_predio')} p
+    LEFT JOIN {_qualified_table(tenant, 'arb_prediotipo')} tp
       ON tp.t_id::text = p.tipo::text
-    LEFT JOIN {SCHEMA_WORK}.arb_condicionprediotipo cp
+    LEFT JOIN {_qualified_table(tenant, 'arb_condicionprediotipo')} cp
       ON cp.t_id::text = p.condicion_predio::text
-    LEFT JOIN {SCHEMA_WORK}.arb_destinacioneconomicatipo de
+    LEFT JOIN {_qualified_table(tenant, 'arb_destinacioneconomicatipo')} de
       ON de.t_id::text = p.destinacion_economica::text
-    LEFT JOIN {SCHEMA_WORK}.arb_resultadovisitatipo rv
+    LEFT JOIN {_qualified_table(tenant, 'arb_resultadovisitatipo')} rv
       ON rv.t_id::text = p.resultado_visita::text
-    LEFT JOIN {SCHEMA_WORK}.arb_interesadodocumentotipo tdoc
+    LEFT JOIN {_qualified_table(tenant, 'arb_interesadodocumentotipo')} tdoc
       ON tdoc.t_id::text = p.tipo_documento_quien_atendio::text
-    LEFT JOIN {SCHEMA_WORK}.arb_metodoproducciontipo tcapt
+    LEFT JOIN {_qualified_table(tenant, 'arb_metodoproducciontipo')} tcapt
       ON tcapt.t_id::text = p.tipo_captura::text
-    LEFT JOIN {SCHEMA_WORK}.arb_estadofmitipo efmi
+    LEFT JOIN {_qualified_table(tenant, 'arb_estadofmitipo')} efmi
       ON efmi.t_id::text = p.estado_fmi::text
     LEFT JOIN LATERAL (
       SELECT
         t.t_id AS terreno_id,
         ST_AsGeoJSON(t.geometria)::json AS terreno_geom
-      FROM {SCHEMA_WORK}.arb_terreno t
+      FROM {_qualified_table(tenant, 'arb_terreno')} t
       WHERE t.predio::text = p.t_id::text
       ORDER BY t.t_id
       LIMIT 1
@@ -307,29 +369,27 @@ def predio_detalle(
       COALESCE(calif.dispname, 'Unidad de Construccion ARB') AS tipo_calificacion_resumen,
       ect.dispname AS estado_construccion,
       ST_AsGeoJSON(uc.geometria)::json AS geom
-    FROM {SCHEMA_WORK}.arb_unidadconstruccion uc
-    JOIN {SCHEMA_WORK}.arb_construccion c
+    FROM {_qualified_table(tenant, 'arb_unidadconstruccion')} uc
+    JOIN {_qualified_table(tenant, 'arb_construccion')} c
       ON c.t_id = uc.construccion
-    LEFT JOIN {SCHEMA_WORK}.arb_caracteristicasunidadconstruccion car
+    LEFT JOIN {_qualified_table(tenant, 'arb_caracteristicasunidadconstruccion')} car
       ON car.t_id = uc.caracteristicasunidadconstruccion
-    LEFT JOIN {SCHEMA_WORK}.arb_calificaciontipo calif
+    LEFT JOIN {_qualified_table(tenant, 'arb_calificaciontipo')} calif
       ON calif.t_id::text = car.tipo_calificacion::text
-    LEFT JOIN {SCHEMA_WORK}.arb_estadoconstrucciontipo ect
+    LEFT JOIN {_qualified_table(tenant, 'arb_estadoconstrucciontipo')} ect
       ON ect.t_id::text = uc.estado_unidad_construccion::text
     WHERE c.predio::text = %s::text;
     """
 
-    # Interesados, derechos y fuentes desnormalizados en arb_derechointeresadofuente
     sql_dif = f"""
     SELECT di.*
-    FROM {SCHEMA_WORK}.arb_derechointeresadofuente di
+    FROM {_qualified_table(tenant, 'arb_derechointeresadofuente')} di
     WHERE di.predio::text = %s::text;
     """
 
-    # Relacion BAUnit <-> unidades espaciales (opcional segun despliegue)
     sql_uebaunit = f"""
     SELECT u.*
-    FROM {SCHEMA_WORK}.arb_uebaunit u
+    FROM {_qualified_table(tenant, 'arb_uebaunit')} u
     WHERE u.baunit::text = %s::text;
     """
 
@@ -337,72 +397,50 @@ def predio_detalle(
     SELECT
       dx.*,
       ST_AsGeoJSON(dx.geometria)::json AS geom
-    FROM {SCHEMA_WORK}.arb_direccion dx
+    FROM {_qualified_table(tenant, 'arb_direccion')} dx
     WHERE dx.arb_predio_direccion::text = %s::text;
     """
 
     try:
-        with db_conn() as conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(sql_base, (predio_id,))
-                base = cur.fetchone()
-                if not base:
-                    return JSONResponse(
-                        {"error": "Predio no encontrado"},
-                        status_code=404,
-                    )
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(sql_base, (predio_id,))
+            base = cur.fetchone()
+            if not base:
+                return JSONResponse({"error": "Predio no encontrado"}, status_code=404)
 
-                cur.execute(sql_uc, (predio_id,))
-                unidades = cur.fetchall()
+            cur.execute(sql_uc, (predio_id,))
+            unidades = cur.fetchall()
 
-                if _table_exists(cur, SCHEMA_WORK, "arb_uebaunit"):
-                    cur.execute(sql_uebaunit, (predio_id,))
-                    uebaunit_rows = cur.fetchall()
-                else:
-                    uebaunit_rows = []
+            if _table_exists(cur, schema, "arb_uebaunit"):
+                cur.execute(sql_uebaunit, (predio_id,))
+                uebaunit_rows = cur.fetchall()
+            else:
+                uebaunit_rows = []
 
+            derechos_interesados = []
+            direcciones = []
+
+            try:
+                cur.execute(sql_dif, (predio_id,))
+                derechos_interesados = _normalize_derechos_rows(cur.fetchall())
+            except Exception:
+                _rollback_safely(conn)
                 derechos_interesados = []
-                direcciones = []
-                try:
-                    cur.execute(sql_dif, (predio_id,))
-                    derechos_interesados = cur.fetchall()
-                    for row in derechos_interesados:
-                        primer_nombre = row.get("i_primer_nombre") or row.get("primer_nombre")
-                        segundo_nombre = row.get("i_segundo_nombre") or row.get("segundo_nombre")
-                        primer_apellido = row.get("i_primer_apellido") or row.get("primer_apellido")
-                        segundo_apellido = row.get("i_segundo_apellido") or row.get("segundo_apellido")
-                        razon_social = row.get("i_razon_social") or row.get("razon_social")
-                        documento_identidad = row.get("i_documento_identidad") or row.get("documento_identidad")
 
-                        nombre_persona = " ".join(
-                            str(v).strip()
-                            for v in (primer_nombre, segundo_nombre, primer_apellido, segundo_apellido)
-                            if v is not None and str(v).strip()
-                        )
-                        row["nombre_completo"] = razon_social or nombre_persona or documento_identidad or ""
-                        row["documento_identidad"] = documento_identidad
-                        row["tipo_nombre"] = row.get("d_tipo_nombre") or row.get("tipo_nombre") or row.get("d_tipo")
-                        row["tipo_documento_nombre"] = (
-                            row.get("i_tipo_documento_nombre")
-                            or row.get("tipo_documento_nombre")
-                            or row.get("i_tipo_documento")
-                        )
-                        row["grupo_etnico_nombre"] = (
-                            row.get("i_grupo_etnico_nombre")
-                            or row.get("grupo_etnico_nombre")
-                            or row.get("i_grupo_etnico")
-                        )
-                except Exception:
-                    derechos_interesados = []
-
-                # Direcciones se consideran "extra"; si falla no debe borrar las otras colecciones
-                try:
-                    cur.execute(sql_direcciones, (predio_id,))
-                    direcciones = cur.fetchall()
-                except Exception:
-                    direcciones = direcciones or []
+            try:
+                cur.execute(sql_direcciones, (predio_id,))
+                direcciones = cur.fetchall()
+            except Exception:
+                _rollback_safely(conn)
+                direcciones = direcciones or []
     except Exception as exc:
-        logger.exception("Error en /predio/detalle predio_id=%s schema=%s", predio_id, SCHEMA_WORK)
+        _rollback_safely(conn)
+        logger.exception(
+            "Error en /predio/detalle predio_id=%s municipality=%s schema=%s",
+            predio_id,
+            tenant.municipality_code,
+            schema,
+        )
         return JSONResponse(
             {
                 "error": "Error consultando detalle de predio",
@@ -431,20 +469,23 @@ def predio_detalle(
 @router.get("/predio/unidad_detalle")
 def unidad_detalle(
     unidad_id: int = Query(..., description="ID de arb_unidadconstruccion.t_id"),
-    _user: str = Depends(require_user),
+    _user: Annotated[dict[str, Any], Depends(get_current_user)] = None,
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)] = None,
+    conn=Depends(get_tenant_db_connection),
 ):
-    with db_conn() as conn:
+    schema = _schema_name(tenant)
+    try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            if not _table_exists(cur, SCHEMA_WORK, "arb_unidadconstruccion"):
+            if not _table_exists(cur, schema, "arb_unidadconstruccion"):
                 return JSONResponse(
                     {"error": "Tabla arb_unidadconstruccion no disponible en el esquema"},
                     status_code=500,
                 )
 
-            uc_cols = _table_columns(cur, SCHEMA_WORK, "arb_unidadconstruccion")
-            has_car = _table_exists(cur, SCHEMA_WORK, "arb_caracteristicasunidadconstruccion")
+            uc_cols = _table_columns(cur, schema, "arb_unidadconstruccion")
+            has_car = _table_exists(cur, schema, "arb_caracteristicasunidadconstruccion")
             car_cols = (
-                _table_columns(cur, SCHEMA_WORK, "arb_caracteristicasunidadconstruccion")
+                _table_columns(cur, schema, "arb_caracteristicasunidadconstruccion")
                 if has_car
                 else set()
             )
@@ -457,10 +498,11 @@ def unidad_detalle(
             ) -> None:
                 if col_name not in uc_cols:
                     return
-                if not _table_exists(cur, SCHEMA_WORK, domain_table):
+                table = _validated_identifier(domain_table)
+                if not _table_exists(cur, schema, table):
                     return
                 join_parts.append(
-                    f"LEFT JOIN {SCHEMA_WORK}.{domain_table} {domain_alias} "
+                    f"LEFT JOIN {schema}.{table} {domain_alias} "
                     f"ON {domain_alias}.t_id::text = uc.{col_name}::text"
                 )
                 select_parts.append(
@@ -489,7 +531,7 @@ def unidad_detalle(
             has_uc_car_fk = has_car and "caracteristicasunidadconstruccion" in uc_cols
             if has_uc_car_fk:
                 join_parts.append(
-                    f"LEFT JOIN {SCHEMA_WORK}.arb_caracteristicasunidadconstruccion car "
+                    f"LEFT JOIN {schema}.arb_caracteristicasunidadconstruccion car "
                     "ON car.t_id = uc.caracteristicasunidadconstruccion"
                 )
                 for col in (
@@ -629,25 +671,26 @@ def unidad_detalle(
                 for fk_col, dom_table, dom_alias, out_alias in car_domains:
                     if fk_col not in car_cols:
                         continue
-                    if not _table_exists(cur, SCHEMA_WORK, dom_table):
+                    table = _validated_identifier(dom_table)
+                    if not _table_exists(cur, schema, table):
                         continue
                     join_parts.append(
-                        f"LEFT JOIN {SCHEMA_WORK}.{dom_table} {dom_alias} "
-                        f"ON {dom_alias}.t_id::text = car.{fk_col}::text"
+                        f"LEFT JOIN {schema}.{table} {dom_alias} "
+                        f"ON {domain_alias}.t_id::text = car.{fk_col}::text"
                     )
                     select_parts.append(
                         "COALESCE("
-                        f"{dom_alias}.dispname, "
-                        f"to_jsonb({dom_alias})->>'iliCode', "
-                        f"to_jsonb({dom_alias})->>'ilicode', "
-                        f"{dom_alias}.t_id::text"
+                        f"{domain_alias}.dispname, "
+                        f"to_jsonb({domain_alias})->>'iliCode', "
+                        f"to_jsonb({domain_alias})->>'ilicode', "
+                        f"{domain_alias}.t_id::text"
                         f") AS {out_alias}"
                     )
 
             sql_unidad = f"""
             SELECT
               {", ".join(select_parts)}
-            FROM {SCHEMA_WORK}.arb_unidadconstruccion uc
+            FROM {schema}.arb_unidadconstruccion uc
             {" ".join(join_parts)}
             WHERE uc.t_id = %s::bigint
             LIMIT 1;
@@ -662,7 +705,6 @@ def unidad_detalle(
                 )
 
             unidad = dict(row)
-
             car_data: dict[str, object] = {}
             for k, v in row.items():
                 if k.startswith("car_"):
@@ -701,8 +743,6 @@ def unidad_detalle(
             has_car_values = any(v is not None and str(v).strip() != "" for v in car_data.values())
             caracteristicas = car_data if has_car_values else None
 
-            # En algunos despliegues cc_tipo_calificar tiene FK cargado pero sin dispname visible.
-            # Si llega el mismo ID numérico, intentamos resolver una etiqueta textual adicional.
             cc_tipo_calificar_fk = car_data.get("cc_tipo_calificar")
             cc_tipo_calificar_lbl = car_data.get("tipo_calificar_nombre")
             if cc_tipo_calificar_fk is not None and (
@@ -710,16 +750,10 @@ def unidad_detalle(
                 or not str(cc_tipo_calificar_lbl).strip()
                 or str(cc_tipo_calificar_lbl).strip() == str(cc_tipo_calificar_fk).strip()
             ):
-                resolved = _resolve_domain_label(
-                    cur,
-                    SCHEMA_WORK,
-                    "arb_calificartipo",
-                    cc_tipo_calificar_fk,
-                )
+                resolved = _resolve_domain_label(cur, schema, "arb_calificartipo", cc_tipo_calificar_fk)
                 if resolved:
                     car_data["tipo_calificar_nombre"] = resolved
                 else:
-                    # Evita propagar el id numérico como "nombre" en este campo.
                     car_data["tipo_calificar_nombre"] = None
 
             tipo_calif = (car_data.get("tipo_calificacion_nombre") or "").strip().lower()
@@ -779,6 +813,18 @@ def unidad_detalle(
                 if caracteristicas
                 else None
             )
+    except Exception as exc:
+        _rollback_safely(conn)
+        logger.exception(
+            "Error en /predio/unidad_detalle unidad_id=%s municipality=%s schema=%s",
+            unidad_id,
+            tenant.municipality_code,
+            schema,
+        )
+        return JSONResponse(
+            {"error": "Error consultando unidad de construccion", "unidad_id": unidad_id, "detalle": str(exc)},
+            status_code=500,
+        )
 
     return {
         "unidad": unidad,
@@ -788,4 +834,3 @@ def unidad_detalle(
         "tipologia_construccion": tipologia_construccion,
         "tipologia_no_convencional": tipologia_no_convencional,
     }
-
