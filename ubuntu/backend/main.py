@@ -4,6 +4,7 @@ import logging
 from dataclasses import dataclass
 
 from fastapi import Depends, FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware  # 👈 IMPORTANTE
 
@@ -130,6 +131,10 @@ def create_app() -> FastAPI:
     def health_api_alias():
         return {"status": "healthy"}
 
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        return RedirectResponse(url=f"{settings.static_url}/icon.png", status_code=307)
+
     @app.get("/api/protected", tags=["auth"])
     def protected(user=Depends(require_user)):
         return {
@@ -143,3 +148,6 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+
