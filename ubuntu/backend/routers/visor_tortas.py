@@ -87,3 +87,5 @@ def resumen_proyecto(_user: str = Depends(require_user)):
         "destinacion_economica": dest_rows,
         "tipo_planta": tipo_planta_rows,
     }
+
+

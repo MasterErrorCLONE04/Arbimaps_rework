@@ -1,8 +1,29 @@
 ﻿<div class="container-fluid page-wrapper">
-  <div class="d-flex align-items-center flex-wrap gap-2 mt-0 mb-4 pt-0">
-    <div class="content-title flex-grow-1 text-center">
-      <small class="title-main mb-0">Resumen del proyecto</small>
-      <p class="subtitle-main mb-0">Visor del proyecto y resumen de gestion</p>
+  <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-2 mt-0 mb-4 pt-0 px-5">
+    <div class="content-title text-start mb-2" style="width: auto">
+      <h3 class="title-main mb-0">Resumen del proyecto</h3>
+      <small class="subtitle-main mb-0">Visor del proyecto y resumen de gestion</small>
+    </div>
+
+    <div class="border-none d-flex flex-row gap-3 p-3 carta-total-predio"
+      style="border-radius: 20px; border-left: 4px solid #6aa4d4">
+      <div class="p-0 d-flex justify-content-center align-items-center" style="
+          background-color: #002f55;
+          width: 60px;
+          height: 60px;
+          border-radius: 500px;
+        ">
+        <!-- <i class="bi bi-map-fill fs-5" style="color: #ffffff;"></i> -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="icono-map" viewBox="0 0 640 512">
+          <!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+          <path fill="rgb(255, 255, 255)"
+            d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="mb-0" id="totalPrediosH1" style="font-weight: 900; font-size: 1.8rem;" >---</h1>
+        <p class="mb-0">Total de predios</p>
+      </div>
     </div>
   </div>
   <!-- <div class="row g-3 mb-4">
@@ -107,11 +128,7 @@
         <div class="px-2 pt-1 pb-2">
           <div class="stats-tabs-block mb-3">
             <div class="stats-pill-nav mb-3 mt-2">
-              <button
-                type="button"
-                class="stats-pill-btn active"
-                id="pillCondicion"
-              >
+              <button type="button" class="stats-pill-btn active" id="pillCondicion">
                 <i class="bi bi-house-gear-fill"></i>
                 <span>Condicion de predio</span>
               </button>
@@ -122,32 +139,20 @@
               </button>
             </div>
 
-            <div
-              class="stats-group-label small fw-semibold text-uppercase text-secondary mb-2 text-center"
-            >
+            <div class="stats-group-label small fw-semibold text-uppercase text-secondary mb-2 text-center">
               Tipo de grafica
             </div>
 
             <div class="d-flex justify-content-center mb-3">
-              <div
-                class="d-inline-flex align-items-center gap-1 p-1 rounded-pill border bg-light"
-              >
-                <button
-                  type="button"
-                  class="btn btn-sm rounded-pill px-3 py-1 text-white shadow-sm"
-                  id="pillDona"
-                  style="background-color: #032f57; border-color: #032f57"
-                >
+              <div class="d-inline-flex align-items-center gap-1 p-1 rounded-pill border bg-light">
+                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 text-white shadow-sm" id="pillDona"
+                  style="background-color: #032f57; border-color: #032f57">
                   <i class="bi bi-circle me-1"></i>
                   <span>Anillos</span>
                 </button>
 
-                <button
-                  type="button"
-                  class="btn btn-sm rounded-pill px-3 py-1 btn-light"
-                  id="pillArea"
-                  style="border-color: #dbe3ec"
-                >
+                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 btn-light" id="pillArea"
+                  style="border-color: #dbe3ec">
                   <i class="bi bi-bullseye me-1"></i>
                   <span>Area</span>
                 </button>
@@ -177,8 +182,7 @@
     <div class="col-12 col-xl-8">
       <div class="panel-card rounded-3 visor-card">
         <div
-          class="card-header-pro d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-start gap-2"
-        >
+          class="card-header-pro d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-start gap-2">
           <div class="text-center text-md-start w-100">
             <h4 class="card-title-pro mb-0">Visor geografico</h4>
             <p class="card-subtitle-pro mb-0 small">
@@ -201,12 +205,7 @@
           <div id="vmLayerPanel" class="vm-layer-panel hidden">
             <div class="vm-layer-panel-head">
               <strong>Capas</strong>
-              <button
-                id="vmCloseLayerPanel"
-                class="vm-panel-close"
-                type="button"
-                title="Ocultar panel"
-              >
+              <button id="vmCloseLayerPanel" class="vm-panel-close" type="button" title="Ocultar panel">
                 x
               </button>
             </div>
@@ -231,12 +230,7 @@
           <div id="vmBasemapPanel" class="vm-layer-panel vm-layer-panel-basemap hidden">
             <div class="vm-layer-panel-head">
               <strong>Mapabase</strong>
-              <button
-                id="vmCloseBasemapPanel"
-                class="vm-panel-close"
-                type="button"
-                title="Ocultar panel"
-              >
+              <button id="vmCloseBasemapPanel" class="vm-panel-close" type="button" title="Ocultar panel">
                 x
               </button>
             </div>
@@ -253,10 +247,14 @@
             </div>
           </div>
 
-          <div id="map"></div>
+          <div id="map" style="height: 50px"></div>
           <div class="vm-zoom-stack" aria-label="Controles de zoom">
-            <button id="vmZoomInBtn" class="vm-zoom-btn" type="button" title="Acercar">+</button>
-            <button id="vmZoomOutBtn" class="vm-zoom-btn" type="button" title="Alejar">-</button>
+            <button id="vmZoomInBtn" class="vm-zoom-btn" type="button" title="Acercar">
+              +
+            </button>
+            <button id="vmZoomOutBtn" class="vm-zoom-btn" type="button" title="Alejar">
+              -
+            </button>
           </div>
         </div>
       </div>
@@ -300,7 +298,9 @@
         border-radius: 16px;
         box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
         overflow: hidden;
-        transition: transform 0.2s ease, opacity 0.2s ease;
+        transition:
+          transform 0.2s ease,
+          opacity 0.2s ease;
       }
 
       .vm-layer-panel.hidden {
@@ -340,7 +340,7 @@
         padding: 10px;
       }
 
-      .vm-layer-block + .vm-layer-block {
+      .vm-layer-block+.vm-layer-block {
         margin-top: 8px;
       }
 
@@ -456,8 +456,8 @@
 
       .vm-zoom-stack {
         position: absolute;
-        right: 12px;
-        bottom: 64px;
+        left: 12px;
+        top: 10px;
         z-index: 34;
         display: flex;
         flex-direction: column;
@@ -512,9 +512,7 @@
       <div class="row g-3">
         <div class="col-12 col-xl-8">
           <div class="card-soft h-100">
-            <div
-              class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"
-            >
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
               <div class="text-center w-100">
                 <h3 class="mb-1">Tabla de destinacion economica</h3>
                 <p class="sub mb-0">
@@ -543,18 +541,11 @@
               </table>
             </div>
 
-            <div
-              class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3"
-            >
-              <small class="text-muted" id="tablaDestinacionInfo"
-                >Mostrando 0 a 0 de 0 registros</small
-              >
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+              <small class="text-muted" id="tablaDestinacionInfo">Mostrando 0 a 0 de 0 registros</small>
 
               <nav aria-label="Paginacion destinacion economica">
-                <ul
-                  class="pagination pagination-sm mb-0"
-                  id="tablaDestinacionPagination"
-                ></ul>
+                <ul class="pagination pagination-sm mb-0" id="tablaDestinacionPagination"></ul>
               </nav>
             </div>
           </div>
@@ -631,10 +622,8 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-  href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
-  rel="stylesheet"
-/>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+  rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/ol@9.2.4/dist/ol.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -679,8 +668,8 @@
   const WMS_URL = `${rp}/proxy/wms`;
   const parsedLayers = String(
     {{ visor_geoserver_layers | default('A_Base_Principal:Base_Principal') | tojson }}
-  )
-    .split(",")
+    )
+      .split(",")
     .map((name) => name.trim())
     .filter(Boolean);
   const GEOSERVER_LAYERS = parsedLayers.length
@@ -1592,10 +1581,10 @@
     }
 
     legend.innerHTML = `
-      <div class="summary-legend-meta mb-2">
-        Haz clic sobre una categoria para mostrarla u ocultarla en la grafica.
-      </div>
-      ${items
+        <div class="summary-legend-meta mb-2">
+          Haz clic sobre una categoria para mostrarla u ocultarla en la grafica.
+        </div>
+        ${items
         .map((item, index) => {
           const name = item[keyField] || "Sin dato";
           const value = Number(item.total || 0);
@@ -1603,19 +1592,19 @@
           const isVisible = visibility[index] !== false;
 
           return `
-            <div class="summary-legend-item ${!isVisible ? "is-hidden" : ""}" data-mode="${mode}" data-index="${index}">
-              <div class="d-flex align-items-center justify-content-between gap-2">
-                <div class="summary-legend-left">
-                  <span class="summary-dot" style="background:${color}"></span>
-                  <span class="summary-legend-name">${name}</span>
+              <div class="summary-legend-item ${!isVisible ? "is-hidden" : ""}" data-mode="${mode}" data-index="${index}">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                  <div class="summary-legend-left">
+                    <span class="summary-dot" style="background:${color}"></span>
+                    <span class="summary-legend-name">${name}</span>
+                  </div>
+                  <span class="summary-legend-value">${value}</span>
                 </div>
-                <span class="summary-legend-value">${value}</span>
               </div>
-            </div>
-          `;
+            `;
         })
         .join("")}
-    `;
+      `;
 
     legend.querySelectorAll(".summary-legend-item").forEach((el) => {
       el.addEventListener("click", () => {
@@ -1641,12 +1630,12 @@
 
     if (!itemsDest || !itemsDest.length) {
       tbody.innerHTML = `
-      <tr>
-        <td colspan="4" class="text-center text-muted py-4">
-          Sin datos disponibles.
-        </td>
-      </tr>
-    `;
+        <tr>
+          <td colspan="4" class="text-center text-muted py-4">
+            Sin datos disponibles.
+          </td>
+        </tr>
+      `;
       return;
     }
 
@@ -1659,13 +1648,13 @@
           : "0.00";
 
         return `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${nombre}</td>
-          <td class="text-end fw-semibold">${cantidad}</td>
-          <td class="text-end">${porcentaje}%</td>
-        </tr>
-      `;
+          <tr>
+            <td>${index + 1}</td>
+            <td>${nombre}</td>
+            <td class="text-end fw-semibold">${cantidad}</td>
+            <td class="text-end">${porcentaje}%</td>
+          </tr>
+        `;
       })
       .join("");
   }
@@ -1781,12 +1770,12 @@
 
     if (!tablaDestinacionData.length) {
       tbody.innerHTML = `
-      <tr>
-        <td colspan="4" class="text-center text-muted py-4">
-          Sin datos disponibles.
-        </td>
-      </tr>
-    `;
+        <tr>
+          <td colspan="4" class="text-center text-muted py-4">
+            Sin datos disponibles.
+          </td>
+        </tr>
+      `;
       if (info) {
         info.textContent = "Mostrando 0 a 0 de 0 registros";
       }
@@ -1806,13 +1795,13 @@
           : "0.00";
 
         return `
-        <tr>
-          <td>${start + index + 1}</td>
-          <td>${nombre}</td>
-          <td class="text-end fw-semibold">${cantidad}</td>
-          <td class="text-end">${porcentaje}%</td>
-        </tr>
-      `;
+          <tr>
+            <td>${start + index + 1}</td>
+            <td>${nombre}</td>
+            <td class="text-end fw-semibold">${cantidad}</td>
+            <td class="text-end">${porcentaje}%</td>
+          </tr>
+        `;
       })
       .join("");
 
@@ -1835,24 +1824,24 @@
     }
 
     let html = `
-    <li class="page-item ${tablaDestinacionPage === 1 ? "disabled" : ""}">
-      <button class="page-link" data-page="prev">Anterior</button>
-    </li>
-  `;
+      <li class="page-item ${tablaDestinacionPage === 1 ? "disabled" : ""}">
+        <button class="page-link" data-page="prev">Anterior</button>
+      </li>
+    `;
 
     for (let i = 1; i <= totalPages; i++) {
       html += `
-      <li class="page-item ${i === tablaDestinacionPage ? "active" : ""}">
-        <button class="page-link" data-page="${i}">${i}</button>
-      </li>
-    `;
+        <li class="page-item ${i === tablaDestinacionPage ? "active" : ""}">
+          <button class="page-link" data-page="${i}">${i}</button>
+        </li>
+      `;
     }
 
     html += `
-    <li class="page-item ${tablaDestinacionPage === totalPages ? "disabled" : ""}">
-      <button class="page-link" data-page="next">Siguiente</button>
-    </li>
-  `;
+      <li class="page-item ${tablaDestinacionPage === totalPages ? "disabled" : ""}">
+        <button class="page-link" data-page="next">Siguiente</button>
+      </li>
+    `;
 
     pagination.innerHTML = html;
 
@@ -1924,12 +1913,12 @@
 
       if (resumenEl) {
         resumenEl.innerHTML = `
-        <div><b>Total predios:</b> ${total}</div>
-        <div style="margin-top:6px;">
-          El panel superior muestra una vista compacta e interactiva de los mismos datos de
-          <b>condicion de predio</b> y <b>tipo de predio</b>.
-        </div>
-      `;
+          <div><b>Total predios:</b> ${total}</div>
+          <div style="margin-top:6px;">
+            El panel superior muestra una vista compacta e interactiva de los mismos datos de
+            <b>condicion de predio</b> y <b>tipo de predio</b>.
+          </div>
+        `;
       }
 
       if (canvasCond && itemsCond.length) {
@@ -2142,12 +2131,26 @@
     }
   }
 
+  async function cargarTotalEnH1() {
+    try {
+      const r = await fetch(`${rp}/visor/total-predios`);
+      const data = await r.json();
+      const h1 = document.getElementById('totalPrediosH1');
+      if (h1) {
+        h1.textContent = data.total.toLocaleString();
+      }
+      console.log("Total de predios obtenido: " + data.total);
+    } catch (e) {
+      console.error("Error cargando el total:", e);
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", async () => {
     console.info("[visor] WMS_URL:", WMS_URL, "LAYERS:", GEOSERVER_LAYERS);
     await initMap();
     await loadProjectExtent();
     bindStatsPillNav();
     loadDashboard();
+    await cargarTotalEnH1();
   });
 </script>
-

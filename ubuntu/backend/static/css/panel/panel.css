@@ -285,7 +285,7 @@ body.panel-body::-webkit-scrollbar {
 .sidebar-group-left {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 4px;
 }
 
 .popupItem {
@@ -359,7 +359,7 @@ body.panel-body::-webkit-scrollbar {
     padding: 3px 8px;
     display: flex;
     align-items: center;
-    gap: 5%;
+    gap: 2px;
     font-weight: 500;
     transition: 0.2s ease;
 }
@@ -412,6 +412,7 @@ body.panel-body::-webkit-scrollbar {
     box-shadow: none !important;
     outline: none !important;
     border: 0 !important;
+    border-radius: 13px;
 }
 
 #asignacionesAccordionDesktop .accordion-body,
@@ -868,7 +869,7 @@ body.panel-body::-webkit-scrollbar {
 
     .mobile-offcanvas-sidebar .accordion .accordion-button {
         padding: 0.7rem 0.9rem;
-        border-radius: 12px;
+        border-radius: 13px !important;
         background: #123f68;
         color: #ffffff;
         font-weight: 600;
