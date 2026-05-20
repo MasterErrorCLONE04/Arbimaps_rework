@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import re
 import shlex
@@ -58,6 +59,8 @@ class XTFValidationService:
     def _validate_xtf(self, job_id: str, file_path: Path) -> dict[str, Any]:
         log_path = (self.log_dir / f"{job_id}.log").resolve()
         report_path = (self.report_dir / f"{job_id}.xml").resolve()
+        quality_result = self._run_internal_quality(file_path)
+        quality, rule_errors = self._quality_and_rule_errors(quality_result)
 
         validator_path = self.validator_jar
         if not validator_path or not validator_path.exists():
@@ -66,20 +69,16 @@ class XTFValidationService:
 
         if not validator_path or not validator_path.exists():
             location_hint = (validator_path or self.default_validator_path).parent
-            return {
-                "status": "skipped",
-                "message": (
+            return self._build_validation_result(
+                status="skipped",
+                message=(
                     "No se encontro ilivalidator.jar. "
                     f"Configura ILIVALIDATOR_JAR o coloca el archivo en {location_hint}."
                 ),
-                "log_path": None,
-                "report_path": None,
-                "command": None,
-                "stdout_tail": "",
-                "stderr_tail": "",
-                "errors": [],
-                "quality": self._empty_quality_result(),
-            }
+                schema_errors=[],
+                rule_errors=rule_errors,
+                quality=quality,
+            )
 
         java_bin = self.java_bin
         if not java_bin:
@@ -87,47 +86,35 @@ class XTFValidationService:
             self.java_bin = java_bin
 
         if not java_bin:
-            return {
-                "status": "skipped",
-                "message": (
+            return self._build_validation_result(
+                status="skipped",
+                message=(
                     "No se encontro el ejecutable de Java. "
                     "Instala Java 11+ o configura JAVA_BIN/JAVA_HOME en el entorno."
                 ),
-                "log_path": None,
-                "report_path": None,
-                "command": None,
-                "stdout_tail": "",
-                "stderr_tail": "",
-                "errors": [],
-                "quality": self._empty_quality_result(),
-            }
+                schema_errors=[],
+                rule_errors=rule_errors,
+                quality=quality,
+            )
 
         if not self.model_dir.exists():
-            return {
-                "status": "error",
-                "message": f"No se encontro la carpeta de modelos {self.model_dir}",
-                "log_path": None,
-                "report_path": None,
-                "command": None,
-                "stdout_tail": "",
-                "stderr_tail": "",
-                "errors": [],
-                "quality": self._empty_quality_result(),
-            }
+            return self._build_validation_result(
+                status="error",
+                message=f"No se encontro la carpeta de modelos {self.model_dir}",
+                schema_errors=[],
+                rule_errors=rule_errors,
+                quality=quality,
+            )
 
         libs = self._gather_validator_libs(validator_path)
         if not libs:
-            return {
-                "status": "error",
-                "message": f"No se encontraron librerías del validador en {self.validator_lib_dir}",
-                "log_path": None,
-                "report_path": None,
-                "command": None,
-                "stdout_tail": "",
-                "stderr_tail": "",
-                "errors": [],
-                "quality": self._empty_quality_result(),
-            }
+            return self._build_validation_result(
+                status="error",
+                message=f"No se encontraron librerías del validador en {self.validator_lib_dir}",
+                schema_errors=[],
+                rule_errors=rule_errors,
+                quality=quality,
+            )
 
         base_cmd = self._build_validator_base_cmd(java_bin, validator_path, libs)
         cmd: list[str] = [
@@ -174,45 +161,18 @@ class XTFValidationService:
             report_path, log_path, process.stdout, process.stderr
         )
 
-        quality_result = run_quality_checks(file_path)
-
-        raw_quality = quality_result.get("quality")
-        raw_issues = quality_result.get("issues", [])
-
-        if not isinstance(raw_quality, dict):
-            raw_quality = {}
-
-        if not isinstance(raw_issues, list):
-            raw_issues = []
-
-        if "issues" not in raw_quality or not isinstance(raw_quality.get("issues"), list):
-            raw_quality["issues"] = raw_issues
-
-        quality = self._normalize_quality_result(
-            raw_quality,
-            issues_override=raw_issues,
+        return self._build_validation_result(
+            status=status,
+            message=message,
+            log_path=str(log_path) if log_path.exists() else None,
+            report_path=str(report_path) if report_path.exists() else None,
+            command=" ".join(shlex.quote(part) for part in cmd),
+            stdout_tail=self._tail_text(process.stdout),
+            stderr_tail=self._tail_text(process.stderr),
+            schema_errors=schema_errors,
+            rule_errors=rule_errors,
+            quality=quality,
         )
-
-        rule_errors = quality_result.get("issues", []) if isinstance(quality_result.get("issues"), list) else []
-        errors = [*schema_errors, *rule_errors]
-
-        if rule_errors and status == "success":
-            status = "invalid"
-            message = "El validador encontró errores en las reglas internas."
-
-        return {
-            "status": status,
-            "message": message,
-            "log_path": str(log_path) if log_path.exists() else None,
-            "report_path": str(report_path) if report_path.exists() else None,
-            "command": " ".join(shlex.quote(part) for part in cmd),
-            "stdout_tail": self._tail_text(process.stdout),
-            "stderr_tail": self._tail_text(process.stderr),
-            "errors": errors,
-            "schema_errors": schema_errors,
-            "rule_errors": rule_errors,
-            "quality": quality,
-        }
 
     def _empty_quality_result(self) -> dict[str, Any]:
         return {
@@ -253,32 +213,138 @@ class XTFValidationService:
         if not isinstance(rules, list):
             rules = []
 
-        # 🔴 IMPORTANTE: traer catálogo
+        # Traer catálogo. Si el motor no lo entrega, cargarlo desde resource/quality_rules/*.json.
         rule_catalog = quality.get("rule_catalog")
-        if not isinstance(rule_catalog, dict):
-            rule_catalog = {}
+        if not isinstance(rule_catalog, dict) or not rule_catalog:
+            rule_catalog = self._load_rule_catalog_fallback()
+        else:
+            normalized_catalog: dict[str, dict[str, Any]] = {}
+            for rule_id, metadata in rule_catalog.items():
+                normalized_rule_id = str(rule_id or "").strip()
+                if not normalized_rule_id or not isinstance(metadata, dict):
+                    continue
+                normalized_catalog[normalized_rule_id] = metadata
+            rule_catalog = normalized_catalog
 
-        # fallback: reconstruir reglas desde issues si rules viene vacío
+        issues_by_rule: dict[str, int] = {}
+        for issue in issues:
+            if not isinstance(issue, dict):
+                continue
+            rule_id = str(
+                issue.get("rule")
+                or issue.get("rule_id")
+                or issue.get("codigo")
+                or ""
+            ).strip()
+            if not rule_id or rule_id == "No disponible":
+                continue
+            issues_by_rule[rule_id] = issues_by_rule.get(rule_id, 0) + 1
+
+        implemented_rule_ids = self._implemented_rule_ids_from_components()
+        catalog_rule_ids = implemented_rule_ids or sorted(rule_catalog.keys(), key=self._rule_sort_key)
+
+        rules_by_id: dict[str, dict[str, Any]] = {}
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+            rule_id = str(rule.get("rule") or rule.get("rule_id") or "").strip()
+            if not rule_id:
+                continue
+            rules_by_id[rule_id] = rule
+
+        # Si llegan reglas parciales (por ejemplo solo las incumplidas), se completa
+        # la lista con el catálogo implementado para conservar agrupación y descripciones.
+        rules_have_metadata = any(
+            isinstance(rule, dict) and (
+                rule.get("component")
+                or rule.get("component_slug")
+                or rule.get("component_label")
+                or rule.get("description")
+            )
+            for rule in rules
+        )
+        missing_catalog_rules = bool(catalog_rule_ids) and any(
+            rule_id not in rules_by_id for rule_id in catalog_rule_ids
+        )
+
+        if rule_catalog and catalog_rule_ids and (not rules_by_id or missing_catalog_rules or not rules_have_metadata):
+            merged_rules: list[dict[str, Any]] = []
+
+            for rule_id in catalog_rule_ids:
+                catalog_item = rule_catalog.get(rule_id, {})
+                item = rules_by_id.pop(rule_id, {})
+                issue_count = self._coerce_int(
+                    item.get("issue_count"),
+                    default=issues_by_rule.get(rule_id, 0),
+                )
+                passed = (
+                    self._coerce_bool(item.get("passed"), default=issue_count == 0)
+                    if "passed" in item
+                    else issue_count == 0
+                )
+                merged_rules.append(
+                    {
+                        "rule": rule_id,
+                        "issue_count": issue_count,
+                        "passed": passed,
+                        "component": (
+                            item.get("component")
+                            or item.get("component_slug")
+                            or catalog_item.get("component_slug")
+                            or catalog_item.get("component")
+                        ),
+                        "component_label": (
+                            item.get("component_label")
+                            or catalog_item.get("component_label")
+                            or catalog_item.get("component")
+                        ),
+                        "description": item.get("description") or catalog_item.get("description"),
+                    }
+                )
+
+            for rule_id in sorted(rules_by_id.keys(), key=self._rule_sort_key):
+                item = rules_by_id[rule_id]
+                catalog_item = rule_catalog.get(rule_id, {})
+                issue_count = self._coerce_int(
+                    item.get("issue_count"),
+                    default=issues_by_rule.get(rule_id, 0),
+                )
+                passed = (
+                    self._coerce_bool(item.get("passed"), default=issue_count == 0)
+                    if "passed" in item
+                    else issue_count == 0
+                )
+                merged_rules.append(
+                    {
+                        "rule": rule_id,
+                        "issue_count": issue_count,
+                        "passed": passed,
+                        "component": (
+                            item.get("component")
+                            or item.get("component_slug")
+                            or catalog_item.get("component_slug")
+                            or catalog_item.get("component")
+                        ),
+                        "component_label": (
+                            item.get("component_label")
+                            or catalog_item.get("component_label")
+                            or catalog_item.get("component")
+                        ),
+                        "description": item.get("description") or catalog_item.get("description"),
+                    }
+                )
+
+            rules = merged_rules
+
+        # fallback final: reconstruir reglas desde issues si no hay catálogo
         if not rules and issues:
-            grouped_rules: dict[str, int] = {}
-
-            for issue in issues:
-                if not isinstance(issue, dict):
-                    continue
-
-                rule_id = str(issue.get("rule") or "").strip()
-                if not rule_id or rule_id == "No disponible":
-                    continue
-
-                grouped_rules[rule_id] = grouped_rules.get(rule_id, 0) + 1
-
             rules = [
                 {
                     "rule": rule_id,
                     "issue_count": issue_count,
                     "passed": issue_count == 0,
                 }
-                for rule_id, issue_count in sorted(grouped_rules.items())
+                for rule_id, issue_count in sorted(issues_by_rule.items())
             ]
 
         implemented_rule_ids: list[str] = []
@@ -292,18 +358,34 @@ class XTFValidationService:
             if not rule_id:
                 continue
 
-            issue_count = self._coerce_int(item.get("issue_count", 0), default=0)
-            passed = bool(item.get("passed")) if "passed" in item else issue_count == 0
+            issue_count = self._coerce_int(
+                item.get("issue_count"),
+                default=issues_by_rule.get(rule_id, 0),
+            )
+            passed = (
+                self._coerce_bool(item.get("passed"), default=issue_count == 0)
+                if "passed" in item
+                else issue_count == 0
+            )
 
-            # 🔴 AQUÍ ESTÁ LA CLAVE (no perder metadata)
+            # No perder metadata aunque la regla venga solo desde un issue.
             catalog_item = rule_catalog.get(rule_id, {})
 
             normalized_rules.append({
                 "rule": rule_id,
                 "issue_count": issue_count,
                 "passed": passed,
-                "component": item.get("component") or catalog_item.get("component_slug"),
-                "component_label": item.get("component_label") or catalog_item.get("component_label"),
+                "component": (
+                    item.get("component")
+                    or item.get("component_slug")
+                    or catalog_item.get("component_slug")
+                    or catalog_item.get("component")
+                ),
+                "component_label": (
+                    item.get("component_label")
+                    or catalog_item.get("component_label")
+                    or catalog_item.get("component")
+                ),
                 "description": item.get("description") or catalog_item.get("description"),
             })
 
@@ -345,37 +427,40 @@ class XTFValidationService:
                 )
             ]
 
-        # 🔴 MUY IMPORTANTE: conservar catálogo
+        # Conservar catálogo para que el template tenga un fallback de metadata.
         quality["rule_catalog"] = rule_catalog
 
         quality["issues"] = issues
         quality["rules"] = normalized_rules
         quality["predio_summary"] = predio_summary
+
+        computed_total_rules = len(normalized_rules)
+        computed_passed_rules = sum(1 for rule in normalized_rules if rule["passed"])
+        computed_failed_rules = computed_total_rules - computed_passed_rules
+        available_default = len(rule_catalog) if rule_catalog else len(set(implemented_rule_ids) | set(unimplemented_rule_ids))
+        available_rules = self._coerce_int(summary.get("available_rules"), default=available_default)
+        if available_rules < computed_total_rules:
+            available_rules = max(computed_total_rules, available_default)
+
+        unimplemented_default = max(available_rules - computed_total_rules, 0)
+        unimplemented_rules = self._coerce_int(
+            summary.get("unimplemented_rules"),
+            default=unimplemented_default,
+        )
+        if (
+            unimplemented_rules == 0
+            and available_rules > computed_total_rules
+            and self._coerce_int(summary.get("total_rules"), default=-1) != computed_total_rules
+        ):
+            unimplemented_rules = unimplemented_default
+
         quality["summary"] = {
-            "available_rules": self._coerce_int(
-                summary.get("available_rules"),
-                default=len(set(implemented_rule_ids) | set(unimplemented_rule_ids)),
-            ),
-            "total_rules": self._coerce_int(
-                summary.get("total_rules"),
-                default=len(normalized_rules),
-            ),
-            "implemented_rules": self._coerce_int(
-                summary.get("implemented_rules"),
-                default=len(normalized_rules),
-            ),
-            "passed_rules": self._coerce_int(
-                summary.get("passed_rules"),
-                default=sum(1 for rule in normalized_rules if rule["passed"]),
-            ),
-            "failed_rules": self._coerce_int(
-                summary.get("failed_rules"),
-                default=sum(1 for rule in normalized_rules if not rule["passed"]),
-            ),
-            "unimplemented_rules": self._coerce_int(
-                summary.get("unimplemented_rules"),
-                default=len(unimplemented_rule_ids),
-            ),
+            "available_rules": available_rules,
+            "total_rules": computed_total_rules,
+            "implemented_rules": computed_total_rules,
+            "passed_rules": computed_passed_rules,
+            "failed_rules": computed_failed_rules,
+            "unimplemented_rules": unimplemented_rules,
             "total_issues": self._coerce_int(
                 summary.get("total_issues"),
                 default=len(issues),
@@ -499,6 +584,87 @@ class XTFValidationService:
             return int(value)
         except (TypeError, ValueError):
             return default
+
+    @staticmethod
+    def _coerce_bool(value: Any, *, default: bool) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return bool(value)
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"1", "true", "t", "yes", "y", "si", "sí"}:
+                return True
+            if normalized in {"0", "false", "f", "no", "n"}:
+                return False
+        return default
+
+    @staticmethod
+    def _rule_sort_key(rule_id: str) -> tuple[int, ...]:
+        parts: list[int] = []
+        for chunk in str(rule_id).split("."):
+            try:
+                parts.append(int(chunk))
+            except ValueError:
+                parts.append(999999)
+        return tuple(parts)
+
+    def _implemented_rule_ids_from_components(self) -> list[str]:
+        try:
+            from quality_rules.components import COMPONENTS
+        except Exception:
+            return []
+
+        rule_ids: list[str] = []
+        for component in COMPONENTS.values():
+            for rule_id in sorted(component.default_rule_ids, key=self._rule_sort_key):
+                if rule_id not in component.rule_functions:
+                    continue
+                if rule_id not in rule_ids:
+                    rule_ids.append(rule_id)
+        return rule_ids
+
+    def _load_rule_catalog_fallback(self) -> dict[str, dict[str, str]]:
+        base_dir = self._abs_path("resource", "quality_rules")
+        if not base_dir.exists():
+            return {}
+
+        try:
+            from quality_rules.components import COMPONENTS
+            component_slugs = list(COMPONENTS.keys())
+        except Exception:
+            component_slugs = [
+                path.stem
+                for path in sorted(base_dir.glob("*.json"))
+                if path.stem != "all_rules"
+            ]
+
+        catalog: dict[str, dict[str, str]] = {}
+        for slug in component_slugs:
+            path = base_dir / f"{slug}.json"
+            if not path.exists():
+                continue
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                continue
+
+            for entry in payload.get("rules", []):
+                if not isinstance(entry, dict):
+                    continue
+                rule_id = str(entry.get("id") or "").strip()
+                if not rule_id:
+                    continue
+
+                component_label = str(entry.get("component") or "").strip()
+                component_slug = str(entry.get("sheet_slug") or slug).strip()
+                catalog[rule_id] = {
+                    "description": str(entry.get("description") or ""),
+                    "component_label": component_label or component_slug.replace("_", " ").title(),
+                    "component_slug": component_slug,
+                }
+
+        return catalog
 
     def _abs_path(self, *parts: str) -> Path:
         return self.project_root.joinpath(*parts)
@@ -766,3 +932,144 @@ class XTFValidationService:
         if status == "invalid":
             return "El validador encontró errores en el XTF."
         return "No se pudo ejecutar el validador. Revisa los registros."
+
+    def _run_internal_quality(self, file_path: Path) -> dict[str, Any]:
+        """Ejecuta las reglas internas de calidad y siempre devuelve una estructura válida."""
+        try:
+            result = run_quality_checks(file_path)
+        except Exception as exc:
+            empty = self._empty_quality_result()
+            empty["issues"] = [
+                {
+                    "rule": "internal_quality",
+                    "object_id": None,
+                    "display_id": "Validador interno",
+                    "message": f"No se pudieron ejecutar las reglas internas: {exc}",
+                    "component": "internal",
+                    "component_label": "Reglas internas",
+                }
+            ]
+            empty["summary"]["total_issues"] = 1
+            empty["summary"]["failed_rules"] = 1
+            return empty
+
+        if isinstance(result, dict) and isinstance(result.get("quality"), dict):
+            quality = result["quality"]
+
+            if "issues" not in quality:
+                quality["issues"] = result.get("issues", [])
+
+            return self._normalize_quality_result(quality)
+
+        return self._normalize_quality_result(result)
+
+    def _quality_and_rule_errors(self, quality_result: dict[str, Any] | None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+        """Normaliza quality y copia los issues internos a rule_errors para que el frontend los muestre."""
+        quality = self._normalize_quality_result(quality_result)
+        rule_errors: list[dict[str, Any]] = []
+
+        catalog = quality.get("rule_catalog") or self._load_rule_catalog_fallback()
+        rule_meta_by_id = {
+            str(rule.get("rule")).strip(): rule
+            for rule in quality.get("rules", [])
+            if isinstance(rule, dict) and rule.get("rule")
+        }
+
+        for issue in quality.get("issues", []):
+            if not isinstance(issue, dict):
+                continue
+
+            rule_id = str(
+                issue.get("rule")
+                or issue.get("rule_id")
+                or issue.get("codigo")
+                or "No disponible"
+            ).strip()
+
+            object_id = (
+                issue.get("display_id")
+                or issue.get("object_id")
+                or issue.get("object_ref")
+                or issue.get("tid")
+            )
+
+            rule_meta = rule_meta_by_id.get(rule_id) or {}
+            catalog_item = catalog.get(rule_id) or {}
+
+            component = (
+                issue.get("component")
+                or issue.get("component_slug")
+                or rule_meta.get("component")
+                or catalog_item.get("component_slug")
+            )
+            component_label = (
+                issue.get("component_label")
+                or rule_meta.get("component_label")
+                or catalog_item.get("component_label")
+            )
+            description = (
+                issue.get("description")
+                or issue.get("descripcion")
+                or rule_meta.get("description")
+                or catalog_item.get("description")
+            )
+
+            rule_errors.append(
+                {
+                    "severity": issue.get("severity") or "ERROR",
+                    "object_id": str(object_id).strip() if object_id else None,
+                    "object_class": issue.get("object_class") or issue.get("class") or issue.get("tabla"),
+                    "rule": rule_id,
+                    "message": issue.get("message") or description or "Error de regla interna.",
+                    "description": description,
+                    "details": issue.get("details") or {},
+                    "component": component,
+                    "component_label": component_label,
+                }
+            )
+
+        return quality, rule_errors
+
+    def _build_validation_result(
+        self,
+        *,
+        status: str,
+        message: str,
+        schema_errors: list[dict[str, Any]] | None = None,
+        rule_errors: list[dict[str, Any]] | None = None,
+        quality: dict[str, Any] | None = None,
+        log_path: str | None = None,
+        report_path: str | None = None,
+        command: str | None = None,
+        stdout_tail: str = "",
+        stderr_tail: str = "",
+    ) -> dict[str, Any]:
+        """Construye la respuesta final conservando schema_errors y errores topológicos/calidad."""
+        normalized_quality = self._normalize_quality_result(quality)
+
+        schema_errors = schema_errors or []
+        rule_errors = rule_errors or []
+
+        summary = normalized_quality.get("summary") or {}
+        total_issues = self._coerce_int(summary.get("total_issues"), default=0)
+        failed_rules = self._coerce_int(summary.get("failed_rules"), default=0)
+
+        if status == "success" and (schema_errors or rule_errors or total_issues > 0 or failed_rules > 0):
+            status = "invalid"
+            message = (
+                "Se detectaron errores durante la validación. "
+                "Revisa el detalle por regla y por predio en las secciones inferiores."
+            )
+
+        return {
+            "status": status,
+            "message": message,
+            "schema_errors": schema_errors,
+            "rule_errors": rule_errors,
+            "quality": normalized_quality,
+            "log_path": log_path,
+            "report_path": report_path,
+            "command": command,
+            "stdout_tail": stdout_tail,
+            "stderr_tail": stderr_tail,
+        }

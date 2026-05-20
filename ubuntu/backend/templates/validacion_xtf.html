@@ -826,7 +826,7 @@ body.modal-open {
 {% if result and result.validation and result.validation.quality and result.validation.quality.rules %}
     {% for item in result.validation.quality.rules %}
         {% set catalog_item = rule_catalog.get(item.rule|string, {}) %}
-        {% set component_name = item.component_label or catalog_item.get('component_label') or item.component or catalog_item.get('component') or 'Sin componente' %}
+        {% set component_name = item.component_label or catalog_item.get('component_label') or item.component or item.component_slug or catalog_item.get('component') or catalog_item.get('component_slug') or 'Sin componente' %}
 
         {% if component_name not in rules_by_component %}
             {% set _ = rules_by_component.update({component_name: []}) %}
@@ -917,13 +917,13 @@ body.modal-open {
                 </p>
 
                 {% if result.validation %}
-                    {% if result.validation.status == 'success' %}
-                    <div class="status-banner status-ok">
-                        El archivo pasó la validación correctamente.
-                    </div>
-                    {% elif result.validation.status == 'invalid' %}
+                    {% if total_errors > 0 or failed_rules > 0 %}
                     <div class="status-banner status-error">
                         Se detectaron errores durante la validación. Revisa el detalle por regla y por predio en las secciones inferiores.
+                    </div>
+                    {% elif result.validation.status == 'success' %}
+                    <div class="status-banner status-ok">
+                        El archivo pasó la validación correctamente.
                     </div>
                     {% else %}
                     <div class="status-banner status-warning">
@@ -943,7 +943,7 @@ body.modal-open {
 
     <div class="kpi-grid">
         <div class="kpi-card">
-            <div class="kpi-label">Errores totales</div>
+            <div class="kpi-label">Errores totales 23</div>
             <div class="kpi-value">{{ total_errors }}</div>
         </div>
         <div class="kpi-card">

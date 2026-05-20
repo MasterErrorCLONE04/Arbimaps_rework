@@ -28,8 +28,10 @@ TARGET_CLASSES = {
     "ARB_NovedadFMIValor",
     "ARB_InformacionPH",
     "ARB_DerechoInteresadoFuente",
+    "ARB_DerechoTipo",
     "ARB_CaracteristicasUnidadConstruccion",
     "ARB_AvaluoValor",
+    "ARB_PredioTipo",
     "ARB_AdjuntoUnidadConstruccion",
     "ARB_AdjuntoTerreno",
     "ARB_AdjuntoPuntoReferencia",
@@ -60,8 +62,10 @@ TARGET_CLASSES = {
     "arb_novedadfmivalor",
     "arb_informacionph",
     "arb_derechointeresadofuente",
+    "arb_derechotipo",
     "arb_caracteristicasunidadconstruccion",
     "arb_avaluovalor",
+    "arb_prediotipo",
     "arb_adjuntounidadconstruccion",
     "arb_adjuntoterreno",
     "arb_adjuntopuntoreferencia",
@@ -77,14 +81,19 @@ ALIASES_BY_NORMALIZED = {
     # Dirección
     "arbdireccion": "ARB_Direccion",
     "arbdirección": "ARB_Direccion",
+    "cdireccion": "ARB_Direccion",
 
     # Capas físicas / geográficas
     "arbmarcapredial": "ARB_MarcaPredial",
     "arbpuntoreferencia": "ARB_PuntoReferencia",
     "arbunidadconstruccion": "ARB_UnidadConstruccion",
+    "dunidaddeconstruccion": "ARB_UnidadConstruccion",
+    "unidaddeconstruccion": "ARB_UnidadConstruccion",
     "arbconstruccion": "ARB_Construccion",
     "arbterrenohistorico": "ARB_TerrenoHistorico",
     "arbterreno": "ARB_Terreno",
+    "eterreno": "ARB_Terreno",
+    "terreno": "ARB_Terreno",
 
     # Tablas ARB
     "arbtramite": "ARB_Tramite",
@@ -94,8 +103,12 @@ ALIASES_BY_NORMALIZED = {
     "arbnovedadfmivalor": "ARB_NovedadFMIValor",
     "arbinformacionph": "ARB_InformacionPH",
     "arbderechointeresadofuente": "ARB_DerechoInteresadoFuente",
+    "derechointeresadofuente": "ARB_DerechoInteresadoFuente",
+    "arbderechotipo": "ARB_DerechoTipo",
     "arbcaracteristicasunidadconstruccion": "ARB_CaracteristicasUnidadConstruccion",
     "arbavaluovalor": "ARB_AvaluoValor",
+    "arbprediotipo": "ARB_PredioTipo",
+    "apredio": "ARB_Predio",
 
     # Adjuntos
     "arbadjuntounidadconstruccion": "ARB_AdjuntoUnidadConstruccion",
@@ -215,6 +228,7 @@ def parse_xtf_tables(
 
     tree = ET.parse(path)
     root = tree.getroot()
+    parents = {id(child): parent for parent in root.iter() for child in parent}
 
     for element in root.iter():
         raw_class_name = _clean_tag(element.tag)
@@ -242,14 +256,37 @@ def parse_xtf_tables(
             if value:
                 record[child_key] = value
 
+        if canonical_class_name == "ARB_Direccion":
+            predio_ref = _find_parent_ref(element, parents, "ARB_Predio", allowed_classes)
+            if predio_ref:
+                record.setdefault("predio", predio_ref)
+                record.setdefault("arb_predio_direccion", predio_ref)
+
         tables.setdefault(canonical_class_name, []).append(record)
 
     return {name: rows for name, rows in tables.items() if rows}
 
 def _is_geometry_node(node: ET.Element) -> bool:
     key = _normalize_key(_clean_tag(node.tag))
-    return key in {"geometria", "geometry", "geom"}
+    return key in {"geometria", "geometry", "geom", "localizacion"}
 
 
 def _node_to_xml(node: ET.Element) -> str:
     return ET.tostring(node, encoding="unicode")
+
+
+def _find_parent_ref(
+    element: ET.Element,
+    parents: dict[int, ET.Element],
+    canonical_parent: str,
+    allowed_classes: dict[str, str],
+) -> str:
+    parent = parents.get(id(element))
+    while parent is not None:
+        raw_class_name = _clean_tag(parent.tag)
+        normalized_class_name = _normalize_key(raw_class_name)
+        if allowed_classes.get(normalized_class_name) == canonical_parent:
+            ref = parent.attrib.get("TID") or parent.attrib.get("t_id") or parent.attrib.get("id")
+            return str(ref).strip() if ref else ""
+        parent = parents.get(id(parent))
+    return ""

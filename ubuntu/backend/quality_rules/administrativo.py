@@ -1,5 +1,6 @@
 from __future__ import annotations
 import re
+import unicodedata
 from .base import DatasetReader, RuleIssue
 
 COMPONENT_SLUG = "administrativo"
@@ -450,7 +451,6 @@ def _expected_digit_condominio(condicion: str) -> str | None:
     return mapping.get(condicion)
 
 #----------------------------- REGLAS -----------------------------
-
 
 def _rule_1_1(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
@@ -2181,8 +2181,6 @@ def _rule_1_19(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
 
-    terreno_tables = ("ARB_Terreno", "arb_terreno")
-
     condicion_fields = (
         "Condicion_Predio",
         "condicion_predio",
@@ -2195,6 +2193,29 @@ def _rule_1_19(dataset: DatasetReader) -> list[RuleIssue]:
         "Tipo_Novedad",
         "novedad",
         "Novedad",
+    )
+
+    terreno_predio_fk_fields = (
+        "predio",
+        "arb_predio",
+        "arb_predio_terreno",
+        "terreno_predio",
+        "predio_asociado",
+        "id_predio",
+        "Id_Predio",
+        "ARB_terreno_predio_ARB_predio_T_Id",
+    )
+
+    novedad_predio_fk_fields = (
+        "arb_predio_novedad_numero_predial",
+        "predio",
+        "arb_predio",
+        "predio_asociado",
+        "id_predio",
+        "Id_Predio",
+        "id_operacion",
+        "Id_Operacion",
+        "ARB_predio_novedad_numero_predial",
     )
 
     required_conditions = {
@@ -2220,12 +2241,93 @@ def _rule_1_19(dataset: DatasetReader) -> list[RuleIssue]:
                 return str(value).strip()
         return None
 
+    def normalize_relation_key(value: object) -> str:
+        text = str(value).strip().lower()
+        text = unicodedata.normalize("NFKD", text)
+        text = "".join(ch for ch in text if not unicodedata.combining(ch))
+        return re.sub(r"[^a-z0-9]", "", text)
+
+    def field_value(row: dict[str, object], candidates: tuple[str, ...]) -> object | None:
+        match = helper._extract_field(row, candidates, require_value=False)
+        if not match:
+            return None
+        value = match[1]
+        if value in (None, ""):
+            return None
+        return value
+
+    def add_predio_alias(alias: object, predio_id: str) -> None:
+        if alias in (None, ""):
+            return
+        alias_text = str(alias).strip()
+        if not alias_text:
+            return
+
+        alias_values = {alias_text}
+        if alias_text.endswith(".0"):
+            alias_values.add(alias_text[:-2])
+
+        alias_norm = normalize_relation_key(alias_text)
+        if alias_norm:
+            alias_values.add(alias_norm)
+
+        for value in alias_values:
+            predio_key_aliases.setdefault(value, predio_id)
+
+    def get_predio_keys(row: dict[str, object]) -> set[str]:
+        keys: set[str] = set()
+        for field in (
+            "T_Id",
+            "t_id",
+            "TID",
+            "tid",
+            "id_operacion",
+            "Id_Operacion",
+            "ID_OPERACION",
+            "numero_predial",
+            "Numero_Predial",
+            "Numero_Predial_Nacional",
+            "numero_predial_nacional",
+        ):
+            value = row.get(field)
+            if value not in (None, ""):
+                keys.add(str(value).strip())
+        object_ref = helper.identify(row)
+        if object_ref:
+            keys.add(str(object_ref).strip())
+        return keys
+
+    def resolve_predio_alias(value: object) -> str | None:
+        if value in (None, ""):
+            return None
+        value_text = str(value).strip()
+        if not value_text:
+            return None
+
+        if value_text in predio_key_aliases:
+            return predio_key_aliases[value_text]
+
+        value_norm = normalize_relation_key(value_text)
+        if value_norm in predio_key_aliases:
+            return predio_key_aliases[value_norm]
+
+        candidates: set[str] = set()
+        for token in re.findall(r"\d+", value_text):
+            if token in predio_key_aliases:
+                candidates.add(predio_key_aliases[token])
+        if len(candidates) == 1:
+            return next(iter(candidates))
+
+        return value_text
+
     predios_validos: dict[str, dict[str, object]] = {}
     predios_invalidos: dict[str, dict[str, object]] = {}
+    predio_key_aliases: dict[str, str] = {}
     predios_con_cancelacion: set[str] = set()
     terrenos_por_predio: dict[str, list[dict[str, object]]] = {}
+    total_terrenos_leidos = 0
+    terrenos_con_predio = 0
 
-    # 1. Clasificar predios por condición
     for table_name, row in helper.iter_predios():
         predio_id = get_t_id(row)
         if not predio_id:
@@ -2253,6 +2355,7 @@ def _rule_1_19(dataset: DatasetReader) -> list[RuleIssue]:
             "object_ref": helper.identify(row),
             "condicion_predio": condicion_str,
             "condicion_predio_norm": condicion_norm,
+            "keys": get_predio_keys(row),
         }
 
         if condicion_norm in required_conditions:
@@ -2260,13 +2363,18 @@ def _rule_1_19(dataset: DatasetReader) -> list[RuleIssue]:
         else:
             predios_invalidos[predio_id] = info
 
-    # 2. Detectar predios con cancelación
-    for table_name, row in helper.iter_novedades():
-        predio_fk = row.get("arb_predio_novedad_numero_predial")
-        if predio_fk in (None, ""):
-            continue
+        add_predio_alias(predio_id, predio_id)
+        for key in info["keys"]:
+            add_predio_alias(key, predio_id)
 
-        predio_id = str(predio_fk).strip()
+    if not predios_validos and not predios_invalidos:
+        return issues
+
+    for table_name, row in helper.iter_novedades():
+        predio_fk = field_value(row, novedad_predio_fk_fields)
+        predio_id = resolve_predio_alias(predio_fk)
+        if not predio_id:
+            continue
 
         novedad_match = helper._extract_field(
             row,
@@ -2284,27 +2392,26 @@ def _rule_1_19(dataset: DatasetReader) -> list[RuleIssue]:
         if _normalize_novedad(novedad_str) in cancelation_values:
             predios_con_cancelacion.add(predio_id)
 
-    # 3. Agrupar terrenos por predio
-    for table_name in terreno_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper.iter_terrenos():
+        total_terrenos_leidos += 1
+        predio_fk = field_value(row, terreno_predio_fk_fields)
+        predio_id = resolve_predio_alias(predio_fk)
+        if not predio_id:
             continue
 
-        for row in dataset.get_records(table_name):
-            predio_fk = row.get("predio")
-            if predio_fk in (None, ""):
-                continue
+        terrenos_con_predio += 1
+        terrenos_por_predio.setdefault(predio_id, []).append(
+            {
+                "tabla": table_name,
+                "campo": "predio",
+                "class": table_name,
+                "object_ref": helper.identify(row),
+            }
+        )
 
-            predio_id = str(predio_fk).strip()
-            terrenos_por_predio.setdefault(predio_id, []).append(
-                {
-                    "tabla": table_name,
-                    "campo": "predio",
-                    "class": table_name,
-                    "object_ref": helper.identify(row),
-                }
-            )
+    if total_terrenos_leidos == 0 or terrenos_con_predio == 0:
+        return issues
 
-    # 4. E01: predios válidos activos deben tener exactamente 1 terreno
     for predio_id, predio_info in predios_validos.items():
         if predio_id in predios_con_cancelacion:
             continue
@@ -2331,7 +2438,6 @@ def _rule_1_19(dataset: DatasetReader) -> list[RuleIssue]:
                 )
             )
 
-    # 5. E02: predios inválidos activos no pueden tener terrenos
     for predio_id, predio_info in predios_invalidos.items():
         if predio_id in predios_con_cancelacion:
             continue
@@ -5847,16 +5953,30 @@ def _rule_1_39(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
 
-    predio_tables = ("ARB_Predio", "arb_predio")
-    direccion_tables = ("ARB_Direccion", "arb_direccion", "ARB_Dirección", "arb_dirección")
-
     principal_fields = (
         "es_direccion_principal",
         "Es_Direccion_Principal",
+        "es_principal",
+        "Es_Principal",
+        "direccion_principal",
+        "Direccion_Principal",
+        "principal",
+        "Principal",
+        "dir_principal",
+        "Dir_Principal",
     )
 
     predio_fk_fields = (
         "arb_predio_direccion",
+        "arb_direccion_arb_predio_direccion_fkey",
+        "arb_predio",
+        "predio",
+        "predio_asociado",
+        "id_predio",
+        "Id_Predio",
+        "id_operacion",
+        "Id_Operacion",
+        "ARB_direccion_ARB_predio_direccion_fkey",
     )
 
     def get_t_id(row: dict[str, object]) -> str | None:
@@ -5869,75 +5989,164 @@ def _rule_1_39(dataset: DatasetReader) -> list[RuleIssue]:
         if value in (None, ""):
             return None
 
-        text = str(value).strip().lower()
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return value != 0
 
-        if text in {"true", "1", "verdadero", "si", "sí"}:
+        text = str(value).strip().lower()
+        text = unicodedata.normalize("NFKD", text)
+        text = "".join(ch for ch in text if not unicodedata.combining(ch))
+
+        try:
+            return float(text) != 0
+        except Exception:
+            pass
+
+        if text in {"true", "verdadero", "si", "s", "t", "y", "yes", "checked", "x"}:
             return True
-        if text in {"false", "0", "falso", "no"}:
+        if text in {"false", "falso", "no", "n", "f", "unchecked"}:
             return False
 
         return None
 
+    def normalize_relation_key(value: object) -> str:
+        text = str(value).strip().lower()
+        text = unicodedata.normalize("NFKD", text)
+        text = "".join(ch for ch in text if not unicodedata.combining(ch))
+        return re.sub(r"[^a-z0-9]", "", text)
+
+    def field_value(row: dict[str, object], candidates: tuple[str, ...]) -> object | None:
+        match = helper._extract_field(row, candidates, require_value=False)
+        if not match:
+            return None
+        value = match[1]
+        if value in (None, ""):
+            return None
+        return value
+
+    def add_predio_alias(alias: object, predio_id: str) -> None:
+        if alias in (None, ""):
+            return
+        alias_text = str(alias).strip()
+        if not alias_text:
+            return
+
+        alias_values = {alias_text}
+        if alias_text.endswith(".0"):
+            alias_values.add(alias_text[:-2])
+
+        alias_norm = normalize_relation_key(alias_text)
+        if alias_norm:
+            alias_values.add(alias_norm)
+
+        for value in alias_values:
+            predio_key_aliases.setdefault(value, predio_id)
+
+    def predio_keys(row: dict[str, object]) -> set[str]:
+        keys: set[str] = set()
+        for field in (
+            "T_Id",
+            "t_id",
+            "TID",
+            "tid",
+            "id_operacion",
+            "Id_Operacion",
+            "ID_OPERACION",
+            "numero_predial",
+            "Numero_Predial",
+            "Numero_Predial_Nacional",
+            "numero_predial_nacional",
+        ):
+            value = row.get(field)
+            if value not in (None, ""):
+                keys.add(str(value).strip())
+        object_ref = helper.identify(row)
+        if object_ref:
+            keys.add(str(object_ref).strip())
+        return keys
+
+    def resolve_predio_alias(value: object) -> str | None:
+        if value in (None, ""):
+            return None
+        value_text = str(value).strip()
+        if not value_text:
+            return None
+
+        if value_text in predio_key_aliases:
+            return predio_key_aliases[value_text]
+
+        value_norm = normalize_relation_key(value_text)
+        if value_norm in predio_key_aliases:
+            return predio_key_aliases[value_norm]
+
+        candidates: set[str] = set()
+        for token in re.findall(r"\d+", value_text):
+            if token in predio_key_aliases:
+                candidates.add(predio_key_aliases[token])
+        if len(candidates) == 1:
+            return next(iter(candidates))
+
+        return value_text
+
     predios: dict[str, dict[str, object]] = {}
+    predio_key_aliases: dict[str, str] = {}
     direcciones_por_predio: dict[str, list[dict[str, object]]] = {}
 
-    # 1. Leer predios
-    for table_name in predio_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper.iter_predios():
+        predio_id = get_t_id(row)
+        if not predio_id:
             continue
 
-        for row in dataset.get_records(table_name):
-            predio_id = get_t_id(row)
-            if not predio_id:
-                continue
+        predios[predio_id] = {
+            "tabla": table_name,
+            "class": table_name,
+            "object_ref": helper.identify(row) or predio_id,
+        }
 
-            predios[predio_id] = {
+        add_predio_alias(predio_id, predio_id)
+        for key in predio_keys(row):
+            add_predio_alias(key, predio_id)
+
+    if not predios:
+        return issues
+
+    for table_name, row in helper.iter_direcciones():
+        predio_fk = field_value(row, predio_fk_fields)
+        predio_id = resolve_predio_alias(predio_fk)
+        if not predio_id:
+            continue
+
+        principal_match = helper._extract_field(
+            row,
+            principal_fields,
+            require_value=False,
+        )
+
+        principal_field = principal_match[0] if principal_match else principal_fields[0]
+        principal_raw = principal_match[1] if principal_match else None
+        es_principal = parse_bool(principal_raw)
+
+        direcciones_por_predio.setdefault(predio_id, []).append(
+            {
                 "tabla": table_name,
                 "class": table_name,
-                "object_ref": helper.identify(row) or predio_id,
+                "campo": principal_field,
+                "valor": principal_raw,
+                "object_ref": helper.identify(row),
+                "es_principal": es_principal,
+                "campo_principal_existe": principal_match is not None,
             }
+        )
 
-    # 2. Leer direcciones
-    for table_name in direccion_tables:
-        if not dataset.has_table(table_name):
-            continue
-
-        for row in dataset.get_records(table_name):
-            predio_fk = None
-
-            for fk_field in predio_fk_fields:
-                match = helper._extract_field(row, (fk_field,), require_value=False)
-                if match and match[1] not in (None, ""):
-                    predio_fk = str(match[1]).strip()
-                    break
-
-            if not predio_fk:
-                continue
-
-            principal_match = helper._extract_field(
-                row,
-                principal_fields,
-                require_value=False,
-            )
-
-            principal_field = principal_match[0] if principal_match else principal_fields[0]
-            principal_raw = principal_match[1] if principal_match else None
-            es_principal = parse_bool(principal_raw)
-
-            direcciones_por_predio.setdefault(predio_fk, []).append(
-                {
-                    "tabla": table_name,
-                    "class": table_name,
-                    "campo": principal_field,
-                    "valor": principal_raw,
-                    "object_ref": helper.identify(row),
-                    "es_principal": es_principal,
-                }
-            )
-
-    # 3. Validar
     for predio_id, direcciones in direcciones_por_predio.items():
         total_direcciones = len(direcciones)
+        if total_direcciones <= 1:
+            continue
+
+        if not any(d["campo_principal_existe"] for d in direcciones):
+            continue
+
         total_principales = sum(1 for d in direcciones if d["es_principal"] is True)
 
         if total_principales != 1:
@@ -5955,7 +6164,7 @@ def _rule_1_39(dataset: DatasetReader) -> list[RuleIssue]:
                     rule_id="1.39",
                     object_ref=predio_info["object_ref"],
                     message=(
-                        "Si un predio tiene una o más direcciones asociadas en ARB_Direccion, "
+                        "Si un predio tiene más de una dirección asociada en ARB_Direccion, "
                         "debe existir una sola dirección principal."
                     ),
                     details={
@@ -6362,6 +6571,7 @@ def _rule_1_42(dataset: DatasetReader) -> list[RuleIssue]:
 
     predio_tables = ("ARB_Predio", "arb_predio")
     direccion_tables = ("ARB_Direccion", "arb_direccion", "ARB_Dirección", "arb_dirección")
+    direccion_tipo_tables = ("ARB_DireccionTipo", "arb_direcciontipo")
 
     numero_predial_fields = (
         "Numero_Predial_Nacional",
@@ -6390,7 +6600,188 @@ def _rule_1_42(dataset: DatasetReader) -> list[RuleIssue]:
             return "1"  # No_Estructurada
         return "0"      # Estructurada
 
+    tipo_direccion_catalog_aliases: dict[str, str] = {}
+
+    def normalized_tipo_key(value: object) -> str:
+        text = str(value).strip().lower()
+        text = unicodedata.normalize("NFKD", text)
+        text = "".join(ch for ch in text if not unicodedata.combining(ch))
+        text = text.replace(" ", "_").replace("-", "_")
+        return re.sub(r"[^a-z0-9_]", "", text)
+
+    def add_tipo_direccion_alias(value: object, normalized_value: str) -> None:
+        if value in (None, "") or normalized_value not in {"0", "1"}:
+            return
+        text = str(value).strip()
+        if not text:
+            return
+        tipo_direccion_catalog_aliases[text] = normalized_value
+        tipo_direccion_catalog_aliases[normalized_tipo_key(text)] = normalized_value
+
+    def normalize_tipo_direccion(value: object) -> str:
+        if value in (None, ""):
+            return ""
+
+        raw_text = str(value).strip()
+        text = normalized_tipo_key(raw_text)
+        compact_text = re.sub(r"[^a-z0-9]", "", text)
+
+        aliases = {
+            "0": "0",  # itfCode Estructurada
+            "2": "0",  # T_Id estandar ARB_DireccionTipo: Estructurada
+            "estructurada": "0",
+            "1": "1",  # itfCode y T_Id No_Estructurada
+            "no_estructurada": "1",
+            "noestructurada": "1",
+        }
+        if text in aliases:
+            return aliases[text]
+        if raw_text in tipo_direccion_catalog_aliases:
+            return tipo_direccion_catalog_aliases[raw_text]
+        if text in tipo_direccion_catalog_aliases:
+            return tipo_direccion_catalog_aliases[text]
+
+        # QGIS puede entregar el valor como etiqueta de dominio completa
+        # (p. ej. ARB_DireccionTipo_Estructurada) en vez del codigo corto.
+        if "noestructurada" in compact_text or "noestructurado" in compact_text:
+            return "1"
+        if "estructurada" in compact_text or "estructurado" in compact_text:
+            return "0"
+
+        return str(value).strip()
+
+    def load_tipo_direccion_catalog_aliases() -> None:
+        for table_name in direccion_tipo_tables:
+            if not dataset.has_table(table_name):
+                continue
+
+            for row in dataset.get_records(table_name):
+                itfcode = helper.get_field_value(row, ("itfcode", "ItfCode", "ITFCODE"))
+                ilicode = helper.get_field_value(row, ("ilicode", "iliCode", "IliCode", "ILICODE"))
+                dispname = helper.get_field_value(row, ("dispname", "DispName", "DISPNAME"))
+                description = helper.get_field_value(row, ("description", "Description", "DESCRIPCION"))
+
+                normalized_catalog_value = ""
+                itfcode_text = "" if itfcode in (None, "") else str(itfcode).strip()
+                if itfcode_text in {"0", "1"}:
+                    normalized_catalog_value = itfcode_text
+                else:
+                    for candidate in (ilicode, dispname, description):
+                        normalized_candidate = normalize_tipo_direccion(candidate)
+                        if normalized_candidate in {"0", "1"}:
+                            normalized_catalog_value = normalized_candidate
+                            break
+
+                if not normalized_catalog_value:
+                    continue
+
+                for field in (
+                    "t_id",
+                    "T_Id",
+                    "T_ID",
+                    "tid",
+                    "TID",
+                    "itfcode",
+                    "ItfCode",
+                    "ilicode",
+                    "iliCode",
+                    "dispname",
+                    "DispName",
+                    "description",
+                    "Description",
+                ):
+                    value = row.get(field)
+                    add_tipo_direccion_alias(value, normalized_catalog_value)
+
+    def raw_tipo_direccion_value(row: dict[str, object], field_name: str) -> object | None:
+        raw_match = helper._extract_field(
+            row,
+            (
+                f"{field_name}__raw",
+                "tipo_direccion__raw",
+                "Tipo_Direccion__raw",
+            ),
+            require_value=False,
+        )
+        if not raw_match:
+            return None
+        return raw_match[1]
+
+    def tipo_direccion_desc(value: str) -> str:
+        return {
+            "0": "Estructurada",
+            "1": "No_Estructurada",
+        }.get(value, "Desconocido")
+
+    def predio_keys(row: dict[str, object]) -> set[str]:
+        keys: set[str] = set()
+        for field in (
+            "T_Id",
+            "t_id",
+            "TID",
+            "tid",
+            "id_operacion",
+            "Id_Operacion",
+            "ID_OPERACION",
+            "numero_predial",
+            "Numero_Predial",
+            "Numero_Predial_Nacional",
+        ):
+            value = row.get(field)
+            if value not in (None, ""):
+                keys.add(str(value).strip())
+        object_ref = helper.identify(row)
+        if object_ref:
+            keys.add(str(object_ref).strip())
+        return keys
+
+    def normalized_relation_key(value: object) -> str:
+        text = str(value).strip().lower()
+        text = unicodedata.normalize("NFKD", text)
+        text = "".join(ch for ch in text if not unicodedata.combining(ch))
+        return re.sub(r"[^a-z0-9]", "", text)
+
+    def add_predio_alias(alias: object, predio_id: str) -> None:
+        if alias in (None, ""):
+            return
+        alias_text = str(alias).strip()
+        if not alias_text:
+            return
+        predio_key_aliases[alias_text] = predio_id
+        alias_norm = normalized_relation_key(alias_text)
+        if alias_norm:
+            predio_key_aliases.setdefault(alias_norm, predio_id)
+
+    def resolve_predio_alias(value: object) -> str:
+        value_text = str(value).strip()
+        if value_text in predio_key_aliases:
+            return predio_key_aliases[value_text]
+        value_norm = normalized_relation_key(value_text)
+        if value_norm in predio_key_aliases:
+            return predio_key_aliases[value_norm]
+        for alias, canonical_id in predio_key_aliases.items():
+            alias_norm = normalized_relation_key(alias)
+            if len(alias_norm) >= 4 and alias_norm in value_norm:
+                return canonical_id
+        return value_text
+
     direcciones_por_predio: dict[str, list[dict[str, object]]] = {}
+    predio_key_aliases: dict[str, str] = {}
+
+    load_tipo_direccion_catalog_aliases()
+
+    for table_name in predio_tables:
+        if not dataset.has_table(table_name):
+            continue
+
+        for row in dataset.get_records(table_name):
+            predio_id = helper.get_field_value(row, ("t_id", "T_ID", "tid", "TID"))
+            if not predio_id:
+                predio_id = helper.identify(row)
+            if not predio_id:
+                continue
+            for key in predio_keys(row):
+                add_predio_alias(key, str(predio_id))
 
     for table_name in direccion_tables:
         if not dataset.has_table(table_name):
@@ -6401,6 +6792,7 @@ def _rule_1_42(dataset: DatasetReader) -> list[RuleIssue]:
             if not predio_id:
                 continue
 
+            predio_id = resolve_predio_alias(predio_id)
             direcciones_por_predio.setdefault(str(predio_id), []).append(row)
 
     for table_name in predio_tables:
@@ -6429,13 +6821,24 @@ def _rule_1_42(dataset: DatasetReader) -> list[RuleIssue]:
                 continue
 
             for direccion_row in direcciones:
-                tipo_direccion = helper.get_field_value(direccion_row, tipo_direccion_fields)
-
-                # Ajuste: si tipo_direccion está vacío, no reporta error
-                if is_empty(tipo_direccion):
+                tipo_match = helper._extract_field(
+                    direccion_row,
+                    tipo_direccion_fields,
+                    require_value=False,
+                )
+                if not tipo_match:
                     continue
 
-                tipo_encontrado = str(tipo_direccion).strip()
+                tipo_field, tipo_direccion = tipo_match
+                tipo_direccion_raw = raw_tipo_direccion_value(direccion_row, tipo_field)
+
+                # Ajuste: si tipo_direccion está vacío, no reporta error
+                if is_empty(tipo_direccion) and is_empty(tipo_direccion_raw):
+                    continue
+
+                tipo_encontrado = normalize_tipo_direccion(tipo_direccion)
+                if tipo_encontrado not in {"0", "1"} and not is_empty(tipo_direccion_raw):
+                    tipo_encontrado = normalize_tipo_direccion(tipo_direccion_raw)
 
                 if tipo_encontrado != tipo_esperado:
                     issues.append(
@@ -6453,13 +6856,11 @@ def _rule_1_42(dataset: DatasetReader) -> list[RuleIssue]:
                                 "numero_predial": numero,
                                 "digitos_6_7": digitos_6_7,
                                 "tipo_direccion_encontrado": tipo_encontrado,
-                                "tipo_direccion_encontrado_desc": (
-                                    "No_Estructurada" if tipo_encontrado == "1" else "Estructurada"
-                                ),
+                                "tipo_direccion_original": tipo_direccion,
+                                "tipo_direccion_raw": tipo_direccion_raw,
+                                "tipo_direccion_encontrado_desc": tipo_direccion_desc(tipo_encontrado),
                                 "tipo_direccion_esperado": tipo_esperado,
-                                "tipo_direccion_esperado_desc": (
-                                    "No_Estructurada" if tipo_esperado == "1" else "Estructurada"
-                                ),
+                                "tipo_direccion_esperado_desc": tipo_direccion_desc(tipo_esperado),
                             },
                         )
                     )
@@ -7205,7 +7606,6 @@ def _rule_1_49(dataset: DatasetReader) -> list[RuleIssue]:
                 )
 
     return issues
-
 
 RULE_FUNCTIONS = {
     "1.1": _rule_1_1,
