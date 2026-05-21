@@ -13,10 +13,62 @@ DEFAULT_RULE_IDS = frozenset({
 })
 
 
+_EMPTY_TEXTS = {
+    "",
+    "NULL",
+    "<NULL>",
+    "NONE",
+    "NAN",
+    "0",
+    "0.0",
+    "NO APLICA",
+    "NO_APLICA",
+    "N/A",
+    "NA",
+    "S/D",
+    "SD",
+    "SIN DATO",
+    "SIN DATOS",
+    "SIN INFORMACION",
+    "SIN INFORMACIÓN",
+    "-",
+    ".",
+}
+
+
+def _is_empty_qgis(value: object) -> bool:
+    if value is None:
+        return True
+
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        try:
+            if float(value) == 0:
+                return True
+        except Exception:
+            pass
+
+    if isinstance(value, str):
+        text = value.strip().upper()
+        text_no_accents = (
+            text.replace("Á", "A")
+            .replace("É", "E")
+            .replace("Í", "I")
+            .replace("Ó", "O")
+            .replace("Ú", "U")
+            .replace("Ñ", "N")
+        )
+        return text in _EMPTY_TEXTS or text_no_accents in _EMPTY_TEXTS
+
+    return False
+
+
 class JuridicoHelper:
     """Utilidades compartidas para reglas jurídicas."""
 
     IDENTIFIER_FIELDS = (
+        "t_ili_tid",
+        "T_Ili_Tid",
+        "T_ILI_TID",
         "id_operacion",
         "Id_Operacion",
         "ID_OPERACION",
@@ -31,8 +83,6 @@ class JuridicoHelper:
         "T_ID",
         "tid",
         "TID",
-        "t_ili_tid",
-        "T_ILI_TID",
     )
 
     PREDIO_TABLES = (
@@ -69,12 +119,12 @@ class JuridicoHelper:
     def identify(self, row: dict[str, object]) -> str | None:
         for field in self.IDENTIFIER_FIELDS:
             value = row.get(field)
-            if value not in (None, ""):
+            if not _is_empty_qgis(value):
                 return str(value).strip()
 
         normalized_targets = {self._normalize_key(field) for field in self.IDENTIFIER_FIELDS}
         for key, candidate in row.items():
-            if self._normalize_key(str(key)) in normalized_targets and candidate not in (None, ""):
+            if self._normalize_key(str(key)) in normalized_targets and not _is_empty_qgis(candidate):
                 return str(candidate).strip()
 
         return None
@@ -83,13 +133,20 @@ class JuridicoHelper:
         match = self._extract_field(row, candidates, require_value=False)
         if not match:
             return None
-        _, raw_value = match
-        if raw_value in (None, ""):
+        field_name, raw_value = match
+        value = _normalizar_valor_dominio(field_name, raw_value)
+        if _is_empty_qgis(value):
             return None
-        return str(raw_value).strip()
+        return str(value).strip()
 
     def get_relation_value(self, row: dict[str, object], candidates: tuple[str, ...]) -> str | None:
-        return self.get_field_value(row, candidates)
+        value = self.get_field_value(row, candidates)
+        if value is not None:
+            return value
+        normalized_candidates = {self._normalize_key(candidate) for candidate in candidates}
+        if "predio" in normalized_candidates:
+            return self.get_field_value(row, PREDIO_RELATION_FIELDS)
+        return None
 
     def make_issue(
         self,
@@ -129,11 +186,7 @@ class JuridicoHelper:
 
     @staticmethod
     def _is_empty(value: object) -> bool:
-        if value is None:
-            return True
-        if isinstance(value, str):
-            return value.strip() == ""
-        return False
+        return _is_empty_qgis(value)
 
     @classmethod
     def _extract_field(
@@ -153,9 +206,304 @@ class JuridicoHelper:
         return None
 
 
+TIPO_INTERESADO_FIELDS = (
+    "i_tipo", "I_Tipo", "tipo_persona", "Tipo_persona", "Tipo de persona",
+    "tipo_interesado", "Tipo_interesado", "Tipo de interesado",
+    "i_tipo_interesado", "interesado_tipo", "tipo_persona_interesado",
+)
+SEXO_FIELDS = (
+    "i_sexo", "I_Sexo", "sexo", "Sexo", "sexo_interesado", "interesado_sexo",
+    "género", "genero", "i_genero", "I_Genero", "Género", "Genero",
+)
+TIPO_FUENTE_FIELDS = (
+    "fa_tipo", "FA_Tipo", "tipo_fuente_administrativa",
+    "Tipo_fuente_administrativa", "Tipo de fuente administrativa",
+    "fuente_tipo", "tipo_fuente", "Tipo fuente", "tipo_documento_fuente",
+)
+ENTE_EMISOR_FIELDS = (
+    "fa_ente_emisor", "FA_Ente_Emisor", "ente_emisor", "Ente_emisor",
+    "Ente emisor", "ente_emisor_fuente", "fuente_ente_emisor",
+)
+NUMERO_FUENTE_FIELDS = (
+    "fa_numero_fuente", "FA_Numero_Fuente", "numero_fuente", "Numero_fuente",
+    "Número de fuente", "Numero de fuente", "numero_documento_fuente",
+)
+FECHA_FUENTE_FIELDS = (
+    "fa_fecha_documento_fuente", "FA_Fecha_Documento_Fuente",
+    "fecha_documento_fuente", "Fecha_documento_fuente", "Fecha documento fuente",
+    "fecha_fuente", "Fecha_fuente", "fecha_documento",
+)
+OBSERVACION_FUENTE_FIELDS = (
+    "fa_observacion", "FA_Observacion", "observacion_fuente_administrativa",
+    "Observacion_fuente_administrativa", "Observación de fuente administrativa",
+    "Observacion de fuente administrativa", "observacion_fuente", "Observacion_fuente",
+)
+FECHA_INICIO_TENENCIA_FIELDS = (
+    "d_fecha_inicio_tenencia", "D_Fecha_Inicio_Tenencia",
+    "fecha_inicio_tenencia", "Fecha_Inicio_Tenencia", "Fecha inicio tenencia",
+)
+TIPO_DERECHO_FIELDS = (
+    "d_tipo", "D_Tipo", "tipo_derecho", "Tipo_Derecho", "Tipo derecho",
+)
+PREDIO_RELATION_FIELDS = (
+    "predio", "Predio", "d_predio", "D_Predio", "id_predio", "ID_PREDIO",
+    "predio_id", "Predio_ID", "id_operacion", "Id_Operacion", "ID_OPERACION",
+    "TID", "t_id", "id",
+)
+PREDIO_IDENTIFIER_FIELDS = JuridicoHelper.IDENTIFIER_FIELDS + (
+    "predio", "Predio",
+)
+NUMERO_PREDIAL_FIELDS = (
+    "Numero_Predial", "numero_predial", "Numero_Predial_Nacional",
+    "numero_predial_nacional", "Numero predial", "Numero predial nacional",
+)
+FECHA_VISITA_PREDIAL_FIELDS = (
+    "Fecha_Visita_Predial", "fecha_visita_predial", "Fecha visita predial",
+    "fecha_levantamiento", "Fecha_Levantamiento", "Fecha levantamiento",
+)
+MATRICULA_INMOBILIARIA_FIELDS = (
+    "Matricula_Inmobiliaria", "matricula_inmobiliaria", "Matricula inmobiliaria",
+    "matricula", "Matricula",
+)
+DOCUMENTO_IDENTIDAD_FIELDS = (
+    "i_documento_identidad", "I_Documento_Identidad", "documento_identidad",
+    "Documento_identidad", "Documento de identidad", "numero_documento",
+    "Número documento", "Numero documento", "identificacion", "identificación",
+)
+RAZON_SOCIAL_FIELDS = (
+    "i_razon_social", "I_Razon_Social", "razon_social", "Razon_social",
+    "Razón social", "Razon social", "razon_social_interesado",
+)
+PRIMER_NOMBRE_FIELDS = ("i_primer_nombre", "I_Primer_Nombre", "primer_nombre", "Primer_nombre", "Primer nombre")
+SEGUNDO_NOMBRE_FIELDS = ("i_segundo_nombre", "I_Segundo_Nombre", "segundo_nombre", "Segundo_nombre", "Segundo nombre")
+PRIMER_APELLIDO_FIELDS = ("i_primer_apellido", "I_Primer_Apellido", "primer_apellido", "Primer_apellido", "Primer apellido")
+SEGUNDO_APELLIDO_FIELDS = ("i_segundo_apellido", "I_Segundo_Apellido", "segundo_apellido", "Segundo_apellido", "Segundo apellido")
+
+
+_DOMINIO_TIPO_INTERESADO = {
+    "0": "Persona_Natural", "0.0": "Persona_Natural",
+    "1": "Persona_Juridica", "1.0": "Persona_Juridica",
+    "2": "Persona_Natural", "2.0": "Persona_Natural",
+    "153": "Persona_Juridica", "154": "Persona_Natural",
+    "960": "Persona_Juridica", "961": "Persona_Natural",
+    "Persona_Juridica": "Persona_Juridica", "Persona_Natural": "Persona_Natural",
+}
+
+_DOMINIO_DERECHO_TIPO = {
+    "1": "Posesion", "1.0": "Posesion",
+    "2": "Ocupacion", "2.0": "Ocupacion",
+    "3": "Dominio", "3.0": "Dominio",
+    "14": "Posesion", "15": "Ocupacion", "16": "Dominio",
+    "63": "Posesion", "64": "Ocupacion", "65": "Dominio",
+    "Posesion": "Posesion", "Ocupacion": "Ocupacion", "Dominio": "Dominio",
+}
+
+_DOMINIO_DOCUMENTO_TIPO = {
+    "1": "Pasaporte", "1.0": "Pasaporte",
+    "2": "Tarjeta_Identidad", "2.0": "Tarjeta_Identidad",
+    "3": "Cedula_Extranjeria", "3.0": "Cedula_Extranjeria",
+    "4": "Cedula_Ciudadania", "4.0": "Cedula_Ciudadania",
+    "5": "NIT", "5.0": "NIT",
+    "6": "Registro_Civil", "6.0": "Registro_Civil",
+    "7": "Secuencial", "7.0": "Secuencial",
+    "292": "Cedula_Ciudadania",
+    "293": "Pasaporte",
+    "294": "Cedula_Extranjeria",
+    "295": "Tarjeta_Identidad",
+    "296": "NIT",
+    "297": "Registro_Civil",
+    "298": "Secuencial",
+    "1013": "Pasaporte",
+    "1014": "Tarjeta_Identidad",
+    "1015": "Cedula_Extranjeria",
+    "1016": "Cedula_Ciudadania",
+    "1017": "NIT",
+    "1018": "Registro_Civil",
+    "1019": "Secuencial",
+    "Pasaporte": "Pasaporte",
+    "Tarjeta_Identidad": "Tarjeta_Identidad",
+    "Cedula_Extranjeria": "Cedula_Extranjeria",
+    "Cedula_Ciudadania": "Cedula_Ciudadania",
+    "NIT": "NIT",
+    "Registro_Civil": "Registro_Civil",
+    "Secuencial": "Secuencial",
+}
+
+_DOMINIO_SEXO_TIPO = {
+    "1": "Masculino", "1.0": "Masculino",
+    "2": "Sin_Determinar", "2.0": "Sin_Determinar",
+    "3": "Femenino", "3.0": "Femenino",
+    "Masculino": "Masculino",
+    "Femenino": "Femenino",
+    "Sin_Determinar": "Sin_Determinar",
+}
+
+_DOMINIO_FUENTE_TIPO = {
+    "1": "Sin_Documento", "1.0": "Sin_Documento",
+    "2": "Documento_Fuente.Titulo_Republicano", "2.0": "Documento_Fuente.Titulo_Republicano",
+    "3": "Documento_Fuente.Acto_Administrativo", "3.0": "Documento_Fuente.Acto_Administrativo",
+    "4": "Documento_Fuente.Escritura_Publica", "4.0": "Documento_Fuente.Escritura_Publica",
+    "5": "Documento_Fuente.Documento_Privado", "5.0": "Documento_Fuente.Documento_Privado",
+    "6": "Documento_Fuente.Cedula_Real", "6.0": "Documento_Fuente.Cedula_Real",
+    "7": "Fuente_Informativa_Intercultural.Auto", "7.0": "Fuente_Informativa_Intercultural.Auto",
+    "8": "Documento_Fuente.Otro_Documento_fuente", "8.0": "Documento_Fuente.Otro_Documento_fuente",
+    "9": "Fuente_Informativa_Intercultural.Mandato_Propio_Indigena",
+    "9.0": "Fuente_Informativa_Intercultural.Mandato_Propio_Indigena",
+    "10": "Fuente_Informativa_Intercultural.Protocolizacion_Notarial",
+    "10.0": "Fuente_Informativa_Intercultural.Protocolizacion_Notarial",
+    "11": "Fuente_Informativa_Intercultural.Otros_Documentos",
+    "11.0": "Fuente_Informativa_Intercultural.Otros_Documentos",
+    "12": "Documento_Fuente.Titulo_Colonial", "12.0": "Documento_Fuente.Titulo_Colonial",
+    "13": "Documento_Fuente.Sentencia_Judicial", "13.0": "Documento_Fuente.Sentencia_Judicial",
+    "1532": "Sin_Documento",
+    "1533": "Documento_Fuente.Titulo_Republicano",
+    "1534": "Documento_Fuente.Acto_Administrativo",
+    "1535": "Documento_Fuente.Escritura_Publica",
+    "1536": "Documento_Fuente.Documento_Privado",
+    "1537": "Documento_Fuente.Cedula_Real",
+    "1538": "Fuente_Informativa_Intercultural.Auto",
+    "1539": "Documento_Fuente.Otro_Documento_fuente",
+    "1540": "Fuente_Informativa_Intercultural.Mandato_Propio_Indigena",
+    "1541": "Fuente_Informativa_Intercultural.Protocolizacion_Notarial",
+    "1542": "Fuente_Informativa_Intercultural.Otros_Documentos",
+    "1543": "Documento_Fuente.Titulo_Colonial",
+    "1544": "Documento_Fuente.Sentencia_Judicial",
+    "Sin_Documento": "Sin_Documento",
+    "Documento_Fuente.Titulo_Republicano": "Documento_Fuente.Titulo_Republicano",
+    "Documento_Fuente.Acto_Administrativo": "Documento_Fuente.Acto_Administrativo",
+    "Documento_Fuente.Escritura_Publica": "Documento_Fuente.Escritura_Publica",
+    "Documento_Fuente.Documento_Privado": "Documento_Fuente.Documento_Privado",
+    "Documento_Fuente.Cedula_Real": "Documento_Fuente.Cedula_Real",
+    "Fuente_Informativa_Intercultural.Auto": "Fuente_Informativa_Intercultural.Auto",
+    "Documento_Fuente.Otro_Documento_fuente": "Documento_Fuente.Otro_Documento_fuente",
+    "Fuente_Informativa_Intercultural.Mandato_Propio_Indigena": (
+        "Fuente_Informativa_Intercultural.Mandato_Propio_Indigena"
+    ),
+    "Fuente_Informativa_Intercultural.Protocolizacion_Notarial": (
+        "Fuente_Informativa_Intercultural.Protocolizacion_Notarial"
+    ),
+    "Fuente_Informativa_Intercultural.Otros_Documentos": (
+        "Fuente_Informativa_Intercultural.Otros_Documentos"
+    ),
+    "Documento_Fuente.Titulo_Colonial": "Documento_Fuente.Titulo_Colonial",
+    "Documento_Fuente.Sentencia_Judicial": "Documento_Fuente.Sentencia_Judicial",
+}
+
+_DOMINIO_GRUPO_ETNICO = {
+    "1": "Etnico.Indigena", "1.0": "Etnico.Indigena",
+    "2": "Etnico.Raizal", "2.0": "Etnico.Raizal",
+    "3": "Ninguno", "3.0": "Ninguno",
+    "4": "Etnico.Rrom", "4.0": "Etnico.Rrom",
+    "5": "Etnico.Palenquero", "5.0": "Etnico.Palenquero",
+    "6": "Etnico.Negro_Afrocolombiano", "6.0": "Etnico.Negro_Afrocolombiano",
+    "8": "Etnico.Indigena",
+    "9": "Etnico.Raizal",
+    "10": "Ninguno",
+    "11": "Etnico.Rrom",
+    "12": "Etnico.Palenquero",
+    "13": "Etnico.Negro_Afrocolombiano",
+    "Etnico.Indigena": "Etnico.Indigena",
+    "Etnico.Raizal": "Etnico.Raizal",
+    "Ninguno": "Ninguno",
+    "Etnico.Rrom": "Etnico.Rrom",
+    "Etnico.Palenquero": "Etnico.Palenquero",
+    "Etnico.Negro_Afrocolombiano": "Etnico.Negro_Afrocolombiano",
+}
+
+_DOMINIO_PREDIO_TIPO = {
+    "1": "Predio.Publico.Baldio.Baldio", "1.0": "Predio.Publico.Baldio.Baldio",
+    "2": "Predio.Privado.Colectivo", "2.0": "Predio.Privado.Colectivo",
+    "3": "Predio.Publico.Presunto_Baldio", "3.0": "Predio.Publico.Presunto_Baldio",
+    "4": "Predio.Publico.Fiscal_Patrimonial", "4.0": "Predio.Publico.Fiscal_Patrimonial",
+    "5": "Predio.Publico.Baldio.Reserva_Indigena", "5.0": "Predio.Publico.Baldio.Reserva_Indigena",
+    "6": "Predio.Publico.Uso_Publico", "6.0": "Predio.Publico.Uso_Publico",
+    "7": "Predio.Privado.Privado", "7.0": "Predio.Privado.Privado",
+    "312": "Predio.Privado.Colectivo",
+    "314": "Predio.Publico.Fiscal_Patrimonial",
+    "316": "Predio.Publico.Uso_Publico",
+    "Predio.Publico.Baldio.Baldio": "Predio.Publico.Baldio.Baldio",
+    "Predio.Privado.Colectivo": "Predio.Privado.Colectivo",
+    "Predio.Publico.Presunto_Baldio": "Predio.Publico.Presunto_Baldio",
+    "Predio.Publico.Fiscal_Patrimonial": "Predio.Publico.Fiscal_Patrimonial",
+    "Predio.Publico.Baldio.Reserva_Indigena": "Predio.Publico.Baldio.Reserva_Indigena",
+    "Predio.Publico.Uso_Publico": "Predio.Publico.Uso_Publico",
+    "Predio.Privado.Privado": "Predio.Privado.Privado",
+}
+
+_DOMINIO_CONDICION_PREDIO = {
+    "1": "PH.Matriz", "1.0": "PH.Matriz",
+    "2": "Condominio.Unidad_Predial", "2.0": "Condominio.Unidad_Predial",
+    "3": "Bien_Uso_Publico", "3.0": "Bien_Uso_Publico",
+    "4": "PH.Unidad_Predial", "4.0": "PH.Unidad_Predial",
+    "5": "Condominio.Matriz", "5.0": "Condominio.Matriz",
+    "6": "Parque_Cementerio.Matriz", "6.0": "Parque_Cementerio.Matriz",
+    "7": "NPH", "7.0": "NPH",
+    "8": "Informal", "8.0": "Informal",
+    "9": "Parque_Cementerio.Unidad_Predial", "9.0": "Parque_Cementerio.Unidad_Predial",
+    "10": "Via", "10.0": "Via",
+    "206": "Via",
+    "209": "Bien_Uso_Publico",
+    "PH.Matriz": "PH.Matriz",
+    "Condominio.Unidad_Predial": "Condominio.Unidad_Predial",
+    "Bien_Uso_Publico": "Bien_Uso_Publico",
+    "PH.Unidad_Predial": "PH.Unidad_Predial",
+    "Condominio.Matriz": "Condominio.Matriz",
+    "Parque_Cementerio.Matriz": "Parque_Cementerio.Matriz",
+    "NPH": "NPH",
+    "Informal": "Informal",
+    "Parque_Cementerio.Unidad_Predial": "Parque_Cementerio.Unidad_Predial",
+    "Via": "Via",
+}
+
+_DOMINIOS_POR_CAMPO = {
+    "dtipo": _DOMINIO_DERECHO_TIPO,
+    "tipoderecho": _DOMINIO_DERECHO_TIPO,
+    "itipo": _DOMINIO_TIPO_INTERESADO,
+    "tipopersona": _DOMINIO_TIPO_INTERESADO,
+    "tipointeresado": _DOMINIO_TIPO_INTERESADO,
+    "itipointeresado": _DOMINIO_TIPO_INTERESADO,
+    "interesadotipo": _DOMINIO_TIPO_INTERESADO,
+    "tipopersonainteresado": _DOMINIO_TIPO_INTERESADO,
+    "fatipo": _DOMINIO_FUENTE_TIPO,
+    "tipofuenteadministrativa": _DOMINIO_FUENTE_TIPO,
+    "fuentetipo": _DOMINIO_FUENTE_TIPO,
+    "tipofuente": _DOMINIO_FUENTE_TIPO,
+    "tipodocumentofuente": _DOMINIO_FUENTE_TIPO,
+    "itipodocumento": _DOMINIO_DOCUMENTO_TIPO,
+    "tipodocumento": _DOMINIO_DOCUMENTO_TIPO,
+    "documentotipo": _DOMINIO_DOCUMENTO_TIPO,
+    "interesadodocumentotipo": _DOMINIO_DOCUMENTO_TIPO,
+    "isexo": _DOMINIO_SEXO_TIPO,
+    "sexo": _DOMINIO_SEXO_TIPO,
+    "sexointeresado": _DOMINIO_SEXO_TIPO,
+    "interesadosexo": _DOMINIO_SEXO_TIPO,
+    "genero": _DOMINIO_SEXO_TIPO,
+    "igenero": _DOMINIO_SEXO_TIPO,
+    "igrupoetnico": _DOMINIO_GRUPO_ETNICO,
+    "grupoetnico": _DOMINIO_GRUPO_ETNICO,
+    "tipo": _DOMINIO_PREDIO_TIPO,
+    "tipopredio": _DOMINIO_PREDIO_TIPO,
+    "condicionpredio": _DOMINIO_CONDICION_PREDIO,
+}
+
+
 def _parse_date(value: object) -> date | None:
-    if value in (None, ""):
+    if _is_empty_qgis(value):
         return None
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if hasattr(value, "toPyDate"):
+        try:
+            return value.toPyDate()
+        except Exception:
+            pass
+    if hasattr(value, "toPyDateTime"):
+        try:
+            return value.toPyDateTime().date()
+        except Exception:
+            pass
 
     text = str(value).strip()
     if not text:
@@ -183,11 +531,11 @@ def _parse_date(value: object) -> date | None:
         return None
 
 
-def _matricula_es_vacia_o_cero(value: str | None) -> bool:
-    if value is None:
+def _matricula_es_vacia_o_cero(value: object | None) -> bool:
+    if _is_empty_qgis(value):
         return True
-    text = str(value).strip()
-    return text == "" or text == "0"
+    text = str(value).strip().upper()
+    return text in {"0", "0.0", "NULL", "<NULL>", "NONE"}
 
 
 def _numero_predial_es_rural(numero_predial: str | None) -> bool:
@@ -221,6 +569,44 @@ def _normalize_text_for_compare(value: object) -> str:
     return text
 
 
+def _domain_token(value: object) -> str:
+    text = _normalize_text_for_compare(value)
+    text = re.sub(r"[^A-Z0-9]+", "_", text)
+    return text.strip("_")
+
+
+def _normalizar_valor_dominio(nombre_campo: object, valor: object) -> object:
+    campo_norm = JuridicoHelper._normalize_key(str(nombre_campo))
+    mapa = _DOMINIOS_POR_CAMPO.get(campo_norm)
+
+    if valor is None:
+        return None
+
+    texto = str(valor).strip()
+    if texto == "":
+        return None
+
+    texto = texto.replace(",", ".")
+    if re.fullmatch(r"\d+\.0+", texto):
+        texto = texto.split(".", 1)[0]
+
+    if mapa:
+        if texto in mapa:
+            return mapa[texto]
+
+        token = _domain_token(texto)
+        for clave, valor_normalizado in mapa.items():
+            clave_token = _domain_token(clave)
+            valor_token = _domain_token(valor_normalizado)
+            if token == clave_token or token == valor_token or token.endswith(valor_token):
+                return valor_normalizado
+
+    if _is_empty_qgis(valor):
+        return None
+
+    return texto
+
+
 def _interesado_es_valido_baldio(nombre: str | None) -> bool:
     normalized = _normalize_text_for_compare(nombre)
 
@@ -239,7 +625,7 @@ def _interesado_es_valido_baldio(nombre: str | None) -> bool:
     return False
 
 def _is_not_empty(value: object) -> bool:
-    return value not in (None, "") and str(value).strip() != ""
+    return not _is_empty_qgis(value)
 
 
 def _only_letters_spaces(value: object) -> bool:
@@ -272,21 +658,47 @@ def _nit_es_valido(value: object) -> bool:
 
 
 def _derecho_tipo_ilicode(value: object) -> str:
-    if value in (None, ""):
+    if _is_empty_qgis(value):
+        return ""
+    value = _normalizar_valor_dominio("d_tipo", value)
+    return str(value).strip() if value is not None else ""
+
+
+def _tipo_interesado_ilicode(value: object) -> str:
+    value = _normalizar_valor_dominio("i_tipo", value)
+    if _is_empty_qgis(value):
         return ""
 
-    text = str(value).strip()
+    text = _domain_token(value)
 
-    mapping = {
-        "14": "Posesion",
-        "15": "Ocupacion",
-        "16": "Dominio",
-        "Posesion": "Posesion",
-        "Ocupacion": "Ocupacion",
-        "Dominio": "Dominio",
-    }
+    if text.endswith("PERSONA_JURIDICA") or text in {"1", "153", "960", "JURIDICA", "PERSONA_JURIDICA"}:
+        return "Persona_Juridica"
+    if text.endswith("PERSONA_NATURAL") or text in {"0", "2", "154", "961", "NATURAL", "PERSONA_NATURAL"}:
+        return "Persona_Natural"
 
-    return mapping.get(text, text)
+    return str(value).strip()
+
+
+def _normalizar_documento_identidad(value: object) -> str:
+    if _is_empty_qgis(value):
+        return ""
+
+    text = str(value).strip().upper().replace(",", ".")
+    if re.fullmatch(r"\d+\.0+", text):
+        text = text.split(".", 1)[0]
+
+    normalized = re.sub(r"[\s.\-]", "", text)
+    if not normalized:
+        return ""
+
+    normalized_text = _normalize_text_for_compare(normalized)
+    if normalized_text in {"0", "00", "000", "NOAPLICA", "NA", "NAN", "NULL", "NONE", "SININFORMACION", "SINDATO", "SINDATOS"}:
+        return ""
+
+    if re.fullmatch(r"0+", normalized):
+        return ""
+
+    return normalized
 
 def _tiene_marca_persona_juridica(value: object) -> bool:
     if not _is_not_empty(value):
@@ -300,48 +712,10 @@ def _tiene_marca_persona_juridica(value: object) -> bool:
     ) is not None
 
 def _fuente_tipo_ilicode(value: object) -> str:
-    if value in (None, ""):
+    if _is_empty_qgis(value):
         return ""
-
-    text = str(value).strip()
-
-    mapping = {
-        "1532": "Sin_Documento",
-        "1533": "Documento_Fuente.Titulo_Republicano",
-        "1534": "Documento_Fuente.Acto_Administrativo",
-        "1535": "Documento_Fuente.Escritura_Publica",
-        "1536": "Documento_Fuente.Documento_Privado",
-        "1537": "Documento_Fuente.Cedula_Real",
-        "1538": "Fuente_Informativa_Intercultural.Auto",
-        "1539": "Documento_Fuente.Otro_Documento_fuente",
-        "1540": "Fuente_Informativa_Intercultural.Mandato_Propio_Indigena",
-        "1541": "Fuente_Informativa_Intercultural.Protocolizacion_Notarial",
-        "1542": "Fuente_Informativa_Intercultural.Otros_Documentos",
-        "1543": "Documento_Fuente.Titulo_Colonial",
-        "1544": "Documento_Fuente.Sentencia_Judicial",
-
-        "Sin_Documento": "Sin_Documento",
-        "Documento_Fuente.Titulo_Republicano": "Documento_Fuente.Titulo_Republicano",
-        "Documento_Fuente.Acto_Administrativo": "Documento_Fuente.Acto_Administrativo",
-        "Documento_Fuente.Escritura_Publica": "Documento_Fuente.Escritura_Publica",
-        "Documento_Fuente.Documento_Privado": "Documento_Fuente.Documento_Privado",
-        "Documento_Fuente.Cedula_Real": "Documento_Fuente.Cedula_Real",
-        "Fuente_Informativa_Intercultural.Auto": "Fuente_Informativa_Intercultural.Auto",
-        "Documento_Fuente.Otro_Documento_fuente": "Documento_Fuente.Otro_Documento_fuente",
-        "Fuente_Informativa_Intercultural.Mandato_Propio_Indigena": (
-            "Fuente_Informativa_Intercultural.Mandato_Propio_Indigena"
-        ),
-        "Fuente_Informativa_Intercultural.Protocolizacion_Notarial": (
-            "Fuente_Informativa_Intercultural.Protocolizacion_Notarial"
-        ),
-        "Fuente_Informativa_Intercultural.Otros_Documentos": (
-            "Fuente_Informativa_Intercultural.Otros_Documentos"
-        ),
-        "Documento_Fuente.Titulo_Colonial": "Documento_Fuente.Titulo_Colonial",
-        "Documento_Fuente.Sentencia_Judicial": "Documento_Fuente.Sentencia_Judicial",
-    }
-
-    return mapping.get(text, text)
+    value = _normalizar_valor_dominio("fa_tipo", value)
+    return str(value).strip() if value is not None else ""
 
 def _contains_any(value: object, words: tuple[str, ...]) -> bool:
     if not _is_not_empty(value):
@@ -353,38 +727,54 @@ def _contains_any(value: object, words: tuple[str, ...]) -> bool:
 
 def _nombre_completo_interesado(row: dict[str, object], helper: JuridicoHelper) -> str:
     partes = (
-        helper.get_field_value(row, ("i_primer_nombre",)),
-        helper.get_field_value(row, ("i_segundo_nombre",)),
-        helper.get_field_value(row, ("i_primer_apellido",)),
-        helper.get_field_value(row, ("i_segundo_apellido",)),
+        helper.get_field_value(row, PRIMER_NOMBRE_FIELDS),
+        helper.get_field_value(row, SEGUNDO_NOMBRE_FIELDS),
+        helper.get_field_value(row, PRIMER_APELLIDO_FIELDS),
+        helper.get_field_value(row, SEGUNDO_APELLIDO_FIELDS),
     )
 
     return " ".join(str(p).strip() for p in partes if _is_not_empty(p)).strip()
 
 def _grupo_etnico_ilicode(value: object) -> str:
-    if value in (None, ""):
+    if _is_empty_qgis(value):
         return ""
+    value = _normalizar_valor_dominio("i_grupo_etnico", value)
+    return str(value).strip() if value is not None else ""
 
-    text = str(value).strip()
 
-    mapping = {
-        "8": "Etnico.Indigena",
-        "9": "Etnico.Raizal",
-        "10": "Ninguno",
-        "11": "Etnico.Rrom",
-        "12": "Etnico.Palenquero",
-        "13": "Etnico.Negro_Afrocolombiano",
+def _indexar_predios_por_identificador(helper: JuridicoHelper) -> dict[str, dict[str, object]]:
+    predios_by_id: dict[str, dict[str, object]] = {}
 
-        # por si llega como texto
-        "Etnico.Indigena": "Etnico.Indigena",
-        "Etnico.Raizal": "Etnico.Raizal",
-        "Ninguno": "Ninguno",
-        "Etnico.Rrom": "Etnico.Rrom",
-        "Etnico.Palenquero": "Etnico.Palenquero",
-        "Etnico.Negro_Afrocolombiano": "Etnico.Negro_Afrocolombiano",
-    }
+    for _, row in helper.iter_predios():
+        for field_name in PREDIO_IDENTIFIER_FIELDS:
+            predio_id = helper.get_field_value(row, (field_name,))
+            if predio_id:
+                predios_by_id[str(predio_id)] = row
 
-    return mapping.get(text, text)
+    return predios_by_id
+
+
+def _buscar_predio_relacionado(
+    helper: JuridicoHelper,
+    row: dict[str, object],
+    predios_by_id: dict[str, dict[str, object]],
+) -> tuple[str | None, dict[str, object] | None]:
+    first_ref: str | None = None
+
+    for field_name in PREDIO_RELATION_FIELDS:
+        predio_ref = helper.get_relation_value(row, (field_name,))
+        if not predio_ref:
+            continue
+
+        predio_ref_str = str(predio_ref)
+        if first_ref is None:
+            first_ref = predio_ref_str
+
+        predio_row = predios_by_id.get(predio_ref_str)
+        if predio_row:
+            return predio_ref_str, predio_row
+
+    return first_ref, None
 # ----------------------------- REGLAS -----------------------------
 
 def _rule_2_1(dataset: DatasetReader) -> list[RuleIssue]:
@@ -396,47 +786,37 @@ def _rule_2_1(dataset: DatasetReader) -> list[RuleIssue]:
     rural_expected = date(1936, 12, 4)
     urban_expected = date(1959, 12, 31)
 
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
+    predios_by_id = _indexar_predios_por_identificador(helper)
 
     for table_name, row in helper.iter_derecho_interesado_fuente():
         fecha_inicio_raw = helper.get_field_value(
             row,
-            ("d_fecha_inicio_tenencia",),
+            FECHA_INICIO_TENENCIA_FIELDS,
         )
         fecha_inicio = _parse_date(fecha_inicio_raw)
 
         tipo_derecho = helper.get_field_value(
             row,
-            ("d_tipo",),
+            TIPO_DERECHO_FIELDS,
         )
         tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
 
-        predio_ref = helper.get_relation_value(
-            row,
-            ("predio",),
-        )
-
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
 
         numero_predial = helper.get_field_value(
             predio_row or {},
-            ("Numero_Predial", "numero_predial"),
+            NUMERO_PREDIAL_FIELDS,
         )
 
         fecha_visita_raw = helper.get_field_value(
             predio_row or {},
-            ("Fecha_Visita_Predial",),
+            FECHA_VISITA_PREDIAL_FIELDS,
         )
         fecha_visita = _parse_date(fecha_visita_raw)
 
         matricula = helper.get_field_value(
             predio_row or {},
-            ("Matricula_Inmobiliaria",),
+            MATRICULA_INMOBILIARIA_FIELDS,
         )
 
         message = None
@@ -1272,17 +1652,17 @@ def _rule_2_17(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     campos_nombre = (
-        ("i_primer_nombre", "primer nombre"),
-        ("i_segundo_nombre", "segundo nombre"),
-        ("i_primer_apellido", "primer apellido"),
-        ("i_segundo_apellido", "segundo apellido"),
+        (PRIMER_NOMBRE_FIELDS, "primer nombre", "primer_nombre"),
+        (SEGUNDO_NOMBRE_FIELDS, "segundo nombre", "segundo_nombre"),
+        (PRIMER_APELLIDO_FIELDS, "primer apellido", "primer_apellido"),
+        (SEGUNDO_APELLIDO_FIELDS, "segundo apellido", "segundo_apellido"),
     )
 
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo = helper.get_field_value(row, ("i_tipo",))
-        razon_social = helper.get_field_value(row, ("i_razon_social",))
+        tipo = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
+        razon_social = helper.get_field_value(row, RAZON_SOCIAL_FIELDS)
 
-        if str(tipo).strip() != "Persona_Natural":
+        if _tipo_interesado_ilicode(tipo) != "Persona_Natural":
             continue
 
         if _is_not_empty(razon_social):
@@ -1293,14 +1673,15 @@ def _rule_2_17(dataset: DatasetReader) -> list[RuleIssue]:
                     message="Para Persona_Natural, la razón social debe ser NULL.",
                     details={
                         "tabla": table_name,
+                        "tipo": tipo,
                         "razon_social": razon_social,
                     },
                 )
             )
             continue
 
-        for campo, etiqueta in campos_nombre:
-            valor = helper.get_field_value(row, (campo,))
+        for campos, etiqueta, detalle in campos_nombre:
+            valor = helper.get_field_value(row, campos)
             if _is_not_empty(valor) and not _only_letters_spaces(valor):
                 issues.append(
                     helper.make_issue(
@@ -1309,7 +1690,8 @@ def _rule_2_17(dataset: DatasetReader) -> list[RuleIssue]:
                         message=f"El {etiqueta} debe estar compuesto exclusivamente por caracteres alfabéticos.",
                         details={
                             "tabla": table_name,
-                            campo: valor,
+                            "tipo": tipo,
+                            detalle: valor,
                         },
                     )
                 )
@@ -1446,14 +1828,27 @@ def _rule_2_20(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 def _rule_2_21(dataset: DatasetReader) -> list[RuleIssue]:
+    """Regla 2.21 alineada con el validador web.
+
+    QGIS 4 puede entregar i_tipo e i_sexo como T_Id, itfCode, iliCode o
+    dispName. En este archivo esos valores ya se normalizan mediante
+    get_field_value; por eso aqui solo comparamos contra los valores canonicos
+    del validador web: Persona_Juridica y Persona_Natural.
+    """
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
 
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo = helper.get_field_value(row, ("i_tipo",))
-        sexo = helper.get_field_value(row, ("i_sexo",))
+        tipo = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
+        sexo = helper.get_field_value(row, SEXO_FIELDS)
 
-        tipo_str = str(tipo).strip() if tipo else ""
+        tipo_str = _tipo_interesado_ilicode(tipo)
+        if not tipo_str and tipo is not None:
+            fallback_tipo = _normalize_text_for_compare(tipo)
+            if "PERSONA_NATURAL" in fallback_tipo or "NATURAL" in fallback_tipo:
+                tipo_str = "Persona_Natural"
+            elif "PERSONA_JURIDICA" in fallback_tipo or "JURIDICA" in fallback_tipo:
+                tipo_str = "Persona_Juridica"
 
         message = None
 
@@ -1478,7 +1873,9 @@ def _rule_2_21(dataset: DatasetReader) -> list[RuleIssue]:
                     details={
                         "tabla": table_name,
                         "tipo": tipo,
+                        "tipo_ilicode": tipo_str,
                         "sexo": sexo,
+                        "sexo_raw": row.get("i_sexo__raw") or row.get("I_Sexo__raw"),
                     },
                 )
             )
@@ -1525,20 +1922,19 @@ def _rule_2_22(dataset: DatasetReader) -> list[RuleIssue]:
 
     return issues
 
-#def _rule_2_23(dataset: DatasetReader) -> list[RuleIssue]:
-    #sin definir aun
+def _rule_2_23(dataset: DatasetReader) -> list[RuleIssue]:
     return []
 
-#def _rule_2_24(dataset: DatasetReader) -> list[RuleIssue]:
-    #sin definir aun
+
+def _rule_2_24(dataset: DatasetReader) -> list[RuleIssue]:
     return []
 
-#def _rule_2_25(dataset: DatasetReader) -> list[RuleIssue]:
-    #sin definir aun
+
+def _rule_2_25(dataset: DatasetReader) -> list[RuleIssue]:
     return []
 
-#def _rule_2_26(dataset: DatasetReader) -> list[RuleIssue]:
-    #sin definir aun
+
+def _rule_2_26(dataset: DatasetReader) -> list[RuleIssue]:
     return []
 
 def _rule_2_27(dataset: DatasetReader) -> list[RuleIssue]:
@@ -1546,13 +1942,13 @@ def _rule_2_27(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_fuente = helper.get_field_value(row, ("fa_tipo",))
+        tipo_fuente = helper.get_field_value(row, TIPO_FUENTE_FIELDS)
         tipo_fuente_str = _fuente_tipo_ilicode(tipo_fuente)
 
-        ente_emisor = helper.get_field_value(row, ("fa_ente_emisor",))
-        numero_fuente = helper.get_field_value(row, ("fa_numero_fuente",))
-        fecha_fuente = helper.get_field_value(row, ("fa_fecha_documento_fuente",))
-        observacion = helper.get_field_value(row, ("fa_observacion",))
+        ente_emisor = helper.get_field_value(row, ENTE_EMISOR_FIELDS)
+        numero_fuente = helper.get_field_value(row, NUMERO_FUENTE_FIELDS)
+        fecha_fuente = helper.get_field_value(row, FECHA_FUENTE_FIELDS)
+        observacion = helper.get_field_value(row, OBSERVACION_FUENTE_FIELDS)
 
         message = None
 
@@ -1675,8 +2071,8 @@ def _rule_2_29(dataset: DatasetReader) -> list[RuleIssue]:
     for _, row in helper.iter_derecho_interesado_fuente():
         predio_ref = helper.get_relation_value(row, ("predio",))
         tipo_interesado = helper.get_field_value(row, ("i_tipo",))
-        documento = helper.get_field_value(row, ("i_documento_identidad",))
-        razon_social = helper.get_field_value(row, ("i_razon_social",))
+        documento = helper.get_field_value(row, DOCUMENTO_IDENTIDAD_FIELDS)
+        razon_social = helper.get_field_value(row, RAZON_SOCIAL_FIELDS)
         nombre_completo = _nombre_completo_interesado(row, helper)
 
         if predio_ref and (
@@ -1718,8 +2114,8 @@ def _rule_2_30(dataset: DatasetReader) -> list[RuleIssue]:
     filas_por_nombre: dict[str, list[tuple[str, dict[str, object]]]] = {}
 
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        documento = helper.get_field_value(row, ("i_documento_identidad",))
-        razon_social = helper.get_field_value(row, ("i_razon_social",))
+        documento = helper.get_field_value(row, DOCUMENTO_IDENTIDAD_FIELDS)
+        razon_social = helper.get_field_value(row, RAZON_SOCIAL_FIELDS)
         nombre_completo = _nombre_completo_interesado(row, helper)
 
         if _is_not_empty(razon_social):
@@ -1729,10 +2125,11 @@ def _rule_2_30(dataset: DatasetReader) -> list[RuleIssue]:
         else:
             continue
 
-        if not _is_not_empty(documento):
+        documento_normalizado = _normalizar_documento_identidad(documento)
+        if not documento_normalizado:
             continue
 
-        documentos_por_nombre.setdefault(clave, set()).add(str(documento).strip())
+        documentos_por_nombre.setdefault(clave, set()).add(documento_normalizado)
         filas_por_nombre.setdefault(clave, []).append((table_name, row))
 
     for clave, documentos in documentos_por_nombre.items():
@@ -1751,16 +2148,15 @@ def _rule_2_30(dataset: DatasetReader) -> list[RuleIssue]:
                     details={
                         "tabla": table_name,
                         "nombre_completo": _nombre_completo_interesado(row, helper),
-                        "razon_social": helper.get_field_value(row, ("i_razon_social",)),
-                        "documento_identidad": helper.get_field_value(row, ("i_documento_identidad",)),
+                        "razon_social": helper.get_field_value(row, RAZON_SOCIAL_FIELDS),
+                        "documento_identidad": helper.get_field_value(row, DOCUMENTO_IDENTIDAD_FIELDS),
                     },
                 )
             )
 
     return issues
 
-#def _rule_2_31(dataset: DatasetReader) -> list[RuleIssue]:
-    #sin definir aun
+def _rule_2_31(dataset: DatasetReader) -> list[RuleIssue]:
     return []
 
 def _rule_2_32(dataset: DatasetReader) -> list[RuleIssue]:
@@ -1817,9 +2213,14 @@ RULE_FUNCTIONS = {
     "2.20": _rule_2_20,
     "2.21": _rule_2_21,
     "2.22": _rule_2_22,
+    "2.23": _rule_2_23,
+    "2.24": _rule_2_24,
+    "2.25": _rule_2_25,
+    "2.26": _rule_2_26,
     "2.27": _rule_2_27,
     "2.28": _rule_2_28,
     "2.29": _rule_2_29,
     "2.30": _rule_2_30,
+    "2.31": _rule_2_31,
     "2.32": _rule_2_32,
 }
