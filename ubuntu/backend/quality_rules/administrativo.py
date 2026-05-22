@@ -1671,6 +1671,7 @@ def _rule_1_15(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
+
 def _rule_1_16(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
