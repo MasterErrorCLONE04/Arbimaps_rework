@@ -8,11 +8,13 @@ import shlex
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 from quality_rules.runner import run_quality_checks
+from services.validation_pdf_report import build_validation_pdf, validation_pdf_filename
 
 
 class XTFValidationService:
@@ -48,13 +50,44 @@ class XTFValidationService:
 
         validation = await asyncio.to_thread(self._validate_xtf, job_id, file_path)
 
-        return {
+        result = {
             "job_id": job_id,
             "original_filename": uploaded_file.filename,
             "stored_path": str(file_path),
             "stored_name": file_path.name,
+            "generated_at": datetime.now().isoformat(timespec="seconds"),
             "validation": validation,
         }
+        self._write_job_result(job_id, result)
+        return result
+
+    def build_pdf_report(self, job_id: str) -> tuple[bytes, str]:
+        result = self.load_job_result(job_id)
+        watermark_path = self._abs_path("static", "img", "marca_de_agua.png")
+        pdf_bytes = build_validation_pdf(result, watermark_path)
+        return pdf_bytes, validation_pdf_filename(result)
+
+    def load_job_result(self, job_id: str) -> dict[str, Any]:
+        result_path = self._job_result_path(job_id)
+        if not result_path.is_file():
+            raise FileNotFoundError(f"No se encontro el resultado de validacion {job_id}.")
+        try:
+            return json.loads(result_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"El resultado de validacion {job_id} no es un JSON valido.") from exc
+
+    def _write_job_result(self, job_id: str, result: dict[str, Any]) -> None:
+        result_path = self._job_result_path(job_id)
+        result_path.write_text(
+            json.dumps(result, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+    def _job_result_path(self, job_id: str) -> Path:
+        safe_job_id = str(job_id or "").strip()
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", safe_job_id):
+            raise FileNotFoundError("Identificador de validacion no valido.")
+        return (self.report_dir / f"{safe_job_id}.json").resolve()
 
     def _validate_xtf(self, job_id: str, file_path: Path) -> dict[str, Any]:
         log_path = (self.log_dir / f"{job_id}.log").resolve()
@@ -426,6 +459,8 @@ class XTFValidationService:
                     key=lambda item: (-item[1], item[0]),
                 )
             ]
+
+        normalized_rules.sort(key=lambda rule: self._rule_sort_key(str(rule.get("rule") or "")))
 
         # Conservar catálogo para que el template tenga un fallback de metadata.
         quality["rule_catalog"] = rule_catalog
@@ -933,6 +968,18 @@ class XTFValidationService:
             return "El validador encontró errores en el XTF."
         return "No se pudo ejecutar el validador. Revisa los registros."
 
+    def _rule_error_sort_key(self, error: dict[str, Any]) -> tuple[tuple[int, ...], str, str, str]:
+        rule_id = str(error.get("rule") or error.get("rule_id") or "").strip()
+        object_id = str(
+            error.get("display_id")
+            or error.get("object_id")
+            or error.get("tid")
+            or ""
+        ).strip()
+        object_class = str(error.get("object_class") or error.get("class") or "").strip()
+        message = str(error.get("message") or "").strip()
+        return (self._rule_sort_key(rule_id), object_id, object_class, message)
+
     def _run_internal_quality(self, file_path: Path) -> dict[str, Any]:
         """Ejecuta las reglas internas de calidad y siempre devuelve una estructura válida."""
         try:
@@ -1028,6 +1075,8 @@ class XTFValidationService:
                 }
             )
 
+        rule_errors.sort(key=self._rule_error_sort_key)
+
         return quality, rule_errors
 
     def _build_validation_result(
@@ -1048,7 +1097,7 @@ class XTFValidationService:
         normalized_quality = self._normalize_quality_result(quality)
 
         schema_errors = schema_errors or []
-        rule_errors = rule_errors or []
+        rule_errors = sorted(rule_errors or [], key=self._rule_error_sort_key)
 
         summary = normalized_quality.get("summary") or {}
         total_issues = self._coerce_int(summary.get("total_issues"), default=0)

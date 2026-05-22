@@ -43,3 +43,55 @@ def test_normalize_quality_expands_partial_rules_with_catalog_metadata():
     assert rule_218["component_label"] == "Juridico"
     assert rule_218["description"]
     assert "Administrativo" in {rule["component_label"] for rule in rules}
+
+
+def test_normalize_quality_orders_rules_numerically():
+    service = XTFValidationService()
+    service._implemented_rule_ids_from_components = lambda: []
+
+    quality = {
+        "issues": [],
+        "rules": [
+            {"rule": "1.10", "issue_count": 0, "passed": True},
+            {"rule": "1.2", "issue_count": 0, "passed": True},
+            {"rule": "2", "issue_count": 0, "passed": True},
+            {"rule": "1.1", "issue_count": 0, "passed": True},
+        ],
+        "rule_catalog": {
+            "1.1": {"description": "Regla 1.1", "component_label": "Prueba"},
+            "1.2": {"description": "Regla 1.2", "component_label": "Prueba"},
+            "1.10": {"description": "Regla 1.10", "component_label": "Prueba"},
+            "2": {"description": "Regla 2", "component_label": "Prueba"},
+        },
+    }
+
+    normalized = service._normalize_quality_result(quality)
+
+    assert [rule["rule"] for rule in normalized["rules"][:4]] == ["1.1", "1.2", "1.10", "2"]
+
+
+def test_rule_errors_are_ordered_by_rule_number():
+    service = XTFValidationService()
+    service._implemented_rule_ids_from_components = lambda: []
+
+    quality = {
+        "issues": [
+            {"rule": "1.10", "display_id": "PREDIO-3", "message": "Error 1.10"},
+            {"rule": "1.2", "display_id": "PREDIO-2", "message": "Error 1.2"},
+            {"rule": "1.1", "display_id": "PREDIO-1", "message": "Error 1.1"},
+        ],
+        "rules": [
+            {"rule": "1.10", "issue_count": 1, "passed": False},
+            {"rule": "1.2", "issue_count": 1, "passed": False},
+            {"rule": "1.1", "issue_count": 1, "passed": False},
+        ],
+        "rule_catalog": {
+            "1.1": {"description": "Regla 1.1", "component_label": "Prueba"},
+            "1.2": {"description": "Regla 1.2", "component_label": "Prueba"},
+            "1.10": {"description": "Regla 1.10", "component_label": "Prueba"},
+        },
+    }
+
+    _, rule_errors = service._quality_and_rule_errors(quality)
+
+    assert [error["rule"] for error in rule_errors] == ["1.1", "1.2", "1.10"]

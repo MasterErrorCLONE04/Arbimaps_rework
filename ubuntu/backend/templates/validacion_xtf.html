@@ -211,6 +211,17 @@
         background: #edf3fa;
     }
 
+    .btn-pdf {
+        background: #0b3a67;
+        color: #fff;
+        box-shadow: 0 12px 24px rgba(11, 58, 103, 0.18);
+    }
+
+    .btn-pdf:hover {
+        transform: translateY(-1px);
+        background: #082f54;
+    }
+
     .helper-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -255,6 +266,25 @@
         gap: 18px;
         align-items: flex-start;
         flex-wrap: wrap;
+    }
+
+    .result-title-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .result-title-row .page-title {
+        margin-bottom: 0;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
     .status-banner {
@@ -672,8 +702,11 @@ body.modal-open {
             padding: 24px 18px;
         }
 
-        .dropzone-actions {
+        .dropzone-actions,
+        .result-title-row,
+        .header-actions {
             flex-direction: column;
+            align-items: stretch;
         }
 
         .btn {
@@ -911,7 +944,16 @@ body.modal-open {
     <div id="resultado-anchor" class="card">
         <div class="page-header">
             <div>
-                <h1 class="page-title">Resultado de validación</h1>
+                <div class="result-title-row">
+                    <h1 class="page-title">Resultado de validación</h1>
+                    <a
+                        href="{{ (rp if rp else '') + '/validacion/xtf/' + result.job_id + '/reporte.pdf' }}"
+                        class="btn btn-pdf"
+                        download
+                    >
+                        Descargar PDF
+                    </a>
+                </div>
                 <p class="subtitle">
                     Consulta el estado general del archivo y el detalle completo de la validación.
                 </p>
@@ -933,7 +975,7 @@ body.modal-open {
                 {% endif %}
             </div>
 
-            <div>
+            <div class="header-actions">
                 <a href="{{ (rp if rp else '') + ('/panel/validacion-xtf' if validacion_embed else '/validacion/xtf') }}" class="btn btn-secondary">
                     Subir otro archivo
                 </a>
@@ -943,7 +985,7 @@ body.modal-open {
 
     <div class="kpi-grid">
         <div class="kpi-card">
-            <div class="kpi-label">Errores totales 23</div>
+            <div class="kpi-label">Errores totales</div>
             <div class="kpi-value">{{ total_errors }}</div>
         </div>
         <div class="kpi-card">

@@ -1,7 +1,7 @@
 import os
 
 from fastapi import APIRouter, Request, UploadFile, File, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from services.xtf_validation_service import XTFValidationService
@@ -80,3 +80,23 @@ async def subir_xtf(request: Request, file: UploadFile = File(...)):
             },
             status_code=500,
         )
+
+
+@router.get("/xtf/{job_id}/reporte.pdf")
+def descargar_reporte_xtf(job_id: str):
+    try:
+        pdf_bytes, filename = _get_xtf_service().build_pdf_report(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
