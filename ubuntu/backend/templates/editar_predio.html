@@ -43,7 +43,7 @@
                         </div>
                         <div class="section-title-principal mt-md-1">
                             <div class="content-title-principal">
-                                <div class="title-principal-detalle d-block">
+                                <div class="title-principal-detalle d-block" id="displayIdOperacion">
                                     ----
                                 </div>
                             </div>
@@ -54,7 +54,7 @@
                     <div class="card p-1 ms-auto w-25">
                         <div class="card-body tarjet-id-operation p-1">
                             <div class="d-block text-tarjet-name text-center">Asignación</div>
-                            <div class="text-result-name text-center">----</div>
+                            <div class="text-result-name text-center" id="displayAsignacion">----</div>
                         </div>
                     </div>
                 </div>
@@ -187,7 +187,7 @@
                                                             <label class="form-label-information mb-2">
                                                                 Área catastral del terreno
                                                             </label>
-                                                            <div class="rounded-3 px-2 py-2 w-100 result-information">
+                                                            <div id="displayAreaCatastral" class="rounded-3 px-2 py-2 w-100 result-information">
                                                                 ----
                                                             </div>
                                                         </div>
@@ -661,7 +661,7 @@
                                                             <label class="form-label-information mb-2">
                                                                 Área registral
                                                             </label>
-                                                            <div class="rounded-3 px-2 py-2 w-100 result-information">
+                                                            <div id="displayAreaRegistral" class="rounded-3 px-2 py-2 w-100 result-information">
                                                                 ----
                                                             </div>
                                                         </div>
@@ -11227,3 +11227,121 @@
     });
 </script>
 <!-- TODO: fin js para pestaña 8 -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btnVolver = document.querySelector('.btn-volver-editar');
+        const btnCancelar = document.querySelector('.btn-boton-abort');
+        const btnGuardar = document.getElementById('btnGuardarCambiosPredio');
+
+        const params = new URLSearchParams(window.location.search);
+        const asignacionId = params.get('id');
+        const predioId = params.get('predio_t_id') || params.get('predio_id');
+        const numeroPredial = params.get('numero_predial_nacional');
+        const basePath = window.rp || '';
+
+        // Poblar cabeceras desde la URL
+        const displayAsig = document.getElementById('displayAsignacion');
+        const displayIdOp = document.getElementById('displayIdOperacion');
+        
+        if (displayAsig && asignacionId) displayAsig.textContent = asignacionId;
+        if (displayIdOp && numeroPredial) displayIdOp.textContent = numeroPredial;
+
+        function cargarDatosBasicosPredio(asigId, pTId) {
+            if (!asigId || !pTId) return;
+            fetch(`${basePath}/api/asignaciones/${asigId}/predios/${pTId}/detalle-basico`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success' && data.predio) {
+                    const p = data.predio;
+                    
+                    if(document.getElementById('editarNumeroPredialNacional')) {
+                        document.getElementById('editarNumeroPredialNacional').textContent = p.numero_predial_nacional || '----';
+                    }
+                    if(document.getElementById('displayAreaCatastral')) {
+                        document.getElementById('displayAreaCatastral').textContent = p.area_catastral_terreno !== null ? p.area_catastral_terreno + ' m²' : '----';
+                    }
+                    if(document.getElementById('displayAreaRegistral')) {
+                        document.getElementById('displayAreaRegistral').textContent = p.area_registral_m2 !== null ? p.area_registral_m2 + ' m²' : '----';
+                    }
+                    
+                    if(document.getElementById('condicion_predio')) {
+                        document.getElementById('condicion_predio').value = p.condicion_predio || '';
+                    }
+                    if(document.getElementById('tipo_predio')) {
+                        document.getElementById('tipo_predio').value = p.tipo_predio || '';
+                    }
+                    if(document.getElementById('destinacion_economica')) {
+                        document.getElementById('destinacion_economica').value = p.destinacion_economica || '';
+                    }
+                    
+                    if(p.condicion_predio && document.getElementById('dropdownCondicionPredio')) {
+                        document.getElementById('dropdownCondicionPredio').innerHTML = `${p.condicion_predio} <i class="fa-solid fa-chevron-down toggle-icon ms-auto"></i>`;
+                    }
+                    if(p.tipo_predio && document.getElementById('dropdownTipoPredio')) {
+                        document.getElementById('dropdownTipoPredio').innerHTML = `${p.tipo_predio} <i class="fa-solid fa-chevron-down toggle-icon ms-auto"></i>`;
+                    }
+                    if(p.destinacion_economica && document.getElementById('dropdownDestinacionEconomica')) {
+                        document.getElementById('dropdownDestinacionEconomica').innerHTML = `${p.destinacion_economica} <i class="fa-solid fa-chevron-down toggle-icon ms-auto"></i>`;
+                    }
+                }
+            })
+            .catch(err => console.error("Error al cargar datos básicos:", err));
+        }
+
+        cargarDatosBasicosPredio(asignacionId, params.get('predio_t_id'));
+
+        function volverAAsignaciones() {
+            if (asignacionId) {
+                window.location.href = `${basePath}/panel/asignaciones/edicion?id=${asignacionId}`;
+            } else {
+                window.history.back();
+            }
+        }
+
+        if (btnVolver) btnVolver.addEventListener('click', volverAAsignaciones);
+        if (btnCancelar) btnCancelar.addEventListener('click', volverAAsignaciones);
+
+        if (btnGuardar) {
+            btnGuardar.addEventListener('click', () => {
+                // Generar payload
+                const payload = {
+                    predio_id: parseInt(predioId) || 0,
+                    asignacion_id: parseInt(asignacionId) || 0,
+                    csrf_token: "placeholder_token", 
+                    campos_editables: {},
+                    campos_ocultos: {},
+                    checks: {},
+                    archivos: {}
+                };
+
+                // Actualizar estado si existe la función global
+                if (typeof window.prepararPayloadEdicionPredio === 'function') {
+                    window.prepararPayloadEdicionPredio();
+                }
+
+                // Llamar al endpoint PUT
+                fetch(`${basePath}/api/predios/${predioId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': payload.csrf_token
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Ocurrió un error al guardar la información");
+                    return res.json();
+                })
+                .then(data => {
+                    alert("Cambios guardados con éxito.");
+                    volverAAsignaciones();
+                })
+                .catch(err => {
+                    console.error("Error Guardar:", err);
+                    alert("No se pudieron guardar los cambios. Revisa la consola para más detalles.");
+                });
+            });
+        }
+    });
+</script>

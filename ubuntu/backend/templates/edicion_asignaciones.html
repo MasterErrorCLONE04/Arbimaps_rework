@@ -3422,62 +3422,132 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        if (window.__ARBI_EDIT_DEBUG__ !== true) return;
-        const ejemploConstruccionesEdit = {
-            construcciones: [
-                {
-                    t_id: 101,
-                    identificador: "C-001",
-                    tipo_construccion_nombre: "Convencional",
-                    predio: "25394000000000000001",
-                    unidades: [
-                        {
-                            t_id: 1001,
-                            planta_ubicacion: "Piso 1",
-                            altura: "2.40",
-                            tipo_planta_nombre: "Principal",
-                            relacion_superficie_nombre: "Cubierta",
-                            estado_unidad_construccion_nombre: "Vigente",
-                            identificador: "UC-001",
-                            tipo_unidad_construccion_nombre: "Residencial",
-                            observaciones: "Unidad principal del primer piso."
-                        },
-                        {
-                            t_id: 1002,
-                            planta_ubicacion: "Piso 2",
-                            altura: "2.55",
-                            tipo_planta_nombre: "Secundaria",
-                            relacion_superficie_nombre: "Privada",
-                            estado_unidad_construccion_nombre: "Vigente",
-                            identificador: "UC-002",
-                            tipo_unidad_construccion_nombre: "Residencial",
-                            observaciones: "Unidad del segundo piso."
-                        }
-                    ]
-                },
-                {
-                    t_id: 102,
-                    identificador: "C-002",
-                    tipo_construccion_nombre: "No convencional",
-                    predio: "25394000000000000001",
-                    unidades: [
-                        {
-                            t_id: 2001,
-                            planta_ubicacion: "Patio",
-                            altura: "3.10",
-                            tipo_planta_nombre: "Exterior",
-                            relacion_superficie_nombre: "Común",
-                            estado_unidad_construccion_nombre: "Vigente",
-                            identificador: "UC-003",
-                            tipo_unidad_construccion_nombre: "Bodega",
-                            observaciones: "Espacio auxiliar."
-                        }
-                    ]
-                }
-            ]
-        };
+        const params = new URLSearchParams(window.location.search);
+        const asignacionId = params.get('id') || params.get('asignacion_id');
+        
+        if (!asignacionId) {
+            console.warn("No se encontró ID de asignación en la URL.");
+            return;
+        }
 
-        cargarTablasConstruccionesYUcEdit(ejemploConstruccionesEdit);
+        let basePath = window.rp || ""; // Base path from Jinja context if available
+
+        // Fetch Detalle Asignación
+        fetch(`${basePath}/asignaciones/${asignacionId}/detalle`)
+            .then(res => {
+                if(!res.ok) throw new Error("Error fetching asignacion");
+                return res.json();
+            })
+            .then(data => {
+                document.getElementById('d_titulo').innerText = `Asignación: ${data.titulo || data.id}`;
+                document.getElementById('d_user').innerText = data.usuario_asignado || '-';
+                
+                if(data.fecha_creacion) {
+                    const dateObj = new Date(data.fecha_creacion);
+                    document.getElementById('d_fecha').innerText = dateObj.toLocaleDateString();
+                }
+
+                document.getElementById('d_total_predios').innerText = data.predios ? data.predios.length : 0;
+                
+                const tbody = document.getElementById('edicionPrediosBody');
+                tbody.innerHTML = '';
+                if(data.predios && data.predios.length > 0) {
+                    data.predios.forEach(p => {
+                        const tr = document.createElement('tr');
+                        tr.style.cursor = "pointer";
+                        tr.innerHTML = `
+                            <td class="text-center">${p.numero_predial_nacional || '-'}</td>
+                            <td class="text-center">${p.predio_t_id || '-'}</td>
+                            <td class="text-center">${p.activo ? 'Activo' : 'Inactivo'}</td>
+                            <td class="text-center">${p.creado_por || '-'}</td>
+                        `;
+                        tr.addEventListener('click', () => {
+                            seleccionarPredioParaEdicion(asignacionId, p.predio_t_id, basePath);
+                        });
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No hay predios asignados</td></tr>';
+                }
+            })
+            .catch(err => {
+                console.error("Error cargando asignacion:", err);
+                document.getElementById('edicionPrediosBody').innerHTML = '<tr><td colspan="4" class="text-center text-danger py-4">Error al cargar predios</td></tr>';
+            });
+
+        function seleccionarPredioParaEdicion(asigId, predioTId, basePath) {
+            if(!predioTId) return;
+
+            const elIdOperacion = document.getElementById('resumenPredioOperacionId');
+            if(elIdOperacion) elIdOperacion.innerText = predioTId;
+            
+            fetch(`${basePath}/asignaciones/${asigId}/predios/${predioTId}/detalle-completo`)
+                .then(res => {
+                    if(!res.ok) throw new Error("Error fetching detalle completo predio");
+                    return res.json();
+                })
+                .then(data => {
+                    const elNumero = document.getElementById('resumenPredioNumero');
+                    if(elNumero) elNumero.innerText = data.numero_predial_nacional || '-';
+                    
+                    const elInteresados = document.getElementById('resumenPredioInteresados');
+                    // data.interesados is hypothetical, if not present we fall back to 0
+                    if(elInteresados) elInteresados.innerText = data.interesados ? data.interesados.length : 0;
+                    
+                    const elConstrucciones = document.getElementById('resumenPredioConstrucciones');
+                    if(elConstrucciones) elConstrucciones.innerText = data.construcciones ? data.construcciones.length : 0;
+
+                    const setHtml = (id, val) => {
+                        const el = document.getElementById(id);
+                        if(el) el.innerText = val || '----';
+                    };
+
+                    setHtml('modal_numero_predial_anterior', data.numero_predial_anterior);
+                    setHtml('modal_codigo_orip', data.codigo_orip);
+                    setHtml('modal_matricula_inmobiliaria', data.matricula_inmobiliaria);
+                    setHtml('modal_estado_fmi', data.estado_fmi_nombre);
+                    setHtml('modal_fecha_apertura_fmi', data.fecha_apertura_fmi);
+                    setHtml('modal_fecha_inscripcion_catastral', data.fecha_inscripcion_catastral);
+                    setHtml('modal_vigencia_actualizacion', data.vigencia_actualizacion);
+                    setHtml('modal_area_registral', data.area_registral);
+                    setHtml('modal_area_catastral_terreno', data.area_catastral_terreno);
+                    setHtml('modal_coeficiente_copropiedad', data.coeficiente_copropiedad);
+                    setHtml('modal_area_coeficiente_copropiedad', data.area_coeficiente_copropiedad);
+                    setHtml('modal_condicion_predio', data.condicion_predio_nombre);
+                    setHtml('modal_tipo_predio', data.tipo_predio_nombre);
+                    setHtml('modal_destinacion_economica', data.destinacion_economica_nombre);
+
+                    // Cargar tabla construcciones
+                    const dsConstrucciones = {
+                        construcciones: data.construcciones || []
+                    };
+                    if(typeof cargarTablasConstruccionesYUcEdit === 'function') {
+                        cargarTablasConstruccionesYUcEdit(dsConstrucciones);
+                    }
+
+                    // Map integration
+                    if(data.predios && data.predios.type === "FeatureCollection" && window.vpMapInstanceEdit) {
+                        // Limpiar capa previa
+                        if(window.vpPredioLayerEdit) window.vpMapInstanceEdit.removeLayer(window.vpPredioLayerEdit);
+                        // Añadir nueva
+                        window.vpPredioLayerEdit = L.geoJSON(data.predios, {
+                            style: { color: "#2563eb", weight: 3, opacity: 0.8, fillOpacity: 0.1 }
+                        }).addTo(window.vpMapInstanceEdit);
+                        window.vpMapInstanceEdit.fitBounds(window.vpPredioLayerEdit.getBounds());
+                    }
+
+                    // Botón Editar Predio
+                    const btnEditar = document.querySelector('.boton-editar-predio');
+                    if(btnEditar) {
+                        btnEditar.onclick = () => {
+                            window.location.href = `${basePath}/panel/asignaciones/edicion?subview=editar_predio&id=${asigId}&predio_id=${predioTId}`;
+                        };
+                    }
+                })
+                .catch(err => {
+                    console.error("Error al cargar el predio", err);
+                });
+        }
     });
 </script>
 

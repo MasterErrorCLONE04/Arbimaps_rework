@@ -2494,3 +2494,128 @@ def importar_retorno_xtf_workspace(
         user,
         publish_to_main=False,
     )
+
+@router.get("/{id}/predios/{predio_t_id}/detalle-basico")
+def obtener_detalle_basico_predio(
+    id: int,
+    predio_t_id: int,
+    user: dict = Depends(require_assignment_roles("admin", "coordinador", "digitalizador", "reconocedor"))
+):
+    schema_work = _safe_ident((ASIG_MODEL_CONTEXT.schema_work or "b_asignaciones_arb").strip(), fallback="b_asignaciones_arb")
+    predio_table = _safe_ident((ASIG_MODEL_CONTEXT.predio_table or "arb_predio").strip(), fallback="arb_predio")
+    predio_numero_field = _safe_ident((ASIG_MODEL_CONTEXT.predio_numero_field or "numero_predial").strip(), fallback="numero_predial")
+
+    with db_conn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # 1. Verificar asignacion
+            cur.execute("SELECT usuario_asignado, work_datasetname FROM arbimaps_app.asignacion WHERE id = %s", (id,))
+            asig = cur.fetchone()
+            if not asig:
+                raise HTTPException(status_code=404, detail="Asignación no encontrada")
+                
+            usuario_asignado = str(asig.get("usuario_asignado") or "").strip().lower()
+            work_datasetname = str(asig.get("work_datasetname") or "").strip()
+            
+            # Verificación de rol
+            role = str(user.get("role") or user.get("role_code") or user.get("rol") or "").strip().lower()
+            if role in {"digitalizador", "reconocedor"}:
+                username = str(user.get("username") or "").strip().lower()
+                if usuario_asignado != username:
+                    raise HTTPException(status_code=403, detail="La asignación no le pertenece")
+                    
+            # 2. Buscar relacion asignacion_predio
+            cur.execute(
+                """
+                SELECT numero_predial_nacional 
+                FROM arbimaps_app.asignacion_predio 
+                WHERE predio_t_id = %s AND asignacion_id = %s AND activo = TRUE
+                LIMIT 1
+                """,
+                (predio_t_id, id)
+            )
+            ap = cur.fetchone()
+            if not ap:
+                raise HTTPException(status_code=404, detail="El predio no está asociado a esta asignación")
+                
+            numero_predial_nacional = str(ap.get("numero_predial_nacional") or "").strip()
+
+            # 3. Localizar el predio en la canasta de trabajo
+            workspace_predio_t_id = None
+            if numero_predial_nacional and work_datasetname:
+                cur.execute(
+                    f"""
+                    SELECT p.t_id
+                    FROM {schema_work}.{predio_table} p
+                    JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
+                    JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                    WHERE d.datasetname = %s
+                      AND BTRIM(p.{predio_numero_field}::text) = BTRIM(%s::text)
+                    ORDER BY p.t_id DESC
+                    LIMIT 1
+                    """,
+                    (work_datasetname, numero_predial_nacional)
+                )
+                row = cur.fetchone()
+                if row and row.get("t_id") is not None:
+                    workspace_predio_t_id = int(row["t_id"])
+                    
+            if workspace_predio_t_id is None and numero_predial_nacional:
+                cur.execute(
+                    f"""
+                    SELECT p.t_id
+                    FROM {schema_work}.{predio_table} p
+                    WHERE BTRIM(p.{predio_numero_field}::text) = BTRIM(%s::text)
+                    ORDER BY p.t_id DESC
+                    LIMIT 1
+                    """,
+                    (numero_predial_nacional,)
+                )
+                row = cur.fetchone()
+                if row and row.get("t_id") is not None:
+                    workspace_predio_t_id = int(row["t_id"])
+
+            if workspace_predio_t_id is None:
+                cur.execute(
+                    f"SELECT t_id FROM {schema_work}.{predio_table} WHERE t_id = %s LIMIT 1",
+                    (predio_t_id,)
+                )
+                row = cur.fetchone()
+                if row and row.get("t_id") is not None:
+                    workspace_predio_t_id = int(row["t_id"])
+                    
+            if not workspace_predio_t_id:
+                raise HTTPException(status_code=404, detail="No se encontró el predio en la canasta de trabajo")
+
+            # 4. Extraer datos básicos
+            cur.execute(
+                f"""
+                SELECT 
+                    numero_predial, 
+                    area_registral_m2, 
+                    condicion_predio, 
+                    destinacion_economica, 
+                    tipo as tipo_predio,
+                    area_catastral_terreno
+                FROM {schema_work}.{predio_table}
+                WHERE t_id = %s
+                """,
+                (workspace_predio_t_id,)
+            )
+            datos_predio = cur.fetchone()
+            
+            if not datos_predio:
+                raise HTTPException(status_code=404, detail="Datos del predio no encontrados")
+
+            # Mapear los resultados
+            return {
+                "status": "success",
+                "predio": {
+                    "numero_predial_nacional": numero_predial_nacional,
+                    "numero_predial": datos_predio.get("numero_predial"),
+                    "area_registral_m2": float(datos_predio.get("area_registral_m2")) if datos_predio.get("area_registral_m2") is not None else None,
+                    "area_catastral_terreno": float(datos_predio.get("area_catastral_terreno")) if datos_predio.get("area_catastral_terreno") is not None else None,
+                    "condicion_predio": datos_predio.get("condicion_predio"),
+                    "destinacion_economica": datos_predio.get("destinacion_economica"),
+                    "tipo_predio": datos_predio.get("tipo_predio")
+                }
+            }
