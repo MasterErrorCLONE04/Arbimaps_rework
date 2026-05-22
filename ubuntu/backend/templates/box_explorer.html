@@ -17,12 +17,14 @@
 
     <div class="d-flex gap-2">
         <!-- Botón Crear Carpeteo FTP (Anteriormente btnCarpeteo) -->
-        <button class="btn text-white d-flex align-items-center gap-2 px-3 py-2" id="btnCarpeteo" style="background-color: #002b49; border-radius: 8px;">
+        <button class="btn text-white d-flex align-items-center gap-2 px-3 py-2" id="btnCarpeteo"
+            style="background-color: #002b49; border-radius: 8px;">
             <i class="bi bi-folder-plus"></i>
             <span>Crear carpeteo FTP</span>
         </button>
         <!-- Botón Sincronizar desde mergin (Anteriormente btnSync) -->
-        <button class="btn d-flex align-items-center gap-2 px-3 py-2" id="btnSync" style="background-color: #8ae6b1; color: #002b49; border-radius: 8px; font-weight: 600;">
+        <button class="btn d-flex align-items-center gap-2 px-3 py-2" id="btnSync"
+            style="background-color: #8ae6b1; color: #002b49; border-radius: 8px; font-weight: 600;">
             <i class="bi bi-arrow-repeat"></i>
             <span>Sincronizar desde mergin</span>
         </button>
@@ -30,23 +32,24 @@
 </div>
 
 <!-- CONTENEDOR PRINCIPAL: Explorador BOX -->
-<div class="card border-0 shadow-sm mb-4 " style="border-radius: 15px; overflow: hidden;">
+<div class="card border-0 shadow mb-4 " style="border-radius: 15px; overflow: hidden;">
     <!-- Card Header Estilo Premium -->
-    <div class="card-header border-0 py-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2" 
-    style="background-color: #002f55; border-radius: 10px;">
+    <div class="card-header border-0 py-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2"
+        style="background-color: #002f55; border-radius: 10px;">
         <div>
             <h4 class="text-white fw-bold mb-1">Explorador BOX</h4>
-            <small class="text-white" style="font-weight: 100 !important;">Consulta archivos adjuntos y carpetas del proyecto</small>
+            <small class="text-white" style="font-weight: 100 !important;">Consulta archivos adjuntos y carpetas del
+                proyecto</small>
         </div>
         <div class="d-flex gap-2">
             <!-- Botones de Acción Secundaria -->
-            <button class="btn text-white border-none d-flex align-items-center gap-2 px-3" id="btnNewFolder" 
-            style="border-radius: 8px; font-size: 0.9rem; background-color: #6aa4d4;">
+            <button class="btn text-white border-none d-flex align-items-center gap-2 px-3" id="btnNewFolder"
+                style="border-radius: 8px; font-size: 0.9rem; background-color: #6aa4d4;">
                 <i class="bi bi-folder-plus"></i>
                 Crear nueva carpeta
             </button>
             <label class="btn text-white border-2 d-flex align-items-center gap-2 px-3 mb-0"
-             style="border-radius: 8px; font-size: 0.9rem; background-color: #6aa4d4; cursor: pointer;">
+                style="border-radius: 8px; font-size: 0.9rem; background-color: #6aa4d4; cursor: pointer;">
                 <i class="bi bi-cloud-upload"></i>
                 Agregar nuevo archivo
                 <input type="file" id="fileUpload" style="display:none;">
@@ -56,27 +59,30 @@
         </div>
     </div>
 
-    <div class="card-body p-4 bg-white">
+    <div class="card-body py-4 px-1 bg-white">
         <!-- Indicador de Progreso de Sincronización -->
-        <div id="syncContainer" class="mb-4 p-3 rounded-3" style="display:none; background-color: #f8fbfe; border: 1px solid #eef5fb;">
+        <div id="syncContainer" class="mb-4 p-3 rounded-3"
+            style="display:none; background-color: #f8fbfe; border: 1px solid #eef5fb;">
             <div class="d-flex justify-content-between mb-2">
                 <span id="syncText" class="fw-bold text-primary small">Iniciando...</span>
                 <span id="syncPercent" class="fw-bold small">0%</span>
             </div>
             <div class="progress" style="height: 10px; border-radius: 5px;">
-                <div id="syncBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%"></div>
+                <div id="syncBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                    role="progressbar" style="width: 0%"></div>
             </div>
         </div>
 
-        <div class="row g-4">
+        <div class="row ">
             <!-- COLUMNA IZQUIERDA: Lista de Archivos -->
-            <div class="col-lg-5">
+            <div class="col-lg-7 p-3 border rounded-4">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div>
                         <h6 class="fw-bold mb-0" style="color: #002b49;">Lista de archivos</h6>
                         <small class="text-muted" id="status">Elementos: 0</small>
                     </div>
-                    <button class="btn btn-sm d-flex align-items-center gap-2 px-3" id="btnBack" style="background-color: #002b49; color: white; border-radius: 8px;">
+                    <button class="btn btn-sm d-flex align-items-center gap-2 px-3" id="btnBack"
+                        style="background-color: #002b49; color: white; border-radius: 8px;">
                         <i class="bi bi-arrow-left"></i>
                         Volver
                     </button>
@@ -84,17 +90,19 @@
 
                 <!-- Buscador -->
                 <div class="input-group mb-3 shadow-sm" style="border-radius: 10px; overflow: hidden;">
-                    <input type="text" id="fileSearch" class="form-control border-0 bg-light px-3" placeholder="Buscar archivo o carpeta" style="height: 45px; font-size: 0.95rem;">
-                    <span class="input-group-text border-0 bg-light px-3" style="background-color: #002b49 !important; color: white;">
+                    <input type="text" id="fileSearch" class="form-control border-0 bg-light px-3"
+                        placeholder="Buscar archivo o carpeta" style="height: 45px; font-size: 0.95rem;">
+                    <span class="input-group-text border-0 bg-light px-3"
+                        style="background-color: #002b49 !important; color: white;">
                         <i class="bi bi-search"></i>
                     </span>
                 </div>
 
                 <!-- Tabla de Archivos -->
-                <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <div class="table-responsive p-2" style="max-height: 500px; overflow-y: auto;">
                     <table class="table table-hover align-middle" id="tbl">
                         <thead class="sticky-top bg-white">
-                            <tr style="border-bottom: 2px solid #f8fbfe;">
+                            <tr    style="border-bottom: 2px solid #c9cacc;">
                                 <th class="py-3" style="color: #002b49; font-size: 0.9rem;">Nombre</th>
                                 <th class="py-3" style="color: #002b49; font-size: 0.9rem;">id</th>
                                 <th class="py-3 text-end" style="color: #002b49; font-size: 0.9rem;">Acciones</th>
@@ -108,13 +116,15 @@
             </div>
 
             <!-- COLUMNA DERECHA: Previsualización -->
-            <div class="col-lg-7">
+            <div class="col-lg-5">
                 <h6 class="fw-bold mb-3" style="color: #002b49;">Previsualización</h6>
-                
-                <div class="card border-0 shadow-sm" style="border-radius: 12px; overflow: hidden; height: 600px; background-color: #f8fbfe;">
-                    
+
+                <div class="card border-0 shadow-sm"
+                    style="border-radius: 12px; overflow: hidden; height: 600px; background-color: #f8fbfe;">
+
                     <!-- Cuerpo del Visor -->
-                    <div class="card-body p-0 d-flex align-items-center justify-content-center bg-white" style="position: relative;">
+                    <div class="card-body p-0 d-flex align-items-center justify-content-center bg-white"
+                        style="position: relative;">
                         <iframe id="viewer" style="width: 100%; height: 100%; border: none;"></iframe>
                         <div id="viewerPlaceholder" class="text-center text-muted">
                             <i class="bi bi-file-earmark-text" style="font-size: 4rem; opacity: 0.1;"></i>
@@ -134,10 +144,12 @@
         cursor: pointer;
         border-bottom: 1px solid #f8fbfe;
     }
+
     #tbody tr:hover {
         background-color: #f8fbfe !important;
-        transform: translateX(4px);
+        transform: scale(1.01);
     }
+
     .action-btn {
         width: 32px;
         height: 32px;
@@ -148,20 +160,45 @@
         transition: all 0.2s ease;
         border: none;
     }
+
     .action-btn:hover {
         transform: scale(1.1);
     }
-    .btn-view { background-color: #28a745; color: white; }
-    .btn-edit { background-color: #002b49; color: white; }
-    .btn-sync { background-color: #3498db; color: white; }
-    
+
+    .btn-view {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-edit {
+        background-color: #002b49;
+        color: white;
+    }
+
+    .btn-sync {
+        background-color: #3498db;
+        color: white;
+    }
+
     /* Scrollbar personalizado */
-    .table-responsive::-webkit-scrollbar { width: 6px; }
-    .table-responsive::-webkit-scrollbar-track { background: #f1f1f1; }
-    .table-responsive::-webkit-scrollbar-thumb { background: #002b49; border-radius: 10px; }
-    
+    .table-responsive::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #002b49;
+        border-radius: 10px;
+    }
+
     /* Ruta breadcrumb */
-    #crumb { font-size: 0.8rem; color: #666; }
+    #crumb {
+        font-size: 0.8rem;
+        color: #666;
+    }
 </style>
 
 <script>
@@ -241,7 +278,7 @@
 
         items.forEach(it => {
             const tr = document.createElement("tr");
-            
+
             // Acción al hacer click en la fila
             tr.onclick = async () => {
                 if (it.type === "folder") {
@@ -253,21 +290,21 @@
             };
 
             const iconHtml = getFileIcon(it);
-            
+
             tr.innerHTML = `
                 <td class="py-3">
                     <div class="d-flex align-items-center">
                         ${iconHtml}
-                        <span class="fw-bold" style="color: #002b49; font-size: 0.9rem;">${it.name}</span>
+                        <span  style="color: #002b49; font-size: 0.9rem;">${it.name}</span>
                     </div>
                 </td>
                 <td class="text-muted small py-3">${it.id}</td>
                 <td class="text-end py-3">
                     <div class="d-flex justify-content-end gap-1">
-                        ${it.type === 'folder' 
-                            ? `<button class="action-btn btn-view" title="Abrir"><i class="bi bi-box-arrow-in-right"></i></button>`
-                            : `<button class="action-btn btn-view btn-ver-archivo" data-id="${it.id}" title="Ver"><i class="bi bi-eye-fill"></i></button>`
-                        }
+                        ${it.type === 'folder'
+                    ? `<button class="action-btn btn-view" title="Abrir"><i class="bi bi-box-arrow-in-right"></i></button>`
+                    : `<button class="action-btn btn-view btn-ver-archivo" data-id="${it.id}" title="Ver"><i class="bi bi-eye-fill"></i></button>`
+                }
                         <button class="action-btn btn-edit btn-rename" data-id="${it.id}" data-name="${it.name}" data-type="${it.type}" title="Renombrar"><i class="bi bi-pencil-fill"></i></button>
                         <button class="action-btn btn-sync" title="Acciones"><i class="bi bi-share-fill"></i></button>
                     </div>
@@ -318,7 +355,7 @@
             elFileName.textContent = it.name;
             elViewer.style.display = "none";
             elPlaceholder.innerHTML = '<div class="spinner-border text-primary"></div>';
-            
+
             const openData = await fetchJson(`${apiBase}/box/open?item_type=file&item_id=${it.id}`);
             elViewer.src = openData.preview_url;
             elViewer.style.display = "block";
