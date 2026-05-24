@@ -5,7 +5,7 @@
       <div class="section-title-one h-100">
         <div class="indication">
           <small class="title-detalle">
-            MÓDULO DE ASIGNACIONES > DETALLE DE ASIGNACIÓN
+            MÓDULO DE ASIGNACIONES > DETALLE DE ASIGNACIÓN<span id="breadcrumbAssignmentName"></span>
           </small>
         </div>
 
@@ -27,336 +27,233 @@
 
     <!-- DERECHA -->
     <div class="col-12 col-lg-5 col-xl-4">
-      <div class="section-title-two w-100 h-100">
-        <div class="busqueda-asignaciones">
-          <small class="text-busqueda-asignaciones d-block">
-            Búsqueda de asignaciones
-          </small>
-          <small class="parraf-busqueda-asignaciones d-block mt-1">
-            Puedes realizar búsquedas de asignaciones mediante su ID
-          </small>
+      <input type="hidden" id="asigDetalleId" />
+      <div class="d-flex flex-column align-items-lg-end gap-3 w-100">
+        <!-- Botón Volver -->
+        <div>
+          <button id="btnResetSearch" type="button"
+            class="btn rounded-pill fw-bold d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
+            style="background-color: #DCE6F1; color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#CAD7E6'" onmouseout="this.style.backgroundColor='#DCE6F1'">
+            <i class="fa-solid fa-arrow-left"></i> Volver a asignaciones
+          </button>
         </div>
 
-        <div class="buscador mt-3 position-relative w-100">
-          <input class="input-buscador form-control border-0 shadow-none py-3 ps-3 pe-5 w-100" id="asigDetalleId"
-            type="number" min="1" placeholder="ID de asignación" />
-
-          <button id="btnCargarDetalle" type="button"
-            class="btn position-absolute top-50 end-0 translate-middle-y me-2 d-inline-flex align-items-center justify-content-center gap-2 px-3 py-2 rounded-pill circle-search border-0">
-            <i class="bi bi-search text-white"></i>
-            <small class="text-white text-circle-search">Buscar</small>
+        <!-- Botones de Acción -->
+        <div class="d-flex gap-2 justify-content-lg-end flex-wrap w-100 justify-content-start">
+          <button id="btnHeaderSyncXtf" type="button"
+            class="btn rounded-pill fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
+            style="background-color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#02203d'" onmouseout="this.style.backgroundColor='#032F57'">
+            <i class="fa-solid fa-code-branch"></i>
+            <span>Sincronizar XTF</span>
+          </button>
+          <button id="btnHeaderHistorial" type="button"
+            class="btn rounded-pill fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
+            data-bs-toggle="modal" data-bs-target="#modalHistorial"
+            style="background-color: #5B9BD5; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#4a8ac4'" onmouseout="this.style.backgroundColor='#5B9BD5'">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>Historial de la asignación</span>
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="section-content-body mt-4 mt-md-5 p-2 p-md-3 col-12 px-0 px-xl-1 mx-auto">
-    <div class="row align-items-stretch justify-content-center g-4 gx-xl-0 mx-auto">
-      <!-- TARJETA IZQUIERDA -->
-      <div class="col-12 col-xl-5">
-        <div class="card-content-information p-4 py-4 py-md-5 h-100 bg-white border rounded-5 shadow-sm">
-          <div class="d-flex justify-content-between align-items-start align-items-md-center flex-wrap gap-3 mb-4">
-            <div class="fw-bold mb-0 resumen-title-main">
-              Asignación: <span id="d_titulo">-</span> <span
-                class="text-muted"><!-- (#<span id="d_id">-</span>) --></span>
-            </div>
+  <div class="unified-detail-card p-4 p-md-5 mt-4 mt-md-5"
+    style="background-color: #021f3c !important; border-radius: 24px !important; color: #ffffff !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+      <h2 class="fw-bold mb-0 text-white" style="font-size: clamp(1.4rem, 1.8vw, 2.2rem);">
+        Asignación: <span id="d_titulo">-</span>
+      </h2>
+      <div class="d-inline-flex align-items-center px-3 py-1.5 rounded-pill"
+        style="background-color: #6095C1; border: 1px solid rgba(255, 255, 255, 0.25);">
+        <span class="me-2 fw-bold text-white-50" style="font-size: 0.9rem;">•</span>
+        <small id="d_estado" class="fw-bold mb-0 text-white text-uppercase"
+          style="font-size: 0.75rem; letter-spacing: 0.05em;">-</small>
+      </div>
+    </div>
 
-            <div class="d-inline-flex align-items-center px-2 py-1 rounded-4 badge-estado-asignacion">
-              <span class="me-2 fw-bold badge-dot">•</span>
-              <small id="d_estado" class="fw-bold mb-0 badge-estado-texto">-</small>
-            </div>
+    <!-- METADATA ROW -->
+    <div class="row g-4 align-items-center py-3"
+      style="border-top: 1px solid rgba(255, 255, 255, 0.1); border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+      <!-- COL 1: ASIGNADO POR -->
+      <div class="col-12 col-md-4 meta-col-separator">
+        <div class="d-flex align-items-center">
+          <div class="me-3 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+            style="width: 48px; height: 48px; background-color: rgba(255,255,255,0.15);">
+            <i class="fa-solid fa-circle-user text-white fs-4"></i>
           </div>
+          <div class="min-w-0">
+            <small class="d-block fw-bold text-uppercase text-white-50"
+              style="font-size: 0.68rem; letter-spacing: 0.06em;">
+              ASIGNADO POR:
+            </small>
+            <small id="d_coord" class="d-block text-white fw-bold text-truncate" style="font-size: 0.9rem;">-</small>
+          </div>
+        </div>
+      </div>
 
-          <div class="row g-3 g-md-4 align-items-start align-items-md-center info-resumen-wrap mt-1 mt-md-3">
-            <div class="col-12 col-md">
-              <div class="d-flex align-items-center">
-                <div
-                  class="me-3 d-flex align-items-center justify-content-center rounded-circle icon-circle-user flex-shrink-0">
-                  <i class="bi bi-person-fill text-white icon-resumen"></i>
-                </div>
+      <!-- COL 2: FECHA DE ASIGNACION -->
+      <div class="col-12 col-md-4 meta-col-separator">
+        <div class="d-flex align-items-center ps-md-4">
+          <div class="me-3 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+            style="width: 48px; height: 48px; background-color: rgba(255,255,255,0.15);">
+            <i class="fa-solid fa-calendar-days text-white fs-4"></i>
+          </div>
+          <div class="min-w-0">
+            <small class="d-block fw-bold text-uppercase text-white-50"
+              style="font-size: 0.68rem; letter-spacing: 0.06em;">
+              FECHA DE ASIGNACIÓN:
+            </small>
+            <small id="d_fecha" class="d-block text-white fw-bold" style="font-size: 0.9rem;">-</small>
+          </div>
+        </div>
+      </div>
 
-                <div class="min-w-0">
-                  <small class="d-block fw-bold text-uppercase mb-1 resumen-label">
-                    USUARIO ENCARGADO
-                  </small>
-                  <small id="d_user" class="d-block mb-0 resumen-value">-</small>
-                </div>
-              </div>
+      <!-- COL 3: ULTIMA SINCRONIZACION -->
+      <div class="col-12 col-md-4">
+        <div class="d-flex align-items-center ps-md-4">
+          <div class="me-3 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+            style="width: 48px; height: 48px; background-color: rgba(255,255,255,0.15);">
+            <i class="fa-solid fa-clock-rotate-left text-white fs-4"></i>
+          </div>
+          <div class="min-w-0">
+            <small class="d-block fw-bold text-uppercase text-white-50"
+              style="font-size: 0.68rem; letter-spacing: 0.06em;">
+              ÚLTIMA SINCRONIZACIÓN:
+            </small>
+            <small id="d_last_sync" class="d-block text-white fw-bold" style="font-size: 0.9rem;">-</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATISTICS CARDS -->
+    <div class="row g-4 mt-4">
+      <!-- Card 1: Asignados -->
+      <div class="col-12 col-md-4">
+        <div
+          class="bg-white p-3 rounded-4 shadow-sm border-end border-5 h-100 d-flex align-items-center justify-content-between"
+          style="border-right-color: #032F57 !important; min-height: 96px;">
+          <div class="d-flex align-items-center gap-3 w-100">
+            <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+              style="width: 48px; height: 48px; background-color: #E6F0FA; color: #032F57;">
+              <i class="fa-solid fa-map-location-dot fs-5"></i>
             </div>
-
-            <div class="col-auto d-none d-md-flex justify-content-center">
-              <div class="separador-info-resumen"></div>
-            </div>
-
-            <div class="col-12 col-md">
-              <div class="d-flex align-items-center">
-                <div
-                  class="me-3 d-flex align-items-center justify-content-center rounded-circle icon-circle-date flex-shrink-0">
-                  <i class="bi bi-calendar-date-fill text-white icon-resumen"></i>
-                </div>
-
-                <div class="min-w-0">
-                  <small class="d-block fw-bold text-uppercase mb-1 resumen-label">
-                    FECHA DE ASIGNACIÓN
-                  </small>
-                  <small id="d_fecha" class="d-block mb-0 resumen-value">-</small>
-                </div>
-              </div>
+            <div class="min-w-0">
+              <small class="d-block text-muted fw-bold" style="font-size: 0.78rem;">Predios Asignados</small>
+              <span id="d_asig" class="d-block fw-bold text-dark fs-3 lh-1 mt-1"
+                style="color: #032F57 !important;">0</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- SEPARADOR SOLO XL -->
-      <div class="col-auto d-none d-xl-flex justify-content-center align-self-stretch px-0">
-        <div class="separador-tarjetas h-100"></div>
+      <!-- Card 2: Eliminados -->
+      <div class="col-12 col-md-4">
+        <div
+          class="bg-white p-3 rounded-4 shadow-sm border-end border-5 h-100 d-flex align-items-center justify-content-between"
+          style="border-right-color: #E53935 !important; min-height: 96px;">
+          <div class="min-w-0">
+            <small class="d-block text-muted fw-bold" style="font-size: 0.78rem;">Predios Eliminados</small>
+            <span id="d_elim" class="d-block fw-bold text-dark fs-3 lh-1 mt-1"
+              style="color: #032F57 !important;">0</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+            style="width: 48px; height: 48px; background-color: #FEE2E2; color: #DC2626;">
+            <i class="fa-solid fa-trash-can fs-5"></i>
+          </div>
+        </div>
       </div>
 
-      <!-- TARJETA DERECHA -->
-      <div class="col-12 col-xl-5">
-        <div class="card-content-cargue p-4 h-100 bg-white border rounded-5 shadow-sm">
-          <div class="row align-items-center justify-content-center justify-content-xl-between g-3 h-100">
-            <div class="col-12 col-lg-7 col-xl-7 d-flex">
-              <div class="section-cargue-xtf mx-auto w-100 d-flex">
-                <label for="asigRetornoFile"
-                  class="label-cargue-xtf d-flex flex-column justify-content-center align-items-center text-center mb-0 w-100">
-                  <i class="bi bi-cloud-arrow-up-fill icon-cargue-xtf"></i>
-                  <small class="text-cargue-xtf mt-3">
-                    Arrastra o selecciona el archivo XTF
-                    <br>
-                    para sincronizar
-                  </small>
-                  <span class="btn-cargue-xtf mt-3">
-                    Seleccionar XTF
-                  </span>
-                </label>
-                <input id="asigRetornoFile" type="file" accept=".xtf" class="d-none" />
-              </div>
-            </div>
-
-            <div class="col-12 col-lg-5 col-xl-5 d-flex">
-              <div class="h-100 w-100 d-flex flex-column justify-content-center align-items-stretch">
-                <div id="xtfPreviewBox" class="xtf-preview-card d-none w-100 mb-3">
-                  <div class="d-flex align-items-center gap-2">
-                    <div id="xtfPreviewCheck"
-                      class="xtf-preview-check d-flex align-items-center justify-content-center flex-shrink-0">
-                      <i id="xtfPreviewIcon" class="bi bi-clock-history"></i>
-                    </div>
-
-                    <div class="flex-grow-1 min-w-0">
-                      <div id="xtfFileName" class="xtf-file-name text-truncate">archivo.xtf</div>
-                      <small id="xtfFileMeta" class="xtf-file-meta d-block">0 MB | listo para sincronizar</small>
-                    </div>
-
-                    <button id="btnRemoveXtf" type="button"
-                      class="btn p-0 border-0 bg-transparent xtf-remove-btn flex-shrink-0" aria-label="Quitar archivo">
-                      <i class="bi bi-trash3-fill"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <button id="btnImportarRetorno" type="button"
-                  class="btn-sync-xtf d-inline-flex align-items-center justify-content-center gap-2 align-self-stretch">
-                  <i class="bi bi-bezier2"></i>
-                  <span>Sincronizar XTF</span>
-                </button>
-                <button id="btnVerValidadores" type="button"
-                  class="btn btn-link p-0 mt-2 text-decoration-none align-self-start">
-                  <small>Ver validadores XTF</small>
-                </button>
-              </div>
-            </div>
+      <!-- Card 3: Nuevos -->
+      <div class="col-12 col-md-4">
+        <div
+          class="bg-white p-3 rounded-4 shadow-sm border-end border-5 h-100 d-flex align-items-center justify-content-between"
+          style="border-right-color: #16A34A !important; min-height: 96px;">
+          <div class="min-w-0">
+            <small class="d-block text-muted fw-bold" style="font-size: 0.78rem;">Predios Nuevos</small>
+            <span id="d_new" class="d-block fw-bold text-dark fs-3 lh-1 mt-1"
+              style="color: #032F57 !important;">0</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+            style="width: 48px; height: 48px; background-color: #DCFCE7; color: #15803D;">
+            <i class="fa-solid fa-map-location-dot fs-5"></i>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="container-content-table mt-4 mt-md-5 p-2 p-md-2 p-xl-3 rounded-5 w-100">
-    <div class="container-title-table">
-      <small class="title-table fw-bold">Información básica de Asignación</small>
-    </div>
+<div class="container-content-table mt-4 mt-md-5 p-2 p-md-2 p-xl-3 rounded-5 w-100">
 
-    <!-- TARJETAS SUPERIORES -->
-    <div class="seccion-tarjet-table mt-4">
-      <div class="row justify-content-center">
-        <div class="col-12">
-          <div class="row justify-content-center justify-content-xl-between g-3 g-xl-4 info-basic-cards-row">
 
-            <!-- USUARIO -->
-            <div class="col-12 col-sm-10 col-md-6 col-lg-5 col-xl info-basic-card-col">
-              <div class="info-basic-user-card h-100 bg-white border border-3 border-dark rounded-4 shadow-sm">
-                <div class="card-body d-flex align-items-center h-100">
-                  <div
-                    class="me-3 d-flex align-items-center justify-content-center rounded-circle icon-circle-user flex-shrink-0">
-                    <i class="bi bi-person-fill text-white icon-resumen"></i>
-                  </div>
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="info-basic-main-wrap mt-4 mt-md-5">
+    <div class="row g-4 align-items-stretch">
 
-                  <div class="min-w-0">
-                    <small class="text-taret-user d-block">Coordinador</small>
-                    <small id="d_coord" class="text-taret-parraf d-block text-truncate">-</small>
+      <!-- IZQUIERDA -->
+      <div class="col-12">
+        <div class="info-basic-panel h-100">
+          <div class="d-flex align-items-start align-items-md-center justify-content-between gap-3 flex-wrap">
+            <div>
+              <h2 class="title mb-1">Desglose Predios</h2>
+              <p class="sub mb-0">
+                Consulta los predios correspondiente a esta asignación
+              </p>
+            </div>
+          </div>
+
+          <hr class="info-basic-divider my-4">
+
+          <div class="asigDetailPanel">
+            <div class="row g-4">
+              <div class="col-12">
+                <div class="asigDetailTableWrap asig-table-light h-100">
+                  <div class="table-responsive">
+                    <table id="tablaPredios" class="asigDetailTable table mb-0">
+                      <thead>
+                        <tr>
+                          <th>Editar</th>
+                          <th>Número predial</th>
+                          <th>T_ID</th>
+                          <th>Estado</th>
+                          <th>Creado por</th>
+                        </tr>
+                      </thead>
+                      <tbody id="asigDetallePrediosBody"></tbody>
+                    </table>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- ASIGNADOS -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl info-basic-card-col">
-              <div
-                class="info-basic-stat-card stat-card-asignados h-100 bg-white border border-3 border-dark rounded-4 shadow-sm position-relative overflow-hidden">
-                <div class="card-body d-flex align-items-center justify-content-between gap-3 h-100">
-                  <div class="min-w-0">
-                    <small class="stat-card-label d-block">Predios Asignados</small>
-                    <div class="stat-card-value" id="d_asig">0</div>
-                  </div>
-
-                  <div class="stat-card-icon stat-card-icon-blue flex-shrink-0">
-                    <i class="bi bi-map-fill"></i>
-                  </div>
-                </div>
+            <div class="row g-3 mt-3 d-none">
+              <div class="col-12 col-md-6">
+                <small class="d-block text-muted">Dataset principal</small>
+                <small id="d_main" class="fw-semibold d-block">-</small>
+              </div>
+              <div class="col-12 col-md-6">
+                <small class="d-block text-muted">Workspace</small>
+                <small id="d_work" class="fw-semibold d-block">-</small>
+              </div>
+              <div class="col-12">
+                <small class="d-block text-muted">Error</small>
+                <small id="d_error" class="fw-semibold d-block">-</small>
               </div>
             </div>
 
-            <!-- ELIMINADOS -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl info-basic-card-col">
-              <div
-                class="info-basic-stat-card stat-card-eliminados h-100 bg-white border border-3 border-dark rounded-4 shadow-sm position-relative overflow-hidden">
-                <div class="card-body d-flex align-items-center justify-content-between gap-3 h-100">
-                  <div class="min-w-0">
-                    <small class="stat-card-label d-block">Predios Eliminados</small>
-                    <div class="stat-card-value" id="d_elim">0</div>
-                  </div>
-
-                  <div class="stat-card-icon stat-card-icon-red flex-shrink-0">
-                    <i class="bi bi-map-fill"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- NUEVOS -->
-            <div class="col-12 col-sm-6 col-md-4 col-lg-4 col-xl info-basic-card-col">
-              <div
-                class="info-basic-stat-card stat-card-nuevos h-100 bg-white border border-3 border-dark rounded-4 shadow-sm position-relative overflow-hidden">
-                <div class="card-body d-flex align-items-center justify-content-between gap-3 h-100">
-                  <div class="min-w-0">
-                    <small class="stat-card-label d-block">Predios Nuevos</small>
-                    <div class="stat-card-value" id="d_new">0</div>
-                  </div>
-
-                  <div class="stat-card-icon stat-card-icon-green flex-shrink-0">
-                    <i class="bi bi-map-fill"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div id="asigDetailMsg" class="mt-3">Ingresa un id y presiona Buscar.</div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- CONTENIDO PRINCIPAL -->
-    <div class="info-basic-main-wrap mt-4 mt-md-5">
-      <div class="row g-4 align-items-stretch">
-
-        <!-- IZQUIERDA -->
-        <div class="col-12 col-xl-8">
-          <div class="info-basic-panel h-100">
-            <div class="d-flex align-items-start align-items-md-center justify-content-between gap-3 flex-wrap">
-              <div>
-                <h2 class="title mb-1">Desglose Predios</h2>
-                <p class="sub mb-0">
-                  Consulta los predios correspondiente a esta asignación
-                </p>
-              </div>
-
-              <button id="btnEdicionAlfanumerica" type="button"
-                class="btn btn-edicion-alfanumerica d-inline-flex align-items-center justify-content-center gap-2 rounded-4 px-3 px-md-4 py-2 border-0">
-                <i class="bi bi-pencil-fill"></i>
-                <small>Edición Alfanumérica</small>
-              </button>
-            </div>
-
-            <hr class="info-basic-divider my-4">
-
-            <div class="asigDetailPanel">
-              <div class="row g-4">
-                <div class="col-12">
-                  <div class="asigDetailTableWrap asig-table-light h-100">
-                    <div class="table-responsive">
-                      <table id="tablaPredios" class="asigDetailTable table mb-0">
-                        <thead>
-                          <tr>
-                            <th class="text-center"></th>
-                            <th class="text-center">Número predial</th>
-                            <th class="text-center">T_ID</th>
-                            <th class="text-center">Estado</th>
-                            <th class="text-center">Creado por</th>
-                          </tr>
-                        </thead>
-                        <tbody id="asigDetallePrediosBody"></tbody>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="row g-3 mt-3">
-                <div class="col-12 col-md-6">
-                  <small class="d-block text-muted">Dataset principal</small>
-                  <small id="d_main" class="fw-semibold d-block">-</small>
-                </div>
-                <div class="col-12 col-md-6">
-                  <small class="d-block text-muted">Workspace</small>
-                  <small id="d_work" class="fw-semibold d-block">-</small>
-                </div>
-                <div class="col-12">
-                  <small class="d-block text-muted">Error</small>
-                  <small id="d_error" class="fw-semibold d-block">-</small>
-                </div>
-              </div>
-
-              <div id="asigDetailMsg" class="mt-3">Ingresa un id y presiona Buscar.</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- DERECHA -->
-        <div class="col-12 col-xl-4">
-          <div class="info-basic-panel history-panel h-100">
-            <div class="d-flex align-items-start gap-2 mb-2">
-              <i class="bi bi-arrow-counterclockwise history-title-icon"></i>
-              <div>
-                <h2 class="title-hisstorial mb-1">Historial de la asignación</h2>
-                <p class="sub mb-0">
-                  Consulta la información más relevante de los cambios que ha tenido esta asignación
-                </p>
-              </div>
-            </div>
-
-            <hr class="info-basic-divider my-4">
-
-            <div class="asigDetailTableWrap asig-table-history h-100">
-              <div class="table-responsive">
-                <table id="tablaHistorial" class="asigDetailTable asigDetailTable-history table mb-0">
-                  <thead>
-                    <tr>
-                      <th>Fecha</th>
-                      <th>Evento</th>
-                      <th>Descripción</th>
-                    </tr>
-                  </thead>
-                  <tbody id="asigDetalleEventosBody"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
     </div>
   </div>
+</div>
 </div>
 
 <div class="modal fade" id="modalValidadoresXtf" tabindex="-1" aria-labelledby="modalValidadoresXtfLabel"
@@ -379,6 +276,9 @@
   </div>
 </div>
 
+{% include 'modales/modal_sincronizar_xtf.html' %}
+{% include 'modales/modal_historial.html' %}
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
@@ -392,9 +292,9 @@
 
     tablaPrediosDT = $('#tablaPredios').DataTable({
       pageLength: 5,
-      lengthMenu: [[5, 10, 25, 50], [5, 10, 25, 50]],
+      lengthChange: false,
       ordering: true,
-      searching: true,
+      searching: false,
       info: true,
       paging: true,
       pagingType: "simple_numbers",
@@ -402,12 +302,10 @@
       autoWidth: false,
       scrollX: true,
       language: {
-        lengthMenu: "Mostrar _MENU_ registros",
         zeroRecords: "No se encontraron resultados",
-        info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-        infoEmpty: "Mostrando 0 a 0 de 0 registros",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ resultados",
+        infoEmpty: "Mostrando 0 a 0 de 0 resultados",
         infoFiltered: "(filtrado de _MAX_ registros totales)",
-        search: "Buscar:",
         emptyTable: "Sin datos.",
         paginate: {
           next: "›",
@@ -419,29 +317,22 @@
     tablaPrediosDT.on("draw", syncPredioSelectionUI);
 
     tablaHistorialDT = $('#tablaHistorial').DataTable({
-      pageLength: 4,
-      lengthMenu: [[4, 8, 12], [4, 8, 12]],
       ordering: true,
-      searching: true,
-      info: true,
-      paging: true,
+      searching: false,
+      info: false,
+      paging: false,
       responsive: false,
       autoWidth: false,
       scrollX: true,
       language: {
-        lengthMenu: "Mostrar _MENU_ registros",
         zeroRecords: "No se encontraron resultados",
-        info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-        infoEmpty: "Mostrando 0 a 0 de 0 registros",
-        infoFiltered: "(filtrado de _MAX_ registros totales)",
-        search: "Buscar:",
-        emptyTable: "Sin datos.",
-        paginate: {
-          first: "Primero",
-          last: "Último",
-          next: "›",
-          previous: "‹"
-        }
+        emptyTable: "Sin datos."
+      }
+    });
+
+    $('#modalHistorial').on('shown.bs.modal', function () {
+      if (tablaHistorialDT) {
+        tablaHistorialDT.columns.adjust().draw();
       }
     });
   });
@@ -709,6 +600,18 @@
       setText("d_elim", dataDet.total_eliminados ?? 0);
       setText("d_new", dataDet.total_nuevos ?? 0);
 
+      const eventos = Array.isArray(dataEvt) ? dataEvt : [];
+      let lastSyncDate = "-";
+      const syncEvents = eventos.filter(e =>
+        e && (e.evento === "PUBLICACION_MAIN" ||
+          e.evento === "CARGA_WORKSPACE" ||
+          e.evento === "RETORNO_XTF_VALIDACION_ERROR")
+      );
+      if (syncEvents.length > 0) {
+        lastSyncDate = fmtDate(syncEvents[syncEvents.length - 1].creado_en);
+      }
+      setText("d_last_sync", lastSyncDate);
+
       const predios = Array.isArray(dataDet.predios) ? dataDet.predios : [];
       tablaPrediosDT.clear();
 
@@ -716,20 +619,19 @@
         predios.forEach(p => {
           tablaPrediosDT.row.add([
             `
-              <div class="d-flex justify-content-center">
-                <input 
-                  type="checkbox" 
-                  class="predio-check form-check-input shadow-none"
-                  value="${esc(p.predio_t_id ?? "")}"
-                  data-asignacion-predio-id="${esc(p.id ?? "")}"
-                  data-predio-t-id="${esc(p.predio_t_id ?? "")}"
-                  data-numero-predial="${esc(p.numero_predial_nacional || "")}"
-                >
-              </div>
+              <a href="#" class="btn-editar-predio d-inline-flex align-items-center" 
+                 data-predio-t-id="${esc(p.predio_t_id ?? "")}" 
+                 data-predio-id="${esc(p.id ?? "")}" 
+                 data-numero="${esc(p.numero_predial_nacional || "")}"
+                 style="color: #021f3c; transition: transform 0.2s ease; cursor: pointer;"
+                 onmouseover="this.style.transform='scale(1.25)'"
+                 onmouseout="this.style.transform='scale(1)'">
+                <i class="fa-solid fa-pen-to-square fs-5"></i>
+              </a>
             `,
             esc(p.numero_predial_nacional || ""),
             esc(p.predio_t_id ?? "-"),
-            `<span class="chip ${p.activo ? "ok" : "off"}">${p.activo ? "ACTIVO" : "INACTIVO"}</span>`,
+            `<span class="chip ${p.activo ? "ok" : "off"}">${p.activo ? "Activo" : "Inactivo"}</span>`,
             esc(p.creado_por || "-")
           ]);
         });
@@ -738,7 +640,6 @@
       tablaPrediosDT.draw();
       syncPredioSelectionUI();
 
-      const eventos = Array.isArray(dataEvt) ? dataEvt : [];
       tablaHistorialDT.clear();
 
       if (eventos.length) {
@@ -753,14 +654,21 @@
 
       tablaHistorialDT.draw();
 
+      const breadcrumbName = document.getElementById("breadcrumbAssignmentName");
+      if (breadcrumbName) {
+        breadcrumbName.textContent = dataDet.titulo ? ` / ${dataDet.titulo}` : "";
+      }
+
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set("id", String(id));
       history.replaceState({}, "", newUrl.toString());
-      msg.textContent = `Detalle cargado para asignacion ${id}.`;
+      msg.textContent = "";
     } catch (err) {
       msg.textContent = err?.message || "Error cargando detalle.";
       prediosBody.innerHTML = '<tr><td colspan="5">Error cargando predios.</td></tr>';
       eventosBody.innerHTML = '<tr><td colspan="3">Error cargando eventos.</td></tr>';
+      const breadcrumbName = document.getElementById("breadcrumbAssignmentName");
+      if (breadcrumbName) breadcrumbName.textContent = "";
     }
   }
 
@@ -885,30 +793,29 @@
 
 
 
-  document.getElementById("btnEdicionAlfanumerica")?.addEventListener("click", () => {
+  $(document).on("click", ".btn-editar-predio", function (e) {
+    e.preventDefault();
     const idActual = Number(elId?.value || idFromUrl);
-    const query = new URLSearchParams();
-
     if (!idActual || idActual < 1) {
       msg.textContent = "Debes cargar primero una asignacion.";
       return;
     }
 
-    if (!predioSeleccionadoTId) {
-      msg.textContent = "Selecciona un predio del Desglose Predios antes de abrir la edicion alfanumerica.";
-      return;
-    }
+    const predioTId = $(this).data("predio-t-id");
+    const predioId = $(this).data("predio-id");
+    const numero = $(this).data("numero");
 
+    const query = new URLSearchParams();
     query.set("id", String(idActual));
     query.set("subview", "editar_predio");
-    query.set("predio_t_id", String(predioSeleccionadoTId));
+    query.set("predio_t_id", String(predioTId));
 
-    if (predioSeleccionadoDetalleId !== null && String(predioSeleccionadoDetalleId).trim() !== "") {
-      query.set("predio_id", String(predioSeleccionadoDetalleId));
+    if (predioId !== null && String(predioId).trim() !== "") {
+      query.set("predio_id", String(predioId));
     }
 
-    if (predioSeleccionadoNumero) {
-      query.set("numero_predial_nacional", String(predioSeleccionadoNumero));
+    if (numero) {
+      query.set("numero_predial_nacional", String(numero));
     }
 
     window.location.href = `${rp}/panel/asignaciones/edicion?${query.toString()}#asig-open`;
@@ -919,33 +826,262 @@
   document.getElementById("btnCargarDetalle")?.addEventListener("click", cargarDetalle);
   btnImportarRetorno?.addEventListener("click", importarRetorno);
 
+  document.getElementById("btnResetSearch")?.addEventListener("click", () => {
+    window.location.href = `${rp}/panel/asignaciones/ver#asig-open`;
+  });
+
+  // Modal Sincronizar XTF bindings and logic
+  const modalSincronizarXtf = document.getElementById("modalSincronizarXtf");
+  const modalSyncAsigName = document.getElementById("modalSyncAsigName");
+  const modalXtfFileInput = document.getElementById("modalXtfFileInput");
+  const modalXtfPreviewBox = document.getElementById("modalXtfPreviewBox");
+  const modalXtfFileName = document.getElementById("modalXtfFileName");
+  const modalXtfFileMeta = document.getElementById("modalXtfFileMeta");
+  const syncDragDropZone = document.getElementById("syncDragDropZone");
+  const btnTriggerFileSelect = document.getElementById("btnTriggerFileSelect");
+  const btnRemoveModalXtf = document.getElementById("btnRemoveModalXtf");
+  const btnSubmitSyncModal = document.getElementById("btnSubmitSyncModal");
+  const btnCancelSyncModal = document.getElementById("btnCancelSyncModal");
+
+  const step1Item = document.getElementById("step1Item");
+  const step2Item = document.getElementById("step2Item");
+  const step3Item = document.getElementById("step3Item");
+  const stepLine1 = document.getElementById("stepLine1");
+  const stepLine2 = document.getElementById("stepLine2");
+
+  const syncStep1Content = document.getElementById("syncStep1Content");
+  const syncStep2Content = document.getElementById("syncStep2Content");
+  const syncStep3Content = document.getElementById("syncStep3Content");
+
+  const syncResultSuccessState = document.getElementById("syncResultSuccessState");
+  const syncResultErrorState = document.getElementById("syncResultErrorState");
+  const syncSuccessMessage = document.getElementById("syncSuccessMessage");
+  const syncErrorMessage = document.getElementById("syncErrorMessage");
+
+  let selectedModalFile = null;
+
+  function resetModalSyncState() {
+    selectedModalFile = null;
+    if (modalXtfFileInput) modalXtfFileInput.value = "";
+
+    // Reset Stepper items
+    step1Item?.classList.add("active");
+    step2Item?.classList.remove("active");
+    step3Item?.classList.remove("active");
+    stepLine1?.classList.remove("active");
+    stepLine2?.classList.remove("active");
+
+    // Reset Step contents
+    syncStep1Content?.classList.remove("d-none");
+    syncStep2Content?.classList.add("d-none");
+    syncStep3Content?.classList.add("d-none");
+
+    // Reset Result states
+    syncResultSuccessState?.classList.add("d-none");
+    syncResultErrorState?.classList.add("d-none");
+
+    // Reset File zone
+    syncDragDropZone?.classList.remove("d-none");
+    modalXtfPreviewBox?.classList.add("d-none");
+
+    // Reset buttons
+    if (btnCancelSyncModal) {
+      btnCancelSyncModal.disabled = false;
+      btnCancelSyncModal.textContent = "Cancelar";
+      btnCancelSyncModal.classList.remove("d-none");
+    }
+    btnSubmitSyncModal?.classList.add("d-none");
+  }
+
+  function displayModalFilePreview(file) {
+    if (!file) {
+      modalXtfPreviewBox?.classList.add("d-none");
+      syncDragDropZone?.classList.remove("d-none");
+      btnSubmitSyncModal?.classList.add("d-none");
+      return;
+    }
+
+    if (modalXtfFileName) modalXtfFileName.textContent = file.name;
+    if (modalXtfFileMeta) modalXtfFileMeta.textContent = formatFileSize(file.size);
+
+    syncDragDropZone?.classList.add("d-none");
+    modalXtfPreviewBox?.classList.remove("d-none");
+    btnSubmitSyncModal?.classList.remove("d-none");
+  }
+
+  async function submitSyncModalFile() {
+    if (retornoEnCurso || !selectedModalFile) return;
+
+    const id = Number(elId.value);
+    if (!id || id < 1) {
+      alert("Debes indicar un id válido.");
+      return;
+    }
+
+    // Go to step 2 (Procesando)
+    syncStep1Content?.classList.add("d-none");
+    syncStep2Content?.classList.remove("d-none");
+
+    step2Item?.classList.add("active");
+    stepLine1?.classList.add("active");
+
+    if (btnCancelSyncModal) {
+      btnCancelSyncModal.disabled = true;
+    }
+    btnSubmitSyncModal?.classList.add("d-none");
+    retornoEnCurso = true;
+
+    const form = new FormData();
+    form.append("archivo", selectedModalFile);
+
+    try {
+      const resp = await fetch(`${rp}/asignaciones/${encodeURIComponent(id)}/retorno-xtf`, {
+        method: "POST",
+        body: form,
+        credentials: "same-origin",
+        headers: { "Accept": "application/json" }
+      });
+
+      const rawText = await resp.text().catch(() => "");
+      let data = {};
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText);
+        } catch (_e) {
+          data = {};
+        }
+      }
+
+      // Go to step 3 (Resultado)
+      syncStep2Content?.classList.add("d-none");
+      syncStep3Content?.classList.remove("d-none");
+      step3Item?.classList.add("active");
+      stepLine2?.classList.add("active");
+
+      if (btnCancelSyncModal) {
+        btnCancelSyncModal.disabled = false;
+        btnCancelSyncModal.textContent = "Finalizar";
+      }
+
+      if (!resp.ok) {
+        const detail = formatBackendDetail(data?.detail || rawText);
+        throw new Error(detail || "No se pudo importar el retorno XTF.");
+      }
+
+      // Show Success State
+      syncResultSuccessState?.classList.remove("d-none");
+      if (syncSuccessMessage) {
+        const rulesWithIssues = Array.isArray(data?.validation_summary?.rules_with_issues)
+          ? data.validation_summary.rules_with_issues
+          : [];
+        const successSuffix = rulesWithIssues.length ? ` (Reglas con observaciones: ${rulesWithIssues.join(", ")})` : "";
+        syncSuccessMessage.textContent = (data?.message || "El archivo XTF se ha sincronizado correctamente.") + successSuffix;
+      }
+
+      // Reload parent detail page
+      await cargarDetalle();
+
+    } catch (err) {
+      // Show Error State
+      syncResultErrorState?.classList.remove("d-none");
+      if (syncErrorMessage) {
+        syncErrorMessage.textContent = formatBackendDetail(err?.message || "Error al procesar el archivo XTF.");
+      }
+      if (btnCancelSyncModal) {
+        btnCancelSyncModal.textContent = "Cerrar";
+      }
+    } finally {
+      retornoEnCurso = false;
+    }
+  }
+
+  // Drag and Drop
+  syncDragDropZone?.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    syncDragDropZone.classList.add("dragover");
+  });
+
+  syncDragDropZone?.addEventListener("dragenter", (e) => {
+    e.preventDefault();
+    syncDragDropZone.classList.add("dragover");
+  });
+
+  syncDragDropZone?.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    syncDragDropZone.classList.remove("dragover");
+  });
+
+  syncDragDropZone?.addEventListener("dragend", (e) => {
+    e.preventDefault();
+    syncDragDropZone.classList.remove("dragover");
+  });
+
+  syncDragDropZone?.addEventListener("drop", (e) => {
+    e.preventDefault();
+    syncDragDropZone.classList.remove("dragover");
+
+    const file = e.dataTransfer?.files?.[0];
+    if (file) {
+      const extensionValida = file.name.toLowerCase().endsWith(".xtf");
+      if (!extensionValida) {
+        alert("El archivo seleccionado no es un .xtf válido.");
+        return;
+      }
+      selectedModalFile = file;
+      displayModalFilePreview(file);
+    }
+  });
+
+  btnTriggerFileSelect?.addEventListener("click", () => {
+    modalXtfFileInput?.click();
+  });
+
+  modalXtfFileInput?.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const extensionValida = file.name.toLowerCase().endsWith(".xtf");
+      if (!extensionValida) {
+        alert("El archivo seleccionado no es un .xtf válido.");
+        modalXtfFileInput.value = "";
+        return;
+      }
+      selectedModalFile = file;
+      displayModalFilePreview(file);
+    }
+  });
+
+  btnRemoveModalXtf?.addEventListener("click", () => {
+    selectedModalFile = null;
+    if (modalXtfFileInput) modalXtfFileInput.value = "";
+    displayModalFilePreview(null);
+  });
+
+  btnSubmitSyncModal?.addEventListener("click", submitSyncModalFile);
+
+  modalSincronizarXtf?.addEventListener("hidden.bs.modal", () => {
+    resetModalSyncState();
+  });
+
+  document.getElementById("btnHeaderSyncXtf")?.addEventListener("click", () => {
+    if (window.bootstrap && modalSincronizarXtf) {
+      const asigTitle = document.getElementById("d_titulo")?.textContent || "-";
+      if (modalSyncAsigName) {
+        modalSyncAsigName.textContent = asigTitle;
+      }
+      resetModalSyncState();
+      window.bootstrap.Modal.getOrCreateInstance(modalSincronizarXtf).show();
+    }
+  });
+
+
   $(document).ready(function () {
     if (idFromUrl && /^\d+$/.test(idFromUrl)) {
-      elId.value = idFromUrl;
+      if (elId) elId.value = idFromUrl;
       cargarDetalle();
-    }
-  });
-
-  elId?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      cargarDetalle();
-    }
-  });
-
-  document.getElementById("asigDetallePrediosBody")?.addEventListener("change", (event) => {
-    const checkbox = event.target.closest(".predio-check");
-    if (!checkbox) return;
-
-    if (checkbox.checked) {
-      predioSeleccionadoDetalleId = checkbox.dataset.asignacionPredioId || null;
-      predioSeleccionadoTId = checkbox.dataset.predioTId || checkbox.value || null;
-      predioSeleccionadoNumero = checkbox.dataset.numeroPredial || null;
     } else {
-      predioSeleccionadoDetalleId = null;
-      predioSeleccionadoTId = null;
-      predioSeleccionadoNumero = null;
+      window.location.href = `${rp}/panel/asignaciones/ver#asig-open`;
     }
-
-    syncPredioSelectionUI();
   });
+
+  // Checkbox listener removed (inline editing is now direct)
 </script>

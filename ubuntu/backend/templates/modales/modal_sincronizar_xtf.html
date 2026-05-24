@@ -1,0 +1,115 @@
+<!-- Modal Sincronizar XTF -->
+<div class="modal fade" id="modalSincronizarXtf" tabindex="-1" aria-labelledby="modalSincronizarXtfLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content sync-modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header sync-modal-header border-0 p-4 align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <div class="sync-modal-icon-circle d-flex align-items-center justify-content-center">
+            <i class="bi bi-bezier2 text-white fs-5"></i>
+          </div>
+          <div>
+            <h5 class="sync-modal-title fw-bold" id="modalSincronizarXtfLabel">Sincronización de asignación</h5>
+            <small class="sync-modal-subtitle d-block" id="modalSyncSubtitle">Nombre de la asignación: <span id="modalSyncAsigName">-</span></small>
+          </div>
+        </div>
+        <button type="button" class="btn p-0 border-0 shadow-none sync-modal-close d-flex align-items-center justify-content-center" data-bs-dismiss="modal" aria-label="Cerrar" style="background: transparent; color: #032F57;">
+          <i class="bi bi-x-lg fs-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body sync-modal-body p-4">
+        <!-- Stepper -->
+        <div class="sync-stepper d-flex align-items-center justify-content-center gap-2 mb-4">
+          <div class="step-item active" id="step1Item">
+            <span class="step-num">1</span>
+            <span class="step-label">Carga de archivo</span>
+          </div>
+          <div class="step-line" id="stepLine1"></div>
+          <div class="step-item" id="step2Item">
+            <span class="step-num">2</span>
+            <span class="step-label">Procesando</span>
+          </div>
+          <div class="step-line" id="stepLine2"></div>
+          <div class="step-item" id="step3Item">
+            <span class="step-num">3</span>
+            <span class="step-label">Resultado</span>
+          </div>
+        </div>
+
+        <!-- Step Contents -->
+        <!-- Step 1: Upload / Drag & Drop -->
+        <div id="syncStep1Content" class="step-content-section">
+          <div class="sync-drag-drop-zone p-5 d-flex flex-column align-items-center justify-content-center text-center" id="syncDragDropZone">
+            <i class="bi bi-cloud-arrow-up-fill sync-cloud-icon mb-3"></i>
+            <h6 class="sync-drag-title fw-bold">Arrastra y suelta tu archivo aqui</h6>
+            <p class="small-format mb-4">o Selecciona un archivo desde tu computadora</p>
+            <button type="button" class="btn btn-select-file fw-bold border-0" id="btnTriggerFileSelect">Selecciona el archivo</button>
+            <input type="file" id="modalXtfFileInput" accept=".xtf" class="d-none">
+            <p class="small-format mt-4 mb-0">Formato permitido: .XTF</p>
+          </div>
+
+          <!-- Preview file when selected -->
+          <div id="modalXtfPreviewBox" class="sync-preview-zone rounded-3 p-3 mt-3 d-none">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-3">
+                <div class="sync-preview-icon d-flex align-items-center justify-content-center">
+                  <i class="bi bi-file-earmark-code fs-4"></i>
+                </div>
+                <div>
+                  <div id="modalXtfFileName" class="fw-bold text-dark text-truncate" style="max-width: 300px;">archivo.xtf</div>
+                  <small id="modalXtfFileMeta" class="text-muted d-block">0 MB</small>
+                </div>
+              </div>
+              <button type="button" class="btn text-danger border-0 p-2" id="btnRemoveModalXtf" aria-label="Eliminar">
+                <i class="bi bi-trash3-fill"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Processing -->
+        <div id="syncStep2Content" class="step-content-section d-none">
+          <div class="d-flex flex-column align-items-center justify-content-center py-5 text-center">
+            <div class="spinner-border text-primary mb-4" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Procesando...</span>
+            </div>
+            <h5 class="fw-bold text-dark">Procesando archivo XTF</h5>
+            <p class="text-muted">Por favor espera un momento, estamos validando y procesando la información.</p>
+          </div>
+        </div>
+
+        <!-- Step 3: Result -->
+        <div id="syncStep3Content" class="step-content-section d-none">
+          <!-- Success State -->
+          <div id="syncResultSuccessState" class="d-none">
+            <div class="d-flex flex-column align-items-center justify-content-center py-5 text-center">
+              <div class="rounded-circle bg-success bg-opacity-10 p-3 mb-4 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                <i class="bi bi-check-circle-fill text-success fs-1"></i>
+              </div>
+              <h5 class="fw-bold text-success">Sincronización exitosa</h5>
+              <p class="text-muted" id="syncSuccessMessage">El archivo XTF se ha sincronizado correctamente.</p>
+            </div>
+          </div>
+          <!-- Error State -->
+          <div id="syncResultErrorState" class="d-none">
+            <div class="d-flex flex-column align-items-center justify-content-center py-5 text-center">
+              <div class="rounded-circle bg-danger bg-opacity-10 p-3 mb-4 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                <i class="bi bi-exclamation-circle-fill text-danger fs-1"></i>
+              </div>
+              <h5 class="fw-bold text-danger">Error de sincronización</h5>
+              <p class="text-muted" id="syncErrorMessage">No se pudo procesar el archivo XTF.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer sync-modal-footer border-0 p-4 justify-content-between">
+        <button type="button" class="btn btn-cancelar-modal fw-bold" id="btnCancelSyncModal" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-sync-xtf-modal text-white fw-bold border-0 d-none" id="btnSubmitSyncModal">Sincronizar</button>
+      </div>
+    </div>
+  </div>
+</div>
