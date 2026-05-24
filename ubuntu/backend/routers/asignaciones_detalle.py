@@ -1627,6 +1627,61 @@ def obtener_detalle_predio_completo_asignacion(
                 fk_candidates=["rrr", "derecho", "derecho_id"],
                 fk_values=derecho_ids,
             )
+            
+            tramites = _fetch_rows(
+                cur,
+                schema=schema_work,
+                table="arb_tramite",
+                where_sql='x."predio"::text = %s',
+                params=(str(workspace_predio_t_id),),
+                order_sql='x."t_id" ASC',
+            )
+
+            marcas = _fetch_rows(
+                cur,
+                schema=schema_work,
+                table="arb_marca",
+                where_sql='x."predio"::text = %s',
+                params=(str(workspace_predio_t_id),),
+                order_sql='x."t_id" ASC',
+            )
+
+            puntos_referencia = _fetch_rows(
+                cur,
+                schema=schema_work,
+                table="arb_puntoreferencia",
+                where_sql='x."predio"::text = %s',
+                params=(str(workspace_predio_t_id),),
+                order_sql='x."t_id" ASC',
+            )
+
+            novedad_numero_predial_valor = _fetch_rows_by_fk_candidates(
+                cur,
+                schema=schema_work,
+                table_candidates=["arb_novedadnumeropredialvalor"],
+                fk_candidates=["arb_predio_novedad_numero_predial", "predio"],
+                fk_value=workspace_predio_t_id,
+                order_sql='x."t_id" ASC',
+            )
+
+            novedad_fmi_valor = _fetch_rows_by_fk_candidates(
+                cur,
+                schema=schema_work,
+                table_candidates=["arb_novedadfmivalor"],
+                fk_candidates=["arb_predio_novedad_fmi", "predio"],
+                fk_value=workspace_predio_t_id,
+                order_sql='x."t_id" ASC',
+            )
+
+            referencias_registrales = _fetch_rows_by_fk_candidates(
+                cur,
+                schema=schema_work,
+                table_candidates=["arb_referenciaregistralsistemaantiguovalor"],
+                fk_candidates=["arb_predio_referencia_registral_sistema_antiguo", "predio"],
+                fk_value=workspace_predio_t_id,
+                order_sql='x."t_id" ASC',
+            )
+
             interesados: list[dict] = []
             fuentes_admin: list[dict] = []
 
@@ -1841,6 +1896,12 @@ def obtener_detalle_predio_completo_asignacion(
         "estructura_novedad_np": estructura_novedad_np,
         "contacto_visita": contacto_visita,
         "rrr_interesado": rrr_interesado,
+        "tramites": tramites,
+        "marcas": marcas,
+        "puntos_referencia": puntos_referencia,
+        "novedad_numero_predial_valor": novedad_numero_predial_valor,
+        "novedad_fmi_valor": novedad_fmi_valor,
+        "referencias_registrales": referencias_registrales,
         "schema_work": schema_work,
     }
 

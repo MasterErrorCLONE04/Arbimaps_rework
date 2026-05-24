@@ -209,15 +209,180 @@ async def guardar_edicion_predio(
             try:
                 updated_fields: list[str] = []
 
-                area_catastral = payload.campos_editables.get("area_catastral_del_terreno")
-                if area_catastral and area_catastral.valor:
+                # Helper to clean numeric strings (e.g. "1.234,56 m2" -> 1234.56)
+                def clean_num(val_str: str) -> Optional[float]:
+                    if not val_str or not val_str.strip() or val_str.strip() == "----" or val_str.strip() == "---":
+                        return None
+                    cleaned = re.sub(r"[^\d.,-]", "", val_str).replace(",", ".")
+                    try:
+                        return float(cleaned)
+                    except ValueError:
+                        return None
+
+                # Helper to clean integer strings
+                def clean_int(val_str: str) -> Optional[int]:
+                    if not val_str or not val_str.strip() or val_str.strip() == "----" or val_str.strip() == "---":
+                        return None
+                    cleaned = re.sub(r"[^\d-]", "", val_str)
+                    try:
+                        return int(cleaned)
+                    except ValueError:
+                        return None
+
+                # Helper to resolve domain/lookup display names to IDs
+                def resolve_lookup(table_name: str, label_text: str) -> Optional[int]:
+                    if not label_text or not label_text.strip() or label_text.strip() == "Selecciona" or label_text.strip() == "Ninguna selección":
+                        return None
+                    val = label_text.strip()
+                    # Try exact match on dispname or ilicode
                     cur.execute(
-                        f"UPDATE {schema_work}.arb_predio SET area_catastral_terreno = %s WHERE t_id = %s",
-                        (area_catastral.valor, workspace_predio_t_id),
+                        f"""
+                        SELECT t_id FROM {schema_work}.{table_name}
+                        WHERE BTRIM(dispname) = %s OR BTRIM(ilicode) = %s
+                        LIMIT 1
+                        """,
+                        (val, val),
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        return int(row[0])
+                    # Fallback to ILIKE match
+                    cur.execute(
+                        f"""
+                        SELECT t_id FROM {schema_work}.{table_name}
+                        WHERE dispname ILIKE %s
+                        LIMIT 1
+                        """,
+                        (f"%{val}%",),
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        return int(row[0])
+                    return None
+
+                # 1. Update text/editable fields in arb_predio
+                if "numero_predial_anterior" in payload.campos_editables:
+                    val = payload.campos_editables["numero_predial_anterior"].valor
+                    if val == "----" or val == "---":
+                        val = None
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET numero_predial_anterior = %s WHERE t_id = %s",
+                        (val or None, workspace_predio_t_id),
                     )
                     if cur.rowcount:
-                        updated_fields.append("arb_predio.area_catastral_terreno")
+                        updated_fields.append("numero_predial_anterior")
 
+                if "matricula_inmobiliaria" in payload.campos_editables:
+                    val = clean_int(payload.campos_editables["matricula_inmobiliaria"].valor)
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET matricula_inmobiliaria = %s WHERE t_id = %s",
+                        (val, workspace_predio_t_id),
+                    )
+                    if cur.rowcount:
+                        updated_fields.append("matricula_inmobiliaria")
+
+                if "codigo_orip" in payload.campos_editables:
+                    val = payload.campos_editables["codigo_orip"].valor
+                    if val == "----" or val == "---":
+                        val = None
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET codigo_orip = %s WHERE t_id = %s",
+                        (val or None, workspace_predio_t_id),
+                    )
+                    if cur.rowcount:
+                        updated_fields.append("codigo_orip")
+
+                if "area_registral" in payload.campos_editables:
+                    val = clean_num(payload.campos_editables["area_registral"].valor)
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET area_registral_m2 = %s WHERE t_id = %s",
+                        (val, workspace_predio_t_id),
+                    )
+                    if cur.rowcount:
+                        updated_fields.append("area_registral_m2")
+
+                if "area_catastral_del_terreno" in payload.campos_editables:
+                    val = clean_num(payload.campos_editables["area_catastral_del_terreno"].valor)
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET area_catastral_terreno = %s WHERE t_id = %s",
+                        (val, workspace_predio_t_id),
+                    )
+                    if cur.rowcount:
+                        updated_fields.append("area_catastral_terreno")
+
+                if "cabida_y_linderos" in payload.campos_editables:
+                    val = payload.campos_editables["cabida_y_linderos"].valor
+                    if val == "----" or val == "---":
+                        val = None
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET cabida_linderos = %s WHERE t_id = %s",
+                        (val or None, workspace_predio_t_id),
+                    )
+                    if cur.rowcount:
+                        updated_fields.append("cabida_linderos")
+
+                if "objervacion_juridica" in payload.campos_editables:
+                    val = payload.campos_editables["objervacion_juridica"].valor
+                    if val == "----" or val == "---":
+                        val = None
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET observacion_juridica = %s WHERE t_id = %s",
+                        (val or None, workspace_predio_t_id),
+                    )
+                    if cur.rowcount:
+                        updated_fields.append("observacion_juridica")
+
+                # 2. Update checkboxes in arb_predio
+                if "comodato" in payload.checks:
+                    val = bool(payload.checks["comodato"])
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET comodato = %s WHERE t_id = %s",
+                        (val, workspace_predio_t_id),
+                    )
+                    if cur.rowcount:
+                        updated_fields.append("comodato")
+
+                if "beneficio_comunidades_indigenas" in payload.checks:
+                    val = bool(payload.checks["beneficio_comunidades_indigenas"])
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET beneficio_comunidades_indigenas = %s WHERE t_id = %s",
+                        (val, workspace_predio_t_id),
+                    )
+                    if cur.rowcount:
+                        updated_fields.append("beneficio_comunidades_indigenas")
+
+                # 3. Update dropdowns / lookup fields in arb_predio
+                if "condicion_predio" in payload.campos_ocultos:
+                    raw_val = payload.campos_ocultos["condicion_predio"]
+                    val = resolve_lookup("arb_condicionprediotipo", raw_val)
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET condicion_predio = %s WHERE t_id = %s",
+                        (val, workspace_predio_t_id),
+                    )
+                    if cur.rowcount:
+                        updated_fields.append("condicion_predio")
+
+                if "tipo_predio" in payload.campos_ocultos:
+                    raw_val = payload.campos_ocultos["tipo_predio"]
+                    val = resolve_lookup("arb_prediotipo", raw_val)
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET tipo = %s WHERE t_id = %s",
+                        (val, workspace_predio_t_id),
+                    )
+                    if cur.rowcount:
+                        updated_fields.append("tipo")
+
+                if "destinacion_economica" in payload.campos_ocultos:
+                    raw_val = payload.campos_ocultos["destinacion_economica"]
+                    val = resolve_lookup("arb_destinacioneconomicatipo", raw_val)
+                    cur.execute(
+                        f"UPDATE {schema_work}.arb_predio SET destinacion_economica = %s WHERE t_id = %s",
+                        (val, workspace_predio_t_id),
+                    )
+                    if cur.rowcount:
+                        updated_fields.append("destinacion_economica")
+
+                # 4. Update address type (original logic)
                 tipo_direccion = payload.campos_ocultos.get("tipo_direccion_tab3")
                 if tipo_direccion:
                     cur.execute(

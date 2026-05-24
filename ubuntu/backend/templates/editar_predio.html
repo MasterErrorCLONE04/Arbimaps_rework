@@ -178,7 +178,8 @@
                                                             <label class="form-label-information mb-2">
                                                                 Número predial anterior
                                                             </label>
-                                                            <div class="rounded-3 px-2 py-2 w-100 result-information">
+                                                            <div id="displayNumeroPredialAnterior"
+                                                                class="rounded-3 px-2 py-2 w-100 result-information">
                                                                 ----
                                                             </div>
                                                         </div>
@@ -187,7 +188,8 @@
                                                             <label class="form-label-information mb-2">
                                                                 Área catastral del terreno
                                                             </label>
-                                                            <div id="displayAreaCatastral" class="rounded-3 px-2 py-2 w-100 result-information">
+                                                            <div id="displayAreaCatastral"
+                                                                class="rounded-3 px-2 py-2 w-100 result-information">
                                                                 ----
                                                             </div>
                                                         </div>
@@ -579,7 +581,7 @@
                                                                 ¿Beneficio comunidades indígenas?
                                                             </span>
                                                             <input class="form-check-input check-custom m-0"
-                                                                type="checkbox" id="comodatoCheck">
+                                                                type="checkbox" id="beneficioComunidadesIndigenasCheck">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -643,9 +645,10 @@
                                                     <div class="col-12 mt-2 ms-0">
                                                         <div class="mb-3">
                                                             <label class="form-label-information mb-2">
-                                                                Matriucual inmobiliaria
+                                                                Matrícula inmobiliaria
                                                             </label>
-                                                            <div class="rounded-3 px-2 py-2 w-100 result-information">
+                                                            <div id="displayMatriculaInmobiliaria"
+                                                                class="rounded-3 px-2 py-2 w-100 result-information">
                                                                 ----
                                                             </div>
                                                         </div>
@@ -653,7 +656,8 @@
                                                             <label class="form-label-information mb-2">
                                                                 Código ORIP
                                                             </label>
-                                                            <div class="rounded-3 px-2 py-2 w-100 result-information">
+                                                            <div id="displayCodigoOrip"
+                                                                class="rounded-3 px-2 py-2 w-100 result-information">
                                                                 ----
                                                             </div>
                                                         </div>
@@ -661,7 +665,8 @@
                                                             <label class="form-label-information mb-2">
                                                                 Área registral
                                                             </label>
-                                                            <div id="displayAreaRegistral" class="rounded-3 px-2 py-2 w-100 result-information">
+                                                            <div id="displayAreaRegistral"
+                                                                class="rounded-3 px-2 py-2 w-100 result-information">
                                                                 ----
                                                             </div>
                                                         </div>
@@ -670,7 +675,8 @@
                                                                 Cabida y linderos
                                                             </label>
 
-                                                            <div class="rounded-3 w-100 result-information p-2 d-flex align-items-start justify-content-start"
+                                                            <div id="displayCabidaLinderos"
+                                                                class="rounded-3 w-100 result-information p-2 d-flex align-items-start justify-content-start"
                                                                 style="min-height: 80px;">
                                                                 ---
                                                             </div>
@@ -687,6 +693,14 @@
                                                         Sistema registral antiguo
                                                     </div>
                                                     <div class="col-12 mt-2 ms-0">
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2 d-block">
+                                                                Referencias registradas
+                                                            </label>
+                                                            <div id="listaReferenciasRegistrales" class="mb-2">
+                                                                <p class="text-muted small ps-1">Cargando...</p>
+                                                            </div>
+                                                        </div>
                                                         <div class="mb-3">
                                                             <label class="form-label-information mb-2 d-block">
                                                                 Número predial nacional
@@ -808,7 +822,8 @@
                                                                 Objervación jurídica
                                                             </label>
 
-                                                            <div class="rounded-3 w-100 result-information p-2 d-flex align-items-start justify-content-start"
+                                                            <div id="displayObservacionJuridica"
+                                                                class="rounded-3 w-100 result-information p-2 d-flex align-items-start justify-content-start"
                                                                 style="min-height: 80px;">
                                                                 ---
                                                             </div>
@@ -2451,92 +2466,7 @@
 
 <script>
     //script para los datos de pruebas en la cuarta pestaña
-    const datosPruebaOpcion4 = [
-        {
-            idPersona: 1,
-            tipoInteresado: "Persona Juridica",
-            predioAsociado: "NVA_9b42e0",
-            tipoDerechoSeleccionado: "Dominio",
-            cuotaParticipacion: 50,
-            fechaInicioTendencia: "1999-05-24",
-            fechaInicioTendencia: false,
-            descripcion: "33",
-            primerNombre: "Ana",
-            segundoNombre: "Maria",
-            primerApellido: "Fernanda",
-            segundoApellido: "Torres",
-            genero: "Femenino",
-            autorreconoceCampesino: false,
-            autorreconoceEtnico: false,
-            grupoEtnico: "",
-            grupoEtnicoGeneral: "",
-            nombreComunidad: "sitio",
-            departamentoResidencia: "Antioquia",
-            municipioResidencia: "San Pedro de Urabá",
-            domicilioResidencia: "null",
-            direccionResidencia: "Crra 3 N°25 e 81",
-            telefono: "3005954563",
-            correoElectronico: "guzmanhernandezj603@gmail.com",
-
-            razonSocial: "Agroesco SAS",
-            numeroFuente: "653",
-            enteEmisor: "568",
-            oficinaOrigen: "la arena",
-            nombreEente: "nameee",
-            ciudadOrigenEnte: "Neiva",
-            estadoDisponibilidad: "Disponible",
-            descripcionFuente: "fuente negra",
-            naturalezaJuridica: "natural",
-            codigoFuente: "arb23",
-            descripcionFuenteGeneral: "nada",
-
-            adjuntoInteresado: {
-                titulo: "",
-                archivo: "",
-                observacion: ""
-            },
-
-            adjuntoFuenteAdministrativa: {
-                titulo: "",
-                archivo: "",
-                observacion: ""
-            },
-        },
-        {
-            idPersona: 2,
-            tipoInteresado: "Persona natural",
-            nombres: "Carlos Andrés",
-            apellidos: "Pérez Molina",
-            tipoDocumento: "Cédula de ciudadanía",
-            numeroDocumento: "80234567",
-            genero: "Masculino",
-            fechaNacimiento: "1984-11-02",
-            nacionalidad: "Colombiana",
-            celular: "3209876543",
-            correo: "carlos.perez@example.com",
-            derecho: {
-                tipoDerecho: "Posesión",
-                porcentajeParticipacion: "50%",
-                calidadJuridica: "Poseedor",
-                fechaInicio: "2020-08-15",
-                observacion: "Comparte participación con otro interesado."
-            },
-            fuente: {
-                numeroFuente: "DP-7781",
-                entidad: "Archivo interno",
-                fechaDocumento: "2020-08-10",
-                actoRegistral: "Declaración",
-                observacion: "Pendiente validación definitiva."
-            },
-            interesado: {
-                condicion: "Interesado secundario",
-                direccionNotificacion: "Carrera 18 # 45-67, Tunja",
-                municipio: "Tunja",
-                departamento: "Boyacá",
-                observacion: "Contacto telefónico confirmado."
-            }
-        }
-    ];
+    let datosPruebaOpcion4 = [];
 </script>
 
 <script>
@@ -4628,85 +4558,7 @@
     // =========================
     // DATOS DE PRUEBA PESTAÑA 5
     // =========================
-    const datosPruebaOpcion5 = [
-        {
-            idConstruccion: 1,
-            etiqueta: "A",
-            predioAsociado: "NVA_9b42e0",
-            adjunto: {
-                titulo: "Adjunto Construccion:9",
-                archivo: "construccion_a.pdf",
-                observacion: "Plano constructivo principal."
-            },
-            unidadesConstruccion: [
-                {
-                    idUnidadConstruccion: 101,
-                    identificador: "P1A1",
-                    tipoPlantaUc: "",
-                    plantaUbicacionUc: "1",
-                    alturaUc: "2",
-                    observacionesUc: "33",
-                    tipoCalificacionUc: "",
-                    usoUc: "",
-                    areaPrivadaConstruidaUc: "205",
-                    anioConstruccionUc: "1999-05-24",
-                    totalPlantasUc: "3",
-                    areaConstruidaUc: "205",
-                    areaPrivadaConstruidaDosUc: "205",
-                    observacionesCaracteristicasUc: "Null",
-                    usosTradicionalesCulturalesUc: "",
-                    adjunto: {
-                        titulo: "Adjunto Terreno:9",
-                        archivo: "unidad_p1a1.pdf",
-                        observacion: "Documento técnico de la unidad."
-                    }
-                },
-                {
-                    idUnidadConstruccion: 102,
-                    identificador: "P1A2",
-                    tipoPlantaUc: "Piso",
-                    plantaUbicacionUc: "2",
-                    alturaUc: "3",
-                    observacionesUc: "Observación de prueba unidad 2.",
-                    adjunto: null
-                }
-            ]
-        },
-        {
-            idConstruccion: 2,
-            etiqueta: "B",
-            predioAsociado: "NVA_9b42e0",
-            adjunto: null,
-            unidadesConstruccion: [
-                {
-                    idUnidadConstruccion: 201,
-                    identificador: "P2B1",
-                    tipoPlantaUc: "Semisótano",
-                    plantaUbicacionUc: "Bloque posterior",
-                    alturaUc: "2.5",
-                    observacionesUc: "Unidad asociada a construcción B.",
-                    adjunto: null
-                }
-            ]
-        },
-        {
-            idConstruccion: 3,
-            etiqueta: "C",
-            predioAsociado: "NVA_9b42e0",
-            adjunto: null,
-            unidadesConstruccion: [
-                {
-                    idUnidadConstruccion: 301,
-                    identificador: "P3C1",
-                    tipoPlantaUc: "Sótano",
-                    plantaUbicacionUc: "Costado izquierdo",
-                    alturaUc: "2.2",
-                    observacionesUc: "Unidad asociada a construcción C.",
-                    adjunto: null
-                }
-            ]
-        }
-    ];
+    let datosPruebaOpcion5 = [];
 
     let construccionSeleccionadaOpcion5 = null;
 
@@ -7869,23 +7721,7 @@
 
 <!-- ? JS PARA LA PESTAÑA 6-->
 <script>
-    const datosPruebaOpcion6 = {
-        visita: {
-            resultadoVisita: '',
-            fechaVisitaPredial: '2026-01-02',
-            observaciones: 'con una observacion solamente',
-            controlCalidad: 'muy buena calidad'
-        },
-
-        atendioVisita: {
-            condicionPredio: 'George Bush',
-            tipoDocumento: '',
-            numeroDocumento: '12345',
-            correoElectronico: 'juan@gmail.com',
-            domicilioNotificaciones: 'noti',
-            autorizaNotificaciones: false
-        }
-    };
+    let datosPruebaOpcion6 = {};
 </script>
 
 <script>
@@ -8387,36 +8223,7 @@
 
 <!-- ! JS PARA LA PESTAÑA 7 -->
 <script>
-    const datosPruebaOpcion7 = [
-        {
-            idPuntoReferencia: 1,
-            identificador: 'T_ID:05',
-            predioAsociado: 'NVA_9b42e0',
-            tipoPunto: 'Ninguna selección',
-            observacion: 'Punto visible y estable al momento de la visita.',
-            correoSeven: 'juansebastian@gmail.com',
-            estado: 'Activo',
-            adjuntoPuntoReferencia: {
-                titulo: 'Adjunto punto referencia:9',
-                archivo: 'IMG-20260406-WA0003.jpeg',
-                observacion: 'Null'
-            }
-        },
-        {
-            idPuntoReferencia: 2,
-            identificador: 'T_ID:06',
-            predioAsociado: 'NVA_9b42e0',
-            tipoPunto: 'Ninguna selección',
-            observacion: 'Elemento físico permanente usado como referencia.',
-            correoSeven: 'juan@gmail.com',
-            estado: 'Activo',
-            adjuntoPuntoReferencia: {
-                titulo: 'Adjunto punto referencia:10',
-                archivo: '',
-                observacion: ''
-            }
-        }
-    ];
+    let datosPruebaOpcion7 = [];
 
     let puntoReferenciaSeleccionadoOpcion7 = null;
 </script>
@@ -9201,79 +9008,7 @@
 
 <!-- TODO: js para pestaña 8 -->
 <script>
-    const datosPruebaOpcion8 = {
-        marcasPrediales: [
-            {
-                idMarcaPredial: 35,
-                predioAsociado: 'NVA_9b42e0',
-                tipoMarcaPredial: 'Predio con cancelación',
-                fechaCreacion: '1999-05-24',
-                fechaFinalizacion: '1999-05-24',
-                resuelta: false,
-                observacion: '33'
-            }
-        ],
-
-        novedadesFmi: [
-            {
-                idNovedadFmi: 18,
-                predioAsociado: 'NVA_9b42e0',
-                matriculaInmobiliaria: '060-123456',
-                tipoNovedad: 'Cambio de matrícula',
-                numeroPredial: '33',
-                fechaRegistro: '2026-01-15',
-                estado: 'Pendiente',
-                observacion: 'Novedad pendiente por validación registral.'
-            }
-        ],
-
-        formularioNovedadFmi: {
-            predioAsociado: 'NVA_9b42e0',
-            tipoNovedad: '',
-            numeroPredial: '33'
-        },
-
-        formularioNovedadNumeroPredial: {
-            predioAsociado: 'NVA_9b42e0',
-            tipoNovedad: '',
-            numeroPredial: '33'
-        },
-
-        formularioTramite: {
-            idTramite: 48,
-            predioAsociado: 'NVA_9b42e0',
-            entidad: '',
-            tipoTramite: '',
-            fechaRadicacion: '1999-05-24',
-            numeroRadicacion: '002',
-            resuelta: false,
-            observacion: '33'
-        },
-
-        novedadesNumeroPredial: [
-            {
-                idNovedadNumeroPredial: 22,
-                predioAsociado: 'NVA_9b42e0',
-                numeroPredialAnterior: '760010100000000010001000000000',
-                numeroPredialNuevo: '760010100000000010001000000001',
-                tipoNovedad: 'Actualización número predial',
-                fechaRegistro: '2026-01-20',
-                observacion: 'Se actualiza número predial por ajuste de información catastral.'
-            }
-        ],
-
-        tramites: [
-            {
-                idTramite: 41,
-                predioAsociado: 'NVA_9b42e0',
-                tipoTramite: 'Mutación de primera clase',
-                radicado: 'RAD-2026-000145',
-                fechaSolicitud: '2026-02-05',
-                estado: 'En revisión',
-                observacion: 'Trámite activo asociado al predio seleccionado.'
-            }
-        ]
-    };
+    let datosPruebaOpcion8 = { marcasPrediales: [], novedadesFmi: [], novedadNumeroPredial: [], tramites: [] };
 
     let marcaPredialSeleccionadaOpcion8 = null;
     let novedadFmiSeleccionadaOpcion8 = null;
@@ -9967,7 +9702,7 @@
         });
 
         datosPruebaOpcion8.formularioNovedadFmi = {
-            predioAsociado: 'NVA_9b42e0',
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
             tipoNovedad: '',
             numeroPredial: '33'
         };
@@ -9987,7 +9722,7 @@
         novedadFmiSeleccionadaOpcion8 = null;
 
         datosPruebaOpcion8.formularioNovedadFmi = {
-            predioAsociado: 'NVA_9b42e0',
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
             tipoNovedad: '',
             numeroPredial: '33'
         };
@@ -10004,7 +9739,7 @@
         creandoNovedadFmiOpcion8 = true;
 
         datosPruebaOpcion8.formularioNovedadFmi = {
-            predioAsociado: 'NVA_9b42e0',
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
             tipoNovedad: '',
             numeroPredial: '33'
         };
@@ -10775,7 +10510,7 @@
         creandoNovedadNumeroPredialOpcion8 = true;
 
         datosPruebaOpcion8.formularioNovedadNumeroPredial = {
-            predioAsociado: 'NVA_9b42e0',
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
             tipoNovedad: '',
             numeroPredial: '33'
         };
@@ -10842,7 +10577,7 @@
         });
 
         datosPruebaOpcion8.formularioNovedadNumeroPredial = {
-            predioAsociado: 'NVA_9b42e0',
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
             tipoNovedad: '',
             numeroPredial: '33'
         };
@@ -10862,7 +10597,7 @@
         novedadNumeroPredialSeleccionadaOpcion8 = null;
 
         datosPruebaOpcion8.formularioNovedadNumeroPredial = {
-            predioAsociado: 'NVA_9b42e0',
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
             tipoNovedad: '',
             numeroPredial: '33'
         };
@@ -10916,7 +10651,7 @@
 
         datosPruebaOpcion8.formularioTramite = {
             idTramite: obtenerNuevoIdOpcion8(datosPruebaOpcion8.tramites, 'idTramite'),
-            predioAsociado: 'NVA_9b42e0',
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
             entidad: '',
             tipoTramite: '',
             fechaRadicacion: '1999-05-24',
@@ -11059,7 +10794,7 @@
 
         datosPruebaOpcion8.formularioTramite = {
             idTramite: obtenerNuevoIdOpcion8(datosPruebaOpcion8.tramites, 'idTramite'),
-            predioAsociado: 'NVA_9b42e0',
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
             entidad: '',
             tipoTramite: '',
             fechaRadicacion: '1999-05-24',
@@ -11084,7 +10819,7 @@
 
         datosPruebaOpcion8.formularioTramite = {
             idTramite: obtenerNuevoIdOpcion8(datosPruebaOpcion8.tramites, 'idTramite'),
-            predioAsociado: 'NVA_9b42e0',
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
             entidad: '',
             tipoTramite: '',
             fechaRadicacion: '1999-05-24',
@@ -11165,7 +10900,7 @@
         creandoNovedadFmiOpcion8 = true;
 
         datosPruebaOpcion8.formularioNovedadFmi = {
-            predioAsociado: 'NVA_9b42e0',
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
             tipoNovedad: '',
             numeroPredial: '33'
         };
@@ -11243,60 +10978,243 @@
         // Poblar cabeceras desde la URL
         const displayAsig = document.getElementById('displayAsignacion');
         const displayIdOp = document.getElementById('displayIdOperacion');
-        
+
         if (displayAsig && asignacionId) displayAsig.textContent = asignacionId;
         if (displayIdOp && numeroPredial) displayIdOp.textContent = numeroPredial;
 
-        function cargarDatosBasicosPredio(asigId, pTId) {
+        function cargarDatosCompletosPredio(asigId, pTId) {
             if (!asigId || !pTId) return;
-            fetch(`${basePath}/api/asignaciones/${asigId}/predios/${pTId}/detalle-basico`)
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success' && data.predio) {
-                    const p = data.predio;
-                    
-                    if(document.getElementById('editarNumeroPredialNacional')) {
-                        document.getElementById('editarNumeroPredialNacional').textContent = p.numero_predial_nacional || '----';
+            fetch(`${basePath}/asignaciones/${asigId}/predios/${pTId}/detalle-completo`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.predio) {
+                        window.datosCompletosPredio = data;
+                        const p = data.predio;
+
+                        function mapDatosBackendAMockups() {
+                            if (!window.datosCompletosPredio) return;
+                            const data = window.datosCompletosPredio;
+                            const predioNacional = (data.predio && data.predio.numero_predial_nacional) || '';
+
+                            if (data.interesados && typeof datosPruebaOpcion4 !== 'undefined') {
+                                datosPruebaOpcion4 = data.interesados.map(i => ({
+                                    idPersona: i.t_id || i.derecho_id || Math.random(),
+                                    tipoInteresado: i.tipo_persona_nombre || '',
+                                    predioAsociado: predioNacional,
+                                    tipoDerechoSeleccionado: i.tipo_derecho_nombre || '',
+                                    cuotaParticipacion: i.cuota_participacion || 0,
+                                    fechaInicioTendencia: i.fecha_inicio_tenencia || '',
+                                    descripcion: i.descripcion_derecho || '',
+                                    primerNombre: i.primer_nombre || '',
+                                    segundoNombre: i.segundo_nombre || '',
+                                    primerApellido: i.primer_apellido || '',
+                                    segundoApellido: i.segundo_apellido || '',
+                                    genero: i.sexo_nombre || '',
+                                    autorreconoceCampesino: i.autorreconocimiento_campesino === true,
+                                    autorreconoceEtnico: i.autorreconocimiento_etnico === true,
+                                    grupoEtnico: i.grupo_etnico_nombre || '',
+                                    departamentoResidencia: i.departamento_nombre || '',
+                                    municipioResidencia: i.municipio_nombre || '',
+                                    domicilioResidencia: i.domicilio_notificacion || '',
+                                    direccionResidencia: i.direccion_residencia || '',
+                                    telefono: i.telefono || '',
+                                    correoElectronico: i.correo_electronico || '',
+                                    razonSocial: i.razon_social || '',
+                                    numeroFuente: i.numero_fuente || '',
+                                    enteEmisor: i.ente_emisor || '',
+                                    oficinaOrigen: i.oficina_origen || '',
+                                    ciudadOrigenEnte: i.ciudad_origen || '',
+                                    estadoDisponibilidad: i.estado_disponibilidad_nombre || '',
+                                    descripcionFuente: i.descripcion_fuente || '',
+                                    naturalezaJuridica: i.naturaleza_juridica_nombre || '',
+                                    adjuntoInteresado: { titulo: "", archivo: "", observacion: "" },
+                                    adjuntoFuenteAdministrativa: { titulo: "", archivo: "", observacion: "" }
+                                }));
+                                if (typeof renderizarSubtabsOpcion4 === 'function') renderizarSubtabsOpcion4(datosPruebaOpcion4);
+                                if (typeof window.renderizarInteresados === 'function') window.renderizarInteresados();
+                            }
+
+                            if (data.construcciones && typeof datosPruebaOpcion5 !== 'undefined') {
+                                datosPruebaOpcion5 = data.construcciones.map(c => ({
+                                    idConstruccion: c.t_id,
+                                    identificadorConstruccion: c.identificador || `C-${c.t_id}`,
+                                    tipoConstruccion: c.tipo_construccion_nombre || '',
+                                    numeroPisos: c.numero_pisos || 0,
+                                    numeroSotanos: c.numero_sotanos || 0,
+                                    numeroMezanines: c.numero_mezanines || 0,
+                                    numeroSemisotanos: c.numero_semisotanos || 0,
+                                    estadoConstruccion: c.estado_construccion_nombre || '',
+                                    anioConstruccion: c.anio_construccion || '',
+                                    areaConstruccion: c.area_construccion || 0,
+                                    observacion: c.observacion || '',
+                                    unidades: (c.unidades || []).map(u => ({
+                                        idUnidad: u.t_id,
+                                        identificadorUnidad: u.identificador || `U-${u.t_id}`,
+                                        tipoConstruccion: u.tipo_construccion_nombre || '',
+                                        usoUnidad: u.tipo_unidad_construccion_nombre || '',
+                                        estadoUnidad: u.estado_unidad_construccion_nombre || '',
+                                        areaConstruida: u.area_construida || 0,
+                                        totalHabitaciones: u.total_habitaciones || 0,
+                                        totalBanios: u.total_banios || 0,
+                                        totalLocales: u.total_locales || 0,
+                                        totalPlantas: u.total_plantas || 0,
+                                        observacion: u.observacion || ''
+                                    }))
+                                }));
+                                if (typeof renderizarConstruccionesOpcion5 === 'function') renderizarConstruccionesOpcion5();
+                            }
+
+                            if (data.contacto_visita && typeof datosPruebaOpcion6 !== 'undefined') {
+                                datosPruebaOpcion6 = {
+                                    visita: { resultadoVisita: '', fechaVisitaPredial: '', observaciones: '', controlCalidad: '' },
+                                    atendioVisita: { condicionPredio: '', tipoDocumento: '' }
+                                };
+                                if (data.contacto_visita.length > 0) {
+                                    const cv = data.contacto_visita[0];
+                                    datosPruebaOpcion6.visita.resultadoVisita = cv.tipo_contacto_nombre || cv.tipo_contacto || '';
+                                    datosPruebaOpcion6.visita.fechaVisitaPredial = cv.fecha_visita || '';
+                                    datosPruebaOpcion6.visita.observaciones = cv.observacion || '';
+                                }
+                                if (typeof window.renderizarTablasOpcion6 === 'function') window.renderizarTablasOpcion6();
+                            }
+
+                            if (data.puntos_referencia && typeof datosPruebaOpcion7 !== 'undefined') {
+                                datosPruebaOpcion7 = data.puntos_referencia.map(pr => ({
+                                    idPuntoReferencia: pr.t_id,
+                                    identificador: pr.identificador || `T_ID:${pr.t_id}`,
+                                    predioAsociado: predioNacional,
+                                    tipoPunto: pr.tipo_punto_nombre || pr.tipo_punto || '',
+                                    observacion: pr.descripcion || '',
+                                    correoSeven: '',
+                                    estado: 'Activo',
+                                    adjuntoPuntoReferencia: { titulo: '', archivo: '', observacion: '' }
+                                }));
+                                if (typeof window.renderizarPuntosReferenciaOpcion7 === 'function') window.renderizarPuntosReferenciaOpcion7();
+                            }
+
+                            if (typeof datosPruebaOpcion8 !== 'undefined') {
+                                if (data.marcas) {
+                                    datosPruebaOpcion8.marcasPrediales = data.marcas.map(m => ({
+                                        idMarcaPredial: m.t_id,
+                                        predioAsociado: predioNacional,
+                                        tipoMarcaPredial: m.tipo_marca_nombre || m.tipo_marca || '',
+                                        fechaCreacion: m.fecha_registro || '',
+                                        fechaFinalizacion: m.fecha_registro || '',
+                                        resuelta: false,
+                                        observacion: m.observacion || ''
+                                    }));
+                                } else { datosPruebaOpcion8.marcasPrediales = []; }
+
+                                if (data.novedad_fmi_valor) {
+                                    datosPruebaOpcion8.novedadesFmi = data.novedad_fmi_valor.map(nf => ({
+                                        idNovedadFmi: nf.t_id,
+                                        predioAsociado: predioNacional,
+                                        tipoNovedadFmi: nf.tipo_novedad_nombre || nf.tipo_novedad || '',
+                                        novedadFmiFinalizada: false,
+                                        observacion: nf.observacion || ''
+                                    }));
+                                } else { datosPruebaOpcion8.novedadesFmi = []; }
+
+                                if (data.novedad_numero_predial_valor) {
+                                    datosPruebaOpcion8.novedadNumeroPredial = data.novedad_numero_predial_valor.map(nnp => ({
+                                        idNovedadNumeroPredial: nnp.t_id,
+                                        predioAsociado: predioNacional,
+                                        tipoNovedadNumeroPredial: nnp.tipo_novedad_nombre || nnp.tipo_novedad || '',
+                                        novedadNumeroPredialFinalizada: false,
+                                        observacion: nnp.observacion || ''
+                                    }));
+                                } else { datosPruebaOpcion8.novedadNumeroPredial = []; }
+
+                                if (data.tramites) {
+                                    datosPruebaOpcion8.tramites = data.tramites.map(t => ({
+                                        idTramite: t.t_id,
+                                        predioAsociado: predioNacional,
+                                        tipoTramite: t.tipo_tramite_nombre || t.tipo_tramite || '',
+                                        radicado: t.radicado || '',
+                                        fechaSolicitud: t.fecha_solicitud || '',
+                                        estado: t.estado_tramite_nombre || t.estado || '',
+                                        observacion: t.observacion || ''
+                                    }));
+                                } else { datosPruebaOpcion8.tramites = []; }
+
+                                if (typeof inicializarOpcion8 === 'function') inicializarOpcion8();
+                            }
+                        }
+
+                        // Llamar la función de mapeo
+                        mapDatosBackendAMockups();
+
+                        // --- Información Básica (Tab 1) ---
+                        const _set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '----'; };
+                        const _setHTML = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val || '----'; };
+                        const _setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+                        const _setChecked = (id, val) => { const el = document.getElementById(id); if (el) el.checked = Boolean(val); };
+
+                        _set('editarNumeroPredialNacional', p.numero_predial_nacional);
+                        _set('displayNumeroPredialAnterior', p.numero_predial_anterior);
+                        _set('displayAreaCatastral', p.area_catastral_terreno != null ? p.area_catastral_terreno + ' m²' : null);
+                        _set('displayAreaRegistral', p.area_registral_m2 != null ? p.area_registral_m2 + ' m²' : null);
+
+                        // --- Información Registral (Tab 2) ---
+                        _set('displayMatriculaInmobiliaria', p.matricula_inmobiliaria);
+                        _set('displayCodigoOrip', p.codigo_orip);
+                        _set('displayCabidaLinderos', p.cabida_linderos);
+
+                        // --- Dropdowns con nombres resueltos ---
+                        const _setDropdown = (inputId, btnId, nombre, valor) => {
+                            const inp = document.getElementById(inputId);
+                            const btn = document.getElementById(btnId);
+                            if (inp) inp.value = valor || '';
+                            if (btn && nombre) {
+                                const span = btn.querySelector('span');
+                                if (span) span.textContent = nombre;
+                            }
+                        };
+
+                        _setDropdown('condicion_predio', 'dropdownCondicionPredio',
+                            p.condicion_predio_nombre || p.condicion_predio, p.condicion_predio);
+                        _setDropdown('tipo_predio', 'dropdownTipoPredio',
+                            p.tipo_predio_nombre || p.tipo_predio, p.tipo_predio);
+                        _setDropdown('destinacion_economica', 'dropdownDestinacionEconomica',
+                            p.destinacion_economica_nombre || p.destinacion_economica, p.destinacion_economica);
+
+                        // --- Checkboxes especiales ---
+                        _setChecked('comodatoCheck', p.comodato);
+                        _setChecked('beneficioComunidadesIndigenasCheck', p.beneficio_comunidades_indigenas);
+
+                        // --- Tab 2: Observación jurídica ---
+                        _set('displayObservacionJuridica', p.observacion_juridica);
+
+                        // --- Tab 2: Referencias registrales sistema antiguo ---
+                        const contRefReg = document.getElementById('listaReferenciasRegistrales');
+                        if (contRefReg && data.referencias_registrales) {
+                            if (data.referencias_registrales.length === 0) {
+                                contRefReg.innerHTML = '<p class="text-muted small ps-1">Sin referencias registradas</p>';
+                            } else {
+                                contRefReg.innerHTML = data.referencias_registrales.map(r => `
+                                <div class="rounded-3 p-2 mb-2 border bg-light-subtle">
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <span class="badge bg-secondary-subtle text-secondary-emphasis">${r.tipo_referencia || ''}</span>
+                                        <strong class="small">${r.matricula || '---'}</strong>
+                                    </div>
+                                    <div class="small text-muted mt-1">
+                                        ${[r.oficina, r.libro ? 'Libro: ' + r.libro : '', r.tomo ? 'Tomo: ' + r.tomo : '', r.pagina ? 'Pág: ' + r.pagina : '', r.numero ? 'Nro: ' + r.numero : '', r.anio ? 'Año: ' + r.anio : ''].filter(Boolean).join(' · ')}
+                                    </div>
+                                </div>`).join('');
+                            }
+                        }
+                        if (typeof updateMapsWithPredioDetalle === 'function') {
+                            updateMapsWithPredioDetalle(data, numeroPredial);
+                        }
                     }
-                    if(document.getElementById('displayAreaCatastral')) {
-                        document.getElementById('displayAreaCatastral').textContent = p.area_catastral_terreno !== null ? p.area_catastral_terreno + ' m²' : '----';
-                    }
-                    if(document.getElementById('displayAreaRegistral')) {
-                        document.getElementById('displayAreaRegistral').textContent = p.area_registral_m2 !== null ? p.area_registral_m2 + ' m²' : '----';
-                    }
-                    
-                    if(document.getElementById('condicion_predio')) {
-                        document.getElementById('condicion_predio').value = p.condicion_predio || '';
-                    }
-                    if(document.getElementById('tipo_predio')) {
-                        document.getElementById('tipo_predio').value = p.tipo_predio || '';
-                    }
-                    if(document.getElementById('destinacion_economica')) {
-                        document.getElementById('destinacion_economica').value = p.destinacion_economica || '';
-                    }
-                    
-                    if(p.condicion_predio && document.getElementById('dropdownCondicionPredio')) {
-                        document.getElementById('dropdownCondicionPredio').innerHTML = `${p.condicion_predio} <i class="fa-solid fa-chevron-down toggle-icon ms-auto"></i>`;
-                    }
-                    if(p.tipo_predio && document.getElementById('dropdownTipoPredio')) {
-                        document.getElementById('dropdownTipoPredio').innerHTML = `${p.tipo_predio} <i class="fa-solid fa-chevron-down toggle-icon ms-auto"></i>`;
-                    }
-                    if(p.destinacion_economica && document.getElementById('dropdownDestinacionEconomica')) {
-                        document.getElementById('dropdownDestinacionEconomica').innerHTML = `${p.destinacion_economica} <i class="fa-solid fa-chevron-down toggle-icon ms-auto"></i>`;
-                    }
-                }
-            })
-            .catch(err => console.error("Error al cargar datos básicos:", err));
+                })
+                .catch(err => console.error("Error al cargar datos básicos:", err));
         }
 
-        cargarDatosBasicosPredio(asignacionId, params.get('predio_t_id'));
+        cargarDatosCompletosPredio(asignacionId, params.get('predio_t_id'));
 
         function volverAAsignaciones() {
-            if (asignacionId) {
-                window.location.href = `${basePath}/panel/asignaciones/edicion?id=${asignacionId}`;
-            } else {
-                window.history.back();
-            }
+            window.location.href = `${basePath}/panel/asignaciones/detalle?id=${asignacionId}`;
         }
 
         if (btnVolver) btnVolver.addEventListener('click', volverAAsignaciones);
@@ -11304,21 +11222,22 @@
 
         if (btnGuardar) {
             btnGuardar.addEventListener('click', () => {
+                // Actualizar estado recolectando todos los inputs/editables
+                let collected = {};
+                if (typeof window.prepararPayloadEdicionPredio === 'function') {
+                    collected = window.prepararPayloadEdicionPredio() || {};
+                }
+
                 // Generar payload
                 const payload = {
                     predio_id: parseInt(predioId) || 0,
                     asignacion_id: parseInt(asignacionId) || 0,
-                    csrf_token: "placeholder_token", 
-                    campos_editables: {},
-                    campos_ocultos: {},
-                    checks: {},
-                    archivos: {}
+                    csrf_token: "placeholder_token",
+                    campos_editables: collected.campos_editables || {},
+                    campos_ocultos: collected.campos_ocultos || {},
+                    checks: collected.checks || {},
+                    archivos: collected.archivos || {}
                 };
-
-                // Actualizar estado si existe la función global
-                if (typeof window.prepararPayloadEdicionPredio === 'function') {
-                    window.prepararPayloadEdicionPredio();
-                }
 
                 // Llamar al endpoint PUT
                 fetch(`${basePath}/api/predios/${predioId}`, {
@@ -11329,19 +11248,617 @@
                     },
                     body: JSON.stringify(payload)
                 })
-                .then(res => {
-                    if (!res.ok) throw new Error("Ocurrió un error al guardar la información");
-                    return res.json();
-                })
-                .then(data => {
-                    alert("Cambios guardados con éxito.");
-                    volverAAsignaciones();
-                })
-                .catch(err => {
-                    console.error("Error Guardar:", err);
-                    alert("No se pudieron guardar los cambios. Revisa la consola para más detalles.");
+                    .then(res => {
+                        if (!res.ok) throw new Error("Ocurrió un error al guardar la información");
+                        return res.json();
+                    })
+                    .then(data => {
+                        alert("Cambios guardados con éxito.");
+                        volverAAsignaciones();
+                    })
+                    .catch(err => {
+                        console.error("Error Guardar:", err);
+                        alert("No se pudieron guardar los cambios. Revisa la consola para más detalles.");
+                    });
+            });
+        }
+    });
+</script>
+
+<!-- Script para inicializar los visores de mapa -->
+<script>
+    const rp = "{{ rp }}";
+    let mapInstances = [];
+
+    // Registrar proyección EPSG:9377
+    if (window.proj4 && window.ol) {
+        proj4.defs(
+            "EPSG:9377",
+            "+proj=tmerc +lat_0=4 +lon_0=-73 +k=0.9992 +x_0=5000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
+        );
+        ol.proj.proj4.register(proj4);
+    }
+
+    function setVectorScopeMode(mapObj) {
+        mapObj.assignmentWmsLayer?.setVisible(false);
+        mapObj.assignmentTerrenosLayer?.setVisible(false);
+        mapObj.assignmentPrediosLayer?.setVisible(false);
+        mapObj.assignmentUcLayer?.setVisible(true);
+        mapObj.assignedScopeLayer?.setVisible(true);
+    }
+
+    function setWmsScopeMode(mapObj) {
+        mapObj.assignmentWmsLayer?.setVisible(true);
+        mapObj.assignmentTerrenosLayer?.setVisible(false);
+        mapObj.assignmentPrediosLayer?.setVisible(false);
+        mapObj.assignmentUcLayer?.setVisible(false);
+        mapObj.assignedScopeLayer?.setVisible(false);
+    }
+
+    function initializeMapViewer(mapElementId) {
+        if (!window.ol) return null;
+        const mapTarget = document.getElementById(mapElementId);
+        if (!mapTarget) return null;
+
+        try {
+            const projection = ol.proj.get("EPSG:9377");
+            const defaultExtent = [4508003.5, 1760960.25, 4532217.0, 1793534.0];
+
+            const osmLayer = new ol.layer.Tile({
+                source: new ol.source.OSM(),
+                visible: true,
+            });
+
+            // Capa WMS
+            const assignmentWmsLayer = new ol.layer.Tile({
+                source: new ol.source.TileWMS({
+                    url: `${window.rp || ""}/geoserver/B_ASIGNACIONES_ARB/wms`,
+                    params: {
+                        "LAYERS": "B_ASIGNACIONES_ARB:ASIGNACIONES",
+                        "TILED": true,
+                        "VERSION": "1.1.0",
+                        "FORMAT": "image/png",
+                        "TRANSPARENT": true,
+                        "SRS": "EPSG:9377",
+                    },
+                    serverType: "geoserver",
+                    crossOrigin: "anonymous",
+                    transition: 0,
+                }),
+                visible: false,
+                opacity: 0.85,
+                zIndex: 20,
+            });
+
+            const assignmentTerrenosLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: "#f59e0b", width: 1.8 }),
+                    fill: new ol.style.Fill({ color: "rgba(245, 158, 11, 0.12)" }),
+                }),
+                visible: false,
+            });
+
+            const assignedScopeLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: "#16a34a", width: 2 }),
+                    fill: new ol.style.Fill({ color: "rgba(34, 197, 94, 0.14)" }),
+                }),
+                visible: true,
+                zIndex: 24,
+            });
+
+            const assignmentPrediosLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: "#0ea5e9", width: 2.2 }),
+                    fill: new ol.style.Fill({ color: "rgba(14, 165, 233, 0.10)" }),
+                }),
+                visible: false,
+            });
+
+            const assignmentUcLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: "#ef4444", width: 1.8 }),
+                    fill: new ol.style.Fill({ color: "rgba(0, 0, 0, 0)" }),
+                }),
+                visible: false,
+            });
+
+            const highlightLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: "#2563eb", width: 3.5 }),
+                    fill: new ol.style.Fill({ color: "rgba(37, 99, 235, 0.24)" }),
+                }),
+                zIndex: 30,
+            });
+
+            const mapInstance = new ol.Map({
+                target: mapElementId,
+                layers: [
+                    osmLayer,
+                    assignmentWmsLayer,
+                    assignmentTerrenosLayer,
+                    assignmentPrediosLayer,
+                    assignmentUcLayer,
+                    assignedScopeLayer,
+                    highlightLayer,
+                ],
+                view: new ol.View({
+                    projection: projection,
+                    center: ol.extent.getCenter(defaultExtent),
+                    zoom: 2,
+                }),
+            });
+
+            const mapObj = {
+                mapElementId: mapElementId,
+                mapInstance: mapInstance,
+                assignmentWmsLayer: assignmentWmsLayer,
+                assignmentTerrenosLayer: assignmentTerrenosLayer,
+                assignedScopeLayer: assignedScopeLayer,
+                assignmentPrediosLayer: assignmentPrediosLayer,
+                assignmentUcLayer: assignmentUcLayer,
+                highlightLayer: highlightLayer,
+                currentPredioFeature: null,
+                assignmentExtent: null,
+                wmsFieldNames: null,
+                pendingWmsFilters: [],
+                activeWmsFilterIdx: -1,
+                wmsScopedApplied: false
+            };
+
+            setVectorScopeMode(mapObj);
+
+            const enableVectorFallback = () => {
+                setVectorScopeMode(mapObj);
+                mapObj.wmsScopedApplied = false;
+                mapObj.pendingWmsFilters = [];
+                mapObj.activeWmsFilterIdx = -1;
+            };
+
+            const applyWmsFilterByIndex = (idx) => {
+                if (!assignmentWmsLayer?.getSource) return false;
+                if (!Array.isArray(mapObj.pendingWmsFilters) || idx < 0 || idx >= mapObj.pendingWmsFilters.length) return false;
+                const cql = mapObj.pendingWmsFilters[idx];
+                mapObj.activeWmsFilterIdx = idx;
+                console.info(`[${mapElementId}] Aplicando CQL_FILTER:`, cql);
+                assignmentWmsLayer.getSource().updateParams({
+                    "CQL_FILTER": cql,
+                    "STYLES": "",
+                });
+                setWmsScopeMode(mapObj);
+                return true;
+            };
+
+            const wmsSource = assignmentWmsLayer.getSource();
+            wmsSource?.on?.("tileloaderror", () => {
+                const nextIdx = mapObj.activeWmsFilterIdx + 1;
+                if (Array.isArray(mapObj.pendingWmsFilters) && nextIdx < mapObj.pendingWmsFilters.length) {
+                    console.warn(`[${mapElementId}] CQL_FILTER no válido, probando siguiente candidato.`);
+                    if (applyWmsFilterByIndex(nextIdx)) return;
+                }
+                console.warn(`[${mapElementId}] WMS no disponible o filtro inválido; activando fallback de alcance.`);
+                enableVectorFallback();
+            });
+
+            // Vincular botones de zoom
+            let suffix = "";
+            if (mapElementId === "mapEditarPredio") suffix = "";
+            else if (mapElementId === "mapEditarPredioTab2") suffix = "Tab2";
+            else if (mapElementId === "mapEditarPredioTab3Card3") suffix = "Tab3Card3";
+            else if (mapElementId === "mapEditarPredioTab5") suffix = "Tab5";
+            else if (mapElementId === "mapEditarPredioTab6") suffix = "Tab6";
+            else if (mapElementId === "mapEditarPredioTab7") suffix = "Tab7";
+
+            const zoomPredioBtn = document.getElementById(`btnZoomPredioEditar${suffix}`);
+            if (zoomPredioBtn) {
+                zoomPredioBtn.addEventListener("click", () => zoomToPredio(mapObj));
+            }
+            const zoomProyectoBtn = document.getElementById(`btnZoomProyectoEditar${suffix}`);
+            if (zoomProyectoBtn) {
+                zoomProyectoBtn.addEventListener("click", () => zoomToProject(mapObj));
+            }
+
+            mapInstances.push(mapObj);
+            return mapInstance;
+        } catch (error) {
+            console.error(`Error inicializando mapa ${mapElementId}:`, error);
+            return null;
+        }
+    }
+
+    function initAllMaps() {
+        if (!window.ol) {
+            console.warn("OpenLayers no está disponible. Los mapas no se inicializaron.");
+            return;
+        }
+
+        initializeMapViewer("mapEditarPredio");
+        initializeMapViewer("mapEditarPredioTab2");
+        initializeMapViewer("mapEditarPredioTab3Card3");
+        initializeMapViewer("mapEditarPredioTab5");
+        initializeMapViewer("mapEditarPredioTab6");
+        initializeMapViewer("mapEditarPredioTab7");
+    }
+
+    function clearAssignmentScopeGeometry(mapObj) {
+        mapObj.assignmentExtent = null;
+        mapObj.assignmentPrediosLayer?.getSource?.().clear();
+        mapObj.assignmentTerrenosLayer?.getSource?.().clear();
+        mapObj.assignmentUcLayer?.getSource?.().clear();
+        mapObj.assignedScopeLayer?.getSource?.().clear();
+        if (mapObj.assignmentWmsLayer?.getSource) {
+            mapObj.assignmentWmsLayer.getSource().updateParams({
+                "CQL_FILTER": null,
+                "STYLES": "",
+            });
+            setVectorScopeMode(mapObj);
+        }
+        mapObj.wmsScopedApplied = false;
+        mapObj.pendingWmsFilters = [];
+        mapObj.activeWmsFilterIdx = -1;
+    }
+
+    function clearPredioGeometry(mapObj) {
+        mapObj.currentPredioFeature = null;
+        if (mapObj.highlightLayer?.getSource) {
+            mapObj.highlightLayer.getSource().clear();
+        }
+    }
+
+    function isValidExtent(extent) {
+        if (!Array.isArray(extent) || extent.length !== 4) return false;
+        const values = extent.map((v) => Number(v));
+        return (
+            values.every((v) => Number.isFinite(v)) &&
+            values[0] < values[2] &&
+            values[1] < values[3]
+        );
+    }
+
+    function _readFeaturesSmart(collection) {
+        const fc = collection && collection.type === "FeatureCollection"
+            ? collection
+            : { type: "FeatureCollection", features: [] };
+        const format = new ol.format.GeoJSON();
+        try {
+            return format.readFeatures(fc, {
+                dataProjection: "EPSG:9377",
+                featureProjection: "EPSG:9377",
+            });
+        } catch (_e) {
+            try {
+                return format.readFeatures(fc, {
+                    dataProjection: "EPSG:4326",
+                    featureProjection: "EPSG:9377",
+                });
+            } catch (_e2) {
+                return [];
+            }
+        }
+    }
+
+    async function _loadWmsFieldNames(mapObj) {
+        if (Array.isArray(mapObj.wmsFieldNames) && mapObj.wmsFieldNames.length) return mapObj.wmsFieldNames;
+        try {
+            const u = new URL(`${rp}/geoserver/B_ASIGNACIONES_ARB/wfs`, window.location.origin);
+            u.searchParams.set("service", "WFS");
+            u.searchParams.set("version", "1.1.0");
+            u.searchParams.set("request", "DescribeFeatureType");
+            u.searchParams.set("typeName", "B_ASIGNACIONES_ARB:ASIGNACIONES");
+            u.searchParams.set("typename", "B_ASIGNACIONES_ARB:ASIGNACIONES");
+            const r = await fetch(u.toString(), { credentials: "same-origin" });
+            if (!r.ok) return [];
+            const xml = await r.text();
+            const doc = new DOMParser().parseFromString(xml, "text/xml");
+            const els = Array.from(doc.getElementsByTagNameNS("*", "element"));
+            const names = els
+                .map((el) => String(el.getAttribute("name") || "").trim())
+                .filter(Boolean);
+            mapObj.wmsFieldNames = names;
+            console.info(`[${mapObj.mapElementId}] Campos WMS detectados:`, names);
+            return names;
+        } catch (_err) {
+            return [];
+        }
+    }
+
+    function _applyScopedWmsFilter(mapObj, scopePayload = {}) {
+        if (!mapObj.assignmentWmsLayer?.getSource) return false;
+        const asigId = Number(scopePayload?.asignacion_id);
+        const workDataset = String(scopePayload?.work_datasetname ?? "").trim();
+        const basketIdsSet = new Set();
+        const predialSet = new Set();
+        const pushBasket = (v) => {
+            const n = Number(v);
+            if (Number.isInteger(n) && n > 0) basketIdsSet.add(n);
+        };
+        const pushPredial = (v) => {
+            const s = String(v ?? "").trim();
+            if (s) predialSet.add(s);
+        };
+
+        if (Array.isArray(scopePayload?.basket_ids)) {
+            scopePayload.basket_ids.forEach(pushBasket);
+        }
+
+        const predioFeatures = Array.isArray(scopePayload?.predios?.features) ? scopePayload.predios.features : [];
+        const terrenoFeatures = Array.isArray(scopePayload?.terrenos?.features) ? scopePayload.terrenos.features : [];
+        const ucFeatures = Array.isArray(scopePayload?.unidades_construccion?.features) ? scopePayload.unidades_construccion.features : [];
+        predioFeatures.forEach((f) => {
+            pushBasket(f?.properties?.basket_id);
+            pushPredial(f?.properties?.numero_predial_nacional);
+        });
+        terrenoFeatures.forEach((f) => {
+            pushBasket(f?.properties?.basket_id);
+            pushPredial(f?.properties?.numero_predial_nacional);
+        });
+        ucFeatures.forEach((f) => {
+            pushBasket(f?.properties?.basket_id);
+            pushPredial(f?.properties?.numero_predial_nacional);
+        });
+
+        const basketIds = Array.from(basketIdsSet.values()).sort((a, b) => a - b);
+        const prediales = Array.from(predialSet.values());
+
+        const filters = [];
+        const fields = Array.isArray(mapObj.wmsFieldNames) ? mapObj.wmsFieldNames : [];
+        const fieldByLower = new Map(fields.map((f) => [String(f).toLowerCase(), f]));
+        const pickField = (...names) => {
+            for (const name of names) {
+                const found = fieldByLower.get(String(name).toLowerCase());
+                if (found) return found;
+            }
+            return null;
+        };
+
+        const fNumPredial = pickField("numero_predial", "numero_predial_nacional", "predio_numero_predial")
+            || "numero_predial";
+        const fBasket = pickField("t_basket", "basket", "t_basket_id")
+            || "t_basket";
+        const fAsigId = pickField("asignacion_id", "id_asignacion", "asignacion");
+        const fDataset = pickField("work_datasetname", "datasetname", "dataset_name");
+
+        if (Number.isInteger(asigId) && asigId > 0 && fAsigId) {
+            filters.push(`${fAsigId} = ${asigId}`);
+        }
+        if (workDataset && fDataset) {
+            const dsQuoted = workDataset.replace(/'/g, "''");
+            filters.push(`${fDataset} = '${dsQuoted}'`);
+        }
+        if (Number.isInteger(asigId) && asigId > 0 && fAsigId && workDataset && fDataset) {
+            const dsQuoted = workDataset.replace(/'/g, "''");
+            filters.push(`${fAsigId} = ${asigId} AND ${fDataset} = '${dsQuoted}'`);
+        }
+
+        if (prediales.length) {
+            const quotedVals = prediales.map((v) => `'${v.replace(/'/g, "''")}'`).join(",");
+            filters.push(`${fNumPredial} IN (${quotedVals})`);
+            if (fNumPredial !== "numero_predial_nacional") {
+                filters.push(`numero_predial_nacional IN (${quotedVals})`);
+            }
+            if (fNumPredial !== "predio_numero_predial") {
+                filters.push(`predio_numero_predial IN (${quotedVals})`);
+            }
+        }
+        if (basketIds.length) {
+            filters.push(`${fBasket} IN (${basketIds.join(",")})`);
+            if (fBasket !== "t_basket") {
+                filters.push(`t_basket IN (${basketIds.join(",")})`);
+            }
+        }
+        if (!filters.length) return false;
+
+        mapObj.pendingWmsFilters = filters;
+        mapObj.activeWmsFilterIdx = -1;
+        const cql = mapObj.pendingWmsFilters[0];
+        mapObj.assignmentWmsLayer.getSource().updateParams({
+            "CQL_FILTER": cql,
+            "STYLES": "",
+        });
+        console.info(`[${mapObj.mapElementId}] Aplicando CQL_FILTER:`, cql);
+        setWmsScopeMode(mapObj);
+        mapObj.activeWmsFilterIdx = 0;
+        mapObj.wmsScopedApplied = true;
+        return true;
+    }
+
+    function extractPredioGeometry(predioRecord = {}) {
+        const candidates = Object.values(predioRecord || {});
+        for (const candidate of candidates) {
+            const parsed = _parseGeometryCandidate(candidate);
+            if (parsed) return parsed;
+        }
+        return null;
+    }
+
+    function _parseGeometryCandidate(value) {
+        if (!value) return null;
+        if (typeof value === "string") {
+            const text = value.trim();
+            if (!text) return null;
+            try {
+                const parsed = JSON.parse(text);
+                return _parseGeometryCandidate(parsed);
+            } catch (_e) {
+                return null;
+            }
+        }
+        if (typeof value !== "object") return null;
+        if (!value.type) return null;
+        if (value.type === "Feature" && value.geometry) return value.geometry;
+        if (Array.isArray(value.coordinates)) return value;
+        return null;
+    }
+
+    function findAssignedGeometryByNumeroPredial(mapObj, numeroPredial) {
+        const npn = String(numeroPredial ?? "").trim();
+        if (!npn || !mapObj.assignedScopeLayer?.getSource) return null;
+        const features = mapObj.assignedScopeLayer.getSource().getFeatures() || [];
+        for (const feature of features) {
+            const val = String(feature?.get?.("numero_predial_nacional") ?? "").trim();
+            if (val && val === npn) {
+                const g = feature.getGeometry?.();
+                if (g) return g.clone();
+            }
+        }
+        return null;
+    }
+
+    function zoomToPredio(mapObj) {
+        if (!mapObj.mapInstance || !mapObj.currentPredioFeature) return;
+        mapObj.mapInstance.getView().fit(mapObj.currentPredioFeature.getGeometry().getExtent(), {
+            padding: [40, 40, 40, 40],
+            duration: 450,
+            maxZoom: 20,
+        });
+    }
+
+    function zoomToProject(mapObj) {
+        if (!mapObj.mapInstance) return;
+        const defaultExtent = [4508003.5, 1760960.25, 4532217.0, 1793534.0];
+        const targetExtent = isValidExtent(mapObj.assignmentExtent) ? mapObj.assignmentExtent : defaultExtent;
+        mapObj.mapInstance.getView().fit(targetExtent, {
+            padding: [40, 40, 40, 40],
+            duration: 450,
+        });
+    }
+
+    async function loadAssignmentScope(asignacionId) {
+        if (!mapInstances.length) return;
+        const idNum = Number(asignacionId);
+        if (!idNum || idNum < 1) return;
+
+        try {
+            const resp = await fetch(`${rp}/asignaciones/${encodeURIComponent(idNum)}/scope-geojson`, {
+                credentials: "same-origin",
+                headers: { "Accept": "application/json" }
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) return;
+
+            for (const mapObj of mapInstances) {
+                clearAssignmentScopeGeometry(mapObj);
+                await _loadWmsFieldNames(mapObj);
+
+                const predioFeatures = _readFeaturesSmart(data?.predios);
+                const terrenoFeatures = _readFeaturesSmart(data?.terrenos);
+                const ucFeatures = _readFeaturesSmart(data?.unidades_construccion);
+
+                mapObj.assignmentPrediosLayer?.getSource?.().addFeatures(predioFeatures);
+                mapObj.assignmentTerrenosLayer?.getSource?.().addFeatures(terrenoFeatures);
+                mapObj.assignmentUcLayer?.getSource?.().addFeatures(ucFeatures);
+
+                const assignedFeatures = terrenoFeatures.length
+                    ? terrenoFeatures
+                    : (ucFeatures.length ? ucFeatures : predioFeatures);
+                mapObj.assignedScopeLayer?.getSource?.().addFeatures(assignedFeatures);
+
+                if (!_applyScopedWmsFilter(mapObj, data)) {
+                    setVectorScopeMode(mapObj);
+                }
+
+                let combinedExtent = null;
+                const appendExtent = (extent) => {
+                    if (!extent || !isValidExtent(extent)) return;
+                    if (!combinedExtent) {
+                        combinedExtent = extent.slice();
+                        return;
+                    }
+                    ol.extent.extend(combinedExtent, extent);
+                };
+                if (predioFeatures.length) {
+                    appendExtent(mapObj.assignmentPrediosLayer.getSource().getExtent());
+                }
+                if (terrenoFeatures.length) {
+                    appendExtent(mapObj.assignmentTerrenosLayer.getSource().getExtent());
+                }
+                if (ucFeatures.length) {
+                    appendExtent(mapObj.assignmentUcLayer.getSource().getExtent());
+                }
+
+                if (combinedExtent && isValidExtent(combinedExtent)) {
+                    mapObj.assignmentExtent = combinedExtent;
+                    mapObj.mapInstance.getView().fit(mapObj.assignmentExtent, {
+                        padding: [40, 40, 40, 40],
+                        duration: 500,
+                        maxZoom: 19,
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Error loading assignment scope:", err);
+        }
+    }
+
+    function updateMapsWithPredioDetalle(detalle = {}, numeroPredial = "") {
+        if (!mapInstances.length) return;
+
+        const geometryObj = extractPredioGeometry(detalle?.predio || {});
+        const format = new ol.format.GeoJSON();
+
+        for (const mapObj of mapInstances) {
+            clearPredioGeometry(mapObj);
+
+            // Ocultar placeholder de mapa vacío al cargar geometría
+            const emptyEl = document.getElementById(mapObj.mapElementId + "Empty");
+            if (emptyEl) {
+                emptyEl.style.display = "none";
+            }
+
+            let geometry = null;
+            if (geometryObj) {
+                try {
+                    geometry = format.readGeometry(geometryObj, {
+                        dataProjection: "EPSG:9377",
+                        featureProjection: "EPSG:9377",
+                    });
+                } catch (_e) { }
+                if (!geometry) {
+                    try {
+                        geometry = format.readGeometry(geometryObj, {
+                            dataProjection: "EPSG:4326",
+                            featureProjection: "EPSG:9377",
+                        });
+                    } catch (_e) { }
+                }
+            }
+            if (!geometry) {
+                geometry = findAssignedGeometryByNumeroPredial(mapObj, numeroPredial);
+            }
+            if (!geometry) continue;
+
+            mapObj.currentPredioFeature = new ol.Feature({ geometry });
+            mapObj.highlightLayer.getSource().addFeature(mapObj.currentPredioFeature);
+
+            zoomToPredio(mapObj);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initAllMaps();
+
+        // Controlar tamaño de mapas al cambiar de pestaña
+        const tabElList = document.querySelectorAll('button[data-bs-toggle="pill"]');
+        tabElList.forEach(tabEl => {
+            tabEl.addEventListener('shown.bs.tab', () => {
+                mapInstances.forEach(mapObj => {
+                    if (mapObj.mapInstance) {
+                        mapObj.mapInstance.updateSize();
+                    }
                 });
             });
+        });
+
+        // Cargar alcance de asignación si el ID está en la URL
+        const params = new URLSearchParams(window.location.search);
+        const asignacionId = params.get('id') || params.get('asignacion_id');
+        if (asignacionId) {
+            loadAssignmentScope(asignacionId);
         }
     });
 </script>
