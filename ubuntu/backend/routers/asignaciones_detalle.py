@@ -16,7 +16,8 @@ from core.asignaciones import (
     ILI2PG_CMD,
     ILI2PG_TIMEOUT_SEC,
 )
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from psycopg2 import errorcodes
 from psycopg2.extras import RealDictCursor
@@ -1484,6 +1485,13 @@ def obtener_detalle_predio_completo_asignacion(
                     table_candidates=["arb_tipoconstrucciontipo"],
                     raw_value=tipo_cons_val,
                 ) or _first_non_empty(cons, "tipo_construccion_nombre", "tipo_construccion")
+                tipo_dominio_val = _first_non_empty(cons, "tipo_dominio")
+                cons["tipo_dominio_nombre"] = _resolve_domain_name(
+                    cur,
+                    schema=schema_work,
+                    table_candidates=["arb_tipodominioconstrucciontipo"],
+                    raw_value=tipo_dominio_val,
+                ) or _first_non_empty(cons, "tipo_dominio_nombre", "tipo_dominio")
                 estado_cons_val = _first_non_empty(cons, "estado_construccion")
                 cons["estado_construccion_nombre"] = _resolve_domain_name(
                     cur,
@@ -1705,26 +1713,30 @@ def obtener_detalle_predio_completo_asignacion(
                     "fraccion",
                     "d_fraccion",
                 )
-                item["telefono"] = _first_non_empty(item, "telefono", "i_telefono")
+                item["telefono"] = _first_non_empty(item, "telefono", "i_telefono", "ic_telefono")
                 item["correo_electronico"] = _first_non_empty(
                     item,
                     "correo_electronico",
                     "i_correo_electronico",
+                    "ic_correo_electronico",
                 )
                 item["direccion_residencia"] = _first_non_empty(
                     item,
                     "direccion_residencia",
                     "i_direccion_residencia",
+                    "ic_direccion_residencia",
                 )
                 item["domicilio_notificacion"] = _first_non_empty(
                     item,
                     "domicilio_notificacion",
                     "i_domicilio_notificacion",
+                    "ic_domicilio_notificacion",
                 )
                 item["autoriza_notificacion_correo"] = _first_non_empty(
                     item,
                     "autoriza_notificacion_correo",
                     "i_autoriza_notificacion_correo",
+                    "ic_autoriza_notificacion_correo",
                 )
                 item["autorreconocimiento_etnico"] = _first_non_empty(
                     item,
@@ -1741,12 +1753,14 @@ def obtener_detalle_predio_completo_asignacion(
                     "departamento_nombre",
                     "i_departamento_nombre",
                     "i_departamento",
+                    "ic_departamento",
                 )
                 item["municipio_nombre"] = _first_non_empty(
                     item,
                     "municipio_nombre",
                     "i_municipio_nombre",
                     "i_municipio",
+                    "ic_municipio",
                 )
                 nombre_completo = _build_full_name(item)
                 if nombre_completo:
@@ -2680,3 +2694,445 @@ def obtener_detalle_basico_predio(
                     "tipo_predio": datos_predio.get("tipo_predio")
                 }
             }
+
+
+def _table_exists(cur, schema: str, table_name: str) -> bool:
+    cur.execute("SELECT to_regclass(%s) IS NOT NULL AS ok;", (f"{schema}.{table_name}",))
+    row = cur.fetchone() or {}
+    return bool(row.get("ok"))
+
+
+def _table_columns(cur, schema: str, table_name: str) -> set[str]:
+    cur.execute(
+        """
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = %s
+          AND table_name = %s;
+        """,
+        (schema, table_name),
+    )
+    return {r.get("column_name") for r in (cur.fetchall() or []) if r.get("column_name")}
+
+
+def _resolve_domain_label(cur, schema: str, table_name: str, pk_value) -> str | None:
+    if pk_value is None:
+        return None
+    table = _safe_ident(table_name, fallback="")
+    if not table or not _table_exists(cur, schema, table):
+        return None
+
+    cols = _table_columns(cur, schema, table)
+    if not cols:
+        return None
+
+    preferred = [
+        "dispname",
+        "iliCode",
+        "ilicode",
+        "nombre",
+        "name",
+        "descripcion",
+        "description",
+        "label",
+        "tipo_calificar",
+    ]
+    selected = [c for c in preferred if c in cols]
+    if not selected:
+        return None
+
+    select_sql = ", ".join(f"t.{_qident(c)} AS {_qident(c)}" for c in selected)
+    sql = (
+        f"SELECT {select_sql} "
+        f"FROM {_qident(schema)}.{_qident(table)} t "
+        "WHERE t.t_id::text = %s::text "
+        "LIMIT 1;"
+    )
+    cur.execute(sql, (str(pk_value),))
+    row = cur.fetchone() or {}
+
+    for c in selected:
+        v = row.get(c)
+        if v is None:
+            continue
+        s = str(v).strip()
+        if not s:
+            continue
+        if s == str(pk_value).strip():
+            continue
+        return s
+    return None
+
+
+@router.get("/unidad_detalle")
+def asignaciones_unidad_detalle(
+    unidad_id: int = Query(..., description="ID de arb_unidadconstruccion.t_id"),
+    schema: Optional[str] = Query(None, description="Esquema opcional a consultar"),
+    _user: dict = Depends(require_assignment_roles("admin", "coordinador", "digitalizador", "reconocedor")),
+):
+    if not schema:
+        schema = _safe_ident(_read_schema_work(), fallback="b_asignaciones_arb")
+    else:
+        schema = _safe_ident(schema, fallback="")
+        if not schema:
+            raise HTTPException(status_code=400, detail="Esquema invalido.")
+
+    try:
+        with db_conn() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                if not _table_exists(cur, schema, "arb_unidadconstruccion"):
+                    return JSONResponse(
+                        {"error": "Tabla arb_unidadconstruccion no disponible en el esquema"},
+                        status_code=500,
+                    )
+
+                uc_cols = _table_columns(cur, schema, "arb_unidadconstruccion")
+                has_car = _table_exists(cur, schema, "arb_caracteristicasunidadconstruccion")
+                car_cols = (
+                    _table_columns(cur, schema, "arb_caracteristicasunidadconstruccion")
+                    if has_car
+                    else set()
+                )
+
+                select_parts: list[str] = ["uc.*"]
+                join_parts: list[str] = []
+
+                def add_uc_domain(
+                    col_name: str, domain_table: str, domain_alias: str, output_alias: str
+                ) -> None:
+                    if col_name not in uc_cols:
+                        return
+                    table = _safe_ident(domain_table, fallback="")
+                    if not table or not _table_exists(cur, schema, table):
+                        return
+                    join_parts.append(
+                        f"LEFT JOIN {_qident(schema)}.{_qident(table)} {domain_alias} "
+                        f"ON {domain_alias}.t_id::text = uc.{_qident(col_name)}::text"
+                    )
+                    select_parts.append(
+                        "COALESCE("
+                        f"{domain_alias}.dispname, "
+                        f"to_jsonb({domain_alias})->>'iliCode', "
+                        f"to_jsonb({domain_alias})->>'ilicode', "
+                        f"{domain_alias}.t_id::text"
+                        f") AS {output_alias}"
+                    )
+
+                add_uc_domain("tipo_planta", "arb_construccionplantatipo", "dtp", "tipo_planta_nombre")
+                add_uc_domain(
+                    "relacion_superficie",
+                    "arb_relacionsuperficieconstrucciontipo",
+                    "drs",
+                    "relacion_superficie_nombre",
+                )
+                add_uc_domain(
+                    "estado_unidad_construccion",
+                    "arb_estadoconstrucciontipo",
+                    "dec",
+                    "estado_unidad_construccion_nombre",
+                )
+
+                has_uc_car_fk = has_car and "caracteristicasunidadconstruccion" in uc_cols
+                if has_uc_car_fk:
+                    join_parts.append(
+                        f"LEFT JOIN {_qident(schema)}.arb_caracteristicasunidadconstruccion car "
+                        "ON car.t_id = uc.caracteristicasunidadconstruccion"
+                    )
+                    for col in (
+                        "t_id",
+                        "identificador",
+                        "tipo_unidad_construccion",
+                        "total_plantas",
+                        "uso",
+                        "anio_construccion",
+                        "area_construida",
+                        "area_privada_construida",
+                        "observaciones",
+                        "usos_tradicionales_culturales",
+                        "comienzo_vida_util_version",
+                        "tipo_calificacion",
+                        "cc_armazon",
+                        "cc_muros",
+                        "cc_cubierta",
+                        "cc_conservacion_estructura",
+                        "cc_fachada",
+                        "cc_cubrimiento_muros",
+                        "cc_piso",
+                        "cc_conservacion_acabados",
+                        "cc_tamanio_banio",
+                        "cc_enchape_banio",
+                        "cc_mobiliario_banio",
+                        "cc_conservacion_banio",
+                        "cc_tamanio_cocina",
+                        "cc_enchape_cocina",
+                        "cc_mobiliario_cocina",
+                        "cc_conservacion_cocina",
+                        "cc_cerchas_complemento_industria",
+                        "cc_altura_cerchas_superior_6m",
+                        "cc_tipo_calificar",
+                        "ct_tipo_tipologia",
+                        "ct_conservacion_tipologia",
+                        "cnc_tipo_anexo",
+                        "cnc_conservacion_anexo",
+                    ):
+                        if col in car_cols:
+                            select_parts.append(f"car.{_qident(col)} AS car_{col}")
+
+                    car_domains: list[tuple[str, str, str, str]] = [
+                        ("tipo_unidad_construccion", "arb_unidadconstrucciontipo", "d_tuc", "tipo_unidad_construccion_nombre"),
+                        ("uso", "arb_usouconstipo", "d_uso", "uso_nombre"),
+                        (
+                            "usos_tradicionales_culturales",
+                            "arb_usostradicionalesculturalestipo",
+                            "d_utc",
+                            "usos_tradicionales_culturales_nombre",
+                        ),
+                        ("tipo_calificacion", "arb_calificaciontipo", "d_tcal", "tipo_calificacion_nombre"),
+                        ("cc_armazon", "arb_armazontipo", "d_cc_armazon", "armazon_nombre"),
+                        ("cc_muros", "arb_murostipo", "d_cc_muros", "muros_nombre"),
+                        ("cc_cubierta", "arb_cubiertatipo", "d_cc_cubierta", "cubierta_nombre"),
+                        (
+                            "cc_conservacion_estructura",
+                            "arb_estadoconservaciontipo",
+                            "d_cc_cons_estr",
+                            "conservacion_estructura_nombre",
+                        ),
+                        ("cc_fachada", "arb_fachadatipo", "d_cc_fachada", "fachada_nombre"),
+                        (
+                            "cc_cubrimiento_muros",
+                            "arb_cubrimientomurostipo",
+                            "d_cc_cubr_muros",
+                            "cubrimiento_muros_nombre",
+                        ),
+                        ("cc_piso", "arb_pisotipo", "d_cc_piso", "piso_nombre"),
+                        (
+                            "cc_conservacion_acabados",
+                            "arb_estadoconservaciontipo",
+                            "d_cc_cons_aca",
+                            "conservacion_acabados_nombre",
+                        ),
+                        ("cc_tamanio_banio", "arb_tamaniobaniotipo", "d_cc_tam_ban", "tamanio_banio_nombre"),
+                        ("cc_enchape_banio", "arb_enchapebaniotipo", "d_cc_enc_ban", "enchape_banio_nombre"),
+                        (
+                            "cc_mobiliario_banio",
+                            "arb_mobiliariobaniotipo",
+                            "d_cc_mob_ban",
+                            "mobiliario_banio_nombre",
+                        ),
+                        (
+                            "cc_conservacion_banio",
+                            "arb_estadoconservaciontipo",
+                            "d_cc_cons_ban",
+                            "conservacion_banio_nombre",
+                        ),
+                        (
+                            "cc_tamanio_cocina",
+                            "arb_tamaniococinatipo",
+                            "d_cc_tam_coc",
+                            "tamanio_cocina_nombre",
+                        ),
+                        (
+                            "cc_enchape_cocina",
+                            "arb_enchapecocinatipo",
+                            "d_cc_enc_coc",
+                            "enchape_cocina_nombre",
+                        ),
+                        (
+                            "cc_mobiliario_cocina",
+                            "arb_mobiliariococinatipo",
+                            "d_cc_mob_coc",
+                            "mobiliario_cocina_nombre",
+                        ),
+                        (
+                            "cc_conservacion_cocina",
+                            "arb_estadoconservaciontipo",
+                            "d_cc_cons_coc",
+                            "conservacion_cocina_nombre",
+                        ),
+                        (
+                            "cc_cerchas_complemento_industria",
+                            "arb_cerchascomplementoindustriatipo",
+                            "d_cc_cer",
+                            "cerchas_complemento_industria_nombre",
+                        ),
+                        ("cc_tipo_calificar", "arb_calificartipo", "d_cc_tipo_cal", "tipo_calificar_nombre"),
+                        ("ct_tipo_tipologia", "arb_tipologiatipo", "d_ct_tip", "tipo_tipologia_nombre"),
+                        (
+                            "ct_conservacion_tipologia",
+                            "arb_estadoconservaciontipologiatipo",
+                            "d_ct_cons",
+                            "conservacion_nombre",
+                        ),
+                        ("cnc_tipo_anexo", "arb_anexotipo", "d_cnc_tip", "tipo_anexo_nombre"),
+                        (
+                            "cnc_conservacion_anexo",
+                            "arb_estadoconservaciontipologiatipo",
+                            "d_cnc_cons",
+                            "conservacion_anexo_nombre",
+                        ),
+                    ]
+
+                    for fk_col, dom_table, dom_alias, out_alias in car_domains:
+                        if fk_col not in car_cols:
+                            continue
+                        table = _safe_ident(dom_table, fallback="")
+                        if not table or not _table_exists(cur, schema, table):
+                            continue
+                        join_parts.append(
+                            f"LEFT JOIN {_qident(schema)}.{_qident(table)} {dom_alias} "
+                            f"ON {dom_alias}.t_id::text = car.{_qident(fk_col)}::text"
+                        )
+                        select_parts.append(
+                            "COALESCE("
+                            f"{dom_alias}.dispname, "
+                            f"to_jsonb({dom_alias})->>'iliCode', "
+                            f"to_jsonb({dom_alias})->>'ilicode', "
+                            f"{dom_alias}.t_id::text"
+                            f") AS {out_alias}"
+                        )
+
+                sql_unidad = f"""
+                SELECT
+                  {", ".join(select_parts)}
+                FROM {_qident(schema)}.arb_unidadconstruccion uc
+                {" ".join(join_parts)}
+                WHERE uc.t_id = %s::bigint
+                LIMIT 1;
+                """
+
+                cur.execute(sql_unidad, (unidad_id,))
+                row = cur.fetchone()
+                if not row:
+                    return JSONResponse(
+                        {"error": "Unidad de construcción no encontrada"},
+                        status_code=404,
+                    )
+
+                unidad = dict(row)
+                car_data: dict[str, object] = {}
+                for k, v in row.items():
+                    if k.startswith("car_"):
+                        car_data[k[4:]] = v
+                for k in (
+                    "tipo_unidad_construccion_nombre",
+                    "uso_nombre",
+                    "usos_tradicionales_culturales_nombre",
+                    "tipo_calificacion_nombre",
+                    "armazon_nombre",
+                    "muros_nombre",
+                    "cubierta_nombre",
+                    "conservacion_estructura_nombre",
+                    "fachada_nombre",
+                    "cubrimiento_muros_nombre",
+                    "piso_nombre",
+                    "conservacion_acabados_nombre",
+                    "tamanio_banio_nombre",
+                    "enchape_banio_nombre",
+                    "mobiliario_banio_nombre",
+                    "conservacion_banio_nombre",
+                    "tamanio_cocina_nombre",
+                    "enchape_cocina_nombre",
+                    "mobiliario_cocina_nombre",
+                    "conservacion_cocina_nombre",
+                    "cerchas_complemento_industria_nombre",
+                    "tipo_calificar_nombre",
+                    "tipo_tipologia_nombre",
+                    "conservacion_nombre",
+                    "tipo_anexo_nombre",
+                    "conservacion_anexo_nombre",
+                ):
+                    if k in row:
+                        car_data[k] = row.get(k)
+
+                has_car_values = any(v is not None and str(v).strip() != "" for v in car_data.values())
+                caracteristicas = car_data if has_car_values else None
+
+                cc_tipo_calificar_fk = car_data.get("cc_tipo_calificar")
+                cc_tipo_calificar_lbl = car_data.get("tipo_calificar_nombre")
+                if cc_tipo_calificar_fk is not None and (
+                    cc_tipo_calificar_lbl is None
+                    or not str(cc_tipo_calificar_lbl).strip()
+                    or str(cc_tipo_calificar_lbl).strip() == str(cc_tipo_calificar_fk).strip()
+                ):
+                    resolved = _resolve_domain_label(cur, schema, "arb_calificartipo", cc_tipo_calificar_fk)
+                    if resolved:
+                        car_data["tipo_calificar_nombre"] = resolved
+                    else:
+                        car_data["tipo_calificar_nombre"] = None
+
+                tipo_calif = (car_data.get("tipo_calificacion_nombre") or "").strip().lower()
+                tipo_modal = None
+                if "no convencional" in tipo_calif:
+                    tipo_modal = "no_convencional"
+                elif "tipolog" in tipo_calif:
+                    tipo_modal = "tipologia"
+                elif "convencional" in tipo_calif:
+                    tipo_modal = "convencional"
+
+                unidad["tipo_calificacion_modal"] = tipo_modal
+                if car_data.get("tipo_calificacion_nombre"):
+                    unidad["tipo_calificacion_clase"] = car_data.get("tipo_calificacion_nombre")
+
+                calificacion_convencional = None
+                if caracteristicas:
+                    calificacion_convencional = {
+                        "tipo_calificacion_nombre": car_data.get("tipo_calificacion_nombre"),
+                        "tipo_calificar_nombre": car_data.get("tipo_calificar_nombre"),
+                        "armazon_nombre": car_data.get("armazon_nombre"),
+                        "muros_nombre": car_data.get("muros_nombre"),
+                        "cubierta_nombre": car_data.get("cubierta_nombre"),
+                        "conservacion_estructura_nombre": car_data.get("conservacion_estructura_nombre"),
+                        "fachada_nombre": car_data.get("fachada_nombre"),
+                        "cubrimiento_muros_nombre": car_data.get("cubrimiento_muros_nombre"),
+                        "piso_nombre": car_data.get("piso_nombre"),
+                        "conservacion_acabados_nombre": car_data.get("conservacion_acabados_nombre"),
+                        "tamanio_banio_nombre": car_data.get("tamanio_banio_nombre"),
+                        "enchape_banio_nombre": car_data.get("enchape_banio_nombre"),
+                        "mobiliario_banio_nombre": car_data.get("mobiliario_banio_nombre"),
+                        "conservacion_banio_nombre": car_data.get("conservacion_banio_nombre"),
+                        "tamanio_cocina_nombre": car_data.get("tamanio_cocina_nombre"),
+                        "enchape_cocina_nombre": car_data.get("enchape_cocina_nombre"),
+                        "mobiliario_cocina_nombre": car_data.get("mobiliario_cocina_nombre"),
+                        "conservacion_cocina_nombre": car_data.get("conservacion_cocina_nombre"),
+                        "cerchas_complemento_industria_nombre": car_data.get("cerchas_complemento_industria_nombre"),
+                        "altura_cerchas_superior_6m": car_data.get("cc_altura_cerchas_superior_6m"),
+                    }
+                    if "total_calificacion" in car_data:
+                        calificacion_convencional["total_calificacion"] = car_data.get("total_calificacion")
+
+                tipologia_construccion = (
+                    {
+                        "tipo_tipologia_nombre": car_data.get("tipo_tipologia_nombre"),
+                        "conservacion_nombre": car_data.get("conservacion_nombre"),
+                    }
+                    if caracteristicas
+                    else None
+                )
+
+                tipologia_no_convencional = (
+                    {
+                        "tipo_anexo_nombre": car_data.get("tipo_anexo_nombre"),
+                        "conservacion_anexo_nombre": car_data.get("conservacion_anexo_nombre"),
+                    }
+                    if caracteristicas
+                    else None
+                )
+    except Exception as exc:
+        logger.exception(
+            "Error en /asignaciones/unidad_detalle unidad_id=%s schema=%s",
+            unidad_id,
+            schema,
+        )
+        return JSONResponse(
+            {"error": "Error consultando unidad de construccion", "unidad_id": unidad_id, "detalle": str(exc)},
+            status_code=500,
+        )
+
+    return {
+        "unidad": unidad,
+        "unidades": [unidad],
+        "caracteristicas": caracteristicas,
+        "calificacion_convencional": calificacion_convencional,
+        "tipologia_construccion": tipologia_construccion,
+        "tipologia_no_convencional": tipologia_no_convencional,
+    }

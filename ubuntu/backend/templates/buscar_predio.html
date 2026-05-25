@@ -757,21 +757,21 @@
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Fecha inicio de tenencia</div>
-                    <div class="text-end">id="derechoFechaInicio">----</div>
+                    <div class="text-end" id="derechoFechaInicio">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Tipo de derecho</div>
-                    <div class="text-end">id="derechoTipo">----</div>
+                    <div class="text-end" id="derechoTipo">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Posesión ancestral o tradicional</div>
-                    <div class="text-end">id="derechoPosesion">----</div>
+                    <div class="text-end" id="derechoPosesion">----</div>
                   </div>
                 </div>
 
@@ -780,7 +780,7 @@
                     <div class="text-start tex-num mb-4">Descripción</div>
 
                     <div class="d-flex justify-content-center align-items-center text-center py-4">
-                      <div class="fw-bold text-num">id="derechoDescripcion">----</div>
+                      <div class="fw-bold text-num" id="derechoDescripcion">----</div>
                     </div>
                   </div>
                 </div>
@@ -798,49 +798,49 @@
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Tipo de fuente administrativa</div>
-                    <div class="text-end">id="fuenteTipo">----</div>
+                    <div class="text-end" id="fuenteTipo">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Número fuente</div>
-                    <div class="text-end">id="fuenteNumero">----</div>
+                    <div class="text-end" id="fuenteNumero">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Ente Emisor</div>
-                    <div class="text-end">id="fuenteEnteEmisor">----</div>
+                    <div class="text-end" id="fuenteEnteEmisor">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Oficina de origen</div>
-                    <div class="text-end">id="fuenteOficinaOrigen">----</div>
+                    <div class="text-end" id="fuenteOficinaOrigen">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Nombre (Escritura)</div>
-                    <div class="text-end">id="fuenteNombre">----</div>
+                    <div class="text-end" id="fuenteNombre">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Ciudad de origen</div>
-                    <div class="text-end">id="fuenteCiudadOrigen">----</div>
+                    <div class="text-end" id="fuenteCiudadOrigen">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Estado disponibilidad</div>
-                    <div class="text-end">id="fuenteEstadoDisponibilidad">----</div>
+                    <div class="text-end" id="fuenteEstadoDisponibilidad">----</div>
                   </div>
                 </div>
 
@@ -849,7 +849,7 @@
                     <div class="text-start tex-num mb-4">Descripción de fuente</div>
 
                     <div class="d-flex justify-content-center align-items-center text-center py-4">
-                      <div class="fw-bold text-num">id="fuenteDescripcion">----</div>
+                      <div class="fw-bold text-num" id="fuenteDescripcion">----</div>
                     </div>
                   </div>
                 </div>
@@ -859,7 +859,7 @@
                     <div class="text-start tex-num mb-4">Observación de la fuente administrativa</div>
 
                     <div class="d-flex justify-content-center align-items-center text-center py-4">
-                      <div class="fw-bold text-num">id="fuenteObservacion">----</div>
+                      <div class="fw-bold text-num" id="fuenteObservacion">----</div>
                     </div>
                   </div>
                 </div>
@@ -2558,8 +2558,9 @@
       row.classList.remove("detalle-relacionado-activo");
     });
 
+    const consId = unit.construccion_id;
     const detailRow = document.querySelector(
-      `#tblConsCollapse tr.fila-unidad-collapse[data-unit-id="${unitId}"]`
+      `#tblConsCollapse tr.fila-unidad-collapse[data-unit-id="${consId || ''}"]`
     )?.nextElementSibling;
 
     if (detailRow && detailRow.classList.contains("fila-detalle-unidad")) {
@@ -2794,6 +2795,91 @@
     _setModalFieldByLabel(root, "Valido control de calidad", _fmtBool(_pickValue(src, ["valido_control_calidad", "valido_control", "valida_control_calidad"])));
   }
 
+  function agruparConstrucciones(unidades = [], numeroPredial = "") {
+    const grupos = new Map();
+
+    unidades.forEach((unidad) => {
+      const consId = unidad.construccion_id;
+      if (!consId) return;
+
+      if (!grupos.has(consId)) {
+        grupos.set(consId, {
+          id: consId,
+          identificador: unidad.construccion_identificador || "---",
+          tipo_construccion_nombre: unidad.construccion_tipo_construccion_nombre || "---",
+          tipo_dominio_nombre: unidad.construccion_tipo_dominio_nombre || "---",
+          total_mezaninis: unidad.construccion_total_mezaninis,
+          total_pisos: unidad.construccion_total_pisos,
+          total_semisotanos: unidad.construccion_total_semisotanos,
+          total_sotanos: unidad.construccion_total_sotanos,
+          area_total_construccion: unidad.construccion_area_total_construccion,
+          observacion: unidad.construccion_observacion,
+          etiqueta: unidad.construccion_etiqueta,
+          estado_construccion_nombre: unidad.construccion_estado_construccion_nombre || "---",
+          predio_numero_predial: numeroPredial,
+          unidades: [],
+        });
+      }
+
+      grupos.get(consId).unidades.push(unidad);
+    });
+
+    return Array.from(grupos.values());
+  }
+
+  function seleccionarConstruccion(c) {
+    const cardUnidadConstruccion = document.getElementById("cardUnidadConstruccion");
+    const detalleUnidadCard = document.getElementById("detalleUnidadConstruccionCard");
+    const badgeConstruccionActiva = document.getElementById("badgeConstruccionActiva");
+    const badgeConstruccionValor = document.getElementById("badgeConstruccionValor");
+    const mensajeSinSeleccionUc = document.getElementById("mensajeSinSeleccionUc");
+    const contenedorBadgesUc = document.getElementById("contenedorBadgesUc");
+
+    if (!c) {
+      if (cardUnidadConstruccion) {
+        cardUnidadConstruccion.classList.remove("has-selection");
+      }
+      if (badgeConstruccionActiva) {
+        badgeConstruccionActiva.classList.add("d-none");
+      }
+      if (badgeConstruccionValor) {
+        badgeConstruccionValor.textContent = "";
+      }
+      if (contenedorBadgesUc) {
+        const badgeUcActiva = document.getElementById("badgeUcActiva");
+        const hayUcVisible = badgeUcActiva && !badgeUcActiva.classList.contains("d-none");
+        if (!hayUcVisible) {
+          contenedorBadgesUc.classList.add("d-none");
+        }
+      }
+      if (mensajeSinSeleccionUc) {
+        mensajeSinSeleccionUc.classList.remove("d-none");
+      }
+      renderUnidadConstruccionCard({ unidades: [] });
+      return;
+    }
+
+    if (cardUnidadConstruccion) {
+      cardUnidadConstruccion.classList.add("has-selection");
+    }
+
+    if (badgeConstruccionActiva && badgeConstruccionValor) {
+      badgeConstruccionActiva.classList.remove("d-none");
+      badgeConstruccionValor.textContent = c.identificador;
+    }
+
+    if (contenedorBadgesUc) {
+      contenedorBadgesUc.classList.remove("d-none");
+    }
+
+    if (mensajeSinSeleccionUc) {
+      mensajeSinSeleccionUc.classList.add("d-none");
+    }
+
+    // Render its units
+    renderUnidadConstruccionCard({ unidades: c.unidades || [] });
+  }
+
   async function loadPredioDetalle() {
     if (!predioId) return;
 
@@ -2835,8 +2921,11 @@
         resumenPredioNpn.textContent = predio?.numero_predial_nacional ?? "-";
       }
 
+      const numeroPredialNpn = predio?.numero_predial_nacional ?? predio?.numero_predial ?? "-";
+      const construcciones = agruparConstrucciones(unidades, numeroPredialNpn);
+
       if (resumenPredioConstrucciones) {
-        resumenPredioConstrucciones.textContent = unidades.length;
+        resumenPredioConstrucciones.textContent = construcciones.length;
       }
 
       if (resumenPredioUnidadConstruccion) {
@@ -2944,240 +3033,171 @@
         ["Beneficio comunidades indígenas", "beneficio_comunidades_indigenas"],
       ]);
 
-      if (unidades.length) {
-        const tbody = document.getElementById("tbodyCons");
-        const tbl = document.getElementById("tblCons");
-
+      if (construcciones.length) {
         const tbodyCollapse = document.getElementById("tbodyConsCollapse");
         const tblCollapse = document.getElementById("tblConsCollapse");
         const emptyCollapse = document.getElementById("emptyConsCollapse");
 
-        if (tbody) tbody.innerHTML = "";
         if (tbodyCollapse) tbodyCollapse.innerHTML = "";
 
-        unidades.forEach((u) => {
-          let tipoCalifLabel = u.tipo_calificacion_clase;
+        construcciones.forEach((c, index) => {
+          const detailId = `detalleUnidad_${index}`;
+          const identificador = _fmtText(c.identificador);
+          const tipoConstruccion = _fmtText(c.tipo_construccion_nombre);
+          const predioLabel = _fmtText(c.predio_numero_predial);
+          const ucAsociada = c.unidades.length;
 
-          if (tipoCalifLabel === "Convencional") {
-            tipoCalifLabel = "Calificación Convencional";
-          } else if (tipoCalifLabel === "Tipologia") {
-            tipoCalifLabel = "Calificación por Tipología";
-          } else if (tipoCalifLabel === "No Convencional") {
-            tipoCalifLabel = "Calificación por Tipología No Convencional";
-          } else if (u.tipo_calificacion_resumen) {
-            tipoCalifLabel = u.tipo_calificacion_resumen;
-          } else {
-            tipoCalifLabel = "";
-          }
+          const tipoDominio = _fmtText(c.tipo_dominio_nombre);
+          const totalMezaninis = _fmtText(c.total_mezaninis);
+          const etiqueta = _fmtText(c.etiqueta || identificador);
 
-          const rowHtml = `
-            <td>${u.t_id ?? ""}</td>
-            <td>${u.caracteristica_identificador ?? ""}</td>
-            <td>${tipoCalifLabel}</td>
+          const totalPisos = _fmtText(c.total_pisos);
+          const totalSemisotanos = _fmtText(c.total_semisotanos);
+          const estadoConstruccion = _fmtText(c.estado_construccion_nombre);
+
+          const totalSotanos = _fmtText(c.total_sotanos);
+          const totalConstruccion = _fmtText(c.area_total_construccion);
+          const observacion = _fmtText(c.observacion);
+
+          const trCollapse = document.createElement("tr");
+          trCollapse.dataset.unitId = String(c.id);
+          trCollapse.className = "fila-unidad-collapse";
+          trCollapse.innerHTML = `
+            <td class="text-center align-middle py-3 border-0">
+              <button
+                class="btn p-0 border-0 bg-transparent shadow-none"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#${detailId}"
+                aria-expanded="false"
+                aria-controls="${detailId}"
+                onclick="event.stopPropagation();"
+              >
+                <i class="fa-solid fa-chevron-down text-dark"></i>
+              </button>
+            </td>
+            <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${identificador}</td>
+            <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${tipoConstruccion}</td>
+            <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${predioLabel}</td>
+            <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${ucAsociada}</td>
           `;
 
-          if (tbody) {
-            const tr = document.createElement("tr");
-            tr.dataset.unitId = String(u.t_id);
-            tr.innerHTML = rowHtml;
-            tr.addEventListener("click", () => {
-              selectUnit(u.t_id);
-            });
-            tbody.appendChild(tr);
-          }
-
-          if (tbodyCollapse) {
-            const detailId = `detalleUnidad_${u.t_id}`;
-
-            const identificador = u.caracteristica_identificador ?? "A";
-            const tipoConstruccion = tipoCalifLabel || "Convencional";
-            const predioLabel =
-              predio?.numero_predial_nacional ??
-              predio?.t_id ??
-              predioId ??
-              "---";
-            const ucAsociada = u.unidades_asociadas ?? u.uc_asociada ?? "---";
-
-            const tipoDominio = u.tipo_dominio ?? "Privado";
-            const totalMezaninis = u.total_mezaninis ?? "----";
-            const etiqueta = u.etiqueta ?? identificador;
-
-            const totalPisos = u.total_plantas ?? "----";
-            const totalSemisotanos = u.total_semisotanos ?? "----";
-            const estadoConstruccion = u.estado_construccion ?? "Vigente";
-
-            const totalSotanos = u.total_sotanos ?? "----";
-            const totalConstruccion = u.total_construccion ?? "----";
-            const observacion = u.observaciones ?? "----";
-
-            const trCollapse = document.createElement("tr");
-            trCollapse.dataset.unitId = String(u.t_id);
-            trCollapse.className = "fila-unidad-collapse";
-            trCollapse.innerHTML = `
-              <td class="text-center align-middle py-3 border-0">
-                <button
-                  class="btn p-0 border-0 bg-transparent shadow-none"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#${detailId}"
-                  aria-expanded="false"
-                  aria-controls="${detailId}"
-                  onclick="event.stopPropagation();"
-                >
-                  <i class="fa-solid fa-chevron-down text-dark"></i>
-                </button>
-              </td>
-              <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${identificador}</td>
-              <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${tipoConstruccion}</td>
-              <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${predioLabel}</td>
-              <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${ucAsociada}</td>
-            `;
-
-            const trDetail = document.createElement("tr");
-            trDetail.className = "fila-detalle-unidad";
-            trDetail.innerHTML = `
-              <td colspan="5" class="p-0 border-0">
-                <div class="collapse" id="${detailId}">
-                  <div class="detalle-unidad-contenido px-5 pt-2 pb-4 ms-5">
-                    <div class="row gx-5 gy-4 mb-4">
-                      <div class="col-12 col-md-4">
-                        <div class="fw-bold mb-1 text-detalle-unidad">Tipo dominio</div>
-                        <div class="text-detalle-unidad">${tipoDominio}</div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="fw-bold mb-1 text-detalle-unidad">Total mezaninis</div>
-                        <div class="text-detalle-unidad">${totalMezaninis}</div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="fw-bold mb-1 text-detalle-unidad">Etiqueta</div>
-                        <div class="text-detalle-unidad">${etiqueta}</div>
-                      </div>
+          const trDetail = document.createElement("tr");
+          trDetail.className = "fila-detalle-unidad";
+          trDetail.innerHTML = `
+            <td colspan="5" class="p-0 border-0">
+              <div class="collapse" id="${detailId}">
+                <div class="detalle-unidad-contenido px-5 pt-2 pb-4 ms-5">
+                  <div class="row gx-5 gy-4 mb-4">
+                    <div class="col-12 col-md-4">
+                      <div class="fw-bold mb-1 text-detalle-unidad">Tipo dominio</div>
+                      <div class="text-detalle-unidad">${tipoDominio}</div>
                     </div>
-
-                    <div class="row gx-5 gy-4 mb-4">
-                      <div class="col-12 col-md-4">
-                        <div class="fw-bold mb-1 text-detalle-unidad">Total pisos</div>
-                        <div class="text-detalle-unidad">${totalPisos}</div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="fw-bold mb-1 text-detalle-unidad">Total semisotanos</div>
-                        <div class="text-detalle-unidad">${totalSemisotanos}</div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="fw-bold mb-1 text-detalle-unidad">Estado construccion</div>
-                        <div class="text-detalle-unidad">${estadoConstruccion}</div>
-                      </div>
+                    <div class="col-12 col-md-4">
+                      <div class="fw-bold mb-1 text-detalle-unidad">Total mezaninis</div>
+                      <div class="text-detalle-unidad">${totalMezaninis}</div>
                     </div>
+                    <div class="col-12 col-md-4">
+                      <div class="fw-bold mb-1 text-detalle-unidad">Etiqueta</div>
+                      <div class="text-detalle-unidad">${etiqueta}</div>
+                    </div>
+                  </div>
 
-                    <div class="row gx-5 gy-4">
-                      <div class="col-12 col-md-4">
-                        <div class="fw-bold mb-1 text-detalle-unidad">Total Sotanos</div>
-                        <div class="text-detalle-unidad">${totalSotanos}</div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="fw-bold mb-1 text-detalle-unidad">Total construccion</div>
-                        <div class="text-detalle-unidad">${totalConstruccion}</div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="fw-bold mb-1 text-detalle-unidad">Observación</div>
-                        <div class="text-detalle-unidad">${observacion}</div>
-                      </div>
+                  <div class="row gx-5 gy-4 mb-4">
+                    <div class="col-12 col-md-4">
+                      <div class="fw-bold mb-1 text-detalle-unidad">Total pisos</div>
+                      <div class="text-detalle-unidad">${totalPisos}</div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <div class="fw-bold mb-1 text-detalle-unidad">Total semisotanos</div>
+                      <div class="text-detalle-unidad">${totalSemisotanos}</div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <div class="fw-bold mb-1 text-detalle-unidad">Estado construccion</div>
+                      <div class="text-detalle-unidad">${estadoConstruccion}</div>
+                    </div>
+                  </div>
+
+                  <div class="row gx-5 gy-4">
+                    <div class="col-12 col-md-4">
+                      <div class="fw-bold mb-1 text-detalle-unidad">Total Sotanos</div>
+                      <div class="text-detalle-unidad">${totalSotanos}</div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <div class="fw-bold mb-1 text-detalle-unidad">Total construccion</div>
+                      <div class="text-detalle-unidad">${totalConstruccion}</div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                      <div class="fw-bold mb-1 text-detalle-unidad">Observación</div>
+                      <div class="text-detalle-unidad">${observacion}</div>
                     </div>
                   </div>
                 </div>
-              </td>
-            `;
+              </div>
+            </td>
+          `;
 
-            const collapseEl = trDetail.querySelector(`#${detailId}`);
-            const icon = trCollapse.querySelector("i");
+          const collapseEl = trDetail.querySelector(`#${detailId}`);
+          const icon = trCollapse.querySelector("i");
 
-            trCollapse.addEventListener("click", (event) => {
-              if (event.target.closest("button")) return;
+          trCollapse.addEventListener("click", (event) => {
+            if (event.target.closest("button")) return;
 
-              const instance = bootstrap.Collapse.getOrCreateInstance(collapseEl, {
-                toggle: false
-              });
+            const instance = bootstrap.Collapse.getOrCreateInstance(collapseEl, {
+              toggle: false
+            });
 
-              if (collapseEl.classList.contains("show")) {
-                instance.hide();
-              } else {
-                instance.show();
+            if (collapseEl.classList.contains("show")) {
+              instance.hide();
+            } else {
+              instance.show();
+            }
+          });
+
+          collapseEl.addEventListener("show.bs.collapse", () => {
+            document.querySelectorAll("#tbodyConsCollapse .collapse.show").forEach((openEl) => {
+              if (openEl.id !== detailId) {
+                const openInstance = bootstrap.Collapse.getOrCreateInstance(openEl, { toggle: false });
+                openInstance.hide();
               }
             });
 
-            collapseEl.addEventListener("show.bs.collapse", () => {
-              document.querySelectorAll("#tbodyConsCollapse .collapse.show").forEach((openEl) => {
-                if (openEl.id !== detailId) {
-                  const openInstance = bootstrap.Collapse.getOrCreateInstance(openEl, { toggle: false });
-                  openInstance.hide();
-                }
-              });
-
-              document.querySelectorAll("#tbodyConsCollapse tr.fila-unidad-collapse").forEach((row) => {
-                row.classList.remove("detalle-activo");
-                const rowIcon = row.querySelector("i");
-                if (rowIcon) {
-                  rowIcon.classList.remove("fa-chevron-up");
-                  rowIcon.classList.add("fa-chevron-down");
-                }
-              });
-
-              document.querySelectorAll("#tbodyConsCollapse tr.fila-detalle-unidad").forEach((row) => {
-                row.classList.remove("detalle-activo");
-              });
-
-              trCollapse.classList.add("detalle-activo");
-              trDetail.classList.add("detalle-activo");
-              icon.classList.remove("fa-chevron-down");
-              icon.classList.add("fa-chevron-up");
-
-              selectUnit(u.t_id);
+            document.querySelectorAll("#tbodyConsCollapse tr.fila-unidad-collapse").forEach((row) => {
+              row.classList.remove("detalle-activo");
+              const rowIcon = row.querySelector("i");
+              if (rowIcon) {
+                rowIcon.classList.remove("fa-chevron-up");
+                rowIcon.classList.add("fa-chevron-down");
+              }
             });
 
-            collapseEl.addEventListener("hide.bs.collapse", () => {
-              trCollapse.classList.remove("detalle-activo");
-              trDetail.classList.remove("detalle-activo");
-              trDetail.classList.remove("detalle-relacionado-activo");
-              icon.classList.remove("fa-chevron-up");
-              icon.classList.add("fa-chevron-down");
-
-              const tblUnidadConstruccionCard = document.getElementById("tblUnidadConstruccionCard");
-              const tbodyUnidadConstruccionCard = document.getElementById("tbodyUnidadConstruccionCard");
-              const detalleUnidadCard = document.getElementById("detalleUnidadConstruccionCard");
-
-              if (tblUnidadConstruccionCard) {
-                tblUnidadConstruccionCard.classList.remove("unidad-relacionada-activa");
-              }
-
-              if (tbodyUnidadConstruccionCard) {
-                tbodyUnidadConstruccionCard.classList.remove("unidad-relacionada-activa");
-                tbodyUnidadConstruccionCard.innerHTML = `
-                  <tr class="fila-vacia-unidad">
-                    <td colspan="5" class="text-center text-muted py-3">
-                      Selecciona una unidad en la tabla de construcciones
-                    </td>
-                  </tr>
-                `;
-              }
-
-              if (detalleUnidadCard) {
-                const collapseUc = bootstrap.Collapse.getInstance(detalleUnidadCard);
-                if (collapseUc) {
-                  collapseUc.hide();
-                }
-              }
-
-              actualizarBadgeConstruccion(null);
-              actualizarBadgeUcDesdeTabla();
+            document.querySelectorAll("#tbodyConsCollapse tr.fila-detalle-unidad").forEach((row) => {
+              row.classList.remove("detalle-activo");
             });
 
-            tbodyCollapse.appendChild(trCollapse);
-            tbodyCollapse.appendChild(trDetail);
-          }
+            trCollapse.classList.add("detalle-activo");
+            trDetail.classList.add("detalle-activo");
+            icon.classList.remove("fa-chevron-down");
+            icon.classList.add("fa-chevron-up");
+
+            seleccionarConstruccion(c);
+          });
+
+          collapseEl.addEventListener("hide.bs.collapse", () => {
+            trCollapse.classList.remove("detalle-activo");
+            trDetail.classList.remove("detalle-activo");
+            trDetail.classList.remove("detalle-relacionado-activo");
+            icon.classList.remove("fa-chevron-up");
+            icon.classList.add("fa-chevron-down");
+
+            seleccionarConstruccion(null);
+          });
+
+          tbodyCollapse.appendChild(trCollapse);
+          tbodyCollapse.appendChild(trDetail);
         });
 
-        if (tbl) tbl.style.display = "table";
-        if (tblCollapse) tblCollapse.style.display = "table";
+        if (tblCollapse) tblCollapse.style.display = "";
         if (emptyCollapse) emptyCollapse.style.display = "none";
       } else {
         const tblCollapse = document.getElementById("tblConsCollapse");

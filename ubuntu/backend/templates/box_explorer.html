@@ -6,7 +6,6 @@
   Se ha mantenido el código original comentado al final del archivo para referencia.
 -->
 
-<!-- CABECERA DE LA PÁGINA: Documentos -->
 <div class="d-flex flex-column flex-md-row gap-3 align-items-center justify-content-between mb-4">
     <div class="d-flex flex-column">
         <h2 class="fw-bold mb-1" style="color: #032f57;">Documentos</h2>
@@ -15,14 +14,13 @@
         </small>
     </div>
 
-    <div class="d-flex gap-2">
-        <!-- Botón Crear Carpeteo FTP (Anteriormente btnCarpeteo) -->
+    <div class="d-flex gap-2 flex-wrap">
         <button class="btn text-white d-flex align-items-center gap-2 px-3 py-2" id="btnCarpeteo"
             style="background-color: #002b49; border-radius: 8px;">
             <i class="bi bi-folder-plus"></i>
             <span>Crear carpeteo FTP</span>
         </button>
-        <!-- Botón Sincronizar desde mergin (Anteriormente btnSync) -->
+
         <button class="btn d-flex align-items-center gap-2 px-3 py-2" id="btnSync"
             style="background-color: #8ae6b1; color: #002b49; border-radius: 8px; font-weight: 600;">
             <i class="bi bi-arrow-repeat"></i>
@@ -32,34 +30,36 @@
 </div>
 
 <!-- CONTENEDOR PRINCIPAL: Explorador BOX -->
-<div class="card border-0 shadow mb-4 " style="border-radius: 15px; overflow: hidden;">
-    <!-- Card Header Estilo Premium -->
-    <div class="card-header border-0 py-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2"
-        style="background-color: #002f55; border-radius: 10px;">
+<div class="card border-0 p-0 mb-4" style="border-radius: 15px; overflow: hidden;">
+    <div class="card-header border-0 rounded-4 py-4 px-4 d-flex align-items-center justify-content-between flex-wrap gap-3"
+        style="background-color: #002f55;">
         <div>
             <h4 class="text-white fw-bold mb-1">Explorador BOX</h4>
-            <small class="text-white" style="font-weight: 100 !important;">Consulta archivos adjuntos y carpetas del
-                proyecto</small>
+            <small class="text-white" style="font-weight: 100 !important;">
+                Consulta archivos adjuntos y carpetas del proyecto
+            </small>
+            <div id="crumb" class="d-none mt-2 small text-white-50">Ruta: (root)</div>
         </div>
-        <div class="d-flex gap-2">
-            <!-- Botones de Acción Secundaria -->
+
+        <div class="d-flex gap-2 flex-wrap">
             <button class="btn text-white border-none d-flex align-items-center gap-2 px-3" id="btnNewFolder"
                 style="border-radius: 8px; font-size: 0.9rem; background-color: #6aa4d4;">
                 <i class="bi bi-folder-plus"></i>
                 Crear nueva carpeta
             </button>
+
             <label class="btn text-white border-2 d-flex align-items-center gap-2 px-3 mb-0"
                 style="border-radius: 8px; font-size: 0.9rem; background-color: #6aa4d4; cursor: pointer;">
                 <i class="bi bi-cloud-upload"></i>
                 Agregar nuevo archivo
                 <input type="file" id="fileUpload" style="display:none;">
             </label>
-            <!-- Botón oculto para disparar la subida después de seleccionar -->
-            <button id="btnUpload" style="display:none;"></button>
+
+            <button id="btnUpload" type="button" style="display:none;"></button>
         </div>
     </div>
 
-    <div class="card-body py-4 px-1 bg-white">
+    <div class="card-body py-4 px-0 bg-white">
         <!-- Indicador de Progreso de Sincronización -->
         <div id="syncContainer" class="mb-4 p-3 rounded-3"
             style="display:none; background-color: #f8fbfe; border: 1px solid #eef5fb;">
@@ -69,69 +69,80 @@
             </div>
             <div class="progress" style="height: 10px; border-radius: 5px;">
                 <div id="syncBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"
-                    role="progressbar" style="width: 0%"></div>
+                    role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="width: 0%"></div>
             </div>
         </div>
 
-        <div class="row ">
+        <div class="row g-3">
             <!-- COLUMNA IZQUIERDA: Lista de Archivos -->
-            <div class="col-lg-6 p-3 border rounded-4 ">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div>
-                        <h6 class="fw-bold mb-0" style="color: #002b49;">Lista de archivos</h6>
-                        <small class="text-muted" id="status">Elementos: 0</small>
+            <div class="col-lg-7">
+                <div class="h-100 p-3 border shadow rounded-4 bg-white">
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                        <div>
+                            <h6 class="fw-bold mb-0" style="color: #002b49;">Lista de archivos</h6>
+                            <small class="text-muted" id="status">Elementos: 0</small>
+                        </div>
+
+                        <button class="btn btn-sm d-flex align-items-center gap-2 px-3" id="btnBack"
+                            style="background-color: #002b49; color: white; border-radius: 8px;">
+                            <i class="bi bi-arrow-left"></i>
+                            Volver
+                        </button>
                     </div>
-                    <button class="btn btn-sm d-flex align-items-center gap-2 px-3" id="btnBack"
-                        style="background-color: #002b49; color: white; border-radius: 8px;">
-                        <i class="bi bi-arrow-left"></i>
-                        Volver
-                    </button>
-                </div>
 
-                <!-- Buscador -->
-                <div class="input-group mb-3 shadow-sm" style="border-radius: 10px; overflow: hidden;">
-                    <input type="text" id="fileSearch" class="form-control border-0 bg-light px-3"
-                        placeholder="Buscar archivo o carpeta" style="height: 45px; font-size: 0.95rem;">
-                    <span class="input-group-text border-0 bg-light px-3"
-                        style="background-color: #002b49 !important; color: white;">
-                        <i class="bi bi-search"></i>
-                    </span>
-                </div>
+                    <!-- Buscador -->
+                    <div class="input-group mb-3 shadow-sm" style="border-radius: 10px; overflow: hidden; border:1px solid #002f55;">
+                        <input type="text" id="fileSearch" class="form-control shadow-sm  bg-light px-3"
+                            placeholder="Buscar archivo o carpeta" style="height: 45px; font-size: 0.95rem; ">
+                        <span class="input-group-text border-0 bg-light px-3"
+                            style="background-color: #002b49 !important; color: white;">
+                            <i class="bi bi-search"></i>
+                        </span>
+                    </div>
 
-                <!-- Tabla de Archivos -->
-                <div class="table-responsive p-2 pt-0" style="max-height: 500px; overflow-y: auto;">
-                    <table class="table table-hover align-middle" id="tbl">
-                        <thead class="sticky-top mt-0 bg-white">
-                            <tr >
-                                <th class="py-3" style="color: #002b49; font-size: 0.9rem;">Nombre</th>
-                                <th class="py-3" style="color: #002b49; font-size: 0.9rem;">id</th>
-                                <th class="py-3 text-end" style="color: #002b49; font-size: 0.9rem;">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody">
-                            <!-- Los items se cargarán dinámicamente -->
-                        </tbody>
-                    </table>
+                    <!-- Tabla de Archivos -->
+                    <div class="table-responsive  p-2 pt-0" style="max-height: 450px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0" id="tbl">
+                            <thead class="sticky-top rounded-4 px-0" >
+                                <tr>
+                                    <th class="py-3 " style="color: #002b49; font-size: 0.9rem;  ">Nombre</th>
+                                    <th class="py-3 " style="color: #002b49; font-size: 0.9rem;">ID</th>
+                                    <th class="py-3 text-end " style="color: #002b49; font-size: 0.9rem; ;">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody">
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted">Cargando...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <!-- COLUMNA DERECHA: Previsualización -->
-            <div class="col-lg-6 p-3 border rounded-4">
-                <div class="d-flex align-items-center justify-content-between py-1 pb-2">
-                    <h6 class="fw-bold mb-0" style="color: #002b49;">Previsualización</h6>
-                </div>
-                
+            <div class="col-lg-5 ">
+                <div class="h-100 p-3 shadow-sm border rounded-4 bg-white">
+                    <div class="d-flex align-items-center justify-content-between py-1 pb-2">
+                        <div>
+                            <h6 class="fw-bold mb-0" style="color: #002b49;">Previsualización</h6>
+                            <small id="viewerFileName" class="text-muted">Ningun archivo seleccionado </small>
+                        </div>
+                    </div>
 
-                <div class="card border shadow-sm"
-                    style="border-radius: 12px; overflow: hidden; height: 600px; background-color: #f8fbfe;">
+                    <div class="card"
+                        style="border-radius: 12px; overflow: hidden; height: 450px; background-color: #f8fbfe; border:none;">
+                        <div class="card-body  p-0 d-flex align-items-center justify-content-center bg-white"
+                            style="position: relative;">
 
-                    <!-- Cuerpo del Visor -->
-                    <div class="card-body p-0 d-flex align-items-center justify-content-center bg-white"
-                        style="position: relative;">
-                        <iframe id="viewer" class="bg-success" style="width: 100%; height: 100%; border: none;"></iframe>
-                        <div id="viewerPlaceholder" class="text-center text-muted">
-                            <i class="bi bi-file-earmark-text" style="font-size: 4rem; opacity: 0.1;"></i>
-                            <p class="mt-2 small">Vista previa no disponible</p>
+                            <iframe id="viewer" class="border-none"
+                                title="Vista previa de archivo"
+                                style="display:none; width: 100%; height: 100%; border: none;"></iframe>
+
+                            <div id="viewerPlaceholder" class="text-center border-4 border-success text-muted px-3">
+                                <i class="bi bi-file-earmark-text" style="font-size: 4rem; opacity: 0.4;"></i>
+                                <p class="mt-2 small mb-0">Selecciona un archivo para previsualizarlo</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -141,11 +152,10 @@
 </div>
 
 <style>
-    /* Estilos para la tabla y efectos de hover */
     #tbody tr {
         transition: all 0.2s ease;
         cursor: pointer;
-        border-bottom: 1px solid #f8fbfe;
+        border-bottom: 1px solid #ffffff;
     }
 
     #tbody tr:hover {
@@ -183,9 +193,14 @@
         color: white;
     }
 
-    /* Scrollbar personalizado */
+    .btn-disabled-soft {
+        opacity: 0.65;
+        pointer-events: none;
+    }
+
     .table-responsive::-webkit-scrollbar {
-        width: 3px;
+        width: 4px;
+        height: 6px;
     }
 
     .table-responsive::-webkit-scrollbar-track {
@@ -193,282 +208,602 @@
     }
 
     .table-responsive::-webkit-scrollbar-thumb {
-        background: #002b49;
-        border-radius: 10px;
+        background: #002f55;
+        height: 2px !important;
+        border-radius: 5px;
     }
 
-    /* Ruta breadcrumb */
     #crumb {
         font-size: 0.8rem;
-        color: #666;
+    }
+
+    #viewerPlaceholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        z-index: 2;
+        
+    }
+
+    #viewer {
+        position: relative;
+        z-index: 1;
     }
 </style>
 
 <script>
-    /**
-     * Lógica del Explorador Box - Versión Rediseñada
-     */
-    const apiBase = "/api";
-    let stack = [];
-    let currentFolderId = "";
-    let allItems = []; // Almacén para búsqueda local
+    (() => {
+        /**
+         * Explorador BOX - Versión renovada y robusta
+         * Funcionalidades:
+         * - Listar archivos y carpetas
+         * - Navegar entre carpetas
+         * - Volver a carpeta anterior
+         * - Buscar localmente
+         * - Previsualizar archivos en iframe
+         * - Subir archivos
+         * - Crear carpetas
+         * - Renombrar archivos/carpetas
+         * - Sincronizar desde mergin
+         * - Crear carpeteo FTP
+         */
 
-    const elStatus = document.getElementById("status");
-    const elBody = document.getElementById("tbody");
-    const elViewer = document.getElementById("viewer");
-    const elFileName = document.getElementById("viewerFileName");
-    const elPlaceholder = document.getElementById("viewerPlaceholder");
-    const elSearch = document.getElementById("fileSearch");
+        const apiBase = "/api";
 
-    /**
-     * Función genérica para peticiones API
-     */
-    async function fetchJson(url) {
-        const res = await fetch(url);
-        if (!res.ok) {
-            const txt = await res.text();
-            throw new Error(txt);
-        }
-        return await res.json();
-    }
+        let stack = [];
+        let currentFolderId = "";
+        let allItems = [];
+        let syncInterval = null;
 
-    /**
-     * Determina el icono Bootstrap coherente según el tipo/extensión
-     */
-    function getFileIcon(it) {
-        if (it.type === 'folder') {
-            return '<i class="bi bi-folder-fill me-2" style="color: #002b49;"></i>';
-        }
-        const name = it.name.toLowerCase();
-        if (name.endsWith('.pdf')) return '<i class="bi bi-file-earmark-pdf-fill me-2 text-danger"></i>';
-        if (name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg')) return '<i class="bi bi-file-earmark-image-fill me-2 text-success"></i>';
-        if (name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv')) return '<i class="bi bi-file-earmark-spreadsheet-fill me-2 text-success"></i>';
-        return '<i class="bi bi-file-earmark-fill me-2 text-secondary"></i>';
-    }
+        const elStatus = document.getElementById("status");
+        const elBody = document.getElementById("tbody");
+        const elCrumb = document.getElementById("crumb");
+        const elSearch = document.getElementById("fileSearch");
+        const elViewer = document.getElementById("viewer");
+        const elPlaceholder = document.getElementById("viewerPlaceholder");
+        const elFileName = document.getElementById("viewerFileName");
+        const elFileUpload = document.getElementById("fileUpload");
+        const elBtnUpload = document.getElementById("btnUpload");
+        const elBtnBack = document.getElementById("btnBack");
+        const elBtnNewFolder = document.getElementById("btnNewFolder");
+        const elBtnSync = document.getElementById("btnSync");
+        const elBtnCarpeteo = document.getElementById("btnCarpeteo");
+        const elSyncContainer = document.getElementById("syncContainer");
+        const elSyncText = document.getElementById("syncText");
+        const elSyncPercent = document.getElementById("syncPercent");
+        const elSyncBar = document.getElementById("syncBar");
 
-    /**
-     * Carga el contenido de una carpeta
-     */
-    async function load(folderId = "") {
-        currentFolderId = folderId;
-        elStatus.textContent = "Cargando...";
-        elBody.innerHTML = '<tr><td colspan="3" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+        function requiredElementsExist() {
+            const missing = [];
 
-        const url = folderId
-            ? `${apiBase}/box/list?folder_id=${encodeURIComponent(folderId)}`
-            : `${apiBase}/box/list`;
-
-        try {
-            const data = await fetchJson(url);
-            allItems = data.items || [];
-            renderTable(allItems);
-            elStatus.textContent = `Elementos: ${allItems.length}`;
-        } catch (e) {
-            elStatus.textContent = "Error: " + e.message;
-            elBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-4">${e.message}</td></tr>`;
-        }
-    }
-
-    /**
-     * Renderiza las filas de la tabla según los items proporcionados (soporta filtrado)
-     */
-    function renderTable(items) {
-        elBody.innerHTML = "";
-        if (!items.length) {
-            elBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-muted">No se encontraron elementos</td></tr>';
-            return;
-        }
-
-        items.forEach(it => {
-            const tr = document.createElement("tr");
-
-            // Acción al hacer click en la fila
-            tr.onclick = async () => {
-                if (it.type === "folder") {
-                    stack.push(currentFolderId);
-                    load(it.id);
-                } else {
-                    openFile(it);
-                }
+            const elements = {
+                status: elStatus,
+                tbody: elBody,
+                crumb: elCrumb,
+                fileSearch: elSearch,
+                viewer: elViewer,
+                viewerPlaceholder: elPlaceholder,
+                viewerFileName: elFileName,
+                fileUpload: elFileUpload,
+                btnUpload: elBtnUpload,
+                btnBack: elBtnBack,
+                btnNewFolder: elBtnNewFolder,
+                btnSync: elBtnSync,
+                btnCarpeteo: elBtnCarpeteo,
+                syncContainer: elSyncContainer,
+                syncText: elSyncText,
+                syncPercent: elSyncPercent,
+                syncBar: elSyncBar
             };
 
-            const iconHtml = getFileIcon(it);
-
-            tr.innerHTML = `
-                <td class="py-3">
-                    <div class="d-flex align-items-center">
-                        ${iconHtml}
-                        <span  style="color: #002b49; font-size: 0.9rem;">${it.name}</span>
-                    </div>
-                </td>
-                <td class="text-muted small py-3">${it.id}</td>
-                <td class="text-end py-3">
-                    <div class="d-flex justify-content-end gap-1">
-                        ${it.type === 'folder'
-                    ? `<button class="action-btn btn-view" title="Abrir"><i class="bi bi-box-arrow-in-right"></i></button>`
-                    : `<button class="action-btn btn-view btn-ver-archivo" data-id="${it.id}" title="Ver"><i class="bi bi-eye-fill"></i></button>`
-                }
-                        <button class="action-btn btn-edit btn-rename" data-id="${it.id}" data-name="${it.name}" data-type="${it.type}" title="Renombrar"><i class="bi bi-pencil-fill"></i></button>
-                        <button class="action-btn btn-sync" title="Acciones"><i class="bi bi-share-fill"></i></button>
-                    </div>
-                </td>
-            `;
-
-            // Prevenir propagación en botones de acción
-            tr.querySelectorAll('.action-btn').forEach(btn => {
-                btn.onclick = (e) => e.stopPropagation();
+            Object.entries(elements).forEach(([id, el]) => {
+                if (!el) missing.push(id);
             });
 
-            // Evento para Ver (Solo archivos)
-            const btnVer = tr.querySelector('.btn-ver-archivo');
-            if (btnVer) {
-                btnVer.onclick = (e) => {
-                    e.stopPropagation();
-                    openFile(it);
-                };
+            if (missing.length) {
+                console.error("Faltan elementos en el HTML:", missing);
+                alert("Faltan elementos requeridos en el HTML: " + missing.join(", "));
+                return false;
             }
 
-            // Evento para Renombrar
-            tr.querySelector('.btn-rename').onclick = async (e) => {
-                e.stopPropagation();
-                const newName = prompt("Nuevo nombre:", it.name);
-                if (!newName || !newName.trim()) return;
-
-                const formData = new FormData();
-                formData.append("item_type", it.type);
-                formData.append("item_id", it.id);
-                formData.append("new_name", newName);
-
-                try {
-                    const res = await fetch(`${apiBase}/box/rename`, { method: "POST", body: formData });
-                    if (!res.ok) throw new Error(await res.text());
-                    load(currentFolderId);
-                } catch (err) { alert(err.message); }
-            };
-
-            elBody.appendChild(tr);
-        });
-    }
-
-    /**
-     * Abre un archivo en el visor
-     */
-    async function openFile(it) {
-        try {
-            elFileName.textContent = it.name;
-            elViewer.style.display = "none";
-            elPlaceholder.innerHTML = '<div class="spinner-border text-primary"></div>';
-
-            const openData = await fetchJson(`${apiBase}/box/open?item_type=file&item_id=${it.id}`);
-            elViewer.src = openData.preview_url;
-            elViewer.style.display = "block";
-            elPlaceholder.innerHTML = "";
-        } catch (e) {
-            elPlaceholder.innerHTML = `<i class="bi bi-exclamation-triangle text-danger"></i><p class="small mt-2">${e.message}</p>`;
+            return true;
         }
-    }
 
-    /**
-     * Filtrado en tiempo real (Búsqueda local)
-     */
-    elSearch.oninput = () => {
-        const query = elSearch.value.toLowerCase().trim();
-        const filtered = allItems.filter(it => it.name.toLowerCase().includes(query));
-        renderTable(filtered);
-    };
+        if (!requiredElementsExist()) return;
 
-    /**
-     * Eventos de Botones Principales
-     */
-    document.getElementById("btnBack").onclick = () => {
-        const prev = stack.pop();
-        load(prev || "");
-    };
+        function escapeHtml(value = "") {
+            return String(value)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
 
-    document.getElementById("fileUpload").onchange = () => {
-        document.getElementById("btnUpload").click();
-    };
+        async function fetchJson(url, options = {}) {
+            const res = await fetch(url, options);
 
-    document.getElementById("btnUpload").onclick = async () => {
-        const file = document.getElementById("fileUpload").files[0];
-        if (!file) return;
-
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("folder_id", currentFolderId);
-
-        try {
-            const res = await fetch(`${apiBase}/box/upload`, { method: "POST", body: fd });
-            if (!res.ok) throw new Error(await res.text());
-            load(currentFolderId);
-        } catch (err) { alert(err.message); }
-    };
-
-    document.getElementById("btnNewFolder").onclick = async () => {
-        const name = prompt("Nombre carpeta:");
-        if (!name) return;
-        const fd = new FormData();
-        fd.append("name", name);
-        fd.append("parent_id", currentFolderId);
-        try {
-            const res = await fetch(`${apiBase}/box/mkdir`, { method: "POST", body: fd });
-            if (!res.ok) throw new Error(await res.text());
-            load(currentFolderId);
-        } catch (err) { alert(err.message); }
-    };
-
-    // --- PROCESOS SYNC Y CARPETEO ---
-    let syncInterval = null;
-
-    function startPolling() {
-        if (syncInterval) clearInterval(syncInterval);
-        syncInterval = setInterval(updateSyncStatus, 2000);
-    }
-
-    document.getElementById("btnSync").onclick = async () => {
-        document.getElementById("syncContainer").style.display = "block";
-        document.getElementById("syncBar").style.width = "0%";
-        document.getElementById("syncText").textContent = "Iniciando sincronización...";
-        await fetch(`${apiBase}/sync-projects`, { method: "POST" });
-        startPolling();
-    };
-
-    document.getElementById("btnCarpeteo").onclick = async () => {
-        currentFolderId = "";
-        document.getElementById("syncContainer").style.display = "block";
-        document.getElementById("syncBar").style.width = "0%";
-        document.getElementById("syncText").textContent = "Iniciando carpeteo...";
-        await fetch(`${apiBase}/create-carpeteo`, { method: "POST" });
-        startPolling();
-    };
-
-    async function updateSyncStatus() {
-        try {
-            const res = await fetch(`${apiBase}/sync-status`);
-            const data = await res.json();
-            if (data.status === "idle") return;
-
-            const percent = data.total > 0 ? Math.round((data.current / data.total) * 100) : 0;
-            document.getElementById("syncBar").style.width = percent + "%";
-            document.getElementById("syncPercent").textContent = percent + "%";
-            document.getElementById("syncText").textContent = `${data.project || "Procesando..."} (${data.current}/${data.total})`;
-
-            if (data.status === "done") {
-                clearInterval(syncInterval);
-                document.getElementById("syncText").textContent = "✅ Proceso completado";
-                load(currentFolderId);
-                setTimeout(() => { document.getElementById("syncContainer").style.display = "none"; }, 3000);
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || `Error HTTP ${res.status}`);
             }
-            if (data.status === "error") {
-                clearInterval(syncInterval);
-                document.getElementById("syncText").textContent = "❌ Error: " + data.project;
-            }
-        } catch (e) { console.error("Error:", e); }
-    }
 
-    // Inicialización
-    load();
+            return await res.json();
+        }
+
+        function getFileIcon(it) {
+            if (it.type === "folder") {
+                return '<i class="bi bi-folder-fill me-2" style="color: #002b49;"></i>';
+            }
+
+            const name = String(it.name || "").toLowerCase();
+
+            if (name.endsWith(".pdf")) {
+                return '<i class="bi bi-file-earmark-pdf-fill me-2 text-danger"></i>';
+            }
+
+            if (name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".webp") || name.endsWith(".gif")) {
+                return '<i class="bi bi-file-earmark-image-fill me-2 text-success"></i>';
+            }
+
+            if (name.endsWith(".xlsx") || name.endsWith(".xls") || name.endsWith(".csv")) {
+                return '<i class="bi bi-file-earmark-spreadsheet-fill me-2 text-success"></i>';
+            }
+
+            if (name.endsWith(".doc") || name.endsWith(".docx")) {
+                return '<i class="bi bi-file-earmark-word-fill me-2 text-primary"></i>';
+            }
+
+            if (name.endsWith(".ppt") || name.endsWith(".pptx")) {
+                return '<i class="bi bi-file-earmark-slides-fill me-2 text-warning"></i>';
+            }
+
+            return '<i class="bi bi-file-earmark-fill me-2 text-secondary"></i>';
+        }
+
+        function setViewerInitial() {
+            elViewer.style.display = "none";
+            elViewer.removeAttribute("src");
+            elFileName.textContent = "Ningún archivo seleccionado";
+            elPlaceholder.style.display = "flex";
+            elPlaceholder.innerHTML = `
+                <i class="bi bi-file-earmark-medical" style="font-size: 4rem; opacity: 0.3;"></i>
+                <p class="mt-2 small mb-0">Selecciona un archivo para previsualizarlo</p>
+            `;
+        }
+
+        function setViewerLoading(fileName) {
+            elViewer.style.display = "none";
+            elViewer.removeAttribute("src");
+            elFileName.textContent = fileName || "Cargando archivo...";
+            elPlaceholder.style.display = "flex";
+            elPlaceholder.innerHTML = `
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="small mt-2 mb-0">Cargando vista previa...</p>
+            `;
+        }
+
+        function setViewerError(message) {
+            elViewer.style.display = "none";
+            elPlaceholder.style.display = "flex";
+            elPlaceholder.innerHTML = `
+                <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                <p class="small mt-2 mb-0">${escapeHtml(message)}</p>
+            `;
+        }
+
+        async function openFile(it) {
+            try {
+                if (!it || !it.id) {
+                    throw new Error("No se recibió el ID del archivo.");
+                }
+
+                setViewerLoading(it.name);
+
+                const openData = await fetchJson(
+                    `${apiBase}/box/open?item_type=file&item_id=${encodeURIComponent(it.id)}`
+                );
+
+                if (!openData || !openData.preview_url) {
+                    throw new Error("La API no devolvió una URL de previsualización.");
+                }
+
+                elViewer.onload = () => {
+                    elPlaceholder.style.display = "none";
+                };
+
+                elViewer.onerror = () => {
+                    setViewerError("No se pudo cargar la vista previa del archivo.");
+                };
+
+                elViewer.src = openData.preview_url;
+                elViewer.style.display = "block";
+            } catch (e) {
+                setViewerError(e.message || "No se pudo abrir el archivo.");
+            }
+        }
+
+        function renderTable(items) {
+            elBody.innerHTML = "";
+
+            if (!items.length) {
+                elBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-center py-4 text-muted">
+                            No se encontraron elementos
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            items.forEach((it) => {
+                const tr = document.createElement("tr");
+
+                tr.addEventListener("click", () => {
+                    if (it.type === "folder") {
+                        stack.push(currentFolderId);
+                        load(it.id);
+                    } else {
+                        openFile(it);
+                    }
+                });
+
+                const safeName = escapeHtml(it.name || "Sin nombre");
+                const safeId = escapeHtml(it.id || "");
+                const safeType = escapeHtml(it.type || "file");
+                const iconHtml = getFileIcon(it);
+
+                tr.innerHTML = `
+                    <td class="py-3">
+                        <div class="d-flex align-items-center">
+                            ${iconHtml}
+                            <span style="color: #002b49; font-size: 0.9rem;">${safeName}</span>
+                        </div>
+                    </td>
+                    <td class="text-muted small py-3">${safeId}</td>
+                    <td class="text-end py-3">
+                        <div class="d-flex justify-content-end gap-1">
+                            ${it.type === "folder"
+                                ? `<button type="button" class="action-btn btn-view btn-abrir-carpeta" title="Abrir carpeta"><i class="bi bi-folder2-open"></i></button>`
+                                : `<button type="button" class="action-btn btn-view btn-ver-archivo" title="Ver archivo"><i class="bi bi-eye-fill"></i></button>`
+                            }
+                            <button type="button" class="action-btn btn-edit btn-rename" data-id="${safeId}" data-name="${safeName}" data-type="${safeType}" title="Renombrar">
+                                <i class="bi bi-pencil-fill"></i>
+                            </button>
+                            
+                        </div>
+                    </td>
+                `;
+
+                const btnAbrirCarpeta = tr.querySelector(".btn-abrir-carpeta");
+                if (btnAbrirCarpeta) {
+                    btnAbrirCarpeta.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        stack.push(currentFolderId);
+                        load(it.id);
+                    });
+                }
+
+                const btnVerArchivo = tr.querySelector(".btn-ver-archivo");
+                if (btnVerArchivo) {
+                    btnVerArchivo.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        openFile(it);
+                    });
+                }
+
+                const btnRename = tr.querySelector(".btn-rename");
+                if (btnRename) {
+                    btnRename.addEventListener("click", async (e) => {
+                        e.stopPropagation();
+                        await renameItem(it);
+                    });
+                }
+
+                const btnCopyId = tr.querySelector(".btn-copy-id");
+                if (btnCopyId) {
+                    btnCopyId.addEventListener("click", async (e) => {
+                        e.stopPropagation();
+                        await copyItemId(it.id);
+                    });
+                }
+
+                elBody.appendChild(tr);
+            });
+        }
+
+        async function load(folderId = "") {
+            currentFolderId = folderId || "";
+            elStatus.textContent = "Cargando...";
+            elBody.innerHTML = `
+                <tr>
+                    <td colspan="3" class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    </td>
+                </tr>
+            `;
+
+            const url = currentFolderId
+                ? `${apiBase}/box/list?folder_id=${encodeURIComponent(currentFolderId)}`
+                : `${apiBase}/box/list`;
+
+            try {
+                const data = await fetchJson(url);
+
+                allItems = Array.isArray(data.items) ? data.items : [];
+                elCrumb.textContent = `Ruta: ${data.folder || "(root)"}`;
+                elStatus.textContent = allItems.length === 1 ? "Elemento: 1" : `Elementos: ${allItems.length}`;
+
+                if (elSearch.value.trim()) {
+                    filterItems();
+                } else {
+                    renderTable(allItems);
+                }
+            } catch (e) {
+                elStatus.textContent = "Error al cargar";
+                elBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-center text-danger py-4">
+                            ${escapeHtml(e.message || "No se pudo cargar la carpeta.")}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function filterItems() {
+            const query = elSearch.value.toLowerCase().trim();
+
+            if (!query) {
+                renderTable(allItems);
+                elStatus.textContent = allItems.length === 1 ? "Elemento: 1" : `Elementos: ${allItems.length}`;
+                return;
+            }
+
+            const filtered = allItems.filter((it) =>
+                String(it.name || "").toLowerCase().includes(query) ||
+                String(it.id || "").toLowerCase().includes(query)
+            );
+
+            elStatus.textContent = `Resultados: ${filtered.length} de ${allItems.length}`;
+            renderTable(filtered);
+        }
+
+        async function renameItem(it) {
+            const newName = prompt("Nuevo nombre:", it.name);
+
+            if (!newName || !newName.trim()) return;
+
+            const formData = new FormData();
+            formData.append("item_type", it.type);
+            formData.append("item_id", it.id);
+            formData.append("new_name", newName.trim());
+
+            try {
+                const res = await fetch(`${apiBase}/box/rename`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    throw new Error(await res.text());
+                }
+
+                await load(currentFolderId);
+            } catch (e) {
+                alert(e.message || "No se pudo renombrar el elemento.");
+            }
+        }
+
+        async function copyItemId(id) {
+            try {
+                if (!navigator.clipboard) {
+                    prompt("Copia el ID:", id);
+                    return;
+                }
+
+                await navigator.clipboard.writeText(id);
+                elStatus.textContent = "ID copiado al portapapeles";
+
+                setTimeout(() => {
+                    elStatus.textContent = allItems.length === 1 ? "Elemento: 1" : `Elementos: ${allItems.length}`;
+                }, 1800);
+            } catch (e) {
+                prompt("Copia el ID:", id);
+            }
+        }
+
+        async function uploadSelectedFile() {
+            const file = elFileUpload.files[0];
+
+            if (!file) {
+                alert("Selecciona un archivo primero.");
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append("file", file);
+            fd.append("folder_id", currentFolderId);
+
+            try {
+                elStatus.textContent = "Subiendo archivo...";
+                elBtnUpload.classList.add("btn-disabled-soft");
+
+                const res = await fetch(`${apiBase}/box/upload`, {
+                    method: "POST",
+                    body: fd
+                });
+
+                if (!res.ok) {
+                    throw new Error(await res.text());
+                }
+
+                elFileUpload.value = "";
+                await load(currentFolderId);
+            } catch (e) {
+                alert(e.message || "No se pudo subir el archivo.");
+                elStatus.textContent = allItems.length === 1 ? "Elemento: 1" : `Elementos: ${allItems.length}`;
+            } finally {
+                elBtnUpload.classList.remove("btn-disabled-soft");
+            }
+        }
+
+        async function createFolder() {
+            const name = prompt("Nombre carpeta:");
+
+            if (!name || !name.trim()) return;
+
+            const fd = new FormData();
+            fd.append("name", name.trim());
+            fd.append("parent_id", currentFolderId);
+
+            try {
+                const res = await fetch(`${apiBase}/box/mkdir`, {
+                    method: "POST",
+                    body: fd
+                });
+
+                if (!res.ok) {
+                    throw new Error(await res.text());
+                }
+
+                await load(currentFolderId);
+            } catch (e) {
+                alert(e.message || "No se pudo crear la carpeta.");
+            }
+        }
+
+        function startProgress(text) {
+            elSyncContainer.style.display = "block";
+            elSyncBar.style.width = "0%";
+            elSyncBar.setAttribute("aria-valuenow", "0");
+            elSyncPercent.textContent = "0%";
+            elSyncText.textContent = text;
+        }
+
+        function startPolling() {
+            if (syncInterval) clearInterval(syncInterval);
+            syncInterval = setInterval(updateSyncStatus, 2000);
+        }
+
+        async function startSync() {
+            try {
+                startProgress("Iniciando sincronización...");
+
+                const res = await fetch(`${apiBase}/sync-projects`, {
+                    method: "POST"
+                });
+
+                if (!res.ok) {
+                    throw new Error(await res.text());
+                }
+
+                startPolling();
+            } catch (e) {
+                elSyncText.textContent = "❌ Error: " + (e.message || "No se pudo iniciar la sincronización.");
+            }
+        }
+
+        async function startCarpeteo() {
+            try {
+                currentFolderId = "";
+                stack = [];
+                elSearch.value = "";
+                setViewerInitial();
+                startProgress("Iniciando carpeteo...");
+
+                const res = await fetch(`${apiBase}/create-carpeteo`, {
+                    method: "POST"
+                });
+
+                if (!res.ok) {
+                    throw new Error(await res.text());
+                }
+
+                startPolling();
+            } catch (e) {
+                elSyncText.textContent = "❌ Error: " + (e.message || "No se pudo iniciar el carpeteo.");
+            }
+        }
+
+        async function updateSyncStatus() {
+            try {
+                const res = await fetch(`${apiBase}/sync-status`);
+
+                if (!res.ok) {
+                    throw new Error(await res.text());
+                }
+
+                const data = await res.json();
+
+                if (!data || data.status === "idle") return;
+
+                const total = Number(data.total || 0);
+                const current = Number(data.current || 0);
+                const percent = total > 0 ? Math.round((current / total) * 100) : 0;
+
+                elSyncBar.style.width = percent + "%";
+                elSyncBar.setAttribute("aria-valuenow", String(percent));
+                elSyncPercent.textContent = percent + "%";
+                elSyncText.textContent = `${data.project || "Procesando..."} (${current}/${total})`;
+
+                if (data.status === "done") {
+                    clearInterval(syncInterval);
+                    syncInterval = null;
+                    elSyncText.textContent = "✅ Proceso completado";
+                    elSyncPercent.textContent = "100%";
+                    elSyncBar.style.width = "100%";
+                    elSyncBar.setAttribute("aria-valuenow", "100");
+
+                    await load(currentFolderId);
+
+                    setTimeout(() => {
+                        elSyncContainer.style.display = "none";
+                    }, 3000);
+                }
+
+                if (data.status === "error") {
+                    clearInterval(syncInterval);
+                    syncInterval = null;
+                    elSyncText.textContent = "❌ Error: " + (data.project || "Proceso detenido");
+                }
+            } catch (e) {
+                console.error("Error consultando sync-status:", e);
+            }
+        }
+
+        function bindEvents() {
+            elSearch.addEventListener("input", filterItems);
+
+            elBtnBack.addEventListener("click", () => {
+                const prev = stack.pop();
+                elSearch.value = "";
+                load(prev || "");
+            });
+
+            elFileUpload.addEventListener("change", () => {
+                if (elFileUpload.files[0]) {
+                    elBtnUpload.click();
+                }
+            });
+
+            elBtnUpload.addEventListener("click", uploadSelectedFile);
+            elBtnNewFolder.addEventListener("click", createFolder);
+            elBtnSync.addEventListener("click", startSync);
+            elBtnCarpeteo.addEventListener("click", startCarpeteo);
+        }
+
+        bindEvents();
+        setViewerInitial();
+        load();
+    })();
 </script>
+
 
 <!-- 
   ==========================================================================

@@ -368,7 +368,19 @@ def predio_detalle(
       calif.dispname AS tipo_calificacion_clase,
       COALESCE(calif.dispname, 'Unidad de Construccion ARB') AS tipo_calificacion_resumen,
       ect.dispname AS estado_construccion,
-      ST_AsGeoJSON(uc.geometria)::json AS geom
+      ST_AsGeoJSON(uc.geometria)::json AS geom,
+      c.t_id AS construccion_id,
+      c.identificador AS construccion_identificador,
+      c.total_mezaninis AS construccion_total_mezaninis,
+      c.total_pisos AS construccion_total_pisos,
+      c.total_semisotanos AS construccion_total_semisotanos,
+      c.total_sotanos AS construccion_total_sotanos,
+      c.area_total_construccion AS construccion_area_total_construccion,
+      c.observacion AS construccion_observacion,
+      c.etiqueta AS construccion_etiqueta,
+      tct.dispname AS construccion_tipo_construccion_nombre,
+      tdct.dispname AS construccion_tipo_dominio_nombre,
+      ect_c.dispname AS construccion_estado_construccion_nombre
     FROM {_qualified_table(tenant, 'arb_unidadconstruccion')} uc
     JOIN {_qualified_table(tenant, 'arb_construccion')} c
       ON c.t_id = uc.construccion
@@ -378,6 +390,12 @@ def predio_detalle(
       ON calif.t_id::text = car.tipo_calificacion::text
     LEFT JOIN {_qualified_table(tenant, 'arb_estadoconstrucciontipo')} ect
       ON ect.t_id::text = uc.estado_unidad_construccion::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_tipoconstrucciontipo')} tct
+      ON tct.t_id::text = c.tipo_construccion::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_tipodominioconstrucciontipo')} tdct
+      ON tdct.t_id::text = c.tipo_dominio::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_estadoconstrucciontipo')} ect_c
+      ON ect_c.t_id::text = c.estado_construccion::text
     WHERE c.predio::text = %s::text;
     """
 
