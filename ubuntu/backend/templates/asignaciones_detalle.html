@@ -5,7 +5,7 @@
       <div class="section-title-one h-100">
         <div class="indication">
           <small class="title-detalle">
-            MÓDULO DE ASIGNACIONES > DETALLE DE ASIGNACIÓN<span id="breadcrumbAssignmentName"></span>
+            MÓDULO DE ASIGNACIONES > DETALLE DE ASIGNACIÓN <span>/</span> <span class="fw-bold" id="breadcrumbAssignmentName"></span>
           </small>
         </div>
 
@@ -32,7 +32,7 @@
         <!-- Botón Volver -->
         <div>
           <button id="btnResetSearch" type="button"
-            class="btn rounded-pill fw-bold d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-3 fw-bold d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
             style="background-color: #DCE6F1; color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#CAD7E6'" onmouseout="this.style.backgroundColor='#DCE6F1'">
             <i class="fa-solid fa-arrow-left"></i> Volver a asignaciones
@@ -86,8 +86,6 @@
               <div id="d_coord_avatar_container"
                 class="me-3 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
                 style="width: 38px; height: 38px; background-color: rgba(255,255,255,0.15); border: 1.5px solid transparent; overflow: hidden; transition: background-color 0.2s ease, border-color 0.2s ease;">
-                <img id="d_coord_avatar" src="" alt="Avatar"
-                  style="width: 100%; height: 100%; object-fit: cover; display: none;" />
                 <i id="d_coord_icon" class="fa-solid fa-circle-user text-white fs-5" style="display: block;"></i>
               </div>
               <div class="min-w-0">
@@ -1556,7 +1554,7 @@
 
         const breadcrumbName = document.getElementById("breadcrumbAssignmentName");
         if (breadcrumbName) {
-          breadcrumbName.textContent = dataDet.titulo ? ` / ${dataDet.titulo}` : "";
+          breadcrumbName.textContent = dataDet.titulo || "";
         }
 
         const newUrl = new URL(window.location.href);

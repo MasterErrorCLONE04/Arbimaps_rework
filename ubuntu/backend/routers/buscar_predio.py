@@ -140,7 +140,7 @@ def _normalize_derechos_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]
 
         nombre_persona = " ".join(
             str(v).strip()
-            for v in (primer_nombre, second_nombre, primer_apellido, segundo_apellido)
+            for v in (primer_nombre, segundo_nombre, primer_apellido, segundo_apellido)
             if v is not None and str(v).strip()
         )
         row["nombre_completo"] = razon_social or nombre_persona or documento_identidad or ""
@@ -382,8 +382,33 @@ def predio_detalle(
     """
 
     sql_dif = f"""
-    SELECT di.*
+    SELECT
+      di.*,
+      dt.dispname AS d_tipo_nombre,
+      fat.dispname AS fa_tipo_nombre,
+      it.dispname AS i_tipo_nombre,
+      idt.dispname AS i_tipo_documento_nombre,
+      get.dispname AS i_grupo_etnico_nombre,
+      njt.dispname AS naturaleza_juridica_nombre,
+      cnjt.dispname AS codigo_naturaleza_juridica_nombre,
+      st.dispname AS sexo_nombre
     FROM {_qualified_table(tenant, 'arb_derechointeresadofuente')} di
+    LEFT JOIN {_qualified_table(tenant, 'arb_derechotipo')} dt
+      ON dt.t_id::text = di.d_tipo::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_fuenteadministrativatipo')} fat
+      ON fat.t_id::text = di.fa_tipo::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_interesadotipo')} it
+      ON it.t_id::text = di.i_tipo::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_interesadodocumentotipo')} idt
+      ON idt.t_id::text = di.i_tipo_documento::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_grupoetnicotipo')} get
+      ON get.t_id::text = di.i_grupo_etnico::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_naturalezajuridicatipo')} njt
+      ON njt.t_id::text = di.naturaleza_juridica::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_codigonaturalezajuridicatipo')} cnjt
+      ON cnjt.t_id::text = di.codigo_naturaleza_juridica::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_sexotipo')} st
+      ON st.t_id::text = di.i_sexo::text
     WHERE di.predio::text = %s::text;
     """
 
@@ -676,14 +701,14 @@ def unidad_detalle(
                         continue
                     join_parts.append(
                         f"LEFT JOIN {schema}.{table} {dom_alias} "
-                        f"ON {domain_alias}.t_id::text = car.{fk_col}::text"
+                        f"ON {dom_alias}.t_id::text = car.{fk_col}::text"
                     )
                     select_parts.append(
                         "COALESCE("
-                        f"{domain_alias}.dispname, "
-                        f"to_jsonb({domain_alias})->>'iliCode', "
-                        f"to_jsonb({domain_alias})->>'ilicode', "
-                        f"{domain_alias}.t_id::text"
+                        f"{dom_alias}.dispname, "
+                        f"to_jsonb({dom_alias})->>'iliCode', "
+                        f"to_jsonb({dom_alias})->>'ilicode', "
+                        f"{dom_alias}.t_id::text"
                         f") AS {out_alias}"
                     )
 

@@ -757,21 +757,21 @@
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Fecha inicio de tenencia</div>
-                    <div class="text-end">----</div>
+                    <div class="text-end">id="derechoFechaInicio">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Tipo de derecho</div>
-                    <div class="text-end">----</div>
+                    <div class="text-end">id="derechoTipo">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Posesión ancestral o tradicional</div>
-                    <div class="text-end">----</div>
+                    <div class="text-end">id="derechoPosesion">----</div>
                   </div>
                 </div>
 
@@ -780,7 +780,7 @@
                     <div class="text-start tex-num mb-4">Descripción</div>
 
                     <div class="d-flex justify-content-center align-items-center text-center py-4">
-                      <div class="fw-bold text-num">----</div>
+                      <div class="fw-bold text-num">id="derechoDescripcion">----</div>
                     </div>
                   </div>
                 </div>
@@ -798,49 +798,49 @@
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Tipo de fuente administrativa</div>
-                    <div class="text-end">----</div>
+                    <div class="text-end">id="fuenteTipo">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Número fuente</div>
-                    <div class="text-end">----</div>
+                    <div class="text-end">id="fuenteNumero">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Ente Emisor</div>
-                    <div class="text-end">----</div>
+                    <div class="text-end">id="fuenteEnteEmisor">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Oficina de origen</div>
-                    <div class="text-end">----</div>
+                    <div class="text-end">id="fuenteOficinaOrigen">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Nombre (Escritura)</div>
-                    <div class="text-end">----</div>
+                    <div class="text-end">id="fuenteNombre">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Ciudad de origen</div>
-                    <div class="text-end">----</div>
+                    <div class="text-end">id="fuenteCiudadOrigen">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Estado disponibilidad</div>
-                    <div class="text-end">----</div>
+                    <div class="text-end">id="fuenteEstadoDisponibilidad">----</div>
                   </div>
                 </div>
 
@@ -849,7 +849,7 @@
                     <div class="text-start tex-num mb-4">Descripción de fuente</div>
 
                     <div class="d-flex justify-content-center align-items-center text-center py-4">
-                      <div class="fw-bold text-num">----</div>
+                      <div class="fw-bold text-num">id="fuenteDescripcion">----</div>
                     </div>
                   </div>
                 </div>
@@ -859,7 +859,7 @@
                     <div class="text-start tex-num mb-4">Observación de la fuente administrativa</div>
 
                     <div class="d-flex justify-content-center align-items-center text-center py-4">
-                      <div class="fw-bold text-num">----</div>
+                      <div class="fw-bold text-num">id="fuenteObservacion">----</div>
                     </div>
                   </div>
                 </div>
@@ -2190,6 +2190,8 @@
       const identificador =
         item?.identificador ??
         item?.caracteristica_identificador ??
+        item?.car_identificador ??
+        detailData?.caracteristicas?.identificador ??
         "----";
 
       const tipoPlanta = item?.tipo_planta_nombre ?? "---";
@@ -2263,11 +2265,9 @@
                     <button
                       type="button"
                       class="btn btn-caracteristicas-uc"
-                      onclick='event.stopPropagation(); abrirModalSegunTipoUc({
-                        identificador: ${JSON.stringify(identificador)},
-                        tipo: ${JSON.stringify(tipoCalificacionModal)},
-                        unidadId: ${JSON.stringify(unidadId)}
-                      })'
+                      data-identificador="${identificador}"
+                      data-tipo="${tipoCalificacionModal ?? ''}"
+                      data-unidad-id="${unidadId ?? ''}"
                     >
                       Ver características
                     </button>
@@ -2280,6 +2280,17 @@
       </tr>
     `;
     }).join("");
+
+    tbody.querySelectorAll(".btn-caracteristicas-uc").forEach((btn) => {
+      btn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        abrirModalSegunTipoUc({
+          identificador: btn.dataset.identificador,
+          tipo: btn.dataset.tipo || null,
+          unidadId: btn.dataset.unidadId || null
+        });
+      });
+    });
 
     tbody.querySelectorAll(".fila-unidad-card-principal").forEach((row) => {
       row.addEventListener("click", (event) => {
@@ -2492,10 +2503,8 @@
       animarActualizacionUnidad();
 
       const detalleUnidadCard = document.getElementById("detalleUnidadConstruccionCard");
-      if (detalleUnidadCard && !detalleUnidadCard.classList.contains("show")) {
-        new bootstrap.Collapse(detalleUnidadCard, {
-          toggle: true
-        });
+      if (detalleUnidadCard) {
+        bootstrap.Collapse.getOrCreateInstance(detalleUnidadCard).show();
       }
 
       actualizarBadgeUcDesdeTabla();
@@ -3099,7 +3108,7 @@
             collapseEl.addEventListener("show.bs.collapse", () => {
               document.querySelectorAll("#tbodyConsCollapse .collapse.show").forEach((openEl) => {
                 if (openEl.id !== detailId) {
-                  const openInstance = bootstrap.Collapse.getInstance(openEl) || new bootstrap.Collapse(openEl, { toggle: false });
+                  const openInstance = bootstrap.Collapse.getOrCreateInstance(openEl, { toggle: false });
                   openInstance.hide();
                 }
               });
@@ -3406,8 +3415,40 @@
     if (interesado) {
       const nombreConSalto = `${interesado.linea1 || ""}<br>${interesado.linea2 || ""}`;
       nombreEl.innerHTML = nombreConSalto;
+
+      // Populate offcanvas fields
+      setTextById("derechoFechaInicio", _fmtDate(interesado.d_fecha_inicio_tenencia ?? interesado.fecha_inicio_tenencia));
+      setTextById("derechoTipo", interesado.d_tipo_nombre ?? interesado.tipo_nombre ?? interesado.tipo_derecho_nombre ?? interesado.d_tipo);
+      setTextById(
+        "derechoPosesion",
+        _fmtBool(
+          interesado.d_posesion_ancestral_y_o_tradicional ??
+          interesado.posesion_ancestral_y_o_tradicional ??
+          interesado.d_posicion_ancestral_y_o_tradicional ??
+          interesado.d_posesion_ancestral_tradicional
+        )
+      );
+      setTextById("derechoDescripcion", interesado.d_descripcion ?? interesado.descripcion ?? interesado.descripcion_derecho);
+
+      setTextById("fuenteTipo", interesado.fa_tipo_nombre ?? interesado.tipo_fuente_administrativa_nombre ?? interesado.fa_tipo);
+      setTextById("fuenteNumero", interesado.fa_numero_fuente ?? interesado.numero_fuente);
+      setTextById("fuenteEnteEmisor", interesado.fa_ente_emisor ?? interesado.ente_emisor);
+      setTextById("fuenteOficinaOrigen", interesado.oficina_origen ?? interesado.fa_oficina_origen);
+      setTextById("fuenteNombre", interesado.nombre ?? interesado.nombre_escritura ?? interesado.fa_nombre_escritura);
+      setTextById("fuenteCiudadOrigen", interesado.ciudad_origen ?? interesado.fa_ciudad_origen);
+      setTextById("fuenteEstadoDisponibilidad", interesado.estado_disponibilidad ?? interesado.estado_disponibilidad_nombre);
+      setTextById("fuenteDescripcion", interesado.descripcion_fuente ?? interesado.fa_descripcion);
+      setTextById("fuenteObservacion", interesado.fa_observacion ?? interesado.observacion_fuente_administrativa);
     } else {
       nombreEl.textContent = "---";
+      // Clear offcanvas fields
+      const fields = [
+        "derechoFechaInicio", "derechoTipo", "derechoPosesion", "derechoDescripcion",
+        "fuenteTipo", "fuenteNumero", "fuenteEnteEmisor", "fuenteOficinaOrigen",
+        "fuenteNombre", "fuenteCiudadOrigen", "fuenteEstadoDisponibilidad",
+        "fuenteDescripcion", "fuenteObservacion"
+      ];
+      fields.forEach(id => setTextById(id, null));
     }
 
     volverAModalInformacionAdicional = true;
