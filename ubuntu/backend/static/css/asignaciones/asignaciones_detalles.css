@@ -1848,7 +1848,17 @@ table.dataTable tbody td {
 
 @media (min-width: 768px) {
     .meta-col-separator {
-        border-right: 1px solid #ffffff !important;
+        position: relative !important;
+        border-right: none !important;
+    }
+    .meta-col-separator::after {
+        content: "" !important;
+        position: absolute !important;
+        right: 0 !important;
+        top: 20% !important;
+        height: 60% !important;
+        width: 1px !important;
+        background-color: rgba(255, 255, 255, 0.25) !important;
     }
 }
 

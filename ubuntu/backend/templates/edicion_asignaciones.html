@@ -332,6 +332,55 @@
                     </div>
                 </div>
                 <!-- COLUMNA DERECHA -->
+                <div class="col-12 col-xl-4">
+                    <div
+                        class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio-edit h-100 d-flex flex-column">
+                        <div class="card-header border-0 p-0 rounded-top-4">
+                            <div class="d-flex align-items-start gap-2 px-3 py-2">
+                                <span class="lh-1 mt-2"><i class="bi bi-crosshair"></i></span>
+                                <div class="lh-sm">
+                                    <div class="fw-bold mb-0 text-visor-edit">Visor predio</div>
+                                    <div class="text-muted d-block text-visualizacion-edit">
+                                        Visualización espacial del predio
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1 visor-mapa-top-edit">
+                            <div id="map" class="w-100 h-100 m-0 p-0"></div>
+                            <div
+                                class="vp-map-tools-edit position-absolute top-0 end-0 mt-1 me-1 d-flex flex-column gap-1 align-items-end">
+                                <button type="button" class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto"
+                                    id="btnZoomPredio">
+                                    Zoom predio
+                                </button>
+                                <button type="button" class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto"
+                                    id="btnZoomProyecto">
+                                    Ver proyecto
+                                </button>
+                            </div>
+                            <div class="position-absolute start-0 bottom-0 ms-2 mb-2 px-2 py-1 rounded-3 bg-white border shadow-sm"
+                                style="font-size:11px; line-height:1.2; z-index: 25; opacity:0.95;">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span
+                                        style="display:inline-block;width:14px;height:10px;background:rgba(34, 197, 94, 0.14);border:2px solid #16a34a;"></span>
+                                    <span>Alcance asignación</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span
+                                        style="display:inline-block;width:14px;height:10px;background:rgba(0,0,0,0);border:2px solid #ef4444;"></span>
+                                    <span>U. construcción</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span
+                                        style="display:inline-block;width:14px;height:10px;background:rgba(37, 99, 235, 0.24);border:2px solid #2563eb;"></span>
+                                    <span>Predio seleccionado</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <!-- SECCION INFERIOR -->
                 <div class="col-12 seccion-inferior-content-edit">
                     <div class="row g-2">
@@ -1180,7 +1229,7 @@
     const rp = "{{ rp }}";
     const ASSIGN_WMS_URL_EDIT = `${rp}/geoserver/B_ASIGNACIONES_ARB/wms`;
     const ASSIGN_WFS_URL_EDIT = `${rp}/geoserver/B_ASIGNACIONES_ARB/wfs`;
-    const ASSIGN_WMS_LAYER_EDIT = {{ asig_geoserver_layer | default('B_ASIGNACIONES_ARB:ASIGNACIONES') | tojson }};
+    const ASSIGN_WMS_LAYER_EDIT = {{ asig_geoserver_layer | default ('B_ASIGNACIONES_ARB:ASIGNACIONES') | tojson }};
     const USE_GEOSERVER_STYLES_EDIT = false;
     const SHOULD_USE_WMS_EDIT = USE_GEOSERVER_STYLES_EDIT && Boolean(ASSIGN_WMS_LAYER_EDIT);
     const params = new URLSearchParams(window.location.search);
@@ -2080,7 +2129,7 @@
         const resp = await fetch(
             `${rp}/asignaciones/${encodeURIComponent(asigKey)}/predios/${encodeURIComponent(predioKey)}/detalle-completo`,
             {
-            credentials: "same-origin"
+                credentials: "same-origin"
             }
         );
         const data = await resp.json().catch(() => ({}));
@@ -2193,8 +2242,8 @@
             <tr>
                 <td colspan="4" class="text-center text-muted py-4">
                     ${predioIdFromUrl
-                        ? "El predio seleccionado no existe dentro de esta asignacion."
-                        : "Esta asignacion no tiene predios para mostrar."}
+                    ? "El predio seleccionado no existe dentro de esta asignacion."
+                    : "Esta asignacion no tiene predios para mostrar."}
                 </td>
             </tr>
         `;
@@ -3378,7 +3427,7 @@
     document.addEventListener("DOMContentLoaded", () => {
         const params = new URLSearchParams(window.location.search);
         const asignacionId = params.get('id') || params.get('asignacion_id');
-        
+
         if (!asignacionId) {
             console.warn("No se encontró ID de asignación en la URL.");
             return;
@@ -3389,23 +3438,23 @@
         // Fetch Detalle Asignación
         fetch(`${basePath}/asignaciones/${asignacionId}/detalle`)
             .then(res => {
-                if(!res.ok) throw new Error("Error fetching asignacion");
+                if (!res.ok) throw new Error("Error fetching asignacion");
                 return res.json();
             })
             .then(data => {
                 document.getElementById('d_titulo').innerText = `Asignación: ${data.titulo || data.id}`;
                 document.getElementById('d_user').innerText = data.usuario_asignado || '-';
-                
-                if(data.fecha_creacion) {
+
+                if (data.fecha_creacion) {
                     const dateObj = new Date(data.fecha_creacion);
                     document.getElementById('d_fecha').innerText = dateObj.toLocaleDateString();
                 }
 
                 document.getElementById('d_total_predios').innerText = data.predios ? data.predios.length : 0;
-                
+
                 const tbody = document.getElementById('edicionPrediosBody');
                 tbody.innerHTML = '';
-                if(data.predios && data.predios.length > 0) {
+                if (data.predios && data.predios.length > 0) {
                     data.predios.forEach(p => {
                         const tr = document.createElement('tr');
                         tr.style.cursor = "pointer";
@@ -3430,30 +3479,30 @@
             });
 
         function seleccionarPredioParaEdicion(asigId, predioTId, basePath) {
-            if(!predioTId) return;
+            if (!predioTId) return;
 
             const elIdOperacion = document.getElementById('resumenPredioOperacionId');
-            if(elIdOperacion) elIdOperacion.innerText = predioTId;
-            
+            if (elIdOperacion) elIdOperacion.innerText = predioTId;
+
             fetch(`${basePath}/asignaciones/${asigId}/predios/${predioTId}/detalle-completo`)
                 .then(res => {
-                    if(!res.ok) throw new Error("Error fetching detalle completo predio");
+                    if (!res.ok) throw new Error("Error fetching detalle completo predio");
                     return res.json();
                 })
                 .then(data => {
                     const elNumero = document.getElementById('resumenPredioNumero');
-                    if(elNumero) elNumero.innerText = data.numero_predial_nacional || '-';
-                    
+                    if (elNumero) elNumero.innerText = data.numero_predial_nacional || '-';
+
                     const elInteresados = document.getElementById('resumenPredioInteresados');
                     // data.interesados is hypothetical, if not present we fall back to 0
-                    if(elInteresados) elInteresados.innerText = data.interesados ? data.interesados.length : 0;
-                    
+                    if (elInteresados) elInteresados.innerText = data.interesados ? data.interesados.length : 0;
+
                     const elConstrucciones = document.getElementById('resumenPredioConstrucciones');
-                    if(elConstrucciones) elConstrucciones.innerText = data.construcciones ? data.construcciones.length : 0;
+                    if (elConstrucciones) elConstrucciones.innerText = data.construcciones ? data.construcciones.length : 0;
 
                     const setHtml = (id, val) => {
                         const el = document.getElementById(id);
-                        if(el) el.innerText = val || '----';
+                        if (el) el.innerText = val || '----';
                     };
 
                     setHtml('modal_numero_predial_anterior', data.numero_predial_anterior);
@@ -3475,14 +3524,14 @@
                     const dsConstrucciones = {
                         construcciones: data.construcciones || []
                     };
-                    if(typeof cargarTablasConstruccionesYUcEdit === 'function') {
+                    if (typeof cargarTablasConstruccionesYUcEdit === 'function') {
                         cargarTablasConstruccionesYUcEdit(dsConstrucciones);
                     }
 
                     // Map integration
-                    if(data.predios && data.predios.type === "FeatureCollection" && window.vpMapInstanceEdit) {
+                    if (data.predios && data.predios.type === "FeatureCollection" && window.vpMapInstanceEdit) {
                         // Limpiar capa previa
-                        if(window.vpPredioLayerEdit) window.vpMapInstanceEdit.removeLayer(window.vpPredioLayerEdit);
+                        if (window.vpPredioLayerEdit) window.vpMapInstanceEdit.removeLayer(window.vpPredioLayerEdit);
                         // Añadir nueva
                         window.vpPredioLayerEdit = L.geoJSON(data.predios, {
                             style: { color: "#2563eb", weight: 3, opacity: 0.8, fillOpacity: 0.1 }
@@ -3492,7 +3541,7 @@
 
                     // Botón Editar Predio
                     const btnEditar = document.querySelector('.boton-editar-predio');
-                    if(btnEditar) {
+                    if (btnEditar) {
                         btnEditar.onclick = () => {
                             window.location.href = `${basePath}/panel/asignaciones/edicion?subview=editar_predio&id=${asigId}&predio_id=${predioTId}`;
                         };
