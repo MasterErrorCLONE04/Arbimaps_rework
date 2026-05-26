@@ -1,0 +1,746 @@
+<script>
+    const scrollContainer = document.getElementById('opcionesScroll');
+    const btnLeft = document.getElementById('btnScrollLeft');
+    const btnRight = document.getElementById('btnScrollRight');
+
+    function updateScrollButtons() {
+        const maxScrollLeft = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+        const currentScroll = Math.ceil(scrollContainer.scrollLeft);
+
+        if (currentScroll <= 0) {
+            btnLeft.classList.add('d-none');
+        } else {
+            btnLeft.classList.remove('d-none');
+        }
+
+        if (currentScroll >= maxScrollLeft) {
+            btnRight.classList.add('d-none');
+        } else {
+            btnRight.classList.remove('d-none');
+        }
+    }
+
+    function scrollTabs(amount) {
+        scrollContainer.scrollBy({
+            left: amount,
+            behavior: 'smooth'
+        });
+
+        setTimeout(updateScrollButtons, 350);
+    }
+
+    scrollContainer.addEventListener('scroll', updateScrollButtons);
+    window.addEventListener('load', updateScrollButtons);
+    window.addEventListener('resize', updateScrollButtons);
+
+    function obtenerTextoNormalizado(elemento) {
+        if (!elemento) return '';
+
+        return elemento.textContent.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    function marcarCampoVacio(campo, claseVacia) {
+        const texto = obtenerTextoNormalizado(campo);
+
+        campo.classList.toggle(
+            claseVacia,
+            !texto || texto === '----' || texto === 'Null' || texto === 'Sin datos...'
+        );
+    }
+
+    function inicializarCampoEditable(campo, index, claseVacia) {
+        if (!campo || campo.dataset.editableInicializado === 'true') return;
+
+        const textoInicial = obtenerTextoNormalizado(campo);
+        campo.textContent = textoInicial || '----';
+
+        campo.setAttribute('contenteditable', 'true');
+        campo.setAttribute('spellcheck', 'false');
+        campo.setAttribute('role', 'textbox');
+        campo.setAttribute('tabindex', '0');
+        campo.dataset.placeholder = campo.textContent.trim() || 'Escribe aquí';
+        campo.dataset.editableInicializado = 'true';
+
+        if (!campo.id) {
+            campo.id = `editarPredioCampo_${index + 1}`;
+        }
+
+        campo.addEventListener('focus', () => {
+            const texto = obtenerTextoNormalizado(campo);
+            if (texto === '----' || texto === 'Null') {
+                campo.textContent = '';
+            }
+            marcarCampoVacio(campo, claseVacia);
+        });
+
+        campo.addEventListener('blur', () => marcarCampoVacio(campo, claseVacia));
+        campo.addEventListener('input', () => marcarCampoVacio(campo, claseVacia));
+
+        marcarCampoVacio(campo, claseVacia);
+    }
+
+    function actualizarTextoDropdown(dropdownId, texto) {
+        const dropdown = document.getElementById(dropdownId);
+        if (!dropdown) return;
+
+        dropdown.innerHTML =
+            '<span>' + texto + '</span><i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>';
+    }
+
+    function resolverSeleccionDropdown(valor, texto, textoDefault) {
+        const textoSeleccionado = (texto && texto.trim()) || (window.event?.target?.textContent || '').trim() ||
+            textoDefault;
+
+        return {
+            texto: textoSeleccionado,
+            valor: (valor && valor.trim()) || textoSeleccionado
+        };
+    }
+
+    function obtenerClaveCampo(texto) {
+        return texto
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '') || 'campo';
+    }
+
+    function obtenerEtiquetaDeCampo(campo) {
+        const contenedor = campo.closest('.mb-3, .mb-2, .mb-0, .d-block, .field-check-custom');
+        const etiqueta = contenedor?.querySelector('label, .text-field-check');
+        return obtenerTextoNormalizado(etiqueta) || campo.id || 'campo';
+    }
+
+    function obtenerValorCampoEditable(campo) {
+        const valor = obtenerTextoNormalizado(campo);
+        return valor === '----' || valor === 'Null' ? '' : valor;
+    }
+
+    function escaparHtml(valor) {
+        return String(valor ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function asignarValorRutaObjeto(objeto, ruta, valor) {
+        const claves = ruta.split('.');
+        let actual = objeto;
+
+        claves.forEach((clave, indice) => {
+            if (indice === claves.length - 1) {
+                actual[clave] = valor;
+                return;
+            }
+
+            if (!actual[clave] || typeof actual[clave] !== 'object') {
+                actual[clave] = {};
+            }
+
+            actual = actual[clave];
+        });
+    }
+
+    function limpiarPlaceholderCampoEditableOpcion4(campo) {
+        if (!campo) return;
+
+        const texto = obtenerTextoNormalizado(campo);
+        if (texto === '----' || texto === 'Null') {
+            campo.textContent = '';
+        }
+
+        actualizarEstadoCampoEditable(campo);
+    }
+
+    function actualizarNombreSubtabOpcion4(idPersona) {
+        const persona = datosPruebaOpcion4.find((item) => item.idPersona === idPersona);
+        const botonTab = document.getElementById(`persona-tab-${idPersona}`);
+
+        if (!persona || !botonTab) return;
+
+        const nombreCompleto = [
+            persona.primerNombre,
+            persona.segundoNombre,
+            persona.primerApellido,
+            persona.segundoApellido
+        ].filter((valor) => valor && valor.trim() !== '').join(' ').trim() || 'Sin nombre';
+
+        botonTab.textContent = nombreCompleto;
+    }
+
+    function actualizarCampoTextoOpcion4(idPersona, ruta, campo) {
+        const persona = datosPruebaOpcion4.find((item) => item.idPersona === idPersona);
+        if (!persona || !campo) return;
+
+        asignarValorRutaObjeto(persona, ruta, obtenerValorCampoEditable(campo));
+        actualizarEstadoCampoEditable(campo);
+
+        if (['primerNombre', 'segundoNombre', 'primerApellido', 'segundoApellido'].includes(ruta)) {
+            actualizarNombreSubtabOpcion4(idPersona);
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function finalizarCampoTextoOpcion4(idPersona, ruta, campo) {
+        if (!campo) return;
+
+        if (!obtenerValorCampoEditable(campo)) {
+            campo.textContent = '----';
+        }
+
+        actualizarCampoTextoOpcion4(idPersona, ruta, campo);
+    }
+
+    function inicializarCamposEditablesOpcion4() {
+        document.querySelectorAll('[data-opcion4-editable="true"]').forEach((campo) => {
+            actualizarEstadoCampoEditable(campo);
+        });
+    }
+
+    function crearCampoEditableOpcion4(label, valor, idPersona, ruta, opciones = {}) {
+        const valorTexto = String(valor ?? '').trim();
+        const valorRenderizado = escaparHtml(valorTexto || '----');
+        const clasesBase = opciones.clases || 'rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center';
+        const estilo = opciones.estilo ? ` style="${opciones.estilo}"` : '';
+
+        return `
+            <div class="${opciones.wrapperClass || 'mb-2'}">
+                <label class="form-label-information mb-1">${label}</label>
+                <div
+                    class="${clasesBase}"
+                    contenteditable="true"
+                    spellcheck="false"
+                    role="textbox"
+                    tabindex="0"
+                    data-opcion4-editable="true"
+                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                    oninput="actualizarCampoTextoOpcion4(${idPersona}, '${ruta}', this)"
+                    onblur="finalizarCampoTextoOpcion4(${idPersona}, '${ruta}', this)"${estilo}>${valorRenderizado}</div>
+            </div>
+        `;
+    }
+
+    function crearCampoEditablePorcentajeOpcion4(label, valor, idPersona, ruta) {
+        const valorTexto = String(valor ?? '').trim();
+        const valorRenderizado = escaparHtml(valorTexto || '----');
+
+        return `
+            <div class="mb-3">
+                <label class="form-label-information mb-2">${label}</label>
+                <div class="rounded-3 px-2 py-2 w-100 result-information d-flex justify-content-between align-items-center">
+                    <span
+                        class="flex-grow-1"
+                        contenteditable="true"
+                        spellcheck="false"
+                        role="textbox"
+                        tabindex="0"
+                        data-opcion4-editable="true"
+                        onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                        oninput="actualizarCampoTextoOpcion4(${idPersona}, '${ruta}', this)"
+                        onblur="finalizarCampoTextoOpcion4(${idPersona}, '${ruta}', this)">${valorRenderizado}</span>
+                    <span class="fw-bold ms-2">%</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function asegurarCampoPayload() {
+        const contenedor = document.querySelector('.content-module-editar');
+        if (!contenedor) return null;
+
+        let payloadInput = document.getElementById('editarPredioPayload');
+        if (payloadInput) return payloadInput;
+
+        payloadInput = document.createElement('input');
+        payloadInput.type = 'hidden';
+        payloadInput.id = 'editarPredioPayload';
+        payloadInput.name = 'editar_predio_payload';
+        contenedor.appendChild(payloadInput);
+
+        return payloadInput;
+    }
+
+    function recolectarCamposEditables() {
+        const campos = {};
+
+        document.querySelectorAll(
+            'div.result-information[contenteditable="true"], div.result-information-edit-geo[contenteditable="true"], div.adjunto-observacion-body[contenteditable="true"], [data-opcion4-editable="true"][contenteditable="true"]'
+        ).forEach((campo, index) => {
+            const etiqueta = obtenerEtiquetaDeCampo(campo);
+            const claveBase = obtenerClaveCampo(etiqueta);
+            const clave = campos[claveBase] === undefined ? claveBase : `${claveBase}_${index + 1}`;
+
+            campos[clave] = {
+                etiqueta,
+                valor: obtenerValorCampoEditable(campo)
+            };
+        });
+
+        return campos;
+    }
+
+    function recolectarInputsOcultos() {
+        const datos = {};
+
+        document.querySelectorAll('input[type="hidden"][name]').forEach((input) => {
+            if (input.id === 'editarPredioPayload') return;
+            datos[input.name] = input.value.trim();
+        });
+
+        return datos;
+    }
+
+    function recolectarChecks() {
+        const checks = {};
+
+        document.querySelectorAll('input[type="checkbox"]').forEach((checkbox, index) => {
+            const etiqueta = obtenerEtiquetaDeCampo(checkbox);
+            const claveBase = obtenerClaveCampo(etiqueta);
+            const clave = checks[claveBase] === undefined ? claveBase : `${claveBase}_${index + 1}`;
+
+            checks[clave] = checkbox.checked;
+        });
+
+        return checks;
+    }
+
+    function recolectarArchivos() {
+        const archivos = {};
+
+        document.querySelectorAll('input[type="file"]').forEach((input) => {
+            if (!input.id) return;
+
+            const archivo = input.files && input.files.length > 0 ? input.files[0] : null;
+            archivos[input.id] = archivo ? {
+                nombre: archivo.name,
+                tipo: archivo.type,
+                tamano: archivo.size
+            } : null;
+        });
+
+        return archivos;
+    }
+
+    function prepararPayloadEdicionPredio() {
+        const payload = {
+            campos_editables: recolectarCamposEditables(),
+            campos_ocultos: recolectarInputsOcultos(),
+            checks: recolectarChecks(),
+            archivos: recolectarArchivos(),
+            interesados: datosPruebaOpcion4 || []
+        };
+
+        const payloadInput = asegurarCampoPayload();
+        if (payloadInput) {
+            payloadInput.value = JSON.stringify(payload);
+        }
+
+        window.editarPredioPayload = payload;
+        return payload;
+    }
+    window.prepararPayloadEdicionPredio = prepararPayloadEdicionPredio;
+
+    // Nota: el guardado (fetch PUT) es manejado exclusivamente por js_loader_submit.html
+    // para evitar listeners duplicados. Esta función ya no registra ningún handler.
+
+    function mostrarCollapse(elementoCollapse, botonToggle) {
+        if (!elementoCollapse) return;
+
+        if (window.bootstrap?.Collapse) {
+            window.bootstrap.Collapse.getOrCreateInstance(elementoCollapse, {
+                toggle: false
+            }).show();
+        } else {
+            elementoCollapse.classList.add('show');
+        }
+
+        if (botonToggle) {
+            botonToggle.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    function ocultarCollapse(elementoCollapse, botonToggle) {
+        if (!elementoCollapse) return;
+
+        if (window.bootstrap?.Collapse) {
+            window.bootstrap.Collapse.getOrCreateInstance(elementoCollapse, {
+                toggle: false
+            }).hide();
+        } else {
+            elementoCollapse.classList.remove('show');
+        }
+
+        if (botonToggle) {
+            botonToggle.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function actualizarVistaAdjuntoDocumento() {
+        const hiddenInput = document.getElementById('adjunto_documento');
+        const inputArchivo = document.getElementById('inputArchivoAdjuntoDocumento');
+        const displayArchivo = document.getElementById('archivoAdjuntoDocumentoDisplay');
+        const displayResumen = document.getElementById('adjuntoDocumentoDisplay');
+        const observacion = document.getElementById('adjuntoObservacionDocumento');
+
+        if (!hiddenInput || !inputArchivo || !displayArchivo || !displayResumen || !observacion) return;
+
+        const archivoSeleccionado = inputArchivo.files && inputArchivo.files.length > 0 ? inputArchivo.files[0] : null;
+        const nombreArchivo = archivoSeleccionado?.name || hiddenInput.value.trim();
+
+        displayArchivo.textContent = nombreArchivo || '----';
+        displayResumen.innerHTML = nombreArchivo ?
+            '<i class="fa-solid fa-file-pdf me-2"></i>Adjunto terreno: ' + nombreArchivo :
+            '<i class="fa-solid fa-file-pdf me-2"></i>Adjunto terreno:';
+
+        if (!obtenerTextoNormalizado(observacion)) {
+            observacion.textContent = 'Null';
+        }
+
+        actualizarEstadoCampoEditable(displayArchivo);
+        actualizarEstadoCampoEditable(observacion);
+    }
+
+    function limpiarAdjuntoDocumento() {
+        const hiddenInput = document.getElementById('adjunto_documento');
+        const inputArchivo = document.getElementById('inputArchivoAdjuntoDocumento');
+        const observacion = document.getElementById('adjuntoObservacionDocumento');
+        const collapse = document.getElementById('formAdjuntoDocumentoCollapse');
+        const botonToggle = document.getElementById('btnToggleAdjuntoDocumento');
+
+        if (hiddenInput) {
+            hiddenInput.value = '';
+        }
+
+        if (inputArchivo) {
+            inputArchivo.value = '';
+        }
+
+        if (observacion) {
+            observacion.textContent = 'Null';
+        }
+
+        actualizarVistaAdjuntoDocumento();
+        prepararPayloadEdicionPredio();
+        ocultarCollapse(collapse, botonToggle);
+    }
+
+    function initAdjuntoDocumento() {
+        const botonAccion = document.getElementById('btnAccionAdjuntoDocumento');
+        const botonToggle = document.getElementById('btnToggleAdjuntoDocumento');
+        const collapse = document.getElementById('formAdjuntoDocumentoCollapse');
+        const hiddenInput = document.getElementById('adjunto_documento');
+        const inputArchivo = document.getElementById('inputArchivoAdjuntoDocumento');
+        const displayArchivo = document.getElementById('archivoAdjuntoDocumentoDisplay');
+        const observacion = document.getElementById('adjuntoObservacionDocumento');
+        const botonEliminar = document.getElementById('btnEliminarAdjuntoDocumento');
+
+        if (!botonAccion || !botonToggle || !collapse || !hiddenInput || !inputArchivo || !displayArchivo ||
+            !observacion || !botonEliminar) {
+            return;
+        }
+
+        actualizarVistaAdjuntoDocumento();
+
+        botonAccion.addEventListener('click', () => {
+            mostrarCollapse(collapse, botonToggle);
+
+            if (!hiddenInput.value.trim() && (!inputArchivo.files || inputArchivo.files.length === 0)) {
+                inputArchivo.click();
+            } else {
+                displayArchivo.focus();
+            }
+        });
+
+        displayArchivo.addEventListener('click', () => inputArchivo.click());
+        displayArchivo.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                inputArchivo.click();
+            }
+        });
+
+        inputArchivo.addEventListener('change', () => {
+            const archivo = inputArchivo.files && inputArchivo.files.length > 0 ? inputArchivo.files[0] : null;
+
+            const esPdf = archivo ? (archivo.type === 'application/pdf' || archivo.name.toLowerCase().endsWith(
+                '.pdf')) : false;
+
+            if (archivo && !esPdf) {
+                inputArchivo.value = '';
+                return;
+            }
+
+            hiddenInput.value = archivo ? archivo.name : '';
+            actualizarVistaAdjuntoDocumento();
+            prepararPayloadEdicionPredio();
+        });
+
+        observacion.addEventListener('input', () => prepararPayloadEdicionPredio());
+        observacion.addEventListener('blur', () => prepararPayloadEdicionPredio());
+        botonEliminar.addEventListener('click', limpiarAdjuntoDocumento);
+    }
+
+    function initTerrenoMatricula() {
+        const botonAccion = document.getElementById('btnAccionTerrenoMatricula');
+        const botonToggle = document.getElementById('btnToggleMatriculaInmobiliaria');
+        const collapse = document.getElementById('formMatriculaInmobiliariaCollapse');
+        const primerCampoTerreno = collapse?.querySelector('.result-information-edit-geo[contenteditable="true"]');
+
+        if (!botonAccion || !botonToggle || !collapse) return;
+
+        botonAccion.addEventListener('click', () => {
+            mostrarCollapse(collapse, botonToggle);
+
+            if (primerCampoTerreno) {
+                setTimeout(() => primerCampoTerreno.focus(), 150);
+            }
+        });
+    }
+
+    function initDireccionTab3() {
+        const botonAccion = document.getElementById('btnAccionDireccionTab3');
+        const botonToggle = document.getElementById('btnTogglePredialAsociadoTab3');
+        const collapse = document.getElementById('formPredialAsociadoTab3Collapse');
+        const primerCampoDireccion = collapse?.querySelector('.result-information-edit-geo[contenteditable="true"]');
+
+        if (!botonAccion || !botonToggle || !collapse) return;
+
+        botonAccion.addEventListener('click', () => {
+            mostrarCollapse(collapse, botonToggle);
+
+            if (primerCampoDireccion) {
+                setTimeout(() => primerCampoDireccion.focus(), 150);
+            }
+        });
+    }
+
+    function limpiarDireccionTab3() {
+        const collapse = document.getElementById('formPredialAsociadoTab3Collapse');
+        const botonToggle = document.getElementById('btnTogglePredialAsociadoTab3');
+        const hiddenInputs = [
+            'predial_asociado_tab3',
+            'tipo_direccion_tab3',
+            'origen_direccion_tab3',
+            'bis_tab3',
+            'bis_tabSectorPredio'
+        ];
+
+        hiddenInputs.forEach((id) => {
+            const input = document.getElementById(id);
+            if (input) {
+                input.value = '';
+            }
+        });
+
+        const checkboxDireccion = document.getElementById('direccionPrincipalCheck');
+        if (checkboxDireccion) {
+            checkboxDireccion.checked = false;
+        }
+
+        actualizarTextoDropdown('dropdownTipoDireccionTab3', 'Selecciona');
+        actualizarTextoDropdown('dropdownOrigenDireccionTab3', 'Ninguna selección');
+        actualizarTextoDropdown('dropdownSectorCiudad', 'Ninguna selección');
+        actualizarTextoDropdown('dropdownSectorPredio', 'Ninguna selección');
+
+        const displayPredial = document.getElementById('predialAsociadoTab3Display');
+        if (displayPredial) {
+            displayPredial.textContent = '(datos de la base)';
+        }
+
+        collapse?.querySelectorAll('.result-information-edit-geo[contenteditable="true"]').forEach((campo) => {
+            campo.textContent = '----';
+            actualizarEstadoCampoEditable(campo);
+        });
+
+        prepararPayloadEdicionPredio();
+        ocultarCollapse(collapse, botonToggle);
+    }
+
+    function initEliminarDireccionTab3() {
+        const botonEliminar = document.getElementById('btnEliminarDireccionTab3');
+        if (!botonEliminar) return;
+
+        botonEliminar.addEventListener('click', limpiarDireccionTab3);
+    }
+
+    // Función para los dropdowns del formulario de la primera pestaña
+    function seleccionarCondicion(valor, texto) {
+        const seleccion = resolverSeleccionDropdown(valor, texto, 'Selecciona');
+        actualizarTextoDropdown('dropdownCondicionPredio', seleccion.texto);
+        document.getElementById('condicion_predio').value = seleccion.valor;
+    }
+
+    // Función para los dropdowns del formulario de la primera pestaña campo tipo de predio
+    function seleccionarTipoPredio(valor, texto) {
+        const seleccion = resolverSeleccionDropdown(valor, texto, 'Selecciona');
+        actualizarTextoDropdown('dropdownTipoPredio', seleccion.texto);
+        document.getElementById('tipo_predio').value = seleccion.valor;
+    }
+
+    // Función para los dropdowns del formulario de la primera pestaña campo destinacion economica
+    function seleccionarDestinacionEconomica(valor, texto) {
+        const seleccion = resolverSeleccionDropdown(valor, texto, 'Selecciona');
+        actualizarTextoDropdown('dropdownDestinacionEconomica', seleccion.texto);
+        document.getElementById('destinacion_economica').value = seleccion.valor;
+    }
+
+    function actualizarEstadoCampoEditable(campo) {
+        if (!campo) return;
+
+        if (campo.classList.contains('result-information')) {
+            marcarCampoVacio(campo, 'result-information-editable-empty');
+        }
+
+        if (campo.classList.contains('result-information-edit-geo')) {
+            marcarCampoVacio(campo, 'result-information-geo-editable-empty');
+        }
+
+        if (campo.classList.contains('adjunto-observacion-body')) {
+            marcarCampoVacio(campo, 'result-information-editable-empty');
+        }
+    }
+
+    function habilitarCamposEditables() {
+        const selectoresEditables = [{
+            selector: 'div.result-information',
+            claseVacia: 'result-information-editable-empty'
+        },
+        {
+            selector: 'div.result-information-edit-geo',
+            claseVacia: 'result-information-geo-editable-empty'
+        },
+        {
+            selector: 'div.adjunto-observacion-body',
+            claseVacia: 'result-information-editable-empty'
+        }
+        ];
+
+        let indiceCampo = 0;
+
+        selectoresEditables.forEach((configuracion) => {
+            document.querySelectorAll(configuracion.selector).forEach((campo) => {
+                inicializarCampoEditable(campo, indiceCampo, configuracion.claseVacia);
+                indiceCampo += 1;
+            });
+        });
+    }
+
+    function setReferenciaRegistralModo(definido) {
+        const card = document.getElementById('cardReferenciaRegistral');
+        const botonAccion = document.getElementById('btnAccionReferenciaRegistral');
+        const dropdown = document.getElementById('dropdownTipoReferenciaRegistral');
+        const hiddenInput = document.getElementById('tipo_referencia_registral');
+
+        if (!card || !botonAccion || !dropdown || !hiddenInput) return;
+
+        const camposTexto = card.querySelectorAll('.result-information[contenteditable="true"]');
+        card.dataset.definido = definido ? 'true' : 'false';
+
+        camposTexto.forEach((campo) => {
+            actualizarEstadoCampoEditable(campo);
+        });
+
+        dropdown.classList.remove('dropdown-readonly');
+        dropdown.setAttribute('aria-disabled', 'false');
+        dropdown.tabIndex = 0;
+
+        if (definido) {
+            botonAccion.innerHTML = 'Eliminar <i class="fa-solid fa-xmark ms-2"></i>';
+            botonAccion.classList.add('btn-referencia-registral-delete');
+        } else {
+            hiddenInput.value = '';
+            dropdown.innerHTML =
+                '<span>Selecciona</span><i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>';
+
+            camposTexto.forEach((campo) => {
+                campo.textContent = '----';
+                actualizarEstadoCampoEditable(campo);
+            });
+
+            botonAccion.innerHTML = 'Añadir <i class="fa-solid fa-plus ms-2"></i>';
+            botonAccion.classList.remove('btn-referencia-registral-delete');
+        }
+    }
+
+    function initReferenciaRegistralCard() {
+        const botonAccion = document.getElementById('btnAccionReferenciaRegistral');
+        if (!botonAccion) return;
+
+        setReferenciaRegistralModo(false);
+
+        botonAccion.addEventListener('click', () => {
+            const definido = botonAccion.closest('#cardReferenciaRegistral')?.dataset.definido === 'true';
+            setReferenciaRegistralModo(!definido);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        habilitarCamposEditables();
+        initReferenciaRegistralCard();
+        initAdjuntoDocumento();
+        initTerrenoMatricula();
+        initDireccionTab3();
+        initEliminarDireccionTab3();
+        cargarNumeroPredialNacionalDesdeQuery();
+        prepararPayloadEdicionPredio();
+    });
+
+    function cargarNumeroPredialNacionalDesdeQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const numeroPredial = params.get('numero_predial_nacional') || params.get('numero_predial') || '';
+        if (!numeroPredial) return;
+
+        const campoPredio = document.getElementById('editarNumeroPredialNacional');
+        if (campoPredio) {
+            campoPredio.textContent = numeroPredial;
+        }
+
+        const tab1 = document.getElementById('opcion1-tab');
+        const panel1 = document.getElementById('opcion1');
+        if (tab1 && panel1) {
+            document.querySelectorAll('#opciones-tab .nav-link').forEach((link) => link.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach((pane) => pane.classList.remove('show', 'active'));
+            tab1.classList.add('active');
+            panel1.classList.add('show', 'active');
+        }
+    }
+
+    // script para el dropdown de la segunda pestaña
+    function seleccionarTipoReferenciaRegistral(valor, texto) {
+        const seleccion = resolverSeleccionDropdown(valor, texto, 'Selecciona');
+        actualizarTextoDropdown('dropdownTipoReferenciaRegistral', seleccion.texto);
+        document.getElementById('tipo_referencia_registral').value = seleccion.valor;
+    }
+
+    // script para el select de la tercera vista campo tipo de direccion
+    function seleccionarTipoDireccionTab3(valor, texto) {
+        const seleccion = resolverSeleccionDropdown(valor, texto, 'Selecciona');
+        actualizarTextoDropdown('dropdownTipoDireccionTab3', seleccion.texto);
+        document.getElementById('tipo_direccion_tab3').value = seleccion.valor;
+    }
+
+    // script para el select de la segunda tarjeta de la pestaña 3 campo clase de vía principal
+    function seleccionarOrigenDireccionTab3(valor, texto) {
+        const seleccion = resolverSeleccionDropdown(valor, texto, 'Selecciona');
+        actualizarTextoDropdown('dropdownOrigenDireccionTab3', seleccion.texto);
+        document.getElementById('origen_direccion_tab3').value = seleccion.valor;
+    }
+
+    // script para el select de la segunda tarjeta de la pestaña 3 campo sector de la ciudad
+    function seleccionarSectorCiudadTab3(valor, texto) {
+        const seleccion = resolverSeleccionDropdown(valor, texto, 'Ninguna selección');
+        actualizarTextoDropdown('dropdownSectorCiudad', seleccion.texto);
+        document.getElementById('bis_tab3').value = seleccion.valor;
+    }
+
+    // script para el select de la segunda tarjeta de la pestaña 3 campo sector del predio
+    function seleccionarSectorPredioTab3(valor, texto) {
+        const seleccion = resolverSeleccionDropdown(valor, texto, 'Ninguna selección');
+        actualizarTextoDropdown('dropdownSectorPredio', seleccion.texto);
+        document.getElementById('bis_tabSectorPredio').value = seleccion.valor;
+    }
+</script>

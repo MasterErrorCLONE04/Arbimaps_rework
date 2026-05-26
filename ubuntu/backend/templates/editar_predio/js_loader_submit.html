@@ -1,0 +1,328 @@
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btnVolver = document.querySelector('.btn-volver-editar');
+        const btnCancelar = document.querySelector('.btn-boton-abort');
+        const btnGuardar = document.getElementById('btnGuardarCambiosPredio');
+
+        const params = new URLSearchParams(window.location.search);
+        const asignacionId = params.get('id');
+        const predioId = params.get('predio_t_id') || params.get('predio_id');
+        const numeroPredial = params.get('numero_predial_nacional');
+        const basePath = window.rp || '';
+
+        // Poblar cabeceras desde la URL
+        const displayAsig = document.getElementById('displayAsignacion');
+        const displayIdOp = document.getElementById('displayIdOperacion');
+
+        if (displayAsig && asignacionId) displayAsig.textContent = asignacionId;
+        if (displayIdOp && numeroPredial) displayIdOp.textContent = numeroPredial;
+
+        function cargarDatosCompletosPredio(asigId, pTId) {
+            if (!asigId || !pTId) return;
+            fetch(`${basePath}/asignaciones/${asigId}/predios/${pTId}/detalle-completo`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.predio) {
+                        window.datosCompletosPredio = data;
+                        const p = data.predio;
+
+                        function mapDatosBackendAMockups() {
+                            if (!window.datosCompletosPredio) return;
+                            const data = window.datosCompletosPredio;
+                            const predioNacional = (data.predio && data.predio.numero_predial_nacional) || '';
+
+                            if (data.interesados && typeof datosPruebaOpcion4 !== 'undefined') {
+                                datosPruebaOpcion4 = data.interesados.map(i => ({
+                                    idPersona: i.t_id || i.derecho_id || Math.random(),
+                                    tipoInteresado: i.tipo_persona_nombre || i.tipo_persona || 'Persona Natural',
+                                    predioAsociado: predioNacional,
+                                    tipoDerechoSeleccionado: i.tipo_derecho_nombre || i.tipo_derecho || 'Dominio',
+                                    cuotaParticipacion: i.cuota_participacion || 0,
+                                    fechaInicioTendencia: i.fecha_inicio_tenencia || i.d_fecha_inicio_tenencia || '',
+                                    descripcion: i.descripcion_derecho || i.d_descripcion || '',
+                                    primerNombre: i.primer_nombre || '',
+                                    segundoNombre: i.segundo_nombre || '',
+                                    primerApellido: i.primer_apellido || '',
+                                    segundoApellido: i.segundo_apellido || '',
+                                    genero: i.sexo_nombre || i.i_sexo || 'Masculino',
+                                    autorreconoceCampesino: i.autorreconocimiento_campesino === true,
+                                    autorreconoceEtnico: i.autorreconocimiento_etnico === true,
+                                    grupoEtnico: i.grupo_etnico_nombre || i.i_grupo_etnico || '',
+                                    departamentoResidencia: i.departamento_nombre || i.ic_departamento || '',
+                                    municipioResidencia: i.municipio_nombre || i.ic_municipio || '',
+                                    domicilioResidencia: i.domicilio_notificacion || i.ic_domicilio_notificacion || '',
+                                    direccionResidencia: i.direccion_residencia || i.ic_direccion_residencia || '',
+                                    telefono: i.telefono || i.ic_telefono || '',
+                                    correoElectronico: i.correo_electronico || i.ic_correo_electronico || '',
+                                    razonSocial: i.razon_social || '',
+                                    numeroFuente: i.numero_fuente || i.fa_numero_fuente || '',
+                                    fechaDocumentoFuente: i.fecha_documento_fuente || i.fa_fecha_documento_fuente || '',
+                                    enteEmisor: i.ente_emisor || i.fa_ente_emisor || '',
+                                    oficinaOrigen: i.oficina_origen || '',
+                                    ciudadOrigenEnte: i.ciudad_origen || '',
+                                    estadoDisponibilidad: i.estado_disponibilidad_nombre || i.estado_disponibilidad || '',
+                                    descripcionFuente: i.descripcion_fuente || '',
+                                    naturalezaJuridica: i.naturaleza_juridica_nombre || i.naturaleza_juridica || '',
+                                    codigoFuente: i.codigo_naturaleza_juridica || '',
+                                    descripcionFuenteGeneral: i.descripcion_fuente_general || i.descripcion_fuente || '',
+                                    tipoDocumento: i.tipo_documento_nombre || i.tipo_documento || 'Cédula de ciudadanía',
+                                    numeroDocumento: i.documento_identidad || i.i_documento_identidad || '',
+                                    posesionAncestralTradicional: i.posesion_ancestral_y_o_tradicional === true || i.d_posesion_ancestral_y_o_tradicional === true,
+                                    fuente: {
+                                        tipoFuenteAdministrativa: i.tipo_fuente_administrativa_nombre || i.tipo_fuente_administrativa || '',
+                                        fechaDocumentoFuente: i.fecha_documento_fuente || i.fa_fecha_documento_fuente || ''
+                                    },
+                                    adjuntoInteresado: { titulo: "", archivo: "", observacion: "" },
+                                    adjuntoFuenteAdministrativa: { titulo: "", archivo: "", observacion: "" }
+                                }));
+                                if (typeof renderizarSubtabsOpcion4 === 'function') renderizarSubtabsOpcion4(datosPruebaOpcion4);
+                                if (typeof window.renderizarInteresados === 'function') window.renderizarInteresados();
+                            }
+
+                            if (data.construcciones && typeof datosPruebaOpcion5 !== 'undefined') {
+                                datosPruebaOpcion5 = data.construcciones.map(c => ({
+                                    idConstruccion: c.t_id,
+                                    identificadorConstruccion: c.identificador || `C-${c.t_id}`,
+                                    tipoConstruccion: c.tipo_construccion_nombre || '',
+                                    numeroPisos: c.numero_pisos || 0,
+                                    numeroSotanos: c.numero_sotanos || 0,
+                                    numeroMezanines: c.numero_mezanines || 0,
+                                    numeroSemisotanos: c.numero_semisotanos || 0,
+                                    estadoConstruccion: c.estado_construccion_nombre || '',
+                                    anioConstruccion: c.anio_construccion || '',
+                                    areaConstruccion: c.area_construccion || 0,
+                                    observacion: c.observacion || '',
+                                    unidades: (c.unidades || []).map(u => ({
+                                        idUnidad: u.t_id,
+                                        identificadorUnidad: u.identificador || `U-${u.t_id}`,
+                                        tipoConstruccion: u.tipo_construccion_nombre || '',
+                                        usoUnidad: u.tipo_unidad_construccion_nombre || '',
+                                        estadoUnidad: u.estado_unidad_construccion_nombre || '',
+                                        areaConstruida: u.area_construida || 0,
+                                        totalHabitaciones: u.total_habitaciones || 0,
+                                        totalBanios: u.total_banios || 0,
+                                        totalLocales: u.total_locales || 0,
+                                        totalPlantas: u.total_plantas || 0,
+                                        observacion: u.observacion || ''
+                                    }))
+                                }));
+                                if (typeof renderizarConstruccionesOpcion5 === 'function') renderizarConstruccionesOpcion5();
+                            }
+
+                            if (data.contacto_visita && typeof datosPruebaOpcion6 !== 'undefined') {
+                                datosPruebaOpcion6 = {
+                                    visita: { resultadoVisita: '', fechaVisitaPredial: '', observaciones: '', controlCalidad: '' },
+                                    atendioVisita: { condicionPredio: '', tipoDocumento: '' }
+                                };
+                                if (data.contacto_visita.length > 0) {
+                                    const cv = data.contacto_visita[0];
+                                    datosPruebaOpcion6.visita.resultadoVisita = cv.tipo_contacto_nombre || cv.tipo_contacto || '';
+                                    datosPruebaOpcion6.visita.fechaVisitaPredial = cv.fecha_visita || '';
+                                    datosPruebaOpcion6.visita.observaciones = cv.observacion || '';
+                                }
+                                if (typeof window.renderizarTablasOpcion6 === 'function') window.renderizarTablasOpcion6();
+                            }
+
+                            if (data.puntos_referencia && typeof datosPruebaOpcion7 !== 'undefined') {
+                                datosPruebaOpcion7 = data.puntos_referencia.map(pr => ({
+                                    idPuntoReferencia: pr.t_id,
+                                    identificador: pr.identificador || `T_ID:${pr.t_id}`,
+                                    predioAsociado: predioNacional,
+                                    tipoPunto: pr.tipo_punto_nombre || pr.tipo_punto || '',
+                                    observacion: pr.descripcion || '',
+                                    correoSeven: '',
+                                    estado: 'Activo',
+                                    adjuntoPuntoReferencia: { titulo: '', archivo: '', observacion: '' }
+                                }));
+                                if (typeof window.renderizarPuntosReferenciaOpcion7 === 'function') window.renderizarPuntosReferenciaOpcion7();
+                            }
+
+                            if (typeof datosPruebaOpcion8 !== 'undefined') {
+                                if (data.marcas) {
+                                    datosPruebaOpcion8.marcasPrediales = data.marcas.map(m => ({
+                                        idMarcaPredial: m.t_id,
+                                        predioAsociado: predioNacional,
+                                        tipoMarcaPredial: m.tipo_marca_nombre || m.tipo_marca || '',
+                                        fechaCreacion: m.fecha_registro || '',
+                                        fechaFinalizacion: m.fecha_registro || '',
+                                        resuelta: false,
+                                        observacion: m.observacion || ''
+                                    }));
+                                } else { datosPruebaOpcion8.marcasPrediales = []; }
+
+                                if (data.novedad_fmi_valor) {
+                                    datosPruebaOpcion8.novedadesFmi = data.novedad_fmi_valor.map(nf => ({
+                                        idNovedadFmi: nf.t_id,
+                                        predioAsociado: predioNacional,
+                                        tipoNovedadFmi: nf.tipo_novedad_nombre || nf.tipo_novedad || '',
+                                        novedadFmiFinalizada: false,
+                                        observacion: nf.observacion || ''
+                                    }));
+                                } else { datosPruebaOpcion8.novedadesFmi = []; }
+
+                                if (data.novedad_numero_predial_valor) {
+                                    datosPruebaOpcion8.novedadNumeroPredial = data.novedad_numero_predial_valor.map(nnp => ({
+                                        idNovedadNumeroPredial: nnp.t_id,
+                                        predioAsociado: predioNacional,
+                                        tipoNovedadNumeroPredial: nnp.tipo_novedad_nombre || nnp.tipo_novedad || '',
+                                        novedadNumeroPredialFinalizada: false,
+                                        observacion: nnp.observacion || ''
+                                    }));
+                                } else { datosPruebaOpcion8.novedadNumeroPredial = []; }
+
+                                if (data.tramites) {
+                                    datosPruebaOpcion8.tramites = data.tramites.map(t => ({
+                                        idTramite: t.t_id,
+                                        predioAsociado: predioNacional,
+                                        tipoTramite: t.tipo_tramite_nombre || t.tipo_tramite || '',
+                                        radicado: t.radicado || '',
+                                        fechaSolicitud: t.fecha_solicitud || '',
+                                        estado: t.estado_tramite_nombre || t.estado || '',
+                                        observacion: t.observacion || ''
+                                    }));
+                                } else { datosPruebaOpcion8.tramites = []; }
+
+                                if (typeof inicializarOpcion8 === 'function') inicializarOpcion8();
+                            }
+                        }
+
+                        // Llamar la función de mapeo
+                        mapDatosBackendAMockups();
+
+                        // --- Información Básica (Tab 1) ---
+                        const _set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '----'; };
+                        const _setHTML = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML = val || '----'; };
+                        const _setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+                        const _setChecked = (id, val) => { const el = document.getElementById(id); if (el) el.checked = Boolean(val); };
+
+                        _set('editarNumeroPredialNacional', p.numero_predial_nacional);
+                        _set('displayNumeroPredialAnterior', p.numero_predial_anterior);
+                        _set('displayAreaCatastral', p.area_catastral_terreno != null ? p.area_catastral_terreno + ' m²' : null);
+                        _set('displayAreaRegistral', p.area_registral_m2 != null ? p.area_registral_m2 + ' m²' : null);
+
+                        // --- Información Registral (Tab 2) ---
+                        _set('displayMatriculaInmobiliaria', p.matricula_inmobiliaria);
+                        _set('displayCodigoOrip', p.codigo_orip);
+                        _set('displayCabidaLinderos', p.cabida_linderos);
+
+                        // --- Dropdowns con nombres resueltos ---
+                        const _setDropdown = (inputId, btnId, nombre, valor) => {
+                            const inp = document.getElementById(inputId);
+                            const btn = document.getElementById(btnId);
+                            if (inp) inp.value = valor || '';
+                            if (btn && nombre) {
+                                const span = btn.querySelector('span');
+                                if (span) span.textContent = nombre;
+                            }
+                        };
+
+                        _setDropdown('condicion_predio', 'dropdownCondicionPredio',
+                            p.condicion_predio_nombre || p.condicion_predio, p.condicion_predio);
+                        _setDropdown('tipo_predio', 'dropdownTipoPredio',
+                            p.tipo_predio_nombre || p.tipo_predio, p.tipo_predio);
+                        _setDropdown('destinacion_economica', 'dropdownDestinacionEconomica',
+                            p.destinacion_economica_nombre || p.destinacion_economica, p.destinacion_economica);
+
+                        // --- Checkboxes especiales ---
+                        _setChecked('comodatoCheck', p.comodato);
+                        _setChecked('beneficioComunidadesIndigenasCheck', p.beneficio_comunidades_indigenas);
+
+                        // --- Tab 2: Observación jurídica ---
+                        _set('displayObservacionJuridica', p.observacion_juridica);
+
+                        // --- Tab 2: Referencias registrales sistema antiguo ---
+                        const contRefReg = document.getElementById('listaReferenciasRegistrales');
+                        if (contRefReg && data.referencias_registrales) {
+                            if (data.referencias_registrales.length === 0) {
+                                contRefReg.innerHTML = '<p class="text-muted small ps-1">Sin referencias registradas</p>';
+                            } else {
+                                contRefReg.innerHTML = data.referencias_registrales.map(r => `
+                                <div class="rounded-3 p-2 mb-2 border bg-light-subtle">
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <span class="badge bg-secondary-subtle text-secondary-emphasis">${r.tipo_referencia || ''}</span>
+                                        <strong class="small">${r.matricula || '---'}</strong>
+                                    </div>
+                                    <div class="small text-muted mt-1">
+                                        ${[r.oficina, r.libro ? 'Libro: ' + r.libro : '', r.tomo ? 'Tomo: ' + r.tomo : '', r.pagina ? 'Pág: ' + r.pagina : '', r.numero ? 'Nro: ' + r.numero : '', r.anio ? 'Año: ' + r.anio : ''].filter(Boolean).join(' · ')}
+                                    </div>
+                                </div>`).join('');
+                            }
+                        }
+                        if (typeof updateMapsWithPredioDetalle === 'function') {
+                            updateMapsWithPredioDetalle(data, numeroPredial);
+                        }
+                    }
+                })
+                .catch(err => console.error("Error al cargar datos básicos:", err));
+        }
+
+        cargarDatosCompletosPredio(asignacionId, predioId);
+
+        function volverAAsignaciones() {
+            window.location.href = `${basePath}/panel/asignaciones/detalle?id=${asignacionId}`;
+        }
+
+        if (btnVolver) btnVolver.addEventListener('click', volverAAsignaciones);
+        if (btnCancelar) btnCancelar.addEventListener('click', volverAAsignaciones);
+
+        if (btnGuardar && btnGuardar.dataset.listenerGuardado !== 'true') {
+            btnGuardar.dataset.listenerGuardado = 'true';
+            btnGuardar.addEventListener('click', () => {
+                // Recolectar estado actual antes de enviar
+                let collected = {};
+                if (typeof window.prepararPayloadEdicionPredio === 'function') {
+                    collected = window.prepararPayloadEdicionPredio() || {};
+                }
+
+                const interesados = collected.interesados || (typeof datosPruebaOpcion4 !== 'undefined' ? datosPruebaOpcion4 : []);
+
+                // Construir payload
+                const payload = {
+                    predio_id: parseInt(predioId) || 0,
+                    asignacion_id: parseInt(asignacionId) || 0,
+                    csrf_token: "placeholder_token",
+                    campos_editables: collected.campos_editables || {},
+                    campos_ocultos: collected.campos_ocultos || {},
+                    checks: collected.checks || {},
+                    archivos: collected.archivos || {},
+                    interesados: interesados
+                };
+
+                console.log('[Guardar] Payload enviado:', JSON.stringify(payload, null, 2));
+                console.log('[Guardar] Interesados a guardar:', interesados.length, interesados);
+
+                // Deshabilitar botón para evitar doble submit
+                btnGuardar.disabled = true;
+                btnGuardar.textContent = 'Guardando...';
+
+                fetch(`${basePath}/api/predios/${predioId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': payload.csrf_token
+                    },
+                    body: JSON.stringify(payload)
+                })
+                    .then(res => {
+                        return res.json().then(data => ({ ok: res.ok, status: res.status, data }));
+                    })
+                    .then(({ ok, status, data }) => {
+                        console.log('[Guardar] Respuesta del servidor:', status, data);
+                        if (!ok) {
+                            const detalle = data?.detail || data?.message || `Error ${status}`;
+                            throw new Error(detalle);
+                        }
+                        alert("✅ Cambios guardados con éxito.");
+                    })
+                    .catch(err => {
+                        console.error('[Guardar] Error:', err);
+                        alert("❌ No se pudieron guardar los cambios.\n\nDetalle: " + err.message);
+                    })
+                    .finally(() => {
+                        btnGuardar.disabled = false;
+                        btnGuardar.innerHTML = '<i class="fa-regular fa-floppy-disk me-2"></i> Guardar cambios';
+                    });
+            });
+        }
+    });
+</script>

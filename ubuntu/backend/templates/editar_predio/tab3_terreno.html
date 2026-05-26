@@ -1,0 +1,597 @@
+                            <div class="tab-pane fade" id="opcion3" role="tabpanel">
+                                <div class="card border-0 p-3 px-0 px-md-3">
+                                    <div class="row g-3">
+                                        <div class="col-12 col-md-6 col-xl-4">
+                                            <div class="card h-100">
+                                                <div class="card-body px-1">
+                                                    <div class="title-tarjet-information">
+                                                        Información Registral
+                                                    </div>
+                                                    <div class="col-12 mt-2 ms-0">
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2 d-block">
+                                                                Matrícula inmobiliaria
+                                                            </label>
+
+                                                            <input type="hidden" name="matricula_inmobiliaria"
+                                                                id="matricula_inmobiliaria" value="">
+
+                                                            <button
+                                                                class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                                type="button" id="btnToggleMatriculaInmobiliaria"
+                                                                data-bs-toggle="collapse"
+                                                                data-bs-target="#formMatriculaInmobiliariaCollapse"
+                                                                aria-expanded="false"
+                                                                aria-controls="formMatriculaInmobiliariaCollapse">
+                                                                <span id="matriculaDisplay">(datos)</span>
+                                                                <i
+                                                                    class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                            </button>
+
+                                                            <div class="collapse"
+                                                                id="formMatriculaInmobiliariaCollapse">
+                                                                <div class="content-form-collapse-dos content-form-matricula-unido"
+                                                                    id="cardMatriculaInmobiliaria">
+
+                                                                    <div class="p-2 p-md-3">
+                                                                        <div class="mb-3">
+                                                                            <label
+                                                                                class="content-text-edit-geo mb-2 d-block">
+                                                                                PruebaJuan
+                                                                            </label>
+                                                                            <div class="text-end">
+                                                                                <button type="button"
+                                                                                    class="btn btn-boton-editar-geo">
+                                                                                    Editar geometria
+                                                                                    <i
+                                                                                        class="fa-solid fa-pencil ms-2 icon-pencil-edit-geo"></i>
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div class="title-tarjet-information mb-3">
+                                                                            Información terreno
+                                                                        </div>
+
+                                                                        <div class="mb-3">
+                                                                            <label class="content-text-label mb-2">
+                                                                                Predio asociado
+                                                                            </label>
+                                                                            <div
+                                                                                class="rounded-3 px-2 py-1 w-100 result-information-edit-geo">
+                                                                                ----
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div class="mb-3">
+                                                                            <label class="content-text-label mb-2">
+                                                                                Etiqueta
+                                                                            </label>
+                                                                            <div
+                                                                                class="rounded-3 px-2 py-1 w-100 result-information-edit-geo">
+                                                                                ----
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div class="title-tarjet-information mb-3">
+                                                                            Adjuntos
+                                                                        </div>
+
+                                                                        <div class="mb-3">
+                                                                            <input type="hidden"
+                                                                                name="adjunto_documento"
+                                                                                id="adjunto_documento" value="">
+                                                                            <input type="file"
+                                                                                id="inputArchivoAdjuntoDocumento"
+                                                                                accept="application/pdf,.pdf"
+                                                                                class="d-none">
+
+                                                                            <button
+                                                                                class="btn w-100 text-start bg-white border d-flex justify-content-between align-items-center py-1 px-2 rounded-3 campo-adjunto-con-linea"
+                                                                                type="button"
+                                                                                id="btnToggleAdjuntoDocumento"
+                                                                                data-bs-toggle="collapse"
+                                                                                data-bs-target="#formAdjuntoDocumentoCollapse"
+                                                                                aria-expanded="false"
+                                                                                aria-controls="formAdjuntoDocumentoCollapse">
+                                                                                <span id="adjuntoDocumentoDisplay"
+                                                                                    class="text-file-geo">
+                                                                                    <i
+                                                                                        class="fa-solid fa-file-pdf me-2"></i>
+                                                                                    Adjunto terreno:
+                                                                                </span>
+                                                                                <i
+                                                                                    class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                                            </button>
+
+                                                                            <div class="collapse"
+                                                                                id="formAdjuntoDocumentoCollapse">
+                                                                                <div
+                                                                                    class="bg-white p-2 content-form-adjunto-unido">
+                                                                                    <div class="mb-0 d-block">
+                                                                                        <label
+                                                                                            class="content-text-label mb-2">
+                                                                                            Archivo
+                                                                                        </label>
+                                                                                        <div class="input-form-dropdown input-label-doc rounded-3 px-2 py-0 d-flex align-items-center"
+                                                                                            id="archivoAdjuntoDocumentoDisplay"
+                                                                                            role="button" tabindex="0">
+                                                                                            ----
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    <div
+                                                                                        class="adjunto-observacion-box mt-3">
+                                                                                        <div
+                                                                                            class="adjunto-observacion-header">
+                                                                                            Observación del adjunto
+                                                                                        </div>
+
+                                                                                        <div class="adjunto-observacion-body d-flex align-items-start"
+                                                                                            id="adjuntoObservacionDocumento">
+                                                                                            Null
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    <div class="text-end mt-3">
+                                                                                        <button type="button"
+                                                                                            class="btn btn-sm btn-boton-eliminar-geo px-3"
+                                                                                            id="btnEliminarAdjuntoDocumento">
+                                                                                            Eliminar
+                                                                                            <i
+                                                                                                class="fa-solid fa-xmark ms-2"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div
+                                                                            class="d-flex justify-content-end gap-2 flex-wrap pe-2 pb-2">
+                                                                            <button type="button"
+                                                                                class="btn btn-sm btn-boton-save-adjunto px-3 me-1"
+                                                                                id="btnAccionAdjuntoDocumento">
+                                                                                Añadir adjunto
+                                                                                <i class="fa-solid fa-plus ms-1"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="mb-3 text-end">
+                                                            <button type="button" class="btn btn-añadir-terreno"
+                                                                id="btnAccionTerrenoMatricula">
+                                                                Añadir terreno <i class="fa-solid fa-plus ms-2"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-6 col-xl-4">
+                                            <div class="card h-100">
+                                                <div class="card-body px-1">
+                                                    <div class="title-tarjet-information">
+                                                        Información Registral
+                                                    </div>
+
+                                                    <div class="col-12 mt-2 ms-0">
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2 d-block">
+                                                                Número predial asociado
+                                                            </label>
+
+                                                            <input type="hidden" name="predial_asociado_tab3"
+                                                                id="predial_asociado_tab3" value="">
+
+                                                            <button
+                                                                class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                                type="button" id="btnTogglePredialAsociadoTab3"
+                                                                data-bs-toggle="collapse"
+                                                                data-bs-target="#formPredialAsociadoTab3Collapse"
+                                                                aria-expanded="false"
+                                                                aria-controls="formPredialAsociadoTab3Collapse">
+                                                                <span id="predialAsociadoTab3Display">(datos de la
+                                                                    base)</span>
+                                                                <i
+                                                                    class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                            </button>
+
+                                                            <div class="collapse" id="formPredialAsociadoTab3Collapse">
+                                                                <div
+                                                                    class="content-form-collapse-dos content-form-tab3-unido">
+                                                                    <div class="p-2 p-md-3">
+                                                                        <div class="mb-2">
+                                                                            <label class="text-field-check mb-1">
+                                                                                Predio asociado
+                                                                            </label>
+                                                                            <div
+                                                                                class="rounded-3 px-2 py-1 w-100 result-information-edit-geo">
+                                                                                ----
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-2">
+                                                                            <label
+                                                                                class="text-field-check mb-1 d-block">
+                                                                                Tipo de direccion
+                                                                            </label>
+
+                                                                            <input type="hidden"
+                                                                                name="tipo_direccion_tab3"
+                                                                                id="tipo_direccion_tab3" value="">
+
+                                                                            <div class="dropdown w-75">
+                                                                                <button
+                                                                                    class="btn w-75 text-start result-information-geo d-flex justify-content-between align-items-center px-2 py-1"
+                                                                                    type="button"
+                                                                                    id="dropdownTipoDireccionTab3"
+                                                                                    data-bs-toggle="dropdown"
+                                                                                    aria-expanded="false">
+                                                                                    <span>Selecciona</span>
+                                                                                    <i
+                                                                                        class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                                                </button>
+
+                                                                                <ul
+                                                                                    class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarTipoDireccionTab3('urbana', 'Urbana')">
+                                                                                            Urbana
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarTipoDireccionTab3('rural', 'Rural')">
+                                                                                            Rural
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarTipoDireccionTab3('principal', 'Principal')">
+                                                                                            Principal
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarTipoDireccionTab3('secundaria', 'Secundaria')">
+                                                                                            Secundaria
+                                                                                        </button>
+                                                                                    </li>
+                                                                                </ul>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="text-field-check mb-1">
+                                                                                Complemento
+                                                                            </label>
+                                                                            <div
+                                                                                class="rounded-3 px-2 py-1 w-100 result-information-edit-geo">
+                                                                                ----
+                                                                            </div>
+                                                                        </div>
+                                                                        <div
+                                                                            class="mb-3 d-flex justify-content-between align-items-center">
+                                                                            <span class="text-field-check">
+                                                                                ¿Es dirección principal?
+                                                                            </span>
+                                                                            <input
+                                                                                class="form-check-input check-custom m-0"
+                                                                                type="checkbox"
+                                                                                id="direccionPrincipalCheck">
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label
+                                                                                class="text-field-check mb-1 d-block">
+                                                                                Clase de vía principal
+                                                                            </label>
+                                                                            <input type="hidden"
+                                                                                name="origen_direccion_tab3"
+                                                                                id="origen_direccion_tab3" value="">
+                                                                            <div class="dropdown w-100">
+                                                                                <button
+                                                                                    class="btn w-100 text-start result-information-geo d-flex justify-content-between align-items-center px-2 py-1"
+                                                                                    type="button"
+                                                                                    id="dropdownOrigenDireccionTab3"
+                                                                                    data-bs-toggle="dropdown"
+                                                                                    aria-expanded="false">
+                                                                                    <span>Ninguna selección</span>
+                                                                                    <i
+                                                                                        class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                                                </button>
+                                                                                <ul
+                                                                                    class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarOrigenDireccionTab3('autopista', 'Autopista')">
+                                                                                            Autopista
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarOrigenDireccionTab3('avenida', 'Avenida')">
+                                                                                            Avenida
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarOrigenDireccionTab3('avenida calle', 'Avenida calle')">
+                                                                                            Avenida calle
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarOrigenDireccionTab3('avenida carrera', 'Avenida carrera')">
+                                                                                            Avenida carrera
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarOrigenDireccionTab3('calle', 'Calle')">
+                                                                                            Calle
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarOrigenDireccionTab3('carrera', 'Carrera')">
+                                                                                            Carrera
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarOrigenDireccionTab3('circular', 'Circular')">
+                                                                                            Circular
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarOrigenDireccionTab3('circunvalar', 'Circunvalar')">
+                                                                                            Circunvalar
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarOrigenDireccionTab3('diagonal', 'Diagonal')">
+                                                                                            Diagonal
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarOrigenDireccionTab3('transversal', 'Transversal')">
+                                                                                            Transversal
+                                                                                        </button>
+                                                                                    </li>
+                                                                                </ul>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-2">
+                                                                            <label class="text-field-check mb-1">
+                                                                                Valor vía principal
+                                                                            </label>
+                                                                            <div
+                                                                                class="rounded-3 px-2 py-1 w-100 result-information-edit-geo">
+                                                                                ----
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-2">
+                                                                            <label class="text-field-check mb-1">
+                                                                                Letra vía principal
+                                                                            </label>
+                                                                            <div
+                                                                                class="rounded-3 px-2 py-1 w-100 result-information-edit-geo">
+                                                                                ----
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-2">
+                                                                            <label class="text-field-check mb-1">
+                                                                                Valor de vía generadora
+                                                                            </label>
+                                                                            <div
+                                                                                class="rounded-3 px-2 py-1 w-100 result-information-edit-geo">
+                                                                                ----
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="text-field-check mb-1">
+                                                                                Número del predio
+                                                                            </label>
+                                                                            <div
+                                                                                class="rounded-3 px-2 py-1 w-100 result-information-edit-geo">
+                                                                                ----
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label
+                                                                                class="text-field-check mb-1 d-block">
+                                                                                Sector de la ciudad
+                                                                            </label>
+                                                                            <input type="hidden" name="bis_tab3"
+                                                                                id="bis_tab3" value="">
+                                                                            <div class="dropdown w-100">
+                                                                                <button
+                                                                                    class="btn w-100 text-start result-information-geo d-flex justify-content-between align-items-center px-2 py-0"
+                                                                                    type="button"
+                                                                                    id="dropdownSectorCiudad"
+                                                                                    data-bs-toggle="dropdown"
+                                                                                    aria-expanded="false">
+                                                                                    <span>Ninguna selección</span>
+                                                                                    <i
+                                                                                        class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                                                </button>
+                                                                                <ul
+                                                                                    class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarSectorCiudadTab3('este', 'Este')">
+                                                                                            Este
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarSectorCiudadTab3('norte', 'Norte')">
+                                                                                            Norte
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarSectorCiudadTab3('oeste', 'Oeste')">
+                                                                                            Oeste
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarSectorCiudadTab3('sur', 'Sur')">
+                                                                                            Sur
+                                                                                        </button>
+                                                                                    </li>
+                                                                                </ul>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label
+                                                                                class="text-field-check mb-1 d-block">
+                                                                                Sector del predio
+                                                                            </label>
+                                                                            <input type="hidden"
+                                                                                name="bis_tabSectorPredio"
+                                                                                id="bis_tabSectorPredio" value="">
+                                                                            <div class="dropdown w-100">
+                                                                                <button
+                                                                                    class="btn w-100 text-start result-information-geo d-flex justify-content-between align-items-center px-2 py-0"
+                                                                                    type="button"
+                                                                                    id="dropdownSectorPredio"
+                                                                                    data-bs-toggle="dropdown"
+                                                                                    aria-expanded="false">
+                                                                                    <span>Ninguna selección</span>
+                                                                                    <i
+                                                                                        class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                                                </button>
+                                                                                <ul
+                                                                                    class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarSectorPredioTab3('este', 'Este')">
+                                                                                            Este
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarSectorPredioTab3('norte', 'Norte')">
+                                                                                            Norte
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarSectorPredioTab3('oeste', 'Oeste')">
+                                                                                            Oeste
+                                                                                        </button>
+                                                                                    </li>
+                                                                                    <li>
+                                                                                        <button class="dropdown-item"
+                                                                                            type="button"
+                                                                                            onclick="seleccionarSectorPredioTab3('sur', 'Sur')">
+                                                                                            Sur
+                                                                                        </button>
+                                                                                    </li>
+                                                                                </ul>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-2">
+                                                                            <label class="text-field-check mb-1">
+                                                                                Código postal
+                                                                            </label>
+                                                                            <div
+                                                                                class="rounded-3 px-2 py-1 w-100 result-information-edit-geo">
+                                                                                ----
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="text-end">
+                                                                            <button type="button"
+                                                                                class="btn btn-sm btn-boton-dat-dele px-3"
+                                                                                id="btnEliminarDireccionTab3">
+                                                                                Eliminar
+                                                                                <i class="fa-solid fa-xmark ms-2"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-boton-save-direccion px-3 p-2"
+                                                                id="btnAccionDireccionTab3">
+                                                                Añadir dirección
+                                                                <i class="fa-solid fa-plus ms-1"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-xl-4">
+                                            <div class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio-edit d-flex flex-column flex-shrink-0"
+                                                style="height: 420px;">
+                                                <div class="card-header border-0 p-0 rounded-top-4">
+                                                    <div class="d-flex align-items-start gap-2 px-3 py-2">
+                                                        <span class="lh-1 mt-2"><i class="bi bi-crosshair"></i></span>
+                                                        <div class="lh-sm">
+                                                            <div class="fw-bold mb-0 text-visor-edit">Visor predio</div>
+                                                            <div class="text-muted d-block text-visualizacion-edit">
+                                                                VisualizaciÃ³n espacial del predio
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1 visor-mapa-top-edit editar-predio-visor-wrap">
+                                                    <div id="mapEditarPredioTab3Card3" class="w-100 h-100 m-0 p-0">
+                                                    </div>
+
+                                                    <div id="mapEditarPredioTab3Card3Empty"
+                                                        class="editar-predio-map-empty position-absolute top-50 start-50 translate-middle text-center px-3">
+                                                        Selecciona un predio vÃ¡lido para visualizar su geometrÃ­a.
+                                                    </div>
+
+                                                    <div
+                                                        class="vp-map-tools-edit position-absolute top-0 end-0 mt-1 me-1 d-flex flex-column gap-1 align-items-end">
+                                                        <button type="button"
+                                                            class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto"
+                                                            id="btnZoomPredioEditarTab3Card3">
+                                                            Zoom predio
+                                                        </button>
+                                                        <button type="button"
+                                                            class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto"
+                                                            id="btnZoomProyectoEditarTab3Card3">
+                                                            Ver proyecto
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>

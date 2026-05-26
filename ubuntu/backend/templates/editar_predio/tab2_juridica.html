@@ -1,0 +1,245 @@
+                            <div class="tab-pane fade" id="opcion2" role="tabpanel">
+                                <div class="card border-0 p-3 px-0 px-md-3">
+                                    <div class="row g-3">
+                                        <!-- primera tarjeta -->
+                                        <div class="col-12 col-md-6 col-xl-4">
+                                            <div class="card h-100">
+                                                <div class="card-body">
+                                                    <div class="title-tarjet-information">
+                                                        Información Registral
+                                                    </div>
+                                                    <div class="col-12 mt-2 ms-0">
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2">
+                                                                Matrícula inmobiliaria
+                                                            </label>
+                                                            <div id="displayMatriculaInmobiliaria"
+                                                                class="rounded-3 px-2 py-2 w-100 result-information">
+                                                                ----
+                                                            </div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2">
+                                                                Código ORIP
+                                                            </label>
+                                                            <div id="displayCodigoOrip"
+                                                                class="rounded-3 px-2 py-2 w-100 result-information">
+                                                                ----
+                                                            </div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2">
+                                                                Área registral
+                                                            </label>
+                                                            <div id="displayAreaRegistral"
+                                                                class="rounded-3 px-2 py-2 w-100 result-information">
+                                                                ----
+                                                            </div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2">
+                                                                Cabida y linderos
+                                                            </label>
+
+                                                            <div id="displayCabidaLinderos"
+                                                                class="rounded-3 w-100 result-information p-2 d-flex align-items-start justify-content-start"
+                                                                style="min-height: 80px;">
+                                                                ---
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- segunda tarjeta -->
+                                        <div class="col-12 col-md-6 col-xl-4">
+                                            <div class="card h-100">
+                                                <div class="card-body">
+                                                    <div class="title-tarjet-information">
+                                                        Sistema registral antiguo
+                                                    </div>
+                                                    <div class="col-12 mt-2 ms-0">
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2 d-block">
+                                                                Referencias registradas
+                                                            </label>
+                                                            <div id="listaReferenciasRegistrales" class="mb-2">
+                                                                <p class="text-muted small ps-1">Cargando...</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2 d-block">
+                                                                Número predial nacional
+                                                            </label>
+
+                                                            <button
+                                                                class="btn btn-add-form-dropdown d-inline-flex align-items-center gap-2 mb-2"
+                                                                type="button" id="btnToggleReferenciaRegistral"
+                                                                data-bs-toggle="collapse"
+                                                                data-bs-target="#formNumeroPredialCollapse"
+                                                                aria-expanded="false"
+                                                                aria-controls="formNumeroPredialCollapse">
+                                                                <i class="fa-solid fa-plus"></i>
+                                                                Añadir
+                                                            </button>
+
+                                                            <div class="collapse" id="formNumeroPredialCollapse">
+                                                                <div class="rounded-3 p-1 border content-form-collapse"
+                                                                    id="cardReferenciaRegistral">
+                                                                    <div class="mb-3">
+                                                                        <div
+                                                                            class="form-label-information-text mb-2 d-block mt-2 ms-2">
+                                                                            <i class="fa-solid fa-plus me-2"></i>
+                                                                            Añadir referencia registral
+                                                                        </div>
+                                                                        <div class="col-11 mt-2 ms-2">
+                                                                            <div class="mb-3">
+                                                                                <label class="content-text-label mb-2">
+                                                                                    Predio asociado
+                                                                                </label>
+                                                                                <div
+                                                                                    class="rounded-3 px-2 py-2 w-100 result-information">
+                                                                                    ----
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="mb-3">
+                                                                                <label
+                                                                                    class="content-text-label mb-2 d-block">
+                                                                                    Tipo de referencia
+                                                                                </label>
+
+                                                                                <input type="hidden"
+                                                                                    name="tipo_referencia_registral"
+                                                                                    id="tipo_referencia_registral"
+                                                                                    value="">
+
+                                                                                <div class="dropdown w-100">
+                                                                                    <button
+                                                                                        class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                                                        type="button"
+                                                                                        id="dropdownTipoReferenciaRegistral"
+                                                                                        data-bs-toggle="dropdown"
+                                                                                        aria-expanded="false">
+                                                                                        <span>Selecciona</span>
+                                                                                        <i
+                                                                                            class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                                                    </button>
+
+                                                                                    <ul
+                                                                                        class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                                                                        <li>
+                                                                                            <button
+                                                                                                class="dropdown-item"
+                                                                                                type="button"
+                                                                                                onclick="seleccionarTipoReferenciaRegistral('selecciona', 'selecciona')">
+                                                                                                Selecciona
+                                                                                            </button>
+                                                                                        </li>
+                                                                                        <li>
+                                                                                            <button
+                                                                                                class="dropdown-item"
+                                                                                                type="button"
+                                                                                                onclick="seleccionarTipoReferenciaRegistral('estructurada', 'estructurada')">
+                                                                                                Estructurada
+                                                                                            </button>
+                                                                                        </li>
+                                                                                        <li>
+                                                                                            <button
+                                                                                                class="dropdown-item"
+                                                                                                type="button"
+                                                                                                onclick="seleccionarTipoReferenciaRegistral('no estructurada', 'no estructurada')">
+                                                                                                No estructurada
+                                                                                            </button>
+                                                                                        </li>
+                                                                                    </ul>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="mb-3">
+                                                                                <label class="content-text-label mb-2">
+                                                                                    Matrícula
+                                                                                </label>
+                                                                                <div
+                                                                                    class="rounded-3 px-2 py-2 w-100 result-information">
+                                                                                    ----
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div
+                                                                        class="d-flex justify-content-end gap-2 flex-wrap pe-2 mb-2">
+                                                                        <button type="button"
+                                                                            class="btn btn-sm btn-boton-save px-3 me-2"
+                                                                            id="btnAccionReferenciaRegistral">
+                                                                            Añadir
+                                                                            <i class="fa-solid fa-plus ms-2"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="title-tarjet-information">
+                                                        Observación
+                                                    </div>
+                                                    <div class="col-12 mt-2 ms-0">
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2">
+                                                                Objervación jurídica
+                                                            </label>
+
+                                                            <div id="displayObservacionJuridica"
+                                                                class="rounded-3 w-100 result-information p-2 d-flex align-items-start justify-content-start"
+                                                                style="min-height: 80px;">
+                                                                ---
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- tercera tarjeta -->
+                                        <div class="col-12 col-xl-4">
+                                            <div class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio-edit d-flex flex-column flex-shrink-0"
+                                                style="height: 420px;">
+                                                <div class="card-header border-0 p-0 rounded-top-4">
+                                                    <div class="d-flex align-items-start gap-2 px-3 py-2">
+                                                        <span class="lh-1 mt-2"><i class="bi bi-crosshair"></i></span>
+                                                        <div class="lh-sm">
+                                                            <div class="fw-bold mb-0 text-visor-edit">Visor predio</div>
+                                                            <div class="text-muted d-block text-visualizacion-edit">
+                                                                Visualización espacial del predio
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1 visor-mapa-top-edit editar-predio-visor-wrap">
+                                                    <div id="mapEditarPredioTab2" class="w-100 h-100 m-0 p-0"></div>
+
+                                                    <div id="mapEditarPredioTab2Empty"
+                                                        class="editar-predio-map-empty position-absolute top-50 start-50 translate-middle text-center px-3">
+                                                        Selecciona un predio válido para visualizar su geometría.
+                                                    </div>
+
+                                                    <div
+                                                        class="vp-map-tools-edit position-absolute top-0 end-0 mt-1 me-1 d-flex flex-column gap-1 align-items-end">
+                                                        <button type="button"
+                                                            class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto"
+                                                            id="btnZoomPredioEditarTab2">
+                                                            Zoom predio
+                                                        </button>
+                                                        <button type="button"
+                                                            class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto"
+                                                            id="btnZoomProyectoEditarTab2">
+                                                            Ver proyecto
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- tercera pestaña -->

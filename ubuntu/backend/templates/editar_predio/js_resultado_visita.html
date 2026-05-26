@@ -1,0 +1,498 @@
+<script>
+    var datosPruebaOpcion6 = {};
+</script>
+
+<script>
+    // =========================
+    // PESTAÑA 6 - RESULTADO VISITA CON DATOS DE PRUEBA
+    // =========================
+
+    function obtenerTextoSeleccionOpcion6(valor, textoDefault = 'Ninguna selección') {
+        return valor && String(valor).trim() !== '' ? valor : textoDefault;
+    }
+
+    function actualizarDatoOpcion6(ruta, valor) {
+        asignarValorRutaObjeto(datosPruebaOpcion6, ruta, valor);
+        prepararPayloadEdicionPredio();
+    }
+
+    function crearSelectResultadoVisitaOpcion6() {
+        const valorActual = datosPruebaOpcion6.visita.resultadoVisita;
+
+        const opciones = [
+            { valor: '', texto: 'Ninguna selección' },
+            { valor: 'Exitoso', texto: 'Exitoso' },
+            { valor: 'Incompleto', texto: 'Incompleto' },
+            { valor: 'Menor de edad', texto: 'Menor de edad' },
+            { valor: 'No hay nadie', texto: 'No hay nadie' },
+            { valor: 'No permitieron el acceso', texto: 'No permitieron el acceso' },
+            { valor: 'Sin visita', texto: 'Sin visita' },
+            { valor: 'Situación de orden público', texto: 'Situación de orden público' },
+            { valor: 'Zona de dificil acceso', texto: 'Zona de dificil acceso' }
+        ];
+
+        return `
+            <input type="hidden"
+                name="resultado_visita_predial"
+                id="resultado_visita_predial"
+                value="${escaparHtml(valorActual)}">
+
+            <div class="dropdown w-100">
+                <button
+                    class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                    type="button"
+                    id="dropdownResultadoVisitaPredial"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    <span>${escaparHtml(obtenerTextoSeleccionOpcion6(valorActual))}</span>
+                    <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                </button>
+
+                <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                    ${opciones.map(opcion => `
+                        <li>
+                            <button class="dropdown-item" type="button"
+                                onclick="seleccionarResultadoVisitaPredial('${escaparHtml(opcion.valor)}', '${escaparHtml(opcion.texto)}')">
+                                ${escaparHtml(opcion.texto)}
+                            </button>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        `;
+    }
+
+    function crearSelectTipoDocumentoAtendioOpcion6() {
+        const valorActual = datosPruebaOpcion6.atendioVisita.tipoDocumento;
+
+        const opciones = [
+            { valor: '', texto: 'Ninguna selección' },
+            { valor: 'Cédula de ciudadanía', texto: 'Cédula de ciudadanía' },
+            { valor: 'Cédula de extranjería', texto: 'Cédula de extranjería' },
+            { valor: 'Pasaporte', texto: 'Pasaporte' },
+            { valor: 'Registro Civil', texto: 'Registro Civil' },
+            { valor: 'Secuencial', texto: 'Secuencial' },
+            { valor: 'Tarjeta de identidad', texto: 'Tarjeta de identidad' }
+        ];
+
+        return `
+            <input type="hidden"
+                name="tipo_documento_atendio_visita"
+                id="tipo_documento_atendio_visita"
+                value="${escaparHtml(valorActual)}">
+
+            <div class="dropdown w-100">
+                <button
+                    class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                    type="button"
+                    id="dropdownTipoDocumentoAtendioVisita"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                    <span>${escaparHtml(obtenerTextoSeleccionOpcion6(valorActual))}</span>
+                    <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                </button>
+
+                <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                    ${opciones.map(opcion => `
+                        <li>
+                            <button class="dropdown-item" type="button"
+                                onclick="seleccionarTipoDocumentoAtendioVisita('${escaparHtml(opcion.valor)}', '${escaparHtml(opcion.texto)}')">
+                                ${escaparHtml(opcion.texto)}
+                            </button>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        `;
+    }
+
+    function renderizarResultadoVisitaOpcion6() {
+        const contenedor = document.getElementById('contenedorResultadoVisitaOpcion6');
+        if (!contenedor) return;
+
+        const datos = datosPruebaOpcion6;
+
+        contenedor.innerHTML = `
+            <div class="row g-3">
+
+                <!-- Tarjeta 1 -->
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card h-100 card-opcion6">
+                        <div class="card-body">
+                            <div class="title-tarjet-information mb-4">
+                                Visita
+                            </div>
+
+                            <div class="col-12 mt-2 ms-0">
+                                <div class="mb-4">
+                                    <label class="form-label-information mb-2">
+                                        Resultado de la visita
+                                    </label>
+                                    ${crearSelectResultadoVisitaOpcion6()}
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label-information mb-2">
+                                        Fecha de visita predial
+                                    </label>
+
+                                    <div class="campo-fecha-visita-predial rounded-3 px-2 py-2 w-100 d-flex justify-content-between align-items-center">
+                                        <span id="textoFechaVisitaPredial">
+                                            ${formatearFechaInputAVisual(datos.visita.fechaVisitaPredial)}
+                                        </span>
+
+                                        <div class="campo-fecha-visita-predial-icono-wrap">
+                                            <button
+                                                type="button"
+                                                class="btn campo-fecha-visita-predial-btn"
+                                                onclick="abrirCalendarioFechaVisitaPredial()"
+                                                aria-label="Abrir calendario fecha visita predial">
+                                                <i class="fa-solid fa-calendar-days campo-fecha-visita-predial-icono"></i>
+                                            </button>
+
+                                            <input
+                                                type="date"
+                                                class="campo-fecha-visita-predial-input"
+                                                id="fecha_visita_predial"
+                                                name="fecha_visita_predial"
+                                                value="${escaparHtml(datos.visita.fechaVisitaPredial)}"
+                                                onchange="actualizarFechaVisitaPredial(this.value)">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label-information mb-2">
+                                        Observaciones
+                                    </label>
+
+                                    <div class="rounded-3 w-100 result-information p-2 d-flex align-items-start justify-content-start"
+                                        id="observaciones_visita_predial"
+                                        contenteditable="true"
+                                        spellcheck="false"
+                                        role="textbox"
+                                        tabindex="0"
+                                        onfocus="limpiarPlaceholderCampoEditableOpcion6(this)"
+                                        oninput="actualizarCampoTextoOpcion6('visita.observaciones', this)"
+                                        onblur="finalizarCampoTextoOpcion6('visita.observaciones', this)"
+                                        style="min-height: 108px;">${escaparHtml(datos.visita.observaciones || 'Sin datos...')}</div>
+                                </div>
+
+                                <div class="mb-0">
+                                    <label class="form-label-information mb-2">
+                                        Control de calidad
+                                    </label>
+
+                                    <div class="rounded-3 w-100 result-information p-2 d-flex align-items-start justify-content-start"
+                                        id="control_calidad_visita"
+                                        contenteditable="true"
+                                        spellcheck="false"
+                                        role="textbox"
+                                        tabindex="0"
+                                        onfocus="limpiarPlaceholderCampoEditableOpcion6(this)"
+                                        oninput="actualizarCampoTextoOpcion6('visita.controlCalidad', this)"
+                                        onblur="finalizarCampoTextoOpcion6('visita.controlCalidad', this)"
+                                        style="min-height: 118px;">${escaparHtml(datos.visita.controlCalidad || 'Sin datos...')}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2 -->
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card h-100 card-opcion6">
+                        <div class="card-body">
+                            <div class="title-tarjet-information mb-4">
+                                Datos de quien atendió la visita
+                            </div>
+
+                            <div class="col-12 mt-2 ms-0">
+                                <div class="mb-4">
+                                    <label class="form-label-information mb-2">
+                                        Condición del predio
+                                    </label>
+
+                                    <div class="rounded-3 px-2 py-2 w-100 result-information"
+                                        contenteditable="true"
+                                        spellcheck="false"
+                                        role="textbox"
+                                        tabindex="0"
+                                        onfocus="limpiarPlaceholderCampoEditableOpcion6(this)"
+                                        oninput="actualizarCampoTextoOpcion6('atendioVisita.condicionPredio', this)"
+                                        onblur="finalizarCampoTextoOpcion6('atendioVisita.condicionPredio', this)">
+                                        ${escaparHtml(datos.atendioVisita.condicionPredio || 'Sin datos...')}
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label-information mb-2">
+                                        Tipo de documento
+                                    </label>
+                                    ${crearSelectTipoDocumentoAtendioOpcion6()}
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label-information mb-2">
+                                        Número de documento de quien atendió
+                                    </label>
+
+                                    <div class="rounded-3 px-2 py-2 w-100 result-information"
+                                        id="numero_documento_atendio_visita"
+                                        contenteditable="true"
+                                        spellcheck="false"
+                                        role="textbox"
+                                        tabindex="0"
+                                        onfocus="limpiarPlaceholderCampoEditableOpcion6(this)"
+                                        oninput="actualizarCampoTextoOpcion6('atendioVisita.numeroDocumento', this)"
+                                        onblur="finalizarCampoTextoOpcion6('atendioVisita.numeroDocumento', this)">
+                                        ${escaparHtml(datos.atendioVisita.numeroDocumento || 'Sin datos...')}
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label-information mb-2">
+                                        Correo electrónico
+                                    </label>
+
+                                    <div class="rounded-3 px-2 py-2 w-100 result-information"
+                                        id="correo_atendio_visita"
+                                        contenteditable="true"
+                                        spellcheck="false"
+                                        role="textbox"
+                                        tabindex="0"
+                                        onfocus="limpiarPlaceholderCampoEditableOpcion6(this)"
+                                        oninput="actualizarCampoTextoOpcion6('atendioVisita.correoElectronico', this)"
+                                        onblur="finalizarCampoTextoOpcion6('atendioVisita.correoElectronico', this)">
+                                        ${escaparHtml(datos.atendioVisita.correoElectronico || 'Sin datos...')}
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label-information mb-2">
+                                        Domicilio de notificaciones
+                                    </label>
+
+                                    <div
+                                        class="rounded-3 px-2 py-2 w-100 result-information d-flex align-items-center"
+                                        contenteditable="true"
+                                        spellcheck="false"
+                                        role="textbox"
+                                        tabindex="0"
+                                        data-opcion6-editable="true"
+                                        onfocus="limpiarPlaceholderCampoEditableOpcion6(this)"
+                                        oninput="actualizarCampoTextoOpcion6('atendioVisita.domicilioNotificaciones', this)"
+                                        onblur="finalizarCampoTextoOpcion6('atendioVisita.domicilioNotificaciones', this)">
+                                        ${escaparHtml(datos.atendioVisita.domicilioNotificaciones || 'Sin datos...')}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center w-100 py-2 rounded-3 field-check-custom">
+                                        <span class="text-field-check-etnico">
+                                            ¿Autoriza notificaciones?
+                                        </span>
+
+                                        <input
+                                            class="form-check-input check-custom m-0"
+                                            type="checkbox"
+                                            id="autoriza_notificaciones_opcion6"
+                                            name="autoriza_notificaciones_opcion6"
+                                            ${datos.atendioVisita.autorizaNotificaciones ? 'checked' : ''}
+                                            onchange="actualizarCheckAutorizaNotificacionesOpcion6(this.checked)"
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 3 -->
+                <div class="col-12 col-xl-4">
+                    <div class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio-edit d-flex flex-column flex-shrink-0 card-opcion6-visor">
+                        <div class="card-header border-0 p-0 rounded-top-4">
+                            <div class="d-flex align-items-start gap-2 px-3 py-2">
+                                <span class="lh-1 mt-2">
+                                    <i class="bi bi-crosshair"></i>
+                                </span>
+
+                                <div class="lh-sm">
+                                    <div class="fw-bold mb-0 text-visor-edit">
+                                        Visor predio
+                                    </div>
+
+                                    <div class="text-muted d-block text-visualizacion-edit">
+                                        Visualización espacial del predio
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1 visor-mapa-top-edit editar-predio-visor-wrap">
+                            <div id="mapEditarPredioTab6" class="w-100 h-100 m-0 p-0"></div>
+
+                            <div id="mapEditarPredioTab6Empty"
+                                class="editar-predio-map-empty position-absolute top-50 start-50 translate-middle text-center px-3">
+                                Selecciona un predio válido para visualizar su geometría.
+                            </div>
+
+                            <div class="vp-map-tools-edit position-absolute bottom-0 end-0 mb-3 me-3 d-flex flex-column gap-1 align-items-end">
+                                <button type="button"
+                                    class="vp-map-btn-edit btn btn-light btn-sm px-3 py-2 w-auto"
+                                    id="btnZoomProyectoEditarTab6">
+                                    <i class="fa-solid fa-eye me-2"></i>
+                                    Ver Proyecto
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        `;
+
+        habilitarCamposEditables();
+        prepararPayloadEdicionPredio();
+    }
+
+    function seleccionarResultadoVisitaPredial(valor, texto) {
+        datosPruebaOpcion6.visita.resultadoVisita = valor;
+
+        const hiddenInput = document.getElementById('resultado_visita_predial');
+        const dropdown = document.getElementById('dropdownResultadoVisitaPredial');
+
+        if (hiddenInput) hiddenInput.value = valor;
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+                <span>${texto}</span>
+                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+            `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function seleccionarTipoDocumentoAtendioVisita(valor, texto) {
+        datosPruebaOpcion6.atendioVisita.tipoDocumento = valor;
+
+        const hiddenInput = document.getElementById('tipo_documento_atendio_visita');
+        const dropdown = document.getElementById('dropdownTipoDocumentoAtendioVisita');
+
+        if (hiddenInput) hiddenInput.value = valor;
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+                <span>${texto}</span>
+                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+            `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // funciones para el campo del calendario de la pestaña 6
+    function abrirCalendarioFechaVisitaPredial() {
+        const input = document.getElementById('fecha_visita_predial');
+        if (!input) return;
+
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+        } else {
+            input.click();
+            input.focus();
+        }
+    }
+
+    function actualizarFechaVisitaPredial(valor) {
+        datosPruebaOpcion6.visita.fechaVisitaPredial = valor;
+
+        const texto = document.getElementById('textoFechaVisitaPredial');
+
+        if (texto) {
+            texto.textContent = formatearFechaInputAVisual(valor);
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // funciones para el campo del calendario de la pestaña 6
+
+
+
+    // funcion para limpiar los placeholders
+    function limpiarPlaceholderCampoEditableOpcion6(campo) {
+        if (!campo) return;
+
+        const texto = obtenerTextoNormalizado(campo);
+
+        if (texto === '----' || texto === 'Null' || texto === 'Sin datos...') {
+            campo.textContent = '';
+        }
+
+        actualizarEstadoCampoEditable(campo);
+    }
+    // fin funcion para limpiar los placeholders
+
+
+    function actualizarCampoTextoOpcion6(ruta, campo) {
+        if (!campo) return;
+
+        const valor = obtenerValorCampoEditableOpcion6(campo);
+        asignarValorRutaObjeto(datosPruebaOpcion6, ruta, valor);
+
+        actualizarEstadoCampoEditable(campo);
+        prepararPayloadEdicionPredio();
+    }
+
+    function finalizarCampoTextoOpcion6(ruta, campo) {
+        if (!campo) return;
+
+        if (!obtenerValorCampoEditableOpcion6(campo)) {
+            campo.textContent = 'Sin datos...';
+        }
+
+        actualizarCampoTextoOpcion6(ruta, campo);
+    }
+
+
+    // funcion para leer bien el valor de la pestaña 6
+    function obtenerValorCampoEditableOpcion6(campo) {
+        const valor = obtenerTextoNormalizado(campo);
+
+        if (
+            valor === '----' ||
+            valor === 'Null' ||
+            valor === 'Sin datos...'
+        ) {
+            return '';
+        }
+
+        return valor;
+    }
+    // fin funcion para leer bien el valor de la pestaña 6
+
+    // funcion para actuyalizare el campo del select para autorizar las notificaciones
+    function actualizarCheckAutorizaNotificacionesOpcion6(checked) {
+        datosPruebaOpcion6.atendioVisita.autorizaNotificaciones = checked;
+        prepararPayloadEdicionPredio();
+    }
+    // fin funcion para actuyalizare el campo del select para autorizar las notificaciones
+
+    // funcion para poder mostrar el contenido de la pestaña 6
+    function inicializarOpcion6ResultadoVisita() {
+        const contenedor = document.getElementById('contenedorResultadoVisitaOpcion6');
+
+        if (!contenedor) return;
+
+        renderizarResultadoVisitaOpcion6();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', inicializarOpcion6ResultadoVisita);
+    } else {
+        inicializarOpcion6ResultadoVisita();
+    }
+    // fin funcion para poder mostrar el contenido de la pestaña 6
+</script>

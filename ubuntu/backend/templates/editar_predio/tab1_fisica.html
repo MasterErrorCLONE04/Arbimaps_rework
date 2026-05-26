@@ -1,0 +1,477 @@
+                            <div class="tab-pane fade show active" id="opcion1" role="tabpanel">
+                                <div class="card border-0 p-2 px-0 px-md-3">
+                                    <div class="row g-3">
+                                        <!-- primera tarjeta-->
+                                        <div class="col-12 col-md-6 col-xl-4">
+                                            <div class="card h-100">
+                                                <div class="card-body">
+                                                    <div class="title-tarjet-information">Información Básica</div>
+
+                                                    <div class="col-12 mt-2 ms-0">
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2">
+                                                                Número predial nacional
+                                                            </label>
+                                                            <div id="editarNumeroPredialNacional"
+                                                                class="rounded-3 px-2 py-2 w-100 result-information">
+                                                                ----
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2">
+                                                                Número predial anterior
+                                                            </label>
+                                                            <div id="displayNumeroPredialAnterior"
+                                                                class="rounded-3 px-2 py-2 w-100 result-information">
+                                                                ----
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2">
+                                                                Área catastral del terreno
+                                                            </label>
+                                                            <div id="displayAreaCatastral"
+                                                                class="rounded-3 px-2 py-2 w-100 result-information">
+                                                                ----
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- segunda tarjeta-->
+                                        <div class="col-12 col-md-6 col-xl-4">
+                                            <div class="card h-100">
+                                                <div class="card-body">
+                                                    <div class="title-tarjet-information">
+                                                        Características del predio
+                                                    </div>
+
+                                                    <div class="col-12 mt-2 ms-0">
+                                                        <!-- campo de condición del predio -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2">
+                                                                Condición del predio
+                                                            </label>
+
+                                                            <input type="hidden" name="condicion_predio"
+                                                                id="condicion_predio" value="">
+
+                                                            <div class="dropdown w-100">
+                                                                <button
+                                                                    class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                                    type="button" id="dropdownCondicionPredio"
+                                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    <span>Selecciona</span>
+                                                                    <i
+                                                                        class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                                </button>
+
+                                                                <ul
+                                                                    class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarCondicion('', '(Condominio) Matriz')">
+                                                                            (Condominio) Matriz
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarCondicion('', '(Condominio) Unidad predial')">
+                                                                            (Condominio) Unidad predial
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarCondicion('', '(Parque cementerio) Matriz')">
+                                                                            (Parque cementerio) Matriz
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarCondicion('', '(Parque cementerio) Unidad predial')">
+                                                                            (Parque cementerio) Unidad predial
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarCondicion('', '(Propiedad horizontal) Matriz')">
+                                                                            (Propiedad horizontal) Matriz
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarCondicion('', '(Propiedad horizontal) Unidad predial')">
+                                                                            (Propiedad horizontal) Unidad predial
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarCondicion('', 'Bien de uso público')">
+                                                                            Bien de uso público
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarCondicion('', 'Informal')">
+                                                                            Informal
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarCondicion('', 'No propiedad horizontal')">
+                                                                            No propiedad horizontal
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarCondicion('', 'Via')">
+                                                                            Via
+                                                                        </button>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                        <!-- campo de tipo de predio -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2">
+                                                                Tipo de predio
+                                                            </label>
+
+                                                            <input type="hidden" name="tipo_predio" id="tipo_predio"
+                                                                value="">
+
+                                                            <div class="dropdown w-100">
+                                                                <button
+                                                                    class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                                    type="button" id="dropdownTipoPredio"
+                                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    <span>Selecciona</span>
+                                                                    <i
+                                                                        class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                                </button>
+                                                                <!-- opciones con lo '' vacios ya que hay van los campos de la bd -->
+                                                                <ul
+                                                                    class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarTipoPredio('', '')">
+                                                                            (Privado) Colectivo
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarTipoPredio('', '')">
+                                                                            (Privado) Privado
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarTipoPredio('', '')">
+                                                                            (Público)(Baldío) Baldío
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarTipoPredio('', '')">
+                                                                            (Público)(Baldío) Reserva Indigena
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarTipoPredio('', '')">
+                                                                            (Público) Fiscal Patrimonial
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarTipoPredio('', '')">
+                                                                            (Público) Presunto Baldío
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarTipoPredio('', '')">
+                                                                            (Público) Uso público
+                                                                        </button>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                        <!-- campo de destinación económica -->
+                                                        <div class="mb-3">
+                                                            <label class="form-label-information mb-2">
+                                                                Destinación económica
+                                                            </label>
+
+                                                            <input type="hidden" name="destinacion_economica"
+                                                                id="destinacion_economica" value="">
+
+                                                            <div class="dropdown w-100">
+                                                                <button
+                                                                    class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                                    type="button" id="dropdownDestinacionEconomica"
+                                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    <span>Selecciona</span>
+                                                                    <i
+                                                                        class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                                </button>
+
+                                                                <ul
+                                                                    class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Acuícula
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Agroforestal
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Agroindustrial
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Agropecuario
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Agricola
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Comercial
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Conservación y protección ambiental
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Cultural
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Educativo
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Forestal productor
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Habitacional
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Industrial
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Infrastructura asociada a producción
+                                                                            agropecuaria
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Infrastructura de saneamiento básico
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Infrastructura energía renovable eléctrica
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Infrastructura hidráulica
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Infrastructura seguridad
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Infrastructura transporte
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Institucional
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Lote no urbanizable
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Lote Rural
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Lote urbanizable no construido
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Mineria e hidrocarburos
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Pecuario
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Recreacional
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Religioso
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Salubridad
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Servicios funerales
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Servicios sociales
+                                                                        </button>
+                                                                    </li>
+                                                                    <li>
+                                                                        <button class="dropdown-item" type="button"
+                                                                            onclick="seleccionarDestinacionEconomica('', '')">
+                                                                            Uso público
+                                                                        </button>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="title-tarjet-information">
+                                                        Componente especial
+                                                    </div>
+                                                    <!-- campos de comodato y beneficio a comunidades indígenas -->
+                                                    <div class="col-12 mt-2 ms-0">
+                                                        <div
+                                                            class="d-flex justify-content-between align-items-center w-100 px-3 py-2 rounded-3 field-check-custom">
+                                                            <span class="text-field-check">
+                                                                Comodato
+                                                            </span>
+                                                            <input class="form-check-input check-custom m-0"
+                                                                type="checkbox" id="comodatoCheck">
+                                                        </div>
+                                                        <div
+                                                            class="d-flex justify-content-between align-items-center w-100 px-3 py-2 rounded-3 field-check-custom">
+                                                            <span class="text-field-check">
+                                                                ¿Beneficio comunidades indígenas?
+                                                            </span>
+                                                            <input class="form-check-input check-custom m-0"
+                                                                type="checkbox" id="beneficioComunidadesIndigenasCheck">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Tercera tarjeta -->
+                                        <div class="col-12 col-xl-4">
+                                            <div class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio-edit d-flex flex-column flex-shrink-0"
+                                                style="height: 420px;">
+                                                <div class="card-header border-0 p-0 rounded-top-4">
+                                                    <div class="d-flex align-items-start gap-2 px-3 py-2">
+                                                        <span class="lh-1 mt-2"><i class="bi bi-crosshair"></i></span>
+                                                        <div class="lh-sm">
+                                                            <div class="fw-bold mb-0 text-visor-edit">Visor predio</div>
+                                                            <div class="text-muted d-block text-visualizacion-edit">
+                                                                Visualización espacial del predio
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1 visor-mapa-top-edit editar-predio-visor-wrap">
+                                                    <div id="mapEditarPredio" class="w-100 h-100 m-0 p-0"></div>
+
+                                                    <div id="mapEditarPredioEmpty"
+                                                        class="editar-predio-map-empty position-absolute top-50 start-50 translate-middle text-center px-3">
+                                                        Selecciona un predio válido para visualizar su geometría.
+                                                    </div>
+
+                                                    <div
+                                                        class="vp-map-tools-edit position-absolute top-0 end-0 mt-1 me-1 d-flex flex-column gap-1 align-items-end">
+                                                        <button type="button"
+                                                            class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto"
+                                                            id="btnZoomPredioEditar">
+                                                            Zoom predio
+                                                        </button>
+                                                        <button type="button"
+                                                            class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto"
+                                                            id="btnZoomProyectoEditar">
+                                                            Ver proyecto
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>

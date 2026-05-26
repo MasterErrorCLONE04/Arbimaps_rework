@@ -1,0 +1,122 @@
+                            <div class="tab-pane fade" id="opcion5" role="tabpanel">
+                                <div class="card border-0 p-1 px-0 px-md-4">
+                                    <div class="row g-2">
+                                        <div class="col-12 col-md-6 col-xl-4">
+                                            <div class="card card-fixed-opcion5">
+                                                <div class="card-body card-body-scroll-opcion5">
+                                                    <div class="title-tarjet-information">
+                                                        Construcciones
+                                                    </div>
+
+                                                    <div class="col-12 mt-2 ms-0 opcion5-card-content">
+                                                        <div class="mb-3 opcion5-scroll-area">
+                                                            <label class="form-label-information mb-2">
+                                                                Listado de construcciones
+                                                            </label>
+
+                                                            <div id="contenedorListadoConstruccionesOpcion5"></div>
+                                                        </div>
+
+                                                        <div class="text-end opcion5-card-actions">
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-boton-save-direccion px-3 p-2"
+                                                                id="btnAccionConstruccionOpcion5">
+                                                                Añadir Construcción
+                                                                <i class="fa-solid fa-plus ms-1"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-6 col-xl-4">
+                                            <div class="card card-fixed-opcion5">
+                                                <div class="card-body px-1 py-1 card-body-scroll-opcion5">
+                                                    <div class="d-flex align-items-center mb-1">
+                                                        <div class="title-tarjet-information mb-0">
+                                                            Unidad de construcción
+                                                        </div>
+
+                                                        <div id="badgeConstruccionSeleccionadaOpcion5"
+                                                            class="btn px-2 py-1 ms-auto flex-shrink-0"
+                                                            style="background-color:#002F55; color:#fff; font-size:0.633rem; font-weight:700; border-radius:12px; display:none;">
+                                                            <span id="textoBadgeConstruccionSeleccionadaOpcion5">
+                                                                Construcción A
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-12 mt-0 ms-0 px-0 opcion5-card-content">
+                                                        <div class="mb-1 opcion5-scroll-area">
+                                                            <label class="form-label-information mb-1">
+                                                                Listado de U.C.
+                                                            </label>
+
+                                                            <div id="contenedorListadoUnidadConstruccionOpcion5"></div>
+                                                        </div>
+
+                                                        <div class="text-end mt-2 opcion5-card-actions">
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-boton-save-direccion px-3 py-1"
+                                                                id="btnAccionUnidadConstruccionOpcion5"
+                                                                style="display:none;">
+                                                                Añadir U.C.
+                                                                <i class="fa-solid fa-plus ms-1"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Tercera tarjeta: Visor predio -->
+                                        <div class="col-12 col-xl-4">
+                                            <div
+                                                class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio-edit d-flex flex-column flex-shrink-0 card-fixed-opcion5 visor-construcciones-opcion5">
+                                                <div class="card-header border-0 p-0 rounded-top-4">
+                                                    <div class="d-flex align-items-start gap-2 px-3 py-2">
+                                                        <span class="lh-1 mt-2">
+                                                            <i class="bi bi-crosshair"></i>
+                                                        </span>
+
+                                                        <div class="lh-sm">
+                                                            <div class="fw-bold mb-0 text-visor-edit">
+                                                                Visor predio
+                                                            </div>
+
+                                                            <div class="text-muted d-block text-visualizacion-edit">
+                                                                Visualización espacial del predio
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1 visor-mapa-top-edit editar-predio-visor-wrap">
+                                                    <div id="mapEditarPredioTab5" class="w-100 h-100 m-0 p-0"></div>
+
+                                                    <div id="mapEditarPredioTab5Empty"
+                                                        class="editar-predio-map-empty position-absolute top-50 start-50 translate-middle text-center px-3">
+                                                        Selecciona un predio válido para visualizar su geometría.
+                                                    </div>
+
+                                                    <div
+                                                        class="vp-map-tools-edit position-absolute top-0 end-0 mt-1 me-1 d-flex flex-column gap-1 align-items-end">
+                                                        <button type="button"
+                                                            class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto"
+                                                            id="btnZoomPredioEditarTab5">
+                                                            Zoom predio
+                                                        </button>
+
+                                                        <button type="button"
+                                                            class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto"
+                                                            id="btnZoomProyectoEditarTab5">
+                                                            Ver proyecto
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- TODO: fin pestaña 5 construcciones -->

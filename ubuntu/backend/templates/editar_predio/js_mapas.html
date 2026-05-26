@@ -1,0 +1,596 @@
+<script>
+    const rp = "{{ rp }}";
+    let mapInstances = [];
+
+    // Registrar proyección EPSG:9377
+    if (window.proj4 && window.ol) {
+        proj4.defs(
+            "EPSG:9377",
+            "+proj=tmerc +lat_0=4 +lon_0=-73 +k=0.9992 +x_0=5000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
+        );
+        ol.proj.proj4.register(proj4);
+    }
+
+    function setVectorScopeMode(mapObj) {
+        mapObj.assignmentWmsLayer?.setVisible(false);
+        mapObj.assignmentTerrenosLayer?.setVisible(false);
+        mapObj.assignmentPrediosLayer?.setVisible(false);
+        mapObj.assignmentUcLayer?.setVisible(true);
+        mapObj.assignedScopeLayer?.setVisible(true);
+    }
+
+    function setWmsScopeMode(mapObj) {
+        mapObj.assignmentWmsLayer?.setVisible(true);
+        mapObj.assignmentTerrenosLayer?.setVisible(false);
+        mapObj.assignmentPrediosLayer?.setVisible(false);
+        mapObj.assignmentUcLayer?.setVisible(false);
+        mapObj.assignedScopeLayer?.setVisible(false);
+    }
+
+    function initializeMapViewer(mapElementId) {
+        if (!window.ol) return null;
+        const mapTarget = document.getElementById(mapElementId);
+        if (!mapTarget) return null;
+
+        try {
+            const projection = ol.proj.get("EPSG:9377");
+            const defaultExtent = [4508003.5, 1760960.25, 4532217.0, 1793534.0];
+
+            const osmLayer = new ol.layer.Tile({
+                source: new ol.source.OSM(),
+                visible: true,
+            });
+
+            // Capa WMS
+            const assignmentWmsLayer = new ol.layer.Tile({
+                source: new ol.source.TileWMS({
+                    url: `${window.rp || ""}/geoserver/B_ASIGNACIONES_ARB/wms`,
+                    params: {
+                        "LAYERS": "B_ASIGNACIONES_ARB:ASIGNACIONES",
+                        "TILED": true,
+                        "VERSION": "1.1.0",
+                        "FORMAT": "image/png",
+                        "TRANSPARENT": true,
+                        "SRS": "EPSG:9377",
+                    },
+                    serverType: "geoserver",
+                    crossOrigin: "anonymous",
+                    transition: 0,
+                }),
+                visible: false,
+                opacity: 0.85,
+                zIndex: 20,
+            });
+
+            const assignmentTerrenosLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: "#f59e0b", width: 1.8 }),
+                    fill: new ol.style.Fill({ color: "rgba(245, 158, 11, 0.12)" }),
+                }),
+                visible: false,
+            });
+
+            const assignedScopeLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: "#16a34a", width: 2 }),
+                    fill: new ol.style.Fill({ color: "rgba(34, 197, 94, 0.14)" }),
+                }),
+                visible: true,
+                zIndex: 24,
+            });
+
+            const assignmentPrediosLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: "#0ea5e9", width: 2.2 }),
+                    fill: new ol.style.Fill({ color: "rgba(14, 165, 233, 0.10)" }),
+                }),
+                visible: false,
+            });
+
+            const assignmentUcLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: "#ef4444", width: 1.8 }),
+                    fill: new ol.style.Fill({ color: "rgba(0, 0, 0, 0)" }),
+                }),
+                visible: false,
+            });
+
+            const highlightLayer = new ol.layer.Vector({
+                source: new ol.source.Vector(),
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({ color: "#2563eb", width: 3.5 }),
+                    fill: new ol.style.Fill({ color: "rgba(37, 99, 235, 0.24)" }),
+                }),
+                zIndex: 30,
+            });
+
+            const mapInstance = new ol.Map({
+                target: mapElementId,
+                layers: [
+                    osmLayer,
+                    assignmentWmsLayer,
+                    assignmentTerrenosLayer,
+                    assignmentPrediosLayer,
+                    assignmentUcLayer,
+                    assignedScopeLayer,
+                    highlightLayer,
+                ],
+                view: new ol.View({
+                    projection: projection,
+                    center: ol.extent.getCenter(defaultExtent),
+                    zoom: 2,
+                }),
+            });
+
+            const mapObj = {
+                mapElementId: mapElementId,
+                mapInstance: mapInstance,
+                assignmentWmsLayer: assignmentWmsLayer,
+                assignmentTerrenosLayer: assignmentTerrenosLayer,
+                assignedScopeLayer: assignedScopeLayer,
+                assignmentPrediosLayer: assignmentPrediosLayer,
+                assignmentUcLayer: assignmentUcLayer,
+                highlightLayer: highlightLayer,
+                currentPredioFeature: null,
+                assignmentExtent: null,
+                wmsFieldNames: null,
+                pendingWmsFilters: [],
+                activeWmsFilterIdx: -1,
+                wmsScopedApplied: false
+            };
+
+            setVectorScopeMode(mapObj);
+
+            const enableVectorFallback = () => {
+                setVectorScopeMode(mapObj);
+                mapObj.wmsScopedApplied = false;
+                mapObj.pendingWmsFilters = [];
+                mapObj.activeWmsFilterIdx = -1;
+            };
+
+            const applyWmsFilterByIndex = (idx) => {
+                if (!assignmentWmsLayer?.getSource) return false;
+                if (!Array.isArray(mapObj.pendingWmsFilters) || idx < 0 || idx >= mapObj.pendingWmsFilters.length) return false;
+                const cql = mapObj.pendingWmsFilters[idx];
+                mapObj.activeWmsFilterIdx = idx;
+                console.info(`[${mapElementId}] Aplicando CQL_FILTER:`, cql);
+                assignmentWmsLayer.getSource().updateParams({
+                    "CQL_FILTER": cql,
+                    "STYLES": "",
+                });
+                setWmsScopeMode(mapObj);
+                return true;
+            };
+
+            const wmsSource = assignmentWmsLayer.getSource();
+            wmsSource?.on?.("tileloaderror", () => {
+                const nextIdx = mapObj.activeWmsFilterIdx + 1;
+                if (Array.isArray(mapObj.pendingWmsFilters) && nextIdx < mapObj.pendingWmsFilters.length) {
+                    console.warn(`[${mapElementId}] CQL_FILTER no válido, probando siguiente candidato.`);
+                    if (applyWmsFilterByIndex(nextIdx)) return;
+                }
+                console.warn(`[${mapElementId}] WMS no disponible o filtro inválido; activando fallback de alcance.`);
+                enableVectorFallback();
+            });
+
+            // Vincular botones de zoom
+            let suffix = "";
+            if (mapElementId === "mapEditarPredio") suffix = "";
+            else if (mapElementId === "mapEditarPredioTab2") suffix = "Tab2";
+            else if (mapElementId === "mapEditarPredioTab3Card3") suffix = "Tab3Card3";
+            else if (mapElementId === "mapEditarPredioTab5") suffix = "Tab5";
+            else if (mapElementId === "mapEditarPredioTab6") suffix = "Tab6";
+            else if (mapElementId === "mapEditarPredioTab7") suffix = "Tab7";
+
+            const zoomPredioBtn = document.getElementById(`btnZoomPredioEditar${suffix}`);
+            if (zoomPredioBtn) {
+                zoomPredioBtn.addEventListener("click", () => zoomToPredio(mapObj));
+            }
+            const zoomProyectoBtn = document.getElementById(`btnZoomProyectoEditar${suffix}`);
+            if (zoomProyectoBtn) {
+                zoomProyectoBtn.addEventListener("click", () => zoomToProject(mapObj));
+            }
+
+            mapInstances.push(mapObj);
+            return mapInstance;
+        } catch (error) {
+            console.error(`Error inicializando mapa ${mapElementId}:`, error);
+            return null;
+        }
+    }
+
+    function initAllMaps() {
+        if (!window.ol) {
+            console.warn("OpenLayers no está disponible. Los mapas no se inicializaron.");
+            return;
+        }
+
+        initializeMapViewer("mapEditarPredio");
+        initializeMapViewer("mapEditarPredioTab2");
+        initializeMapViewer("mapEditarPredioTab3Card3");
+        initializeMapViewer("mapEditarPredioTab5");
+        initializeMapViewer("mapEditarPredioTab6");
+        initializeMapViewer("mapEditarPredioTab7");
+    }
+
+    function clearAssignmentScopeGeometry(mapObj) {
+        mapObj.assignmentExtent = null;
+        mapObj.assignmentPrediosLayer?.getSource?.().clear();
+        mapObj.assignmentTerrenosLayer?.getSource?.().clear();
+        mapObj.assignmentUcLayer?.getSource?.().clear();
+        mapObj.assignedScopeLayer?.getSource?.().clear();
+        if (mapObj.assignmentWmsLayer?.getSource) {
+            mapObj.assignmentWmsLayer.getSource().updateParams({
+                "CQL_FILTER": null,
+                "STYLES": "",
+            });
+            setVectorScopeMode(mapObj);
+        }
+        mapObj.wmsScopedApplied = false;
+        mapObj.pendingWmsFilters = [];
+        mapObj.activeWmsFilterIdx = -1;
+    }
+
+    function clearPredioGeometry(mapObj) {
+        mapObj.currentPredioFeature = null;
+        if (mapObj.highlightLayer?.getSource) {
+            mapObj.highlightLayer.getSource().clear();
+        }
+    }
+
+    function isValidExtent(extent) {
+        if (!Array.isArray(extent) || extent.length !== 4) return false;
+        const values = extent.map((v) => Number(v));
+        return (
+            values.every((v) => Number.isFinite(v)) &&
+            values[0] < values[2] &&
+            values[1] < values[3]
+        );
+    }
+
+    function _readFeaturesSmart(collection) {
+        const fc = collection && collection.type === "FeatureCollection"
+            ? collection
+            : { type: "FeatureCollection", features: [] };
+        const format = new ol.format.GeoJSON();
+        try {
+            return format.readFeatures(fc, {
+                dataProjection: "EPSG:9377",
+                featureProjection: "EPSG:9377",
+            });
+        } catch (_e) {
+            try {
+                return format.readFeatures(fc, {
+                    dataProjection: "EPSG:4326",
+                    featureProjection: "EPSG:9377",
+                });
+            } catch (_e2) {
+                return [];
+            }
+        }
+    }
+
+    async function _loadWmsFieldNames(mapObj) {
+        if (Array.isArray(mapObj.wmsFieldNames) && mapObj.wmsFieldNames.length) return mapObj.wmsFieldNames;
+        try {
+            const u = new URL(`${rp}/geoserver/B_ASIGNACIONES_ARB/wfs`, window.location.origin);
+            u.searchParams.set("service", "WFS");
+            u.searchParams.set("version", "1.1.0");
+            u.searchParams.set("request", "DescribeFeatureType");
+            u.searchParams.set("typeName", "B_ASIGNACIONES_ARB:ASIGNACIONES");
+            u.searchParams.set("typename", "B_ASIGNACIONES_ARB:ASIGNACIONES");
+            const r = await fetch(u.toString(), { credentials: "same-origin" });
+            if (!r.ok) return [];
+            const xml = await r.text();
+            const doc = new DOMParser().parseFromString(xml, "text/xml");
+            const els = Array.from(doc.getElementsByTagNameNS("*", "element"));
+            const names = els
+                .map((el) => String(el.getAttribute("name") || "").trim())
+                .filter(Boolean);
+            mapObj.wmsFieldNames = names;
+            console.info(`[${mapObj.mapElementId}] Campos WMS detectados:`, names);
+            return names;
+        } catch (_err) {
+            return [];
+        }
+    }
+
+    function _applyScopedWmsFilter(mapObj, scopePayload = {}) {
+        if (!mapObj.assignmentWmsLayer?.getSource) return false;
+        const asigId = Number(scopePayload?.asignacion_id);
+        const workDataset = String(scopePayload?.work_datasetname ?? "").trim();
+        const basketIdsSet = new Set();
+        const predialSet = new Set();
+        const pushBasket = (v) => {
+            const n = Number(v);
+            if (Number.isInteger(n) && n > 0) basketIdsSet.add(n);
+        };
+        const pushPredial = (v) => {
+            const s = String(v ?? "").trim();
+            if (s) predialSet.add(s);
+        };
+
+        if (Array.isArray(scopePayload?.basket_ids)) {
+            scopePayload.basket_ids.forEach(pushBasket);
+        }
+
+        const predioFeatures = Array.isArray(scopePayload?.predios?.features) ? scopePayload.predios.features : [];
+        const terrenoFeatures = Array.isArray(scopePayload?.terrenos?.features) ? scopePayload.terrenos.features : [];
+        const ucFeatures = Array.isArray(scopePayload?.unidades_construccion?.features) ? scopePayload.unidades_construccion.features : [];
+        predioFeatures.forEach((f) => {
+            pushBasket(f?.properties?.basket_id);
+            pushPredial(f?.properties?.numero_predial_nacional);
+        });
+        terrenoFeatures.forEach((f) => {
+            pushBasket(f?.properties?.basket_id);
+            pushPredial(f?.properties?.numero_predial_nacional);
+        });
+        ucFeatures.forEach((f) => {
+            pushBasket(f?.properties?.basket_id);
+            pushPredial(f?.properties?.numero_predial_nacional);
+        });
+
+        const basketIds = Array.from(basketIdsSet.values()).sort((a, b) => a - b);
+        const prediales = Array.from(predialSet.values());
+
+        const filters = [];
+        const fields = Array.isArray(mapObj.wmsFieldNames) ? mapObj.wmsFieldNames : [];
+        const fieldByLower = new Map(fields.map((f) => [String(f).toLowerCase(), f]));
+        const pickField = (...names) => {
+            for (const name of names) {
+                const found = fieldByLower.get(String(name).toLowerCase());
+                if (found) return found;
+            }
+            return null;
+        };
+
+        const fNumPredial = pickField("numero_predial", "numero_predial_nacional", "predio_numero_predial")
+            || "numero_predial";
+        const fBasket = pickField("t_basket", "basket", "t_basket_id")
+            || "t_basket";
+        const fAsigId = pickField("asignacion_id", "id_asignacion", "asignacion");
+        const fDataset = pickField("work_datasetname", "datasetname", "dataset_name");
+
+        if (Number.isInteger(asigId) && asigId > 0 && fAsigId) {
+            filters.push(`${fAsigId} = ${asigId}`);
+        }
+        if (workDataset && fDataset) {
+            const dsQuoted = workDataset.replace(/'/g, "''");
+            filters.push(`${fDataset} = '${dsQuoted}'`);
+        }
+        if (Number.isInteger(asigId) && asigId > 0 && fAsigId && workDataset && fDataset) {
+            const dsQuoted = workDataset.replace(/'/g, "''");
+            filters.push(`${fAsigId} = ${asigId} AND ${fDataset} = '${dsQuoted}'`);
+        }
+
+        if (prediales.length) {
+            const quotedVals = prediales.map((v) => `'${v.replace(/'/g, "''")}'`).join(",");
+            filters.push(`${fNumPredial} IN (${quotedVals})`);
+            if (fNumPredial !== "numero_predial_nacional") {
+                filters.push(`numero_predial_nacional IN (${quotedVals})`);
+            }
+            if (fNumPredial !== "predio_numero_predial") {
+                filters.push(`predio_numero_predial IN (${quotedVals})`);
+            }
+        }
+        if (basketIds.length) {
+            filters.push(`${fBasket} IN (${basketIds.join(",")})`);
+            if (fBasket !== "t_basket") {
+                filters.push(`t_basket IN (${basketIds.join(",")})`);
+            }
+        }
+        if (!filters.length) return false;
+
+        mapObj.pendingWmsFilters = filters;
+        mapObj.activeWmsFilterIdx = -1;
+        const cql = mapObj.pendingWmsFilters[0];
+        mapObj.assignmentWmsLayer.getSource().updateParams({
+            "CQL_FILTER": cql,
+            "STYLES": "",
+        });
+        console.info(`[${mapObj.mapElementId}] Aplicando CQL_FILTER:`, cql);
+        setWmsScopeMode(mapObj);
+        mapObj.activeWmsFilterIdx = 0;
+        mapObj.wmsScopedApplied = true;
+        return true;
+    }
+
+    function extractPredioGeometry(predioRecord = {}) {
+        const candidates = Object.values(predioRecord || {});
+        for (const candidate of candidates) {
+            const parsed = _parseGeometryCandidate(candidate);
+            if (parsed) return parsed;
+        }
+        return null;
+    }
+
+    function _parseGeometryCandidate(value) {
+        if (!value) return null;
+        if (typeof value === "string") {
+            const text = value.trim();
+            if (!text) return null;
+            try {
+                const parsed = JSON.parse(text);
+                return _parseGeometryCandidate(parsed);
+            } catch (_e) {
+                return null;
+            }
+        }
+        if (typeof value !== "object") return null;
+        if (!value.type) return null;
+        if (value.type === "Feature" && value.geometry) return value.geometry;
+        if (Array.isArray(value.coordinates)) return value;
+        return null;
+    }
+
+    function findAssignedGeometryByNumeroPredial(mapObj, numeroPredial) {
+        const npn = String(numeroPredial ?? "").trim();
+        if (!npn || !mapObj.assignedScopeLayer?.getSource) return null;
+        const features = mapObj.assignedScopeLayer.getSource().getFeatures() || [];
+        for (const feature of features) {
+            const val = String(feature?.get?.("numero_predial_nacional") ?? "").trim();
+            if (val && val === npn) {
+                const g = feature.getGeometry?.();
+                if (g) return g.clone();
+            }
+        }
+        return null;
+    }
+
+    function zoomToPredio(mapObj) {
+        if (!mapObj.mapInstance || !mapObj.currentPredioFeature) return;
+        mapObj.mapInstance.getView().fit(mapObj.currentPredioFeature.getGeometry().getExtent(), {
+            padding: [40, 40, 40, 40],
+            duration: 450,
+            maxZoom: 20,
+        });
+    }
+
+    function zoomToProject(mapObj) {
+        if (!mapObj.mapInstance) return;
+        const defaultExtent = [4508003.5, 1760960.25, 4532217.0, 1793534.0];
+        const targetExtent = isValidExtent(mapObj.assignmentExtent) ? mapObj.assignmentExtent : defaultExtent;
+        mapObj.mapInstance.getView().fit(targetExtent, {
+            padding: [40, 40, 40, 40],
+            duration: 450,
+        });
+    }
+
+    async function loadAssignmentScope(asignacionId) {
+        if (!mapInstances.length) return;
+        const idNum = Number(asignacionId);
+        if (!idNum || idNum < 1) return;
+
+        try {
+            const resp = await fetch(`${rp}/asignaciones/${encodeURIComponent(idNum)}/scope-geojson`, {
+                credentials: "same-origin",
+                headers: { "Accept": "application/json" }
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) return;
+
+            for (const mapObj of mapInstances) {
+                clearAssignmentScopeGeometry(mapObj);
+                await _loadWmsFieldNames(mapObj);
+
+                const predioFeatures = _readFeaturesSmart(data?.predios);
+                const terrenoFeatures = _readFeaturesSmart(data?.terrenos);
+                const ucFeatures = _readFeaturesSmart(data?.unidades_construccion);
+
+                mapObj.assignmentPrediosLayer?.getSource?.().addFeatures(predioFeatures);
+                mapObj.assignmentTerrenosLayer?.getSource?.().addFeatures(terrenoFeatures);
+                mapObj.assignmentUcLayer?.getSource?.().addFeatures(ucFeatures);
+
+                const assignedFeatures = terrenoFeatures.length
+                    ? terrenoFeatures
+                    : (ucFeatures.length ? ucFeatures : predioFeatures);
+                mapObj.assignedScopeLayer?.getSource?.().addFeatures(assignedFeatures);
+
+                if (!_applyScopedWmsFilter(mapObj, data)) {
+                    setVectorScopeMode(mapObj);
+                }
+
+                let combinedExtent = null;
+                const appendExtent = (extent) => {
+                    if (!extent || !isValidExtent(extent)) return;
+                    if (!combinedExtent) {
+                        combinedExtent = extent.slice();
+                        return;
+                    }
+                    ol.extent.extend(combinedExtent, extent);
+                };
+                if (predioFeatures.length) {
+                    appendExtent(mapObj.assignmentPrediosLayer.getSource().getExtent());
+                }
+                if (terrenoFeatures.length) {
+                    appendExtent(mapObj.assignmentTerrenosLayer.getSource().getExtent());
+                }
+                if (ucFeatures.length) {
+                    appendExtent(mapObj.assignmentUcLayer.getSource().getExtent());
+                }
+
+                if (combinedExtent && isValidExtent(combinedExtent)) {
+                    mapObj.assignmentExtent = combinedExtent;
+                    mapObj.mapInstance.getView().fit(mapObj.assignmentExtent, {
+                        padding: [40, 40, 40, 40],
+                        duration: 500,
+                        maxZoom: 19,
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Error loading assignment scope:", err);
+        }
+    }
+
+    function updateMapsWithPredioDetalle(detalle = {}, numeroPredial = "") {
+        if (!mapInstances.length) return;
+
+        const geometryObj = extractPredioGeometry(detalle?.predio || {});
+        const format = new ol.format.GeoJSON();
+
+        for (const mapObj of mapInstances) {
+            clearPredioGeometry(mapObj);
+
+            // Ocultar placeholder de mapa vacío al cargar geometría
+            const emptyEl = document.getElementById(mapObj.mapElementId + "Empty");
+            if (emptyEl) {
+                emptyEl.style.display = "none";
+            }
+
+            let geometry = null;
+            if (geometryObj) {
+                try {
+                    geometry = format.readGeometry(geometryObj, {
+                        dataProjection: "EPSG:9377",
+                        featureProjection: "EPSG:9377",
+                    });
+                } catch (_e) { }
+                if (!geometry) {
+                    try {
+                        geometry = format.readGeometry(geometryObj, {
+                            dataProjection: "EPSG:4326",
+                            featureProjection: "EPSG:9377",
+                        });
+                    } catch (_e) { }
+                }
+            }
+            if (!geometry) {
+                geometry = findAssignedGeometryByNumeroPredial(mapObj, numeroPredial);
+            }
+            if (!geometry) continue;
+
+            mapObj.currentPredioFeature = new ol.Feature({ geometry });
+            mapObj.highlightLayer.getSource().addFeature(mapObj.currentPredioFeature);
+
+            zoomToPredio(mapObj);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initAllMaps();
+
+        // Controlar tamaño de mapas al cambiar de pestaña
+        const tabElList = document.querySelectorAll('button[data-bs-toggle="pill"]');
+        tabElList.forEach(tabEl => {
+            tabEl.addEventListener('shown.bs.tab', () => {
+                mapInstances.forEach(mapObj => {
+                    if (mapObj.mapInstance) {
+                        mapObj.mapInstance.updateSize();
+                    }
+                });
+            });
+        });
+
+        // Cargar alcance de asignación si el ID está en la URL
+        const params = new URLSearchParams(window.location.search);
+        const asignacionId = params.get('id') || params.get('asignacion_id');
+        if (asignacionId) {
+            loadAssignmentScope(asignacionId);
+        }
+    });
+</script>

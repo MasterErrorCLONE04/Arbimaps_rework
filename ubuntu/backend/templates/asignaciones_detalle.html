@@ -4375,7 +4375,7 @@
       /* informacion de derechos */
       setPanelTextEdit("panel_fecha_inicio_tenencia_edit", item.fecha_inicio_tenencia || "---");
       setPanelTextEdit("panel_tipo_derecho_edit", item.tipo_derecho_nombre || item.tipo_derecho || "---");
-      setPanelTextEdit("panel_posesion_ancestral_edit", item.posesion_ancestral_tradicional || "---");
+      setPanelTextEdit("panel_posesion_ancestral_edit", asSiNoEdit(item.posesion_ancestral_tradicional));
       setPanelTextEdit("panel_descripcion_derecho_edit", item.descripcion_derecho || "---");
 
       /* informacion fuente administrativa */

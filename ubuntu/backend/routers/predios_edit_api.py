@@ -1,4 +1,5 @@
 ﻿from typing import Optional
+import logging
 import re
 import secrets
 
@@ -26,6 +27,7 @@ class EdicionPredioPayload(BaseModel):
     campos_ocultos: dict
     checks: dict
     archivos: dict
+    interesados: Optional[list] = None
 
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -234,6 +236,17 @@ async def guardar_edicion_predio(
                     if not label_text or not label_text.strip() or label_text.strip() == "Selecciona" or label_text.strip() == "Ninguna selección":
                         return None
                     val = label_text.strip()
+                    
+                    # If value is already a numeric ID, verify it exists in the table and return it directly
+                    if val.isdigit():
+                        cur.execute(
+                            f"SELECT t_id FROM {schema_work}.{table_name} WHERE t_id = %s LIMIT 1",
+                            (int(val),),
+                        )
+                        row = cur.fetchone()
+                        if row:
+                            return int(row[0])
+
                     # Try exact match on dispname or ilicode
                     cur.execute(
                         f"""
@@ -333,20 +346,30 @@ async def guardar_edicion_predio(
                         updated_fields.append("observacion_juridica")
 
                 # 2. Update checkboxes in arb_predio
+                comodato_val = None
                 if "comodato" in payload.checks:
-                    val = bool(payload.checks["comodato"])
+                    comodato_val = bool(payload.checks["comodato"])
+                elif "comodatocheck" in payload.checks:
+                    comodato_val = bool(payload.checks["comodatocheck"])
+
+                if comodato_val is not None:
                     cur.execute(
                         f"UPDATE {schema_work}.arb_predio SET comodato = %s WHERE t_id = %s",
-                        (val, workspace_predio_t_id),
+                        (comodato_val, workspace_predio_t_id),
                     )
                     if cur.rowcount:
                         updated_fields.append("comodato")
 
+                beneficio_val = None
                 if "beneficio_comunidades_indigenas" in payload.checks:
-                    val = bool(payload.checks["beneficio_comunidades_indigenas"])
+                    beneficio_val = bool(payload.checks["beneficio_comunidades_indigenas"])
+                elif "beneficiocomunidadesindigenascheck" in payload.checks:
+                    beneficio_val = bool(payload.checks["beneficiocomunidadesindigenascheck"])
+
+                if beneficio_val is not None:
                     cur.execute(
                         f"UPDATE {schema_work}.arb_predio SET beneficio_comunidades_indigenas = %s WHERE t_id = %s",
-                        (val, workspace_predio_t_id),
+                        (beneficio_val, workspace_predio_t_id),
                     )
                     if cur.rowcount:
                         updated_fields.append("beneficio_comunidades_indigenas")
@@ -392,6 +415,163 @@ async def guardar_edicion_predio(
                     if cur.rowcount:
                         updated_fields.append("arb_direccion.tipo_direccion")
 
+                # 5. Sincronizar interesados (derecho/fuente/interesado)
+                if payload.interesados is not None:
+                    import uuid
+                    # Obtener IDs existentes para este predio
+                    cur.execute(
+                        f"SELECT t_id FROM {schema_work}.arb_derechointeresadofuente WHERE predio = %s",
+                        (workspace_predio_t_id,),
+                    )
+                    existing_ids = {row[0] for row in cur.fetchall()}
+                    retained_ids = set()
+
+                    for item in payload.interesados:
+                        id_persona = item.get("idPersona")
+                        
+                        # Extraer y limpiar campos
+                        d_cuota = clean_num(str(item.get("cuotaParticipacion") or ""))
+                        d_fecha_inicio = item.get("fechaInicioTendencia") or None
+                        if d_fecha_inicio == "" or d_fecha_inicio == "----":
+                            d_fecha_inicio = None
+                        d_posesion_ancestral = bool(item.get("posesionAncestralTradicional"))
+                        d_desc = item.get("descripcion") or None
+                        
+                        fa_numero = item.get("numeroFuente") or None
+                        # Soporte para fechas en sub-objeto o planas
+                        fuente_obj = item.get("fuente") or {}
+                        if isinstance(fuente_obj, dict):
+                            fa_fecha_doc = fuente_obj.get("fechaDocumentoFuente") or item.get("fechaDocumentoFuente")
+                            fa_tipo_raw = fuente_obj.get("tipoFuenteAdministrativa") or item.get("tipoFuenteAdministrativa")
+                        else:
+                            fa_fecha_doc = item.get("fechaDocumentoFuente")
+                            fa_tipo_raw = item.get("tipoFuenteAdministrativa")
+                        
+                        if fa_fecha_doc == "" or fa_fecha_doc == "----":
+                            fa_fecha_doc = None
+                        fa_ente = item.get("enteEmisor") or None
+                        fa_oficina = clean_int(str(item.get("oficinaOrigen") or ""))
+                        fa_nombre = item.get("nombreEente") or item.get("nombre") or None
+                        fa_ciudad = item.get("ciudadOrigenEnte") or None
+                        fa_estado = item.get("estadoDisponibilidad") or None
+                        fa_desc = item.get("descripcionFuente") or item.get("descripcionFuenteGeneral") or None
+                        
+                        i_doc = item.get("numeroDocumento") or None
+                        i_primer_nom = item.get("primerNombre") or None
+                        i_segundo_nom = item.get("segundoNombre") or None
+                        i_primer_ape = item.get("primerApellido") or None
+                        i_segundo_ape = item.get("segundoApellido") or None
+                        i_razon = item.get("razonSocial") or None
+                        i_campesino = bool(item.get("autorreconoceCampesino"))
+                        i_etnico = bool(item.get("autorreconoceEtnico"))
+                        
+                        ic_dep = item.get("departamentoResidencia") or None
+                        ic_mun = item.get("municipioResidencia") or None
+                        ic_dom = item.get("domicilioResidencia") or None
+                        ic_dir = item.get("direccionResidencia") or None
+                        ic_tel = clean_num(str(item.get("telefono") or ""))
+                        ic_email = item.get("correoElectronico") or None
+                        
+                        # Resolver tipos usando resolve_lookup
+                        d_tipo_id = resolve_lookup("arb_derechotipo", item.get("tipoDerechoSeleccionado")) or 829
+                        fa_tipo_id = resolve_lookup("arb_fuenteadministrativatipo", fa_tipo_raw) or 207
+                        i_tipo_id = resolve_lookup("arb_interesadotipo", item.get("tipoInteresado")) or 887
+                        i_tipo_doc_id = resolve_lookup("arb_interesadodocumentotipo", item.get("tipoDocumento")) or 850
+                        i_sexo_id = resolve_lookup("arb_sexotipo", item.get("genero") or item.get("sexo")) or 1031
+                        i_grupo_etnico_id = resolve_lookup("arb_grupoetnicotipo", item.get("grupoEtnico"))
+
+                        try:
+                            # Debe ser un entero positivo >= 1 para considerarse registro existente
+                            # Decimales (Math.random()), negativos o 0 van por INSERT
+                            id_val = float(id_persona) if id_persona is not None else 0.0
+                            is_existing = id_val >= 1 and float(int(id_val)) == id_val
+                        except (ValueError, TypeError):
+                            is_existing = False
+
+                        if is_existing:
+                            id_persona_int = int(id_val)
+                            retained_ids.add(id_persona_int)
+                            
+                            cur.execute(
+                                f"""
+                                UPDATE {schema_work}.arb_derechointeresadofuente
+                                SET d_tipo = %s, d_cuota_participacion = %s, d_fecha_inicio_tenencia = %s,
+                                    d_posesion_ancestral_y_o_tradicional = %s, d_descripcion = %s,
+                                    fa_tipo = %s, fa_numero_fuente = %s, fa_fecha_documento_fuente = %s,
+                                    fa_ente_emisor = %s, oficina_origen = %s, nombre = %s,
+                                    ciudad_origen = %s, estado_disponibilidad = %s, descripcion_fuente = %s,
+                                    i_tipo = %s, i_tipo_documento = %s, i_documento_identidad = %s,
+                                    i_primer_nombre = %s, i_segundo_nombre = %s, i_primer_apellido = %s,
+                                    i_segundo_apellido = %s, i_sexo = %s, i_grupo_etnico = %s,
+                                    i_razon_social = %s, i_autorreconocimiento_campesino = %s,
+                                    i_autorreconocimiento_etnico = %s, ic_departamento = %s,
+                                    ic_municipio = %s, ic_domicilio_notificacion = %s,
+                                    ic_direccion_residencia = %s, ic_telefono = %s,
+                                    ic_correo_electronico = %s
+                                WHERE t_id = %s AND predio = %s
+                                """,
+                                (
+                                    d_tipo_id, d_cuota, d_fecha_inicio, d_posesion_ancestral, d_desc,
+                                    fa_tipo_id, fa_numero, fa_fecha_doc, fa_ente, fa_oficina, fa_nombre,
+                                    fa_ciudad, fa_estado, fa_desc,
+                                    i_tipo_id, i_tipo_doc_id, i_doc,
+                                    i_primer_nom, i_segundo_nom, i_primer_ape, i_segundo_ape,
+                                    i_sexo_id, i_grupo_etnico_id, i_razon, i_campesino, i_etnico,
+                                    ic_dep, ic_mun, ic_dom, ic_dir, ic_tel, ic_email,
+                                    id_persona_int, workspace_predio_t_id
+                                )
+                            )
+                        else:
+                            # Obtener basket del predio
+                            cur.execute(
+                                f"SELECT t_basket FROM {schema_work}.arb_predio WHERE t_id = %s",
+                                (workspace_predio_t_id,),
+                            )
+                            row_p = cur.fetchone()
+                            t_basket = row_p[0] if row_p else None
+                            
+                            t_ili_tid = str(uuid.uuid4())
+                            cur.execute(
+                                f"""
+                                INSERT INTO {schema_work}.arb_derechointeresadofuente (
+                                    t_basket, t_ili_tid, predio, d_tipo, d_cuota_participacion, d_fecha_inicio_tenencia,
+                                    d_posesion_ancestral_y_o_tradicional, d_descripcion,
+                                    fa_tipo, fa_numero_fuente, fa_fecha_documento_fuente,
+                                    fa_ente_emisor, oficina_origen, nombre,
+                                    ciudad_origen, estado_disponibilidad, descripcion_fuente,
+                                    i_tipo, i_tipo_documento, i_documento_identidad,
+                                    i_primer_nombre, i_segundo_nombre, i_primer_apellido,
+                                    i_segundo_apellido, i_sexo, i_grupo_etnico,
+                                    i_razon_social, i_autorreconocimiento_campesino,
+                                    i_autorreconocimiento_etnico, ic_departamento,
+                                    ic_municipio, ic_domicilio_notificacion,
+                                    ic_direccion_residencia, ic_telefono,
+                                    ic_correo_electronico
+                                ) VALUES (
+                                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                                )
+                                """,
+                                (
+                                    t_basket, t_ili_tid, workspace_predio_t_id,
+                                    d_tipo_id, d_cuota, d_fecha_inicio, d_posesion_ancestral, d_desc,
+                                    fa_tipo_id, fa_numero, fa_fecha_doc, fa_ente, fa_oficina, fa_nombre,
+                                    fa_ciudad, fa_estado, fa_desc,
+                                    i_tipo_id, i_tipo_doc_id, i_doc,
+                                    i_primer_nom, i_segundo_nom, i_primer_ape, i_segundo_ape,
+                                    i_sexo_id, i_grupo_etnico_id, i_razon, i_campesino, i_etnico,
+                                    ic_dep, ic_mun, ic_dom, ic_dir, ic_tel, ic_email
+                                )
+                            )
+                    
+                    # Eliminar removidos
+                    deleted_ids = existing_ids - retained_ids
+                    if deleted_ids:
+                        cur.execute(
+                            f"DELETE FROM {schema_work}.arb_derechointeresadofuente WHERE t_id = ANY(%s) AND predio = %s",
+                            (list(deleted_ids), workspace_predio_t_id),
+                        )
+                    updated_fields.append("interesados")
+
                 conn.commit()
                 _safe_log_update_event(
                     payload.asignacion_id,
@@ -402,6 +582,7 @@ async def guardar_edicion_predio(
                 return {"status": "success", "message": "Predio y relaciones actualizados."}
             except Exception as exc:
                 conn.rollback()
+                logging.exception("[guardar_edicion_predio] Error de base de datos al guardar predio %s: %s", predio_t_id, exc)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail=f"Error de base de datos: {exc}",

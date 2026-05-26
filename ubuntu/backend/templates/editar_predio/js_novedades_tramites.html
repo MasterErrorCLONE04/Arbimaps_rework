@@ -1,0 +1,1954 @@
+<script>
+    var datosPruebaOpcion8 = { marcasPrediales: [], novedadesFmi: [], novedadNumeroPredial: [], tramites: [] };
+
+    let marcaPredialSeleccionadaOpcion8 = null;
+    let novedadFmiSeleccionadaOpcion8 = null;
+    let creandoNovedadFmiOpcion8 = false;
+    let novedadNumeroPredialSeleccionadaOpcion8 = null;
+    let creandoNovedadNumeroPredialOpcion8 = false;
+    let tramiteSeleccionadoOpcion8 = null;
+    let creandoTramiteOpcion8 = false;
+
+    const opcionesTipoMarcaPredialOpcion8 = [
+        'Ninguna selección',
+        'Misma identificación y diferente propietario',
+        'Error estructura codificación del tipo de documento',
+        'Predio con propietarios repetidos',
+        'Puntaje de construcciones anexas',
+        'Folio de matrícula inmobiliaria no existente en el Catastro',
+        'Predio con destino lote y con área construida',
+        'Predio al cual se le debe adicionar una construcción',
+        'Códigos asignados',
+        'Diferencia de área en metros cuadrados',
+        'Predios con sentencias judiciales de restitución de tierras',
+        'Construccion sin puntaje',
+        'Predio nuevo',
+        'Predio con folio en sistema antiguo',
+        'Error en la estructura de la dirección',
+        'PH no construido',
+        'Diferencia de área en porcentaje',
+        'Mejoras sin predio matriz asociado',
+        'Error en la estructura de la codificación del propietario',
+        'Predio en omision',
+        'Predio sin destino económico',
+        'Código de terreno que se repite',
+        'Predio con cancelación',
+        'Predio con desenglobe',
+        'Predio sin dirección',
+        'Predio con englobe',
+        'Predio con homónimos en su propietario',
+        'Predio con folio duplicado',
+        'Mejoras con área de terreno',
+        'Mejoras con folio',
+        'Predio con destino no lote, pero sin área construida',
+        'Predio sin folio de matrícula inmobiliaria',
+        'Predios en zonas de importancia ambiental',
+        'Mejoras sin área construida',
+        'Mismo propietario y diferente identificación',
+        'Matricula registral repetida en catastro',
+        'Predio catastral con Folio de matrícula Inmobiliaria no ubicado en el Registro',
+        'Predio con diferente círculo registral',
+        'Revisión de folios cerrados',
+        'Propietario sin identificación',
+        'Predio sin área de terreno',
+        'Predio con demolición',
+        'Predio con cambio de código de sector',
+        'Propietario con identificación inválida',
+        'Predio en comision',
+        'Error en el tipo de documento',
+        'Codificación de usos de construcción PH',
+        'Predio con vacío cartográfico',
+        'Predio con errores en la estructura del folio',
+        'Predios titulados por los anteriores INCORA, INCODER o el actual ANT'
+    ];
+
+    function generarOpcionesTipoMarcaPredialOpcion8(idMarcaPredial) {
+        return opcionesTipoMarcaPredialOpcion8.map((texto) => {
+            const valor = texto === 'Ninguna selección' ? '' : texto;
+
+            return `
+            <li>
+                <button
+                    class="dropdown-item"
+                    type="button"
+                    onclick="seleccionarTipoMarcaPredialOpcion8(${idMarcaPredial}, '${escaparHtml(valor)}', '${escaparHtml(texto)}')">
+                    ${escaparHtml(texto)}
+                </button>
+            </li>
+        `;
+        }).join('');
+    }
+
+    function valorVacioOpcion8(valor) {
+        const texto = String(valor ?? '').trim();
+        return texto || 'Vacío';
+    }
+
+    function formatearFechaOpcion8(valor) {
+        if (!valor) return 'Vacío';
+
+        const partes = valor.split('-');
+        if (partes.length !== 3) return valor;
+
+        const [anio, mes, dia] = partes;
+        return `${Number(dia)}/${Number(mes)}/${anio}`;
+    }
+
+    function crearCampoTextoOpcion8(label, valor, idRegistro, campo, tipo) {
+        return `
+            <div class="mb-3">
+                <label class="form-label-information mb-2">${label}</label>
+                <div
+                    class="rounded-3 px-2 py-2 w-100 result-information"
+                    contenteditable="true"
+                    spellcheck="false"
+                    oninput="actualizarCampoOpcion8('${tipo}', ${idRegistro}, '${campo}', this)">
+                    ${escaparHtml(valorVacioOpcion8(valor))}
+                </div>
+            </div>
+        `;
+    }
+
+    function crearCampoPrincipalOpcion8(label, valor, idRegistro, campo, tipo) {
+        return `
+            <div class="mb-3 campo-principal-opcion8 p-2">
+                <label class="form-label-information mb-2">${label}</label>
+                <div
+                    class="rounded-3 px-2 py-2 w-100 result-information"
+                    contenteditable="true"
+                    spellcheck="false"
+                    oninput="actualizarCampoOpcion8('${tipo}', ${idRegistro}, '${campo}', this)">
+                    ${escaparHtml(valorVacioOpcion8(valor))}
+                </div>
+            </div>
+        `;
+    }
+
+    function crearCampoFechaOpcion8(label, valor, idRegistro, campo, tipo) {
+        const idInput = `fecha_${tipo}_${campo}_${idRegistro}`;
+        const idTexto = `texto_${tipo}_${campo}_${idRegistro}`;
+
+        return `
+            <div class="mb-3">
+                <label class="form-label-information mb-2">${label}</label>
+
+                <div class="rounded-3 px-2 py-2 w-100 campo-fecha-opcion8 d-flex justify-content-between align-items-center">
+                    <span id="${idTexto}">${formatearFechaOpcion8(valor)}</span>
+
+                    <div class="campo-fecha-opcion8-icono-wrap">
+                        <button
+                            type="button"
+                            class="campo-fecha-opcion8-btn"
+                            onclick="abrirCalendarioOpcion8('${idInput}')"
+                            aria-label="Abrir calendario">
+                            <i class="fa-solid fa-calendar-days campo-fecha-opcion8-icono"></i>
+                        </button>
+
+                        <input
+                            type="date"
+                            class="campo-fecha-opcion8-input"
+                            id="${idInput}"
+                            value="${escaparHtml(valor || '')}"
+                            onchange="actualizarFechaOpcion8('${tipo}', ${idRegistro}, '${campo}', this.value, '${idTexto}')">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function crearDropdownTipoMarcaPredialOpcion8(marca) {
+        const opciones = [
+            'Ninguna selección',
+            'Predio con cancelación',
+            'Predio con condición especial',
+            'Predio en revisión',
+            'Predio con inconsistencia',
+            'Predio con alerta jurídica'
+        ];
+
+        return `
+            <div class="mb-3">
+                <label class="form-label-information mb-2">Tipo de marca predial</label>
+
+                <input
+                    type="hidden"
+                    name="tipo_marca_predial_${marca.idMarcaPredial}"
+                    id="tipo_marca_predial_${marca.idMarcaPredial}"
+                    value="${escaparHtml(marca.tipoMarcaPredial || '')}">
+
+                <div class="dropdown w-100">
+                    <button
+                        class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                        type="button"
+                        id="dropdownTipoMarcaPredial_${marca.idMarcaPredial}"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <span>${escaparHtml(marca.tipoMarcaPredial || 'Ninguna selección')}</span>
+                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                    </button>
+
+                    <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                        ${opciones.map((opcion) => `
+                            <li>
+                                <button
+                                    class="dropdown-item"
+                                    type="button"
+                                    onclick="seleccionarTipoMarcaPredialOpcion8(${marca.idMarcaPredial}, '${escaparHtml(opcion === 'Ninguna selección' ? '' : opcion)}', '${escaparHtml(opcion)}')">
+                                    ${escaparHtml(opcion)}
+                                </button>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+
+    function crearCampoCheckOpcion8(label, checked, idRegistro, campo, tipo) {
+        return `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center w-100 py-2 rounded-3 field-check-custom">
+                    <span class="text-field-check-etnico">${label}</span>
+                    <input
+                        class="form-check-input check-custom m-0"
+                        type="checkbox"
+                        ${checked ? 'checked' : ''}
+                        onchange="actualizarCheckOpcion8('${tipo}', ${idRegistro}, '${campo}', this.checked)">
+                </div>
+            </div>
+        `;
+    }
+
+    function crearVisorOpcion8(idMapa, idEmpty) {
+        return `
+            <div class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio-edit d-flex flex-column flex-shrink-0 card-fixed-opcion8 visor-opcion8">
+                <div class="card-header border-0 p-0 rounded-top-4">
+                    <div class="d-flex align-items-start gap-2 px-3 py-2">
+                        <span class="lh-1 mt-2">
+                            <i class="bi bi-crosshair"></i>
+                        </span>
+
+                        <div class="lh-sm">
+                            <div class="fw-bold mb-0 text-visor-edit">
+                                Visor predio
+                            </div>
+
+                            <div class="text-muted d-block text-visualizacion-edit">
+                                Visualización espacial del predio
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1 visor-mapa-top-edit editar-predio-visor-wrap">
+                    <div id="${idMapa}" class="w-100 h-100 m-0 p-0"></div>
+
+                    <div
+                        id="${idEmpty}"
+                        class="editar-predio-map-empty position-absolute top-50 start-50 translate-middle text-center px-3">
+                        Selecciona un predio válido para visualizar su geometría.
+                    </div>
+
+                    <div class="vp-map-tools-edit position-absolute bottom-0 end-0 mb-3 me-3 d-flex flex-column gap-1 align-items-end">
+                        <button type="button" class="vp-map-btn-edit btn btn-light btn-sm px-3 py-2 w-auto">
+                            <i class="fa-solid fa-eye me-2"></i>
+                            Ver Proyecto
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderizarMarcasPredialesOpcion8() {
+        const contenedor = document.getElementById('contenedorMarcasPredialesOpcion8');
+        if (!contenedor) return;
+
+        const marcas = datosPruebaOpcion8.marcasPrediales;
+        const marca = marcas.find((item) => item.idMarcaPredial === marcaPredialSeleccionadaOpcion8) || null;
+
+        contenedor.innerHTML = `
+            <div class="row g-3">
+
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card card-fixed-opcion8">
+                        <div class="card-body card-body-scroll-opcion8">
+                            <div class="title-tarjet-information mb-3">
+                                Listado de marcas prediales
+                            </div>
+
+                            <div class="d-flex flex-column gap-2 mb-3">
+                                ${marcas.map((item) => {
+            const estaSeleccionada = item.idMarcaPredial === marcaPredialSeleccionadaOpcion8;
+
+            return `
+                                        <div
+                                            class="item-listado-opcion8 d-flex justify-content-between align-items-center px-2 py-2 ${estaSeleccionada ? 'active' : ''}">
+
+                                            <button
+                                                type="button"
+                                                class="btn btn-ojo-marca-predial-opcion8 p-0 border-0 shadow-none"
+                                                onclick="seleccionarMarcaPredialOpcion8(${item.idMarcaPredial})"
+                                                aria-label="${estaSeleccionada ? 'Cerrar información de marca predial' : 'Ver información de marca predial'}">
+
+                                                <i class="fa-solid ${estaSeleccionada ? 'fa-eye-slash' : 'fa-eye'} icon-ojo-marca-predial-opcion8"></i>
+                                            </button>
+
+                                            <span class="item-id-opcion8">
+                                                T_ID:${item.idMarcaPredial}
+                                            </span>
+                                        </div>
+                                    `;
+        }).join('')}
+                            </div>
+
+                            <div class="text-end">
+                                <button type="button" class="btn btn-add-opcion8 px-3 py-2" onclick="agregarMarcaPredialOpcion8()">
+                                    Añadir marca predial
+                                    <i class="fa-solid fa-plus ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card card-fixed-opcion8">
+                        <div class="card-body card-body-scroll-opcion8">
+                            ${marca ? `
+                                <div class="detalle-marca-predial-opcion8 detalle-marca-predial-opcion8-activo">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="title-tarjet-information mb-0">
+                                            Información de marca predial
+                                        </div>
+
+                                        <span class="ms-auto rounded-2 px-3 py-1 result-information d-inline-flex align-items-center" style="min-height:auto;">
+                                            T_ID:${marca.idMarcaPredial}
+                                        </span>
+                                    </div>
+
+                                    ${crearCampoPrincipalOpcion8('Predio asociado', marca.predioAsociado, marca.idMarcaPredial, 'predioAsociado', 'marcasPrediales')}
+
+                                    <div class="mb-3">
+                                        <label class="form-label-information mb-2">Tipo de marca predial</label>
+
+                                        <input
+                                            type="hidden"
+                                            name="tipo_marca_predial_${marca.idMarcaPredial}"
+                                            id="tipo_marca_predial_${marca.idMarcaPredial}"
+                                            value="${escaparHtml(marca.tipoMarcaPredial || '')}"
+                                        >
+
+                                        <div class="dropdown w-100">
+                                            <button
+                                                class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                type="button"
+                                                id="dropdownTipoMarcaPredial_${marca.idMarcaPredial}"
+                                                data-bs-toggle="dropdown"
+                                                aria-expanded="false">
+                                                <span>${escaparHtml(marca.tipoMarcaPredial || 'Ninguna selección')}</span>
+                                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                            </button>
+
+                                            <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll tipo-marca-predial-opciones">
+                                                ${generarOpcionesTipoMarcaPredialOpcion8(marca.idMarcaPredial)}
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-2">
+                                        <div class="col-12 col-md-6">
+                                            ${crearCampoFechaOpcion8('Fecha de creación', marca.fechaCreacion, marca.idMarcaPredial, 'fechaCreacion', 'marcasPrediales')}
+                                        </div>
+
+                                        <div class="col-12 col-md-6">
+                                            ${crearCampoFechaOpcion8('Fecha de finalización', marca.fechaFinalizacion, marca.idMarcaPredial, 'fechaFinalizacion', 'marcasPrediales')}
+                                        </div>
+                                    </div>
+
+                                    ${crearCampoCheckOpcion8('¿Fue resuelta?', marca.resuelta, marca.idMarcaPredial, 'resuelta', 'marcasPrediales')}
+
+                                    ${crearCampoTextoOpcion8('Observación', marca.observacion, marca.idMarcaPredial, 'observacion', 'marcasPrediales')}
+
+                                    <div class="d-flex justify-content-end mt-3">
+                                        <button
+                                            type="button"
+                                            class="btn btn-eliminar-marca-predial-opcion8 px-3 py-2"
+                                            onclick="eliminarMarcaPredialOpcion8(${marca.idMarcaPredial}, event)">
+                                            Eliminar marca predial
+                                            <i class="fa-solid fa-xmark ms-2"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="estado-sin-seleccion-opcion8">
+                                    <i class="fa-regular fa-eye mb-2"></i>
+                                    <div>Seleccione una marca predial del listado para ver su información.</div>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-xl-5">
+                    ${crearVisorOpcion8('mapEditarPredioTab8', 'mapEditarPredioTab8Empty')}
+                </div>
+            </div>
+        `;
+
+        habilitarCamposEditables();
+        prepararPayloadEdicionPredio();
+    }
+
+    function renderizarNovedadesFmiOpcion8() {
+        const contenedor = document.getElementById('contenedorNovedadesFmiOpcion8');
+        if (!contenedor) return;
+
+        const registros = datosPruebaOpcion8.novedadesFmi || [];
+        const formulario = datosPruebaOpcion8.formularioNovedadFmi || {};
+
+        const novedadSeleccionada = registros.find(
+            (item) => item.idNovedadFmi === novedadFmiSeleccionadaOpcion8
+        ) || null;
+
+        const datosFormularioNovedadFmi = novedadSeleccionada || formulario;
+        const mostrarFormularioNovedadFmi = Boolean(novedadSeleccionada || creandoNovedadFmiOpcion8);
+
+        contenedor.innerHTML = `
+        <div class="row g-3 align-items-stretch novedades-fmi-layout-opcion8">
+
+            <!-- Tarjeta 1: Listado de novedades FMI -->
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="card card-fixed-opcion8 card-novedad-fmi-opcion8">
+                    <div class="card-body card-body-scroll-opcion8">
+                        <div class="title-tarjet-information mb-3">
+                            Listado de novedades FMI
+                        </div>
+
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            ${registros.length
+                ? registros.map((item) => `
+                                        <div class="item-listado-novedad-fmi d-flex justify-content-between align-items-center px-2 py-2">
+                                            <button
+                                                type="button"
+                                                class="btn btn-ojo-novedad-fmi p-0 border-0 bg-transparent"
+                                                onclick="seleccionarNovedadFmiOpcion8(${item.idNovedadFmi})">
+                                                <i class="fa-regular ${novedadFmiSeleccionadaOpcion8 === item.idNovedadFmi ? 'fa-eye' : 'fa-eye-slash'}"></i>
+                                            </button>
+
+                                            <span class="id-listado-novedad-fmi">
+                                                ${item.idNovedadFmi}
+                                            </span>
+                                        </div>
+                                    `).join('')
+                : `
+                                        <div class="estado-vacio-opcion8 text-center py-4">
+                                            Sin novedades FMI registradas.
+                                        </div>
+                                    `
+            }
+                        </div>
+
+                        <div class="text-end mt-3">
+                            <button
+                                type="button"
+                                class="btn btn-add-novedad-fmi-opcion8 px-3 py-2"
+                                onclick="agregarNovedadFmiOpcion8()">
+                                Añadir marca predial
+                                <i class="fa-solid fa-plus ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta 2: Crear novedad FMI -->
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="card card-fixed-opcion8 card-novedad-fmi-opcion8">
+                    <div class="card-body card-body-scroll-opcion8">
+
+                        <div class="title-tarjet-information mb-4">
+                            Información novedad predial
+                        </div>
+
+                        ${mostrarFormularioNovedadFmi
+                ? `
+                            <div class="opcion8-panel-suave">
+                                <div class="text-center titulo-crear-novedad-fmi-opcion8 mb-4">
+                                    Crear novedad FMI
+                                </div>
+                                <div class="campo-principal-novedad-fmi rounded-3 p-2 mb-4">
+                                    <label class="form-label-information mb-2">
+                                        Predio asociado
+                                    </label>
+
+                                    <div
+                                        class="rounded-3 px-2 py-2 w-100 result-information result-information-white fw-bold"
+                                        contenteditable="true"
+                                        spellcheck="false"
+                                        role="textbox"
+                                        tabindex="0"
+                                        id="predioAsociadoNovedadFmiOpcion8">
+                                        ${escaparHtml(datosFormularioNovedadFmi.predioAsociado || '----')}
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label-information mb-2">
+                                        Tipo de novedad
+                                    </label>
+
+                                    <input
+                                        type="hidden"
+                                        id="tipo_novedad_fmi_opcion8"
+                                        name="tipo_novedad_fmi_opcion8"
+                                        value="${escaparHtml(datosFormularioNovedadFmi.tipoNovedad || '')}"
+                                    >
+
+                                    <div class="dropdown w-100">
+                                        <button
+                                            class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                            type="button"
+                                            id="dropdownTipoNovedadFmiOpcion8"
+                                            data-bs-toggle="dropdown"
+                                            aria-expanded="false">
+                                            <span>${escaparHtml(datosFormularioNovedadFmi.tipoNovedad || 'Ninguna selección')}</span>
+                                            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                        </button>
+
+                                        <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                            <li>
+                                                <button class="dropdown-item" type="button"
+                                                    onclick="seleccionarTipoNovedadFmiOpcion8('', 'Ninguna selección')">
+                                                    Ninguna selección
+                                                </button>
+                                            </li>
+
+                                            <li>
+                                                <button class="dropdown-item" type="button"
+                                                    onclick="seleccionarTipoNovedadFmiOpcion8('FMI debe estar cerrado', 'FMI debe estar cerrado')">
+                                                    FMI debe estar cerrado
+                                                </button>
+                                            </li>
+
+                                            <li>
+                                                <button class="dropdown-item" type="button"
+                                                    onclick="seleccionarTipoNovedadFmiOpcion8('FMI sin correspondencia catastral', 'FMI sin correspondencia catastral')">
+                                                    FMI sin correspondencia catastral
+                                                </button>
+                                            </li>
+
+                                            <li>
+                                                <button class="dropdown-item" type="button"
+                                                    onclick="seleccionarTipoNovedadFmiOpcion8('FMI no es segregado del que se enuncia', 'FMI no es segregado del que se enuncia')">
+                                                    FMI no es segregado del que se enuncia
+                                                </button>
+                                            </li>
+
+                                            <li>
+                                                <button class="dropdown-item" type="button"
+                                                    onclick="seleccionarTipoNovedadFmiOpcion8('FMI debe estar abierto', 'FMI debe estar abierto')">
+                                                    FMI debe estar abierto
+                                                </button>
+                                            </li>
+
+                                            <li>
+                                                <button class="dropdown-item" type="button"
+                                                    onclick="seleccionarTipoNovedadFmiOpcion8('FMI duplicado sobre el mismo bien inmueble', 'FMI duplicado sobre el mismo bien inmueble')">
+                                                    FMI duplicado sobre el mismo bien inmueble
+                                                </button>
+                                            </li>
+
+                                            <li>
+                                                <button class="dropdown-item" type="button"
+                                                    onclick="seleccionarTipoNovedadFmiOpcion8('FMI con error en la identificación de naturaleza jurídica del acto', 'FMI con error en la identificación de naturaleza jurídica del acto')">
+                                                    FMI con error en la identificación de naturaleza jurídica del acto
+                                                </button>
+                                            </li>
+
+                                            <li>
+                                                <button class="dropdown-item" type="button"
+                                                    onclick="seleccionarTipoNovedadFmiOpcion8('Título mal inscrito no corresponde al predio', 'Título mal inscrito no corresponde al predio')">
+                                                    Título mal inscrito no corresponde al predio
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label-information mb-2">
+                                        Número predial
+                                    </label>
+
+                                    <div
+                                        class="rounded-3 px-2 py-2 w-100 result-information"
+                                        contenteditable="true"
+                                        spellcheck="false"
+                                        role="textbox"
+                                        tabindex="0"
+                                        id="numeroPredialNovedadFmiOpcion8">
+                                        ${escaparHtml(datosFormularioNovedadFmi.numeroPredial || '----')}
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-end gap-2 flex-wrap mt-3">
+                                    <button
+                                        type="button"
+                                        class="btn btn-crear-novedad-fmi-opcion8 px-3 py-2"
+                                        onclick="crearNovedadFmiOpcion8()">
+                                        Crear novedad
+                                        <i class="fa-solid fa-plus ms-2"></i>
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-cancelar-novedad-fmi-opcion8 px-3 py-2"
+                                        onclick="${novedadSeleccionada ? `eliminarNovedadFmiOpcion8(${novedadSeleccionada.idNovedadFmi})` : 'cancelarNovedadFmiOpcion8()'}">
+                                        Cancelar
+                                        <i class="fa-solid fa-xmark ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            `
+                : `
+                        <div class="panel-novedad-fmi-cerrado opcion8-panel-suave">
+                            <div class="estado-cerrado-novedad-fmi text-center">
+                                <i class="fa-regular fa-eye-slash mb-2"></i>
+                                <div>
+                                    Selecciona el icono del ojo para ver la información.
+                                </div>
+                            </div>
+                        </div>
+                        `
+            }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta 3: Visor predio -->
+            <div class="col-12 col-xl-5">
+                ${crearVisorOpcion8('mapEditarPredioTab8NovedadesFmi', 'mapEditarPredioTab8NovedadesFmiEmpty')}
+            </div>
+        </div>
+    `;
+
+        habilitarCamposEditables();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    // constantes para el boton de agregar novedad
+
+
+    // funciones para el estilo de la segunda subpestaña
+    function seleccionarTipoNovedadFmiOpcion8(valor, texto) {
+        const hiddenInput = document.getElementById('tipo_novedad_fmi_opcion8');
+
+        if (!datosPruebaOpcion8.formularioNovedadFmi) {
+            datosPruebaOpcion8.formularioNovedadFmi = {
+                predioAsociado: '',
+                tipoNovedad: '',
+                numeroPredial: ''
+            };
+        }
+
+        datosPruebaOpcion8.formularioNovedadFmi.tipoNovedad = valor || '';
+
+        if (hiddenInput) {
+            hiddenInput.value = valor || '';
+        }
+
+        actualizarTextoDropdown('dropdownTipoNovedadFmiOpcion8', texto || 'Ninguna selección');
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function crearNovedadFmiOpcion8() {
+        const predioAsociado = obtenerTextoNormalizado(
+            document.getElementById('predioAsociadoNovedadFmiOpcion8')
+        );
+
+        const tipoNovedad = document.getElementById('tipo_novedad_fmi_opcion8')?.value || '';
+
+        const numeroPredial = obtenerTextoNormalizado(
+            document.getElementById('numeroPredialNovedadFmiOpcion8')
+        );
+
+        const nuevoId = obtenerNuevoIdOpcion8(datosPruebaOpcion8.novedadesFmi, 'idNovedadFmi');
+
+        datosPruebaOpcion8.novedadesFmi.push({
+            idNovedadFmi: nuevoId,
+            predioAsociado: predioAsociado || '',
+            matriculaInmobiliaria: '',
+            tipoNovedad: tipoNovedad || '',
+            numeroPredial: numeroPredial || '',
+            fechaRegistro: '',
+            estado: '',
+            observacion: ''
+        });
+
+        datosPruebaOpcion8.formularioNovedadFmi = {
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
+            tipoNovedad: '',
+            numeroPredial: '33'
+        };
+
+        creandoNovedadFmiOpcion8 = false;
+        novedadFmiSeleccionadaOpcion8 = null;
+
+        renderizarNovedadesFmiOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function cancelarNovedadFmiOpcion8() {
+        creandoNovedadFmiOpcion8 = false;
+        novedadFmiSeleccionadaOpcion8 = null;
+
+        datosPruebaOpcion8.formularioNovedadFmi = {
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
+            tipoNovedad: '',
+            numeroPredial: '33'
+        };
+
+        renderizarNovedadesFmiOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function agregarNovedadFmiOpcion8() {
+        novedadFmiSeleccionadaOpcion8 = null;
+        creandoNovedadFmiOpcion8 = true;
+
+        datosPruebaOpcion8.formularioNovedadFmi = {
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
+            tipoNovedad: '',
+            numeroPredial: '33'
+        };
+
+        renderizarNovedadesFmiOpcion8();
+
+        setTimeout(() => {
+            const campoPredio = document.getElementById('predioAsociadoNovedadFmiOpcion8');
+
+            if (campoPredio) {
+                campoPredio.focus();
+            }
+        }, 100);
+    }
+    // fin funciones para el estilo de la segunda subpestaña
+
+    // funciones para la tercera subpestaña de la pestaña 8
+    function renderizarNovedadNumeroPredialOpcion8() {
+        const contenedor = document.getElementById('contenedorNovedadNumeroPredialOpcion8');
+        if (!contenedor) return;
+
+        const registros = datosPruebaOpcion8.novedadesNumeroPredial || [];
+        const formulario = datosPruebaOpcion8.formularioNovedadNumeroPredial || {};
+
+        const novedadSeleccionada = registros.find(
+            (item) => item.idNovedadNumeroPredial === novedadNumeroPredialSeleccionadaOpcion8
+        ) || null;
+
+        const datosFormularioNovedadNumeroPredial = novedadSeleccionada || formulario;
+        const mostrarFormularioNovedadNumeroPredial = Boolean(
+            novedadSeleccionada || creandoNovedadNumeroPredialOpcion8
+        );
+
+        contenedor.innerHTML = `
+            <div class="row g-3 align-items-stretch novedad-numero-predial-layout-opcion8">
+
+                <!-- Tarjeta 1: Listado -->
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card card-fixed-opcion8 card-novedad-numero-predial-opcion8">
+                        <div class="card-body card-body-scroll-opcion8">
+                            <div class="title-tarjet-information mb-4">
+                                Listado de novedades del número predial
+                            </div>
+
+                            <div class="d-flex flex-column gap-2 mb-3">
+                                ${registros.length
+                ? registros.map((item) => `
+                                            <div class="item-listado-novedad-numero-predial d-flex justify-content-between align-items-center px-2 py-2">
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-ojo-novedad-numero-predial p-0 border-0 bg-transparent"
+                                                    onclick="seleccionarNovedadNumeroPredialOpcion8(${item.idNovedadNumeroPredial})">
+                                                    <i class="fa-regular ${novedadNumeroPredialSeleccionadaOpcion8 === item.idNovedadNumeroPredial ? 'fa-eye' : 'fa-eye-slash'}"></i>
+                                                </button>
+
+                                                <span class="id-listado-novedad-numero-predial">
+                                                    ${item.idNovedadNumeroPredial}
+                                                </span>
+                                            </div>
+                                        `).join('')
+                : `
+                                            <div class="estado-vacio-opcion8 text-center py-4">
+                                                Sin novedades del número predial registradas.
+                                            </div>
+                                        `
+            }
+                            </div>
+
+                            <div class="text-end mt-3">
+                                <button
+                                    type="button"
+                                    class="btn btn-add-novedad-numero-predial-opcion8 px-3 py-2"
+                                    onclick="agregarNovedadNumeroPredialOpcion8()">
+                                    Añadir marca predial
+                                    <i class="fa-solid fa-plus ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Información -->
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card card-fixed-opcion8 card-novedad-numero-predial-opcion8">
+                        <div class="card-body card-body-scroll-opcion8">
+
+                            <div class="d-flex justify-content-between align-items-start mb-4">
+                                <div class="title-tarjet-information">
+                                    Información de marca predial
+                                </div>
+
+                                <div class="cuadro-superior-novedad-numero-predial"></div>
+                            </div>
+
+                            ${mostrarFormularioNovedadNumeroPredial
+                ? `
+                                        <div class="opcion8-panel-suave">
+                                            <div class="text-center titulo-crear-novedad-numero-predial-opcion8 mb-4">
+                                                crear novedad en NPN
+                                            </div>
+
+                                            <div class="campo-principal-novedad-numero-predial rounded-3 p-2 mb-4">
+                                                <label class="form-label-information mb-2">
+                                                    Predio asociado
+                                                </label>
+
+                                                <div
+                                                    class="rounded-3 px-2 py-2 w-100 result-information result-information-white fw-bold"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    id="predioAsociadoNovedadNumeroPredialOpcion8">
+                                                    ${escaparHtml(datosFormularioNovedadNumeroPredial.predioAsociado || '----')}
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-4">
+                                                <label class="form-label-information mb-2">
+                                                    Tipo de novedad
+                                                </label>
+
+                                                <input
+                                                    type="hidden"
+                                                    id="tipo_novedad_numero_predial_opcion8"
+                                                    name="tipo_novedad_numero_predial_opcion8"
+                                                    value="${escaparHtml(datosFormularioNovedadNumeroPredial.tipoNovedad || '')}"
+                                                >
+
+                                                <div class="dropdown w-100">
+                                                    <button
+                                                        class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                        type="button"
+                                                        id="dropdownTipoNovedadNumeroPredialOpcion8"
+                                                        data-bs-toggle="dropdown"
+                                                        aria-expanded="false">
+                                                        <span>${escaparHtml(datosFormularioNovedadNumeroPredial.tipoNovedad || 'Ninguna selección')}</span>
+                                                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                    </button>
+
+                                                    <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll dropdown-novedad-numero-predial-opcion8">
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('', 'Ninguna selección')">Ninguna selección</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial condominio a NPH', 'Cambio de número predial condominio a NPH')">Cambio de número predial condominio a NPH</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial condominio a PH', 'Cambio de número predial condominio a PH')">Cambio de número predial condominio a PH</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial manzana a manzana', 'Cambio de número predial manzana a manzana')">Cambio de número predial manzana a manzana</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial mejora a informal', 'Cambio de número predial mejora a informal')">Cambio de número predial mejora a informal</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial mejora a NPH', 'Cambio de número predial mejora a NPH')">Cambio de número predial mejora a NPH</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial a municipio a municipio', 'Cambio de número predial a municipio a municipio')">Cambio de número predial a municipio a municipio</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial NPH a bien de uso público', 'Cambio de número predial NPH a bien de uso público')">Cambio de número predial NPH a bien de uso público</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial NPH a condominio', 'Cambio de número predial NPH a condominio')">Cambio de número predial NPH a condominio</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial NPH a informal', 'Cambio de número predial NPH a informal')">Cambio de número predial NPH a informal</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial NPH a PH', 'Cambio de número predial NPH a PH')">Cambio de número predial NPH a PH</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial NPH a VIA', 'Cambio de número predial NPH a VIA')">Cambio de número predial NPH a VIA</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial PH a condominio', 'Cambio de número predial PH a condominio')">Cambio de número predial PH a condominio</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial rural a urbano', 'Cambio de número predial rural a urbano')">Cambio de número predial rural a urbano</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial urbano a rural', 'Cambio de número predial urbano a rural')">Cambio de número predial urbano a rural</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cambio de número predial vereda a vereda', 'Cambio de número predial vereda a vereda')">Cambio de número predial vereda a vereda</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cancelación', 'Cancelación')">Cancelación</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cancelación por desenglobe', 'Cancelación por desenglobe')">Cancelación por desenglobe</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Cancelación por englobe', 'Cancelación por englobe')">Cancelación por englobe</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Desenglobe división material', 'Desenglobe división material')">Desenglobe división material</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Desenglobe venta parcial', 'Desenglobe venta parcial')">Desenglobe venta parcial</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Englobe mantiene FMI', 'Englobe mantiene FMI')">Englobe mantiene FMI</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Englobe nuevo FMI', 'Englobe nuevo FMI')">Englobe nuevo FMI</button></li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoNovedadNumeroPredialOpcion8('Predio nuevo', 'Predio nuevo')">Predio nuevo</button></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-4">
+                                                <label class="form-label-information mb-2">
+                                                    Número predial
+                                                </label>
+
+                                                <div
+                                                    class="rounded-3 px-2 py-2 w-100 result-information"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    id="numeroPredialNovedadNumeroPredialOpcion8">
+                                                    ${escaparHtml(datosFormularioNovedadNumeroPredial.numeroPredial || datosFormularioNovedadNumeroPredial.numeroPredialNuevo || '----')}
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex justify-content-end gap-2 flex-wrap mt-3">
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-crear-novedad-numero-predial-opcion8 px-3 py-2"
+                                                    onclick="crearNovedadNumeroPredialOpcion8()">
+                                                    Crear novedad
+                                                    <i class="fa-solid fa-plus ms-2"></i>
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-cancelar-novedad-numero-predial-opcion8 px-3 py-2"
+                                                    onclick="${novedadSeleccionada ? `eliminarNovedadNumeroPredialOpcion8(${novedadSeleccionada.idNovedadNumeroPredial})` : 'cancelarNovedadNumeroPredialOpcion8()'}">
+                                                    Cancelar
+                                                    <i class="fa-solid fa-xmark ms-2"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        `
+                : `
+                                        <div class="panel-novedad-numero-predial-cerrado opcion8-panel-suave">
+                                            <div class="estado-cerrado-novedad-numero-predial text-center">
+                                                No existe ningún registro
+                                            </div>
+                                        </div>
+                                    `
+            }
+                        </div>
+                    </div>
+                </div>
+                <!-- Tarjeta 3: Visor -->
+                <div class="col-12 col-xl-5">
+                    ${crearVisorOpcion8('mapEditarPredioTab8NovedadNumeroPredial', 'mapEditarPredioTab8NovedadNumeroPredialEmpty')}
+                </div>
+            </div>
+        `;
+
+        habilitarCamposEditables();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    // funciones para la sub pestaña 4 de la pestaña 8 tramites
+    function renderizarTramitesOpcion8() {
+        const contenedor = document.getElementById('contenedorTramitesOpcion8');
+        if (!contenedor) return;
+
+        const registros = datosPruebaOpcion8.tramites || [];
+        const formulario = datosPruebaOpcion8.formularioTramite || {};
+
+        const tramiteSeleccionado = registros.find(
+            (item) => item.idTramite === tramiteSeleccionadoOpcion8
+        ) || null;
+
+        const datosFormularioTramite = tramiteSeleccionado || formulario;
+
+        const mostrarFormularioTramite = Boolean(
+            tramiteSeleccionado || creandoTramiteOpcion8
+        );
+
+        const idBadgeTramite = datosFormularioTramite.idTramite ||
+            tramiteSeleccionado?.idTramite ||
+            registros[0]?.idTramite ||
+            obtenerNuevoIdOpcion8(registros, 'idTramite');
+
+        contenedor.innerHTML = `
+        <div class="row g-3 align-items-stretch tramites-layout-opcion8">
+
+            <!-- Tarjeta 1: Listado de trámites -->
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="card card-fixed-opcion8 card-tramite-opcion8">
+                    <div class="card-body card-body-scroll-opcion8">
+                        <div class="title-tarjet-information mb-4">
+                            Listado de trámites asociados
+                        </div>
+
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            ${registros.length
+                ? registros.map((item) => `
+                                        <div class="item-listado-tramite d-flex justify-content-between align-items-center px-2 py-2">
+                                            <button
+                                                type="button"
+                                                class="btn btn-ojo-tramite p-0 border-0 bg-transparent"
+                                                onclick="seleccionarTramiteOpcion8(${item.idTramite})">
+                                                <i class="fa-regular ${tramiteSeleccionadoOpcion8 === item.idTramite ? 'fa-eye' : 'fa-eye-slash'}"></i>
+                                            </button>
+
+                                            <span class="id-listado-tramite">
+                                                ${item.idTramite}
+                                            </span>
+                                        </div>
+                                    `).join('')
+                : `
+                                        <div class="estado-vacio-opcion8 text-center py-4">
+                                            Sin trámites asociados.
+                                        </div>
+                                    `
+            }
+                        </div>
+
+                        <div class="text-end mt-3">
+                            <button
+                                type="button"
+                                class="btn btn-add-tramite-opcion8 px-3 py-2"
+                                onclick="agregarTramiteOpcion8()">
+                                Añadir trámite
+                                <i class="fa-solid fa-plus ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta 2: Información del trámite -->
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="card card-fixed-opcion8 card-tramite-opcion8">
+                    <div class="card-body card-body-scroll-opcion8">
+
+                        <div class="d-flex justify-content-between align-items-start mb-4">
+                            <div class="title-tarjet-information">
+                                Información del trámite asociado
+                            </div>
+
+                            <div class="badge-tramite-opcion8">
+                                T_ID:${escaparHtml(idBadgeTramite)}
+                            </div>
+                        </div>
+
+                        ${mostrarFormularioTramite
+                ? `
+                                    <div class="opcion8-panel-suave">
+
+                                        <div class="campo-principal-tramite rounded-3 p-2 mb-4">
+                                            <label class="form-label-information mb-2">
+                                                Predio asociado
+                                            </label>
+
+                                            <div
+                                                class="rounded-3 px-2 py-2 w-100 result-information result-information-white fw-bold"
+                                                contenteditable="true"
+                                                spellcheck="false"
+                                                role="textbox"
+                                                tabindex="0"
+                                                id="predioAsociadoTramiteOpcion8">
+                                                ${escaparHtml(datosFormularioTramite.predioAsociado || '----')}
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label class="form-label-information mb-2">
+                                                Entidad
+                                            </label>
+
+                                            <input
+                                                type="hidden"
+                                                id="entidad_tramite_opcion8"
+                                                name="entidad_tramite_opcion8"
+                                                value="${escaparHtml(datosFormularioTramite.entidad || '')}"
+                                            >
+
+                                            <div class="dropdown w-100">
+                                                <button
+                                                    class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                    type="button"
+                                                    id="dropdownEntidadTramiteOpcion8"
+                                                    data-bs-toggle="dropdown"
+                                                    aria-expanded="false">
+                                                    <span>${escaparHtml(datosFormularioTramite.entidad || 'Ninguna selección')}</span>
+                                                    <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                </button>
+
+                                                <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll dropdown-tramite-opcion8">
+                                                    <li>
+                                                        <button class="dropdown-item" type="button"
+                                                            onclick="seleccionarEntidadTramiteOpcion8('', 'Ninguna selección')">
+                                                            Ninguna selección
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <button class="dropdown-item" type="button"
+                                                            onclick="seleccionarEntidadTramiteOpcion8('ANT Agencia Nacional de Tierras', 'ANT Agencia Nacional de Tierras')">
+                                                            ANT Agencia Nacional de Tierras
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <button class="dropdown-item" type="button"
+                                                            onclick="seleccionarEntidadTramiteOpcion8('Superintendencia de Notariado y Registro', 'Superintendencia de Notariado y Registro')">
+                                                            Superintendencia de Notariado y Registro
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <button class="dropdown-item" type="button"
+                                                            onclick="seleccionarEntidadTramiteOpcion8('Unidad de Restitución de Tierras', 'Unidad de Restitución de Tierras')">
+                                                            Unidad de Restitución de Tierras
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label class="form-label-information mb-2">
+                                                Trámite
+                                            </label>
+
+                                            <input
+                                                type="hidden"
+                                                id="tipo_tramite_opcion8"
+                                                name="tipo_tramite_opcion8"
+                                                value="${escaparHtml(datosFormularioTramite.tipoTramite || '')}"
+                                            >
+
+                                            <div class="dropdown w-100">
+                                                <button
+                                                    class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                    type="button"
+                                                    id="dropdownTipoTramiteOpcion8"
+                                                    data-bs-toggle="dropdown"
+                                                    aria-expanded="false">
+                                                    <span>${escaparHtml(datosFormularioTramite.tipoTramite || 'Ninguna selección')}</span>
+                                                    <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                </button>
+
+                                                <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll dropdown-tramite-opcion8">
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('', 'Ninguna selección')">Ninguna selección</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Autoestimación del avalúo', 'Autoestimación del avalúo')">Autoestimación del avalúo</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Cancelación del predio', 'Cancelación del predio')">Cancelación del predio</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Clarificación Vigencia Legal Coloniales Republicanos', 'Clarificación Vigencia Legal Coloniales Republicanos')">Clarificación Vigencia Legal Coloniales Republicanos</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Complementación', 'Complementación')">Complementación</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Formalización Territorios Colectivos', 'Formalización Territorios Colectivos')">Formalización Territorios Colectivos</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Modificación en la inscripción', 'Modificación en la inscripción')">Modificación en la inscripción</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Mutación de primera clase', 'Mutación de primera clase')">Mutación de primera clase</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Mutaciones de cuarta clase', 'Mutaciones de cuarta clase')">Mutaciones de cuarta clase</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Mutaciones de quinta clase', 'Mutaciones de quinta clase')">Mutaciones de quinta clase</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Mutaciones de segunda clase', 'Mutaciones de segunda clase')">Mutaciones de segunda clase</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Mutaciones de tercera clase', 'Mutaciones de tercera clase')">Mutaciones de tercera clase</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Procedimientos Agrarios', 'Procedimientos Agrarios')">Procedimientos Agrarios</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Rectificaciones', 'Rectificaciones')">Rectificaciones</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Restitución Derechos Territoriales', 'Restitución Derechos Territoriales')">Restitución Derechos Territoriales</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Revisión del avalúo catastral', 'Revisión del avalúo catastral')">Revisión del avalúo catastral</button></li>
+                                                    <li><button class="dropdown-item" type="button" onclick="seleccionarTipoTramiteOpcion8('Territorios Ancestrales Tradicionales', 'Territorios Ancestrales Tradicionales')">Territorios Ancestrales Tradicionales</button></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label-information mb-2">
+                                                    Fecha de radicación
+                                                </label>
+
+                                                <div class="rounded-3 px-2 py-2 w-100 campo-fecha-tramite-opcion8">
+                                                    <span
+                                                        class="texto-fecha-tramite-opcion8"
+                                                        contenteditable="false"
+                                                        id="fechaRadicacionTramiteOpcion8">
+                                                        ${escaparHtml(formatearFechaTramiteOpcion8(datosFormularioTramite.fechaRadicacion || '1999-05-24'))}
+                                                    </span>
+
+                                                    <button
+                                                        type="button"
+                                                        class="btn-calendario-tramite-opcion8"
+                                                        onclick="abrirCalendarioTramiteOpcion8()"
+                                                        aria-label="Seleccionar fecha de radicación">
+                                                        <i class="bi bi-calendar3 campo-fecha-tramite-icono"></i>
+                                                    </button>
+
+                                                    <input
+                                                        type="date"
+                                                        id="inputFechaRadicacionTramiteOpcion8"
+                                                        class="campo-fecha-tramite-input"
+                                                        value="${escaparHtml(datosFormularioTramite.fechaRadicacion || '1999-05-24')}"
+                                                        onchange="actualizarFechaTramiteOpcion8(this.value)">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-12 col-md-6">
+                                                <label class="form-label-information mb-2">
+                                                    Número de radicación
+                                                </label>
+
+                                                <div
+                                                    class="rounded-3 px-2 py-2 w-100 result-information"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    id="numeroRadicacionTramiteOpcion8">
+                                                    ${escaparHtml(datosFormularioTramite.numeroRadicacion || datosFormularioTramite.radicado || '002')}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4 d-flex justify-content-between align-items-center">
+                                            <span class="form-label-information mb-0">
+                                                ¿Está resuelta?
+                                            </span>
+
+                                            <input
+                                                class="form-check-input check-custom m-0"
+                                                type="checkbox"
+                                                id="resueltaTramiteOpcion8"
+                                                ${datosFormularioTramite.resuelta ? 'checked' : ''}
+                                                onchange="actualizarCheckTramiteOpcion8(this.checked)">
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label class="form-label-information mb-2">
+                                                Observación
+                                            </label>
+
+                                            <div
+                                                class="rounded-3 px-2 py-2 w-100 result-information observacion-tramite-opcion8"
+                                                contenteditable="true"
+                                                spellcheck="false"
+                                                role="textbox"
+                                                tabindex="0"
+                                                id="observacionTramiteOpcion8">
+                                                ${escaparHtml(datosFormularioTramite.observacion || '33')}
+                                            </div>
+                                        </div>
+
+                                        <div class="acciones-tramite-opcion8 d-flex justify-content-center align-items-center gap-2 flex-nowrap mt-3">
+                                            <button
+                                                type="button"
+                                                class="btn btn-generar-tramite-opcion8 px-3 py-2"
+                                                onclick="generarRegistroTramiteOpcion8()">
+                                                Generar registro trámite
+                                                <i class="fa-solid fa-plus ms-2"></i>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                class="btn btn-cancelar-tramite-opcion8 px-3 py-2"
+                                                onclick="${tramiteSeleccionado ? `eliminarTramiteOpcion8(${tramiteSeleccionado.idTramite})` : 'cancelarTramiteOpcion8()'}">
+                                                Cancelar
+                                                <i class="fa-solid fa-xmark ms-2"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `
+                : `
+                                    <div class="panel-tramite-cerrado opcion8-panel-suave">
+                                        <div class="estado-cerrado-tramite text-center">
+                                            No existe trámite asociado
+                                        </div>
+                                    </div>
+                                `
+            }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta 3: Visor -->
+            <div class="col-12 col-xl-5">
+                ${crearVisorOpcion8('mapEditarPredioTab8Tramites', 'mapEditarPredioTab8TramitesEmpty')}
+            </div>
+        </div>
+    `;
+
+        habilitarCamposEditables();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function obtenerColeccionOpcion8(tipo) {
+        return datosPruebaOpcion8[tipo] || [];
+    }
+
+    function obtenerCampoIdOpcion8(tipo) {
+        const ids = {
+            marcasPrediales: 'idMarcaPredial',
+            novedadesFmi: 'idNovedadFmi',
+            novedadesNumeroPredial: 'idNovedadNumeroPredial',
+            tramites: 'idTramite'
+        };
+
+        return ids[tipo];
+    }
+
+    function actualizarCampoOpcion8(tipo, idRegistro, campo, elemento) {
+        const coleccion = obtenerColeccionOpcion8(tipo);
+        const campoId = obtenerCampoIdOpcion8(tipo);
+        const registro = coleccion.find((item) => item[campoId] === idRegistro);
+
+        if (!registro || !elemento) return;
+
+        const texto = obtenerTextoNormalizado(elemento);
+        registro[campo] = texto === 'Vacío' ? '' : texto;
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function actualizarFechaOpcion8(tipo, idRegistro, campo, valor, idTexto) {
+        const coleccion = obtenerColeccionOpcion8(tipo);
+        const campoId = obtenerCampoIdOpcion8(tipo);
+        const registro = coleccion.find((item) => item[campoId] === idRegistro);
+        const texto = document.getElementById(idTexto);
+
+        if (!registro) return;
+
+        registro[campo] = valor;
+
+        if (texto) {
+            texto.textContent = formatearFechaOpcion8(valor);
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function actualizarCheckOpcion8(tipo, idRegistro, campo, checked) {
+        const coleccion = obtenerColeccionOpcion8(tipo);
+        const campoId = obtenerCampoIdOpcion8(tipo);
+        const registro = coleccion.find((item) => item[campoId] === idRegistro);
+
+        if (!registro) return;
+
+        registro[campo] = checked;
+        prepararPayloadEdicionPredio();
+    }
+
+    function abrirCalendarioOpcion8(idInput) {
+        const input = document.getElementById(idInput);
+        if (!input) return;
+
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+        } else {
+            input.focus();
+            input.click();
+        }
+    }
+
+    function seleccionarTipoMarcaPredialOpcion8(idMarcaPredial, valor, texto) {
+        const marca = datosPruebaOpcion8.marcasPrediales.find((item) => item.idMarcaPredial === idMarcaPredial);
+        if (!marca) return;
+
+        marca.tipoMarcaPredial = valor || '';
+
+        actualizarTextoDropdown(`dropdownTipoMarcaPredial_${idMarcaPredial}`, texto || 'Ninguna selección');
+
+        const hidden = document.getElementById(`tipo_marca_predial_${idMarcaPredial}`);
+        if (hidden) {
+            hidden.value = marca.tipoMarcaPredial;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // funcion para seleccionar el ojo
+    function seleccionarMarcaPredialOpcion8(idMarcaPredial) {
+        const estaAbierta = marcaPredialSeleccionadaOpcion8 === idMarcaPredial;
+
+        if (estaAbierta) {
+            cambiarDetalleMarcaPredialConTransicion(null);
+            return;
+        }
+
+        cambiarDetalleMarcaPredialConTransicion(idMarcaPredial);
+    }
+    // fin funcion para seleccionar el ojo
+
+    // funciones para eliminar la marca predial boton de eliminar marca predial
+    function eliminarMarcaPredialOpcion8(idMarcaPredial, event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        const idNormalizado = Number(idMarcaPredial);
+
+        const indiceMarca = datosPruebaOpcion8.marcasPrediales.findIndex(
+            (marca) => Number(marca.idMarcaPredial) === idNormalizado
+        );
+
+        if (indiceMarca === -1) return;
+
+        datosPruebaOpcion8.marcasPrediales.splice(indiceMarca, 1);
+
+        if (Number(marcaPredialSeleccionadaOpcion8) === idNormalizado) {
+            marcaPredialSeleccionadaOpcion8 = null;
+        }
+
+        renderizarMarcasPredialesOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+    // fin funciones para eliminar la marca predial boton de eliminar marca predial
+
+    // funcion para cambiar los detalles de la transicion
+    function cambiarDetalleMarcaPredialConTransicion(idMarcaPredial) {
+        const panelActual = document.querySelector('#opcion8 .detalle-marca-predial-panel');
+
+        if (!panelActual) {
+            marcaPredialSeleccionadaOpcion8 = idMarcaPredial;
+            renderizarMarcasPredialesOpcion8();
+            return;
+        }
+
+        panelActual.classList.add('detalle-marca-predial-panel-saliendo');
+
+        setTimeout(() => {
+            marcaPredialSeleccionadaOpcion8 = idMarcaPredial;
+            renderizarMarcasPredialesOpcion8();
+
+            const nuevoPanel = document.querySelector('#opcion8 .detalle-marca-predial-panel');
+
+            if (nuevoPanel) {
+                nuevoPanel.classList.add('detalle-marca-predial-panel-entrando');
+
+                requestAnimationFrame(() => {
+                    nuevoPanel.classList.remove('detalle-marca-predial-panel-entrando');
+                    nuevoPanel.classList.add('detalle-marca-predial-panel-activo');
+                });
+            }
+        }, 220);
+    }
+    // fin funcion para cambiar los detalles de la transicion
+
+
+    // FUNCION QUE PERMITE ABRIR Y CERRAR EL MISMO OJO PARA ABRIR LA INFORMACION DE LA SEGUNDA SUB PESTAÑA
+    function seleccionarNovedadFmiOpcion8(idNovedadFmi) {
+        creandoNovedadFmiOpcion8 = false;
+
+        if (novedadFmiSeleccionadaOpcion8 === idNovedadFmi) {
+            novedadFmiSeleccionadaOpcion8 = null;
+        } else {
+            novedadFmiSeleccionadaOpcion8 = idNovedadFmi;
+        }
+
+        renderizarNovedadesFmiOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+    // FIN FUNCION QUE PERMITE ABRIR Y CERRAR EL MISMO OJO PARA ABRIR LA INFORMACION DE LA SEGUNDA SUB PESTAÑA
+
+    // FUNCION PARA ELIMINAR LA NOVEDAD DEL FMI OPCION
+    function eliminarNovedadFmiOpcion8(idNovedadFmi) {
+        datosPruebaOpcion8.novedadesFmi = datosPruebaOpcion8.novedadesFmi.filter(
+            (item) => item.idNovedadFmi !== idNovedadFmi
+        );
+
+        if (novedadFmiSeleccionadaOpcion8 === idNovedadFmi) {
+            novedadFmiSeleccionadaOpcion8 = null;
+        }
+
+        renderizarNovedadesFmiOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+    // FIN FUNCION PARA ELIMINAR LA NOVEDAD DEL FMI OPCION
+
+
+    // funciones para la tercera sub pestaña de la pestaña 8
+    function seleccionarNovedadNumeroPredialOpcion8(idNovedadNumeroPredial) {
+        creandoNovedadNumeroPredialOpcion8 = false;
+
+        if (novedadNumeroPredialSeleccionadaOpcion8 === idNovedadNumeroPredial) {
+            novedadNumeroPredialSeleccionadaOpcion8 = null;
+        } else {
+            novedadNumeroPredialSeleccionadaOpcion8 = idNovedadNumeroPredial;
+        }
+
+        renderizarNovedadNumeroPredialOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function agregarNovedadNumeroPredialOpcion8() {
+        novedadNumeroPredialSeleccionadaOpcion8 = null;
+        creandoNovedadNumeroPredialOpcion8 = true;
+
+        datosPruebaOpcion8.formularioNovedadNumeroPredial = {
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
+            tipoNovedad: '',
+            numeroPredial: '33'
+        };
+
+        renderizarNovedadNumeroPredialOpcion8();
+
+        setTimeout(() => {
+            const campoPredio = document.getElementById('predioAsociadoNovedadNumeroPredialOpcion8');
+
+            if (campoPredio) {
+                campoPredio.focus();
+            }
+        }, 100);
+    }
+
+    function seleccionarTipoNovedadNumeroPredialOpcion8(valor, texto) {
+        const hiddenInput = document.getElementById('tipo_novedad_numero_predial_opcion8');
+
+        if (!datosPruebaOpcion8.formularioNovedadNumeroPredial) {
+            datosPruebaOpcion8.formularioNovedadNumeroPredial = {
+                predioAsociado: '',
+                tipoNovedad: '',
+                numeroPredial: ''
+            };
+        }
+
+        datosPruebaOpcion8.formularioNovedadNumeroPredial.tipoNovedad = valor || '';
+
+        if (hiddenInput) {
+            hiddenInput.value = valor || '';
+        }
+
+        actualizarTextoDropdown('dropdownTipoNovedadNumeroPredialOpcion8', texto || 'Ninguna selección');
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function crearNovedadNumeroPredialOpcion8() {
+        const predioAsociado = obtenerTextoNormalizado(
+            document.getElementById('predioAsociadoNovedadNumeroPredialOpcion8')
+        );
+
+        const tipoNovedad = document.getElementById('tipo_novedad_numero_predial_opcion8')?.value || '';
+
+        const numeroPredial = obtenerTextoNormalizado(
+            document.getElementById('numeroPredialNovedadNumeroPredialOpcion8')
+        );
+
+        const nuevoId = obtenerNuevoIdOpcion8(
+            datosPruebaOpcion8.novedadesNumeroPredial,
+            'idNovedadNumeroPredial'
+        );
+
+        datosPruebaOpcion8.novedadesNumeroPredial.push({
+            idNovedadNumeroPredial: nuevoId,
+            predioAsociado: predioAsociado || '',
+            numeroPredialAnterior: '',
+            numeroPredialNuevo: numeroPredial || '',
+            tipoNovedad: tipoNovedad || '',
+            fechaRegistro: '',
+            observacion: ''
+        });
+
+        datosPruebaOpcion8.formularioNovedadNumeroPredial = {
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
+            tipoNovedad: '',
+            numeroPredial: '33'
+        };
+
+        creandoNovedadNumeroPredialOpcion8 = false;
+        novedadNumeroPredialSeleccionadaOpcion8 = null;
+
+        renderizarNovedadNumeroPredialOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function cancelarNovedadNumeroPredialOpcion8() {
+        creandoNovedadNumeroPredialOpcion8 = false;
+        novedadNumeroPredialSeleccionadaOpcion8 = null;
+
+        datosPruebaOpcion8.formularioNovedadNumeroPredial = {
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
+            tipoNovedad: '',
+            numeroPredial: '33'
+        };
+
+        renderizarNovedadNumeroPredialOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function eliminarNovedadNumeroPredialOpcion8(idNovedadNumeroPredial) {
+        datosPruebaOpcion8.novedadesNumeroPredial = datosPruebaOpcion8.novedadesNumeroPredial.filter(
+            (item) => item.idNovedadNumeroPredial !== idNovedadNumeroPredial
+        );
+
+        if (novedadNumeroPredialSeleccionadaOpcion8 === idNovedadNumeroPredial) {
+            novedadNumeroPredialSeleccionadaOpcion8 = null;
+        }
+
+        creandoNovedadNumeroPredialOpcion8 = false;
+
+        renderizarNovedadNumeroPredialOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+    // fin funciones para la tercera sub pestaña de la pestaña 8
+
+    // funciones para el correcto funcionamiento de la sub pestaña 4
+    function seleccionarTramiteOpcion8(idTramite) {
+        creandoTramiteOpcion8 = false;
+
+        if (tramiteSeleccionadoOpcion8 === idTramite) {
+            tramiteSeleccionadoOpcion8 = null;
+        } else {
+            tramiteSeleccionadoOpcion8 = idTramite;
+        }
+
+        renderizarTramitesOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function agregarTramiteOpcion8() {
+        tramiteSeleccionadoOpcion8 = null;
+        creandoTramiteOpcion8 = true;
+
+        datosPruebaOpcion8.formularioTramite = {
+            idTramite: obtenerNuevoIdOpcion8(datosPruebaOpcion8.tramites, 'idTramite'),
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
+            entidad: '',
+            tipoTramite: '',
+            fechaRadicacion: '1999-05-24',
+            numeroRadicacion: '002',
+            resuelta: false,
+            observacion: '33'
+        };
+
+        renderizarTramitesOpcion8();
+
+        setTimeout(() => {
+            const campoPredio = document.getElementById('predioAsociadoTramiteOpcion8');
+
+            if (campoPredio) {
+                campoPredio.focus();
+            }
+        }, 100);
+    }
+
+    function seleccionarEntidadTramiteOpcion8(valor, texto) {
+        const hiddenInput = document.getElementById('entidad_tramite_opcion8');
+
+        if (!datosPruebaOpcion8.formularioTramite) {
+            datosPruebaOpcion8.formularioTramite = {};
+        }
+
+        datosPruebaOpcion8.formularioTramite.entidad = valor || '';
+
+        if (hiddenInput) {
+            hiddenInput.value = valor || '';
+        }
+
+        actualizarTextoDropdown('dropdownEntidadTramiteOpcion8', texto || 'Ninguna selección');
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function seleccionarTipoTramiteOpcion8(valor, texto) {
+        const hiddenInput = document.getElementById('tipo_tramite_opcion8');
+
+        if (!datosPruebaOpcion8.formularioTramite) {
+            datosPruebaOpcion8.formularioTramite = {};
+        }
+
+        datosPruebaOpcion8.formularioTramite.tipoTramite = valor || '';
+
+        if (hiddenInput) {
+            hiddenInput.value = valor || '';
+        }
+
+        actualizarTextoDropdown('dropdownTipoTramiteOpcion8', texto || 'Ninguna selección');
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function formatearFechaTramiteOpcion8(valor) {
+        if (!valor) return '----';
+
+        const partes = valor.split('-');
+
+        if (partes.length !== 3) {
+            return valor;
+        }
+
+        const anio = partes[0];
+        const mes = Number(partes[1]);
+        const dia = Number(partes[2]);
+
+        return `${dia}/${mes}/${anio}`;
+    }
+
+    function actualizarFechaTramiteOpcion8(valor) {
+        const textoFecha = document.getElementById('fechaRadicacionTramiteOpcion8');
+
+        if (textoFecha) {
+            textoFecha.textContent = formatearFechaTramiteOpcion8(valor);
+        }
+
+        if (!datosPruebaOpcion8.formularioTramite) {
+            datosPruebaOpcion8.formularioTramite = {};
+        }
+
+        datosPruebaOpcion8.formularioTramite.fechaRadicacion = valor || '';
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function actualizarCheckTramiteOpcion8(valor) {
+        if (!datosPruebaOpcion8.formularioTramite) {
+            datosPruebaOpcion8.formularioTramite = {};
+        }
+
+        datosPruebaOpcion8.formularioTramite.resuelta = Boolean(valor);
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function generarRegistroTramiteOpcion8() {
+        const predioAsociado = obtenerTextoNormalizado(
+            document.getElementById('predioAsociadoTramiteOpcion8')
+        );
+
+        const entidad = document.getElementById('entidad_tramite_opcion8')?.value || '';
+        const tipoTramite = document.getElementById('tipo_tramite_opcion8')?.value || '';
+
+        const fechaVisual = obtenerTextoNormalizado(
+            document.getElementById('fechaRadicacionTramiteOpcion8')
+        );
+
+        const numeroRadicacion = obtenerTextoNormalizado(
+            document.getElementById('numeroRadicacionTramiteOpcion8')
+        );
+
+        const observacion = obtenerTextoNormalizado(
+            document.getElementById('observacionTramiteOpcion8')
+        );
+
+        const resuelta = document.getElementById('resueltaTramiteOpcion8')?.checked || false;
+
+        const nuevoId = obtenerNuevoIdOpcion8(datosPruebaOpcion8.tramites, 'idTramite');
+
+        datosPruebaOpcion8.tramites.push({
+            idTramite: nuevoId,
+            predioAsociado: predioAsociado || '',
+            entidad: entidad || '',
+            tipoTramite: tipoTramite || '',
+            fechaRadicacion: datosPruebaOpcion8.formularioTramite?.fechaRadicacion || fechaVisual || '',
+            numeroRadicacion: numeroRadicacion || '',
+            resuelta,
+            observacion: observacion || ''
+        });
+
+        datosPruebaOpcion8.formularioTramite = {
+            idTramite: obtenerNuevoIdOpcion8(datosPruebaOpcion8.tramites, 'idTramite'),
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
+            entidad: '',
+            tipoTramite: '',
+            fechaRadicacion: '1999-05-24',
+            numeroRadicacion: '002',
+            resuelta: false,
+            observacion: '33'
+        };
+
+        creandoTramiteOpcion8 = false;
+        tramiteSeleccionadoOpcion8 = null;
+
+        renderizarTramitesOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function cancelarTramiteOpcion8() {
+        creandoTramiteOpcion8 = false;
+        tramiteSeleccionadoOpcion8 = null;
+
+        datosPruebaOpcion8.formularioTramite = {
+            idTramite: obtenerNuevoIdOpcion8(datosPruebaOpcion8.tramites, 'idTramite'),
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
+            entidad: '',
+            tipoTramite: '',
+            fechaRadicacion: '1999-05-24',
+            numeroRadicacion: '002',
+            resuelta: false,
+            observacion: '33'
+        };
+
+        renderizarTramitesOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function eliminarTramiteOpcion8(idTramite) {
+        datosPruebaOpcion8.tramites = datosPruebaOpcion8.tramites.filter(
+            (item) => item.idTramite !== idTramite
+        );
+
+        if (tramiteSeleccionadoOpcion8 === idTramite) {
+            tramiteSeleccionadoOpcion8 = null;
+        }
+
+        creandoTramiteOpcion8 = false;
+
+        renderizarTramitesOpcion8();
+
+        if (typeof prepararPayloadEdicionPredio === 'function') {
+            prepararPayloadEdicionPredio();
+        }
+    }
+
+    function abrirCalendarioTramiteOpcion8() {
+        const inputFecha = document.getElementById('inputFechaRadicacionTramiteOpcion8');
+
+        if (!inputFecha) return;
+
+        inputFecha.focus();
+
+        if (typeof inputFecha.showPicker === 'function') {
+            inputFecha.showPicker();
+        } else {
+            inputFecha.click();
+        }
+    }
+
+
+    // fin funciones para el correcto funcionamiento de la sub pestaña 4
+
+    function obtenerNuevoIdOpcion8(coleccion, campoId) {
+        if (!coleccion.length) return 1;
+        return Math.max(...coleccion.map((item) => Number(item[campoId]) || 0)) + 1;
+    }
+
+    function agregarMarcaPredialOpcion8() {
+        const nuevoId = obtenerNuevoIdOpcion8(datosPruebaOpcion8.marcasPrediales, 'idMarcaPredial');
+
+        datosPruebaOpcion8.marcasPrediales.push({
+            idMarcaPredial: nuevoId,
+            predioAsociado: '',
+            tipoMarcaPredial: '',
+            fechaCreacion: '',
+            fechaFinalizacion: '',
+            resuelta: false,
+            observacion: ''
+        });
+
+        // No se abre automáticamente la segunda tarjeta.
+        // Solo se verá cuando selecciones el registro en el listado.
+        marcaPredialSeleccionadaOpcion8 = null;
+
+        renderizarMarcasPredialesOpcion8();
+    }
+
+    function agregarNovedadFmiOpcion8() {
+        novedadFmiSeleccionadaOpcion8 = null;
+        creandoNovedadFmiOpcion8 = true;
+
+        datosPruebaOpcion8.formularioNovedadFmi = {
+            predioAsociado: (new URLSearchParams(window.location.search).get('numero_predial_nacional') || ''),
+            tipoNovedad: '',
+            numeroPredial: '33'
+        };
+
+        renderizarNovedadesFmiOpcion8();
+
+        setTimeout(() => {
+            const campoPredio = document.getElementById('predioAsociadoNovedadFmiOpcion8');
+
+            if (campoPredio) {
+                campoPredio.focus();
+            }
+        }, 100);
+    }
+
+    function agregarNovedadNumeroPredialOpcion8() {
+        const nuevoId = obtenerNuevoIdOpcion8(datosPruebaOpcion8.novedadesNumeroPredial, 'idNovedadNumeroPredial');
+
+        datosPruebaOpcion8.novedadesNumeroPredial.push({
+            idNovedadNumeroPredial: nuevoId,
+            predioAsociado: '',
+            numeroPredialAnterior: '',
+            numeroPredialNuevo: '',
+            tipoNovedad: '',
+            fechaRegistro: '',
+            observacion: ''
+        });
+
+        novedadNumeroPredialSeleccionadaOpcion8 = nuevoId;
+        renderizarNovedadNumeroPredialOpcion8();
+    }
+
+    function agregarTramiteOpcion8() {
+        const nuevoId = obtenerNuevoIdOpcion8(datosPruebaOpcion8.tramites, 'idTramite');
+
+        datosPruebaOpcion8.tramites.push({
+            idTramite: nuevoId,
+            predioAsociado: '',
+            tipoTramite: '',
+            radicado: '',
+            fechaSolicitud: '',
+            estado: '',
+            observacion: ''
+        });
+
+        tramiteSeleccionadoOpcion8 = nuevoId;
+        renderizarTramitesOpcion8();
+    }
+
+    function inicializarOpcion8() {
+        renderizarMarcasPredialesOpcion8();
+        renderizarNovedadesFmiOpcion8();
+        renderizarNovedadNumeroPredialOpcion8();
+        renderizarTramitesOpcion8();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        inicializarOpcion8();
+    });
+</script>

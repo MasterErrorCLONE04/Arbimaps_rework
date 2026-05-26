@@ -1856,6 +1856,7 @@ def obtener_detalle_predio_completo_asignacion(
                     item,
                     "posesion_ancestral_tradicional",
                     "d_posesion_ancestral_tradicional",
+                    "d_posesion_ancestral_y_o_tradicional",
                 )
                 item["descripcion_derecho"] = _first_non_empty(item, "descripcion_derecho", "d_descripcion")
                 item["descripcion_fuente"] = _first_non_empty(
@@ -1872,7 +1873,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["numero_fuente"] = _first_non_empty(item, "numero_fuente", "fa_numero_fuente")
                 item["ente_emisor"] = _first_non_empty(item, "ente_emisor", "fa_ente_emisor")
                 item["oficina_origen"] = _first_non_empty(item, "oficina_origen", "fa_oficina_origen")
-                item["nombre_escritura"] = _first_non_empty(item, "nombre_escritura", "fa_nombre_escritura")
+                item["nombre_escritura"] = _first_non_empty(item, "nombre_escritura", "fa_nombre_escritura", "nombre")
                 item["ciudad_origen"] = _first_non_empty(item, "ciudad_origen", "fa_ciudad_origen")
 
                 interesados.append(item)

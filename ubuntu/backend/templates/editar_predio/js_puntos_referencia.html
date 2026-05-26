@@ -1,0 +1,782 @@
+<script>
+    var datosPruebaOpcion7 = [];
+
+    let puntoReferenciaSeleccionadoOpcion7 = null;
+</script>
+
+<script>
+    function renderizarPuntosReferenciaOpcion7() {
+        const contenedor = document.getElementById('contenedorPuntosReferenciaOpcion7');
+        if (!contenedor) return;
+
+        const listado = datosPruebaOpcion7.map((punto) => {
+            const activo = puntoReferenciaSeleccionadoOpcion7?.idPuntoReferencia === punto.idPuntoReferencia;
+            const iconoOjo = activo ? 'fa-eye-slash' : 'fa-eye';
+            const tituloBoton = activo ? 'Ocultar información' : 'Ver información';
+
+            return `
+                <div
+                    class="punto-referencia-item d-flex justify-content-between align-items-center rounded-3 px-2 py-1 mb-3 ${activo ? 'active' : ''}">
+            
+                    <button
+                        type="button"
+                        class="btn btn-toggle-punto-referencia p-0 d-flex align-items-center justify-content-center"
+                        title="${tituloBoton}"
+                        aria-label="${tituloBoton}"
+                        aria-expanded="${activo ? 'true' : 'false'}"
+                        onclick="togglePuntoReferenciaOpcion7(event, ${punto.idPuntoReferencia})">
+                        <i class="fa-regular ${iconoOjo} punto-referencia-icon"></i>
+                    </button>
+
+                    <span class="punto-referencia-id">
+                        ${escaparHtml(punto.identificador || 'Nuevo punto de referencia')}
+                    </span>
+                </div>
+            `;
+        }).join('');
+
+        contenedor.innerHTML = `
+            <div class="row g-4">
+
+                <!-- Primera tarjeta -->
+                <div class="col-12 col-md-6 col-xl-3">
+                    <div class="card card-fixed-opcion7">
+                        <div class="card-body card-body-scroll-opcion7">
+                            <div class="title-tarjet-information">
+                                Listado de puntos de referencia asociado
+                            </div>
+
+                            <div class="mt-4">
+                                ${listado || `
+                                    <div class="estado-vacio-punto-referencia-opcion7">
+                                        No hay puntos de referencia asociados
+                                    </div>
+                                `}
+
+                                <div class="text-end mt-4">
+                                    <button
+                                        type="button"
+                                        class="btn btn-add-punto-referencia px-2 py-2"
+                                        onclick="agregarPuntoReferenciaOpcion7()">
+                                        Añadir punto de referencia
+                                        <i class="fa-solid fa-plus ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Segunda tarjeta -->
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card card-fixed-opcion7">
+                        <div class="card-body card-body-scroll-opcion7">
+                            <div class="title-tarjet-information">
+                                Información general
+                            </div>
+
+                            <div class="detalle-punto-referencia-panel ${puntoReferenciaSeleccionadoOpcion7 ? 'detalle-punto-referencia-panel-activo' : ''}">
+                                ${renderizarDetallePuntoReferenciaOpcion7()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tercera tarjeta -->
+                <div class="col-12 col-xl-5">
+                    <div
+                        class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio-edit d-flex flex-column flex-shrink-0 card-fixed-opcion7 visor-punto-referencia-opcion7">
+                        <div class="card-header border-0 p-0 rounded-top-4">
+                            <div class="d-flex align-items-start gap-2 px-3 py-2">
+                                <span class="lh-1 mt-2">
+                                    <i class="bi bi-crosshair"></i>
+                                </span>
+
+                                <div class="lh-sm">
+                                    <div class="fw-bold mb-0 text-visor-edit">
+                                        Visor predio
+                                    </div>
+
+                                    <div class="text-muted d-block text-visualizacion-edit">
+                                        Visualización espacial del predio
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1 visor-mapa-top-edit editar-predio-visor-wrap">
+                            <div id="mapEditarPredioTab7" class="w-100 h-100 m-0 p-0"></div>
+
+                            <div
+                                id="mapEditarPredioTab7Empty"
+                                class="editar-predio-map-empty position-absolute top-50 start-50 translate-middle text-center px-3">
+                                Selecciona un predio válido para visualizar su geometría.
+                            </div>
+
+                            <div
+                                class="vp-map-tools-edit position-absolute bottom-0 end-0 mb-2 me-2 d-flex flex-column gap-1 align-items-end">
+                                <button
+                                    type="button"
+                                    class="vp-map-btn-edit btn btn-light btn-sm px-3 py-2 w-auto btn-ver-proyecto-opcion7"
+                                    id="btnZoomProyectoEditarTab7">
+                                    <i class="fa-regular fa-eye me-2"></i>
+                                    Ver Proyecto
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        `;
+
+        habilitarCamposEditables();
+        prepararPayloadEdicionPredio();
+    }
+
+    function renderizarDetallePuntoReferenciaOpcion7() {
+        const punto = puntoReferenciaSeleccionadoOpcion7;
+
+        if (!punto) {
+            return `
+                <div class="punto-referencia-empty text-center mt-4">
+                    Seleccione una marca predial
+                </div>
+            `;
+        }
+
+        return `
+            <div class="mt-4">
+                <div class="mb-3 campo-predio-seven p-2">
+                <label class="form-label-information-seven mb-2">
+                    Predio asociado
+                </label>
+
+                <div
+                    class="rounded-3 px-2 py-1 w-100 result-information campo-predio-asociado-seven d-flex align-items-center"
+                    contenteditable="true"
+                    spellcheck="false"
+                    onfocus="limpiarPlaceholderCampoEditableOpcion7(this)"
+                    oninput="actualizarCampoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, 'predioAsociado', this)"
+                    onblur="finalizarCampoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, 'predioAsociado', this)">
+                    ${escaparHtml(punto.predioAsociado || 'Sin datos...')}
+                </div>
+            </div>
+
+                <div class="mb-3">
+                    <label class="form-label-information mb-2">
+                        Tipo de punto de referencia
+                    </label>
+
+                    <input
+                        type="hidden"
+                        name="tipo_punto_referencia_${punto.idPuntoReferencia}"
+                        id="tipo_punto_referencia_${punto.idPuntoReferencia}"
+                        value="${escaparHtml(punto.tipoPunto || '')}">
+
+                    <div class="dropdown w-100">
+                        <button
+                            class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                            type="button"
+                            id="dropdownTipoPuntoReferencia_${punto.idPuntoReferencia}"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <span>${escaparHtml(punto.tipoPunto || 'Ninguna selección')}</span>
+                            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                        </button>
+
+                        <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                            <li>
+                                <button class="dropdown-item" type="button"
+                                    onclick="seleccionarTipoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, '', 'Ninguna selección')">
+                                    Ninguna selección
+                                </button>
+                            </li>
+
+                            <li>
+                                <button class="dropdown-item" type="button"
+                                    onclick="seleccionarTipoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, 'Oferta económica', 'Oferta económica')">
+                                    Oferta económica
+                                </button>
+                            </li>
+
+                            <li>
+                                <button class="dropdown-item" type="button"
+                                    onclick="seleccionarTipoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, 'Otro', 'Otro')">
+                                    Otro
+                                </button>
+                            </li>
+
+                            <li>
+                                <button class="dropdown-item" type="button"
+                                    onclick="seleccionarTipoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, 'Piedra', 'Piedra')">
+                                    Piedra
+                                </button>
+                            </li>
+
+                            <li>
+                                <button class="dropdown-item" type="button"
+                                    onclick="seleccionarTipoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, 'Polisombra', 'Polisombra')">
+                                    Polisombra
+                                </button>
+                            </li>
+
+                            <li>
+                                <button class="dropdown-item" type="button"
+                                    onclick="seleccionarTipoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, 'Punto lindero', 'Punto lindero')">
+                                    Punto lindero
+                                </button>
+                            </li>
+
+                            <li>
+                                <button class="dropdown-item" type="button"
+                                    onclick="seleccionarTipoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, 'Ruina', 'Ruina')">
+                                    Ruina
+                                </button>
+                            </li>
+
+                            <li>
+                                <button class="dropdown-item" type="button"
+                                    onclick="seleccionarTipoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, 'Unidad espacial', 'Unidad espacial')">
+                                    Unidad espacial
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label-information mb-2">
+                        Observación
+                    </label>
+                    <div
+                        class="rounded-3 px-2 py-2 w-100 result-information"
+                        contenteditable="true"
+                        spellcheck="false"
+                        style="min-height: 80px;"
+                        oninput="actualizarCampoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, 'observacion', this)">
+                        ${escaparHtml(punto.observacion || '----')}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label-information mb-2">
+                        Correo
+                    </label>
+                    <div
+                        class="rounded-3 px-2 py-2 w-100 result-information"
+                        contenteditable="true"
+                        spellcheck="false"
+                        oninput="actualizarCampoPuntoReferenciaOpcion7(${punto.idPuntoReferencia}, 'correoSeven', this)">
+                        ${escaparHtml(punto.correoSeven || '----')}
+                    </div>
+                </div>
+
+                <div class="title-tarjet-information mt-4 mb-3">
+                    Adjuntos
+                </div>
+                <div class="row g-2 mb-3">
+                    ${crearBloqueAdjuntoPuntoReferenciaOpcion7(punto.adjuntoPuntoReferencia, punto.idPuntoReferencia)}
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-boton-dat-dele px-3"
+                        onclick="eliminarPuntoReferenciaOpcion7(${punto.idPuntoReferencia})">
+                        Eliminar
+                        <i class="fa-solid fa-xmark ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    // funcion para la seccion de adjuntos de la pestaña 7
+    function crearBloqueAdjuntoPuntoReferenciaOpcion7(adjunto, idPuntoReferencia) {
+        const titulo = adjunto?.titulo || `Adjunto punto referencia:${idPuntoReferencia}`;
+        const archivo = adjunto?.archivo || '';
+        const observacion = adjunto?.observacion || 'Null';
+
+        const tieneAdjunto = archivo.trim() !== '';
+        const formularioAbierto = adjunto?.formularioAbierto === true;
+
+        if (!tieneAdjunto) {
+            return `
+                <div class="col-12">
+                    <input
+                        type="file"
+                        id="inputAdjuntoPuntoReferencia_${idPuntoReferencia}"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        class="d-none"
+                        onchange="seleccionarArchivoAdjuntoPuntoReferenciaOpcion7(${idPuntoReferencia}, this)">
+
+                    <div class="d-flex justify-content-end mb-2">
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-boton-save-adjunto-for px-3"
+                            onclick="abrirFormularioAdjuntoPuntoReferenciaOpcion7(${idPuntoReferencia})">
+                            Añadir adjunto
+                            <i class="fa-solid fa-plus ms-2"></i>
+                        </button>
+                    </div>
+
+                    <div
+                        class="collapse ${formularioAbierto ? 'show' : ''}"
+                        id="collapseAdjuntoPuntoReferencia_${idPuntoReferencia}">
+
+                        <div class="bg-white p-3 rounded-3 border content-form-adjunto-unido">
+                            <div class="mb-3">
+                                <label class="content-text-label mb-2">
+                                    Archivo
+                                </label>
+
+                                <div
+                                    class="input-form-dropdown input-label-doc rounded-3 px-2 py-2 d-flex align-items-center justify-content-between"
+                                    id="archivoAdjuntoPuntoReferenciaDisplay_${idPuntoReferencia}"
+                                    role="button"
+                                    tabindex="0"
+                                    onclick="document.getElementById('inputAdjuntoPuntoReferencia_${idPuntoReferencia}').click()"
+                                    onkeydown="abrirAdjuntoPuntoReferenciaConTecladoOpcion7(event, ${idPuntoReferencia})">
+                                    <span>Seleccionar archivo</span>
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </div>
+                            </div>
+
+                            <div class="adjunto-observacion-box mt-3">
+                                <div class="adjunto-observacion-header">
+                                    Observación del adjunto
+                                </div>
+
+                                <div
+                                    class="adjunto-observacion-body d-flex align-items-start"
+                                    id="observacionAdjuntoPuntoReferencia_${idPuntoReferencia}"
+                                    contenteditable="true"
+                                    spellcheck="false"
+                                    onfocus="limpiarPlaceholderCampoEditableOpcion7(this)"
+                                    oninput="actualizarObservacionAdjuntoPuntoReferenciaOpcion7(${idPuntoReferencia}, this)"
+                                    onblur="finalizarObservacionAdjuntoPuntoReferenciaOpcion7(${idPuntoReferencia}, this)">
+                                    ${escaparHtml(observacion || 'Null')}
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-boton-abort px-3 text-white"
+                                    onclick="cancelarFormularioAdjuntoPuntoReferenciaOpcion7(${idPuntoReferencia})">
+                                    Cancelar
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-boton-save-adjunto px-3"
+                                    onclick="guardarAdjuntoPuntoReferenciaOpcion7(${idPuntoReferencia})">
+                                    Guardar adjunto
+                                    <i class="fa-solid fa-plus ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+        <div class="col-12">
+            <input
+                type="file"
+                id="inputAdjuntoPuntoReferencia_${idPuntoReferencia}"
+                accept=".pdf,.jpg,.jpeg,.png"
+                class="d-none"
+                onchange="seleccionarArchivoAdjuntoPuntoReferenciaOpcion7(${idPuntoReferencia}, this)">
+
+            <div class="adjunto-punto-referencia-card rounded-3 overflow-hidden adjunto-punto-referencia-card-activo">
+                <button
+                    class="btn w-100 border-0 shadow-none d-flex justify-content-between align-items-center py-2 px-3 adjunto-punto-referencia-toggle"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseAdjuntoPuntoReferencia_${idPuntoReferencia}"
+                    aria-expanded="false"
+                    aria-controls="collapseAdjuntoPuntoReferencia_${idPuntoReferencia}">
+
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-file-pdf adjunto-punto-referencia-icon"></i>
+                        <span class="adjunto-punto-referencia-title">
+                            ${escaparHtml(titulo)}
+                        </span>
+                    </div>
+
+                    <i class="fa-solid fa-chevron-down adjunto-punto-referencia-arrow"></i>
+                </button>
+
+                <div class="collapse" id="collapseAdjuntoPuntoReferencia_${idPuntoReferencia}">
+                    <div class="px-3 pb-3 pt-2">
+                        <div class="mb-3">
+                            <label class="form-label-archivo mb-2">
+                                Archivo
+                            </label>
+
+                            <div
+                                class="adjunto-punto-referencia-file rounded-3 px-3 py-2 d-flex justify-content-between align-items-center"
+                                role="button"
+                                tabindex="0"
+                                onclick="document.getElementById('inputAdjuntoPuntoReferencia_${idPuntoReferencia}').click()"
+                                onkeydown="abrirAdjuntoPuntoReferenciaConTecladoOpcion7(event, ${idPuntoReferencia})">
+
+                                <span
+                                    class="text-truncate me-2"
+                                    id="archivoAdjuntoPuntoReferenciaDisplay_${idPuntoReferencia}">
+                                    ${escaparHtml(archivo)}
+                                </span>
+
+                                <i class="fa-solid fa-file-pdf adjunto-punto-referencia-file-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="adjunto-punto-referencia-observacion rounded-3 overflow-hidden">
+                                <div class="adjunto-punto-referencia-observacion-header px-3 py-2">
+                                    Observación del adjunto
+                                </div>
+
+                                <div
+                                    class="adjunto-punto-referencia-observacion-body px-3 py-4 d-flex align-items-start"
+                                    contenteditable="true"
+                                    spellcheck="false"
+                                    id="observacionAdjuntoPuntoReferencia_${idPuntoReferencia}"
+                                    onfocus="limpiarPlaceholderCampoEditableOpcion7(this)"
+                                    oninput="actualizarObservacionAdjuntoPuntoReferenciaOpcion7(${idPuntoReferencia}, this)"
+                                    onblur="finalizarObservacionAdjuntoPuntoReferenciaOpcion7(${idPuntoReferencia}, this)">
+                                    ${escaparHtml(observacion || 'Null')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button
+                                type="button"
+                                class="btn adjunto-punto-referencia-btn-eliminar px-3 py-2"
+                                onclick="eliminarAdjuntoPuntoReferenciaOpcion7(${idPuntoReferencia})">
+                                Eliminar
+                                <i class="fa-solid fa-xmark ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+    // funcion para abrir el formulario de añadir adjunto
+    function abrirFormularioAdjuntoPuntoReferenciaOpcion7(idPuntoReferencia) {
+        const punto = datosPruebaOpcion7.find((item) => item.idPuntoReferencia === idPuntoReferencia);
+        if (!punto) return;
+
+        if (!punto.adjuntoPuntoReferencia) {
+            punto.adjuntoPuntoReferencia = {
+                titulo: `Adjunto punto referencia:${idPuntoReferencia}`,
+                archivo: '',
+                observacion: 'Null',
+                formularioAbierto: true
+            };
+        }
+
+        punto.adjuntoPuntoReferencia.formularioAbierto = true;
+
+        renderizarPuntosReferenciaOpcion7();
+
+        setTimeout(() => {
+            const collapse = document.getElementById(`collapseAdjuntoPuntoReferencia_${idPuntoReferencia}`);
+
+            if (collapse && window.bootstrap?.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(collapse, {
+                    toggle: false
+                }).show();
+            } else if (collapse) {
+                collapse.classList.add('show');
+            }
+        }, 80);
+    }
+
+    // funcion oara qye seleccione el punto del ojo
+    function togglePuntoReferenciaOpcion7(event, idPuntoReferencia) {
+        event.stopPropagation();
+
+        const estaAbierto = puntoReferenciaSeleccionadoOpcion7?.idPuntoReferencia === idPuntoReferencia;
+
+        if (estaAbierto) {
+            cambiarDetallePuntoReferenciaConTransicion(null);
+            return;
+        }
+
+        const nuevoPunto = datosPruebaOpcion7.find((punto) => {
+            return punto.idPuntoReferencia === idPuntoReferencia;
+        }) || null;
+
+        cambiarDetallePuntoReferenciaConTransicion(nuevoPunto);
+    }
+    // fin funcion oara qye seleccione el punto del ojo
+
+    // funcion para notar transicion al cambiar de informacion
+    function cambiarDetallePuntoReferenciaConTransicion(nuevoPunto) {
+        const panelActual = document.querySelector('#opcion7 .detalle-punto-referencia-panel');
+
+        if (!panelActual) {
+            puntoReferenciaSeleccionadoOpcion7 = nuevoPunto;
+            renderizarPuntosReferenciaOpcion7();
+            return;
+        }
+
+        panelActual.classList.add('detalle-punto-referencia-panel-saliendo');
+
+        setTimeout(() => {
+            puntoReferenciaSeleccionadoOpcion7 = nuevoPunto;
+            renderizarPuntosReferenciaOpcion7();
+
+            const nuevoPanel = document.querySelector('#opcion7 .detalle-punto-referencia-panel');
+
+            if (nuevoPanel) {
+                nuevoPanel.classList.add('detalle-punto-referencia-panel-entrando');
+
+                requestAnimationFrame(() => {
+                    nuevoPanel.classList.remove('detalle-punto-referencia-panel-entrando');
+                    nuevoPanel.classList.add('detalle-punto-referencia-panel-activo');
+                });
+            }
+        }, 220);
+    }
+    // fin funcion para notar transicion al cambiar de informacion
+
+    function cancelarFormularioAdjuntoPuntoReferenciaOpcion7(idPuntoReferencia) {
+        const punto = datosPruebaOpcion7.find((item) => item.idPuntoReferencia === idPuntoReferencia);
+        if (!punto) return;
+
+        punto.adjuntoPuntoReferencia = {
+            titulo: `Adjunto punto referencia:${idPuntoReferencia}`,
+            archivo: '',
+            observacion: 'Null',
+            formularioAbierto: false
+        };
+
+        renderizarPuntosReferenciaOpcion7();
+        prepararPayloadEdicionPredio();
+    }
+    // fin funcion para abrir el formulario de añadir adjunto
+
+    function abrirAdjuntoPuntoReferenciaConTecladoOpcion7(event, idPuntoReferencia) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+
+        event.preventDefault();
+
+        const input = document.getElementById(`inputAdjuntoPuntoReferencia_${idPuntoReferencia}`);
+        if (input) {
+            input.click();
+        }
+    }
+
+    function seleccionarArchivoAdjuntoPuntoReferenciaOpcion7(idPuntoReferencia, input) {
+        const punto = datosPruebaOpcion7.find((item) => item.idPuntoReferencia === idPuntoReferencia);
+        if (!punto || !input) return;
+
+        const archivo = input.files && input.files.length > 0 ? input.files[0] : null;
+        if (!archivo) return;
+
+        if (!punto.adjuntoPuntoReferencia) {
+            punto.adjuntoPuntoReferencia = {
+                titulo: `Adjunto punto referencia:${idPuntoReferencia}`,
+                archivo: '',
+                observacion: 'Null',
+                formularioAbierto: true
+            };
+        }
+
+        punto.adjuntoPuntoReferencia.archivo = archivo.name;
+        punto.adjuntoPuntoReferencia.formularioAbierto = true;
+
+        const displayArchivo = document.getElementById(`archivoAdjuntoPuntoReferenciaDisplay_${idPuntoReferencia}`);
+
+        if (displayArchivo) {
+            displayArchivo.innerHTML = `
+            <span class="text-truncate me-2">${escaparHtml(archivo.name)}</span>
+            <i class="fa-solid fa-file-pdf"></i>
+        `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // funcion para guardar el adjunto
+    function guardarAdjuntoPuntoReferenciaOpcion7(idPuntoReferencia) {
+        const punto = datosPruebaOpcion7.find((item) => item.idPuntoReferencia === idPuntoReferencia);
+        if (!punto || !punto.adjuntoPuntoReferencia) return;
+
+        const archivo = (punto.adjuntoPuntoReferencia.archivo || '').trim();
+
+        if (!archivo) {
+            const input = document.getElementById(`inputAdjuntoPuntoReferencia_${idPuntoReferencia}`);
+            if (input) {
+                input.click();
+            }
+            return;
+        }
+
+        const observacion = document.getElementById(`observacionAdjuntoPuntoReferencia_${idPuntoReferencia}`);
+
+        punto.adjuntoPuntoReferencia = {
+            titulo: `Adjunto punto referencia:${idPuntoReferencia}`,
+            archivo: archivo,
+            observacion: observacion ? obtenerTextoNormalizado(observacion) || 'Null' : 'Null',
+            formularioAbierto: false
+        };
+
+        prepararPayloadEdicionPredio();
+        renderizarPuntosReferenciaOpcion7();
+    }
+    // fin funcion para guardar el adjunto
+
+    function actualizarObservacionAdjuntoPuntoReferenciaOpcion7(idPuntoReferencia, elemento) {
+        const punto = datosPruebaOpcion7.find((item) => item.idPuntoReferencia === idPuntoReferencia);
+        if (!punto || !elemento) return;
+
+        if (!punto.adjuntoPuntoReferencia) {
+            punto.adjuntoPuntoReferencia = {
+                titulo: `Adjunto punto referencia:${idPuntoReferencia}`,
+                archivo: '',
+                observacion: ''
+            };
+        }
+
+        punto.adjuntoPuntoReferencia.observacion = obtenerValorCampoEditable(elemento);
+        prepararPayloadEdicionPredio();
+    }
+
+    function finalizarObservacionAdjuntoPuntoReferenciaOpcion7(idPuntoReferencia, elemento) {
+        if (!elemento) return;
+
+        const texto = obtenerTextoNormalizado(elemento);
+
+        if (!texto) {
+            elemento.textContent = 'Null';
+        }
+
+        actualizarObservacionAdjuntoPuntoReferenciaOpcion7(idPuntoReferencia, elemento);
+    }
+
+    function eliminarAdjuntoPuntoReferenciaOpcion7(idPuntoReferencia) {
+        const punto = datosPruebaOpcion7.find((item) => item.idPuntoReferencia === idPuntoReferencia);
+        if (!punto) return;
+
+        punto.adjuntoPuntoReferencia = {
+            titulo: `Adjunto punto referencia:${idPuntoReferencia}`,
+            archivo: '',
+            observacion: 'Null',
+            formularioAbierto: false
+        };
+
+        prepararPayloadEdicionPredio();
+        renderizarPuntosReferenciaOpcion7();
+    }
+    // fin funcion para la seccion de adjuntos de la pestaña 7
+
+    function seleccionarPuntoReferenciaOpcion7(idPuntoReferencia) {
+        puntoReferenciaSeleccionadoOpcion7 = datosPruebaOpcion7.find((punto) => {
+            return punto.idPuntoReferencia === idPuntoReferencia;
+        }) || null;
+
+        renderizarPuntosReferenciaOpcion7();
+    }
+
+    function actualizarCampoPuntoReferenciaOpcion7(idPuntoReferencia, campo, elemento) {
+        const punto = datosPruebaOpcion7.find((item) => item.idPuntoReferencia === idPuntoReferencia);
+        if (!punto || !elemento) return;
+
+        punto[campo] = obtenerValorCampoEditable(elemento);
+        actualizarEstadoCampoEditable(elemento);
+        prepararPayloadEdicionPredio();
+    }
+
+    function seleccionarTipoPuntoReferenciaOpcion7(idPuntoReferencia, valor, texto) {
+        const punto = datosPruebaOpcion7.find((item) => item.idPuntoReferencia === idPuntoReferencia);
+        if (!punto) return;
+
+        const seleccion = resolverSeleccionDropdown(valor, texto, 'Ninguna selección');
+
+        punto.tipoPunto = seleccion.valor;
+
+        actualizarTextoDropdown(`dropdownTipoPuntoReferencia_${idPuntoReferencia}`, seleccion.texto);
+
+        const input = document.getElementById(`tipo_punto_referencia_${idPuntoReferencia}`);
+        if (input) {
+            input.value = seleccion.valor;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function agregarPuntoReferenciaOpcion7() {
+        const nuevoId = datosPruebaOpcion7.length
+            ? Math.max(...datosPruebaOpcion7.map((punto) => punto.idPuntoReferencia)) + 1
+            : 1;
+
+        const nuevoPunto = {
+            idPuntoReferencia: nuevoId,
+
+            // Campos vacíos para que la tarjeta 2 abra limpia
+            identificador: '',
+            predioAsociado: '',
+            tipoPunto: '',
+            nombreReferencia: '',
+            descripcion: '',
+            coordenadaEste: '',
+            coordenadaNorte: '',
+            altura: '',
+            observacion: '',
+            correoSeven: '',
+            estado: '',
+
+            // Bandera para saber que es un registro nuevo
+            esNuevo: true,
+
+            // Sin adjunto cargado al iniciar
+            adjuntoPuntoReferencia: {
+                titulo: `Adjunto punto referencia:${nuevoId}`,
+                archivo: '',
+                observacion: 'Null',
+                formularioAbierto: false
+            }
+        };
+
+        datosPruebaOpcion7.push(nuevoPunto);
+
+        cambiarDetallePuntoReferenciaConTransicion(nuevoPunto);
+
+        setTimeout(() => {
+            const primerCampo = document.querySelector('#opcion7 .campo-predio-asociado-seven');
+            if (primerCampo) {
+                primerCampo.focus();
+            }
+        }, 350);
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function eliminarPuntoReferenciaOpcion7(idPuntoReferencia) {
+        const index = datosPruebaOpcion7.findIndex((punto) => {
+            return punto.idPuntoReferencia === idPuntoReferencia;
+        });
+
+        if (index === -1) return;
+
+        datosPruebaOpcion7.splice(index, 1);
+        puntoReferenciaSeleccionadoOpcion7 = null;
+
+        renderizarPuntosReferenciaOpcion7();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderizarPuntosReferenciaOpcion7();
+    });
+</script>

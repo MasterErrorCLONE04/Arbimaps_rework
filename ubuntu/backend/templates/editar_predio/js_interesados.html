@@ -1,0 +1,2190 @@
+<script>
+    var datosPruebaOpcion4 = [];
+    // script para las sub pestañas de la informacion de las personas de la cuarta pestaña
+    function crearCampoSoloLectura(label, valor) {
+        return `
+            <div class="mb-3">
+                <label class="form-label-information mb-2">${label}</label>
+                <div class="rounded-3 px-2 py-2 w-100 result-information">
+                    ${valor || '----'}
+                </div>
+            </div>
+        `;
+    }
+
+    function crearCampoCuotaParticipacion(label, valor) {
+        return `
+        <div class="mb-3">
+            <label class="form-label-information mb-2">${label}</label>
+            <div class="rounded-3 px-2 py-2 w-100 result-information d-flex justify-content-between align-items-center">
+                <span>${valor ?? '----'}</span>
+                <span class="fw-bold">%</span>
+            </div>
+        </div>
+    `;
+    }
+
+    function formatearFechaInputAVisual(valor) {
+        if (!valor) return '----';
+
+        const partes = valor.split('-');
+        if (partes.length !== 3) return valor;
+
+        const [anio, mes, dia] = partes;
+        return `${dia}/${mes}/${anio}`;
+    }
+
+    function crearCampoFechaInicioTendencia(label, valor, idPersona) {
+        const valorInput = valor || '';
+        const valorVisual = formatearFechaInputAVisual(valorInput);
+
+        return `
+            <div class="mb-3">
+                <label class="form-label-information mb-2">${label}</label>
+
+                <div
+                    class="rounded-3 px-2 py-2 w-100 result-information d-flex justify-content-between align-items-center campo-fecha-tendencia-wrap"
+                    id="campo_fecha_inicio_tendencia_${idPersona}">
+                    <span id="texto_fecha_inicio_tendencia_${idPersona}">${valorVisual}</span>
+                    <div class="position-relative d-flex align-items-center justify-content-center campo-fecha-tendencia-icono-wrap">
+                        <button
+                            type="button"
+                            class="btn btn-sm p-0 border-0 bg-transparent campo-fecha-tendencia-icono-wrap"
+                            onclick="abrirCalendarioFechaInicioTendencia(${idPersona})"
+                            aria-label="Abrir calendario">
+                            <i class="fa-solid fa-calendar-minus campo-fecha-tendencia-icono"></i>
+                        </button>
+                        <input
+                            type="date"
+                            class="campo-fecha-tendencia-input"
+                            id="fecha_inicio_tendencia_${idPersona}"
+                            name="fecha_inicio_tendencia_${idPersona}"
+                            value="${valorInput}"
+                            onchange="actualizarFechaInicioTendencia(${idPersona}, this.value)"
+                            aria-label="${label}"
+                        >
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function crearCampoCheckDerecho(label, checked, idPersona) {
+        return `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center w-100 py-2 rounded-3 field-check-custom">
+                    <span class="text-field-check small">${label}</span>
+                    <input
+                        class="form-check-input check-custom m-0"
+                        type="checkbox"
+                        id="posesion_ancestral_tradicional_${idPersona}"
+                        name="posesion_ancestral_tradicional_${idPersona}"
+                        ${checked ? 'checked' : ''}
+                        onchange="actualizarCheckDerecho(${idPersona}, this.checked)"
+                    >
+                </div>
+            </div>
+        `;
+    }
+
+    // FUNCION PARA EL CHECK DEL CAMPO SE AUTORRECONOCE COMO CAMPECINO
+    function crearCampoCheckCampesino(label, checked, idPersona) {
+        return `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center w-100 py-2 rounded-3 field-check-custom">
+                    <span class="text-field-check-campesino small">${label}</span>
+                    <input
+                        class="form-check-input check-custom m-0"
+                        type="checkbox"
+                        id="autorreconoce_campesino_${idPersona}"
+                        name="autorreconoce_campesino_${idPersona}"
+                        ${checked ? 'checked' : ''}
+                        onchange="actualizarCheckCampesino(${idPersona}, this.checked)"
+                    >
+                </div>
+            </div>
+        `;
+    }
+
+    // FUNCION PARA EL CHECK DEL CAMPO SE AUTORRECONOCE COMO ETNICO
+    function crearCampoCheckEtnico(label, checked, idPersona) {
+        return `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center w-100 py-2 rounded-3 field-check-custom">
+                    <span class="text-field-check-etnico small">${label}</span>
+                    <input
+                        class="form-check-input check-custom m-0"
+                        type="checkbox"
+                        id="autorreconoce_etnico_${idPersona}"
+                        name="autorreconoce_etnico_${idPersona}"
+                        ${checked ? 'checked' : ''}
+                        onchange="actualizarCheckEtnico(${idPersona}, this.checked)"
+                    >
+                </div>
+            </div>
+        `;
+    }
+
+    // FUNCION PARA LA PARTE DE ADJUNTOS
+    function crearBloqueAdjuntoInteresado(adjunto, idPersona) {
+        const titulo = adjunto?.titulo || `Adjunto interesado:${idPersona}`;
+        const archivo = adjunto?.archivo || '----';
+        const observacion = adjunto?.observacion || 'Null';
+
+        const noTieneAdjunto = !adjunto || archivo === '----' || archivo.trim() === '';
+
+        if (noTieneAdjunto) {
+            return `
+            <div class="col-12">
+                <input
+                    type="file"
+                    id="inputAdjuntoInteresado_${idPersona}"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    class="d-none"
+                >
+
+                <div class="d-flex justify-content-end mb-2">
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-boton-save-adjunto-for px-3"
+                        onclick="abrirFormularioAdjuntoInteresado(${idPersona})">
+                        Añadir adjunto
+                        <i class="fa-solid fa-plus ms-2"></i>
+                    </button>
+                </div>
+
+                <div class="collapse" id="collapseAdjuntoInteresado_${idPersona}">
+                    <div class="bg-white p-3 rounded-3 border content-form-adjunto-unido">
+                        <div class="mb-3">
+                            <label class="content-text-label mb-2">Archivo</label>
+                            <div
+                                class="input-form-dropdown input-label-doc rounded-3 px-2 py-2 d-flex align-items-center"
+                                id="archivoAdjuntoInteresadoDisplay_${idPersona}"
+                                role="button"
+                                tabindex="0"
+                                onclick="document.getElementById('inputAdjuntoInteresado_${idPersona}').click()">
+                                ----
+                            </div>
+                        </div>
+
+                        <div class="adjunto-observacion-box mt-3">
+                            <div class="adjunto-observacion-header">
+                                Observación del adjunto
+                            </div>
+                            <div
+                                class="adjunto-observacion-body d-flex align-items-start"
+                                id="observacionAdjuntoInteresado_${idPersona}"
+                                contenteditable="true"
+                                spellcheck="false">Null</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-boton-abort px-3 text-white"
+                                onclick="cancelarAdjuntoInteresado(${idPersona})">
+                                Cancelar
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-boton-save-adjunto px-3"
+                                onclick="guardarAdjuntoInteresado(${idPersona})">
+                                Guardar adjunto
+                                <i class="fa-solid fa-plus ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        }
+
+        return `
+        <div class="col-12">
+            <div class="adjunto-interesado-card rounded-3 overflow-hidden">
+                <button
+                    class="btn w-100 border-0 shadow-none d-flex justify-content-between align-items-center py-1 adjunto-interesado-toggle"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseAdjuntoInteresado_${idPersona}"
+                    aria-expanded="false"
+                    aria-controls="collapseAdjuntoInteresado_${idPersona}">
+                
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-file-pdf adjunto-interesado-icon"></i>
+                        <span class="adjunto-interesado-title">${titulo}</span>
+                    </div>
+
+                    <i class="fa-solid fa-chevron-down adjunto-interesado-arrow"></i>
+                </button>
+
+                <div class="collapse" id="collapseAdjuntoInteresado_${idPersona}">
+                    <div class="px-3 pb-3 pt-2">
+                        <div class="mb-3">
+                            <label class="form-label-archivo mb-2">Archivo</label>
+                            <div class="adjunto-interesado-file rounded-3 px-3 py-1 d-flex justify-content-between align-items-center">
+                                <span class="text-truncate me-2">${archivo}</span>
+                                <i class="fa-solid fa-file-pdf adjunto-interesado-file-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="adjunto-interesado-observacion rounded-3 overflow-hidden">
+                                <div class="adjunto-interesado-observacion-header px-3 py-2">
+                                    Observación del adjunto
+                                </div>
+                                <div class="adjunto-interesado-observacion-body px-3 py-4 d-flex align-items-start">
+                                    ${observacion}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button
+                                type="button"
+                                class="btn adjunto-interesado-btn-eliminar px-3 py-2"
+                                onclick="eliminarAdjuntoInteresado(${idPersona})">
+                                Eliminar
+                                <i class="fa-solid fa-xmark ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+
+    // FUNCION PARA LOS ADJUNTOS DE FUENTE TERCERA TARJETA 4 PESTAÑA
+    function crearBloqueAdjuntoFuenteAdministrativa(adjunto, idPersona) {
+        const titulo = adjunto?.titulo || `Adjunto fuente administrativa:${idPersona}`;
+        const archivo = adjunto?.archivo || '----';
+        const observacion = adjunto?.observacion || 'Null';
+
+        const noTieneAdjunto = !adjunto || archivo === '----' || archivo.trim() === '';
+
+        if (noTieneAdjunto) {
+            return `
+            <div class="col-12">
+                <input
+                    type="file"
+                    id="inputAdjuntoFuenteAdministrativa_${idPersona}"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    class="d-none"
+                >
+
+                <div class="d-flex justify-content-end mb-2">
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-boton-save-adjunto-for px-3"
+                        onclick="abrirFormularioAdjuntoFuenteAdministrativa(${idPersona})">
+                        Añadir adjunto
+                        <i class="fa-solid fa-plus ms-2"></i>
+                    </button>
+                </div>
+
+                <div class="collapse" id="collapseAdjuntoFuenteAdministrativa_${idPersona}">
+                    <div class="bg-white p-3 rounded-3 border content-form-adjunto-unido">
+                        <div class="mb-3">
+                            <label class="content-text-label mb-2">Archivo</label>
+                            <div
+                                class="input-form-dropdown input-label-doc rounded-3 px-2 py-2 d-flex align-items-center"
+                                id="archivoAdjuntoFuenteAdministrativaDisplay_${idPersona}"
+                                role="button"
+                                tabindex="0"
+                                onclick="document.getElementById('inputAdjuntoFuenteAdministrativa_${idPersona}').click()">
+                                ----
+                            </div>
+                        </div>
+
+                        <div class="adjunto-observacion-box mt-3">
+                            <div class="adjunto-observacion-header">
+                                Observación del adjunto
+                            </div>
+                            <div
+                                class="adjunto-observacion-body d-flex align-items-start"
+                                id="observacionAdjuntoFuenteAdministrativa_${idPersona}"
+                                contenteditable="true"
+                                spellcheck="false">Null</div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-3">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-boton-abort px-3 text-white"
+                                onclick="cancelarAdjuntoFuenteAdministrativa(${idPersona})">
+                                Cancelar
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-boton-save-adjunto px-3"
+                                onclick="guardarAdjuntoFuenteAdministrativa(${idPersona})">
+                                Guardar adjunto
+                                <i class="fa-solid fa-plus ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        }
+
+        return `
+        <div class="col-12">
+            <div class="adjunto-interesado-card rounded-3 overflow-hidden">
+                <button
+                    class="btn w-100 border-0 shadow-none d-flex justify-content-between align-items-center py-1 adjunto-interesado-toggle"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseAdjuntoFuenteAdministrativa_${idPersona}"
+                    aria-expanded="false"
+                    aria-controls="collapseAdjuntoFuenteAdministrativa_${idPersona}">
+                    
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-file-pdf adjunto-interesado-icon"></i>
+                        <span class="adjunto-interesado-title">${titulo}</span>
+                    </div>
+
+                    <i class="fa-solid fa-chevron-down adjunto-interesado-arrow"></i>
+                </button>
+
+                <div class="collapse" id="collapseAdjuntoFuenteAdministrativa_${idPersona}">
+                    <div class="px-3 pb-3 pt-2">
+                        <div class="mb-3">
+                            <label class="form-label-archivo mb-2">Archivo</label>
+                            <div class="adjunto-interesado-file rounded-3 px-3 py-1 d-flex justify-content-between align-items-center">
+                                <span class="text-truncate me-2">${archivo}</span>
+                                <i class="fa-solid fa-file-pdf adjunto-interesado-file-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="adjunto-interesado-observacion rounded-3 overflow-hidden">
+                                <div class="adjunto-interesado-observacion-header px-3 py-2">
+                                    Observación del adjunto
+                                </div>
+                                <div class="adjunto-interesado-observacion-body px-3 py-4 d-flex align-items-start">
+                                    ${observacion}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button
+                                type="button"
+                                class="btn adjunto-interesado-btn-eliminar px-3 py-2"
+                                onclick="eliminarAdjuntoFuenteAdministrativa(${idPersona})">
+                                Eliminar
+                                <i class="fa-solid fa-xmark ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+
+    // FUNCION PARA LA CONDICIONAL SEGUN EL TIPO DE PERSONA
+    function renderizarBloqueTipoPersona(persona) {
+        if (persona.tipoInteresado === 'Persona Juridica') {
+            return `
+                <div class="title-tarjet-interesados mb-3 mt-3">Información persona jurídica</div>
+                <div class="row g-2">
+                    <div class="col-12">
+                        <div class="mb-2">
+                            <label class="form-label-information mb-1">Razón social</label>
+                            <div class="rounded-3 px-2 py-0 w-100 result-information d-flex align-items-center">
+                                <span class="text-dark flex-grow-1"
+                                    contenteditable="true"
+                                    spellcheck="false"
+                                    role="textbox"
+                                    tabindex="0"
+                                    data-opcion4-editable="true"
+                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'razonSocial', this)"
+                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'razonSocial', this)">${escaparHtml(persona.razonSocial || '----')}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="title-tarjet-interesados mb-3 mt-3">Información Contacto</div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="mb-2">
+                            <label class="form-label-information mb-1">Departamento de residencia</label>
+                            <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                                <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'departamentoResidencia', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'departamentoResidencia', this)">${escaparHtml(persona.departamentoResidencia || '----')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-2">
+                            <label class="form-label-information mb-1">Municipio de residencia</label>
+                            <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                                <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'municipioResidencia', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'municipioResidencia', this)">${escaparHtml(persona.municipioResidencia || '----')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-2">
+                            <label class="form-label-information mb-1">Domicilio notificación</label>
+                            <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                                <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'domicilioResidencia', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'domicilioResidencia', this)">${escaparHtml(persona.domicilioResidencia || '----')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="mb-2">
+                            <label class="form-label-information mb-1">Dirección de residencia</label>
+                            <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                                <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'direccionResidencia', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'direccionResidencia', this)">${escaparHtml(persona.direccionResidencia || '----')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-2">
+                            <label class="form-label-information mb-1">Teléfono</label>
+                            <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                                <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'telefono', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'telefono', this)">${escaparHtml(persona.telefono || '----')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-2">
+                            <label class="form-label-information mb-1">Correo electrónico</label>
+                            <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                                <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'correoElectronico', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'correoElectronico', this)">${escaparHtml(persona.correoElectronico || '----')}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="title-tarjet-interesados mb-3 mt-3">Adjuntos</div>
+                    <div class="row g-2">
+                        ${crearBloqueAdjuntoInteresado(persona.adjuntoInteresado, persona.idPersona)}
+                    </div>
+                </div>            
+            `;
+        }
+
+        return `
+            <div class="title-tarjet-interesados mb-3 mt-3">Información persona natural</div>
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Primer nombre</label>
+                        <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                            <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'primerNombre', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'primerNombre', this)">${escaparHtml(persona.primerNombre || '----')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Segundo nombre</label>
+                        <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                            <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'segundoNombre', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'segundoNombre', this)">${escaparHtml(persona.segundoNombre || '----')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Primer apellido</label>
+                        <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                            <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'primerApellido', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'primerApellido', this)">${escaparHtml(persona.primerApellido || '----')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Segundo apellido</label>
+                        <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                            <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'segundoApellido', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'segundoApellido', this)">${escaparHtml(persona.segundoApellido || '----')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Sexo</label>
+                        <input
+                            type="hidden"
+                            name="sexo_interesado_${persona.idPersona}"
+                            id="sexo_interesado_${persona.idPersona}"
+                            value="${persona.genero || ''}"
+                        >
+
+                        <div class="dropdown w-100">
+                            <button
+                                class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                type="button"
+                                id="dropdownSexoInteresado_${persona.idPersona}"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <span>${persona.genero || 'Ninguna selección'}</span>
+                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                            </button>
+
+                            <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                <li>
+                                    <button class="dropdown-item" type="button"
+                                        onclick="seleccionarSexoInteresado(${persona.idPersona}, '', 'Ninguna selección')">
+                                        Ninguna selección
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item" type="button"
+                                        onclick="seleccionarSexoInteresado(${persona.idPersona}, 'Femenino', 'Femenino')">
+                                        Femenino
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item" type="button"
+                                        onclick="seleccionarSexoInteresado(${persona.idPersona}, 'Masculino', 'Masculino')">
+                                        Masculino
+                                    </button>
+                                </li>
+                                <li>
+                                    <button class="dropdown-item" type="button"
+                                        onclick="seleccionarSexoInteresado(${persona.idPersona}, 'Sin determinar', 'Sin determinar')">
+                                        Sin determinar
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    ${crearCampoCheckCampesino('¿Se autorreconoce como campesino?', persona.autorreconoceCampesino, persona.idPersona)}
+                </div>
+                <div class="col-12">
+                    ${crearCampoCheckEtnico('¿Se autorreconoce como étnico?', persona.autorreconoceEtnico, persona.idPersona)}
+                </div>
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label class="form-label-information mb-2">Grupo étnico</label>
+                        <input
+                            type="hidden"
+                            name="grupo_etnico_general_${persona.idPersona}"
+                            id="grupo_etnico_general_${persona.idPersona}"
+                            value="${persona.grupoEtnicoGeneral || ''}"
+                        >
+                        <div class="dropdown w-100">
+                            <button
+                                class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                type="button"
+                                id="dropdownGrupoEtnicoGeneral_${persona.idPersona}"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <span>${persona.grupoEtnicoGeneral || 'Ninguna selección'}</span>
+                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                            </button>
+
+                            <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, '', 'Ninguna selección')">Ninguna selección</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'indígena', 'indígena')">indígena</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'Negro o afrocolombiano', 'Negro o afrocolombiano')">Negro o afrocolombiano</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'Ninguno', 'Ninguno')">Ninguno</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'Palenquero', 'Palenquero')">Palenquero</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'Raizal', 'Raizal')">Raizal</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'Rrom', 'Rrom')">Rrom</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-11 mx-auto">
+                    <div class="title-tarjet-interesados mb-3 mt-3">Información identificación etnica</div>
+                    <div class="mb-3">
+                        <label class="form-label-information mb-2">Grupo étnico</label>
+
+                        <input
+                            type="hidden"
+                            name="grupo_etnico_${persona.idPersona}"
+                            id="grupo_etnico_${persona.idPersona}"
+                            value="${persona.grupoEtnico || ''}"
+                        >
+
+                        <div class="dropdown w-100">
+                            <button
+                                class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                type="button"
+                                id="dropdownGrupoEtnico_${persona.idPersona}"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <span>${persona.grupoEtnico || 'Ninguna selección'}</span>
+                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                            </button>
+
+                            <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, '', 'Ninguna selección')">Ninguna selección</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Achagua', 'Achagua')">Achagua</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Ambalo', 'Ambalo')">Ambalo</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Amorua', 'Amorua')">Amorua</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Andakies', 'Andakies')">Andakies</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Andoke', 'Andoke')">Andoke</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Arhuaco', 'Arhuaco')">Arhuaco</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Awa', 'Awa')">Awa</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Baniba', 'Baniba')">Baniba</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Bara', 'Bara')">Bara</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Barasano', 'Barasano')">Barasano</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Bari', 'Bari')">Bari</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Betoye', 'Betoye')">Betoye</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Bora', 'Bora')">Bora</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Calima', 'Calima')">Calima</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Carapana', 'Carapana')">Carapana</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Carijona', 'Carijona')">Carijona</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Chiricoa', 'Chiricoa')">Chiricoa</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Chitanero', 'Chitanero')">Chitanero</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Cocama', 'Cocama')">Cocama</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Coconuco', 'Coconuco')">Coconuco</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Cofan', 'Cofan')">Cofan</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Coreguaje', 'Coreguaje')">Coreguaje</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Cube', 'Cube')">Cube</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Cubiyari', 'Cubiyari')">Cubiyari</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Cuiba', 'Cuiba')">Cuiba</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Cuna Tule', 'Cuna Tule')">Cuna Tule</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Curripaco', 'Curripaco')">Curripaco</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Desano', 'Desano')">Desano</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Dujos', 'Dujos')">Dujos</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Embera', 'Embera')">Embera</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Embera Chami', 'Embera Chami')">Embera Chami</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Embera Dobida', 'Embera Dobida')">Embera Dobida</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Embera Katio', 'Embera Katio')">Embera Katio</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Eperara Siapidara', 'Eperara Siapidara')">Eperara Siapidara</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Ette Ennaka', 'Ette Ennaka')">Ette Ennaka</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Guanaco', 'Guanaco')">Guanaco</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Guanano', 'Guanano')">Guanano</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Guane', 'Guane')">Guane</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Guariquema', 'Guariquema')">Guariquema</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Hitnu', 'Hitnu')">Hitnu</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Hupdu', 'Hupdu')">Hupdu</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Indígenas sin información', 'Indígenas sin información')">Indígenas sin información</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Indígenas Bolivia', 'Indígenas Bolivia')">Indígenas Bolivia</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Indígenas Brasil', 'Indígenas Brasil')">Indígenas Brasil</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Indígenas Ecuador', 'Indígenas Ecuador')">Indígenas Ecuador</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Indígenas Mexico', 'Indígenas Mexico')">Indígenas Mexico</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Indígenas Panamá', 'Indígenas Panamá')">Indígenas Panamá</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Indígenas Perú', 'Indígenas Perú')">Indígenas Perú</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Indígenas Venezuela', 'Indígenas Venezuela')">Indígenas Venezuela</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Inga', 'Inga')">Inga</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Jeeruiwa', 'Jeeruiwa')">Jeeruiwa</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Jiw', 'Jiw')">Jiw</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Judpa', 'Judpa')">Judpa</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Juhup', 'Juhup')">Juhup</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Jurumi', 'Jurumi')">Jurumi</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Kakua', 'Kakua')">Kakua</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Kametsa', 'Kametsa')">Kametsa</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Kankuamo', 'Kankuamo')">Kankuamo</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Kichwa', 'Kichwa')">Kichwa</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Kogui', 'Kogui')">Kogui</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Letuamo', 'Letuamo')">Letuamo</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Lomaprieta', 'Lomaprieta')">Lomaprieta</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Macaguane', 'Macaguane')">Macaguane</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Makaguaje', 'Makaguaje')">Makaguaje</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Maku', 'Maku')">Maku</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Makuna', 'Makuna')">Makuna</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Mapayerri', 'Mapayerri')">Mapayerri</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Masiguare', 'Masiguare')">Masiguare</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Matapi', 'Matapi')">Matapi</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Maya', 'Maya')">Maya</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Mirana', 'Mirana')">Mirana</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Misak', 'Misak')">Misak</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Mokana', 'Mokana')">Mokana</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Muinane', 'Muinane')">Muinane</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Muisca', 'Muisca')">Muisca</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Murui', 'Murui')">Murui</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Nasa', 'Nasa')">Nasa</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Nonuya', 'Nonuya')">Nonuya</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Nukak Maku', 'Nukak Maku')">Nukak Maku</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Nutabe', 'Nutabe')">Nutabe</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Ocaina_490', 'Ocaina_490')">Ocaina_490</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Otavaleno', 'Otavaleno')">Otavaleno</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Panches', 'Panches')">Panches</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Pasee', 'Pasee')">Pasee</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Pastos', 'Pastos')">Pastos</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Piapoco', 'Piapoco')">Piapoco</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Piaroa', 'Piaroa')">Piaroa</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Pijao', 'Pijao')">Pijao</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Piratapuyo', 'Piratapuyo')">Piratapuyo</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Pisamira', 'Pisamira')">Pisamira</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Polindara', 'Polindara')">Polindara</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Puinave', 'Puinave')">Puinave</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Quillacinga', 'Quillacinga')">Quillacinga</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Quimbaya', 'Quimbaya')">Quimbaya</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Quizgo', 'Quizgo')">Quizgo</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Saliba', 'Saliba')">Saliba</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Sikuani', 'Sikuani')">Sikuani</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Siona', 'Siona')">Siona</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Siriano', 'Siriano')">Siriano</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Taiwano', 'Taiwano')">Taiwano</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Tanimuka', 'Tanimuka')">Tanimuka</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Tariano', 'Tariano')">Tariano</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Tatuyo', 'Tatuyo')">Tatuyo</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Tayronas', 'Tayronas')">Tayronas</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Tikuna', 'Tikuna')">Tikuna</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Tinigua', 'Tinigua')">Tinigua</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Totoro', 'Totoro')">Totoro</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Tsiripu', 'Tsiripu')">Tsiripu</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Tukano', 'Tukano')">Tukano</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Tukuya', 'Tukuya')">Tukuya</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Uwa', 'Uwa')">Uwa</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Wayuu', 'Wayuu')">Wayuu</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Wipiwi', 'Wipiwi')">Wipiwi</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Wiwa', 'Wiwa')">Wiwa</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Wouman', 'Wouman')">Wouman</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Yagua', 'Yagua')">Yagua</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Yamalero', 'Yamalero')">Yamalero</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Yanacona', 'Yanacona')">Yanacona</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Yari', 'Yari')">Yari</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Yaruro', 'Yaruro')">Yaruro</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Yauna', 'Yauna')">Yauna</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Yeral', 'Yeral')">Yeral</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Yukpa', 'Yukpa')">Yukpa</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Yukuna', 'Yukuna')">Yukuna</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Yuri', 'Yuri')">Yuri</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Yuruti', 'Yuruti')">Yuruti</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Zenu', 'Zenu')">Zenu</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Nombre de la comunidad</label>
+                        <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                            <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'nombreComunidad', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'nombreComunidad', this)">${escaparHtml(persona.nombreComunidad || '----')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Departamento de residencia</label>
+                        <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                            <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'departamentoResidencia', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'departamentoResidencia', this)">${escaparHtml(persona.departamentoResidencia || '----')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Municipio de residencia</label>
+                        <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                            <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'municipioResidencia', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'municipioResidencia', this)">${escaparHtml(persona.municipioResidencia || '----')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Domicilio notificación</label>
+                        <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                            <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'domicilioResidencia', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'domicilioResidencia', this)">${escaparHtml(persona.domicilioResidencia || '----')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Dirección de residencia</label>
+                        <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                            <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'direccionResidencia', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'direccionResidencia', this)">${escaparHtml(persona.direccionResidencia || '----')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Teléfono</label>
+                        <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                            <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'telefono', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'telefono', this)">${escaparHtml(persona.telefono || '----')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Correo electrónico</label>
+                        <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center">
+                            <span class="text-dark flex-grow-1" contenteditable="true" spellcheck="false" role="textbox" tabindex="0" data-opcion4-editable="true" onfocus="limpiarPlaceholderCampoEditableOpcion4(this)" oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'correoElectronico', this)" onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'correoElectronico', this)">${escaparHtml(persona.correoElectronico || '----')}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="title-tarjet-interesados mb-3 mt-3">Adjuntos</div>
+                <div class="row g-2">
+                    ${crearBloqueAdjuntoInteresado(persona.adjuntoInteresado, persona.idPersona)}
+                </div>
+            </div>
+        `;
+    }
+
+
+    function renderizarBloqueTipoPersonaEditable(persona) {
+        if (persona.tipoInteresado === 'Persona Juridica') {
+            return `
+                <div class="title-tarjet-interesados mb-3 mt-3">InformaciÃ³n persona jurÃ­dica</div>
+                <div class="row g-2">
+                    <div class="col-12">
+                        ${crearCampoEditableOpcion4('RazÃ³n social', persona.razonSocial, persona.idPersona, 'razonSocial', {
+                clases: 'rounded-3 px-2 py-0 w-100 result-information d-flex align-items-center'
+            })}
+                    </div>
+                </div>
+                <div class="title-tarjet-interesados mb-3 mt-3">InformaciÃ³n Contacto</div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        ${crearCampoEditableOpcion4('Departamento de residencia', persona.departamentoResidencia, persona.idPersona, 'departamentoResidencia')}
+                    </div>
+                    <div class="col-6">
+                        ${crearCampoEditableOpcion4('Municipio de residencia', persona.municipioResidencia, persona.idPersona, 'municipioResidencia')}
+                    </div>
+                    <div class="col-6">
+                        ${crearCampoEditableOpcion4('Domicilio notificaciÃ³n', persona.domicilioResidencia, persona.idPersona, 'domicilioResidencia')}
+                    </div>
+                    <div class="col-6">
+                        ${crearCampoEditableOpcion4('DirecciÃ³n de residencia', persona.direccionResidencia, persona.idPersona, 'direccionResidencia')}
+                    </div>
+                    <div class="col-12">
+                        ${crearCampoEditableOpcion4('TelÃ©fono', persona.telefono, persona.idPersona, 'telefono')}
+                    </div>
+                    <div class="col-12">
+                        ${crearCampoEditableOpcion4('Correo electrÃ³nico', persona.correoElectronico, persona.idPersona, 'correoElectronico')}
+                    </div>
+                    <div class="title-tarjet-interesados mb-3 mt-3">Adjuntos</div>
+                    <div class="row g-2">
+                        ${crearBloqueAdjuntoInteresado(persona.adjuntoInteresado, persona.idPersona)}
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="title-tarjet-interesados mb-3 mt-3">InformaciÃ³n persona natural</div>
+            <div class="row g-2">
+                <div class="col-6">
+                    ${crearCampoEditableOpcion4('Primer nombre', persona.primerNombre, persona.idPersona, 'primerNombre')}
+                </div>
+                <div class="col-6">
+                    ${crearCampoEditableOpcion4('Segundo nombre', persona.segundoNombre, persona.idPersona, 'segundoNombre')}
+                </div>
+                <div class="col-6">
+                    ${crearCampoEditableOpcion4('Primer apellido', persona.primerApellido, persona.idPersona, 'primerApellido')}
+                </div>
+                <div class="col-6">
+                    ${crearCampoEditableOpcion4('Segundo apellido', persona.segundoApellido, persona.idPersona, 'segundoApellido')}
+                </div>
+                <div class="col-12">
+                    <div class="mb-2">
+                        <label class="form-label-information mb-1">Sexo</label>
+                        <input
+                            type="hidden"
+                            name="sexo_interesado_${persona.idPersona}"
+                            id="sexo_interesado_${persona.idPersona}"
+                            value="${persona.genero || ''}"
+                        >
+
+                        <div class="dropdown w-100">
+                            <button
+                                class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                type="button"
+                                id="dropdownSexoInteresado_${persona.idPersona}"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <span>${persona.genero || 'Ninguna selecciÃ³n'}</span>
+                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                            </button>
+
+                            <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarSexoInteresado(${persona.idPersona}, '', 'Ninguna selecciÃ³n')">Ninguna selecciÃ³n</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarSexoInteresado(${persona.idPersona}, 'Femenino', 'Femenino')">Femenino</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarSexoInteresado(${persona.idPersona}, 'Masculino', 'Masculino')">Masculino</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarSexoInteresado(${persona.idPersona}, 'Sin determinar', 'Sin determinar')">Sin determinar</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    ${crearCampoCheckCampesino('Â¿Se autorreconoce como campesino?', persona.autorreconoceCampesino, persona.idPersona)}
+                </div>
+                <div class="col-12">
+                    ${crearCampoCheckEtnico('Â¿Se autorreconoce como Ã©tnico?', persona.autorreconoceEtnico, persona.idPersona)}
+                </div>
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label class="form-label-information mb-2">Grupo Ã©tnico</label>
+                        <input
+                            type="hidden"
+                            name="grupo_etnico_general_${persona.idPersona}"
+                            id="grupo_etnico_general_${persona.idPersona}"
+                            value="${persona.grupoEtnicoGeneral || ''}"
+                        >
+                        <div class="dropdown w-100">
+                            <button
+                                class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                type="button"
+                                id="dropdownGrupoEtnicoGeneral_${persona.idPersona}"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <span>${persona.grupoEtnicoGeneral || 'Ninguna selecciÃ³n'}</span>
+                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                            </button>
+                            <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, '', 'Ninguna selecciÃ³n')">Ninguna selecciÃ³n</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'indÃ­gena', 'indÃ­gena')">indÃ­gena</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'Negro o afrocolombiano', 'Negro o afrocolombiano')">Negro o afrocolombiano</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'Ninguno', 'Ninguno')">Ninguno</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'Palenquero', 'Palenquero')">Palenquero</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'Raizal', 'Raizal')">Raizal</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnicoGeneral(${persona.idPersona}, 'Rrom', 'Rrom')">Rrom</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-11 mx-auto">
+                    <div class="title-tarjet-interesados mb-3 mt-3">InformaciÃ³n identificaciÃ³n etnica</div>
+                    <div class="mb-3">
+                        <label class="form-label-information mb-2">Grupo Ã©tnico</label>
+                        <input
+                            type="hidden"
+                            name="grupo_etnico_${persona.idPersona}"
+                            id="grupo_etnico_${persona.idPersona}"
+                            value="${persona.grupoEtnico || ''}"
+                        >
+                        <div class="dropdown w-100">
+                            <button
+                                class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                type="button"
+                                id="dropdownGrupoEtnico_${persona.idPersona}"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <span>${persona.grupoEtnico || 'Ninguna selecciÃ³n'}</span>
+                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                            </button>
+                            <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, '', 'Ninguna selecciÃ³n')">Ninguna selecciÃ³n</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Achagua', 'Achagua')">Achagua</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Ambalo', 'Ambalo')">Ambalo</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Amorua', 'Amorua')">Amorua</button></li>
+                                <li><button class="dropdown-item" type="button" onclick="seleccionarGrupoEtnico(${persona.idPersona}, 'Andakies', 'Andakies')">Andakies</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                    ${crearCampoEditableOpcion4('Nombre de la comunidad', persona.nombreComunidad, persona.idPersona, 'nombreComunidad')}
+                </div>
+                <div class="col-6">
+                    ${crearCampoEditableOpcion4('Departamento de residencia', persona.departamentoResidencia, persona.idPersona, 'departamentoResidencia')}
+                </div>
+                <div class="col-6">
+                    ${crearCampoEditableOpcion4('Municipio de residencia', persona.municipioResidencia, persona.idPersona, 'municipioResidencia')}
+                </div>
+                <div class="col-6">
+                    ${crearCampoEditableOpcion4('Domicilio notificaciÃ³n', persona.domicilioResidencia, persona.idPersona, 'domicilioResidencia')}
+                </div>
+                <div class="col-6">
+                    ${crearCampoEditableOpcion4('DirecciÃ³n de residencia', persona.direccionResidencia, persona.idPersona, 'direccionResidencia')}
+                </div>
+                <div class="col-12">
+                    ${crearCampoEditableOpcion4('TelÃ©fono', persona.telefono, persona.idPersona, 'telefono')}
+                </div>
+                <div class="col-12">
+                    ${crearCampoEditableOpcion4('Correo electrÃ³nico', persona.correoElectronico, persona.idPersona, 'correoElectronico')}
+                </div>
+                <div class="title-tarjet-interesados mb-3 mt-3">Adjuntos</div>
+                <div class="row g-2">
+                    ${crearBloqueAdjuntoInteresado(persona.adjuntoInteresado, persona.idPersona)}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderizarTarjetaDerechoOpcion4(persona) {
+        return `
+            <div class="card h-100 card-fixed-opcion4">
+                <div class="card-body card-body-scroll-opcion4">
+                    <div class="row g-1 mb-3">
+                        <div class="col-12">
+                            ${crearCampoEditableOpcion4('Predio asociado', persona.predioAsociado, persona.idPersona, 'predioAsociado')}
+                        </div>
+                    </div>
+                    <div class="title-tarjet-derecho mb-3">InformaciÃ³n de derecho</div>
+                    <div class="row g-1">
+                        <div class="col-12">
+                            <div class="mb-2">
+                                <label class="form-label-information mb-1">Tipo de derecho</label>
+                                <input type="hidden" name="tipo_derecho_persona_${persona.idPersona}" id="tipo_derecho_persona_${persona.idPersona}" value="${persona.tipoDerechoSeleccionado || ''}">
+                                <div class="dropdown w-100">
+                                    <button class="btn w-100 text-start result-information d-flex justify-content-between align-items-center" type="button" id="dropdownTipoDerechoPersona_${persona.idPersona}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span>${persona.tipoDerechoSeleccionado || 'Ninguna selecciÃ³n'}</span>
+                                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                    </button>
+                                    <ul class="dropdown-menu w-100 custom-dropdown-menu">
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoDerechoPersona(${persona.idPersona}, '', 'Ninguna selecciÃ³n')">Ninguna selecciÃ³n</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoDerechoPersona(${persona.idPersona}, 'Dominio', 'Dominio')">Dominio</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoDerechoPersona(${persona.idPersona}, 'OcupaciÃ³n', 'OcupaciÃ³n')">OcupaciÃ³n</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoDerechoPersona(${persona.idPersona}, 'PosesiÃ³n', 'PosesiÃ³n')">PosesiÃ³n</button></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            ${crearCampoEditablePorcentajeOpcion4('Cuota de participaciÃ³n', persona.cuotaParticipacion, persona.idPersona, 'cuotaParticipacion')}
+                        </div>
+                        <div class="col-12">
+                            ${crearCampoFechaInicioTendencia('Fecha de inicio de tendencia', persona.fechaInicioTendencia, persona.idPersona)}
+                        </div>
+                        <div class="col-12">
+                            ${crearCampoCheckDerecho('Â¿PosesiÃ³n ancestral y/o tradicional?', persona.posesionAncestralTradicional, persona.idPersona)}
+                        </div>
+                        <div class="col-12">
+                            ${crearCampoEditableOpcion4('DescripciÃ³n', persona.descripcion, persona.idPersona, 'descripcion', {
+            wrapperClass: 'mb-3',
+            clases: 'rounded-3 px-2 py-2 w-100 result-information d-flex align-items-start',
+            estilo: 'min-height: 130px;'
+        })}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderizarTarjetaFuenteOpcion4(persona) {
+        return `
+            <div class="card h-100 card-fixed-opcion4">
+                <div class="card-body card-body-scroll-opcion4">
+                    <div class="title-tarjet-information mb-3">Fuente administrativa</div>
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <div class="mb-2">
+                                <label class="form-label-information mb-1">Tipo de fuente administrativa</label>
+                                <input type="hidden" name="tipo_fuente_administrativa_${persona.idPersona}" id="tipo_fuente_administrativa_${persona.idPersona}" value="${persona.fuente?.tipoFuenteAdministrativa || ''}">
+                                <div class="dropdown w-100">
+                                    <button class="btn w-100 text-start result-information d-flex justify-content-between align-items-center" type="button" id="dropdownTipoFuenteAdministrativa_${persona.idPersona}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span>${persona.fuente?.tipoFuenteAdministrativa || 'Ninguna selecciÃ³n'}</span>
+                                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                    </button>
+                                    <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '', 'Ninguna selecciÃ³n')">Ninguna selecciÃ³n</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Acto administrativo', '(Fuente) Acto administrativo')">(Fuente) Acto administrativo</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) CÃ©dula real', '(Fuente) CÃ©dula real')">(Fuente) CÃ©dula real</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Documento privado', '(Fuente) Documento privado')">(Fuente) Documento privado</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Escritura pÃºblica', '(Fuente) Escritura pÃºblica')">(Fuente) Escritura pÃºblica</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Otro documento fuente', '(Fuente) Otro documento fuente')">(Fuente) Otro documento fuente</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Sentencia judicial', '(Fuente) Sentencia judicial')">(Fuente) Sentencia judicial</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Titulo colonial', '(Fuente) Titulo colonial')">(Fuente) Titulo colonial</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Titulo Republicano', '(Fuente) Titulo Republicano')">(Fuente) Titulo Republicano</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Intercultural) Auto', '(Intercultural) Auto')">(Intercultural) Auto</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Intercultural) Mandato propio indÃ­gena', '(Intercultural) Mandato propio indÃ­gena')">(Intercultural) Mandato propio indÃ­gena</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Intercultural) Otros documentos', '(Intercultural) Otros documentos')">(Intercultural) Otros documentos</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Intercultural) ProtocolizaciÃ³n notarial', '(Intercultural) ProtocolizaciÃ³n notarial')">(Intercultural) ProtocolizaciÃ³n notarial</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, 'Sin documento', 'Sin documento')">Sin documento</button></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            ${crearCampoEditableOpcion4('Numero de fuente', persona.numeroFuente, persona.idPersona, 'numeroFuente')}
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-2">
+                                <label class="form-label-information mb-1">Fecha documento fuente</label>
+                                <div class="rounded-3 px-2 py-2 w-100 result-information d-flex justify-content-between align-items-center campo-fecha-documento-fuente-wrap" id="campo_fecha_documento_fuente_${persona.idPersona}">
+                                    <span id="texto_fecha_documento_fuente_${persona.idPersona}">${formatearFechaInputAVisual(persona.fuente?.fechaDocumentoFuente || persona.fuente?.fechaDocumento || '')}</span>
+                                    <div class="position-relative d-flex align-items-center justify-content-center campo-fecha-documento-fuente-icono-wrap">
+                                        <button type="button" class="btn btn-sm p-0 border-0 bg-transparent campo-fecha-documento-fuente-btn" onclick="abrirCalendarioFechaDocumentoFuente(${persona.idPersona})" aria-label="Abrir calendario fecha documento fuente">
+                                            <i class="fa-solid fa-calendar-days campo-fecha-documento-fuente-icono"></i>
+                                        </button>
+                                        <input type="date" class="campo-fecha-documento-fuente-input" id="fecha_documento_fuente_${persona.idPersona}" name="fecha_documento_fuente_${persona.idPersona}" value="${persona.fuente?.fechaDocumentoFuente || persona.fuente?.fechaDocumento || ''}" onchange="actualizarFechaDocumentoFuente(${persona.idPersona}, this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">${crearCampoEditableOpcion4('Ente emisor', persona.enteEmisor, persona.idPersona, 'enteEmisor')}</div>
+                        <div class="col-12">${crearCampoEditableOpcion4('Oficina de origen', persona.oficinaOrigen, persona.idPersona, 'oficinaOrigen')}</div>
+                        <div class="col-12">${crearCampoEditableOpcion4('Nombre', persona.nombreEente, persona.idPersona, 'nombreEente')}</div>
+                        <div class="col-12">${crearCampoEditableOpcion4('Ciudad origen', persona.ciudadOrigenEnte, persona.idPersona, 'ciudadOrigenEnte')}</div>
+                        <div class="col-12">${crearCampoEditableOpcion4('Estado disponibilidad', persona.estadoDisponibilidad, persona.idPersona, 'estadoDisponibilidad')}</div>
+                        <div class="col-12">${crearCampoEditableOpcion4('DescripciÃ³n fuente', persona.descripcionFuente, persona.idPersona, 'descripcionFuente')}</div>
+                        <div class="col-12">${crearCampoEditableOpcion4('Naturaleza jurÃ­dica', persona.naturalezaJuridica, persona.idPersona, 'naturalezaJuridica')}</div>
+                        <div class="col-12">${crearCampoEditableOpcion4('CÃ³digo naturaleza jurÃ­dica', persona.codigoFuente, persona.idPersona, 'codigoFuente')}</div>
+                        <div class="col-12">
+                            ${crearCampoEditableOpcion4('DescripciÃ³n', persona.descripcionFuenteGeneral, persona.idPersona, 'descripcionFuenteGeneral', {
+            wrapperClass: 'mb-3',
+            clases: 'rounded-3 px-2 py-2 w-100 result-information d-flex align-items-start',
+            estilo: 'min-height: 130px;'
+        })}
+                        </div>
+                        <div class="col-12">
+                            <div class="title-tarjet-information mb-3">Adjunto</div>
+                            ${crearBloqueAdjuntoFuenteAdministrativa(persona.adjuntoFuenteAdministrativa, persona.idPersona)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderizarSubtabsOpcion4(personas) {
+        const tabsContainer = document.getElementById('subTabsPersonasOpcion4');
+        const contentContainer = document.getElementById('subTabsPersonasContenidoOpcion4');
+
+        if (!tabsContainer || !contentContainer) return;
+
+        tabsContainer.innerHTML = '';
+        contentContainer.innerHTML = '';
+
+        personas.forEach((persona, index) => {
+            const tabId = `persona-tab-${persona.idPersona}`;
+            const paneId = `persona-pane-${persona.idPersona}`;
+            const activa = index === 0 ? 'active' : '';
+            const showActive = index === 0 ? 'show active' : '';
+
+            const nombreCompleto = [
+                persona.primerNombre,
+                persona.segundoNombre,
+                persona.primerApellido,
+                persona.segundoApellido
+            ].filter(valor => valor && valor.trim() !== '').join(' ').trim() || 'Sin nombre';
+
+            tabsContainer.innerHTML += `
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link p-3 ${activa}"
+                        id="${tabId}"
+                        data-bs-toggle="pill"
+                        data-bs-target="#${paneId}"
+                        type="button"
+                        role="tab">
+                        ${nombreCompleto}
+                    </button>
+                </li>
+            `;
+
+            contentContainer.innerHTML += `
+                <div class="tab-pane fade ${showActive}" id="${paneId}" role="tabpanel">
+                    <div class="row p-2 g-3">
+
+                        <!-- Tarjeta 1: Datos del interesado -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card h-100 card-fixed-opcion4">
+                                <div class="card-body card-body-scroll-opcion4">
+                                    <div class="row g-1 mb-3">
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Predio asociado</label>
+                                                <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'predioAsociado', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'predioAsociado', this)">${escaparHtml(persona.predioAsociado || '----')}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="title-tarjet-derecho m-0">
+                                            Información de derecho
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 p-1" onclick="eliminarInteresado(${persona.idPersona})" title="Eliminar Interesado">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </div>
+                                    <div class="row g-1">
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Tipo de derecho</label>
+
+                                                <input
+                                                    type="hidden"
+                                                    name="tipo_derecho_persona_${persona.idPersona}"
+                                                    id="tipo_derecho_persona_${persona.idPersona}"
+                                                    value="${persona.tipoDerechoSeleccionado || ''}"
+                                                >
+
+                                                <div class="dropdown w-100">
+                                                    <button
+                                                        class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                        type="button"
+                                                        id="dropdownTipoDerechoPersona_${persona.idPersona}"
+                                                        data-bs-toggle="dropdown"
+                                                        aria-expanded="false">
+                                                        <span>${persona.tipoDerechoSeleccionado || 'Ninguna selección'}</span>
+                                                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                    </button>
+
+                                                    <ul class="dropdown-menu w-100 custom-dropdown-menu">
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDerechoPersona(${persona.idPersona}, '', 'Ninguna selección')">
+                                                                Ninguna selección
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDerechoPersona(${persona.idPersona}, 'Dominio', 'Dominio')">
+                                                                Dominio
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDerechoPersona(${persona.idPersona}, 'Ocupación', 'Ocupación')">
+                                                                Ocupación
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDerechoPersona(${persona.idPersona}, 'Posesión', 'Posesión')">
+                                                                Posesión
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            ${crearCampoEditablePorcentajeOpcion4('Cuota de participación', persona.cuotaParticipacion, persona.idPersona, 'cuotaParticipacion')}
+                                        </div>
+                                        <div class="col-12">
+                                            ${crearCampoFechaInicioTendencia('Fecha de inicio de tendencia', persona.fechaInicioTendencia, persona.idPersona)}
+                                        </div>
+                                        <div class="col-12">
+                                            ${crearCampoCheckDerecho('¿Posesión ancestral y/o tradicional?', persona.posesionAncestralTradicional, persona.idPersona)}
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-3">
+                                                <label class="form-label-information mb-2">Descripción</label>
+                                                <div class="rounded-3 px-2 py-2 w-100 result-information d-flex align-items-start" style="min-height: 130px;"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'descripcion', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'descripcion', this)">${escaparHtml(persona.descripcion || '----')}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tarjeta 2: Información interesado -->
+                        <div class="col-12 col-md-6 col-xl-5">
+                            <div class="card h-100 card-fixed-opcion4">
+                                <div class="card-body card-body-scroll-opcion4">
+                                    <div class="title-tarjet-interesados mb-3">Información interesado</div>
+                                    <div class="row g-1">
+                                        <div class="col-12 col-md-12">
+                                            <div class="mb-3">
+                                                <label class="form-label-information mb-2">Tipo de persona</label>
+
+                                                <input
+                                                    type="hidden"
+                                                    name="tipo_persona_interesado_${persona.idPersona}"
+                                                    id="tipo_persona_interesado_${persona.idPersona}"
+                                                    value="${persona.tipoInteresado || ''}"
+                                                >
+
+                                                <div class="dropdown w-100">
+                                                    <button
+                                                        class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                        type="button"
+                                                        id="dropdownTipoPersonaInteresado_${persona.idPersona}"
+                                                        data-bs-toggle="dropdown"
+                                                        aria-expanded="false">
+                                                        <span>${persona.tipoInteresado || 'Ninguna Selección'}</span>
+                                                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                    </button>
+
+                                                    <ul class="dropdown-menu w-100 custom-dropdown-menu">
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoPersonaInteresado(${persona.idPersona}, '', 'Ninguna Selección')">
+                                                                Ninguna Selección
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoPersonaInteresado(${persona.idPersona}, 'Persona Natural', 'Persona Natural')">
+                                                                Persona Natural
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoPersonaInteresado(${persona.idPersona}, 'Persona Juridica', 'Persona Juridica')">
+                                                                Persona Juridica
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-md-12">
+                                            <div class="mb-3">
+                                                <label class="form-label-information mb-2">Tipo de documento</label>
+                                                <input
+                                                    type="hidden"
+                                                    name="tipo_documento_interesado_${persona.idPersona}"
+                                                    id="tipo_documento_interesado_${persona.idPersona}"
+                                                    value="${persona.tipoDocumento || ''}"
+                                                >
+
+                                                <div class="dropdown w-100">
+                                                    <button
+                                                        class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                        type="button"
+                                                        id="dropdownTipoDocumentoInteresado_${persona.idPersona}"
+                                                        data-bs-toggle="dropdown"
+                                                        aria-expanded="false">
+                                                        <span>${persona.tipoDocumento || 'Ninguna Selección'}</span>
+                                                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                    </button>
+
+                                                    <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDocumentoInteresado(${persona.idPersona}, '', 'Ninguna Selección')">
+                                                                Ninguna Selección
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDocumentoInteresado(${persona.idPersona}, 'Cédula de ciudadanía', 'Cédula de ciudadanía')">
+                                                                Cédula de ciudadanía
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDocumentoInteresado(${persona.idPersona}, 'Cédula de extranjería', 'Cédula de extranjería')">
+                                                                Cédula de extranjería
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDocumentoInteresado(${persona.idPersona}, 'Pasaporte', 'Pasaporte')">
+                                                                Pasaporte
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDocumentoInteresado(${persona.idPersona}, 'Registro civil', 'Registro civil')">
+                                                                Registro civil
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDocumentoInteresado(${persona.idPersona}, 'Secuencial', 'Secuencial')">
+                                                                Secuencial
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDocumentoInteresado(${persona.idPersona}, 'Tarjeta de identidad', 'Tarjeta de identidad')">
+                                                                Tarjeta de identidad
+                                                            </button>
+                                                        </li>
+                                                        <li>
+                                                            <button class="dropdown-item" type="button"
+                                                                onclick="seleccionarTipoDocumentoInteresado(${persona.idPersona}, 'NIT', 'NIT')">
+                                                                NIT
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Numero de identidad</label>
+                                                <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'numeroDocumento', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'numeroDocumento', this)">${escaparHtml(persona.numeroDocumento || '----')}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    ${renderizarBloqueTipoPersona(persona)}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tarjeta 3: Fuente e información de contacto -->
+                        <div class="col-12 col-xl-4">
+                            <div class="card h-100 card-fixed-opcion4">
+                                <div class="card-body card-body-scroll-opcion4">
+                                    <div class="title-tarjet-information mb-3">Fuente administrativa</div>
+                                    <div class="row g-2">
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Tipo de fuente administrativa</label>
+
+                                                <input
+                                                    type="hidden"
+                                                    name="tipo_fuente_administrativa_${persona.idPersona}"
+                                                    id="tipo_fuente_administrativa_${persona.idPersona}"
+                                                    value="${persona.fuente?.tipoFuenteAdministrativa || ''}"
+                                                >
+
+                                                <div class="dropdown w-100">
+                                                    <button
+                                                        class="btn w-100 text-start result-information d-flex justify-content-between align-items-center"
+                                                        type="button"
+                                                        id="dropdownTipoFuenteAdministrativa_${persona.idPersona}"
+                                                        data-bs-toggle="dropdown"
+                                                        aria-expanded="false">
+                                                        <span>${persona.fuente?.tipoFuenteAdministrativa || 'Ninguna selección'}</span>
+                                                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                                    </button>
+
+                                                    <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '', 'Ninguna selección')">
+                                                                Ninguna selección
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Acto administrativo', '(Fuente) Acto administrativo')">
+                                                                (Fuente) Acto administrativo
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Cédula real', '(Fuente) Cédula real')">
+                                                                (Fuente) Cédula real
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Documento privado', '(Fuente) Documento privado')">
+                                                                (Fuente) Documento privado
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Escritura pública', '(Fuente) Escritura pública')">
+                                                                (Fuente) Escritura pública
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Otro documento fuente', '(Fuente) Otro documento fuente')">
+                                                                (Fuente) Otro documento fuente
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Sentencia judicial', '(Fuente) Sentencia judicial')">
+                                                                (Fuente) Sentencia judicial
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Titulo colonial', '(Fuente) Titulo colonial')">
+                                                                (Fuente) Titulo colonial
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Fuente) Titulo Republicano', '(Fuente) Titulo Republicano')">
+                                                                (Fuente) Titulo Republicano
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Intercultural) Auto', '(Intercultural) Auto')">
+                                                                (Intercultural) Auto
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Intercultural) Mandato propio indígena', '(Intercultural) Mandato propio indígena')">
+                                                                (Intercultural) Mandato propio indígena
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Intercultural) Otros documentos', '(Intercultural) Otros documentos')">
+                                                                (Intercultural) Otros documentos
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, '(Intercultural) Protocolización notarial', '(Intercultural) Protocolización notarial')">
+                                                                (Intercultural) Protocolización notarial
+                                                            </button>
+                                                        </li>
+                                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoFuenteAdministrativa(${persona.idPersona}, 'Sin documento', 'Sin documento')">
+                                                                Sin documento
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Numero de fuente</label>
+                                                <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'numeroFuente', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'numeroFuente', this)">${escaparHtml(persona.numeroFuente || '----')}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Fecha documento fuente</label>
+                                                <div
+                                                    class="rounded-3 px-2 py-2 w-100 result-information d-flex justify-content-between align-items-center campo-fecha-documento-fuente-wrap"
+                                                    id="campo_fecha_documento_fuente_${persona.idPersona}">
+                                                    <span id="texto_fecha_documento_fuente_${persona.idPersona}">
+                                                        ${formatearFechaInputAVisual(persona.fuente?.fechaDocumentoFuente || persona.fuente?.fechaDocumento || '')}
+                                                    </span>
+
+                                                    <div class="position-relative d-flex align-items-center justify-content-center campo-fecha-documento-fuente-icono-wrap">
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-sm p-0 border-0 bg-transparent campo-fecha-documento-fuente-btn"
+                                                            onclick="abrirCalendarioFechaDocumentoFuente(${persona.idPersona})"
+                                                            aria-label="Abrir calendario fecha documento fuente">
+                                                            <i class="fa-solid fa-calendar-days campo-fecha-documento-fuente-icono"></i>
+                                                        </button>
+
+                                                        <input
+                                                            type="date"
+                                                            class="campo-fecha-documento-fuente-input"
+                                                            id="fecha_documento_fuente_${persona.idPersona}"
+                                                            name="fecha_documento_fuente_${persona.idPersona}"
+                                                            value="${persona.fuente?.fechaDocumentoFuente || persona.fuente?.fechaDocumento || ''}"
+                                                            onchange="actualizarFechaDocumentoFuente(${persona.idPersona}, this.value)">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Ente emisor</label>
+                                                <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'enteEmisor', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'enteEmisor', this)">${escaparHtml(persona.enteEmisor || '----')}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Oficina de origen</label>
+                                                <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'oficinaOrigen', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'oficinaOrigen', this)">${escaparHtml(persona.oficinaOrigen || '----')}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Nombre</label>
+                                                <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'nombreEente', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'nombreEente', this)">${escaparHtml(persona.nombreEente || '----')}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Ciudad origen</label>
+                                                <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'ciudadOrigenEnte', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'ciudadOrigenEnte', this)">${escaparHtml(persona.ciudadOrigenEnte || '----')}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Estado disponibilidad</label>
+                                                <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'estadoDisponibilidad', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'estadoDisponibilidad', this)">${escaparHtml(persona.estadoDisponibilidad || '----')}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Descripción fuente</label>
+                                                <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'descripcionFuente', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'descripcionFuente', this)">${escaparHtml(persona.descripcionFuente || '----')}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Naturaleza jurídica</label>
+                                                <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'naturalezaJuridica', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'naturalezaJuridica', this)">${escaparHtml(persona.naturalezaJuridica || '----')}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-2">
+                                                <label class="form-label-information mb-1">Código naturaleza jurídica</label>
+                                                <div class="rounded-3 px-2 py-1 w-100 result-information d-flex align-items-center"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'codigoFuente', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'codigoFuente', this)">${escaparHtml(persona.codigoFuente || '----')}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="mb-3">
+                                                <label class="form-label-information mb-2">Descripción</label>
+                                                <div class="rounded-3 px-2 py-2 w-100 result-information d-flex align-items-start" style="min-height: 130px;"
+                                                    contenteditable="true"
+                                                    spellcheck="false"
+                                                    role="textbox"
+                                                    tabindex="0"
+                                                    data-opcion4-editable="true"
+                                                    onfocus="limpiarPlaceholderCampoEditableOpcion4(this)"
+                                                    oninput="actualizarCampoTextoOpcion4(${persona.idPersona}, 'descripcionFuenteGeneral', this)"
+                                                    onblur="finalizarCampoTextoOpcion4(${persona.idPersona}, 'descripcionFuenteGeneral', this)">${escaparHtml(persona.descripcionFuenteGeneral || '----')}</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="title-tarjet-information mb-3">Adjunto</div>
+                                            ${crearBloqueAdjuntoFuenteAdministrativa(persona.adjuntoFuenteAdministrativa, persona.idPersona)}
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+        });
+
+        inicializarCamposEditablesOpcion4();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderizarSubtabsOpcion4(datosPruebaOpcion4);
+
+        const btnAgregar = document.getElementById('btnAgregarInteresado');
+        if (btnAgregar) {
+            btnAgregar.addEventListener('click', agregarInteresado);
+        }
+    });
+
+    // FUNCION PARA SELECCIONAR UN NUEVO TIPO DE DERECHO
+    function seleccionarTipoDerechoPersona(idPersona, valor, texto) {
+        const hiddenInput = document.getElementById(`tipo_derecho_persona_${idPersona}`);
+        const dropdown = document.getElementById(`dropdownTipoDerechoPersona_${idPersona}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            persona.tipoDerechoSeleccionado = texto;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA SELECCIONAR EL TIPO DE PERSONA
+    function seleccionarTipoPersonaInteresado(idPersona, valor, texto) {
+        const hiddenInput = document.getElementById(`tipo_persona_interesado_${idPersona}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            persona.tipoInteresado = texto;
+        }
+
+        renderizarSubtabsOpcion4(datosPruebaOpcion4);
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA SELECCIONAR EL TIPO DE DOCUMENTO
+    function seleccionarTipoDocumentoInteresado(idPersona, valor, texto) {
+        const hiddenInput = document.getElementById(`tipo_documento_interesado_${idPersona}`);
+        const dropdown = document.getElementById(`dropdownTipoDocumentoInteresado_${idPersona}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            persona.tipoDocumento = texto;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+                <span>${texto}</span>
+                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+            `;
+        }
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA SELECCIONAR EL TIPO DE SEXO
+    function seleccionarSexoInteresado(idPersona, valor, texto) {
+        const hiddenInput = document.getElementById(`sexo_interesado_${idPersona}`);
+        const dropdown = document.getElementById(`dropdownSexoInteresado_${idPersona}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            persona.genero = texto;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+                <span>${texto}</span>
+                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+            `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA EL PRIMER CAMPO DE GRUPO ETNICO
+    function seleccionarGrupoEtnicoGeneral(idPersona, valor, texto) {
+        const hiddenInput = document.getElementById(`grupo_etnico_general_${idPersona}`);
+        const dropdown = document.getElementById(`dropdownGrupoEtnicoGeneral_${idPersona}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            persona.grupoEtnicoGeneral = texto;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA SELECCIONAR EL GRUPO ETNICO
+    function seleccionarGrupoEtnico(idPersona, valor, texto) {
+        const hiddenInput = document.getElementById(`grupo_etnico_${idPersona}`);
+        const dropdown = document.getElementById(`dropdownGrupoEtnico_${idPersona}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            persona.grupoEtnico = texto;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+                <span>${texto}</span>
+                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+            `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA SELECCIONAR EL TIPO DE FUENTE ADMINISTRATIVA TERCERA TARJETA PESTAÑA 4
+    function seleccionarTipoFuenteAdministrativa(idPersona, valor, texto) {
+        const hiddenInput = document.getElementById(`tipo_fuente_administrativa_${idPersona}`);
+        const dropdown = document.getElementById(`dropdownTipoFuenteAdministrativa_${idPersona}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            if (!persona.fuente) persona.fuente = {};
+            persona.fuente.tipoFuenteAdministrativa = texto;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA SELECCIONAR EL LA FECHA DEL CAMPO FECHA DE DOCUMENTO DE FUENTE TARJETA 3 PESTAÑA 4
+    function abrirCalendarioFechaDocumentoFuente(idPersona) {
+        const input = document.getElementById(`fecha_documento_fuente_${idPersona}`);
+        if (!input) return;
+
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+        } else {
+            input.click();
+            input.focus();
+        }
+    }
+
+    function actualizarFechaDocumentoFuente(idPersona, valor) {
+        const texto = document.getElementById(`texto_fecha_documento_fuente_${idPersona}`);
+        if (texto) {
+            texto.textContent = formatearFechaInputAVisual(valor);
+        }
+
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            if (!persona.fuente) persona.fuente = {};
+            persona.fuente.fechaDocumentoFuente = valor;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+
+    // script para el campo de fecha de inicio de tenencia de la pestaña 4
+    function abrirCalendarioFechaInicioTendencia(idPersona) {
+        const input = document.getElementById(`fecha_inicio_tendencia_${idPersona}`);
+        if (!input) return;
+
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+        } else {
+            input.click();
+            input.focus();
+        }
+    }
+
+    function actualizarFechaInicioTendencia(idPersona, valor) {
+        const texto = document.getElementById(`texto_fecha_inicio_tendencia_${idPersona}`);
+        if (texto) {
+            texto.textContent = formatearFechaInputAVisual(valor);
+        }
+
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            persona.fechaInicioTendencia = valor;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // funcion para actualizar el check de la pestaña 4 del campo de poseción ancestral
+    function actualizarCheckDerecho(idPersona, checked) {
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            persona.posesionAncestralTradicional = checked;
+        }
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCIONES DERECHOS/INTERESADOS DINAMICOS (AÑADIR / ELIMINAR)
+    function agregarInteresado() {
+        const nuevoInteresado = {
+            idPersona: -Date.now(),
+            tipoInteresado: 'Persona Natural',
+            predioAsociado: '',
+            tipoDerechoSeleccionado: 'Dominio',
+            cuotaParticipacion: 100,
+            fechaInicioTendencia: '',
+            descripcion: '',
+            primerNombre: 'Nuevo',
+            segundoNombre: '',
+            primerApellido: 'Interesado',
+            segundoApellido: '',
+            genero: 'Masculino',
+            autorreconoceCampesino: false,
+            autorreconoceEtnico: false,
+            grupoEtnico: '',
+            departamentoResidencia: '',
+            municipioResidencia: '',
+            domicilioResidencia: '',
+            direccionResidencia: '',
+            telefono: '',
+            correoElectronico: '',
+            razonSocial: '',
+            numeroFuente: '',
+            enteEmisor: '',
+            oficinaOrigen: '',
+            ciudadOrigenEnte: '',
+            estadoDisponibilidad: '',
+            descripcionFuente: '',
+            naturalezaJuridica: '',
+            codigoFuente: '',
+            descripcionFuenteGeneral: '',
+            tipoDocumento: 'Cédula de ciudadanía',
+            numeroDocumento: '',
+            posesionAncestralTradicional: false,
+            fuente: {
+                tipoFuenteAdministrativa: '',
+                fechaDocumentoFuente: ''
+            },
+            adjuntoInteresado: { titulo: "", archivo: "", observacion: "" },
+            adjuntoFuenteAdministrativa: { titulo: "", archivo: "", observacion: "" }
+        };
+
+        if (typeof datosPruebaOpcion4 === 'undefined') {
+            datosPruebaOpcion4 = [];
+        }
+        datosPruebaOpcion4.push(nuevoInteresado);
+        renderizarSubtabsOpcion4(datosPruebaOpcion4);
+
+        // Activar la nueva pestaña
+        const tabEl = document.getElementById(`persona-tab-${nuevoInteresado.idPersona}`);
+        if (tabEl && window.bootstrap?.Tab) {
+            const tab = bootstrap.Tab.getOrCreateInstance(tabEl);
+            tab.show();
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function eliminarInteresado(idPersona) {
+        if (!confirm("¿Está seguro de que desea eliminar este interesado?")) return;
+
+        datosPruebaOpcion4 = datosPruebaOpcion4.filter(p => p.idPersona !== idPersona);
+        renderizarSubtabsOpcion4(datosPruebaOpcion4);
+
+        if (datosPruebaOpcion4.length > 0) {
+            const firstTab = document.getElementById(`persona-tab-${datosPruebaOpcion4[0].idPersona}`);
+            if (firstTab && window.bootstrap?.Tab) {
+                const tab = bootstrap.Tab.getOrCreateInstance(firstTab);
+                tab.show();
+            }
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA ACTUALIZAR EL CAMPO DE QUE SI SE AUTORECONOCE COMO INDIGENA
+    function actualizarCheckCampesino(idPersona, checked) {
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            persona.autorreconoceCampesino = checked;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA ACTUALIZAR EL CAMPO DE QUE SI SE AUTORECONOCE COMO ETNICO
+    function actualizarCheckEtnico(idPersona, checked) {
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (persona) {
+            persona.autorreconoceEtnico = checked;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA ELIMINAR EL ADJUNTO
+    function eliminarAdjuntoInteresado(idPersona) {
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (!persona) return;
+
+        persona.adjuntoInteresado = null;
+
+        renderizarSubtabsOpcion4(datosPruebaOpcion4);
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA AGREGAR EL ADJUNTO
+    function abrirFormularioAdjuntoInteresado(idPersona) {
+        const collapse = document.getElementById(`collapseAdjuntoInteresado_${idPersona}`);
+        const input = document.getElementById(`inputAdjuntoInteresado_${idPersona}`);
+        const display = document.getElementById(`archivoAdjuntoInteresadoDisplay_${idPersona}`);
+
+        if (collapse && window.bootstrap?.Collapse) {
+            bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
+        } else if (collapse) {
+            collapse.classList.add('show');
+        }
+
+        if (input && !input.dataset.listenerInicializado) {
+            input.dataset.listenerInicializado = 'true';
+
+            input.addEventListener('change', function () {
+                const archivo = this.files && this.files.length > 0 ? this.files[0] : null;
+                if (display) {
+                    display.textContent = archivo ? archivo.name : '----';
+                }
+            });
+        }
+
+        if (display && !display.dataset.listenerInicializado) {
+            display.dataset.listenerInicializado = 'true';
+
+            display.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    input?.click();
+                }
+            });
+        }
+    }
+
+    function cancelarAdjuntoInteresado(idPersona) {
+        const collapse = document.getElementById(`collapseAdjuntoInteresado_${idPersona}`);
+        const input = document.getElementById(`inputAdjuntoInteresado_${idPersona}`);
+        const display = document.getElementById(`archivoAdjuntoInteresadoDisplay_${idPersona}`);
+        const observacion = document.getElementById(`observacionAdjuntoInteresado_${idPersona}`);
+
+        if (input) input.value = '';
+        if (display) display.textContent = '----';
+        if (observacion) observacion.textContent = 'Null';
+
+        if (collapse && window.bootstrap?.Collapse) {
+            bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).hide();
+        } else if (collapse) {
+            collapse.classList.remove('show');
+        }
+    }
+
+    function guardarAdjuntoInteresado(idPersona) {
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        const input = document.getElementById(`inputAdjuntoInteresado_${idPersona}`);
+        const observacion = document.getElementById(`observacionAdjuntoInteresado_${idPersona}`);
+
+        if (!persona || !input) return;
+
+        const archivo = input.files && input.files.length > 0 ? input.files[0] : null;
+        const textoObservacion = observacion ? observacion.textContent.trim() : 'Null';
+
+        if (!archivo) return;
+
+        persona.adjuntoInteresado = {
+            titulo: `Adjunto interesado:${idPersona}`,
+            archivo: archivo.name,
+            observacion: textoObservacion || 'Null'
+        };
+
+        renderizarSubtabsOpcion4(datosPruebaOpcion4);
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCIONES PARA LA SECCION DE ADJUNTOS DE FUENTE TERCERA TARJETA PESTAÑA 4
+    function abrirFormularioAdjuntoFuenteAdministrativa(idPersona) {
+        const collapse = document.getElementById(`collapseAdjuntoFuenteAdministrativa_${idPersona}`);
+        const input = document.getElementById(`inputAdjuntoFuenteAdministrativa_${idPersona}`);
+        const display = document.getElementById(`archivoAdjuntoFuenteAdministrativaDisplay_${idPersona}`);
+
+        if (collapse && window.bootstrap?.Collapse) {
+            bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
+        } else if (collapse) {
+            collapse.classList.add('show');
+        }
+
+        if (input && !input.dataset.listenerInicializado) {
+            input.dataset.listenerInicializado = 'true';
+
+            input.addEventListener('change', function () {
+                const archivo = this.files && this.files.length > 0 ? this.files[0] : null;
+                if (display) {
+                    display.textContent = archivo ? archivo.name : '----';
+                }
+            });
+        }
+
+        if (display && !display.dataset.listenerInicializado) {
+            display.dataset.listenerInicializado = 'true';
+
+            display.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    input?.click();
+                }
+            });
+        }
+    }
+
+    function cancelarAdjuntoFuenteAdministrativa(idPersona) {
+        const collapse = document.getElementById(`collapseAdjuntoFuenteAdministrativa_${idPersona}`);
+        const input = document.getElementById(`inputAdjuntoFuenteAdministrativa_${idPersona}`);
+        const display = document.getElementById(`archivoAdjuntoFuenteAdministrativaDisplay_${idPersona}`);
+        const observacion = document.getElementById(`observacionAdjuntoFuenteAdministrativa_${idPersona}`);
+
+        if (input) input.value = '';
+        if (display) display.textContent = '----';
+        if (observacion) observacion.textContent = 'Null';
+
+        if (collapse && window.bootstrap?.Collapse) {
+            bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).hide();
+        } else if (collapse) {
+            collapse.classList.remove('show');
+        }
+    }
+
+    function guardarAdjuntoFuenteAdministrativa(idPersona) {
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        const input = document.getElementById(`inputAdjuntoFuenteAdministrativa_${idPersona}`);
+        const observacion = document.getElementById(`observacionAdjuntoFuenteAdministrativa_${idPersona}`);
+
+        if (!persona || !input) return;
+
+        const archivo = input.files && input.files.length > 0 ? input.files[0] : null;
+        const textoObservacion = observacion ? observacion.textContent.trim() : 'Null';
+
+        if (!archivo) return;
+
+        persona.adjuntoFuenteAdministrativa = {
+            titulo: `Adjunto fuente administrativa:${idPersona}`,
+            archivo: archivo.name,
+            observacion: textoObservacion || 'Null'
+        };
+
+        renderizarSubtabsOpcion4(datosPruebaOpcion4);
+        prepararPayloadEdicionPredio();
+    }
+
+    function eliminarAdjuntoFuenteAdministrativa(idPersona) {
+        const persona = datosPruebaOpcion4.find(p => p.idPersona === idPersona);
+        if (!persona) return;
+
+        persona.adjuntoFuenteAdministrativa = null;
+
+        renderizarSubtabsOpcion4(datosPruebaOpcion4);
+        prepararPayloadEdicionPredio();
+    }
+</script>

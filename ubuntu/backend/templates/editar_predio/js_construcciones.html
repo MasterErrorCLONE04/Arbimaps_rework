@@ -1,0 +1,3162 @@
+<script>
+    // =========================
+    // DATOS DE PRUEBA PESTAÑA 5
+    // =========================
+    var datosPruebaOpcion5 = [];
+
+    let construccionSeleccionadaOpcion5 = null;
+
+    // =========================
+    // HELPERS
+    // =========================
+    function obtenerConstruccionOpcion5(idConstruccion) {
+        return datosPruebaOpcion5.find(item => item.idConstruccion === idConstruccion);
+    }
+
+    function obtenerUnidadConstruccionOpcion5(idUnidadConstruccion) {
+        for (const construccion of datosPruebaOpcion5) {
+            const unidad = (construccion.unidadesConstruccion || []).find(
+                item => item.idUnidadConstruccion === idUnidadConstruccion
+            );
+
+            if (unidad) {
+                return { construccion, unidad };
+            }
+        }
+        return null;
+    }
+
+    function escaparHtml(valor) {
+        return String(valor ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function obtenerTextoNormalizado(elemento) {
+        if (!elemento) return '';
+        return elemento.textContent.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // FUNCION PARA ACTUALIZAR EL CAMPO EDITABLE Y EL PLACEHOLDER
+    function actualizarEstadoCampoEditableOpcion5(campo) {
+        if (!campo) return;
+
+        const texto = obtenerTextoNormalizado(campo);
+        const placeholderVacio = campo.dataset.placeholderVacio || '----';
+        const vacio = !texto || texto === placeholderVacio || texto === '----' || texto === 'Null';
+
+        campo.classList.toggle('result-information-editable-empty', vacio);
+        campo.classList.toggle('result-information-geo-editable-empty', vacio);
+    }
+    // FIN DE ACTUALIZAR EL CAMPO EDITABLE Y EL PLACEHOLDER
+
+    // FUNCION DE LIMPIAR EL PLACEHOLDER
+    function limpiarPlaceholderCampoEditableOpcion5(campo) {
+        if (!campo) return;
+
+        const texto = obtenerTextoNormalizado(campo);
+        const placeholderVacio = campo.dataset.placeholderVacio || '----';
+
+        if (texto === placeholderVacio || texto === '----' || texto === 'Null') {
+            campo.textContent = '';
+        }
+        actualizarEstadoCampoEditableOpcion5(campo);
+    }
+    // FIN DE LA FUNCION DE LIMPIAR EL PLACEHOLDER
+
+    // FUNCION DE OBTENER EL VALOR DEL CAMPO DE EDITABLE
+    function obtenerValorCampoEditableOpcion5(campo) {
+        const valor = obtenerTextoNormalizado(campo);
+        const placeholderVacio = campo?.dataset?.placeholderVacio || '----';
+
+        return valor === placeholderVacio || valor === '----' || valor === 'Null' ? '' : valor;
+    }
+    // FIN FUNCION DE OBTENER EL VALOR DEL CAMPO DE EDITABLE
+
+
+    function actualizarCampoUnidadConstruccionOpcion5(idUnidadConstruccion, ruta, campo) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        if (!resultado || !campo) return;
+
+        resultado.unidad[ruta] = obtenerValorCampoEditableOpcion5(campo);
+        actualizarEstadoCampoEditableOpcion5(campo);
+        prepararPayloadEdicionPredio();
+    }
+
+    // CAMPO DE FINALIZAR EL CAMPO DE LAS UNIDADES DE CONSTRUCCION
+    function finalizarCampoUnidadConstruccionOpcion5(idUnidadConstruccion, ruta, campo) {
+        if (!campo) return;
+
+        const placeholderVacio = campo.dataset.placeholderVacio || '----';
+        if (!obtenerValorCampoEditableOpcion5(campo)) {
+            campo.textContent = placeholderVacio;
+        }
+        actualizarCampoUnidadConstruccionOpcion5(idUnidadConstruccion, ruta, campo);
+    }
+    // FIN PARA EL CAMPO DE FINALIZAR EL CAMPO DE LAS UNIDADES DE CONSTRUCCION
+
+    // =========================
+    // TARJETA 1 - CONSTRUCCIONES
+    // =========================
+    function crearCampoConstruccionOpcion5(label, valor, idConstruccion, ruta) {
+        return `
+            <div class="mb-2">
+                <label class="form-label-information mb-1">${label}</label>
+                <div
+                    class="rounded-3 px-2 py-1 w-100 result-information-construccion"
+                    contenteditable="true"
+                    spellcheck="false"
+                    role="textbox"
+                    tabindex="0"
+                    onfocus="limpiarPlaceholderCampoEditableOpcion5(this)"
+                    oninput="actualizarCampoConstruccionOpcion5(${idConstruccion}, '${ruta}', this)"
+                    onblur="finalizarCampoConstruccionOpcion5(${idConstruccion}, '${ruta}', this)">
+                    ${escaparHtml(valor || '----')}
+                </div>
+            </div>
+        `;
+    }
+
+    function actualizarCampoConstruccionOpcion5(idConstruccion, ruta, campo) {
+        const construccion = obtenerConstruccionOpcion5(idConstruccion);
+        if (!construccion || !campo) return;
+
+        construccion[ruta] = obtenerValorCampoEditableOpcion5(campo);
+        actualizarEstadoCampoEditableOpcion5(campo);
+        prepararPayloadEdicionPredio();
+    }
+
+    function finalizarCampoConstruccionOpcion5(idConstruccion, ruta, campo) {
+        if (!campo) return;
+
+        if (!obtenerValorCampoEditableOpcion5(campo)) {
+            campo.textContent = '----';
+        }
+
+        actualizarCampoConstruccionOpcion5(idConstruccion, ruta, campo);
+    }
+
+    function crearFormularioAdjuntoConstruccionOpcion5(construccion) {
+        return `
+            <div class="bg-white p-3 rounded-3 border content-form-adjunto-unido mt-2">
+                <input
+                    type="file"
+                    id="inputAdjuntoConstruccion_${construccion.idConstruccion}"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    class="d-none"
+                >
+
+                <div class="mb-3">
+                    <label class="content-text-label mb-2">Archivo</label>
+                    <div
+                        class="input-form-dropdown input-label-doc rounded-3 px-2 py-2 d-flex align-items-center"
+                        id="archivoAdjuntoConstruccionDisplay_${construccion.idConstruccion}"
+                        role="button"
+                        tabindex="0"
+                        onclick="document.getElementById('inputAdjuntoConstruccion_${construccion.idConstruccion}').click()">
+                        Seleccionar
+                    </div>
+                </div>
+
+                <div class="adjunto-observacion-box mt-3">
+                    <div class="adjunto-observacion-header">
+                        Observación del adjunto
+                    </div>
+                    <div
+                        class="adjunto-observacion-body d-flex align-items-start"
+                        id="observacionAdjuntoConstruccion_${construccion.idConstruccion}"
+                        contenteditable="true"
+                        spellcheck="false">Null</div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-boton-abort px-3 text-white"
+                        onclick="cancelarAdjuntoConstruccion(${construccion.idConstruccion})">
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-boton-save-adjunto px-3"
+                        onclick="guardarAdjuntoConstruccion(${construccion.idConstruccion})">
+                        Guardar adjunto
+                        <i class="fa-solid fa-plus ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function crearBloqueAdjuntoConstruccionOpcion5(construccion) {
+        const adjunto = construccion.adjunto;
+        const tieneAdjunto = !!adjunto && !!adjunto.titulo;
+
+        if (!tieneAdjunto) {
+            return `
+                <div class="text-end">
+                    <button type="button"
+                        class="btn btn-sm btn-boton-save-adjunto-for px-3"
+                        onclick="abrirFormularioAdjuntoConstruccion(${construccion.idConstruccion})">
+                        Añadir adjunto
+                        <i class="fa-solid fa-plus ms-2"></i>
+                    </button>
+                </div>
+
+                <div class="collapse" id="collapseFormularioAdjuntoConstruccion_${construccion.idConstruccion}">
+                    ${crearFormularioAdjuntoConstruccionOpcion5(construccion)}
+                </div>
+            `;
+        }
+
+        return `
+            <div class="mb-3">
+                <div class="adjunto-construccion-card">
+                    <button
+                        class="btn w-100 border-0 shadow-none d-flex justify-content-between align-items-center py-1 px-3 adjunto-construccion-toggle"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseAdjuntoConstruccion_${construccion.idConstruccion}"
+                        aria-expanded="false"
+                        aria-controls="collapseAdjuntoConstruccion_${construccion.idConstruccion}">
+                        
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-file-pdf adjunto-construccion-icon"></i>
+                            <span class="adjunto-construccion-title">${escaparHtml(adjunto.titulo)}</span>
+                        </div>
+
+                        <i class="fa-solid fa-chevron-down adjunto-construccion-arrow"></i>
+                    </button>
+
+                    <div class="collapse" id="collapseAdjuntoConstruccion_${construccion.idConstruccion}">
+                        <div class="px-3 pb-3 pt-2">
+                            <div class="mb-2">
+                                <label class="form-label-information mb-2">Archivo</label>
+                                <div class="adjunto-construccion-file rounded-3 px-3 py-2">
+                                    ${escaparHtml(adjunto.archivo || '----')}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="adjunto-construccion-observacion rounded-3 overflow-hidden">
+                                    <div class="adjunto-construccion-observacion-header px-3 py-2">
+                                        Observación del adjunto
+                                    </div>
+                                    <div class="adjunto-construccion-observacion-body px-3 py-3">
+                                        ${escaparHtml(adjunto.observacion || 'Null')}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-end">
+                                <button type="button"
+                                    class="btn adjunto-construccion-btn-eliminar px-3 py-1"
+                                    onclick="eliminarAdjuntoConstruccion(${construccion.idConstruccion})">
+                                    Eliminar
+                                    <i class="fa-solid fa-xmark ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapse mt-2" id="collapseFormularioAdjuntoConstruccion_${construccion.idConstruccion}">
+                    ${crearFormularioAdjuntoConstruccionOpcion5(construccion)}
+                </div>
+
+                <div class="text-end mt-3">
+                    <button type="button"
+                        class="btn btn-sm btn-boton-save-adjunto-for px-3"
+                        onclick="abrirFormularioAdjuntoConstruccion(${construccion.idConstruccion})">
+                        Añadir adjunto
+                        <i class="fa-solid fa-plus ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderizarListadoConstruccionesOpcion5(construcciones) {
+        const contenedor = document.getElementById('contenedorListadoConstruccionesOpcion5');
+        if (!contenedor) return;
+
+        contenedor.innerHTML = '';
+
+        construcciones.forEach((construccion) => {
+            contenedor.innerHTML += `
+                <div class="construccion-acordeon-item mb-2">
+                    <button
+                        class="btn w-100 text-start construccion-acordeon-toggle d-flex justify-content-between align-items-center collapsed py-2"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseConstruccion_${construccion.idConstruccion}"
+                        aria-expanded="false"
+                        aria-controls="collapseConstruccion_${construccion.idConstruccion}"
+                        onclick="seleccionarConstruccionOpcion5(${construccion.idConstruccion})">
+                        <span>Etiqueta: ${escaparHtml(construccion.etiqueta)}</span>
+                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                    </button>
+
+                    <div class="collapse" id="collapseConstruccion_${construccion.idConstruccion}">
+                        <div class="construccion-acordeon-body">
+                            <div class="text-end mb-3">
+                                <button type="button" class="btn btn-boton-editar-geo">
+                                    Editar geometría
+                                    <i class="fa-solid fa-pencil ms-2 icon-pencil-edit-geo"></i>
+                                </button>
+                            </div>
+                            
+                            ${crearCampoConstruccionOpcion5('Predio asociado', construccion.predioAsociado, construccion.idConstruccion, 'predioAsociado')}
+                            ${crearCampoConstruccionOpcion5('Etiqueta', construccion.etiqueta, construccion.idConstruccion, 'etiqueta')}
+
+                            <div class="title-tarjet-information mb-3 mt-2">
+                                Adjuntos
+                            </div>
+
+                            ${crearBloqueAdjuntoConstruccionOpcion5(construccion)}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        inicializarIconosConstruccionOpcion5();
+    }
+
+    function inicializarIconosConstruccionOpcion5() {
+        document.querySelectorAll('.construccion-acordeon-item .collapse').forEach((collapseEl) => {
+            collapseEl.addEventListener('show.bs.collapse', function () {
+                const boton = document.querySelector(`[data-bs-target="#${this.id}"]`);
+                const icono = boton?.querySelector('i');
+
+                if (icono) {
+                    icono.classList.remove('fa-chevron-down');
+                    icono.classList.add('fa-chevron-up');
+                }
+            });
+
+            collapseEl.addEventListener('hide.bs.collapse', function () {
+                const boton = document.querySelector(`[data-bs-target="#${this.id}"]`);
+                const icono = boton?.querySelector('i');
+
+                if (icono) {
+                    icono.classList.remove('fa-chevron-up');
+                    icono.classList.add('fa-chevron-down');
+                }
+            });
+
+            collapseEl.addEventListener('hidden.bs.collapse', function () {
+                if (!this.id.startsWith('collapseConstruccion_')) return;
+
+                const idConstruccion = Number(this.id.replace('collapseConstruccion_', ''));
+
+                if (construccionSeleccionadaOpcion5 === idConstruccion) {
+                    construccionSeleccionadaOpcion5 = null;
+                    actualizarBadgeConstruccionSeleccionadaOpcion5(null);
+                    renderizarEstadoVacioUnidadConstruccionOpcion5('Esta construcción no tiene UC');
+                }
+            });
+        });
+
+        document.querySelectorAll('.adjunto-construccion-card .collapse').forEach((collapseEl) => {
+            collapseEl.addEventListener('show.bs.collapse', function () {
+                const boton = document.querySelector(`[data-bs-target="#${this.id}"]`);
+                const icono = boton?.querySelector('.adjunto-construccion-arrow');
+
+                if (icono) {
+                    icono.classList.remove('fa-chevron-down');
+                    icono.classList.add('fa-chevron-up');
+                }
+            });
+
+            collapseEl.addEventListener('hide.bs.collapse', function () {
+                const boton = document.querySelector(`[data-bs-target="#${this.id}"]`);
+                const icono = boton?.querySelector('.adjunto-construccion-arrow');
+
+                if (icono) {
+                    icono.classList.remove('fa-chevron-up');
+                    icono.classList.add('fa-chevron-down');
+                }
+            });
+        });
+    }
+
+    function abrirFormularioAdjuntoConstruccion(idConstruccion) {
+        const collapse = document.getElementById(`collapseFormularioAdjuntoConstruccion_${idConstruccion}`);
+        const input = document.getElementById(`inputAdjuntoConstruccion_${idConstruccion}`);
+        const display = document.getElementById(`archivoAdjuntoConstruccionDisplay_${idConstruccion}`);
+
+        if (collapse && window.bootstrap?.Collapse) {
+            bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
+        } else if (collapse) {
+            collapse.classList.add('show');
+        }
+
+        if (input && !input.dataset.listenerInicializado) {
+            input.dataset.listenerInicializado = 'true';
+
+            input.addEventListener('change', function () {
+                const archivo = this.files && this.files.length > 0 ? this.files[0] : null;
+                if (display) {
+                    display.textContent = archivo ? archivo.name : 'Seleccionar';
+                }
+            });
+        }
+
+        if (display && !display.dataset.listenerInicializado) {
+            display.dataset.listenerInicializado = 'true';
+
+            display.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    input?.click();
+                }
+            });
+        }
+    }
+
+    function cancelarAdjuntoConstruccion(idConstruccion) {
+        const collapse = document.getElementById(`collapseFormularioAdjuntoConstruccion_${idConstruccion}`);
+        const input = document.getElementById(`inputAdjuntoConstruccion_${idConstruccion}`);
+        const display = document.getElementById(`archivoAdjuntoConstruccionDisplay_${idConstruccion}`);
+        const observacion = document.getElementById(`observacionAdjuntoConstruccion_${idConstruccion}`);
+
+        if (input) input.value = '';
+        if (display) display.textContent = 'Seleccionar';
+        if (observacion) observacion.textContent = 'Null';
+
+        if (collapse && window.bootstrap?.Collapse) {
+            bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).hide();
+        } else if (collapse) {
+            collapse.classList.remove('show');
+        }
+    }
+
+    function guardarAdjuntoConstruccion(idConstruccion) {
+        const construccion = obtenerConstruccionOpcion5(idConstruccion);
+        const input = document.getElementById(`inputAdjuntoConstruccion_${idConstruccion}`);
+        const observacion = document.getElementById(`observacionAdjuntoConstruccion_${idConstruccion}`);
+
+        if (!construccion || !input) return;
+
+        const archivo = input.files && input.files.length > 0 ? input.files[0] : null;
+        const textoObservacion = observacion ? observacion.textContent.trim() : 'Null';
+
+        if (!archivo) return;
+
+        construccion.adjunto = {
+            titulo: `Adjunto Construccion:${idConstruccion}`,
+            archivo: archivo.name,
+            observacion: textoObservacion || 'Null'
+        };
+
+        renderizarListadoConstruccionesOpcion5(datosPruebaOpcion5);
+        prepararPayloadEdicionPredio();
+    }
+
+    function eliminarAdjuntoConstruccion(idConstruccion) {
+        const construccion = obtenerConstruccionOpcion5(idConstruccion);
+        if (!construccion) return;
+
+        construccion.adjunto = null;
+
+        renderizarListadoConstruccionesOpcion5(datosPruebaOpcion5);
+        setTimeout(() => {
+            abrirFormularioAdjuntoConstruccion(idConstruccion);
+        }, 100);
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // =========================
+    // TARJETA 2 - UNIDAD DE CONSTRUCCIÓN
+    // =========================
+    function actualizarBadgeConstruccionSeleccionadaOpcion5(construccion) {
+        const badge = document.getElementById('badgeConstruccionSeleccionadaOpcion5');
+        const texto = document.getElementById('textoBadgeConstruccionSeleccionadaOpcion5');
+
+        if (!badge || !texto) return;
+
+        if (!construccion) {
+            badge.style.display = 'none';
+            texto.textContent = '';
+            return;
+        }
+
+        texto.textContent = `Construcción ${construccion.etiqueta}`;
+        badge.style.display = 'inline-flex';
+    }
+
+    function seleccionarConstruccionOpcion5(idConstruccion) {
+        construccionSeleccionadaOpcion5 = idConstruccion;
+        const construccion = obtenerConstruccionOpcion5(idConstruccion);
+
+        actualizarBadgeConstruccionSeleccionadaOpcion5(construccion);
+        renderizarListadoUnidadConstruccionOpcion5(idConstruccion);
+        prepararPayloadEdicionPredio();
+    }
+
+    function crearCampoUnidadConstruccionOpcion5(label, valor, idUnidadConstruccion, ruta) {
+        return `
+            <div class="mb-2">
+                <label class="form-label-information mb-1">${label}</label>
+                <div
+                    class="rounded-3 px-2 py-1 w-100 result-information-construccion"
+                    contenteditable="true"
+                    spellcheck="false"
+                    role="textbox"
+                    tabindex="0"
+                    onfocus="limpiarPlaceholderCampoEditableOpcion5(this)"
+                    oninput="actualizarCampoUnidadConstruccionOpcion5(${idUnidadConstruccion}, '${ruta}', this)"
+                    onblur="finalizarCampoUnidadConstruccionOpcion5(${idUnidadConstruccion}, '${ruta}', this)">
+                    ${escaparHtml(valor || '----')}
+                </div>
+            </div>
+        `;
+    }
+
+    function crearCampoUnidadConstruccionOpcion5ConSufijo(label, valor, sufijo, idUnidadConstruccion, ruta) {
+        return `
+            <div class="mb-2">
+                <label class="form-label-information mb-1">${label}</label>
+                <div class="rounded-3 px-2 py-1 w-100 result-information-construccion d-flex justify-content-between align-items-center">
+                    <span
+                        class="flex-grow-1"
+                        contenteditable="true"
+                        spellcheck="false"
+                        role="textbox"
+                        tabindex="0"
+                        onfocus="limpiarPlaceholderCampoEditableOpcion5(this)"
+                        oninput="actualizarCampoUnidadConstruccionOpcion5(${idUnidadConstruccion}, '${ruta}', this)"
+                        onblur="finalizarCampoUnidadConstruccionOpcion5(${idUnidadConstruccion}, '${ruta}', this)">
+                        ${escaparHtml(valor || '----')}
+                    </span>
+                    <span class="fw-bold ms-2 text-muted">${sufijo}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function crearTextAreaUnidadConstruccionOpcion5(label, valor, idUnidadConstruccion, ruta) {
+        return `
+            <div class="mb-2">
+                <label class="form-label-information mb-1">${label}</label>
+                <div
+                    class="rounded-3 px-2 py-2 w-100 result-information-construccion d-flex align-items-start"
+                    style="min-height: 102px;"
+                    contenteditable="true"
+                    spellcheck="false"
+                    role="textbox"
+                    tabindex="0"
+                    onfocus="limpiarPlaceholderCampoEditableOpcion5(this)"
+                    oninput="actualizarCampoUnidadConstruccionOpcion5(${idUnidadConstruccion}, '${ruta}', this)"
+                    onblur="finalizarCampoUnidadConstruccionOpcion5(${idUnidadConstruccion}, '${ruta}', this)">
+                    ${escaparHtml(valor || '----')}
+                </div>
+            </div>
+        `;
+    }
+
+    function crearSelectTipoPlantaUc(unidad) {
+        return `
+            <div class="mb-2">
+                <label class="form-label-information mb-1">Tipo de planta</label>
+
+                <input
+                    type="hidden"
+                    name="tipo_planta_uc_${unidad.idUnidadConstruccion}"
+                    id="tipo_planta_uc_${unidad.idUnidadConstruccion}"
+                    value="${escaparHtml(unidad.tipoPlantaUc || '')}"
+                >
+
+                <div class="dropdown w-100">
+                    <button
+                        class="btn w-100 text-start result-information-construccion d-flex justify-content-between align-items-center"
+                        type="button"
+                        id="dropdownTipoPlantaUc_${unidad.idUnidadConstruccion}"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <span>${escaparHtml(unidad.tipoPlantaUc || 'Ninguna Selección')}</span>
+                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                    </button>
+
+                    <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                        <li>
+                            <button class="dropdown-item" type="button"
+                                onclick="seleccionarTipoPlantaUc(${unidad.idUnidadConstruccion}, '', 'Ninguna Selección')">
+                                Ninguna selección
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" type="button"
+                                onclick="seleccionarTipoPlantaUc(${unidad.idUnidadConstruccion}, 'Mezanine', 'Mezanine')">
+                                Mezanine
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" type="button"
+                                onclick="seleccionarTipoPlantaUc(${unidad.idUnidadConstruccion}, 'Piso', 'Piso')">
+                                Piso
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" type="button"
+                                onclick="seleccionarTipoPlantaUc(${unidad.idUnidadConstruccion}, 'Semisótano', 'Semisótano')">
+                                Semisótano
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" type="button"
+                                onclick="seleccionarTipoPlantaUc(${unidad.idUnidadConstruccion}, 'Sótano', 'Sótano')">
+                                Sótano
+                            </button>
+                        </li>
+                        <li>
+                            <button class="dropdown-item" type="button"
+                                onclick="seleccionarTipoPlantaUc(${unidad.idUnidadConstruccion}, 'Subterráneo', 'Subterráneo')">
+                                Subterráneo
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        `;
+    }
+
+    // FUNCIONES PARA LOS CAMPOS DE USOS TRADICIONALES CULTURALES
+    function crearSelectUsosTradicionalesCulturalesUc(unidad) {
+        const opciones = [
+            { valor: '', texto: 'Ninguna selección' },
+            { valor: 'Bodegas comunitarias', texto: 'Bodegas comunitarias' },
+            { valor: 'Bohíos', texto: 'Bohíos' },
+            { valor: 'Casas de cabildo', texto: 'Casas de cabildo' },
+            { valor: 'Casas de paso comunitarias', texto: 'Casas de paso comunitarias' },
+            { valor: 'Cementerios indígenas', texto: 'Cementerios indígenas' },
+            { valor: 'Centros de salud', texto: 'Centros de salud' },
+            { valor: 'Cocina comunitaria', texto: 'Cocina comunitaria' },
+            { valor: 'Cooperativas comunitarias', texto: 'Cooperativas comunitarias' },
+            { valor: 'Cuartos fríos comunitarios', texto: 'Cuartos fríos comunitarios' },
+            { valor: 'Destiladeros tradicionales', texto: 'Destiladeros tradicionales' },
+            { valor: 'Espacios de pensamiento', texto: 'Espacios de pensamiento' },
+            { valor: 'Espacios de reunión', texto: 'Espacios de reunión' },
+            { valor: 'Estructuras turísticas', texto: 'Estructuras turísticas' },
+            { valor: 'Etnomuseos', texto: 'Etnomuseos' },
+            { valor: 'Instituciones educativas indígenas', texto: 'Instituciones educativas indígenas' },
+            { valor: 'Molinos comunitarios', texto: 'Molinos comunitarios' },
+            { valor: 'Muelles comunitarios', texto: 'Muelles comunitarios' },
+            { valor: 'Paseras', texto: 'Paseras' },
+            { valor: 'Piscinas de sal', texto: 'Piscinas de sal' },
+            { valor: 'Salones comunales comunitarios', texto: 'Salones comunales comunitarios' },
+            { valor: 'Sedes de organizaciones', texto: 'Sedes de organizaciones' },
+            { valor: 'Tiendas comunitarias', texto: 'Tiendas comunitarias' },
+            { valor: 'Tostaderos', texto: 'Tostaderos' },
+            { valor: 'Trapiches comunitarios', texto: 'Trapiches comunitarios' }
+        ];
+
+        const idUnidad = unidad.idUnidadConstruccion;
+        const valorActual = unidad.usosTradicionalesCulturalesUc || '';
+        const opcionActual = opciones.find(opcion => opcion.valor === valorActual);
+
+        return `
+        <div class="mb-2">
+            <label class="form-label-information mb-1">
+                Usos tradicionales culturales
+            </label>
+
+            <input
+                type="hidden"
+                name="usos_tradicionales_culturales_uc_${idUnidad}"
+                id="usos_tradicionales_culturales_uc_${idUnidad}"
+                value="${escaparHtml(valorActual)}"
+            >
+
+            <div class="w-100 usos-tradicionales-culturales-uc-select">
+                <button
+                    class="btn w-100 text-start result-information-construccion d-flex justify-content-between align-items-center px-2 py-2 usos-tradicionales-culturales-uc-toggle"
+                    type="button"
+                    id="dropdownUsosTradicionalesCulturalesUc_${idUnidad}"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseUsosTradicionalesCulturalesUc_${idUnidad}"
+                    aria-expanded="false"
+                    aria-controls="collapseUsosTradicionalesCulturalesUc_${idUnidad}">
+                    <span>${escaparHtml(opcionActual?.texto || 'Ninguna selección')}</span>
+                    <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                </button>
+
+                <div
+                    class="collapse usos-tradicionales-culturales-uc-opciones"
+                    id="collapseUsosTradicionalesCulturalesUc_${idUnidad}">
+                    <div class="usos-tradicionales-culturales-uc-lista">
+                        ${opciones.map((opcion) => `
+                            <button
+                                class="btn w-100 text-start usos-tradicionales-culturales-uc-opcion"
+                                type="button"
+                                onclick='seleccionarUsosTradicionalesCulturalesUc(${idUnidad}, ${JSON.stringify(opcion.valor)}, ${JSON.stringify(opcion.texto)})'>
+                                ${escaparHtml(opcion.texto)}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+    function seleccionarUsosTradicionalesCulturalesUc(idUnidadConstruccion, valor, texto) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const hiddenInput = document.getElementById(`usos_tradicionales_culturales_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownUsosTradicionalesCulturalesUc_${idUnidadConstruccion}`);
+        const collapse = document.getElementById(`collapseUsosTradicionalesCulturalesUc_${idUnidadConstruccion}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        if (resultado?.unidad) {
+            resultado.unidad.usosTradicionalesCulturalesUc = valor;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        if (collapse) {
+            if (window.bootstrap?.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(collapse, {
+                    toggle: false
+                }).hide();
+            } else {
+                collapse.classList.remove('show');
+            }
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+    // FIN FUNCIONES PARA LOS CAMPOS DE USOS TRADICIONALES CULTURALES
+
+    function seleccionarTipoPlantaUc(idUnidadConstruccion, valor, texto) {
+        const hiddenInput = document.getElementById(`tipo_planta_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownTipoPlantaUc_${idUnidadConstruccion}`);
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+
+        if (hiddenInput) hiddenInput.value = valor;
+        if (resultado?.unidad) resultado.unidad.tipoPlantaUc = valor;
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+                <span>${texto}</span>
+                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+            `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function crearFormularioAdjuntoUc(unidad) {
+        return `
+            <div class="bg-white p-3 rounded-3 border content-form-adjunto-unido mt-2">
+                <input
+                    type="file"
+                    id="inputAdjuntoUc_${unidad.idUnidadConstruccion}"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    class="d-none"
+                >
+
+                <div class="mb-3">
+                    <label class="content-text-label mb-2">Archivo</label>
+                    <div
+                        class="input-form-dropdown input-label-doc rounded-3 px-2 py-2 d-flex align-items-center"
+                        id="archivoAdjuntoUcDisplay_${unidad.idUnidadConstruccion}"
+                        role="button"
+                        tabindex="0"
+                        onclick="document.getElementById('inputAdjuntoUc_${unidad.idUnidadConstruccion}').click()">
+                        Seleccionar
+                    </div>
+                </div>
+
+                <div class="adjunto-observacion-box mt-3">
+                    <div class="adjunto-observacion-header">
+                        Observación del adjunto
+                    </div>
+                    <div
+                        class="adjunto-observacion-body d-flex align-items-start"
+                        id="observacionAdjuntoUc_${unidad.idUnidadConstruccion}"
+                        contenteditable="true"
+                        spellcheck="false">Null</div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-boton-abort px-3 text-white"
+                        onclick="cancelarAdjuntoUc(${unidad.idUnidadConstruccion})">
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-boton-save-adjunto px-3"
+                        onclick="guardarAdjuntoUc(${unidad.idUnidadConstruccion})">
+                        Guardar adjunto
+                        <i class="fa-solid fa-plus ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function crearBloqueAdjuntoUnidadConstruccionOpcion5(unidad) {
+        const adjunto = unidad.adjunto;
+        const tieneAdjunto = !!adjunto && !!adjunto.titulo;
+
+        if (!tieneAdjunto) {
+            return `
+                <div class="text-end">
+                    <button type="button"
+                        class="btn btn-sm btn-boton-save-adjunto-for px-3"
+                        onclick="abrirFormularioAdjuntoUc(${unidad.idUnidadConstruccion})">
+                        Añadir adjunto
+                        <i class="fa-solid fa-plus ms-2"></i>
+                    </button>
+                </div>
+
+                <div class="collapse" id="collapseFormularioAdjuntoUc_${unidad.idUnidadConstruccion}">
+                    ${crearFormularioAdjuntoUc(unidad)}
+                </div>
+            `;
+        }
+
+        return `
+            <div class="mb-3">
+                <div class="adjunto-construccion-card">
+                    <button
+                        class="btn w-100 border-0 shadow-none d-flex justify-content-between align-items-center py-1 px-3 adjunto-construccion-toggle"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#collapseAdjuntoUc_${unidad.idUnidadConstruccion}"
+                        aria-expanded="false"
+                        aria-controls="collapseAdjuntoUc_${unidad.idUnidadConstruccion}">
+                        
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-file-pdf adjunto-construccion-icon"></i>
+                            <span class="adjunto-construccion-title">${escaparHtml(adjunto.titulo)}</span>
+                        </div>
+
+                        <i class="fa-solid fa-chevron-down adjunto-construccion-arrow"></i>
+                    </button>
+
+                    <div class="collapse" id="collapseAdjuntoUc_${unidad.idUnidadConstruccion}">
+                        <div class="px-3 pb-3 pt-2">
+                            <div class="mb-2">
+                                <label class="form-label-information mb-2">Archivo</label>
+                                <div class="adjunto-construccion-file rounded-3 px-3 py-2">
+                                    ${escaparHtml(adjunto.archivo || '----')}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="adjunto-construccion-observacion rounded-3 overflow-hidden">
+                                    <div class="adjunto-construccion-observacion-header px-3 py-2">
+                                        Observación del adjunto
+                                    </div>
+                                    <div class="adjunto-construccion-observacion-body px-3 py-3">
+                                        ${escaparHtml(adjunto.observacion || 'Null')}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-end">
+                                <button type="button"
+                                    class="btn adjunto-construccion-btn-eliminar px-3 py-1"
+                                    onclick="eliminarAdjuntoUc(${unidad.idUnidadConstruccion})">
+                                    Eliminar
+                                    <i class="fa-solid fa-xmark ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapse mt-2" id="collapseFormularioAdjuntoUc_${unidad.idUnidadConstruccion}">
+                    ${crearFormularioAdjuntoUc(unidad)}
+                </div>
+
+                <div class="text-end mt-3">
+                    <button type="button"
+                        class="btn btn-sm btn-boton-save-adjunto-for px-3"
+                        onclick="abrirFormularioAdjuntoUc(${unidad.idUnidadConstruccion})">
+                        Añadir adjunto
+                        <i class="fa-solid fa-plus ms-2"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderizarDetalleUnidadConstruccionOpcion5(unidad) {
+        return `
+        <div class="construccion-acordeon-body pt-0 unidad-construccion-detalle-wrap" id="detalleUnidadUc_${unidad.idUnidadConstruccion}">
+            
+            <div class="uc-detalle-normal" id="detalleNormalUc_${unidad.idUnidadConstruccion}">
+                <div class="text-end mb-3">
+                    <button type="button" class="btn btn-boton-editar-geo">
+                        Editar geometría
+                        <i class="fa-solid fa-pencil ms-2 icon-pencil-edit-geo"></i>
+                    </button>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-12">
+                        ${crearSelectTipoPlantaUc(unidad)}
+                    </div>
+
+                    <div class="col-6">
+                        ${crearCampoUnidadConstruccionOpcion5(
+            'Planta Ubicación',
+            unidad.plantaUbicacionUc,
+            unidad.idUnidadConstruccion,
+            'plantaUbicacionUc'
+        )}
+                    </div>
+
+                    <div class="col-6">
+                        ${crearCampoUnidadConstruccionOpcion5ConSufijo(
+            'Altura',
+            unidad.alturaUc,
+            'M2',
+            unidad.idUnidadConstruccion,
+            'alturaUc'
+        )}
+                    </div>
+
+                    <div class="col-12">
+                        ${crearTextAreaUnidadConstruccionOpcion5(
+            'Observaciones',
+            unidad.observacionesUc,
+            unidad.idUnidadConstruccion,
+            'observacionesUc'
+        )}
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <div class="title-tarjet-information mb-3">
+                            Adjuntos
+                        </div>
+
+                        ${crearBloqueAdjuntoUnidadConstruccionOpcion5(unidad)}
+                    </div>
+
+                    <div class="col-12 mt-2">
+                        <div class="title-tarjet-information mb-3">
+                            Característica de unidad de construcción
+                        </div>
+
+                        <div>
+                            <button type="button"
+                                class="btn boton-uc-quinto px-2 py-2 ms-4"
+                                onclick="toggleCaracteristicasUcOpcion5(${unidad.idUnidadConstruccion})">
+                                Ver característica UC
+                                <i class="fa-solid fa-bars-staggered ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="uc-detalle-caracteristicas d-none" id="detalleCaracteristicasUc_${unidad.idUnidadConstruccion}">
+                ${renderizarCaracteristicasUcOpcion5(unidad)}
+            </div>
+        </div>
+    `;
+    }
+
+    // FUNCION PARA EL ESTADO SIN CONSTRUCCION SELECCIONADO
+    function renderizarEstadoVacioUnidadConstruccionOpcion5(texto = 'Esta construcción no tiene UC') {
+        const contenedor = document.getElementById('contenedorListadoUnidadConstruccionOpcion5');
+        const botonAgregar = document.getElementById('btnAccionUnidadConstruccionOpcion5');
+
+        if (!contenedor) return;
+
+        contenedor.innerHTML = `
+        <div class="estado-vacio-uc-opcion5">
+            ${texto}
+        </div>
+    `;
+
+        if (botonAgregar) {
+            botonAgregar.style.display = 'inline-flex';
+        }
+    }
+
+    function obtenerSiguienteIdConstruccionOpcion5() {
+        const ids = datosPruebaOpcion5.map(item => Number(item.idConstruccion) || 0);
+        return ids.length ? Math.max(...ids) + 1 : 1;
+    }
+
+    function obtenerSiguienteIdUnidadConstruccionOpcion5() {
+        const ids = datosPruebaOpcion5.flatMap(construccion =>
+            (construccion.unidadesConstruccion || []).map(unidad => Number(unidad.idUnidadConstruccion) || 0)
+        );
+
+        return ids.length ? Math.max(...ids) + 1 : 101;
+    }
+
+    function obtenerSiguienteEtiquetaConstruccionOpcion5() {
+        const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const index = datosPruebaOpcion5.length;
+
+        return letras[index] || `C${index + 1}`;
+    }
+
+    function abrirFormularioNuevaConstruccionOpcion5() {
+        const idNuevaConstruccion = obtenerSiguienteIdConstruccionOpcion5();
+
+        const nuevaConstruccion = {
+            idConstruccion: idNuevaConstruccion,
+            etiqueta: obtenerSiguienteEtiquetaConstruccionOpcion5(),
+            predioAsociado: '',
+            adjunto: null,
+            unidadesConstruccion: []
+        };
+
+        datosPruebaOpcion5.push(nuevaConstruccion);
+
+        renderizarListadoConstruccionesOpcion5(datosPruebaOpcion5);
+        seleccionarConstruccionOpcion5(idNuevaConstruccion);
+
+        setTimeout(() => {
+            const collapse = document.getElementById(`collapseConstruccion_${idNuevaConstruccion}`);
+            const boton = document.querySelector(`[data-bs-target="#collapseConstruccion_${idNuevaConstruccion}"]`);
+
+            if (collapse && window.bootstrap?.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(collapse, {
+                    toggle: false
+                }).show();
+            } else if (collapse) {
+                collapse.classList.add('show');
+            }
+
+            if (boton) {
+                boton.classList.remove('collapsed');
+                boton.setAttribute('aria-expanded', 'true');
+            }
+
+            const primerCampo = collapse?.querySelector('[contenteditable="true"]');
+            if (primerCampo) {
+                primerCampo.focus();
+            }
+        }, 120);
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function abrirFormularioNuevaUnidadConstruccionOpcion5() {
+        if (!construccionSeleccionadaOpcion5) {
+            abrirFormularioNuevaConstruccionOpcion5();
+            return;
+        }
+
+        const construccion = obtenerConstruccionOpcion5(construccionSeleccionadaOpcion5);
+        if (!construccion) {
+            abrirFormularioNuevaConstruccionOpcion5();
+            return;
+        }
+
+        const idNuevaUnidad = obtenerSiguienteIdUnidadConstruccionOpcion5();
+
+        const nuevaUnidad = {
+            idUnidadConstruccion: idNuevaUnidad,
+            identificador: '',
+            tipoPlantaUc: '',
+            plantaUbicacionUc: '',
+            alturaUc: '',
+            observacionesUc: '',
+            tipoClaseUc: '',
+            tipoCalificacionUc: '',
+            usoUc: '',
+            areaPrivadaConstruidaUc: '',
+            anioConstruccionUc: '',
+            totalPlantasUc: '',
+            areaConstruidaUc: '',
+            areaPrivadaConstruidaDosUc: '',
+            adjunto: null
+        };
+
+        if (!Array.isArray(construccion.unidadesConstruccion)) {
+            construccion.unidadesConstruccion = [];
+        }
+
+        construccion.unidadesConstruccion.push(nuevaUnidad);
+
+        renderizarListadoUnidadConstruccionOpcion5(construccion.idConstruccion);
+
+        setTimeout(() => {
+            const collapse = document.getElementById(`collapseUnidadConstruccion_${idNuevaUnidad}`);
+            const boton = document.querySelector(`[data-bs-target="#collapseUnidadConstruccion_${idNuevaUnidad}"]`);
+
+            if (collapse && window.bootstrap?.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(collapse, {
+                    toggle: false
+                }).show();
+            } else if (collapse) {
+                collapse.classList.add('show');
+            }
+
+            if (boton) {
+                boton.classList.remove('collapsed');
+                boton.setAttribute('aria-expanded', 'true');
+            }
+
+            const primerCampo = collapse?.querySelector('[contenteditable="true"]');
+            if (primerCampo) {
+                primerCampo.focus();
+            }
+        }, 120);
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function inicializarBotonesAgregarOpcion5() {
+        const botonAgregarConstruccion = document.getElementById('btnAccionConstruccionOpcion5');
+        const botonAgregarUc = document.getElementById('btnAccionUnidadConstruccionOpcion5');
+
+        if (botonAgregarConstruccion && botonAgregarConstruccion.dataset.listenerInicializado !== 'true') {
+            botonAgregarConstruccion.dataset.listenerInicializado = 'true';
+            botonAgregarConstruccion.addEventListener('click', abrirFormularioNuevaConstruccionOpcion5);
+        }
+
+        if (botonAgregarUc && botonAgregarUc.dataset.listenerInicializado !== 'true') {
+            botonAgregarUc.dataset.listenerInicializado = 'true';
+            botonAgregarUc.addEventListener('click', abrirFormularioNuevaUnidadConstruccionOpcion5);
+        }
+    }
+    // FIN FUNCION PARA EL ESTADO SIN CONSTRUCCION SELECCIONADO
+
+    function renderizarListadoUnidadConstruccionOpcion5(idConstruccion) {
+        const contenedor = document.getElementById('contenedorListadoUnidadConstruccionOpcion5');
+        const botonAgregar = document.getElementById('btnAccionUnidadConstruccionOpcion5');
+
+        if (!contenedor) return;
+
+        const construccion = obtenerConstruccionOpcion5(idConstruccion);
+
+        if (!construccion) {
+            actualizarBadgeConstruccionSeleccionadaOpcion5(null);
+            renderizarEstadoVacioUnidadConstruccionOpcion5('Esta construcción no tiene UC');
+            return;
+        }
+
+        if (botonAgregar) {
+            botonAgregar.style.display = 'inline-flex';
+        }
+
+        const unidades = construccion.unidadesConstruccion || [];
+
+        if (!unidades.length) {
+            renderizarEstadoVacioUnidadConstruccionOpcion5('Esta construcción no tiene UC');
+            return;
+        }
+
+        contenedor.innerHTML = '';
+
+        unidades.forEach((unidad) => {
+            contenedor.innerHTML += `
+            <div class="construccion-acordeon-item mb-1">
+                <button
+                    class="btn w-100 mt-2 text-start construccion-acordeon-toggle d-flex justify-content-between align-items-center collapsed py-1"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseUnidadConstruccion_${unidad.idUnidadConstruccion}"
+                    aria-expanded="false"
+                    aria-controls="collapseUnidadConstruccion_${unidad.idUnidadConstruccion}">
+                    <span>ID: ${escaparHtml(unidad.identificador || '----')}</span>
+                    <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                </button>
+
+                <div class="collapse" id="collapseUnidadConstruccion_${unidad.idUnidadConstruccion}">
+                    ${renderizarDetalleUnidadConstruccionOpcion5(unidad)}
+                </div>
+            </div>
+        `;
+        });
+
+        inicializarIconosUnidadConstruccionOpcion5();
+    }
+
+    function inicializarIconosUnidadConstruccionOpcion5() {
+        document.querySelectorAll('#contenedorListadoUnidadConstruccionOpcion5 .collapse').forEach((collapseEl) => {
+            collapseEl.addEventListener('show.bs.collapse', function () {
+                const boton = document.querySelector(`[data-bs-target="#${this.id}"]`);
+                const icono = boton?.querySelector('i');
+                if (icono) {
+                    icono.classList.remove('fa-chevron-down');
+                    icono.classList.add('fa-chevron-up');
+                }
+            });
+
+            collapseEl.addEventListener('hide.bs.collapse', function () {
+                const boton = document.querySelector(`[data-bs-target="#${this.id}"]`);
+                const icono = boton?.querySelector('i');
+                if (icono) {
+                    icono.classList.remove('fa-chevron-up');
+                    icono.classList.add('fa-chevron-down');
+                }
+            });
+        });
+    }
+
+    function abrirFormularioAdjuntoUc(idUnidadConstruccion) {
+        const collapse = document.getElementById(`collapseFormularioAdjuntoUc_${idUnidadConstruccion}`);
+        const input = document.getElementById(`inputAdjuntoUc_${idUnidadConstruccion}`);
+        const display = document.getElementById(`archivoAdjuntoUcDisplay_${idUnidadConstruccion}`);
+
+        if (collapse && window.bootstrap?.Collapse) {
+            bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
+        } else if (collapse) {
+            collapse.classList.add('show');
+        }
+
+        if (input && !input.dataset.listenerInicializado) {
+            input.dataset.listenerInicializado = 'true';
+
+            input.addEventListener('change', function () {
+                const archivo = this.files && this.files.length > 0 ? this.files[0] : null;
+                if (display) {
+                    display.textContent = archivo ? archivo.name : 'Seleccionar';
+                }
+            });
+        }
+
+        if (display && !display.dataset.listenerInicializado) {
+            display.dataset.listenerInicializado = 'true';
+
+            display.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    input?.click();
+                }
+            });
+        }
+    }
+
+    function cancelarAdjuntoUc(idUnidadConstruccion) {
+        const collapse = document.getElementById(`collapseFormularioAdjuntoUc_${idUnidadConstruccion}`);
+        const input = document.getElementById(`inputAdjuntoUc_${idUnidadConstruccion}`);
+        const display = document.getElementById(`archivoAdjuntoUcDisplay_${idUnidadConstruccion}`);
+        const observacion = document.getElementById(`observacionAdjuntoUc_${idUnidadConstruccion}`);
+
+        if (input) input.value = '';
+        if (display) display.textContent = 'Seleccionar';
+        if (observacion) observacion.textContent = 'Null';
+
+        if (collapse && window.bootstrap?.Collapse) {
+            bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).hide();
+        } else if (collapse) {
+            collapse.classList.remove('show');
+        }
+    }
+
+    function guardarAdjuntoUc(idUnidadConstruccion) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const input = document.getElementById(`inputAdjuntoUc_${idUnidadConstruccion}`);
+        const observacion = document.getElementById(`observacionAdjuntoUc_${idUnidadConstruccion}`);
+
+        if (!resultado || !input) return;
+
+        const archivo = input.files && input.files.length > 0 ? input.files[0] : null;
+        const textoObservacion = observacion ? observacion.textContent.trim() : 'Null';
+
+        if (!archivo) return;
+
+        resultado.unidad.adjunto = {
+            titulo: `Adjunto Terreno:${idUnidadConstruccion}`,
+            archivo: archivo.name,
+            observacion: textoObservacion || 'Null'
+        };
+
+        renderizarListadoUnidadConstruccionOpcion5(resultado.construccion.idConstruccion);
+        prepararPayloadEdicionPredio();
+    }
+
+    function eliminarAdjuntoUc(idUnidadConstruccion) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        if (!resultado) return;
+
+        resultado.unidad.adjunto = null;
+
+        renderizarListadoUnidadConstruccionOpcion5(resultado.construccion.idConstruccion);
+
+        setTimeout(() => {
+            abrirFormularioAdjuntoUc(idUnidadConstruccion);
+        }, 100);
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function toggleCaracteristicasUcOpcion5(idUnidadConstruccion) {
+        const detalleNormal = document.getElementById(`detalleNormalUc_${idUnidadConstruccion}`);
+        const detalleCaracteristicas = document.getElementById(`detalleCaracteristicasUc_${idUnidadConstruccion}`);
+
+        if (!detalleNormal || !detalleCaracteristicas) return;
+
+        detalleNormal.classList.add('uc-panel-saliendo');
+
+        setTimeout(() => {
+            detalleNormal.classList.add('d-none');
+            detalleNormal.classList.remove('uc-panel-saliendo');
+
+            detalleCaracteristicas.classList.remove('d-none');
+
+            requestAnimationFrame(() => {
+                detalleCaracteristicas.classList.add('uc-panel-activo');
+            });
+        }, 180);
+    }
+
+    function cerrarCaracteristicasUcOpcion5(idUnidadConstruccion) {
+        const detalleNormal = document.getElementById(`detalleNormalUc_${idUnidadConstruccion}`);
+        const detalleCaracteristicas = document.getElementById(`detalleCaracteristicasUc_${idUnidadConstruccion}`);
+
+        if (!detalleNormal || !detalleCaracteristicas) return;
+
+        detalleCaracteristicas.classList.remove('uc-panel-activo');
+        detalleCaracteristicas.classList.add('uc-panel-saliendo');
+
+        setTimeout(() => {
+            detalleCaracteristicas.classList.add('d-none');
+            detalleCaracteristicas.classList.remove('uc-panel-saliendo');
+
+            detalleNormal.classList.remove('d-none');
+
+            requestAnimationFrame(() => {
+                detalleNormal.classList.add('uc-panel-activo');
+            });
+
+            setTimeout(() => {
+                detalleNormal.classList.remove('uc-panel-activo');
+            }, 220);
+        }, 180);
+    }
+
+    function crearCampoCaracteristicaUc(label, valor, idUnidadConstruccion, ruta, placeholderVacio = '----') {
+        const valorMostrar = valor && String(valor).trim() !== '' ? valor : placeholderVacio;
+
+        return `
+        <div class="mb-2">
+            <label class="form-label-information mb-1">${label}</label>
+            <div
+                class="rounded-3 px-2 py-1 w-100 result-information-construccion"
+                contenteditable="true"
+                spellcheck="false"
+                role="textbox"
+                tabindex="0"
+                data-placeholder-vacio="${escaparHtml(placeholderVacio)}"
+                onfocus="limpiarPlaceholderCampoEditableOpcion5(this)"
+                oninput="actualizarCampoUnidadConstruccionOpcion5(${idUnidadConstruccion}, '${ruta}', this)"
+                onblur="finalizarCampoUnidadConstruccionOpcion5(${idUnidadConstruccion}, '${ruta}', this)">
+                ${escaparHtml(valorMostrar)}
+            </div>
+        </div>
+    `;
+    }
+
+    function crearCampoCaracteristicaUcConSufijo(label, valor, sufijo, idUnidadConstruccion, ruta) {
+        return `
+        <div class="mb-2">
+            <label class="form-label-information mb-1">${label}</label>
+            <div class="rounded-3 px-2 py-1 w-100 result-information-construccion d-flex justify-content-between align-items-center">
+                <span
+                    class="flex-grow-1"
+                    contenteditable="true"
+                    spellcheck="false"
+                    role="textbox"
+                    tabindex="0"
+                    onfocus="limpiarPlaceholderCampoEditableOpcion5(this)"
+                    oninput="actualizarCampoUnidadConstruccionOpcion5(${idUnidadConstruccion}, '${ruta}', this)"
+                    onblur="finalizarCampoUnidadConstruccionOpcion5(${idUnidadConstruccion}, '${ruta}', this)">
+                    ${escaparHtml(valor || '----')}
+                </span>
+                <span class="fw-bold ms-2 text-muted">${sufijo}</span>
+            </div>
+        </div>
+    `;
+    }
+
+    function crearCampoFechaCaracteristicaUc(label, valor, idUnidadConstruccion, ruta) {
+        const valorInput = valor || '';
+        const valorVisual = formatearFechaInputAVisual(valorInput);
+
+        return `
+        <div class="mb-2">
+            <label class="form-label-information mb-1">${label}</label>
+
+            <div class="rounded-3 px-2 py-1 w-100 result-information-construccion d-flex justify-content-between align-items-center">
+                <span id="texto_${ruta}_${idUnidadConstruccion}">${valorVisual}</span>
+
+                <div class="position-relative d-flex align-items-center justify-content-center" style="width:24px; min-width:24px; height:24px;">
+                    <button
+                        type="button"
+                        class="btn btn-sm p-0 border-0 bg-transparent"
+                        onclick="abrirCalendarioCaracteristicaUc(${idUnidadConstruccion}, '${ruta}')"
+                        aria-label="Abrir calendario">
+                        <i class="fa-solid fa-calendar-days" style="color:#8EA3B5; font-size:0.95rem;"></i>
+                    </button>
+
+                    <input
+                        type="date"
+                        id="input_${ruta}_${idUnidadConstruccion}"
+                        value="${valorInput}"
+                        onchange="actualizarFechaCaracteristicaUc(${idUnidadConstruccion}, '${ruta}', this.value)"
+                        style="position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; border:0;">
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+    function abrirCalendarioCaracteristicaUc(idUnidadConstruccion, ruta) {
+        const input = document.getElementById(`input_${ruta}_${idUnidadConstruccion}`);
+        if (!input) return;
+
+        if (typeof input.showPicker === 'function') {
+            input.showPicker();
+        } else {
+            input.click();
+            input.focus();
+        }
+    }
+
+    function actualizarFechaCaracteristicaUc(idUnidadConstruccion, ruta, valor) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        if (!resultado) return;
+
+        resultado.unidad[ruta] = valor;
+
+        const texto = document.getElementById(`texto_${ruta}_${idUnidadConstruccion}`);
+        if (texto) {
+            texto.textContent = formatearFechaInputAVisual(valor);
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function seleccionarTipoCalificacionUc(idUnidadConstruccion, valor, texto) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const hiddenInput = document.getElementById(`tipo_calificacion_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownTipoCalificacionUc_${idUnidadConstruccion}`);
+
+        if (hiddenInput) hiddenInput.value = valor;
+        if (resultado?.unidad) resultado.unidad.tipoCalificacionUc = valor;
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function seleccionarUsoUc(idUnidadConstruccion, valor, texto) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const hiddenInput = document.getElementById(`uso_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownUsoUc_${idUnidadConstruccion}`);
+
+        if (hiddenInput) hiddenInput.value = valor;
+        if (resultado?.unidad) resultado.unidad.usoUc = valor;
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCIONES PARA LA SEGUNDA PESTAñA DE LA SECCION DE VER CARACTERISTICAS UC
+    function obtenerTituloPestanaTipoCalificacionUc(tipoCalificacionUc) {
+        const tipo = (tipoCalificacionUc || '').trim().toLowerCase();
+
+        if (tipo === 'convencional') {
+            return 'Calificación convencional';
+        }
+
+        if (tipo === 'tipología' || tipo === 'tipologia') {
+            return 'Tipología';
+        }
+
+        if (tipo === 'no convencional') {
+            return 'No convencional';
+        }
+
+        return 'Detalle';
+    }
+
+    // FUNCIONES PARA LAS OPCIONES DE LOS SELECT DE LA SEGUNDA PESTAÑA (NO CONVENCIONAL)
+    function renderizarOpcionesTipoAnexoUc(idUnidadConstruccion) {
+        const opciones = [
+            { valor: '', texto: 'Ninguna selección' },
+            { valor: '(Albercas o bañaderas) Plus', texto: '(Albercas o bañaderas) Plus' },
+            { valor: '(Albercas o bañaderas) Sencillo', texto: '(Albercas o bañaderas) Sencillo' },
+            { valor: '(Albercas o bañaderas) Medio', texto: '(Albercas o bañaderas) Medio' },
+
+            { valor: '(Beneficiaderos) Medio', texto: '(Beneficiaderos) Medio' },
+            { valor: '(Beneficiaderos) Plus', texto: '(Beneficiaderos) Plus' },
+            { valor: '(Beneficiaderos) Sencilla', texto: '(Beneficiaderos) Sencilla' },
+
+            { valor: '(Camaroneras) Sencilla', texto: '(Camaroneras) Sencilla' },
+            { valor: '(Camaroneras) Tecnificadas', texto: '(Camaroneras) Tecnificadas' },
+
+            { valor: '(Canchas de tenis) Tenis 1', texto: '(Canchas de tenis) Tenis 1' },
+            { valor: '(Canchas de tenis) Tenis 2', texto: '(Canchas de tenis) Tenis 2' },
+
+            { valor: '(Canchas) Futbol sintética', texto: '(Canchas) Futbol sintética' },
+            { valor: '(Canchas) Multifuncional', texto: '(Canchas) Multifuncional' },
+            { valor: '(Canchas) Multifuncional de asfalto', texto: '(Canchas) Multifuncional de asfalto' },
+
+            { valor: '(Carreteras) Vía afirmado', texto: '(Carreteras) Vía afirmado' },
+            { valor: '(Carreteras) Vía pavimento flexible', texto: '(Carreteras) Vía pavimento flexible' },
+            { valor: '(Carreteras) Vía pavimento rigido', texto: '(Carreteras) Vía pavimento rigido' },
+            { valor: '(Carreteras) Vía placa huella plus', texto: '(Carreteras) Vía placa huella plus' },
+            { valor: '(Carreteras) Vía placa huella sencilla', texto: '(Carreteras) Vía placa huella sencilla' },
+            { valor: '(Carreteras) Vía terciaria tradicional', texto: '(Carreteras) Vía terciaria tradicional' },
+            { valor: '(Carreteras) Zona dura adoquín trafico liviano', texto: '(Carreteras) Zona dura adoquín trafico liviano' },
+            { valor: '(Carreteras) Zona dura adoquín tráfico pesado', texto: '(Carreteras) Zona dura adoquín tráfico pesado' },
+            { valor: '(Carreteras) Zona dura concreto tráfico liviano', texto: '(Carreteras) Zona dura concreto tráfico liviano' },
+
+            { valor: '(Cimientos, estructura, muros y placabase) Muro', texto: '(Cimientos, estructura, muros y placabase) Muro' },
+            { valor: '(Cimientos, estructura, muros y placabase) Placa muro', texto: '(Cimientos, estructura, muros y placabase) Placa muro' },
+            { valor: '(Cimientos, estructura, muros y placabase) Placa simple', texto: '(Cimientos, estructura, muros y placabase) Placa simple' },
+            { valor: '(Cimientos, estructura, muros y placabase) Simple', texto: '(Cimientos, estructura, muros y placabase) Simple' },
+
+            { valor: '(Cocheras o marraneras o porquerizas) Media', texto: '(Cocheras o marraneras o porquerizas) Media' },
+            { valor: '(Cocheras o marraneras o porquerizas) Sencilla', texto: '(Cocheras o marraneras o porquerizas) Sencilla' },
+            { valor: '(Cocheras o marraneras o porquerizas) Tecnificada', texto: '(Cocheras o marraneras o porquerizas) Tecnificada' },
+
+            { valor: '(Coliseos) Medio', texto: '(Coliseos) Medio' },
+            { valor: '(Coliseos) Plus', texto: '(Coliseos) Plus' },
+            { valor: '(Coliseos) Sencillo', texto: '(Coliseos) Sencillo' },
+
+            { valor: '(Construcción en membrana arquitectónica) Tipo cobertizo plus', texto: '(Construcción en membrana arquitectónica) Tipo cobertizo plus' },
+            { valor: '(Construcción en membrana arquitectónica) Tipo cobertizo sencillo', texto: '(Construcción en membrana arquitectónica) Tipo cobertizo sencillo' },
+
+            { valor: '(Contenedor) Básico', texto: '(Contenedor) Básico' },
+            { valor: '(Contenedor) Frigorífico', texto: '(Contenedor) Frigorífico' },
+            { valor: '(Contenedor) Intervenido', texto: '(Contenedor) Intervenido' },
+            { valor: '(Contenedor) Plus', texto: '(Contenedor) Plus' },
+
+            { valor: '(Corrales) Medio', texto: '(Corrales) Medio' },
+            { valor: '(Corrales) Sencillo', texto: '(Corrales) Sencillo' },
+            { valor: '(Corrales) Tecnificado', texto: '(Corrales) Tecnificado' },
+
+            { valor: '(Estación de bombeo) Estación de bombeo', texto: '(Estación de bombeo) Estación de bombeo' },
+
+            { valor: '(Estación sistema de transporte) Media', texto: '(Estación sistema de transporte) Media' },
+            { valor: '(Estación sistema de transporte) Plus', texto: '(Estación sistema de transporte) Plus' },
+            { valor: '(Estación sistema de transporte) Sencilla', texto: '(Estación sistema de transporte) Sencilla' },
+
+            { valor: '(Estadios) Estadio 1 – Tipo 40', texto: '(Estadios) Estadio 1 – Tipo 40' },
+            { valor: '(Estadios) Estadio 2 – Tipo 60', texto: '(Estadios) Estadio 2 – Tipo 60' },
+
+            { valor: '(Estructuras aeroportuarias tipo hangar) Hangar a dos aguas', texto: '(Estructuras aeroportuarias tipo hangar) Hangar a dos aguas' },
+            { valor: '(Estructuras aeroportuarias tipo hangar) Hangar simple', texto: '(Estructuras aeroportuarias tipo hangar) Hangar simple' },
+
+            { valor: '(Estructuras especiales) Media', texto: '(Estructuras especiales) Media' },
+            { valor: '(Estructuras especiales) Plus', texto: '(Estructuras especiales) Plus' },
+            { valor: '(Estructuras especiales) Sencilla', texto: '(Estructuras especiales) Sencilla' },
+
+            { valor: '(Galpones o gallineros) Medio', texto: '(Galpones o gallineros) Medio' },
+            { valor: '(Galpones o gallineros) Sencillo', texto: '(Galpones o gallineros) Sencillo' },
+            { valor: '(Galpones o gallineros) Tecnificado', texto: '(Galpones o gallineros) Tecnificado' },
+
+            { valor: '(Kioscos) Medio', texto: '(Kioscos) Medio' },
+            { valor: '(Kioscos) Plus', texto: '(Kioscos) Plus' },
+            { valor: '(Kioscos) Sencillo', texto: '(Kioscos) Sencillo' },
+
+            { valor: '(Lagunas de oxidación) Revestidas', texto: '(Lagunas de oxidación) Revestidas' },
+            { valor: '(Lagunas de oxidación) Sin revestir', texto: '(Lagunas de oxidación) Sin revestir' },
+
+            { valor: '(Marquesinas o patios cubiertos) Plus', texto: '(Marquesinas o patios cubiertos) Plus' },
+            { valor: '(Marquesinas o patios cubiertos) Sencillo', texto: '(Marquesinas o patios cubiertos) Sencillo' },
+
+            { valor: '(Muelles) Concreto', texto: '(Muelles) Concreto' },
+            { valor: '(Muelles) Madera', texto: '(Muelles) Madera' },
+            { valor: '(Muelles) Plus', texto: '(Muelles) Plus' },
+
+            { valor: '(Pérgolas) Media', texto: '(Pérgolas) Media' },
+            { valor: '(Pérgolas) Plus', texto: '(Pérgolas) Plus' },
+            { valor: '(Pérgolas) Sencilla', texto: '(Pérgolas) Sencilla' },
+
+            { valor: '(Piscinas) Grande', texto: '(Piscinas) Grande' },
+            { valor: '(Piscinas) Mediana', texto: '(Piscinas) Mediana' },
+            { valor: '(Piscinas) Pequeña', texto: '(Piscinas) Pequeña' },
+            { valor: '(Piscinas) Prefabricada', texto: '(Piscinas) Prefabricada' },
+
+            { valor: '(Pista de aeropuerto) Media de cemento y asfalto', texto: '(Pista de aeropuerto) Media de cemento y asfalto' },
+            { valor: '(Pista de aeropuerto) Plus de vuelo de precisión', texto: '(Pista de aeropuerto) Plus de vuelo de precisión' },
+            { valor: '(Pista de aeropuerto) Sencilla de materiales blandos', texto: '(Pista de aeropuerto) Sencilla de materiales blandos' },
+
+            { valor: '(Plaza de toros) Concreto', texto: '(Plaza de toros) Concreto' },
+            { valor: '(Plaza de toros) Madera', texto: '(Plaza de toros) Madera' },
+
+            { valor: '(Pozos) Medio', texto: '(Pozos) Medio' },
+            { valor: '(Pozos) Profundo', texto: '(Pozos) Profundo' },
+            { valor: '(Pozos) Sencillo', texto: '(Pozos) Sencillo' },
+
+            { valor: '(Ramadas o cobertizos o caneyes) Media', texto: '(Ramadas o cobertizos o caneyes) Media' },
+            { valor: '(Ramadas o cobertizos o caneyes) Plus', texto: '(Ramadas o cobertizos o caneyes) Plus' },
+            { valor: '(Ramadas o cobertizos o caneyes) Sencilla', texto: '(Ramadas o cobertizos o caneyes) Sencilla' },
+
+            { valor: '(Secaderos) Medio', texto: '(Secaderos) Medio' },
+            { valor: '(Secaderos) Plus', texto: '(Secaderos) Plus' },
+            { valor: '(Secaderos) Sencillo', texto: '(Secaderos) Sencillo' },
+
+            { valor: '(Silos) En Acero Galvanizado', texto: '(Silos) En Acero Galvanizado' },
+            { valor: '(Silos) En concreto', texto: '(Silos) En concreto' },
+
+            { valor: '(Tanques) Elevados plus', texto: '(Tanques) Elevados plus' },
+            { valor: '(Tanques) Medio', texto: '(Tanques) Medio' },
+            { valor: '(Tanques) Plus', texto: '(Tanques) Plus' },
+            { valor: '(Tanques) Sencillo Revestido', texto: '(Tanques) Sencillo Revestido' },
+            { valor: '(Tanques) Sencillo sin revestir', texto: '(Tanques) Sencillo sin revestir' },
+            { valor: '(Tanques) Soporte elevando sencillo', texto: '(Tanques) Soporte elevando sencillo' },
+
+            { valor: '(Toboganes) Básico', texto: '(Toboganes) Básico' },
+            { valor: '(Toboganes) Medio', texto: '(Toboganes) Medio' },
+            { valor: '(Toboganes) Sencillo', texto: '(Toboganes) Sencillo' },
+
+            { valor: '(Torres Enfriamiento) Concretos metálicas', texto: '(Torres Enfriamiento) Concretos metálicas' },
+            { valor: '(Torres Enfriamiento) Prefabricadas', texto: '(Torres Enfriamiento) Prefabricadas' },
+
+            { valor: '(Vía férrea) Trocha angosta', texto: '(Vía férrea) Trocha angosta' },
+            { valor: '(Vía férrea) Trocha normal', texto: '(Vía férrea) Trocha normal' },
+
+            { valor: 'Canchas.Futbol Tipo 20', texto: 'Canchas.Futbol Tipo 20' },
+            { valor: 'Toboganes Plus', texto: 'Toboganes Plus' }
+        ];
+
+        return opciones.map((opcion) => `
+            <button
+                class="btn w-100 text-start tipo-anexo-uc-opcion"
+                type="button"
+                onclick='seleccionarTipoAnexoUc(${idUnidadConstruccion}, ${JSON.stringify(opcion.valor)}, ${JSON.stringify(opcion.texto)})'>
+                ${escaparHtml(opcion.texto)}
+            </button>
+        `).join('');
+    }
+
+    function renderizarOpcionesConservacionAnexoUc(idUnidadConstruccion) {
+        const opciones = [
+            { valor: '', texto: 'Ninguna selección' },
+            { valor: 'Optimo 1', texto: 'Optimo 1' },
+            { valor: 'Muy Bueno – 1.5', texto: 'Muy Bueno – 1.5' },
+            { valor: 'Bueno – 2', texto: 'Bueno – 2' },
+            { valor: 'Intermedio – 2.5', texto: 'Intermedio – 2.5' },
+            { valor: 'Regular – 3', texto: 'Regular – 3' },
+            { valor: 'Deficiente – 3.5', texto: 'Deficiente – 3.5' },
+            { valor: 'Malo – 4', texto: 'Malo – 4' },
+            { valor: 'Muy Malo – 4.5', texto: 'Muy Malo – 4.5' },
+            { valor: 'Ruinoso – 5', texto: 'Ruinoso – 5' }
+        ];
+
+        return opciones.map((opcion) => `
+        <button
+            class="btn w-100 text-start conservacion-anexo-uc-opcion"
+            type="button"
+            onclick='seleccionarConservacionAnexoUc(${idUnidadConstruccion}, ${JSON.stringify(opcion.valor)}, ${JSON.stringify(opcion.texto)})'>
+            ${escaparHtml(opcion.texto)}
+        </button>
+    `).join('');
+    }
+
+    // FIN FUNCIONES PARA LAS OPCIONES DE LOS SELECT DE LA SEGUNDA PESTAÑA (NO CONVENCIONAL)
+
+    // FUNCIONES PARA LAS OPCIONES DE LOS SELECT DE LA SEGUNDA PESTAÑA (CALIFICACIÓN CONVENCIONAL)
+    function renderizarOpcionesTipoACalificarUc(idUnidadConstruccion) {
+        const opciones = [
+            { valor: '', texto: 'Ninguna selección' },
+            { valor: 'Comercial', texto: 'Comercial' },
+            { valor: 'Industrial', texto: 'Industrial' },
+            { valor: 'Residencial', texto: 'Residencial' }
+        ];
+
+        return opciones.map((opcion) => `
+        <button
+            class="btn w-100 text-start tipo-a-calificar-uc-opcion"
+            type="button"
+            onclick='seleccionarTipoACalificarUc(${idUnidadConstruccion}, ${JSON.stringify(opcion.valor)}, ${JSON.stringify(opcion.texto)})'>
+            ${escaparHtml(opcion.texto)}
+        </button>
+    `).join('');
+    }
+
+    function obtenerOpcionesEstructuraConvencionalUc(campo) {
+        const opciones = {
+            armazonUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: '(Armazón) Concreto cuatro o más pisos', texto: '(Armazón) Concreto cuatro o más pisos' },
+                { valor: '(Armazón) Hasta tres pisos', texto: '(Armazón) Hasta tres pisos' },
+                { valor: '(Armazón) Ladrillo, bloque', texto: '(Armazón) Ladrillo, bloque' },
+                { valor: '(Armazón) Madera', texto: '(Armazón) Madera' },
+                { valor: '(Armazón) Prefabricado', texto: '(Armazón) Prefabricado' }
+            ],
+            murosUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: '(Muros) Bahareque, adobe, tapia', texto: '(Muros) Bahareque, adobe, tapia' },
+                { valor: '(Muros) Bloque, ladrillo', texto: '(Muros) Bloque, ladrillo' },
+                { valor: '(Muros) Concreto prefabricado', texto: '(Muros) Concreto prefabricado' },
+                { valor: '(Muros) Madera', texto: '(Muros) Madera' },
+                { valor: '(Muros) Materiales de desecho, esterilla', texto: '(Muros) Materiales de desecho, esterilla' }
+            ],
+            cubiertaUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: '(Cubierta) Azotea, aliminio, placa sencilla con eternit o teja de barro', texto: '(Cubierta) Azotea, aliminio, placa sencilla con eternit o teja de barro' },
+                { valor: '(Cubierta) Entrepiso (cubierta provicional) prefabricado', texto: '(Cubierta) Entrepiso (cubierta provicional) prefabricado' },
+                { valor: '(Cubierta) Eternit o teja de barro (Cubierta sencilla)', texto: '(Cubierta) Eternit o teja de barro (Cubierta sencilla)' },
+                { valor: '(Cubierta) Materiales de desecho, telas alfásticas', texto: '(Cubierta) Materiales de desecho, telas alfásticas' },
+                { valor: '(Cubierta) Placa impermeabilizada cubierta lujosa u ornamental', texto: '(Cubierta) Placa impermeabilizada cubierta lujosa u ornamental' },
+                { valor: '(Cubierta) Zinc, teja de barro, eternit rústico', texto: '(Cubierta) Zinc, teja de barro, eternit rústico' }
+            ],
+            conservacionEstructuraUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Bueno', texto: 'Bueno' },
+                { valor: 'Excelente', texto: 'Excelente' },
+                { valor: 'Malo', texto: 'Malo' },
+                { valor: 'Regular', texto: 'Regular' }
+            ],
+            //opciones de seccion de acabados principales
+            cubiertaMurosUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: '(Cubrimiento de muros) Pañete, papel común, ladrillo prensado', texto: '(Cubrimiento de muros) Pañete, papel común, ladrillo prensado' },
+                { valor: '(Cubrimiento de muros) Estuco, cerámica, papel fino', texto: '(Cubrimiento de muros) Estuco, cerámica, papel fino' },
+                { valor: '(Cubrimiento de muros) Mármol, lujosos otros', texto: '(Cubrimiento de muros) Mármol, lujosos otros' },
+                { valor: '(Cubrimiento de muros) Madera, piedra ornamental', texto: '(Cubrimiento de muros) Madera, piedra ornamental' },
+                { valor: '(Cubrimiento de muros) Sin cubrimiento', texto: '(Cubrimiento de muros) Sin cubrimiento' }
+            ],
+
+            fachadaUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: '(Fachada) Buena', texto: '(Fachada) Buena' },
+                { valor: '(Fachada) Lujosa', texto: '(Fachada) Lujosa' },
+                { valor: '(Fachada) Pobre', texto: '(Fachada) Pobre' },
+                { valor: '(Fachada) Regular', texto: '(Fachada) Regular' },
+                { valor: '(Fachada) Sencilla', texto: '(Fachada) Sencilla' }
+            ],
+
+            pisoUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: '(Piso) Baldosa común de cemento, tablón de ladrillo', texto: '(Piso) Baldosa común de cemento, tablón de ladrillo' },
+                { valor: '(Piso) Cemento, madera burda', texto: '(Piso) Cemento, madera burda' },
+                { valor: '(Piso) Listón machihembrado', texto: '(Piso) Listón machihembrado' },
+                { valor: '(Piso) Parquet, alfombra, retal de mármol (grano pequeño)', texto: '(Piso) Parquet, alfombra, retal de mármol (grano pequeño)' },
+                { valor: '(Piso) Retal de mármol, mármol, otros lujosos', texto: '(Piso) Retal de mármol, mármol, otros lujosos' },
+                { valor: '(Piso) Tableta, caucho, acrílico, granito, baldosa fina', texto: '(Piso) Tableta, caucho, acrílico, granito, baldosa fina' },
+                { valor: '(Piso) Tierra pisada', texto: '(Piso) Tierra pisada' }
+            ],
+
+            conservacionAcabadosUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Bueno', texto: 'Bueno' },
+                { valor: 'Excelente', texto: 'Excelente' },
+                { valor: 'Malo', texto: 'Malo' },
+                { valor: 'Regular', texto: 'Regular' }
+            ],
+            // opciones para la seccion de info baños
+            tamanoBanosUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: '(Tamaño de baño) Grande', texto: '(Tamaño de baño) Grande' },
+                { valor: '(Tamaño de baño) Mediano', texto: '(Tamaño de baño) Mediano' },
+                { valor: '(Tamaño de baño) Pequeño', texto: '(Tamaño de baño) Pequeño' },
+                { valor: '(Tamaño de baño) Sin baño', texto: '(Tamaño de baño) Sin baño' }
+            ],
+
+            enchapeBanoUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: '(Enchape de baño) Baldosín decorado, papel fino', texto: '(Enchape de baño) Baldosín decorado, papel fino' },
+                { valor: '(Enchape de baño) Baldosín unicolor, papel común', texto: '(Enchape de baño) Baldosín unicolor, papel común' },
+                { valor: '(Enchape de baño) Cerámica cristanac, granito', texto: '(Enchape de baño) Cerámica cristanac, granito' },
+                { valor: '(Enchape de baño) Mármol, enchape lujoso', texto: '(Enchape de baño) Mármol, enchape lujoso' },
+                { valor: '(Enchape de baño) Pañete, baldosa común de cemento', texto: '(Enchape de baño) Mármol, enchape lujoso' },
+                { valor: '(Enchape de baño) Sin cubrimiento', texto: '(Enchape de baño) Sin cubrimiento' }
+            ],
+
+            mobiliarioBanoUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: '(Mobiliario baño) Bueno', texto: '(Mobiliario baño) Bueno' },
+                { valor: '(Mobiliario baño) Lujoso', texto: '(Mobiliario baño) Lujoso' },
+                { valor: '(Mobiliario baño) Pobre', texto: '(Mobiliario baño) Pobre' },
+                { valor: '(Mobiliario baño) Regular', texto: '(Mobiliario baño) Regular' },
+                { valor: '(Mobiliario baño) Sencillo', texto: '(Mobiliario baño) Sencillo' }
+            ],
+
+            conservacionBanoUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Bueno', texto: 'Bueno' },
+                { valor: 'Excelente', texto: 'Excelente' },
+                { valor: 'Malo', texto: 'Malo' },
+                { valor: 'Regular', texto: 'Regular' }
+            ],
+
+            // opciones para la seccion de info cocinas
+            tamanoCocinaUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: '(Tamaño de cocina) Grande', texto: '(Tamaño de cocina) Grande' },
+                { valor: '(Tamaño de cocina) Mediano', texto: '(Tamaño de cocina) Mediano' },
+                { valor: '(Tamaño de cocina) Pequeño', texto: '(Tamaño de cocina) Pequeño' },
+                { valor: '(Tamaño de cocina) Sin cocina', texto: '(Tamaño de cocina) Sin cocina' },
+            ],
+
+            enchapeCocinaUc: [
+                { valor: '(Enchape de cocina) Baldosín decorado, papel fino', texto: '(Enchape de cocina) Baldosín decorado, papel fino' },
+                { valor: '(Enchape de cocina) Baldosín unicolor, papel común', texto: '(Enchape de cocina) Baldosín unicolor, papel común' },
+                { valor: '(Enchape de cocina) Cerámica cristanac, granito', texto: '(Enchape de cocina) Cerámica cristanac, granito' },
+                { valor: '(Enchape de cocina) Mármol, enchape lujoso', texto: '(Enchape de cocina) Mármol, enchape lujoso' },
+                { valor: '(Enchape de cocina) Pañete, baldosa común de cemento', texto: '(Enchape de cocina) Mármol, enchape lujoso' },
+                { valor: '(Enchape de cocina) Sin cubrimiento', texto: '(Enchape de cocina) Sin cubrimiento' }
+            ],
+
+            mobiliarioCocinaUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: '(Mobiliario de cocina) Bueno', texto: '(Mobiliario de cocina) Bueno' },
+                { valor: '(Mobiliario de cocina) Lujoso', texto: '(Mobiliario de cocina) Lujoso' },
+                { valor: '(Mobiliario de cocina) Pobre', texto: '(Mobiliario de cocina) Pobre' },
+                { valor: '(Mobiliario de cocina) Regular', texto: '(Mobiliario de cocina) Regular' },
+                { valor: '(Mobiliario de cocina) Sencillo', texto: '(Mobiliario de cocina) Sencillo' }
+            ],
+
+            conservacionCocinaUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Bueno', texto: 'Bueno' },
+                { valor: 'Excelente', texto: 'Excelente' },
+                { valor: 'Malo', texto: 'Malo' },
+                { valor: 'Regular', texto: 'Regular' }
+            ],
+
+            // opciones para las cerchas
+            conservacionCocinaUc: [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Bueno', texto: 'Bueno' },
+                { valor: 'Excelente', texto: 'Excelente' },
+                { valor: 'Malo', texto: 'Malo' },
+                { valor: 'Regular', texto: 'Regular' }
+            ],
+
+            cerchasComplementoIndustrialUc: [
+                { valor: '', texto: 'Ninguna selección' },
+                { valor: '(Cerchas complemento industrial) Madera', texto: '(Cerchas complemento industrial) Madera' },
+                { valor: '(Cerchas complemento industrial) Metálica liviana', texto: '(Cerchas complemento industrial) Metálica liviana' },
+                { valor: '(Cerchas complemento industrial) Metálica mediana', texto: '(Cerchas complemento industrial) Metálica mediana' },
+                { valor: '(Cerchas complemento industrial) Metálica pesada', texto: '(Cerchas complemento industrial) Metálica pesada' }
+            ]
+        };
+
+        return opciones[campo] || [{ valor: '', texto: 'Ninguna Selección' }];
+    }
+
+    function renderizarOpcionesEstructuraConvencionalUc(idUnidadConstruccion, campo) {
+        const opciones = obtenerOpcionesEstructuraConvencionalUc(campo);
+
+        return opciones.map((opcion) => `
+        <button
+            class="btn w-100 text-start estructura-convencional-uc-opcion"
+            type="button"
+            onclick='seleccionarEstructuraConvencionalUc(${idUnidadConstruccion}, ${JSON.stringify(campo)}, ${JSON.stringify(opcion.valor)}, ${JSON.stringify(opcion.texto)})'>
+            ${escaparHtml(opcion.texto)}
+        </button>
+    `).join('');
+    }
+
+    function crearSelectEstructuraConvencionalUc(label, unidad, campo) {
+        const idUnidad = unidad.idUnidadConstruccion;
+        const valorActual = unidad[campo] || '';
+        const idDropdown = `dropdown_${campo}_${idUnidad}`;
+        const idCollapse = `collapse_${campo}_${idUnidad}`;
+        const idHidden = `${campo}_${idUnidad}`;
+
+        return `
+        <div class="col-12">
+            <label class="form-label-information mb-2">
+                ${label}
+            </label>
+
+            <input
+                type="hidden"
+                name="${campo}_${idUnidad}"
+                id="${idHidden}"
+                value="${escaparHtml(valorActual)}"
+            >
+
+            <div class="w-100 estructura-convencional-uc-select">
+                <button
+                    class="btn w-100 text-start result-information-construccion d-flex justify-content-between align-items-center px-2 py-2 estructura-convencional-uc-toggle"
+                    type="button"
+                    id="${idDropdown}"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#${idCollapse}"
+                    aria-expanded="false"
+                    aria-controls="${idCollapse}">
+                    <span>${escaparHtml(valorActual || 'Ninguna Selección')}</span>
+                    <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                </button>
+
+                <div
+                    class="collapse estructura-convencional-uc-opciones"
+                    id="${idCollapse}">
+                    <div class="estructura-convencional-uc-lista">
+                        ${renderizarOpcionesEstructuraConvencionalUc(idUnidad, campo)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+    function renderizarBloqueEstructuraConvencionalUc(unidad) {
+        return `
+        <div class="col-12 mt-3">
+            <div class="title-tarjet-information mb-3">
+                Estructura
+            </div>
+        </div>
+
+        ${crearSelectEstructuraConvencionalUc('Armazón', unidad, 'armazonUc')}
+        ${crearSelectEstructuraConvencionalUc('Muros', unidad, 'murosUc')}
+        ${crearSelectEstructuraConvencionalUc('Cubierta', unidad, 'cubiertaUc')}
+        ${crearSelectEstructuraConvencionalUc('Conservación de estructura', unidad, 'conservacionEstructuraUc')}
+    `;
+    }
+
+    // FUNCION PARA LA SECCION DE ACABADOS PRINCIPALES PESTAÑA (CONVENCIONALES)
+    function renderizarBloqueAcabadosPrincipalesUc(unidad) {
+        return `
+        <div class="col-12 mt-3">
+            <div class="title-tarjet-information mb-3">
+                Acabados principales
+            </div>
+        </div>
+
+        ${crearSelectEstructuraConvencionalUc('Cubrimiento de muros', unidad, 'cubiertaMurosUc')}
+        ${crearSelectEstructuraConvencionalUc('Fachada', unidad, 'fachadaUc')}
+        ${crearSelectEstructuraConvencionalUc('Piso', unidad, 'pisoUc')}
+        ${crearSelectEstructuraConvencionalUc('Conservación de acabados', unidad, 'conservacionAcabadosUc')}
+    `;
+    }
+    // FIN FUNCION PARA LA SECCION DE ACABADOS PRINCIPALES PESTAÑA (CONVENCIONALES)
+
+    // FUNCION PARA LA SECCION DE INFO BAÑOS PESTAÑA (CONVENCIONALES)
+    function renderizarBloqueInfoBanosUc(unidad) {
+        return `
+            <div class="col-12 mt-3">
+                <div class="title-tarjet-information mb-3">
+                    Info Baños
+                </div>
+            </div>
+
+            ${crearSelectEstructuraConvencionalUc('Tamaño de baños', unidad, 'tamanoBanosUc')}
+            ${crearSelectEstructuraConvencionalUc('Enchape de baño', unidad, 'enchapeBanoUc')}
+            ${crearSelectEstructuraConvencionalUc('Mobiliario baño', unidad, 'mobiliarioBanoUc')}
+            ${crearSelectEstructuraConvencionalUc('Conservación de baño', unidad, 'conservacionBanoUc')}
+        `;
+    }
+    // FIN FUNCION PARA LA SECCION DE INFO BAÑOS PESTAÑA (CONVENCIONALES)
+
+    // FUNCION PARA LA SECCION DE INFO DE COCINA PESTAÑA (CONVENCIONALES)
+    function renderizarBloqueInfoCocinasUc(unidad) {
+        return `
+        <div class="col-12 mt-3">
+            <div class="title-tarjet-information mb-3">
+                Info cocinas
+            </div>
+        </div>
+
+        ${crearSelectEstructuraConvencionalUc('Tamaño de cocina', unidad, 'tamanoCocinaUc')}
+        ${crearSelectEstructuraConvencionalUc('Enchape de cocina', unidad, 'enchapeCocinaUc')}
+        ${crearSelectEstructuraConvencionalUc('Mobiliario de cocina', unidad, 'mobiliarioCocinaUc')}
+        ${crearSelectEstructuraConvencionalUc('Conservación de cocina', unidad, 'conservacionCocinaUc')}
+    `;
+    }
+    // FIN FUNCION PARA LA SECCION DE INFO DE COCINA PESTAÑA (CONVENCIONALES)
+
+    // FUNCION PARA LA SECCION DE CERCHAS
+    function renderizarBloqueCerchasUc(unidad) {
+        const checkedAltura = unidad.alturaSuperiorSeisUc ? 'checked' : '';
+        const totalCalificacion = unidad.totalCalificacionCerchasUc || '00';
+
+        return `
+        <div class="col-12 mt-3">
+            <div class="title-tarjet-information mb-3">
+                Cerchas
+            </div>
+        </div>
+
+        ${crearSelectEstructuraConvencionalUc(
+            'Cerchas de complemento industrial',
+            unidad,
+            'cerchasComplementoIndustrialUc'
+        )}
+
+        <div class="col-12 mt-2">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-field-check">
+                    ¿La altura es superior a 6m?
+                </span>
+
+                <input
+                    class="form-check-input check-custom m-0"
+                    type="checkbox"
+                    id="alturaSuperiorSeisUc_${unidad.idUnidadConstruccion}"
+                    name="altura_superior_seis_uc_${unidad.idUnidadConstruccion}"
+                    ${checkedAltura}
+                    onchange="actualizarAlturaSuperiorSeisUc(${unidad.idUnidadConstruccion}, this.checked)"
+                >
+            </div>
+        </div>
+
+        <div class="col-12 mt-3">
+            <div class="d-flex justify-content-end">
+                <div class="total-calificacion-cerchas-wrap">
+                    <label class="form-label-information mb-2 d-block text-end">
+                        Total de calificación
+                    </label>
+
+                    <div
+                        class="total-calificacion-cerchas-box"
+                        contenteditable="true"
+                        spellcheck="false"
+                        role="textbox"
+                        tabindex="0"
+                        onfocus="limpiarPlaceholderCampoEditableOpcion5(this)"
+                        oninput="actualizarTotalCalificacionCerchasUc(${unidad.idUnidadConstruccion}, this)"
+                        onblur="finalizarTotalCalificacionCerchasUc(${unidad.idUnidadConstruccion}, this)">
+                        ${escaparHtml(totalCalificacion)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+    function actualizarAlturaSuperiorSeisUc(idUnidadConstruccion, checked) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        if (!resultado?.unidad) return;
+
+        resultado.unidad.alturaSuperiorSeisUc = checked;
+        prepararPayloadEdicionPredio();
+    }
+
+    function actualizarTotalCalificacionCerchasUc(idUnidadConstruccion, campo) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        if (!resultado?.unidad || !campo) return;
+
+        resultado.unidad.totalCalificacionCerchasUc = obtenerValorCampoEditableOpcion5(campo);
+        prepararPayloadEdicionPredio();
+    }
+
+    function finalizarTotalCalificacionCerchasUc(idUnidadConstruccion, campo) {
+        if (!campo) return;
+
+        const valor = obtenerValorCampoEditableOpcion5(campo);
+
+        if (!valor) {
+            campo.textContent = '00';
+        }
+
+        actualizarTotalCalificacionCerchasUc(idUnidadConstruccion, campo);
+    }
+    // FIN FUNCION PARA LA SECCION DE CERCHAS
+
+    function seleccionarEstructuraConvencionalUc(idUnidadConstruccion, campo, valor, texto) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const hiddenInput = document.getElementById(`${campo}_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdown_${campo}_${idUnidadConstruccion}`);
+        const collapse = document.getElementById(`collapse_${campo}_${idUnidadConstruccion}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        if (resultado?.unidad) {
+            resultado.unidad[campo] = valor;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        if (collapse) {
+            if (window.bootstrap?.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(collapse, {
+                    toggle: false
+                }).hide();
+            } else {
+                collapse.classList.remove('show');
+            }
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+    // FIN FUNCIONES PARA LAS OPCIONES DE LOS SELECT DE LA SEGUNDA PESTAÑA (CALIFICACIÓN CONVENCIONAL)
+
+    //FUNCIONES PARA LA PESTAÑA DE TIPOLOGIA
+    function renderizarOpcionesTipoTipologiaUc(idUnidadConstruccion) {
+        const opciones = [
+            { valor: '', texto: 'Ninguna selección' },
+            { valor: '(Comercial) Básico 2', texto: '(Comercial) Básico 2' },
+            { valor: '(Comercial) Especializado 1', texto: '(Comercial) Especializado 1' },
+            { valor: '(Comercial) Especializado 2', texto: '(Comercial) Especializado 2' },
+            { valor: '(Comercial) Especializado 3', texto: '(Comercial) Especializado 3' },
+            { valor: '(Comercial) Especializado 4', texto: '(Comercial) Especializado 4' },
+            { valor: '(Comercial) Intermedio 1', texto: '(Comercial) Intermedio 1' },
+            { valor: '(Comercial) Intermedio 2', texto: '(Comercial) Intermedio 2' },
+            { valor: '(Comercial) Intermedio 3', texto: '(Comercial) Intermedio 3' }
+        ];
+
+        return opciones.map((opcion) => `
+        <button
+            class="btn w-100 text-start tipologia-uc-opcion"
+            type="button"
+            onclick='seleccionarTipoTipologiaUc(${idUnidadConstruccion}, ${JSON.stringify(opcion.valor)}, ${JSON.stringify(opcion.texto)})'>
+            ${escaparHtml(opcion.texto)}
+        </button>
+    `).join('');
+    }
+
+    function renderizarOpcionesConservacionTipologiaUc(idUnidadConstruccion) {
+        const opciones = [
+            { valor: '', texto: 'Ninguna Selección' },
+            { valor: 'Optimo 1', texto: 'Optimo 1' },
+            { valor: 'Muy Bueno - 1.5', texto: 'Muy Bueno - 1.5' },
+            { valor: 'Bueno - 2', texto: 'Bueno - 2' },
+            { valor: 'Intermedio - 2.5', texto: 'Intermedio - 2.5' },
+            { valor: 'Regular - 3', texto: 'Regular - 3' },
+            { valor: 'Deficiente - 3.5', texto: 'Deficiente - 3.5' },
+            { valor: 'Malo - 4', texto: 'Malo - 4' },
+            { valor: 'Muy Malo - 4.5', texto: 'Muy Malo - 4.5' },
+            { valor: 'Ruinoso - 5', texto: 'Ruinoso - 5' }
+        ];
+
+        return opciones.map((opcion) => `
+        <button
+            class="btn w-100 text-start conservacion-tipologia-uc-opcion"
+            type="button"
+            onclick='seleccionarConservacionTipologiaUc(${idUnidadConstruccion}, ${JSON.stringify(opcion.valor)}, ${JSON.stringify(opcion.texto)})'>
+            ${escaparHtml(opcion.texto)}
+        </button>
+    `).join('');
+    }
+
+    function seleccionarTipoTipologiaUc(idUnidadConstruccion, valor, texto) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const hiddenInput = document.getElementById(`tipo_tipologia_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownTipoTipologiaUc_${idUnidadConstruccion}`);
+        const collapse = document.getElementById(`collapseTipoTipologiaUc_${idUnidadConstruccion}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        if (resultado?.unidad) {
+            resultado.unidad.tipoTipologiaUc = valor;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        if (collapse) {
+            if (window.bootstrap?.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(collapse, {
+                    toggle: false
+                }).hide();
+            } else {
+                collapse.classList.remove('show');
+            }
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+    function seleccionarConservacionTipologiaUc(idUnidadConstruccion, valor, texto) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const hiddenInput = document.getElementById(`conservacion_tipologia_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownConservacionTipologiaUc_${idUnidadConstruccion}`);
+        const collapse = document.getElementById(`collapseConservacionTipologiaUc_${idUnidadConstruccion}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        if (resultado?.unidad) {
+            resultado.unidad.conservacionTipologiaUc = valor;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        if (collapse) {
+            if (window.bootstrap?.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(collapse, {
+                    toggle: false
+                }).hide();
+            } else {
+                collapse.classList.remove('show');
+            }
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+    // FIN FUNCIONES PARA LA PESTAÑA DE TIPOLOGIA
+
+    function renderizarContenidoSegunTipoCalificacionUc(unidad) {
+        const tipo = (unidad.tipoCalificacionUc || '').trim().toLowerCase();
+
+        if (tipo === 'convencional') {
+            return `
+                <div class="row g-2">
+
+                    <!-- Campo Tipo a calificar -->
+                    <div class="col-12">
+                        <label class="form-label-information mb-2">
+                            Tipo a calificar
+                        </label>
+
+                        <input
+                            type="hidden"
+                            name="tipo_a_calificar_uc_${unidad.idUnidadConstruccion}"
+                            id="tipo_a_calificar_uc_${unidad.idUnidadConstruccion}"
+                            value="${unidad.tipoACalificarUc || ''}"
+                        >
+
+                        <div class="w-100 tipo-a-calificar-uc-select">
+                            <button
+                                class="btn w-100 text-start result-information-construccion d-flex justify-content-between align-items-center px-2 py-2 tipo-a-calificar-uc-toggle"
+                                type="button"
+                                id="dropdownTipoACalificarUc_${unidad.idUnidadConstruccion}"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#collapseTipoACalificarUc_${unidad.idUnidadConstruccion}"
+                                aria-expanded="false"
+                                aria-controls="collapseTipoACalificarUc_${unidad.idUnidadConstruccion}">
+                                <span>${unidad.tipoACalificarUc || 'Ninguna Selección'}</span>
+                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                            </button>
+
+                            <div
+                                class="collapse tipo-a-calificar-uc-opciones"
+                                id="collapseTipoACalificarUc_${unidad.idUnidadConstruccion}">
+                                <div class="tipo-a-calificar-uc-lista">
+                                    ${renderizarOpcionesTipoACalificarUc(unidad.idUnidadConstruccion)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${renderizarBloqueEstructuraConvencionalUc(unidad)}
+
+                    ${renderizarBloqueAcabadosPrincipalesUc(unidad)}
+
+                    ${renderizarBloqueInfoBanosUc(unidad)}
+
+                    ${renderizarBloqueInfoCocinasUc(unidad)}
+
+                    ${renderizarBloqueCerchasUc(unidad)}
+
+                </div>
+            `;
+        }
+
+        if (tipo === 'tipología' || tipo === 'tipologia') {
+            return `
+                <div class="row g-3">
+
+                    <div class="col-12">
+                        <label class="form-label-information mb-2">
+                            Tipo tipología
+                        </label>
+
+                        <input
+                            type="hidden"
+                            name="tipo_tipologia_uc_${unidad.idUnidadConstruccion}"
+                            id="tipo_tipologia_uc_${unidad.idUnidadConstruccion}"
+                            value="${unidad.tipoTipologiaUc || ''}"
+                        >
+
+                        <div class="w-100 tipologia-uc-select">
+                            <button
+                                class="btn w-100 text-start result-information-construccion d-flex justify-content-between align-items-center px-2 py-2 tipologia-uc-toggle"
+                                type="button"
+                                id="dropdownTipoTipologiaUc_${unidad.idUnidadConstruccion}"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#collapseTipoTipologiaUc_${unidad.idUnidadConstruccion}"
+                                aria-expanded="false"
+                                aria-controls="collapseTipoTipologiaUc_${unidad.idUnidadConstruccion}">
+                                <span>${unidad.tipoTipologiaUc || 'Ninguna selección'}</span>
+                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                            </button>
+
+                            <div
+                                class="collapse tipologia-uc-opciones"
+                                id="collapseTipoTipologiaUc_${unidad.idUnidadConstruccion}">
+                                <div class="tipologia-uc-lista">
+                                    ${renderizarOpcionesTipoTipologiaUc(unidad.idUnidadConstruccion)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label-information mb-2">
+                            Conservación tipología
+                        </label>
+
+                        <input
+                            type="hidden"
+                            name="conservacion_tipologia_uc_${unidad.idUnidadConstruccion}"
+                            id="conservacion_tipologia_uc_${unidad.idUnidadConstruccion}"
+                            value="${unidad.conservacionTipologiaUc || ''}"
+                        >
+
+                        <div class="w-100 conservacion-tipologia-uc-select">
+                            <button
+                                class="btn w-100 text-start result-information-construccion d-flex justify-content-between align-items-center px-2 py-2 conservacion-tipologia-uc-toggle"
+                                type="button"
+                                id="dropdownConservacionTipologiaUc_${unidad.idUnidadConstruccion}"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#collapseConservacionTipologiaUc_${unidad.idUnidadConstruccion}"
+                                aria-expanded="false"
+                                aria-controls="collapseConservacionTipologiaUc_${unidad.idUnidadConstruccion}">
+                                <span>${unidad.conservacionTipologiaUc || 'Ninguna Selección'}</span>
+                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                            </button>
+
+                            <div
+                                class="collapse conservacion-tipologia-uc-opciones"
+                                id="collapseConservacionTipologiaUc_${unidad.idUnidadConstruccion}">
+                                <div class="conservacion-tipologia-uc-lista">
+                                    ${renderizarOpcionesConservacionTipologiaUc(unidad.idUnidadConstruccion)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            `;
+        }
+
+        if (tipo === 'no convencional') {
+            return `
+                <div class="row g-3">
+
+                    <!-- Campo Tipo de Anexo -->
+                    <div class="col-12">
+                        <label class="form-label-information mb-2">
+                            Tipo de Anexo
+                        </label>
+
+                        <input
+                            type="hidden"
+                            name="tipo_anexo_uc_${unidad.idUnidadConstruccion}"
+                            id="tipo_anexo_uc_${unidad.idUnidadConstruccion}"
+                            value="${unidad.tipoAnexoUc || ''}"
+                        >
+
+                        <div class="w-100 tipo-anexo-uc-select">
+                            <button
+                                class="btn w-100 text-start result-information-construccion d-flex justify-content-between align-items-center px-2 py-2 tipo-anexo-uc-toggle"
+                                type="button"
+                                id="dropdownTipoAnexoUc_${unidad.idUnidadConstruccion}"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#collapseTipoAnexoUc_${unidad.idUnidadConstruccion}"
+                                aria-expanded="false"
+                                aria-controls="collapseTipoAnexoUc_${unidad.idUnidadConstruccion}">
+                                <span>${unidad.tipoAnexoUc || 'Ninguna selección'}</span>
+                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                            </button>
+
+                            <div
+                                class="collapse tipo-anexo-uc-opciones"
+                                id="collapseTipoAnexoUc_${unidad.idUnidadConstruccion}">
+                                <div class="tipo-anexo-uc-lista">
+                                    ${renderizarOpcionesTipoAnexoUc(unidad.idUnidadConstruccion)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campo Conservación Anexo -->
+                    <div class="col-12">
+                        <label class="form-label-information mb-2">
+                            Conservación anexo
+                        </label>
+
+                        <input
+                            type="hidden"
+                            name="conservacion_anexo_uc_${unidad.idUnidadConstruccion}"
+                            id="conservacion_anexo_uc_${unidad.idUnidadConstruccion}"
+                            value="${unidad.conservacionAnexoUc || ''}"
+                        >
+
+                        <div class="w-100 conservacion-anexo-uc-select">
+                            <button
+                                class="btn w-100 text-start result-information-construccion d-flex justify-content-between align-items-center px-2 py-2 conservacion-anexo-uc-toggle"
+                                type="button"
+                                id="dropdownConservacionAnexoUc_${unidad.idUnidadConstruccion}"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#collapseConservacionAnexoUc_${unidad.idUnidadConstruccion}"
+                                aria-expanded="false"
+                                aria-controls="collapseConservacionAnexoUc_${unidad.idUnidadConstruccion}">
+                                <span>${unidad.conservacionAnexoUc || 'Ninguna selección'}</span>
+                                <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                            </button>
+
+                            <div
+                                class="collapse conservacion-anexo-uc-opciones"
+                                id="collapseConservacionAnexoUc_${unidad.idUnidadConstruccion}">
+                                <div class="conservacion-anexo-uc-lista">
+                                    ${renderizarOpcionesConservacionAnexoUc(unidad.idUnidadConstruccion)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+        <div class="row g-2">
+            <div class="col-12">
+                <div class="rounded-3 px-3 py-3 result-information-construccion">
+                    Selecciona un tipo de calificación para ver esta pestaña.
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+    // FIN FUNCIONES PARA LA SEGUNDA PESTALA DE LA SECCION DE VER CARACTERISTICAS UC
+
+
+    function renderizarCaracteristicasUcOpcion5(unidad) {
+        return `
+        <div class="p-2 rounded-4 mt-2 seccion-caracteristicas-uc-wrap">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="fw-bold text-white caracteristicas-uc-id">
+                        ID: ${escaparHtml(unidad.identificador || '----')}
+                    </div>
+                    <div class="text-white mt-3 caracteristicas-uc-title">
+                        Característica de la unidad de construcción
+                    </div>
+                </div>
+
+                <button type="button"
+                    class="btn p-0 border-0 bg-transparent text-white"
+                    onclick="cerrarCaracteristicasUcOpcion5(${unidad.idUnidadConstruccion})">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <ul class="nav nav-tabs border-0 caracteristicas-uc-tabs mb-0"
+                id="tabsCaracteristicasUc_${unidad.idUnidadConstruccion}"
+                role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button
+                        class="nav-link active"
+                        id="tabGeneralUc_${unidad.idUnidadConstruccion}"
+                        data-bs-toggle="tab"
+                        data-bs-target="#paneGeneralUc_${unidad.idUnidadConstruccion}"
+                        type="button"
+                        role="tab"
+                        aria-controls="paneGeneralUc_${unidad.idUnidadConstruccion}"
+                        aria-selected="true">
+                        General
+                    </button>
+                </li>
+
+                ${unidad.tipoCalificacionUc ? `
+                    <li class="nav-item ms-2" role="presentation">
+                        <button
+                            class="nav-link"
+                            id="tabDetalleCalificacionUc_${unidad.idUnidadConstruccion}"
+                            data-bs-toggle="tab"
+                            data-bs-target="#paneDetalleCalificacionUc_${unidad.idUnidadConstruccion}"
+                            type="button"
+                            role="tab"
+                            aria-controls="paneDetalleCalificacionUc_${unidad.idUnidadConstruccion}"
+                            aria-selected="false">
+                            ${escaparHtml(obtenerTituloPestanaTipoCalificacionUc(unidad.tipoCalificacionUc))}
+                        </button>
+                    </li>
+                ` : ''}
+            </ul>
+
+            <div class="tab-content caracteristicas-uc-tab-content"
+                id="tabsCaracteristicasUcContent_${unidad.idUnidadConstruccion}">
+                
+                <div class="tab-pane fade show active"
+                    id="paneGeneralUc_${unidad.idUnidadConstruccion}"
+                    role="tabpanel"
+                    aria-labelledby="tabGeneralUc_${unidad.idUnidadConstruccion}">
+                    
+                    <div class="p-2 caracteristicas-uc-card-body">
+                        <div class="row g-2 mt-2">
+                            <div class="col-6 text-condition-five">
+                                ${crearCampoCaracteristicaUc(
+            'ID Grupo (NPN)',
+            unidad.idGrupoNpnUc,
+            unidad.idUnidadConstruccion,
+            'idGrupoNpnUc',
+            'Sin datos...'
+        )}
+                            </div>
+
+                            <div class="col-6 text-condition-five">
+                                ${crearCampoCaracteristicaUc(
+            'Indentificador',
+            unidad.identificadorCaracteristicaUc,
+            unidad.idUnidadConstruccion,
+            'identificadorCaracteristicaUc',
+            'Sin datos...'
+        )}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label-information mb-1">Tipo de unidad de construcción</label>
+                                <input type="hidden"
+                                    id="tipo_clase_uc_${unidad.idUnidadConstruccion}"
+                                    value="${escaparHtml(unidad.tipoClaseUc || '')}">
+                                <div class="dropdown w-100">
+                                    <button
+                                        class="btn w-100 text-start result-information-construccion d-flex justify-content-between align-items-center"
+                                        type="button"
+                                        id="dropdownTipoClaseUc_${unidad.idUnidadConstruccion}"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                        <span>${escaparHtml(unidad.tipoClaseUc || 'Ninguna Selección')}</span>
+                                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                    </button>
+
+                                    <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll">
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoClaseUc(${unidad.idUnidadConstruccion}, '', 'Ninguna Selección')">Ninguna selección</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoClaseUc(${unidad.idUnidadConstruccion}, 'Anexo', 'Anexo')">Anexo</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoClaseUc(${unidad.idUnidadConstruccion}, 'Comercial', 'Comercial')">Comercial</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoClaseUc(${unidad.idUnidadConstruccion}, 'Industrial', 'Industrial')">Industrial</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoClaseUc(${unidad.idUnidadConstruccion}, 'Institucional', 'Institucional')">Institucional</button></li>
+                                        <li><button class="dropdown-item" type="button" onclick="seleccionarTipoClaseUc(${unidad.idUnidadConstruccion}, 'Residencial', 'Residencial')">Residencial</button></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label-information mb-1">Tipo de calificación</label>
+                                <input type="hidden"
+                                    id="tipo_calificacion_uc_${unidad.idUnidadConstruccion}"
+                                    value="${escaparHtml(unidad.tipoCalificacionUc || '')}">
+
+                                <div class="dropdown w-100">
+                                    <button
+                                        class="btn w-100 text-start result-information-construccion d-flex justify-content-between align-items-center"
+                                        type="button"
+                                        id="dropdownTipoCalificacionUc_${unidad.idUnidadConstruccion}"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                        <span>${escaparHtml(unidad.tipoCalificacionUc || 'Ninguna Selección')}</span>
+                                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                    </button>
+
+                                    <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll"
+                                        id="menuTipoCalificacionUc_${unidad.idUnidadConstruccion}">
+                                        ${crearOpcionesTipoCalificacionUc(unidad)}
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label-information mb-1">Uso</label>
+                                <input type="hidden"
+                                    id="uso_uc_${unidad.idUnidadConstruccion}"
+                                    value="${escaparHtml(unidad.usoUc || '')}">
+
+                                <div class="dropdown w-100">
+                                    <button
+                                        class="btn w-100 text-start result-information-construccion d-flex justify-content-between align-items-center"
+                                        type="button"
+                                        id="dropdownUsoUc_${unidad.idUnidadConstruccion}"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                        <span>${escaparHtml(unidad.usoUc || 'Ninguna Selección')}</span>
+                                        <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+                                    </button>
+
+                                    <ul class="dropdown-menu w-100 custom-dropdown-menu dropdown-menu-scroll"
+                                        id="menuUsoUc_${unidad.idUnidadConstruccion}">
+                                        ${crearOpcionesUsoUc(unidad)}
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                ${crearCampoCaracteristicaUcConSufijo(
+            'Área privada construida',
+            unidad.areaPrivadaConstruidaUc,
+            'M2',
+            unidad.idUnidadConstruccion,
+            'areaPrivadaConstruidaUc'
+        )}
+                            </div>
+
+                            <div class="col-6 campo-uc-mitad">
+                                ${crearCampoFechaCaracteristicaUc(
+            'Año de construcción',
+            unidad.anioConstruccionUc,
+            unidad.idUnidadConstruccion,
+            'anioConstruccionUc'
+        )}
+                            </div>
+
+                            <div class="col-6 campo-uc-mitad">
+                                ${crearCampoCaracteristicaUcConSufijo(
+            'Total de plantas',
+            unidad.totalPlantasUc,
+            'M2',
+            unidad.idUnidadConstruccion,
+            'totalPlantasUc'
+        )}
+                            </div>
+
+                            <div class="col-6 campo-uc-mitad">
+                                ${crearCampoCaracteristicaUcConSufijo(
+            'Área construida',
+            unidad.areaConstruidaUc,
+            'M2',
+            unidad.idUnidadConstruccion,
+            'areaConstruidaUc'
+        )}
+                            </div>
+
+                            <div class="col-6 campo-uc-mitad">
+                                ${crearCampoCaracteristicaUcConSufijo(
+            'Área privada construida',
+            unidad.areaPrivadaConstruidaUc,
+            'M2',
+            unidad.idUnidadConstruccion,
+            'areaPrivadaConstruidaUc'
+        )}
+                            </div>
+                            <div class="col-12 mt-3">
+                                ${crearTextAreaUnidadConstruccionOpcion5(
+            'Observaciones',
+            unidad.observacionesCaracteristicasUc,
+            unidad.idUnidadConstruccion,
+            'observacionesCaracteristicasUc'
+        )}
+                            </div>
+
+                            <div class="col-12">
+                                ${crearSelectUsosTradicionalesCulturalesUc(unidad)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                ${unidad.tipoCalificacionUc ? `
+                    <div class="tab-pane fade"
+                        id="paneDetalleCalificacionUc_${unidad.idUnidadConstruccion}"
+                        role="tabpanel"
+                        aria-labelledby="tabDetalleCalificacionUc_${unidad.idUnidadConstruccion}">
+        
+                        <div class="p-1 caracteristicas-uc-card-body">
+                            ${renderizarContenidoSegunTipoCalificacionUc(unidad)}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    }
+
+    function seleccionarTipoClaseUc(idUnidadConstruccion, valor, texto) {
+        const hiddenInput = document.getElementById(`tipo_clase_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownTipoClaseUc_${idUnidadConstruccion}`);
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        if (resultado?.unidad) {
+            resultado.unidad.tipoClaseUc = valor;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        refrescarOpcionesTipoCalificacionUc(idUnidadConstruccion);
+        refrescarOpcionesUsoUc(idUnidadConstruccion);
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCION PARA EL CAMPO DE TIPO A CALIFICAR PESTAÑA CALIFICACION CONVENCIONAL
+    function seleccionarTipoACalificarUc(idUnidadConstruccion, valor, texto) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const hiddenInput = document.getElementById(`tipo_a_calificar_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownTipoACalificarUc_${idUnidadConstruccion}`);
+        const collapse = document.getElementById(`collapseTipoACalificarUc_${idUnidadConstruccion}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        if (resultado?.unidad) {
+            resultado.unidad.tipoACalificarUc = valor;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        if (collapse) {
+            if (window.bootstrap?.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(collapse, {
+                    toggle: false
+                }).hide();
+            } else {
+                collapse.classList.remove('show');
+            }
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+    // FIN FUNCION PARA EL CAMPO DE TIPO A CALIFICAR PESTAÑA CALIFICACION CONVENCIONAL
+
+
+    // FUNCION PARAS QUE AL SELECCIONAR EL TIPO DE CALIFICACION ME HABRA LA SEGUNDA PESTAÑA
+    function seleccionarTipoCalificacionUc(idUnidadConstruccion, valor, texto) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const hiddenInput = document.getElementById(`tipo_calificacion_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownTipoCalificacionUc_${idUnidadConstruccion}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        if (resultado?.unidad) {
+            resultado.unidad.tipoCalificacionUc = valor;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        actualizarPestanaTipoCalificacionUc(idUnidadConstruccion);
+
+        prepararPayloadEdicionPredio();
+    }
+
+    // FUNCIONES PARA LOS SELECT DE LA SEGUNDA PESTAÑA DE CARACTERISTICAS UC (NO CONVENCIONAL)
+    function seleccionarTipoAnexoUc(idUnidadConstruccion, valor, texto) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const hiddenInput = document.getElementById(`tipo_anexo_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownTipoAnexoUc_${idUnidadConstruccion}`);
+        const collapse = document.getElementById(`collapseTipoAnexoUc_${idUnidadConstruccion}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+        if (resultado?.unidad) {
+            resultado.unidad.tipoAnexoUc = valor;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        if (collapse) {
+            if (window.bootstrap?.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(collapse, {
+                    toggle: false
+                }).hide();
+            } else {
+                collapse.classList.remove('show');
+            }
+        }
+        prepararPayloadEdicionPredio();
+    }
+
+    function seleccionarConservacionAnexoUc(idUnidadConstruccion, valor, texto) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const hiddenInput = document.getElementById(`conservacion_anexo_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownConservacionAnexoUc_${idUnidadConstruccion}`);
+        const collapse = document.getElementById(`collapseConservacionAnexoUc_${idUnidadConstruccion}`);
+
+        if (hiddenInput) {
+            hiddenInput.value = valor;
+        }
+
+        if (resultado?.unidad) {
+            resultado.unidad.conservacionAnexoUc = valor;
+        }
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        if (collapse) {
+            if (window.bootstrap?.Collapse) {
+                bootstrap.Collapse.getOrCreateInstance(collapse, {
+                    toggle: false
+                }).hide();
+            } else {
+                collapse.classList.remove('show');
+            }
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+    // FIN FUNCIONES PARA LOS SELECT DE LA SEGUNDA PESTAÑA DE CARACTERISTICAS UC (NO CONVENCIONAL)
+
+    function actualizarPestanaTipoCalificacionUc(idUnidadConstruccion) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        if (!resultado?.unidad) return;
+
+        const unidad = resultado.unidad;
+
+        const contenedorTabs = document.getElementById(`tabsCaracteristicasUc_${idUnidadConstruccion}`);
+        const contenedorContent = document.getElementById(`tabsCaracteristicasUcContent_${idUnidadConstruccion}`);
+
+        if (!contenedorTabs || !contenedorContent) return;
+
+        const tabAnterior = document.getElementById(`itemDetalleCalificacionUc_${idUnidadConstruccion}`);
+        const paneAnterior = document.getElementById(`paneDetalleCalificacionUc_${idUnidadConstruccion}`);
+
+        if (tabAnterior) tabAnterior.remove();
+        if (paneAnterior) paneAnterior.remove();
+
+        if (!unidad.tipoCalificacionUc) {
+            const tabGeneral = document.getElementById(`tabGeneralUc_${idUnidadConstruccion}`);
+            if (tabGeneral && window.bootstrap?.Tab) {
+                bootstrap.Tab.getOrCreateInstance(tabGeneral).show();
+            }
+
+            return;
+        }
+
+        contenedorTabs.insertAdjacentHTML('beforeend', `
+        <li class="nav-item ms-2" role="presentation" id="itemDetalleCalificacionUc_${unidad.idUnidadConstruccion}">
+            <button
+                class="nav-link"
+                id="tabDetalleCalificacionUc_${idUnidadConstruccion}"
+                data-bs-toggle="tab"
+                data-bs-target="#paneDetalleCalificacionUc_${idUnidadConstruccion}"
+                type="button"
+                role="tab"
+                aria-controls="paneDetalleCalificacionUc_${idUnidadConstruccion}"
+                aria-selected="false">
+                ${escaparHtml(obtenerTituloPestanaTipoCalificacionUc(unidad.tipoCalificacionUc))}
+            </button>
+        </li>
+    `);
+
+        contenedorContent.insertAdjacentHTML('beforeend', `
+        <div class="tab-pane fade"
+            id="paneDetalleCalificacionUc_${idUnidadConstruccion}"
+            role="tabpanel"
+            aria-labelledby="tabDetalleCalificacionUc_${idUnidadConstruccion}">
+            
+            <div class="p-3 caracteristicas-uc-card-body">
+                ${renderizarContenidoSegunTipoCalificacionUc(unidad)}
+            </div>
+        </div>
+    `);
+    }
+
+    // FIN FUNCION PARAS QUE AL SELECCIONAR EL TIPO DE CALIFICACION ME HABRA LA SEGUNDA PESTAÑA
+
+
+
+
+    function seleccionarUsoUc(idUnidadConstruccion, valor, texto) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        const hiddenInput = document.getElementById(`uso_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownUsoUc_${idUnidadConstruccion}`);
+
+        if (hiddenInput) hiddenInput.value = valor;
+        if (resultado?.unidad) resultado.unidad.usoUc = valor;
+
+        if (dropdown) {
+            dropdown.innerHTML = `
+            <span>${texto}</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        prepararPayloadEdicionPredio();
+    }
+
+
+    // funciones para las condicionales de los select de la quinta pestaña para los campo de caracteristicas de UC
+    function obtenerOpcionesTipoCalificacionSegunClase(tipoClaseUc) {
+        const tipo = (tipoClaseUc || '').trim().toLowerCase();
+
+        if (!tipo) {
+            return [];
+        }
+
+        if (tipo === 'anexo') {
+            return [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'No convencional', texto: 'No convencional' }
+            ];
+        }
+
+        if (tipo === 'comercial') {
+            return [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Convencional', texto: 'Convencional' },
+                { valor: 'Tipología', texto: 'Tipología' }
+            ];
+        }
+
+        if (tipo === 'industrial') {
+            return [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Convencional', texto: 'Convencional' },
+                { valor: 'Tipología', texto: 'Tipología' }
+            ];
+        }
+
+        if (tipo === 'institucional') {
+            return [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Convencional', texto: 'Convencional' },
+                { valor: 'Tipología', texto: 'Tipología' }
+            ];
+        }
+
+        if (tipo === 'residencial') {
+            return [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Convencional', texto: 'Convencional' },
+                { valor: 'Tipología', texto: 'Tipología' }
+            ];
+        }
+
+        return [
+            { valor: '', texto: 'Ninguna Selección' },
+            { valor: 'Convencional', texto: 'Convencional' },
+            { valor: 'No convencional', texto: 'No convencional' }
+        ];
+    }
+
+
+    // FUNCIONES DE EL CAMPO DE TIPO DE USO CON LAS CONDICIONALES SEGUNB EL CAMPO DE (Tipo de unidad de construcción)
+    function obtenerOpcionesUsoSegunClase(tipoClaseUc) {
+        const tipo = (tipoClaseUc || '').trim().toLowerCase();
+
+        if (!tipo) {
+            return [];
+        }
+
+        if (tipo === 'anexo') {
+            return [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Albercas-Bañaderas', texto: 'Albercas-Bañaderas' },
+                { valor: 'Beneficiaderos', texto: 'Beneficiaderos' },
+                { valor: 'Camaroneras', texto: 'Camaroneras' },
+                { valor: 'Canchas', texto: 'Canchas' },
+                { valor: 'Canchas_de_tenis', texto: 'Canchas de tenis' },
+                { valor: 'Carretera', texto: 'Carretera' },
+                { valor: 'Cerramiento', texto: 'Cerramiento' },
+                { valor: 'Cimientos,estructura,muros_y_placa_base', texto: 'Cimientos,estructura,muros y placa base' },
+                { valor: 'Cocheras-marraneras-porquerizas', texto: 'Cocheras marraneras porquerizas' },
+                { valor: 'Construcción_en_membrana_arquitectónica', texto: 'Construcción en membrana arquitectónica' },
+                { valor: 'Contenedor', texto: 'Contenedor' },
+                { valor: 'Corrales', texto: 'Corrales' },
+                { valor: 'Establos-pesebreras-caballerizas', texto: 'Establos-pesebreras-caballerizas' },
+                { valor: 'Estación_de_bombeo', texto: 'Estación de bombeo' },
+                { valor: 'Estación_de_sistemas_de_transporte', texto: 'Estación de sistemas de transporte' },
+                { valor: 'Galpones_Gallineros', texto: 'Galpones-Gallineros' },
+                { valor: 'Glamping', texto: 'Glamping' },
+                { valor: 'Hangar', texto: 'Hangar' },
+                { valor: 'Kioscos', texto: 'Kioscos' },
+                { valor: 'Lagunas_de_oxidación', texto: 'Lagunas de oxidación' },
+                { valor: 'Marquesinas-Patios_cubiertos', texto: 'Marquesinas-Patios cubiertos' },
+                { valor: 'Muelles', texto: 'Muelles' },
+                { valor: 'Murallas', texto: 'Murallas' },
+                { valor: 'Pérgolas', texto: 'Pérgolas' },
+                { valor: 'Piscinas', texto: 'Piscinas' },
+                { valor: 'Pista_aeropuerto', texto: 'Pista aeropuerto' },
+                { valor: 'Pozos', texto: 'Pozos' },
+                { valor: 'Ramadas-Cobertizos-Caneyes', texto: 'Ramadas-Cobertizos-Caneyes' },
+                { valor: 'Secaderos', texto: 'Secaderos' },
+                { valor: 'Silos', texto: 'Silos' },
+                { valor: 'Tanques', texto: 'Tanques' },
+                { valor: 'Toboganes', texto: 'Toboganes' },
+                { valor: 'Torre_de_control', texto: 'Torre de control' },
+                { valor: 'Torre_de_emfriamiento', texto: 'Torre de emfriamiento' },
+                { valor: 'Vía_ferrea', texto: 'Vía ferrea' }
+            ];
+        }
+
+        if (tipo === 'apartamento') {
+            return [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Residencial', texto: 'Residencial' },
+                { valor: 'Habitacional', texto: 'Habitacional' }
+            ];
+        }
+
+        if (tipo === 'local') {
+            return [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Comercial', texto: 'Comercial' },
+                { valor: 'Servicios', texto: 'Servicios' }
+            ];
+        }
+
+        if (tipo === 'bodega') {
+            return [
+                { valor: '', texto: 'Ninguna Selección' },
+                { valor: 'Industrial', texto: 'Industrial' },
+                { valor: 'Almacenamiento', texto: 'Almacenamiento' },
+                { valor: 'Logístico', texto: 'Logístico' }
+            ];
+        }
+
+        return [
+            { valor: '', texto: 'Ninguna Selección' },
+            { valor: 'Residencial', texto: 'Residencial' },
+            { valor: 'Comercial', texto: 'Comercial' },
+            { valor: 'Industrial', texto: 'Industrial' }
+        ];
+    }
+
+
+
+    function crearOpcionesTipoCalificacionUc(unidad) {
+        const opciones = obtenerOpcionesTipoCalificacionSegunClase(unidad.tipoClaseUc);
+
+        return opciones.map(opcion => `
+        <li>
+            <button class="dropdown-item" type="button"
+                onclick="seleccionarTipoCalificacionUc(${unidad.idUnidadConstruccion}, '${escaparHtml(opcion.valor)}', '${escaparHtml(opcion.texto)}')">
+                ${escaparHtml(opcion.texto)}
+            </button>
+        </li>
+    `).join('');
+    }
+
+    // FUNCIONES PARA LOS CAMPOS CON CONDICIONALES PARA EL CAMPO DE USO
+    function crearOpcionesUsoUc(unidad) {
+        const opciones = obtenerOpcionesUsoSegunClase(unidad.tipoClaseUc);
+
+        return opciones.map(opcion => `
+        <li>
+            <button class="dropdown-item" type="button"
+                onclick="seleccionarUsoUc(${unidad.idUnidadConstruccion}, '${escaparHtml(opcion.valor)}', '${escaparHtml(opcion.texto)}')">
+                ${escaparHtml(opcion.texto)}
+            </button>
+        </li>
+    `).join('');
+    }
+
+    function refrescarOpcionesUsoUc(idUnidadConstruccion) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        if (!resultado) return;
+
+        const { unidad } = resultado;
+        const menu = document.getElementById(`menuUsoUc_${idUnidadConstruccion}`);
+        const hiddenInput = document.getElementById(`uso_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownUsoUc_${idUnidadConstruccion}`);
+
+        if (!menu || !hiddenInput || !dropdown) return;
+
+        const opciones = obtenerOpcionesUsoSegunClase(unidad.tipoClaseUc);
+        const valoresValidos = opciones.map(item => item.valor);
+
+        if (!valoresValidos.includes(unidad.usoUc || '')) {
+            unidad.usoUc = '';
+            hiddenInput.value = '';
+            dropdown.innerHTML = `
+            <span>Ninguna Selección</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        menu.innerHTML = crearOpcionesUsoUc(unidad);
+    }
+
+    // FIN FUNCIONES PARA LOS CAMPOS CON CONDICIONALES PARA EL CAMPO DE USO
+
+    function refrescarOpcionesTipoCalificacionUc(idUnidadConstruccion) {
+        const resultado = obtenerUnidadConstruccionOpcion5(idUnidadConstruccion);
+        if (!resultado) return;
+
+        const { unidad } = resultado;
+        const menu = document.getElementById(`menuTipoCalificacionUc_${idUnidadConstruccion}`);
+        const hiddenInput = document.getElementById(`tipo_calificacion_uc_${idUnidadConstruccion}`);
+        const dropdown = document.getElementById(`dropdownTipoCalificacionUc_${idUnidadConstruccion}`);
+
+        if (!menu || !hiddenInput || !dropdown) return;
+
+        const opciones = obtenerOpcionesTipoCalificacionSegunClase(unidad.tipoClaseUc);
+        const valoresValidos = opciones.map(item => item.valor);
+
+        if (!valoresValidos.includes(unidad.tipoCalificacionUc || '')) {
+            unidad.tipoCalificacionUc = '';
+            hiddenInput.value = '';
+            dropdown.innerHTML = `
+            <span>Ninguna Selección</span>
+            <i class="fa-solid fa-chevron-down icon-dropdown-arrow"></i>
+        `;
+        }
+
+        menu.innerHTML = crearOpcionesTipoCalificacionUc(unidad);
+    }
+
+
+
+    // =========================
+    // INICIALIZACIÓN
+    // =========================
+    document.addEventListener('DOMContentLoaded', () => {
+        renderizarListadoConstruccionesOpcion5(datosPruebaOpcion5);
+        actualizarBadgeConstruccionSeleccionadaOpcion5(null);
+        renderizarEstadoVacioUnidadConstruccionOpcion5('Esta construcción no tiene UC');
+        inicializarBotonesAgregarOpcion5();
+    });
+</script>
