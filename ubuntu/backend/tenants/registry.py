@@ -23,6 +23,7 @@ class MunicipalityRegistry:
                     f"Municipality code duplicado en registry: {code!r}"
                 )
             self._by_code[code] = config
+        self._validate_active_runtime_uniqueness()
 
     @classmethod
     def from_sources(cls) -> "MunicipalityRegistry":
@@ -67,6 +68,28 @@ class MunicipalityRegistry:
     def validate_code(self, municipality_code: str, *, active_only: bool = True) -> str:
         config = self.require_active(municipality_code) if active_only else self.get(municipality_code)
         return config.code
+
+    def _validate_active_runtime_uniqueness(self) -> None:
+        seen: dict[tuple[str, int, str], str] = {}
+        for config in self.active():
+            if config.db is None:
+                raise MunicipalityConfigError(
+                    f"Municipio activo '{config.code}' sin configuracion DB."
+                )
+            key = (
+                config.db.host.strip().lower(),
+                int(config.db.port),
+                config.db.db_name.strip().lower(),
+            )
+            previous = seen.get(key)
+            if previous is not None:
+                raise MunicipalityConfigError(
+                    "Configuracion activa invalida para aislamiento tenant: "
+                    f"los municipios {previous!r} y {config.code!r} "
+                    "comparten la misma DB fisica "
+                    f"({key[0]}:{key[1]}/{key[2]})."
+                )
+            seen[key] = config.code
 
     @staticmethod
     def _normalize_code(municipality_code: str) -> str:

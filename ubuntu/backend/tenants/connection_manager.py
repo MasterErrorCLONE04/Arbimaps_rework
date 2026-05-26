@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from threading import RLock
 from typing import Any
 
+from psycopg2 import extensions
 from psycopg2.pool import PoolError, ThreadedConnectionPool
 
 from .context import TenantContext
@@ -13,7 +14,7 @@ class ConnectionManager:
     Administra pools de conexiones por municipio.
 
     Cada municipio obtiene su propio ThreadedConnectionPool y se identifica por
-    `tenant.connection_key`, que hoy coincide con `municipality_code`.
+    `tenant.connection_key`, compuesta por tenant_code + host + port + db_name.
     """
 
     def __init__(
@@ -78,20 +79,66 @@ class ConnectionManager:
                 f"No se pudo obtener conexion para municipio '{tenant.municipality_code}'."
             ) from exc
 
+    def _rollback_defensive(self, conn) -> None:
+        if conn is None or getattr(conn, "closed", 1):
+            return
+        status = conn.get_transaction_status()
+        if status != extensions.TRANSACTION_STATUS_IDLE:
+            conn.rollback()
+
+    def _reset_session_state(self, conn) -> None:
+        if conn is None or getattr(conn, "closed", 1):
+            return
+        previous_autocommit = conn.autocommit
+        try:
+            if not previous_autocommit:
+                conn.autocommit = True
+            with conn.cursor() as cur:
+                cur.execute("RESET ALL")
+                cur.execute("RESET ROLE")
+                cur.execute("UNLISTEN *")
+                cur.execute("DISCARD TEMP")
+        finally:
+            if not getattr(conn, "closed", 1):
+                try:
+                    conn.autocommit = previous_autocommit
+                except Exception:
+                    pass
+
+    def _prepare_connection_for_pool(self, conn) -> bool:
+        if conn is None:
+            return False
+        if getattr(conn, "closed", 0):
+            return False
+        try:
+            self._rollback_defensive(conn)
+            self._reset_session_state(conn)
+        except Exception:
+            try:
+                conn.close()
+            except Exception:
+                pass
+            return False
+        return not bool(getattr(conn, "closed", 0))
+
     def release_connection(self, tenant: TenantContext, conn, *, close: bool = False) -> None:
         if conn is None:
             return
+        should_close = bool(close)
+        if not should_close:
+            should_close = not self._prepare_connection_for_pool(conn)
         key = tenant.connection_key
         with self._lock:
             pool = self._pools.get(key)
         if pool is None:
             try:
-                conn.close()
+                if not getattr(conn, "closed", 1):
+                    conn.close()
             except Exception:
                 pass
             return
         try:
-            pool.putconn(conn, close=close)
+            pool.putconn(conn, close=should_close)
         except Exception as exc:
             raise ConnectionManagerError(
                 f"No se pudo liberar conexion para municipio '{tenant.municipality_code}'."
@@ -102,6 +149,12 @@ class ConnectionManager:
         conn = self.get_connection(tenant)
         try:
             yield conn
+        except Exception:
+            try:
+                self._rollback_defensive(conn)
+            except Exception:
+                pass
+            raise
         finally:
             self.release_connection(tenant, conn)
 

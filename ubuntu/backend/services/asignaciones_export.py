@@ -6,10 +6,11 @@ import time
 import traceback
 import uuid
 import glob
+import re
 from typing import List, Optional
 
-from core.asignaciones import ASIG_MODEL_CONTEXT, ILI2PG_TIMEOUT_SEC
-from core.db import db_conn, get_db_params
+from core.asignaciones import AssignmentModelContext, get_assignment_model_context
+from tenants import TenantContext, app_table
 
 
 class ExportServiceError(Exception):
@@ -35,12 +36,71 @@ def _qualify(schema: str, table: str) -> str:
     return f"{schema}.{table}"
 
 
-def _resolve_assignment_predio_source(schema: str) -> tuple[str, str]:
-    return ASIG_MODEL_CONTEXT.predio_table, ASIG_MODEL_CONTEXT.predio_numero_field
+def _validate_pg_identifier(name: str, label: str) -> str:
+    value = (name or "").strip().strip('"')
+    if not value:
+        raise ValueError(f"{label} no puede estar vacio.")
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value):
+        raise ValueError(f"{label} invalido para PostgreSQL: {name!r}.")
+    return value
 
 
-def _resolve_assignment_export_model(schema: str) -> str:
-    return ASIG_MODEL_CONTEXT.name
+def _resolve_assignment_predio_source(
+    schema: str,
+    model_context: AssignmentModelContext,
+) -> tuple[str, str]:
+    return model_context.predio_table, model_context.predio_numero_field
+
+
+def _resolve_assignment_export_model(
+    schema: str,
+    model_context: AssignmentModelContext,
+) -> str:
+    return model_context.name
+
+
+def _assignment_model_context(
+    tenant: Optional[TenantContext] = None,
+) -> AssignmentModelContext:
+    base = get_assignment_model_context("arb")
+    schema_main = (
+        (tenant.schemas.main if tenant else "") or base.schema_main or ""
+    ).strip().strip('"')
+    schema_work = (
+        (tenant.schemas.work if tenant else "") or base.schema_work or ""
+    ).strip().strip('"')
+    return AssignmentModelContext(
+        name=base.name,
+        schema_main=schema_main,
+        schema_work=schema_work,
+        datasetname_main_default=base.datasetname_main_default,
+        required_baskets=base.required_baskets,
+        predio_table=base.predio_table,
+        predio_numero_field=base.predio_numero_field,
+    )
+
+
+def _tenant_tool_db_params(tenant: TenantContext) -> dict:
+    params = tenant.db_params
+    dbname = str(params.get("dbname") or params.get("database") or "")
+    return {
+        "host": str(params.get("host", "")),
+        "port": str(params.get("port", "5432")),
+        "dbname": dbname,
+        "database": dbname,
+        "user": str(params.get("user", "")),
+        "password": str(params.get("password", "")),
+        "sslmode": str(params.get("sslmode", "")),
+        "connect_timeout": str(params.get("connect_timeout", "")),
+        "keepalives": str(params.get("keepalives", "")),
+        "keepalives_idle": str(params.get("keepalives_idle", "")),
+        "keepalives_interval": str(params.get("keepalives_interval", "")),
+        "keepalives_count": str(params.get("keepalives_count", "")),
+    }
+
+
+def _normalized_schema_name(value: str) -> str:
+    return (value or "").strip().strip('"').lower()
 
 
 def _resolve_ili2pg_cmd(ili2pg_cmd: str) -> str:
@@ -184,8 +244,26 @@ def _extract_error_highlights(text: str, *, max_lines: int = 12) -> str:
     return "\n".join(highlights)
 
 
-def _build_ili2pg_env() -> dict:
+def _build_process_env(db_params: Optional[dict] = None) -> dict:
     env = os.environ.copy()
+    if db_params:
+        env_overrides = {
+            "PGHOST": db_params.get("host", ""),
+            "PGPORT": db_params.get("port", ""),
+            "PGDATABASE": db_params.get("dbname", "") or db_params.get("database", ""),
+            "PGUSER": db_params.get("user", ""),
+            "PGPASSWORD": db_params.get("password", ""),
+            "PGSSLMODE": db_params.get("sslmode", ""),
+            "PGCONNECT_TIMEOUT": db_params.get("connect_timeout", ""),
+            "PGKEEPALIVES": db_params.get("keepalives", ""),
+            "PGKEEPALIVES_IDLE": db_params.get("keepalives_idle", ""),
+            "PGKEEPALIVES_INTERVAL": db_params.get("keepalives_interval", ""),
+            "PGKEEPALIVES_COUNT": db_params.get("keepalives_count", ""),
+        }
+        for key, value in env_overrides.items():
+            if value not in (None, ""):
+                env[key] = str(value)
+
     extra_opts = (os.getenv("ILI2PG_JAVA_TOOL_OPTIONS", "") or "").strip()
     xmx_mb = (os.getenv("ILI2PG_JAVA_XMX_MB", "") or "").strip()
     if xmx_mb.isdigit() and int(xmx_mb) > 0:
@@ -201,6 +279,46 @@ def _build_ili2pg_env() -> dict:
     else:
         env["JAVA_TOOL_OPTIONS"] = extra_opts
     return env
+
+
+def _extract_cli_password(args: list[str]) -> str:
+    try:
+        for idx, value in enumerate(args):
+            if value == "--dbpwd" and idx + 1 < len(args):
+                return str(args[idx + 1] or "")
+    except Exception:
+        return ""
+    return ""
+
+
+def _mask_sensitive_text(text: str, *secrets: str) -> str:
+    masked = text or ""
+    for secret in secrets:
+        if secret:
+            masked = masked.replace(secret, "***")
+    return masked
+
+
+def _build_ogr_pg_connection_string(db: dict) -> str:
+    parts = [
+        f"host={db['host']}",
+        f"port={db['port']}",
+        f"dbname={db['dbname'] or db['database']}",
+        f"user={db['user']}",
+        f"password={db['password']}",
+    ]
+    optional_parts = [
+        ("sslmode", db.get("sslmode", "")),
+        ("connect_timeout", db.get("connect_timeout", "")),
+        ("keepalives", db.get("keepalives", "")),
+        ("keepalives_idle", db.get("keepalives_idle", "")),
+        ("keepalives_interval", db.get("keepalives_interval", "")),
+        ("keepalives_count", db.get("keepalives_count", "")),
+    ]
+    for key, value in optional_parts:
+        if value not in (None, ""):
+            parts.append(f"{key}={value}")
+    return "PG:" + " ".join(parts)
 
 
 
@@ -239,16 +357,13 @@ def _run_stage(stage: str, fn, *args, **kwargs):
         raise ExportServiceError(status_code=500, detail=_stage_error_detail(stage, exc)) from exc
 
 
-def _resolve_model_dir() -> Optional[str]:
-    # El directorio de modelos está en backend/resource/model
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    path = os.path.join(base_dir, "resource", "model")
-    if os.path.exists(path):
-        return path
-    return None
-
-
-def run_ili2pg(args: list[str], *, ili2pg_cmd: str = "", timeout_sec: int = ILI2PG_TIMEOUT_SEC) -> None:
+def run_ili2pg(
+    args: list[str],
+    *,
+    ili2pg_cmd: str = "",
+    timeout_sec: int = 600,
+    db_params: Optional[dict] = None,
+) -> None:
     cmd_text = _resolve_ili2pg_cmd(ili2pg_cmd)
     _ensure_ili2pg_runtime_available(cmd_text)
     if cmd_text:
@@ -257,6 +372,7 @@ def run_ili2pg(args: list[str], *, ili2pg_cmd: str = "", timeout_sec: int = ILI2
             args = base + args[1:]
         else:
             args = base
+    password = _extract_cli_password(args) or str((db_params or {}).get("password", "") or "")
     try:
         subprocess.run(
             args,
@@ -264,7 +380,7 @@ def run_ili2pg(args: list[str], *, ili2pg_cmd: str = "", timeout_sec: int = ILI2
             text=True,
             check=True,
             timeout=timeout_sec,
-            env=_build_ili2pg_env(),
+            env=_build_process_env(db_params),
         )
     except subprocess.TimeoutExpired:
         raise ExportServiceError(
@@ -281,9 +397,12 @@ def run_ili2pg(args: list[str], *, ili2pg_cmd: str = "", timeout_sec: int = ILI2
             ),
         )
     except subprocess.CalledProcessError as e:
-        stderr = _tail_lines(e.stderr or "", max_lines=120)
-        stdout = _tail_lines(e.stdout or "", max_lines=80)
-        summary = _extract_error_highlights((e.stderr or "") + "\n" + (e.stdout or ""))
+        stderr = _mask_sensitive_text(_tail_lines(e.stderr or "", max_lines=120), password)
+        stdout = _mask_sensitive_text(_tail_lines(e.stdout or "", max_lines=80), password)
+        summary = _mask_sensitive_text(
+            _extract_error_highlights((e.stderr or "") + "\n" + (e.stdout or "")),
+            password,
+        )
         detail = f"ili2pg falló (exit={e.returncode})."
         if summary:
             detail += f" Causa probable:\n{summary}"
@@ -294,95 +413,81 @@ def run_ili2pg(args: list[str], *, ili2pg_cmd: str = "", timeout_sec: int = ILI2
         raise ExportServiceError(status_code=500, detail=detail)
 
 
-def db_env():
-    params = get_db_params()
-    return {
-        "host": str(params.get("host", "")),
-        "port": str(params.get("port", "5432")),
-        "dbname": str(params.get("dbname", "")),
-        "user": str(params.get("user", "")),
-        "password": str(params.get("password", "")),
-    }
-
-
-def _fetch_dataset_basket_ids(schema: str, datasetname: str) -> List[int]:
+def _fetch_dataset_basket_ids(conn, schema: str, datasetname: str) -> List[int]:
     basket_table = _qualify(schema, "t_ili2db_basket")
     dataset_table = _qualify(schema, "t_ili2db_dataset")
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT b.t_id
-                FROM {basket_table} b
-                JOIN {dataset_table} d ON d.t_id = b.dataset
-                WHERE d.datasetname = %s
-                ORDER BY b.t_id
-                """,
-                (datasetname,),
-            )
-            return [int(row[0]) for row in (cur.fetchall() or []) if row and row[0] is not None]
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT b.t_id
+            FROM {basket_table} b
+            JOIN {dataset_table} d ON d.t_id = b.dataset
+            WHERE d.datasetname = %s
+            ORDER BY b.t_id
+            """,
+            (datasetname,),
+        )
+        return [int(row[0]) for row in (cur.fetchall() or []) if row and row[0] is not None]
 
 
-def _ensure_dataset_object_tili_tids(schema: str, datasetname: str) -> None:
+def _ensure_dataset_object_tili_tids(conn, schema: str, datasetname: str) -> None:
     if not datasetname:
         return
 
     basket_table = _qualify(schema, "t_ili2db_basket")
     dataset_table = _qualify(schema, "t_ili2db_dataset")
 
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT c.table_name, c.data_type
-                FROM information_schema.columns c
-                WHERE c.table_schema = %s
-                  AND c.column_name = 't_ili_tid'
-                  AND EXISTS (
-                    SELECT 1
-                    FROM information_schema.columns cb
-                    WHERE cb.table_schema = c.table_schema
-                      AND cb.table_name = c.table_name
-                      AND cb.column_name = 't_basket'
-                  )
-                ORDER BY c.table_name
-                """,
-                (schema,),
-            )
-            rows = cur.fetchall() or []
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT c.table_name, c.data_type
+            FROM information_schema.columns c
+            WHERE c.table_schema = %s
+              AND c.column_name = 't_ili_tid'
+              AND EXISTS (
+                SELECT 1
+                FROM information_schema.columns cb
+                WHERE cb.table_schema = c.table_schema
+                  AND cb.table_name = c.table_name
+                  AND cb.column_name = 't_basket'
+              )
+            ORDER BY c.table_name
+            """,
+            (schema,),
+        )
+        rows = cur.fetchall() or []
 
-            for table_name, data_type in rows:
-                target = _qualify(schema, str(table_name))
-                if str(data_type).lower() == "uuid":
-                    cur.execute(
-                        f"""
-                        UPDATE {target} t
-                        SET t_ili_tid = (md5(CONCAT(%s, '_', %s, '_', t.t_id::text)))::uuid
-                        FROM {basket_table} b
-                        JOIN {dataset_table} d ON d.t_id = b.dataset
-                        WHERE t.t_basket = b.t_id
-                          AND d.datasetname = %s
-                          AND t.t_ili_tid IS NULL
+        for table_name, data_type in rows:
+            target = _qualify(schema, str(table_name))
+            if str(data_type).lower() == "uuid":
+                cur.execute(
+                    f"""
+                    UPDATE {target} t
+                    SET t_ili_tid = (md5(CONCAT(%s, '_', %s, '_', t.t_id::text)))::uuid
+                    FROM {basket_table} b
+                    JOIN {dataset_table} d ON d.t_id = b.dataset
+                    WHERE t.t_basket = b.t_id
+                      AND d.datasetname = %s
+                      AND t.t_ili_tid IS NULL
+                    """,
+                    (datasetname, table_name, datasetname),
+                )
+            else:
+                cur.execute(
+                    f"""
+                    UPDATE {target} t
+                    SET t_ili_tid = CONCAT(%s, '_', %s, '_', t.t_id)
+                    FROM {basket_table} b
+                    JOIN {dataset_table} d ON d.t_id = b.dataset
+                    WHERE t.t_basket = b.t_id
+                      AND d.datasetname = %s
+                      AND (t.t_ili_tid IS NULL OR NULLIF(TRIM(t.t_ili_tid::text), '') IS NULL)
                         """,
                         (datasetname, table_name, datasetname),
                     )
-                else:
-                    cur.execute(
-                        f"""
-                        UPDATE {target} t
-                        SET t_ili_tid = CONCAT(%s, '_', %s, '_', t.t_id)
-                        FROM {basket_table} b
-                        JOIN {dataset_table} d ON d.t_id = b.dataset
-                        WHERE t.t_basket = b.t_id
-                          AND d.datasetname = %s
-                          AND (t.t_ili_tid IS NULL OR NULLIF(TRIM(t.t_ili_tid::text), '') IS NULL)
-                        """,
-                        (datasetname, table_name, datasetname),
-                    )
-        conn.commit()
 
 
-def _validate_dataset_cuc_integrity(schema: str, datasetname: str) -> None:
+def _validate_dataset_cuc_integrity(conn, schema: str, datasetname: str) -> None:
     if not datasetname:
         return
 
@@ -395,28 +500,27 @@ def _validate_dataset_cuc_integrity(schema: str, datasetname: str) -> None:
         "cuc_calificacion_unidadconstruccion",
     ]
 
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            for table_name in cuc_tables:
-                cur.execute(
-                    """
-                    SELECT 1
-                    FROM information_schema.columns
-                    WHERE table_schema = %s
-                      AND table_name = %s
-                      AND column_name = 't_ili_tid'
-                    LIMIT 1
-                    """,
-                    (schema, table_name),
-                )
-                if cur.fetchone() is None:
-                    continue
+    with conn.cursor() as cur:
+        for table_name in cuc_tables:
+            cur.execute(
+                """
+                SELECT 1
+                FROM information_schema.columns
+                WHERE table_schema = %s
+                  AND table_name = %s
+                  AND column_name = 't_ili_tid'
+                LIMIT 1
+                """,
+                (schema, table_name),
+            )
+            if cur.fetchone() is None:
+                continue
 
-                target = _qualify(schema, table_name)
-                cur.execute(
-                    f"""
-                    SELECT
-                        COUNT(*) AS total,
+            target = _qualify(schema, table_name)
+            cur.execute(
+                f"""
+                SELECT
+                    COUNT(*) AS total,
                         COUNT(*) FILTER (
                             WHERE NULLIF(TRIM(c.t_ili_tid::text), '') IS NULL
                         ) AS oid_vacio
@@ -427,17 +531,17 @@ def _validate_dataset_cuc_integrity(schema: str, datasetname: str) -> None:
                     """,
                     (datasetname,),
                 )
-                row = cur.fetchone() or (0, 0)
-                total = int(_row_get(row, 0, 0) or 0)
-                oid_vacio = int(_row_get(row, 1, 0) or 0)
-                if total > 0 and oid_vacio > 0:
-                    raise ExportServiceError(
-                        status_code=409,
-                        detail=(
-                            f"Dataset '{datasetname}' invalido para exportar: "
-                            f"{table_name}.t_ili_tid vacio en {oid_vacio}/{total} filas."
-                        ),
-                    )
+            row = cur.fetchone() or (0, 0)
+            total = int(_row_get(row, 0, 0) or 0)
+            oid_vacio = int(_row_get(row, 1, 0) or 0)
+            if total > 0 and oid_vacio > 0:
+                raise ExportServiceError(
+                    status_code=409,
+                    detail=(
+                        f"Dataset '{datasetname}' invalido para exportar: "
+                        f"{table_name}.t_ili_tid vacio en {oid_vacio}/{total} filas."
+                    ),
+                )
 
             cur.execute(
                 """
@@ -513,7 +617,7 @@ def _validate_dataset_cuc_integrity(schema: str, datasetname: str) -> None:
                     )
 
 
-def _sanitize_dataset_derecho_links(schema: str, datasetname: str) -> None:
+def _sanitize_dataset_derecho_links(conn, schema: str, datasetname: str) -> None:
     if not datasetname:
         return
 
@@ -529,81 +633,80 @@ def _sanitize_dataset_derecho_links(schema: str, datasetname: str) -> None:
         "cr_agrupacioninteresados",
     }
     tracked_tables = sorted(required | optional)
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SET LOCAL lock_timeout = '3s'")
-            cur.execute("SET LOCAL statement_timeout = '180s'")
-            cur.execute(
-                """
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = %s
-                  AND table_name = ANY(%s)
-                """,
-                (schema, tracked_tables),
-            )
-            available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
-            if not required.issubset(available):
-                return
+    with conn.cursor() as cur:
+        cur.execute("SET LOCAL lock_timeout = '3s'")
+        cur.execute("SET LOCAL statement_timeout = '180s'")
+        cur.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+              AND table_name = ANY(%s)
+            """,
+            (schema, tracked_tables),
+        )
+        available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
+        if not required.issubset(available):
+            return
 
-            derecho = _qualify(schema, "ilc_derecho")
-            rrr_fuente = _qualify(schema, "col_rrrfuente")
-            rrr_inter = _qualify(schema, "col_rrrinteresado")
-            basket = _qualify(schema, "t_ili2db_basket")
-            dataset = _qualify(schema, "t_ili2db_dataset")
+        derecho = _qualify(schema, "ilc_derecho")
+        rrr_fuente = _qualify(schema, "col_rrrfuente")
+        rrr_inter = _qualify(schema, "col_rrrinteresado")
+        basket = _qualify(schema, "t_ili2db_basket")
+        dataset = _qualify(schema, "t_ili2db_dataset")
 
-            # Remove orphan RRR rows first.
-            cur.execute(
-                f"""
-                DELETE FROM {rrr_fuente} rf
-                USING {basket} b, {dataset} d
-                WHERE rf.t_basket = b.t_id
-                  AND b.dataset = d.t_id
-                  AND d.datasetname = %s
-                  AND NOT EXISTS (
-                    SELECT 1
-                    FROM {derecho} dr
-                    JOIN {basket} db ON db.t_id = dr.t_basket
-                    JOIN {dataset} dd ON dd.t_id = db.dataset
-                    WHERE dd.datasetname = %s
-                      AND dr.t_id = rf.rrr
-                  )
-                """,
-                (datasetname, datasetname),
-            )
+        # Remove orphan RRR rows first.
+        cur.execute(
+            f"""
+            DELETE FROM {rrr_fuente} rf
+            USING {basket} b, {dataset} d
+            WHERE rf.t_basket = b.t_id
+              AND b.dataset = d.t_id
+              AND d.datasetname = %s
+              AND NOT EXISTS (
+                SELECT 1
+                FROM {derecho} dr
+                JOIN {basket} db ON db.t_id = dr.t_basket
+                JOIN {dataset} dd ON dd.t_id = db.dataset
+                WHERE dd.datasetname = %s
+                  AND dr.t_id = rf.rrr
+              )
+            """,
+            (datasetname, datasetname),
+        )
 
-            cur.execute(
-                f"""
-                DELETE FROM {rrr_inter} ri
-                USING {basket} b, {dataset} d
-                WHERE ri.t_basket = b.t_id
-                  AND b.dataset = d.t_id
-                  AND d.datasetname = %s
-                  AND NOT EXISTS (
-                    SELECT 1
-                    FROM {derecho} dr
-                    JOIN {basket} db ON db.t_id = dr.t_basket
-                    JOIN {dataset} dd ON dd.t_id = db.dataset
-                    WHERE dd.datasetname = %s
-                      AND dr.t_id = ri.rrr
-                  )
-                """,
-                (datasetname, datasetname),
-            )
+        cur.execute(
+            f"""
+            DELETE FROM {rrr_inter} ri
+            USING {basket} b, {dataset} d
+            WHERE ri.t_basket = b.t_id
+              AND b.dataset = d.t_id
+              AND d.datasetname = %s
+              AND NOT EXISTS (
+                SELECT 1
+                FROM {derecho} dr
+                JOIN {basket} db ON db.t_id = dr.t_basket
+                JOIN {dataset} dd ON dd.t_id = db.dataset
+                WHERE dd.datasetname = %s
+                  AND dr.t_id = ri.rrr
+              )
+            """,
+            (datasetname, datasetname),
+        )
 
-            # Keep ilc_derecho rows untouched here.
-            # Multiplicity is validated later with explicit 409 errors, to avoid
-            # masking copy issues by deleting derechos and leaving predios with 0 rrr.
-            # Importante: no borrar relaciones ri por referencias de interesado fuera
-            # del dataset. Esas referencias se deben rehidratar/remapear, no eliminar.
-            # Borrar aqui termina dejando ILC_Derecho sin interesado/fuente.
+        # Keep ilc_derecho rows untouched here.
+        # Multiplicity is validated later with explicit 409 errors, to avoid
+        # masking copy issues by deleting derechos and leaving predios with 0 rrr.
+        # Importante: no borrar relaciones ri por referencias de interesado fuera
+        # del dataset. Esas referencias se deben rehidratar/remapear, no eliminar.
+        # Borrar aqui termina dejando ILC_Derecho sin interesado/fuente.
 
-            # No destructive pruning here. Rehydration must repair links without
-            # deleting core assignment entities.
-        conn.commit()
+        # No destructive pruning here. Rehydration must repair links without
+        # deleting core assignment entities.
 
 
 def _rehydrate_dataset_derecho_links_from_source(
+    conn,
     schema: str,
     datasetname: str,
     *,
@@ -611,10 +714,10 @@ def _rehydrate_dataset_derecho_links_from_source(
 ) -> None:
     if not datasetname:
         return
-    if (schema or "").strip().lower() != (ASIG_MODEL_CONTEXT.schema_work or "").strip().lower():
+    if not schema:
         return
 
-    source_schema = (source_schema or ASIG_MODEL_CONTEXT.schema_main).strip().strip('"')
+    source_schema = (source_schema or "").strip().strip('"')
     if not source_schema:
         return
 
@@ -638,91 +741,90 @@ def _rehydrate_dataset_derecho_links_from_source(
         "t_ili2db_basket",
     }
 
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SET LOCAL lock_timeout = '3s'")
-            cur.execute("SET LOCAL statement_timeout = '600s'")
-            cur.execute(
-                """
-                SELECT table_name
+    with conn.cursor() as cur:
+        cur.execute("SET LOCAL lock_timeout = '3s'")
+        cur.execute("SET LOCAL statement_timeout = '600s'")
+        cur.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+              AND table_name = ANY(%s)
+            """,
+            (schema, list(required_target)),
+        )
+        target_available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
+        if not required_target.issubset(target_available):
+            return
+
+        cur.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+              AND table_name = ANY(%s)
+            """,
+            (source_schema, list(required_source)),
+        )
+        source_available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
+        if not required_source.issubset(source_available):
+            return
+
+        cur.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1
                 FROM information_schema.tables
                 WHERE table_schema = %s
-                  AND table_name = ANY(%s)
-                """,
-                (schema, list(required_target)),
+                  AND table_name = 'col_miembros'
             )
-            target_available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
-            if not required_target.issubset(target_available):
-                return
+            """,
+            (source_schema,),
+        )
+        has_members_source = bool((cur.fetchone() or [False])[0])
 
-            cur.execute(
-                """
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = %s
-                  AND table_name = ANY(%s)
-                """,
-                (source_schema, list(required_source)),
-            )
-            source_available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
-            if not required_source.issubset(source_available):
-                return
+        t_basket = _qualify(schema, "t_ili2db_basket")
+        t_dataset = _qualify(schema, "t_ili2db_dataset")
+        t_derecho = _qualify(schema, "ilc_derecho")
+        t_rrri = _qualify(schema, "col_rrrinteresado")
+        t_rrrf = _qualify(schema, "col_rrrfuente")
+        t_inter = _qualify(schema, "ilc_interesado")
+        t_agrup = _qualify(schema, "cr_agrupacioninteresados")
+        t_fuente = _qualify(schema, "ilc_fuenteadministrativa")
 
-            cur.execute(
-                """
-                SELECT EXISTS (
-                    SELECT 1
-                    FROM information_schema.tables
-                    WHERE table_schema = %s
-                      AND table_name = 'col_miembros'
-                )
-                """,
-                (source_schema,),
-            )
-            has_members_source = bool((cur.fetchone() or [False])[0])
+        s_basket = _qualify(source_schema, "t_ili2db_basket")
+        s_derecho = _qualify(source_schema, "ilc_derecho")
+        s_rrri = _qualify(source_schema, "col_rrrinteresado")
+        s_rrrf = _qualify(source_schema, "col_rrrfuente")
+        s_inter = _qualify(source_schema, "ilc_interesado")
+        s_agrup = _qualify(source_schema, "cr_agrupacioninteresados")
+        s_fuente = _qualify(source_schema, "ilc_fuenteadministrativa")
+        s_miembros = _qualify(source_schema, "col_miembros")
 
-            t_basket = _qualify(schema, "t_ili2db_basket")
-            t_dataset = _qualify(schema, "t_ili2db_dataset")
-            t_derecho = _qualify(schema, "ilc_derecho")
-            t_rrri = _qualify(schema, "col_rrrinteresado")
-            t_rrrf = _qualify(schema, "col_rrrfuente")
-            t_inter = _qualify(schema, "ilc_interesado")
-            t_agrup = _qualify(schema, "cr_agrupacioninteresados")
-            t_fuente = _qualify(schema, "ilc_fuenteadministrativa")
-
-            s_basket = _qualify(source_schema, "t_ili2db_basket")
-            s_derecho = _qualify(source_schema, "ilc_derecho")
-            s_rrri = _qualify(source_schema, "col_rrrinteresado")
-            s_rrrf = _qualify(source_schema, "col_rrrfuente")
-            s_inter = _qualify(source_schema, "ilc_interesado")
-            s_agrup = _qualify(source_schema, "cr_agrupacioninteresados")
-            s_fuente = _qualify(source_schema, "ilc_fuenteadministrativa")
-            s_miembros = _qualify(source_schema, "col_miembros")
-
-            # Do not auto-create/rebuild baskets on export.
-            # Validate that required topics already exist in the assignment dataset.
-            cur.execute(
-                f"""
-                WITH ds_derechos AS (
-                    SELECT
-                        COALESCE(sd.t_id, dr.t_id) AS source_id,
-                        dr.t_id AS target_id
-                    FROM {t_derecho} dr
-                    JOIN {t_basket} b ON b.t_id = dr.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    LEFT JOIN {s_derecho} sd
-                      ON dr.t_ili_tid IS NOT NULL
-                     AND sd.t_ili_tid = dr.t_ili_tid
-                    WHERE d.datasetname = %s
-                ),
-                src_baskets AS (
-                    SELECT ri.t_basket AS source_basket
-                    FROM {s_rrri} ri
-                    JOIN ds_derechos dd ON dd.source_id = ri.rrr
-                    UNION
-                    SELECT rf.t_basket AS source_basket
-                    FROM {s_rrrf} rf
-                    JOIN ds_derechos dd ON dd.source_id = rf.rrr
+        # Do not auto-create/rebuild baskets on export.
+        # Validate that required topics already exist in the assignment dataset.
+        cur.execute(
+            f"""
+            WITH ds_derechos AS (
+                SELECT
+                    COALESCE(sd.t_id, dr.t_id) AS source_id,
+                    dr.t_id AS target_id
+                FROM {t_derecho} dr
+                JOIN {t_basket} b ON b.t_id = dr.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                LEFT JOIN {s_derecho} sd
+                  ON dr.t_ili_tid IS NOT NULL
+                 AND sd.t_ili_tid = dr.t_ili_tid
+                WHERE d.datasetname = %s
+            ),
+            src_baskets AS (
+                SELECT ri.t_basket AS source_basket
+                FROM {s_rrri} ri
+                JOIN ds_derechos dd ON dd.source_id = ri.rrr
+                UNION
+                SELECT rf.t_basket AS source_basket
+                FROM {s_rrrf} rf
+                JOIN ds_derechos dd ON dd.source_id = rf.rrr
                     UNION
                     SELECT i.t_basket AS source_basket
                     FROM {s_rrri} ri
@@ -765,219 +867,219 @@ def _rehydrate_dataset_derecho_links_from_source(
                 """,
                 (datasetname, datasetname),
             )
-            row = cur.fetchone() or ([], 0)
-            missing_topics = list(row[0] or [])
-            missing_count = int(row[1] or 0)
-            if missing_count > 0:
-                sample = ", ".join(missing_topics[:10])
-                raise ExportServiceError(
-                    status_code=409,
-                    detail=(
-                        f"Dataset '{datasetname}' invalido para exportar: faltan {missing_count} "
-                        f"topic(s) de basket requeridos por relaciones RRR. "
-                        f"Muestra topics: {sample if sample else 'sin muestra'}."
-                    ),
-                )
-
-            # 1) Build source->target id maps to avoid cross-dataset t_id collisions.
-            cur.execute("DROP TABLE IF EXISTS _rehyd_map_inter")
-            cur.execute("DROP TABLE IF EXISTS _rehyd_map_agrup")
-            cur.execute("DROP TABLE IF EXISTS _rehyd_map_fuente")
-            cur.execute("DROP TABLE IF EXISTS _rehyd_map_rrri")
-            cur.execute("DROP TABLE IF EXISTS _rehyd_map_rrrf")
-            cur.execute(
-                "CREATE TEMP TABLE _rehyd_map_inter(source_id bigint PRIMARY KEY, target_id bigint NOT NULL)"
-            )
-            cur.execute(
-                "CREATE TEMP TABLE _rehyd_map_agrup(source_id bigint PRIMARY KEY, target_id bigint NOT NULL)"
-            )
-            cur.execute(
-                "CREATE TEMP TABLE _rehyd_map_fuente(source_id bigint PRIMARY KEY, target_id bigint NOT NULL)"
-            )
-            cur.execute(
-                "CREATE TEMP TABLE _rehyd_map_rrri(source_id bigint PRIMARY KEY, target_id bigint NOT NULL)"
-            )
-            cur.execute(
-                "CREATE TEMP TABLE _rehyd_map_rrrf(source_id bigint PRIMARY KEY, target_id bigint NOT NULL)"
+        row = cur.fetchone() or ([], 0)
+        missing_topics = list(row[0] or [])
+        missing_count = int(row[1] or 0)
+        if missing_count > 0:
+            sample = ", ".join(missing_topics[:10])
+            raise ExportServiceError(
+                status_code=409,
+                detail=(
+                    f"Dataset '{datasetname}' invalido para exportar: faltan {missing_count} "
+                    f"topic(s) de basket requeridos por relaciones RRR. "
+                    f"Muestra topics: {sample if sample else 'sin muestra'}."
+                ),
             )
 
-            # Seed agrupacion map with every group already present in dataset.
-            # This allows member rehydration even when a group was copied outside
-            # the derecho->rrr traversal.
-            cur.execute(
-                f"""
-                WITH ds_agrup AS (
-                    SELECT a.t_id AS target_id, NULLIF(BTRIM(a.t_ili_tid::text), '') AS target_tid
-                    FROM {t_agrup} a
-                    JOIN {t_basket} b ON b.t_id = a.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                )
-                INSERT INTO _rehyd_map_agrup(source_id, target_id)
-                SELECT COALESCE(sa.t_id, ds.target_id) AS source_id, ds.target_id
-                FROM ds_agrup ds
-                LEFT JOIN {s_agrup} sa
-                  ON ds.target_tid IS NOT NULL
-                 AND NULLIF(BTRIM(sa.t_ili_tid::text), '') = ds.target_tid
-                ON CONFLICT (source_id) DO UPDATE
-                SET target_id = EXCLUDED.target_id
-                """,
-                (datasetname,),
-            )
+        # 1) Build source->target id maps to avoid cross-dataset t_id collisions.
+        cur.execute("DROP TABLE IF EXISTS _rehyd_map_inter")
+        cur.execute("DROP TABLE IF EXISTS _rehyd_map_agrup")
+        cur.execute("DROP TABLE IF EXISTS _rehyd_map_fuente")
+        cur.execute("DROP TABLE IF EXISTS _rehyd_map_rrri")
+        cur.execute("DROP TABLE IF EXISTS _rehyd_map_rrrf")
+        cur.execute(
+            "CREATE TEMP TABLE _rehyd_map_inter(source_id bigint PRIMARY KEY, target_id bigint NOT NULL)"
+        )
+        cur.execute(
+            "CREATE TEMP TABLE _rehyd_map_agrup(source_id bigint PRIMARY KEY, target_id bigint NOT NULL)"
+        )
+        cur.execute(
+            "CREATE TEMP TABLE _rehyd_map_fuente(source_id bigint PRIMARY KEY, target_id bigint NOT NULL)"
+        )
+        cur.execute(
+            "CREATE TEMP TABLE _rehyd_map_rrri(source_id bigint PRIMARY KEY, target_id bigint NOT NULL)"
+        )
+        cur.execute(
+            "CREATE TEMP TABLE _rehyd_map_rrrf(source_id bigint PRIMARY KEY, target_id bigint NOT NULL)"
+        )
 
-            # Parent map: ilc_interesado
-            cur.execute(
-                f"""
-                WITH ds_derechos AS (
-                    SELECT
-                        COALESCE(sd.t_id, dr.t_id) AS source_id,
-                        dr.t_id AS target_id
-                    FROM {t_derecho} dr
-                    JOIN {t_basket} b ON b.t_id = dr.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    LEFT JOIN {s_derecho} sd
-                      ON dr.t_ili_tid IS NOT NULL
-                     AND sd.t_ili_tid = dr.t_ili_tid
-                    WHERE d.datasetname = %s
-                ),
-                src_ids AS (
-                    SELECT DISTINCT ri.interesado_ilc_interesado AS source_id
-                    FROM {s_rrri} ri
-                    JOIN ds_derechos dd ON dd.source_id = ri.rrr
-                    WHERE ri.interesado_ilc_interesado IS NOT NULL
-                ),
-                in_ds AS (
-                    SELECT i.t_id AS source_id
-                    FROM {t_inter} i
-                    JOIN {t_basket} b ON b.t_id = i.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                need_clone AS (
-                    SELECT s.source_id
-                    FROM src_ids s
-                    LEFT JOIN in_ds d ON d.source_id = s.source_id
-                    WHERE d.source_id IS NULL
-                ),
-                base AS (
-                    SELECT COALESCE(MAX(t_id), 0) AS mx
-                    FROM {t_inter}
-                ),
-                clone_ids AS (
-                    SELECT n.source_id, base.mx + ROW_NUMBER() OVER (ORDER BY n.source_id) AS target_id
-                    FROM need_clone n, base
-                ),
-                direct_ids AS (
-                    SELECT s.source_id, s.source_id AS target_id
-                    FROM src_ids s
-                    LEFT JOIN need_clone n ON n.source_id = s.source_id
-                    WHERE n.source_id IS NULL
-                )
-                INSERT INTO _rehyd_map_inter(source_id, target_id)
-                SELECT source_id, target_id FROM direct_ids
-                UNION ALL
-                SELECT source_id, target_id FROM clone_ids
-                ON CONFLICT (source_id) DO UPDATE SET target_id = EXCLUDED.target_id
-                """,
-                (datasetname, datasetname),
+        # Seed agrupacion map with every group already present in dataset.
+        # This allows member rehydration even when a group was copied outside
+        # the derecho->rrr traversal.
+        cur.execute(
+            f"""
+            WITH ds_agrup AS (
+                SELECT a.t_id AS target_id, NULLIF(BTRIM(a.t_ili_tid::text), '') AS target_tid
+                FROM {t_agrup} a
+                JOIN {t_basket} b ON b.t_id = a.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
             )
+            INSERT INTO _rehyd_map_agrup(source_id, target_id)
+            SELECT COALESCE(sa.t_id, ds.target_id) AS source_id, ds.target_id
+            FROM ds_agrup ds
+            LEFT JOIN {s_agrup} sa
+              ON ds.target_tid IS NOT NULL
+             AND NULLIF(BTRIM(sa.t_ili_tid::text), '') = ds.target_tid
+            ON CONFLICT (source_id) DO UPDATE
+            SET target_id = EXCLUDED.target_id
+            """,
+            (datasetname,),
+        )
 
-            # Parent map: cr_agrupacioninteresados
-            cur.execute(
-                f"""
-                WITH ds_derechos AS (
-                    SELECT
-                        COALESCE(sd.t_id, dr.t_id) AS source_id,
-                        dr.t_id AS target_id
-                    FROM {t_derecho} dr
-                    JOIN {t_basket} b ON b.t_id = dr.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    LEFT JOIN {s_derecho} sd
-                      ON dr.t_ili_tid IS NOT NULL
-                     AND sd.t_ili_tid = dr.t_ili_tid
-                    WHERE d.datasetname = %s
-                ),
-                src_ids AS (
-                    SELECT DISTINCT ri.interesado_cr_agrupacioninteresados AS source_id
-                    FROM {s_rrri} ri
-                    JOIN ds_derechos dd ON dd.source_id = ri.rrr
-                    WHERE ri.interesado_cr_agrupacioninteresados IS NOT NULL
-                ),
-                in_ds AS (
-                    SELECT a.t_id AS source_id
-                    FROM {t_agrup} a
-                    JOIN {t_basket} b ON b.t_id = a.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                need_clone AS (
-                    SELECT s.source_id
-                    FROM src_ids s
-                    LEFT JOIN in_ds d ON d.source_id = s.source_id
-                    WHERE d.source_id IS NULL
-                ),
-                base AS (
-                    SELECT COALESCE(MAX(t_id), 0) AS mx
-                    FROM {t_agrup}
-                ),
-                clone_ids AS (
-                    SELECT n.source_id, base.mx + ROW_NUMBER() OVER (ORDER BY n.source_id) AS target_id
-                    FROM need_clone n, base
-                ),
-                direct_ids AS (
-                    SELECT s.source_id, s.source_id AS target_id
-                    FROM src_ids s
-                    LEFT JOIN need_clone n ON n.source_id = s.source_id
-                    WHERE n.source_id IS NULL
-                )
-                INSERT INTO _rehyd_map_agrup(source_id, target_id)
-                SELECT source_id, target_id FROM direct_ids
-                UNION ALL
-                SELECT source_id, target_id FROM clone_ids
-                ON CONFLICT (source_id) DO UPDATE SET target_id = EXCLUDED.target_id
-                """,
-                (datasetname, datasetname),
+        # Parent map: ilc_interesado
+        cur.execute(
+            f"""
+            WITH ds_derechos AS (
+                SELECT
+                    COALESCE(sd.t_id, dr.t_id) AS source_id,
+                    dr.t_id AS target_id
+                FROM {t_derecho} dr
+                JOIN {t_basket} b ON b.t_id = dr.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                LEFT JOIN {s_derecho} sd
+                  ON dr.t_ili_tid IS NOT NULL
+                 AND sd.t_ili_tid = dr.t_ili_tid
+                WHERE d.datasetname = %s
+            ),
+            src_ids AS (
+                SELECT DISTINCT ri.interesado_ilc_interesado AS source_id
+                FROM {s_rrri} ri
+                JOIN ds_derechos dd ON dd.source_id = ri.rrr
+                WHERE ri.interesado_ilc_interesado IS NOT NULL
+            ),
+            in_ds AS (
+                SELECT i.t_id AS source_id
+                FROM {t_inter} i
+                JOIN {t_basket} b ON b.t_id = i.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            need_clone AS (
+                SELECT s.source_id
+                FROM src_ids s
+                LEFT JOIN in_ds d ON d.source_id = s.source_id
+                WHERE d.source_id IS NULL
+            ),
+            base AS (
+                SELECT COALESCE(MAX(t_id), 0) AS mx
+                FROM {t_inter}
+            ),
+            clone_ids AS (
+                SELECT n.source_id, base.mx + ROW_NUMBER() OVER (ORDER BY n.source_id) AS target_id
+                FROM need_clone n, base
+            ),
+            direct_ids AS (
+                SELECT s.source_id, s.source_id AS target_id
+                FROM src_ids s
+                LEFT JOIN need_clone n ON n.source_id = s.source_id
+                WHERE n.source_id IS NULL
             )
+            INSERT INTO _rehyd_map_inter(source_id, target_id)
+            SELECT source_id, target_id FROM direct_ids
+            UNION ALL
+            SELECT source_id, target_id FROM clone_ids
+            ON CONFLICT (source_id) DO UPDATE SET target_id = EXCLUDED.target_id
+            """,
+            (datasetname, datasetname),
+        )
 
-            # Parent map: ilc_fuenteadministrativa
-            cur.execute(
-                f"""
-                WITH ds_derechos AS (
-                    SELECT
-                        COALESCE(sd.t_id, dr.t_id) AS source_id,
-                        dr.t_id AS target_id
-                    FROM {t_derecho} dr
-                    JOIN {t_basket} b ON b.t_id = dr.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    LEFT JOIN {s_derecho} sd
-                      ON dr.t_ili_tid IS NOT NULL
-                     AND sd.t_ili_tid = dr.t_ili_tid
-                    WHERE d.datasetname = %s
-                ),
-                src_ids AS (
-                    SELECT DISTINCT rf.fuente_administrativa AS source_id
-                    FROM {s_rrrf} rf
-                    JOIN ds_derechos dd ON dd.source_id = rf.rrr
-                    WHERE rf.fuente_administrativa IS NOT NULL
-                ),
-                in_ds AS (
-                    SELECT f.t_id AS source_id
-                    FROM {t_fuente} f
-                    JOIN {t_basket} b ON b.t_id = f.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                need_clone AS (
-                    SELECT s.source_id
-                    FROM src_ids s
-                    LEFT JOIN in_ds d ON d.source_id = s.source_id
-                    WHERE d.source_id IS NULL
-                ),
-                base AS (
-                    SELECT COALESCE(MAX(t_id), 0) AS mx
-                    FROM {t_fuente}
-                ),
-                clone_ids AS (
+        # Parent map: cr_agrupacioninteresados
+        cur.execute(
+            f"""
+            WITH ds_derechos AS (
+                SELECT
+                    COALESCE(sd.t_id, dr.t_id) AS source_id,
+                    dr.t_id AS target_id
+                FROM {t_derecho} dr
+                JOIN {t_basket} b ON b.t_id = dr.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                LEFT JOIN {s_derecho} sd
+                  ON dr.t_ili_tid IS NOT NULL
+                 AND sd.t_ili_tid = dr.t_ili_tid
+                WHERE d.datasetname = %s
+            ),
+            src_ids AS (
+                SELECT DISTINCT ri.interesado_cr_agrupacioninteresados AS source_id
+                FROM {s_rrri} ri
+                JOIN ds_derechos dd ON dd.source_id = ri.rrr
+                WHERE ri.interesado_cr_agrupacioninteresados IS NOT NULL
+            ),
+            in_ds AS (
+                SELECT a.t_id AS source_id
+                FROM {t_agrup} a
+                JOIN {t_basket} b ON b.t_id = a.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            need_clone AS (
+                SELECT s.source_id
+                FROM src_ids s
+                LEFT JOIN in_ds d ON d.source_id = s.source_id
+                WHERE d.source_id IS NULL
+            ),
+            base AS (
+                SELECT COALESCE(MAX(t_id), 0) AS mx
+                FROM {t_agrup}
+            ),
+            clone_ids AS (
+                SELECT n.source_id, base.mx + ROW_NUMBER() OVER (ORDER BY n.source_id) AS target_id
+                FROM need_clone n, base
+            ),
+            direct_ids AS (
+                SELECT s.source_id, s.source_id AS target_id
+                FROM src_ids s
+                LEFT JOIN need_clone n ON n.source_id = s.source_id
+                WHERE n.source_id IS NULL
+            )
+            INSERT INTO _rehyd_map_agrup(source_id, target_id)
+            SELECT source_id, target_id FROM direct_ids
+            UNION ALL
+            SELECT source_id, target_id FROM clone_ids
+            ON CONFLICT (source_id) DO UPDATE SET target_id = EXCLUDED.target_id
+            """,
+            (datasetname, datasetname),
+        )
+
+        # Parent map: ilc_fuenteadministrativa
+        cur.execute(
+            f"""
+            WITH ds_derechos AS (
+                SELECT
+                    COALESCE(sd.t_id, dr.t_id) AS source_id,
+                    dr.t_id AS target_id
+                FROM {t_derecho} dr
+                JOIN {t_basket} b ON b.t_id = dr.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                LEFT JOIN {s_derecho} sd
+                  ON dr.t_ili_tid IS NOT NULL
+                 AND sd.t_ili_tid = dr.t_ili_tid
+                WHERE d.datasetname = %s
+            ),
+            src_ids AS (
+                SELECT DISTINCT rf.fuente_administrativa AS source_id
+                FROM {s_rrrf} rf
+                JOIN ds_derechos dd ON dd.source_id = rf.rrr
+                WHERE rf.fuente_administrativa IS NOT NULL
+            ),
+            in_ds AS (
+                SELECT f.t_id AS source_id
+                FROM {t_fuente} f
+                JOIN {t_basket} b ON b.t_id = f.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            need_clone AS (
+                SELECT s.source_id
+                FROM src_ids s
+                LEFT JOIN in_ds d ON d.source_id = s.source_id
+                WHERE d.source_id IS NULL
+            ),
+            base AS (
+                SELECT COALESCE(MAX(t_id), 0) AS mx
+                FROM {t_fuente}
+            ),
+            clone_ids AS (
                     SELECT n.source_id, base.mx + ROW_NUMBER() OVER (ORDER BY n.source_id) AS target_id
                     FROM need_clone n, base
                 ),
@@ -996,193 +1098,249 @@ def _rehydrate_dataset_derecho_links_from_source(
                 (datasetname, datasetname),
             )
 
-            # Link map: col_rrrinteresado
-            cur.execute(
-                f"""
-                WITH ds_derechos AS (
-                    SELECT
-                        COALESCE(sd.t_id, dr.t_id) AS source_id,
-                        dr.t_id AS target_id
-                    FROM {t_derecho} dr
-                    JOIN {t_basket} b ON b.t_id = dr.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    LEFT JOIN {s_derecho} sd
-                      ON dr.t_ili_tid IS NOT NULL
-                     AND sd.t_ili_tid = dr.t_ili_tid
-                    WHERE d.datasetname = %s
-                ),
-                src_ids AS (
-                    SELECT DISTINCT ri.t_id AS source_id
-                    FROM {s_rrri} ri
-                    JOIN ds_derechos dd ON dd.source_id = ri.rrr
-                ),
-                in_ds AS (
-                    SELECT ri.t_id AS source_id
-                    FROM {t_rrri} ri
-                    JOIN {t_basket} b ON b.t_id = ri.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                need_clone AS (
-                    SELECT s.source_id
-                    FROM src_ids s
-                    LEFT JOIN in_ds d ON d.source_id = s.source_id
-                    WHERE d.source_id IS NULL
-                ),
-                base AS (
-                    SELECT COALESCE(MAX(t_id), 0) AS mx
-                    FROM {t_rrri}
-                ),
-                clone_ids AS (
-                    SELECT n.source_id, base.mx + ROW_NUMBER() OVER (ORDER BY n.source_id) AS target_id
-                    FROM need_clone n, base
-                ),
-                direct_ids AS (
-                    SELECT s.source_id, s.source_id AS target_id
-                    FROM src_ids s
-                    LEFT JOIN need_clone n ON n.source_id = s.source_id
-                    WHERE n.source_id IS NULL
-                )
-                INSERT INTO _rehyd_map_rrri(source_id, target_id)
-                SELECT source_id, target_id FROM direct_ids
-                UNION ALL
-                SELECT source_id, target_id FROM clone_ids
+        # Link map: col_rrrinteresado
+        cur.execute(
+            f"""
+            WITH ds_derechos AS (
+                SELECT
+                    COALESCE(sd.t_id, dr.t_id) AS source_id,
+                    dr.t_id AS target_id
+                FROM {t_derecho} dr
+                JOIN {t_basket} b ON b.t_id = dr.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                LEFT JOIN {s_derecho} sd
+                  ON dr.t_ili_tid IS NOT NULL
+                 AND sd.t_ili_tid = dr.t_ili_tid
+                WHERE d.datasetname = %s
+            ),
+            src_ids AS (
+                SELECT DISTINCT ri.t_id AS source_id
+                FROM {s_rrri} ri
+                JOIN ds_derechos dd ON dd.source_id = ri.rrr
+            ),
+            in_ds AS (
+                SELECT ri.t_id AS source_id
+                FROM {t_rrri} ri
+                JOIN {t_basket} b ON b.t_id = ri.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            need_clone AS (
+                SELECT s.source_id
+                FROM src_ids s
+                LEFT JOIN in_ds d ON d.source_id = s.source_id
+                WHERE d.source_id IS NULL
+            ),
+            base AS (
+                SELECT COALESCE(MAX(t_id), 0) AS mx
+                FROM {t_rrri}
+            ),
+            clone_ids AS (
+                SELECT n.source_id, base.mx + ROW_NUMBER() OVER (ORDER BY n.source_id) AS target_id
+                FROM need_clone n, base
+            ),
+            direct_ids AS (
+                SELECT s.source_id, s.source_id AS target_id
+                FROM src_ids s
+                LEFT JOIN need_clone n ON n.source_id = s.source_id
+                WHERE n.source_id IS NULL
+            )
+            INSERT INTO _rehyd_map_rrri(source_id, target_id)
+            SELECT source_id, target_id FROM direct_ids
+            UNION ALL
+            SELECT source_id, target_id FROM clone_ids
+            ON CONFLICT (source_id) DO UPDATE SET target_id = EXCLUDED.target_id
+            """,
+            (datasetname, datasetname),
+        )
+
+        # Link map: col_rrrfuente
+        cur.execute(
+            f"""
+            WITH ds_derechos AS (
+                SELECT
+                    COALESCE(sd.t_id, dr.t_id) AS source_id,
+                    dr.t_id AS target_id
+                FROM {t_derecho} dr
+                JOIN {t_basket} b ON b.t_id = dr.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                LEFT JOIN {s_derecho} sd
+                  ON dr.t_ili_tid IS NOT NULL
+                 AND sd.t_ili_tid = dr.t_ili_tid
+                WHERE d.datasetname = %s
+            ),
+            src_ids AS (
+                SELECT DISTINCT rf.t_id AS source_id
+                FROM {s_rrrf} rf
+                JOIN ds_derechos dd ON dd.source_id = rf.rrr
+            ),
+            in_ds AS (
+                SELECT rf.t_id AS source_id
+                FROM {t_rrrf} rf
+                JOIN {t_basket} b ON b.t_id = rf.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            need_clone AS (
+                SELECT s.source_id
+                FROM src_ids s
+                LEFT JOIN in_ds d ON d.source_id = s.source_id
+                WHERE d.source_id IS NULL
+            ),
+            base AS (
+                SELECT COALESCE(MAX(t_id), 0) AS mx
+                FROM {t_rrrf}
+            ),
+            clone_ids AS (
+                SELECT n.source_id, base.mx + ROW_NUMBER() OVER (ORDER BY n.source_id) AS target_id
+                FROM need_clone n, base
+            ),
+            direct_ids AS (
+                SELECT s.source_id, s.source_id AS target_id
+                FROM src_ids s
+                LEFT JOIN need_clone n ON n.source_id = s.source_id
+                WHERE n.source_id IS NULL
+            )
+            INSERT INTO _rehyd_map_rrrf(source_id, target_id)
+            SELECT source_id, target_id FROM direct_ids
+            UNION ALL
+            SELECT source_id, target_id FROM clone_ids
                 ON CONFLICT (source_id) DO UPDATE SET target_id = EXCLUDED.target_id
                 """,
                 (datasetname, datasetname),
             )
 
-            # Link map: col_rrrfuente
-            cur.execute(
-                f"""
-                WITH ds_derechos AS (
-                    SELECT
-                        COALESCE(sd.t_id, dr.t_id) AS source_id,
-                        dr.t_id AS target_id
-                    FROM {t_derecho} dr
-                    JOIN {t_basket} b ON b.t_id = dr.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    LEFT JOIN {s_derecho} sd
-                      ON dr.t_ili_tid IS NOT NULL
-                     AND sd.t_ili_tid = dr.t_ili_tid
-                    WHERE d.datasetname = %s
-                ),
-                src_ids AS (
-                    SELECT DISTINCT rf.t_id AS source_id
-                    FROM {s_rrrf} rf
-                    JOIN ds_derechos dd ON dd.source_id = rf.rrr
-                ),
-                in_ds AS (
-                    SELECT rf.t_id AS source_id
-                    FROM {t_rrrf} rf
-                    JOIN {t_basket} b ON b.t_id = rf.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                need_clone AS (
-                    SELECT s.source_id
-                    FROM src_ids s
-                    LEFT JOIN in_ds d ON d.source_id = s.source_id
-                    WHERE d.source_id IS NULL
-                ),
-                base AS (
-                    SELECT COALESCE(MAX(t_id), 0) AS mx
-                    FROM {t_rrrf}
-                ),
-                clone_ids AS (
-                    SELECT n.source_id, base.mx + ROW_NUMBER() OVER (ORDER BY n.source_id) AS target_id
-                    FROM need_clone n, base
-                ),
-                direct_ids AS (
-                    SELECT s.source_id, s.source_id AS target_id
-                    FROM src_ids s
-                    LEFT JOIN need_clone n ON n.source_id = s.source_id
-                    WHERE n.source_id IS NULL
-                )
-                INSERT INTO _rehyd_map_rrrf(source_id, target_id)
-                SELECT source_id, target_id FROM direct_ids
-                UNION ALL
-                SELECT source_id, target_id FROM clone_ids
-                ON CONFLICT (source_id) DO UPDATE SET target_id = EXCLUDED.target_id
-                """,
-                (datasetname, datasetname),
+        # 2) Parents referenced by RRR links (with mapped t_id).
+        cur.execute(
+            f"""
+            WITH ds_derechos AS (
+                SELECT
+                    COALESCE(sd.t_id, dr.t_id) AS source_id,
+                    dr.t_id AS target_id
+                FROM {t_derecho} dr
+                JOIN {t_basket} b ON b.t_id = dr.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                LEFT JOIN {s_derecho} sd
+                  ON dr.t_ili_tid IS NOT NULL
+                 AND sd.t_ili_tid = dr.t_ili_tid
+                WHERE d.datasetname = %s
+            ),
+            src AS (
+                SELECT DISTINCT i.*
+                FROM {s_rrri} ri
+                JOIN ds_derechos dd ON dd.source_id = ri.rrr
+                JOIN {s_inter} i ON i.t_id = ri.interesado_ilc_interesado
+                WHERE ri.interesado_ilc_interesado IS NOT NULL
             )
-
-            # 2) Parents referenced by RRR links (with mapped t_id).
-            cur.execute(
-                f"""
-                WITH ds_derechos AS (
-                    SELECT
-                        COALESCE(sd.t_id, dr.t_id) AS source_id,
-                        dr.t_id AS target_id
-                    FROM {t_derecho} dr
-                    JOIN {t_basket} b ON b.t_id = dr.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    LEFT JOIN {s_derecho} sd
-                      ON dr.t_ili_tid IS NOT NULL
-                     AND sd.t_ili_tid = dr.t_ili_tid
-                    WHERE d.datasetname = %s
-                ),
-                src AS (
-                    SELECT DISTINCT i.*
-                    FROM {s_rrri} ri
-                    JOIN ds_derechos dd ON dd.source_id = ri.rrr
-                    JOIN {s_inter} i ON i.t_id = ri.interesado_ilc_interesado
-                    WHERE ri.interesado_ilc_interesado IS NOT NULL
+            INSERT INTO {t_inter}
+            SELECT (jsonb_populate_record(
+                NULL::{t_inter},
+                to_jsonb(s) || jsonb_build_object(
+                    't_id', m.target_id,
+                    't_basket', tb.t_id,
+                    't_ili_tid', ((md5(CONCAT(
+                        random()::text, clock_timestamp()::text, '_rehyd_inter_', m.target_id::text
+                    )))::uuid)::text
                 )
-                INSERT INTO {t_inter}
-                SELECT (jsonb_populate_record(
-                    NULL::{t_inter},
-                    to_jsonb(s) || jsonb_build_object(
-                        't_id', m.target_id,
-                        't_basket', tb.t_id,
-                        't_ili_tid', ((md5(CONCAT(
-                            random()::text, clock_timestamp()::text, '_rehyd_inter_', m.target_id::text
-                        )))::uuid)::text
-                    )
-                )).*
-                FROM src s
-                JOIN _rehyd_map_inter m ON m.source_id = s.t_id
-                JOIN {s_basket} sb ON sb.t_id = s.t_basket
-                JOIN {t_basket} tb ON tb.topic = sb.topic
-                JOIN {t_dataset} td ON td.t_id = tb.dataset
-                LEFT JOIN {t_inter} t ON t.t_id = m.target_id
-                WHERE td.datasetname = %s
-                  AND t.t_id IS NULL
-                ON CONFLICT (documento_identidad) DO UPDATE
-                SET t_basket = EXCLUDED.t_basket
-                """,
-                (datasetname, datasetname),
-            )
+            )).*
+            FROM src s
+            JOIN _rehyd_map_inter m ON m.source_id = s.t_id
+            JOIN {s_basket} sb ON sb.t_id = s.t_basket
+            JOIN {t_basket} tb ON tb.topic = sb.topic
+            JOIN {t_dataset} td ON td.t_id = tb.dataset
+            LEFT JOIN {t_inter} t ON t.t_id = m.target_id
+            WHERE td.datasetname = %s
+              AND t.t_id IS NULL
+            ON CONFLICT (documento_identidad) DO UPDATE
+            SET t_basket = EXCLUDED.t_basket
+            """,
+            (datasetname, datasetname),
+        )
 
-            # Expand grouped-interesado map recursively so nested subgroup members
-            # can be rehydrated as well (prevents parent groups ending with <2 members).
+        # Expand grouped-interesado map recursively so nested subgroup members
+        # can be rehydrated as well (prevents parent groups ending with <2 members).
+        cur.execute(
+            f"""
+            WITH RECURSIVE expanded(source_id) AS (
+                SELECT source_id
+                FROM _rehyd_map_agrup
+                UNION
+                SELECT DISTINCT m.interesado_cr_agrupacioninteresados
+                FROM {source_schema}.col_miembros m
+                JOIN expanded e ON e.source_id = m.agrupacion
+                WHERE m.interesado_cr_agrupacioninteresados IS NOT NULL
+            ),
+            src_ids AS (
+                SELECT DISTINCT source_id
+                FROM expanded
+                WHERE source_id IS NOT NULL
+            ),
+            missing_map AS (
+                SELECT s.source_id
+                FROM src_ids s
+                LEFT JOIN _rehyd_map_agrup m ON m.source_id = s.source_id
+                WHERE m.source_id IS NULL
+            ),
+            in_ds AS (
+                SELECT a.t_id AS source_id
+                FROM {t_agrup} a
+                JOIN {t_basket} b ON b.t_id = a.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            need_clone AS (
+                SELECT m.source_id
+                FROM missing_map m
+                LEFT JOIN in_ds d ON d.source_id = m.source_id
+                WHERE d.source_id IS NULL
+            ),
+            base AS (
+                SELECT GREATEST(
+                    COALESCE((SELECT MAX(t_id) FROM {t_agrup}), 0),
+                    COALESCE((SELECT MAX(target_id) FROM _rehyd_map_agrup), 0)
+                ) AS mx
+            ),
+            clone_ids AS (
+                SELECT n.source_id, base.mx + ROW_NUMBER() OVER (ORDER BY n.source_id) AS target_id
+                FROM need_clone n, base
+            ),
+            direct_ids AS (
+                SELECT m.source_id, m.source_id AS target_id
+                FROM missing_map m
+                LEFT JOIN need_clone n ON n.source_id = m.source_id
+                WHERE n.source_id IS NULL
+            )
+            INSERT INTO _rehyd_map_agrup(source_id, target_id)
+            SELECT source_id, target_id FROM direct_ids
+            UNION ALL
+            SELECT source_id, target_id FROM clone_ids
+            ON CONFLICT (source_id) DO UPDATE SET target_id = EXCLUDED.target_id
+            """,
+            (datasetname,),
+        )
+
+        # Expand ilc_interesado map from group members as well.
+        # Some groups reference interesados only through col_miembros
+        # (not directly via col_rrrinteresado).
+        if has_members_source:
             cur.execute(
                 f"""
-                WITH RECURSIVE expanded(source_id) AS (
-                    SELECT source_id
-                    FROM _rehyd_map_agrup
-                    UNION
-                    SELECT DISTINCT m.interesado_cr_agrupacioninteresados
-                    FROM {source_schema}.col_miembros m
-                    JOIN expanded e ON e.source_id = m.agrupacion
-                    WHERE m.interesado_cr_agrupacioninteresados IS NOT NULL
-                ),
-                src_ids AS (
-                    SELECT DISTINCT source_id
-                    FROM expanded
-                    WHERE source_id IS NOT NULL
+                WITH src_ids AS (
+                    SELECT DISTINCT m.interesado_ilc_interesado AS source_id
+                    FROM {s_miembros} m
+                    JOIN _rehyd_map_agrup ga ON ga.source_id = m.agrupacion
+                    WHERE m.interesado_ilc_interesado IS NOT NULL
                 ),
                 missing_map AS (
                     SELECT s.source_id
                     FROM src_ids s
-                    LEFT JOIN _rehyd_map_agrup m ON m.source_id = s.source_id
-                    WHERE m.source_id IS NULL
+                    LEFT JOIN _rehyd_map_inter mi ON mi.source_id = s.source_id
+                    WHERE mi.source_id IS NULL
                 ),
                 in_ds AS (
-                    SELECT a.t_id AS source_id
-                    FROM {t_agrup} a
-                    JOIN {t_basket} b ON b.t_id = a.t_basket
+                    SELECT i.t_id AS source_id
+                    FROM {t_inter} i
+                    JOIN {t_basket} b ON b.t_id = i.t_basket
                     JOIN {t_dataset} d ON d.t_id = b.dataset
                     WHERE d.datasetname = %s
                 ),
@@ -1194,8 +1352,8 @@ def _rehydrate_dataset_derecho_links_from_source(
                 ),
                 base AS (
                     SELECT GREATEST(
-                        COALESCE((SELECT MAX(t_id) FROM {t_agrup}), 0),
-                        COALESCE((SELECT MAX(target_id) FROM _rehyd_map_agrup), 0)
+                        COALESCE((SELECT MAX(t_id) FROM {t_inter}), 0),
+                        COALESCE((SELECT MAX(target_id) FROM _rehyd_map_inter), 0)
                     ) AS mx
                 ),
                 clone_ids AS (
@@ -1208,7 +1366,7 @@ def _rehydrate_dataset_derecho_links_from_source(
                     LEFT JOIN need_clone n ON n.source_id = m.source_id
                     WHERE n.source_id IS NULL
                 )
-                INSERT INTO _rehyd_map_agrup(source_id, target_id)
+                INSERT INTO _rehyd_map_inter(source_id, target_id)
                 SELECT source_id, target_id FROM direct_ids
                 UNION ALL
                 SELECT source_id, target_id FROM clone_ids
@@ -1216,62 +1374,6 @@ def _rehydrate_dataset_derecho_links_from_source(
                 """,
                 (datasetname,),
             )
-
-            # Expand ilc_interesado map from group members as well.
-            # Some groups reference interesados only through col_miembros
-            # (not directly via col_rrrinteresado).
-            if has_members_source:
-                cur.execute(
-                    f"""
-                    WITH src_ids AS (
-                        SELECT DISTINCT m.interesado_ilc_interesado AS source_id
-                        FROM {s_miembros} m
-                        JOIN _rehyd_map_agrup ga ON ga.source_id = m.agrupacion
-                        WHERE m.interesado_ilc_interesado IS NOT NULL
-                    ),
-                    missing_map AS (
-                        SELECT s.source_id
-                        FROM src_ids s
-                        LEFT JOIN _rehyd_map_inter mi ON mi.source_id = s.source_id
-                        WHERE mi.source_id IS NULL
-                    ),
-                    in_ds AS (
-                        SELECT i.t_id AS source_id
-                        FROM {t_inter} i
-                        JOIN {t_basket} b ON b.t_id = i.t_basket
-                        JOIN {t_dataset} d ON d.t_id = b.dataset
-                        WHERE d.datasetname = %s
-                    ),
-                    need_clone AS (
-                        SELECT m.source_id
-                        FROM missing_map m
-                        LEFT JOIN in_ds d ON d.source_id = m.source_id
-                        WHERE d.source_id IS NULL
-                    ),
-                    base AS (
-                        SELECT GREATEST(
-                            COALESCE((SELECT MAX(t_id) FROM {t_inter}), 0),
-                            COALESCE((SELECT MAX(target_id) FROM _rehyd_map_inter), 0)
-                        ) AS mx
-                    ),
-                    clone_ids AS (
-                        SELECT n.source_id, base.mx + ROW_NUMBER() OVER (ORDER BY n.source_id) AS target_id
-                        FROM need_clone n, base
-                    ),
-                    direct_ids AS (
-                        SELECT m.source_id, m.source_id AS target_id
-                        FROM missing_map m
-                        LEFT JOIN need_clone n ON n.source_id = m.source_id
-                        WHERE n.source_id IS NULL
-                    )
-                    INSERT INTO _rehyd_map_inter(source_id, target_id)
-                    SELECT source_id, target_id FROM direct_ids
-                    UNION ALL
-                    SELECT source_id, target_id FROM clone_ids
-                    ON CONFLICT (source_id) DO UPDATE SET target_id = EXCLUDED.target_id
-                    """,
-                    (datasetname,),
-                )
 
             # Ensure all mapped ilc_interesado rows exist in target dataset.
             cur.execute(
@@ -1643,7 +1745,7 @@ def _rehydrate_dataset_derecho_links_from_source(
         conn.commit()
 
 
-def _validate_dataset_derecho_multiplicity(schema: str, datasetname: str) -> None:
+def _validate_dataset_derecho_multiplicity(conn, schema: str, datasetname: str) -> None:
     if not datasetname:
         return
     derecho = _qualify(schema, "ilc_derecho")
@@ -1651,59 +1753,58 @@ def _validate_dataset_derecho_multiplicity(schema: str, datasetname: str) -> Non
     rrr_inter = _qualify(schema, "col_rrrinteresado")
     basket = _qualify(schema, "t_ili2db_basket")
     dataset = _qualify(schema, "t_ili2db_dataset")
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
-                WITH invalid AS (
-                    SELECT dr.t_id
-                    FROM {derecho} dr
-                    JOIN {basket} b ON b.t_id = dr.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                      AND (
-                        NOT EXISTS (
-                          SELECT 1
-                          FROM {rrr_inter} ri
-                          JOIN {basket} ib ON ib.t_id = ri.t_basket
-                          JOIN {dataset} idd ON idd.t_id = ib.dataset
-                          WHERE idd.datasetname = %s
-                            AND ri.rrr = dr.t_id
-                        )
-                        OR NOT EXISTS (
-                          SELECT 1
-                          FROM {rrr_fuente} rf
-                          JOIN {basket} fb ON fb.t_id = rf.t_basket
-                          JOIN {dataset} fdd ON fdd.t_id = fb.dataset
-                          WHERE fdd.datasetname = %s
-                            AND rf.rrr = dr.t_id
-                        )
-                      )
-                )
-                SELECT COUNT(*) FROM invalid
-                """,
-                (datasetname, datasetname, datasetname),
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            WITH invalid AS (
+                SELECT dr.t_id
+                FROM {derecho} dr
+                JOIN {basket} b ON b.t_id = dr.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+                  AND (
+                    NOT EXISTS (
+                      SELECT 1
+                      FROM {rrr_inter} ri
+                      JOIN {basket} ib ON ib.t_id = ri.t_basket
+                      JOIN {dataset} idd ON idd.t_id = ib.dataset
+                      WHERE idd.datasetname = %s
+                        AND ri.rrr = dr.t_id
+                    )
+                    OR NOT EXISTS (
+                      SELECT 1
+                      FROM {rrr_fuente} rf
+                      JOIN {basket} fb ON fb.t_id = rf.t_basket
+                      JOIN {dataset} fdd ON fdd.t_id = fb.dataset
+                      WHERE fdd.datasetname = %s
+                        AND rf.rrr = dr.t_id
+                    )
+                  )
             )
-            invalid_count = int((cur.fetchone() or [0])[0] or 0)
-            if invalid_count <= 0:
-                return
+            SELECT COUNT(*) FROM invalid
+            """,
+            (datasetname, datasetname, datasetname),
+        )
+        invalid_count = int((cur.fetchone() or [0])[0] or 0)
+        if invalid_count <= 0:
+            return
 
-            cur.execute(
-                f"""
-                WITH invalid AS (
-                    SELECT dr.t_id
-                    FROM {derecho} dr
-                    JOIN {basket} b ON b.t_id = dr.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                      AND (
-                        NOT EXISTS (
-                          SELECT 1
-                          FROM {rrr_inter} ri
-                          JOIN {basket} ib ON ib.t_id = ri.t_basket
-                          JOIN {dataset} idd ON idd.t_id = ib.dataset
-                          WHERE idd.datasetname = %s
-                            AND ri.rrr = dr.t_id
+        cur.execute(
+            f"""
+            WITH invalid AS (
+                SELECT dr.t_id
+                FROM {derecho} dr
+                JOIN {basket} b ON b.t_id = dr.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+                  AND (
+                    NOT EXISTS (
+                      SELECT 1
+                      FROM {rrr_inter} ri
+                      JOIN {basket} ib ON ib.t_id = ri.t_basket
+                      JOIN {dataset} idd ON idd.t_id = ib.dataset
+                      WHERE idd.datasetname = %s
+                        AND ri.rrr = dr.t_id
                         )
                         OR NOT EXISTS (
                           SELECT 1
@@ -1717,22 +1818,22 @@ def _validate_dataset_derecho_multiplicity(schema: str, datasetname: str) -> Non
                     ORDER BY dr.t_id
                     LIMIT 20
                 )
-                SELECT t_id FROM invalid
-                """,
-                (datasetname, datasetname, datasetname),
-            )
-            sample = [str(r[0]) for r in (cur.fetchall() or []) if r and r[0] is not None]
-            raise ExportServiceError(
-                status_code=409,
-                detail=(
-                    f"Dataset '{datasetname}' invalido para exportar: "
-                    f"{invalid_count} derecho(s) sin interesado/fuente_administrativa. "
-                    f"Muestra t_id: {', '.join(sample) if sample else 'sin muestra'}."
-                ),
-            )
+            SELECT t_id FROM invalid
+            """,
+            (datasetname, datasetname, datasetname),
+        )
+        sample = [str(r[0]) for r in (cur.fetchall() or []) if r and r[0] is not None]
+        raise ExportServiceError(
+            status_code=409,
+            detail=(
+                f"Dataset '{datasetname}' invalido para exportar: "
+                f"{invalid_count} derecho(s) sin interesado/fuente_administrativa. "
+                f"Muestra t_id: {', '.join(sample) if sample else 'sin muestra'}."
+            ),
+        )
 
 
-def _validate_dataset_predio_rrr_multiplicity(schema: str, datasetname: str) -> None:
+def _validate_dataset_predio_rrr_multiplicity(conn, schema: str, datasetname: str) -> None:
     if not datasetname:
         return
 
@@ -1742,49 +1843,48 @@ def _validate_dataset_predio_rrr_multiplicity(schema: str, datasetname: str) -> 
         "t_ili2db_basket",
         "t_ili2db_dataset",
     }
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = %s
-                  AND table_name = ANY(%s)
-                """,
-                (schema, list(required)),
-            )
-            available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
-            if not required.issubset(available):
-                return
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+              AND table_name = ANY(%s)
+            """,
+            (schema, list(required)),
+        )
+        available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
+        if not required.issubset(available):
+            return
 
-            predio = _qualify(schema, "ilc_predio")
-            derecho = _qualify(schema, "ilc_derecho")
-            basket = _qualify(schema, "t_ili2db_basket")
-            dataset = _qualify(schema, "t_ili2db_dataset")
+        predio = _qualify(schema, "ilc_predio")
+        derecho = _qualify(schema, "ilc_derecho")
+        basket = _qualify(schema, "t_ili2db_basket")
+        dataset = _qualify(schema, "t_ili2db_dataset")
 
-            cur.execute(
-                f"""
-                WITH predios AS (
-                    SELECT p.t_id, p.numero_predial_nacional, p.t_ili_tid
-                    FROM {predio} p
-                    JOIN {basket} b ON b.t_id = p.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                conteo AS (
-                    SELECT
-                        p.t_id,
-                        p.numero_predial_nacional,
-                        p.t_ili_tid,
-                        COUNT(dr.t_id)::int AS derechos_count
-                    FROM predios p
-                    LEFT JOIN {derecho} dr
-                      ON dr.unidad = p.t_id
-                    LEFT JOIN {basket} db ON db.t_id = dr.t_basket
-                    LEFT JOIN {dataset} dd
-                      ON dd.t_id = db.dataset
-                     AND dd.datasetname = %s
-                    WHERE dr.t_id IS NULL OR dd.t_id IS NOT NULL
+        cur.execute(
+            f"""
+            WITH predios AS (
+                SELECT p.t_id, p.numero_predial_nacional, p.t_ili_tid
+                FROM {predio} p
+                JOIN {basket} b ON b.t_id = p.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            conteo AS (
+                SELECT
+                    p.t_id,
+                    p.numero_predial_nacional,
+                    p.t_ili_tid,
+                    COUNT(dr.t_id)::int AS derechos_count
+                FROM predios p
+                LEFT JOIN {derecho} dr
+                  ON dr.unidad = p.t_id
+                LEFT JOIN {basket} db ON db.t_id = dr.t_basket
+                LEFT JOIN {dataset} dd
+                  ON dd.t_id = db.dataset
+                 AND dd.datasetname = %s
+                WHERE dr.t_id IS NULL OR dd.t_id IS NOT NULL
                     GROUP BY p.t_id, p.numero_predial_nacional, p.t_ili_tid
                 )
                 SELECT
@@ -1795,69 +1895,71 @@ def _validate_dataset_predio_rrr_multiplicity(schema: str, datasetname: str) -> 
                 """,
                 (datasetname, datasetname),
             )
-            row = cur.fetchone() or (0, 0, 0)
-            sin_rrr = int(_row_get(row, 0, 0) or 0)
-            con_multiples = int(_row_get(row, 1, 0) or 0)
-            invalidos_total = int(_row_get(row, 2, 0) or 0)
-            if invalidos_total <= 0:
-                return
+        row = cur.fetchone() or (0, 0, 0)
+        sin_rrr = int(_row_get(row, 0, 0) or 0)
+        con_multiples = int(_row_get(row, 1, 0) or 0)
+        invalidos_total = int(_row_get(row, 2, 0) or 0)
+        if invalidos_total <= 0:
+            return
 
-            cur.execute(
-                f"""
-                WITH predios AS (
-                    SELECT p.t_id, p.numero_predial_nacional, p.t_ili_tid
-                    FROM {predio} p
-                    JOIN {basket} b ON b.t_id = p.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                conteo AS (
-                    SELECT
-                        p.t_id,
-                        p.numero_predial_nacional,
-                        p.t_ili_tid,
-                        COUNT(dr.t_id)::int AS derechos_count
-                    FROM predios p
-                    LEFT JOIN {derecho} dr
-                      ON dr.unidad = p.t_id
-                    LEFT JOIN {basket} db ON db.t_id = dr.t_basket
-                    LEFT JOIN {dataset} dd
-                      ON dd.t_id = db.dataset
-                     AND dd.datasetname = %s
-                    WHERE dr.t_id IS NULL OR dd.t_id IS NOT NULL
-                    GROUP BY p.t_id, p.numero_predial_nacional, p.t_ili_tid
-                )
-                SELECT t_id, numero_predial_nacional, t_ili_tid, derechos_count
-                FROM conteo
-                WHERE derechos_count <> 1
-                ORDER BY derechos_count, numero_predial_nacional NULLS LAST, t_id
-                LIMIT 25
-                """,
-                (datasetname, datasetname),
+        cur.execute(
+            f"""
+            WITH predios AS (
+                SELECT p.t_id, p.numero_predial_nacional, p.t_ili_tid
+                FROM {predio} p
+                JOIN {basket} b ON b.t_id = p.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            conteo AS (
+                SELECT
+                    p.t_id,
+                    p.numero_predial_nacional,
+                    p.t_ili_tid,
+                    COUNT(dr.t_id)::int AS derechos_count
+                FROM predios p
+                LEFT JOIN {derecho} dr
+                  ON dr.unidad = p.t_id
+                LEFT JOIN {basket} db ON db.t_id = dr.t_basket
+                LEFT JOIN {dataset} dd
+                  ON dd.t_id = db.dataset
+                 AND dd.datasetname = %s
+                WHERE dr.t_id IS NULL OR dd.t_id IS NOT NULL
+                GROUP BY p.t_id, p.numero_predial_nacional, p.t_ili_tid
             )
-            sample_rows = cur.fetchall() or []
-            sample = "; ".join(
-                [
-                    f"t_id={_row_get(r,0,'NULL')}, npn={_row_get(r,1,'NULL') or 'NULL'}, tid={_row_get(r,2,'NULL') or 'NULL'}, derechos={_row_get(r,3,'NULL')}"
-                    for r in sample_rows
-                    if r
-                ]
-            )
-            raise ExportServiceError(
-                status_code=409,
-                detail=(
-                    f"Dataset '{datasetname}' invalido para exportar: "
-                    f"rol rrr de ILC_Predio requiere cardinalidad 1..1 y se detectaron "
-                    f"{invalidos_total} predio(s) fuera de regla "
-                    f"(sin rrr={sin_rrr}, con >1 rrr={con_multiples}). "
-                    f"Muestra: {sample if sample else 'sin muestra'}."
-                ),
-            )
+            SELECT t_id, numero_predial_nacional, t_ili_tid, derechos_count
+            FROM conteo
+            WHERE derechos_count <> 1
+            ORDER BY derechos_count, numero_predial_nacional NULLS LAST, t_id
+            LIMIT 25
+            """,
+            (datasetname, datasetname),
+        )
+        sample_rows = cur.fetchall() or []
+        sample = "; ".join(
+            [
+                f"t_id={_row_get(r,0,'NULL')}, npn={_row_get(r,1,'NULL') or 'NULL'}, tid={_row_get(r,2,'NULL') or 'NULL'}, derechos={_row_get(r,3,'NULL')}"
+                for r in sample_rows
+                if r
+            ]
+        )
+        raise ExportServiceError(
+            status_code=409,
+            detail=(
+                f"Dataset '{datasetname}' invalido para exportar: "
+                f"rol rrr de ILC_Predio requiere cardinalidad 1..1 y se detectaron "
+                f"{invalidos_total} predio(s) fuera de regla "
+                f"(sin rrr={sin_rrr}, con >1 rrr={con_multiples}). "
+                f"Muestra: {sample if sample else 'sin muestra'}."
+            ),
+        )
 
 
 
 
 def _sanitize_dataset_predio_core_from_source(
+    conn,
+    tenant: TenantContext,
     schema: str,
     datasetname: str,
     *,
@@ -1865,10 +1967,10 @@ def _sanitize_dataset_predio_core_from_source(
 ) -> None:
     if not datasetname:
         return
-    if (schema or "").strip().lower() != (ASIG_MODEL_CONTEXT.schema_work or "").strip().lower():
+    if _normalized_schema_name(schema) != _normalized_schema_name(tenant.schemas.work):
         return
 
-    source_schema = (source_schema or ASIG_MODEL_CONTEXT.schema_main).strip().strip('"')
+    source_schema = (source_schema or tenant.schemas.main or "").strip().strip('"')
     if not source_schema:
         return
 
@@ -1886,58 +1988,57 @@ def _sanitize_dataset_predio_core_from_source(
         "t_ili2db_basket",
     }
 
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = %s
-                  AND table_name = ANY(%s)
-                """,
-                (schema, list(required_target)),
-            )
-            target_available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
-            if not required_target.issubset(target_available):
-                return
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+              AND table_name = ANY(%s)
+            """,
+            (schema, list(required_target)),
+        )
+        target_available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
+        if not required_target.issubset(target_available):
+            return
 
-            cur.execute(
-                """
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = %s
-                  AND table_name = ANY(%s)
-                """,
-                (source_schema, list(required_source)),
-            )
-            source_available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
-            if not required_source.issubset(source_available):
-                return
+        cur.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+              AND table_name = ANY(%s)
+            """,
+            (source_schema, list(required_source)),
+        )
+        source_available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
+        if not required_source.issubset(source_available):
+            return
 
-            t_basket = _qualify(schema, "t_ili2db_basket")
-            t_dataset = _qualify(schema, "t_ili2db_dataset")
-            t_predio = _qualify(schema, "ilc_predio")
-            t_dir = _qualify(schema, "extdireccion")
-            t_datos = _qualify(schema, "ilc_datosadicionaleslevantamientocatastral")
+        t_basket = _qualify(schema, "t_ili2db_basket")
+        t_dataset = _qualify(schema, "t_ili2db_dataset")
+        t_predio = _qualify(schema, "ilc_predio")
+        t_dir = _qualify(schema, "extdireccion")
+        t_datos = _qualify(schema, "ilc_datosadicionaleslevantamientocatastral")
 
-            s_basket = _qualify(source_schema, "t_ili2db_basket")
-            s_predio = _qualify(source_schema, "ilc_predio")
-            s_dir = _qualify(source_schema, "extdireccion")
-            s_datos = _qualify(source_schema, "ilc_datosadicionaleslevantamientocatastral")
+        s_basket = _qualify(source_schema, "t_ili2db_basket")
+        s_predio = _qualify(source_schema, "ilc_predio")
+        s_dir = _qualify(source_schema, "extdireccion")
+        s_datos = _qualify(source_schema, "ilc_datosadicionaleslevantamientocatastral")
 
-            cur.execute("DROP TABLE IF EXISTS _rehyd_map_predio")
-            cur.execute(
-                "CREATE TEMP TABLE _rehyd_map_predio(target_id bigint PRIMARY KEY, source_id bigint NOT NULL)"
-            )
+        cur.execute("DROP TABLE IF EXISTS _rehyd_map_predio")
+        cur.execute(
+            "CREATE TEMP TABLE _rehyd_map_predio(target_id bigint PRIMARY KEY, source_id bigint NOT NULL)"
+        )
 
-            cur.execute(
-                f"""
-                WITH target_predios AS (
-                    SELECT p.t_id AS target_id, p.t_ili_tid, p.numero_predial_nacional
-                    FROM {t_predio} p
-                    JOIN {t_basket} b ON b.t_id = p.t_basket
-                    JOIN {t_dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
+        cur.execute(
+            f"""
+            WITH target_predios AS (
+                SELECT p.t_id AS target_id, p.t_ili_tid, p.numero_predial_nacional
+                FROM {t_predio} p
+                JOIN {t_basket} b ON b.t_id = p.t_basket
+                JOIN {t_dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
                 ),
                 matches AS (
                     SELECT
@@ -1975,46 +2076,46 @@ def _sanitize_dataset_predio_core_from_source(
                 (datasetname,),
             )
 
-            # Keep exactly one direccion per predio in dataset.
-            cur.execute(
-                f"""
-                WITH ranked AS (
-                    SELECT
-                        d.t_id,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY d.ilc_predio_direccion
-                            ORDER BY d.t_id
-                        ) AS rn
-                    FROM {t_dir} d
-                    JOIN {t_basket} b ON b.t_id = d.t_basket
-                    JOIN {t_dataset} ds ON ds.t_id = b.dataset
-                    WHERE ds.datasetname = %s
-                )
-                DELETE FROM {t_dir} d
-                USING ranked r
-                WHERE d.t_id = r.t_id
-                  AND r.rn > 1
-                """,
-                (datasetname,),
+        # Keep exactly one direccion per predio in dataset.
+        cur.execute(
+            f"""
+            WITH ranked AS (
+                SELECT
+                    d.t_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY d.ilc_predio_direccion
+                        ORDER BY d.t_id
+                    ) AS rn
+                FROM {t_dir} d
+                JOIN {t_basket} b ON b.t_id = d.t_basket
+                JOIN {t_dataset} ds ON ds.t_id = b.dataset
+                WHERE ds.datasetname = %s
             )
+            DELETE FROM {t_dir} d
+            USING ranked r
+            WHERE d.t_id = r.t_id
+              AND r.rn > 1
+            """,
+            (datasetname,),
+        )
 
-            cur.execute(
-                f"""
-                WITH missing_predios AS (
-                    SELECT p.t_id AS target_predio, mp.source_id AS source_predio
-                    FROM {t_predio} p
-                    JOIN {t_basket} b ON b.t_id = p.t_basket
-                    JOIN {t_dataset} ds ON ds.t_id = b.dataset
-                    JOIN _rehyd_map_predio mp ON mp.target_id = p.t_id
-                    LEFT JOIN {t_dir} d ON d.ilc_predio_direccion = p.t_id
-                    LEFT JOIN {t_basket} db ON db.t_id = d.t_basket
-                    LEFT JOIN {t_dataset} dd ON dd.t_id = db.dataset AND dd.datasetname = %s
-                    WHERE ds.datasetname = %s
-                    GROUP BY p.t_id, mp.source_id
-                    HAVING COUNT(dd.t_id) = 0
-                ),
-                src AS (
-                    SELECT
+        cur.execute(
+            f"""
+            WITH missing_predios AS (
+                SELECT p.t_id AS target_predio, mp.source_id AS source_predio
+                FROM {t_predio} p
+                JOIN {t_basket} b ON b.t_id = p.t_basket
+                JOIN {t_dataset} ds ON ds.t_id = b.dataset
+                JOIN _rehyd_map_predio mp ON mp.target_id = p.t_id
+                LEFT JOIN {t_dir} d ON d.ilc_predio_direccion = p.t_id
+                LEFT JOIN {t_basket} db ON db.t_id = d.t_basket
+                LEFT JOIN {t_dataset} dd ON dd.t_id = db.dataset AND dd.datasetname = %s
+                WHERE ds.datasetname = %s
+                GROUP BY p.t_id, mp.source_id
+                HAVING COUNT(dd.t_id) = 0
+            ),
+            src AS (
+                SELECT
                         mp.target_predio,
                         sd.*,
                         tb.t_id AS target_basket
@@ -2059,52 +2160,52 @@ def _sanitize_dataset_predio_core_from_source(
                 (datasetname, datasetname, datasetname),
             )
 
-            # Keep exactly one datos_adicionales per predio in dataset.
-            cur.execute(
-                f"""
-                WITH ranked AS (
-                    SELECT
-                        x.t_id,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY x.ilc_predio
-                            ORDER BY x.t_id
-                        ) AS rn
-                    FROM {t_datos} x
-                    JOIN {t_basket} b ON b.t_id = x.t_basket
-                    JOIN {t_dataset} ds ON ds.t_id = b.dataset
-                    WHERE ds.datasetname = %s
-                )
-                DELETE FROM {t_datos} x
-                USING ranked r
-                WHERE x.t_id = r.t_id
-                  AND r.rn > 1
-                """,
-                (datasetname,),
+        # Keep exactly one datos_adicionales per predio in dataset.
+        cur.execute(
+            f"""
+            WITH ranked AS (
+                SELECT
+                    x.t_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY x.ilc_predio
+                        ORDER BY x.t_id
+                    ) AS rn
+                FROM {t_datos} x
+                JOIN {t_basket} b ON b.t_id = x.t_basket
+                JOIN {t_dataset} ds ON ds.t_id = b.dataset
+                WHERE ds.datasetname = %s
             )
+            DELETE FROM {t_datos} x
+            USING ranked r
+            WHERE x.t_id = r.t_id
+              AND r.rn > 1
+            """,
+            (datasetname,),
+        )
 
-            cur.execute(
-                f"""
-                WITH missing_predios AS (
-                    SELECT p.t_id AS target_predio, mp.source_id AS source_predio
-                    FROM {t_predio} p
-                    JOIN {t_basket} b ON b.t_id = p.t_basket
-                    JOIN {t_dataset} ds ON ds.t_id = b.dataset
-                    JOIN _rehyd_map_predio mp ON mp.target_id = p.t_id
-                    LEFT JOIN {t_datos} x ON x.ilc_predio = p.t_id
-                    LEFT JOIN {t_basket} xb ON xb.t_id = x.t_basket
-                    LEFT JOIN {t_dataset} xd ON xd.t_id = xb.dataset AND xd.datasetname = %s
-                    WHERE ds.datasetname = %s
-                    GROUP BY p.t_id, mp.source_id
-                    HAVING COUNT(xd.t_id) = 0
-                ),
-                src AS (
-                    SELECT
-                        mp.target_predio,
-                        sx.*,
-                        tb.t_id AS target_basket
-                    FROM missing_predios mp
-                    JOIN LATERAL (
-                        SELECT s.*
+        cur.execute(
+            f"""
+            WITH missing_predios AS (
+                SELECT p.t_id AS target_predio, mp.source_id AS source_predio
+                FROM {t_predio} p
+                JOIN {t_basket} b ON b.t_id = p.t_basket
+                JOIN {t_dataset} ds ON ds.t_id = b.dataset
+                JOIN _rehyd_map_predio mp ON mp.target_id = p.t_id
+                LEFT JOIN {t_datos} x ON x.ilc_predio = p.t_id
+                LEFT JOIN {t_basket} xb ON xb.t_id = x.t_basket
+                LEFT JOIN {t_dataset} xd ON xd.t_id = xb.dataset AND xd.datasetname = %s
+                WHERE ds.datasetname = %s
+                GROUP BY p.t_id, mp.source_id
+                HAVING COUNT(xd.t_id) = 0
+            ),
+            src AS (
+                SELECT
+                    mp.target_predio,
+                    sx.*,
+                    tb.t_id AS target_basket
+                FROM missing_predios mp
+                JOIN LATERAL (
+                    SELECT s.*
                         FROM {s_datos} s
                         WHERE s.ilc_predio = mp.source_predio
                         ORDER BY s.t_id
@@ -2146,7 +2247,7 @@ def _sanitize_dataset_predio_core_from_source(
         conn.commit()
 
 
-def _validate_dataset_predio_aux_multiplicity(schema: str, datasetname: str) -> None:
+def _validate_dataset_predio_aux_multiplicity(conn, schema: str, datasetname: str) -> None:
     if not datasetname:
         return
 
@@ -2157,37 +2258,36 @@ def _validate_dataset_predio_aux_multiplicity(schema: str, datasetname: str) -> 
         "t_ili2db_basket",
         "t_ili2db_dataset",
     }
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = %s
-                  AND table_name = ANY(%s)
-                """,
-                (schema, list(required)),
-            )
-            available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
-            if not required.issubset(available):
-                return
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+              AND table_name = ANY(%s)
+            """,
+            (schema, list(required)),
+        )
+        available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
+        if not required.issubset(available):
+            return
 
-            predio = _qualify(schema, "ilc_predio")
-            direccion = _qualify(schema, "extdireccion")
-            datos = _qualify(schema, "ilc_datosadicionaleslevantamientocatastral")
-            basket = _qualify(schema, "t_ili2db_basket")
-            dataset = _qualify(schema, "t_ili2db_dataset")
+        predio = _qualify(schema, "ilc_predio")
+        direccion = _qualify(schema, "extdireccion")
+        datos = _qualify(schema, "ilc_datosadicionaleslevantamientocatastral")
+        basket = _qualify(schema, "t_ili2db_basket")
+        dataset = _qualify(schema, "t_ili2db_dataset")
 
-            cur.execute(
-                f"""
-                WITH predios AS (
-                    SELECT p.t_id, p.numero_predial_nacional, p.t_ili_tid
-                    FROM {predio} p
-                    JOIN {basket} b ON b.t_id = p.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                conteo AS (
+        cur.execute(
+            f"""
+            WITH predios AS (
+                SELECT p.t_id, p.numero_predial_nacional, p.t_ili_tid
+                FROM {predio} p
+                JOIN {basket} b ON b.t_id = p.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            conteo AS (
                     SELECT
                         p.t_id,
                         p.numero_predial_nacional,
@@ -2207,38 +2307,38 @@ def _validate_dataset_predio_aux_multiplicity(schema: str, datasetname: str) -> 
                     COUNT(*) FILTER (WHERE direccion_count <> 1) AS direccion_invalida,
                     COUNT(*) FILTER (WHERE datos_count <> 1) AS datos_invalido,
                     COUNT(*) FILTER (WHERE direccion_count <> 1 OR datos_count <> 1) AS invalidos_total
-                FROM conteo
-                """,
-                (datasetname, datasetname, datasetname),
-            )
-            row = cur.fetchone() or (0, 0, 0)
-            direccion_invalida = int(_row_get(row, 0, 0) or 0)
-            datos_invalido = int(_row_get(row, 1, 0) or 0)
-            invalidos_total = int(_row_get(row, 2, 0) or 0)
-            if invalidos_total <= 0:
-                return
+            FROM conteo
+            """,
+            (datasetname, datasetname, datasetname),
+        )
+        row = cur.fetchone() or (0, 0, 0)
+        direccion_invalida = int(_row_get(row, 0, 0) or 0)
+        datos_invalido = int(_row_get(row, 1, 0) or 0)
+        invalidos_total = int(_row_get(row, 2, 0) or 0)
+        if invalidos_total <= 0:
+            return
 
-            cur.execute(
-                f"""
-                WITH predios AS (
-                    SELECT p.t_id, p.numero_predial_nacional, p.t_ili_tid
-                    FROM {predio} p
-                    JOIN {basket} b ON b.t_id = p.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                conteo AS (
-                    SELECT
-                        p.t_id,
-                        p.numero_predial_nacional,
-                        p.t_ili_tid,
-                        COUNT(DISTINCT CASE WHEN ddd.t_id IS NOT NULL THEN d.t_id END)::int AS direccion_count,
-                        COUNT(DISTINCT CASE WHEN ddx.t_id IS NOT NULL THEN x.t_id END)::int AS datos_count
-                    FROM predios p
-                    LEFT JOIN {direccion} d ON d.ilc_predio_direccion = p.t_id
-                    LEFT JOIN {basket} dbd ON dbd.t_id = d.t_basket
-                    LEFT JOIN {dataset} ddd ON ddd.t_id = dbd.dataset AND ddd.datasetname = %s
-                    LEFT JOIN {datos} x ON x.ilc_predio = p.t_id
+        cur.execute(
+            f"""
+            WITH predios AS (
+                SELECT p.t_id, p.numero_predial_nacional, p.t_ili_tid
+                FROM {predio} p
+                JOIN {basket} b ON b.t_id = p.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            conteo AS (
+                SELECT
+                    p.t_id,
+                    p.numero_predial_nacional,
+                    p.t_ili_tid,
+                    COUNT(DISTINCT CASE WHEN ddd.t_id IS NOT NULL THEN d.t_id END)::int AS direccion_count,
+                    COUNT(DISTINCT CASE WHEN ddx.t_id IS NOT NULL THEN x.t_id END)::int AS datos_count
+                FROM predios p
+                LEFT JOIN {direccion} d ON d.ilc_predio_direccion = p.t_id
+                LEFT JOIN {basket} dbd ON dbd.t_id = d.t_basket
+                LEFT JOIN {dataset} ddd ON ddd.t_id = dbd.dataset AND ddd.datasetname = %s
+                LEFT JOIN {datos} x ON x.ilc_predio = p.t_id
                     LEFT JOIN {basket} dbx ON dbx.t_id = x.t_basket
                     LEFT JOIN {dataset} ddx ON ddx.t_id = dbx.dataset AND ddx.datasetname = %s
                     GROUP BY p.t_id, p.numero_predial_nacional, p.t_ili_tid
@@ -2247,30 +2347,30 @@ def _validate_dataset_predio_aux_multiplicity(schema: str, datasetname: str) -> 
                 FROM conteo
                 WHERE direccion_count <> 1 OR datos_count <> 1
                 ORDER BY numero_predial_nacional NULLS LAST, t_id
-                LIMIT 20
-                """,
-                (datasetname, datasetname, datasetname),
-            )
-            sample_rows = cur.fetchall() or []
-            sample = "; ".join(
-                [
-                    f"t_id={_row_get(r,0,'NULL')}, npn={_row_get(r,1,'NULL') or 'NULL'}, tid={_row_get(r,2,'NULL') or 'NULL'}, direccion={_row_get(r,3,'NULL')}, datos={_row_get(r,4,'NULL')}"
-                    for r in sample_rows
-                    if r
-                ]
-            )
-            raise ExportServiceError(
-                status_code=409,
-                detail=(
-                    f"Dataset '{datasetname}' invalido para exportar: "
-                    f"cardinalidad de ILC_Predio fuera de regla "
-                    f"(direccion!=1: {direccion_invalida}, datos_adicionales!=1: {datos_invalido}). "
-                    f"Muestra: {sample if sample else 'sin muestra'}."
-                ),
-            )
+            LIMIT 20
+            """,
+            (datasetname, datasetname, datasetname),
+        )
+        sample_rows = cur.fetchall() or []
+        sample = "; ".join(
+            [
+                f"t_id={_row_get(r,0,'NULL')}, npn={_row_get(r,1,'NULL') or 'NULL'}, tid={_row_get(r,2,'NULL') or 'NULL'}, direccion={_row_get(r,3,'NULL')}, datos={_row_get(r,4,'NULL')}"
+                for r in sample_rows
+                if r
+            ]
+        )
+        raise ExportServiceError(
+            status_code=409,
+            detail=(
+                f"Dataset '{datasetname}' invalido para exportar: "
+                f"cardinalidad de ILC_Predio fuera de regla "
+                f"(direccion!=1: {direccion_invalida}, datos_adicionales!=1: {datos_invalido}). "
+                f"Muestra: {sample if sample else 'sin muestra'}."
+            ),
+        )
 
 
-def _sanitize_dataset_predio_aux_cardinality(schema: str, datasetname: str) -> None:
+def _sanitize_dataset_predio_aux_cardinality(conn, schema: str, datasetname: str) -> None:
     if not datasetname:
         return
 
@@ -2281,46 +2381,45 @@ def _sanitize_dataset_predio_aux_cardinality(schema: str, datasetname: str) -> N
         "t_ili2db_basket",
         "t_ili2db_dataset",
     }
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SET LOCAL lock_timeout = '3s'")
-            cur.execute("SET LOCAL statement_timeout = '180s'")
-            cur.execute(
-                """
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = %s
-                  AND table_name = ANY(%s)
-                """,
-                (schema, list(required)),
-            )
-            available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
-            if not required.issubset(available):
-                return
+    with conn.cursor() as cur:
+        cur.execute("SET LOCAL lock_timeout = '3s'")
+        cur.execute("SET LOCAL statement_timeout = '180s'")
+        cur.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+              AND table_name = ANY(%s)
+            """,
+            (schema, list(required)),
+        )
+        available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
+        if not required.issubset(available):
+            return
 
-            predio = _qualify(schema, "ilc_predio")
-            direccion = _qualify(schema, "extdireccion")
-            datos = _qualify(schema, "ilc_datosadicionaleslevantamientocatastral")
-            basket = _qualify(schema, "t_ili2db_basket")
-            dataset = _qualify(schema, "t_ili2db_dataset")
+        predio = _qualify(schema, "ilc_predio")
+        direccion = _qualify(schema, "extdireccion")
+        datos = _qualify(schema, "ilc_datosadicionaleslevantamientocatastral")
+        basket = _qualify(schema, "t_ili2db_basket")
+        dataset = _qualify(schema, "t_ili2db_dataset")
 
-            cur.execute(
-                f"""
-                WITH predios AS (
-                    SELECT p.t_id
-                    FROM {predio} p
-                    JOIN {basket} b ON b.t_id = p.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                ranked AS (
-                    SELECT
-                        d.t_id,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY d.ilc_predio_direccion
-                            ORDER BY d.t_id
-                        ) AS rn
-                    FROM {direccion} d
+        cur.execute(
+            f"""
+            WITH predios AS (
+                SELECT p.t_id
+                FROM {predio} p
+                JOIN {basket} b ON b.t_id = p.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            ranked AS (
+                SELECT
+                    d.t_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY d.ilc_predio_direccion
+                        ORDER BY d.t_id
+                    ) AS rn
+                FROM {direccion} d
                     JOIN predios p ON p.t_id = d.ilc_predio_direccion
                     JOIN {basket} b ON b.t_id = d.t_basket
                     JOIN {dataset} ds ON ds.t_id = b.dataset
@@ -2334,40 +2433,38 @@ def _sanitize_dataset_predio_aux_cardinality(schema: str, datasetname: str) -> N
                 (datasetname, datasetname),
             )
 
-            cur.execute(
-                f"""
-                WITH predios AS (
-                    SELECT p.t_id
-                    FROM {predio} p
-                    JOIN {basket} b ON b.t_id = p.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                ranked AS (
-                    SELECT
-                        x.t_id,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY x.ilc_predio
-                            ORDER BY x.t_id
-                        ) AS rn
-                    FROM {datos} x
-                    JOIN predios p ON p.t_id = x.ilc_predio
-                    JOIN {basket} b ON b.t_id = x.t_basket
-                    JOIN {dataset} ds ON ds.t_id = b.dataset
-                    WHERE ds.datasetname = %s
-                )
-                DELETE FROM {datos} x
-                USING ranked r
-                WHERE x.t_id = r.t_id
-                  AND r.rn > 1
-                """,
-                (datasetname, datasetname),
+        cur.execute(
+            f"""
+            WITH predios AS (
+                SELECT p.t_id
+                FROM {predio} p
+                JOIN {basket} b ON b.t_id = p.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            ranked AS (
+                SELECT
+                    x.t_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY x.ilc_predio
+                        ORDER BY x.t_id
+                    ) AS rn
+                FROM {datos} x
+                JOIN predios p ON p.t_id = x.ilc_predio
+                JOIN {basket} b ON b.t_id = x.t_basket
+                JOIN {dataset} ds ON ds.t_id = b.dataset
+                WHERE ds.datasetname = %s
             )
+            DELETE FROM {datos} x
+            USING ranked r
+            WHERE x.t_id = r.t_id
+              AND r.rn > 1
+            """,
+            (datasetname, datasetname),
+        )
 
-        conn.commit()
 
-
-def _sanitize_dataset_agrup_miembros_cardinality(schema: str, datasetname: str) -> None:
+def _sanitize_dataset_agrup_miembros_cardinality(conn, schema: str, datasetname: str) -> None:
     if not datasetname:
         return
 
@@ -2378,47 +2475,46 @@ def _sanitize_dataset_agrup_miembros_cardinality(schema: str, datasetname: str) 
         "t_ili2db_basket",
         "t_ili2db_dataset",
     }
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SET LOCAL lock_timeout = '3s'")
-            cur.execute("SET LOCAL statement_timeout = '600s'")
-            cur.execute(
-                """
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = %s
-                  AND table_name = ANY(%s)
-                """,
-                (schema, list(required)),
-            )
-            available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
-            if not required.issubset(available):
-                return
+    with conn.cursor() as cur:
+        cur.execute("SET LOCAL lock_timeout = '3s'")
+        cur.execute("SET LOCAL statement_timeout = '600s'")
+        cur.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+              AND table_name = ANY(%s)
+            """,
+            (schema, list(required)),
+        )
+        available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
+        if not required.issubset(available):
+            return
 
-            agrup = _qualify(schema, "cr_agrupacioninteresados")
-            miembros = _qualify(schema, "col_miembros")
-            rrri = _qualify(schema, "col_rrrinteresado")
-            basket = _qualify(schema, "t_ili2db_basket")
-            dataset = _qualify(schema, "t_ili2db_dataset")
+        agrup = _qualify(schema, "cr_agrupacioninteresados")
+        miembros = _qualify(schema, "col_miembros")
+        rrri = _qualify(schema, "col_rrrinteresado")
+        basket = _qualify(schema, "t_ili2db_basket")
+        dataset = _qualify(schema, "t_ili2db_dataset")
 
-            # 1) Collapse simple groups (exactly one direct interesado) into direct rrri.
-            cur.execute(
-                f"""
-                WITH grupos AS (
-                    SELECT g.t_id
-                    FROM {agrup} g
-                    JOIN {basket} b ON b.t_id = g.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                conteo AS (
-                    SELECT
-                        g.t_id,
-                        COUNT(m.*)::int AS miembros_count,
-                        COUNT(*) FILTER (WHERE m.interesado_ilc_interesado IS NOT NULL)::int AS inter_count,
-                        COUNT(*) FILTER (WHERE m.interesado_cr_agrupacioninteresados IS NOT NULL)::int AS subagr_count,
-                        MIN(m.interesado_ilc_interesado) FILTER (WHERE m.interesado_ilc_interesado IS NOT NULL) AS solo_interesado
-                    FROM grupos g
+        # 1) Collapse simple groups (exactly one direct interesado) into direct rrri.
+        cur.execute(
+            f"""
+            WITH grupos AS (
+                SELECT g.t_id
+                FROM {agrup} g
+                JOIN {basket} b ON b.t_id = g.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            conteo AS (
+                SELECT
+                    g.t_id,
+                    COUNT(m.*)::int AS miembros_count,
+                    COUNT(*) FILTER (WHERE m.interesado_ilc_interesado IS NOT NULL)::int AS inter_count,
+                    COUNT(*) FILTER (WHERE m.interesado_cr_agrupacioninteresados IS NOT NULL)::int AS subagr_count,
+                    MIN(m.interesado_ilc_interesado) FILTER (WHERE m.interesado_ilc_interesado IS NOT NULL) AS solo_interesado
+                FROM grupos g
                     LEFT JOIN {miembros} m ON m.agrupacion = g.t_id
                     GROUP BY g.t_id
                 ),
@@ -2451,40 +2547,40 @@ def _sanitize_dataset_agrup_miembros_cardinality(schema: str, datasetname: str) 
                 (datasetname, datasetname),
             )
 
-            # 2) Drop rrri rows still pointing to groups with <2 members.
-            cur.execute(
-                f"""
-                WITH grupos AS (
-                    SELECT g.t_id
-                    FROM {agrup} g
-                    JOIN {basket} b ON b.t_id = g.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                invalid AS (
-                    SELECT g.t_id
-                    FROM grupos g
-                    LEFT JOIN {miembros} m ON m.agrupacion = g.t_id
-                    GROUP BY g.t_id
-                    HAVING COUNT(m.*) < 2
-                )
-                DELETE FROM {rrri} ri
-                USING invalid i, {basket} b, {dataset} d
-                WHERE ri.t_basket = b.t_id
-                  AND b.dataset = d.t_id
-                  AND d.datasetname = %s
-                  AND ri.interesado_cr_agrupacioninteresados = i.t_id
-                """,
-                (datasetname, datasetname),
+        # 2) Drop rrri rows still pointing to groups with <2 members.
+        cur.execute(
+            f"""
+            WITH grupos AS (
+                SELECT g.t_id
+                FROM {agrup} g
+                JOIN {basket} b ON b.t_id = g.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            invalid AS (
+                SELECT g.t_id
+                FROM grupos g
+                LEFT JOIN {miembros} m ON m.agrupacion = g.t_id
+                GROUP BY g.t_id
+                HAVING COUNT(m.*) < 2
             )
+            DELETE FROM {rrri} ri
+            USING invalid i, {basket} b, {dataset} d
+            WHERE ri.t_basket = b.t_id
+              AND b.dataset = d.t_id
+              AND d.datasetname = %s
+              AND ri.interesado_cr_agrupacioninteresados = i.t_id
+            """,
+            (datasetname, datasetname),
+        )
 
-            # 3) Remove orphan/invalid members and invalid groups themselves.
-            cur.execute(
-                f"""
-                WITH grupos AS (
-                    SELECT g.t_id
-                    FROM {agrup} g
-                    JOIN {basket} b ON b.t_id = g.t_basket
+        # 3) Remove orphan/invalid members and invalid groups themselves.
+        cur.execute(
+            f"""
+            WITH grupos AS (
+                SELECT g.t_id
+                FROM {agrup} g
+                JOIN {basket} b ON b.t_id = g.t_basket
                     JOIN {dataset} d ON d.t_id = b.dataset
                     WHERE d.datasetname = %s
                 ),
@@ -2502,46 +2598,45 @@ def _sanitize_dataset_agrup_miembros_cardinality(schema: str, datasetname: str) 
                 (datasetname,),
             )
 
-            cur.execute(
-                f"""
-                WITH grupos AS (
-                    SELECT g.t_id
-                    FROM {agrup} g
-                    JOIN {basket} b ON b.t_id = g.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                invalid AS (
-                    SELECT g.t_id
-                    FROM grupos g
-                    LEFT JOIN {miembros} m ON m.agrupacion = g.t_id
-                    GROUP BY g.t_id
-                    HAVING COUNT(m.*) < 2
-                )
-                DELETE FROM {agrup} g
-                USING invalid i
-                WHERE g.t_id = i.t_id
-                """,
-                (datasetname,),
+        cur.execute(
+            f"""
+            WITH grupos AS (
+                SELECT g.t_id
+                FROM {agrup} g
+                JOIN {basket} b ON b.t_id = g.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            invalid AS (
+                SELECT g.t_id
+                FROM grupos g
+                LEFT JOIN {miembros} m ON m.agrupacion = g.t_id
+                GROUP BY g.t_id
+                HAVING COUNT(m.*) < 2
             )
+            DELETE FROM {agrup} g
+            USING invalid i
+            WHERE g.t_id = i.t_id
+            """,
+            (datasetname,),
+        )
 
-            # 4) Clean any rrri left without interested after collapsing/deletion.
-            cur.execute(
-                f"""
-                DELETE FROM {rrri} ri
-                USING {basket} b, {dataset} d
-                WHERE ri.t_basket = b.t_id
-                  AND b.dataset = d.t_id
-                  AND d.datasetname = %s
-                  AND ri.interesado_ilc_interesado IS NULL
-                  AND ri.interesado_cr_agrupacioninteresados IS NULL
-                """,
-                (datasetname,),
-            )
-        conn.commit()
+        # 4) Clean any rrri left without interested after collapsing/deletion.
+        cur.execute(
+            f"""
+            DELETE FROM {rrri} ri
+            USING {basket} b, {dataset} d
+            WHERE ri.t_basket = b.t_id
+              AND b.dataset = d.t_id
+              AND d.datasetname = %s
+              AND ri.interesado_ilc_interesado IS NULL
+              AND ri.interesado_cr_agrupacioninteresados IS NULL
+            """,
+            (datasetname,),
+        )
 
 
-def _validate_dataset_agrup_miembros_multiplicity(schema: str, datasetname: str) -> None:
+def _validate_dataset_agrup_miembros_multiplicity(conn, schema: str, datasetname: str) -> None:
     if not datasetname:
         return
 
@@ -2551,39 +2646,38 @@ def _validate_dataset_agrup_miembros_multiplicity(schema: str, datasetname: str)
         "t_ili2db_basket",
         "t_ili2db_dataset",
     }
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = %s
-                  AND table_name = ANY(%s)
-                """,
-                (schema, list(required)),
-            )
-            available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
-            if not required.issubset(available):
-                return
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+              AND table_name = ANY(%s)
+            """,
+            (schema, list(required)),
+        )
+        available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
+        if not required.issubset(available):
+            return
 
-            agrup = _qualify(schema, "cr_agrupacioninteresados")
-            miembros = _qualify(schema, "col_miembros")
-            basket = _qualify(schema, "t_ili2db_basket")
-            dataset = _qualify(schema, "t_ili2db_dataset")
+        agrup = _qualify(schema, "cr_agrupacioninteresados")
+        miembros = _qualify(schema, "col_miembros")
+        basket = _qualify(schema, "t_ili2db_basket")
+        dataset = _qualify(schema, "t_ili2db_dataset")
 
-            cur.execute(
-                f"""
-                WITH grupos AS (
-                    SELECT g.t_id
-                    FROM {agrup} g
-                    JOIN {basket} b ON b.t_id = g.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                conteo AS (
-                    SELECT g.t_id, COUNT(m.*)::int AS miembros_count
-                    FROM grupos g
-                    LEFT JOIN {miembros} m ON m.agrupacion = g.t_id
+        cur.execute(
+            f"""
+            WITH grupos AS (
+                SELECT g.t_id
+                FROM {agrup} g
+                JOIN {basket} b ON b.t_id = g.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            conteo AS (
+                SELECT g.t_id, COUNT(m.*)::int AS miembros_count
+                FROM grupos g
+                LEFT JOIN {miembros} m ON m.agrupacion = g.t_id
                     GROUP BY g.t_id
                 )
                 SELECT COUNT(*)
@@ -2592,49 +2686,50 @@ def _validate_dataset_agrup_miembros_multiplicity(schema: str, datasetname: str)
                 """,
                 (datasetname,),
             )
-            invalidos = int((cur.fetchone() or [0])[0] or 0)
-            if invalidos <= 0:
-                return
+        invalidos = int((cur.fetchone() or [0])[0] or 0)
+        if invalidos <= 0:
+            return
 
-            cur.execute(
-                f"""
-                WITH grupos AS (
-                    SELECT g.t_id
-                    FROM {agrup} g
-                    JOIN {basket} b ON b.t_id = g.t_basket
-                    JOIN {dataset} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                ),
-                conteo AS (
-                    SELECT g.t_id, COUNT(m.*)::int AS miembros_count
-                    FROM grupos g
-                    LEFT JOIN {miembros} m ON m.agrupacion = g.t_id
-                    GROUP BY g.t_id
-                )
-                SELECT t_id, miembros_count
-                FROM conteo
-                WHERE miembros_count < 2
-                ORDER BY t_id
-                LIMIT 20
-                """,
-                (datasetname,),
+        cur.execute(
+            f"""
+            WITH grupos AS (
+                SELECT g.t_id
+                FROM {agrup} g
+                JOIN {basket} b ON b.t_id = g.t_basket
+                JOIN {dataset} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+            ),
+            conteo AS (
+                SELECT g.t_id, COUNT(m.*)::int AS miembros_count
+                FROM grupos g
+                LEFT JOIN {miembros} m ON m.agrupacion = g.t_id
+                GROUP BY g.t_id
             )
-            sample_rows = cur.fetchall() or []
-            sample = ", ".join(
-                [f"agrup={_row_get(r,0,'NULL')} miembros={_row_get(r,1,'NULL')}" for r in sample_rows if r]
-            )
-            raise ExportServiceError(
-                status_code=409,
-                detail=(
-                    f"Dataset '{datasetname}' invalido para exportar: "
-                    f"{invalidos} agrupacion(es) con miembros insuficientes (minimo 2). "
-                    f"Muestra: {sample if sample else 'sin muestra'}."
-                ),
-            )
+            SELECT t_id, miembros_count
+            FROM conteo
+            WHERE miembros_count < 2
+            ORDER BY t_id
+            LIMIT 20
+            """,
+            (datasetname,),
+        )
+        sample_rows = cur.fetchall() or []
+        sample = ", ".join(
+            [f"agrup={_row_get(r,0,'NULL')} miembros={_row_get(r,1,'NULL')}" for r in sample_rows if r]
+        )
+        raise ExportServiceError(
+            status_code=409,
+            detail=(
+                f"Dataset '{datasetname}' invalido para exportar: "
+                f"{invalidos} agrupacion(es) con miembros insuficientes (minimo 2). "
+                f"Muestra: {sample if sample else 'sin muestra'}."
+            ),
+        )
 
 
 
 def _augment_export_basket_ids_with_references(
+    conn,
     schema: str,
     datasetname: str,
     basket_ids: List[int],
@@ -2662,46 +2757,45 @@ def _augment_export_basket_ids_with_references(
         "arb_derechointeresadofuente",
     }
     tracked_tables = sorted(required | optional)
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT table_name
-                FROM information_schema.tables
-                WHERE table_schema = %s
-                  AND table_name = ANY(%s)
-                """,
-                (schema, tracked_tables),
-            )
-            available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
-            if not required.issubset(available):
-                return sorted(set(base_ids))
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+              AND table_name = ANY(%s)
+            """,
+            (schema, tracked_tables),
+        )
+        available = {str(r[0]) for r in (cur.fetchall() or []) if r and r[0]}
+        if not required.issubset(available):
+            return sorted(set(base_ids))
 
-            basket = _qualify(schema, "t_ili2db_basket")
-            dataset = _qualify(schema, "t_ili2db_dataset")
-            extra_ids: set[int] = set()
+        basket = _qualify(schema, "t_ili2db_basket")
+        dataset = _qualify(schema, "t_ili2db_dataset")
+        extra_ids: set[int] = set()
 
-            def _add_ids(query: str):
-                cur.execute(query, (datasetname,))
-                for row in cur.fetchall() or []:
-                    if row and row[0] is not None:
-                        extra_ids.add(int(row[0]))
+        def _add_ids(query: str):
+            cur.execute(query, (datasetname,))
+            for row in cur.fetchall() or []:
+                if row and row[0] is not None:
+                    extra_ids.add(int(row[0]))
 
-            if {"ilc_predio", "extdireccion"}.issubset(available):
-                predio = _qualify(schema, "ilc_predio")
-                direccion = _qualify(schema, "extdireccion")
-                _add_ids(
-                    f"""
-                    WITH predios AS (
-                        SELECT p.t_id
-                        FROM {predio} p
-                        JOIN {basket} b ON b.t_id = p.t_basket
-                        JOIN {dataset} d ON d.t_id = b.dataset
-                        WHERE d.datasetname = %s
-                    )
-                    SELECT DISTINCT d.t_basket
-                    FROM {direccion} d
-                    JOIN predios p ON p.t_id = d.ilc_predio_direccion
+        if {"ilc_predio", "extdireccion"}.issubset(available):
+            predio = _qualify(schema, "ilc_predio")
+            direccion = _qualify(schema, "extdireccion")
+            _add_ids(
+                f"""
+                WITH predios AS (
+                    SELECT p.t_id
+                    FROM {predio} p
+                    JOIN {basket} b ON b.t_id = p.t_basket
+                    JOIN {dataset} d ON d.t_id = b.dataset
+                    WHERE d.datasetname = %s
+                )
+                SELECT DISTINCT d.t_basket
+                FROM {direccion} d
+                JOIN predios p ON p.t_id = d.ilc_predio_direccion
                     WHERE d.t_basket IS NOT NULL
                     """
                 )
@@ -2992,76 +3086,73 @@ def _augment_export_basket_ids_with_references(
             ]
             return allowed
 
-def _ensure_basket_tili_tids(schema: str, basket_ids: List[int]) -> None:
+def _ensure_basket_tili_tids(conn, schema: str, basket_ids: List[int]) -> None:
     if not basket_ids:
         return
     basket_table = _qualify(schema, "t_ili2db_basket")
-    with db_conn() as conn:
-        with conn.cursor() as cur:
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT t_id, NULLIF(TRIM(t_ili_tid), '') AS t_ili_tid
+            FROM {basket_table}
+            WHERE t_id = ANY(%s)
+            ORDER BY t_id
+            """,
+            (basket_ids,),
+        )
+        rows = cur.fetchall() or []
+        present_ids = {
+            int(_row_get(row, 0))
+            for row in rows
+            if _row_get(row, 0, None) is not None
+        }
+        missing_ids = [
+            int(_row_get(row, 0))
+            for row in rows
+            if _row_get(row, 0, None) is not None and not _row_get(row, 1, None)
+        ]
+
+        not_found = sorted(set(int(bid) for bid in basket_ids) - present_ids)
+        if not_found:
+            raise ExportServiceError(
+                status_code=400,
+                detail=f"No existen baskets {not_found} en {schema}.",
+            )
+
+        if not missing_ids:
+            return
+
+        for basket_id in missing_ids:
             cur.execute(
                 f"""
-                SELECT t_id, NULLIF(TRIM(t_ili_tid), '') AS t_ili_tid
-                FROM {basket_table}
-                WHERE t_id = ANY(%s)
-                ORDER BY t_id
+                UPDATE {basket_table}
+                SET t_ili_tid = %s
+                WHERE t_id = %s
+                  AND (t_ili_tid IS NULL OR TRIM(t_ili_tid) = '')
                 """,
-                (basket_ids,),
+                (str(uuid.uuid4()), basket_id),
             )
-            rows = cur.fetchall() or []
-            present_ids = {
-                int(_row_get(row, 0))
-                for row in rows
-                if _row_get(row, 0, None) is not None
-            }
-            missing_ids = [
-                int(_row_get(row, 0))
-                for row in rows
-                if _row_get(row, 0, None) is not None and not _row_get(row, 1, None)
-            ]
-
-            not_found = sorted(set(int(bid) for bid in basket_ids) - present_ids)
-            if not_found:
-                raise ExportServiceError(
-                    status_code=400,
-                    detail=f"No existen baskets {not_found} en {schema}.",
-                )
-
-            if not missing_ids:
-                return
-
-            for basket_id in missing_ids:
-                cur.execute(
-                    f"""
-                    UPDATE {basket_table}
-                    SET t_ili_tid = %s
-                    WHERE t_id = %s
-                      AND (t_ili_tid IS NULL OR TRIM(t_ili_tid) = '')
-                    """,
-                    (str(uuid.uuid4()), basket_id),
-                )
-        conn.commit()
 
 
-def _fetch_basket_bids(schema: str, basket_ids: List[int]) -> List[str]:
+def _fetch_basket_bids(conn, schema: str, basket_ids: List[int]) -> List[str]:
     if not basket_ids:
         return []
     basket_table = _qualify(schema, "t_ili2db_basket")
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT NULLIF(TRIM(t_ili_tid), '') AS basket_bid
-                FROM {basket_table}
-                WHERE t_id = ANY(%s)
-                ORDER BY t_id
-                """,
-                (basket_ids,),
-            )
-            bids = [
-                str(row[0]).strip()
-                for row in (cur.fetchall() or [])
-                if row and row[0] is not None and str(row[0]).strip()
-            ]
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT NULLIF(TRIM(t_ili_tid), '') AS basket_bid
+            FROM {basket_table}
+            WHERE t_id = ANY(%s)
+            ORDER BY t_id
+            """,
+            (basket_ids,),
+        )
+        bids = [
+            str(row[0]).strip()
+            for row in (cur.fetchall() or [])
+            if row and row[0] is not None and str(row[0]).strip()
+        ]
     if len(bids) != len(basket_ids):
         raise ExportServiceError(
             status_code=500,
@@ -3071,15 +3162,16 @@ def _fetch_basket_bids(schema: str, basket_ids: List[int]) -> List[str]:
 
 
 def ili2pg_export(
+    tenant: TenantContext,
     schema: str,
     basket_ids: List[str],
     xtf_path: str,
     *,
     ili2pg_cmd: str = "",
-    timeout_sec: int = ILI2PG_TIMEOUT_SEC,
+    timeout_sec: int = 600,
 ):
-    db = db_env()
-    model_dir = _resolve_model_dir()
+    db = _tenant_tool_db_params(tenant)
+    safe_schema = _validate_pg_identifier(schema, "schema")
     basket_list = [
         str(b).strip()
         for b in (basket_ids or [])
@@ -3088,33 +3180,29 @@ def ili2pg_export(
     if not basket_list:
         raise ExportServiceError(status_code=400, detail="No se definieron baskets para exportar.")
     baskets_arg = ";".join(basket_list)
-    
-    cmd_args = [
-        "ili2pg",
-        "--export",
-        "--dbhost",
-        db["host"],
-        "--dbport",
-        db["port"],
-        "--dbusr",
-        db["user"],
-        "--dbpwd",
-        db["password"],
-        "--dbdatabase",
-        db["dbname"],
-        "--dbschema",
-        schema,
-        "--baskets",
-        baskets_arg,
-    ]
-    if model_dir:
-        cmd_args.extend(["--modeldir", model_dir])
-    cmd_args.append(xtf_path)
-    
     run_ili2pg(
-        cmd_args,
+        [
+            "ili2pg",
+            "--export",
+            "--dbhost",
+            db["host"],
+            "--dbport",
+            db["port"],
+            "--dbusr",
+            db["user"],
+            "--dbpwd",
+            db["password"],
+            "--dbdatabase",
+            db["dbname"],
+            "--dbschema",
+            safe_schema,
+            "--baskets",
+            baskets_arg,
+            xtf_path,
+        ],
         ili2pg_cmd=ili2pg_cmd,
         timeout_sec=timeout_sec,
+        db_params=db,
     )
 
 
@@ -3145,7 +3233,7 @@ def _is_lock_retryable_export_error(detail: str) -> bool:
     )
 
 
-def _run_rehydrate_derecho_with_retry(schema: str, datasetname: str) -> None:
+def _run_rehydrate_derecho_with_retry(conn, schema: str, datasetname: str) -> None:
     retries = _safe_int_env("ASIG_REHYDRATE_LOCK_RETRIES", 3, minimum=0)
     backoff_ms = _safe_int_env("ASIG_REHYDRATE_LOCK_BACKOFF_MS", 1200, minimum=200)
     attempt = 0
@@ -3155,6 +3243,7 @@ def _run_rehydrate_derecho_with_retry(schema: str, datasetname: str) -> None:
             _run_stage(
                 "rehydrate_dataset_derecho_links_from_source",
                 _rehydrate_dataset_derecho_links_from_source,
+                conn,
                 schema,
                 datasetname,
             )
@@ -3167,28 +3256,42 @@ def _run_rehydrate_derecho_with_retry(schema: str, datasetname: str) -> None:
             raise
 
 
-def _run_validate_derecho_with_retry(schema: str, datasetname: str) -> None:
+def _run_validate_derecho_with_retry(conn, schema: str, datasetname: str) -> None:
     try:
-        _run_stage("validate_dataset_derecho_multiplicity", _validate_dataset_derecho_multiplicity, schema, datasetname)
+        _run_stage(
+            "validate_dataset_derecho_multiplicity",
+            _validate_dataset_derecho_multiplicity,
+            conn,
+            schema,
+            datasetname,
+        )
     except ExportServiceError as exc:
         detail = exc.detail if isinstance(exc.detail, str) else ""
         if not _is_derecho_missing_links_error(detail):
             raise
-        _run_rehydrate_derecho_with_retry(schema, datasetname)
-        _run_stage("sanitize_dataset_derecho_links_retry", _sanitize_dataset_derecho_links, schema, datasetname)
+        _run_rehydrate_derecho_with_retry(conn, schema, datasetname)
+        _run_stage(
+            "sanitize_dataset_derecho_links_retry",
+            _sanitize_dataset_derecho_links,
+            conn,
+            schema,
+            datasetname,
+        )
         _run_stage(
             "validate_dataset_derecho_multiplicity_retry",
             _validate_dataset_derecho_multiplicity,
+            conn,
             schema,
             datasetname,
         )
 
 
-def _run_validate_agrup_with_retry(schema: str, datasetname: str) -> None:
+def _run_validate_agrup_with_retry(conn, schema: str, datasetname: str) -> None:
     try:
         _run_stage(
             "validate_dataset_agrup_miembros_multiplicity",
             _validate_dataset_agrup_miembros_multiplicity,
+            conn,
             schema,
             datasetname,
         )
@@ -3196,68 +3299,95 @@ def _run_validate_agrup_with_retry(schema: str, datasetname: str) -> None:
         detail = exc.detail if isinstance(exc.detail, str) else ""
         if not _is_agrup_multiplicity_error(detail):
             raise
-        _run_rehydrate_derecho_with_retry(schema, datasetname)
+        _run_rehydrate_derecho_with_retry(conn, schema, datasetname)
         _run_stage(
             "validate_dataset_agrup_miembros_multiplicity_retry",
             _validate_dataset_agrup_miembros_multiplicity,
+            conn,
             schema,
             datasetname,
         )
 
 
-def _prepare_export_dataset_legacy_disabled(schema: str, datasetname: str) -> None:
-    _run_stage("ensure_dataset_object_tili_tids", _ensure_dataset_object_tili_tids, schema, datasetname)
-    _run_stage("sanitize_dataset_derecho_links_pre", _sanitize_dataset_derecho_links, schema, datasetname)
-    _run_rehydrate_derecho_with_retry(schema, datasetname)
-    _run_stage("sanitize_dataset_derecho_links_post", _sanitize_dataset_derecho_links, schema, datasetname)
+def _prepare_export_dataset_legacy_disabled(
+    conn,
+    tenant: TenantContext,
+    schema: str,
+    datasetname: str,
+) -> None:
+    _run_stage("ensure_dataset_object_tili_tids", _ensure_dataset_object_tili_tids, conn, schema, datasetname)
+    _run_stage(
+        "sanitize_dataset_derecho_links_pre",
+        _sanitize_dataset_derecho_links,
+        conn,
+        schema,
+        datasetname,
+    )
+    _run_rehydrate_derecho_with_retry(conn, schema, datasetname)
+    _run_stage(
+        "sanitize_dataset_derecho_links_post",
+        _sanitize_dataset_derecho_links,
+        conn,
+        schema,
+        datasetname,
+    )
     _run_stage(
         "sanitize_dataset_predio_core_from_source",
         _sanitize_dataset_predio_core_from_source,
+        conn,
+        tenant,
         schema,
         datasetname,
     )
     _run_stage(
         "sanitize_dataset_predio_aux_cardinality",
         _sanitize_dataset_predio_aux_cardinality,
+        conn,
         schema,
         datasetname,
     )
     _run_stage(
         "sanitize_dataset_agrup_miembros_cardinality",
         _sanitize_dataset_agrup_miembros_cardinality,
+        conn,
         schema,
         datasetname,
     )
-    _run_validate_derecho_with_retry(schema, datasetname)
+    _run_validate_derecho_with_retry(conn, schema, datasetname)
     _run_stage(
         "validate_dataset_predio_rrr_multiplicity",
         _validate_dataset_predio_rrr_multiplicity,
+        conn,
         schema,
         datasetname,
     )
     _run_stage(
         "validate_dataset_predio_aux_multiplicity",
         _validate_dataset_predio_aux_multiplicity,
+        conn,
         schema,
         datasetname,
     )
     _run_stage(
         "validate_dataset_agrup_miembros_multiplicity",
         _validate_dataset_agrup_miembros_multiplicity,
+        conn,
         schema,
         datasetname,
     )
-    _run_stage("validate_dataset_cuc_integrity", _validate_dataset_cuc_integrity, schema, datasetname)
+    _run_stage("validate_dataset_cuc_integrity", _validate_dataset_cuc_integrity, conn, schema, datasetname)
 
 
-def _prepare_export_dataset_arb(schema: str, datasetname: str) -> None:
+def _prepare_export_dataset_arb(conn, schema: str, datasetname: str) -> None:
     # Arbimaps no usa la rehidratacion/saneamiento del modelo ILC.
     # Solo asegura identificadores de exportacion y deja la consistencia
     # estructural a cargo del workspace Arbimaps.
-    _run_stage("ensure_dataset_object_tili_tids", _ensure_dataset_object_tili_tids, schema, datasetname)
+    _run_stage("ensure_dataset_object_tili_tids", _ensure_dataset_object_tili_tids, conn, schema, datasetname)
 
 
 def _export_dataset_baskets_with_fallback(
+    conn,
+    tenant: TenantContext,
     schema: str,
     datasetname: str,
     xtf_path: str,
@@ -3265,16 +3395,17 @@ def _export_dataset_baskets_with_fallback(
     ili2pg_cmd: str,
     timeout_sec: int,
 ) -> None:
-    basket_ids = _run_stage("fetch_dataset_basket_ids", _fetch_dataset_basket_ids, schema, datasetname)
+    basket_ids = _run_stage("fetch_dataset_basket_ids", _fetch_dataset_basket_ids, conn, schema, datasetname)
     basket_ids = _run_stage(
         "augment_export_basket_ids_with_references",
         _augment_export_basket_ids_with_references,
+        conn,
         schema,
         datasetname,
         basket_ids,
     )
-    _run_stage("ensure_basket_tili_tids", _ensure_basket_tili_tids, schema, basket_ids)
-    basket_bids = _run_stage("fetch_basket_bids", _fetch_basket_bids, schema, basket_ids)
+    _run_stage("ensure_basket_tili_tids", _ensure_basket_tili_tids, conn, schema, basket_ids)
+    basket_bids = _run_stage("fetch_basket_bids", _fetch_basket_bids, conn, schema, basket_ids)
     if not basket_ids:
         raise ExportServiceError(
             status_code=400,
@@ -3283,6 +3414,7 @@ def _export_dataset_baskets_with_fallback(
     _run_stage(
         "ili2pg_export_baskets",
         ili2pg_export,
+        tenant=tenant,
         schema=schema,
         basket_ids=basket_bids,
         xtf_path=xtf_path,
@@ -3298,13 +3430,21 @@ def _prepare_assignment_export_legacy_disabled(schema: str, datasetname: str, *,
     )
 
 
-def _prepare_assignment_export_arb(schema: str, datasetname: str, *, apply_dataset_sanitizers: bool) -> None:
+def _prepare_assignment_export_arb(
+    conn,
+    schema: str,
+    datasetname: str,
+    *,
+    apply_dataset_sanitizers: bool,
+) -> None:
     # Arbimaps siempre debe garantizar identificadores exportables aunque
     # no use el pipeline de saneamiento del modelo Leiva.
-    _prepare_export_dataset_arb(schema, datasetname)
+    _prepare_export_dataset_arb(conn, schema, datasetname)
 
 
 def _export_assignment_baskets_with_fallback(
+    conn,
+    tenant: TenantContext,
     schema: str,
     asignacion_id: int,
     datasetname: str,
@@ -3317,6 +3457,8 @@ def _export_assignment_baskets_with_fallback(
     basket_bids = _run_stage(
         "list_assignment_basket_bids",
         _list_assignment_basket_bids,
+        conn,
+        tenant,
         schema=schema,
         asignacion_id=asignacion_id,
         datasetname=datasetname,
@@ -3332,6 +3474,7 @@ def _export_assignment_baskets_with_fallback(
         _run_stage(
             "ili2pg_export_baskets",
             ili2pg_export,
+            tenant=tenant,
             schema=schema,
             basket_ids=basket_bids,
             xtf_path=xtf_path,
@@ -3347,6 +3490,7 @@ def _export_assignment_baskets_with_fallback(
         _run_stage(
             "ili2pg_export_dataset_fallback",
             ili2pg_export_by_dataset,
+            tenant,
             schema=schema,
             datasetname=datasetname,
             xtf_path=xtf_path,
@@ -3357,6 +3501,7 @@ def _export_assignment_baskets_with_fallback(
 
 
 def ili2pg_export_by_dataset(
+    tenant: TenantContext,
     schema: str,
     datasetname: str,
     xtf_path: str,
@@ -3366,38 +3511,37 @@ def ili2pg_export_by_dataset(
 ):
     if not datasetname:
         raise ExportServiceError(status_code=400, detail="Dataset no definido para exportar.")
-    db = db_env()
-    model_dir = _resolve_model_dir()
-    cmd_args = [
-        "ili2pg",
-        "--export",
-        "--dbhost",
-        db["host"],
-        "--dbport",
-        db["port"],
-        "--dbusr",
-        db["user"],
-        "--dbpwd",
-        db["password"],
-        "--dbdatabase",
-        db["dbname"],
-        "--dbschema",
-        schema,
-        "--dataset",
-        datasetname,
-    ]
-    if model_dir:
-        cmd_args.extend(["--modeldir", model_dir])
-    cmd_args.append(xtf_path)
-
+    db = _tenant_tool_db_params(tenant)
+    safe_schema = _validate_pg_identifier(schema, "schema")
     run_ili2pg(
-        cmd_args,
+        [
+            "ili2pg",
+            "--export",
+            "--dbhost",
+            db["host"],
+            "--dbport",
+            db["port"],
+            "--dbusr",
+            db["user"],
+            "--dbpwd",
+            db["password"],
+            "--dbdatabase",
+            db["dbname"],
+            "--dbschema",
+            safe_schema,
+            "--dataset",
+            datasetname,
+            xtf_path,
+        ],
         ili2pg_cmd=ili2pg_cmd,
         timeout_sec=timeout_sec,
+        db_params=db,
     )
 
 
 def ili2pg_export_dataset(
+    conn,
+    tenant: TenantContext,
     schema: str,
     datasetname: str,
     xtf_path: str,
@@ -3408,9 +3552,11 @@ def ili2pg_export_dataset(
     if not datasetname:
         raise ExportServiceError(status_code=400, detail="Dataset no definido para exportar.")
     try:
-        _prepare_export_dataset_arb(schema, datasetname)
+        _prepare_export_dataset_arb(conn, schema, datasetname)
 
         _export_dataset_baskets_with_fallback(
+            conn,
+            tenant,
             schema,
             datasetname,
             xtf_path,
@@ -3422,7 +3568,8 @@ def ili2pg_export_dataset(
         if not _is_missing_t_basket_error(detail):
             raise
         ili2pg_export_by_dataset(
-            schema=schema,
+            tenant,
+            schema=safe_schema,
             datasetname=datasetname,
             xtf_path=xtf_path,
             ili2pg_cmd=ili2pg_cmd,
@@ -3431,84 +3578,92 @@ def ili2pg_export_dataset(
 
 
 def _list_assignment_basket_bids(
+    conn,
+    tenant: TenantContext,
     schema: str,
     asignacion_id: int,
     datasetname: str,
     required_topics: Optional[List[str]] = None,
 ) -> List[str]:
-    normalized_schema = (schema or "").strip().strip('"').lower()
-    arb_work = (ASIG_MODEL_CONTEXT.schema_work or "").strip().strip('"').lower()
-    predio_table_name, numero_field = _resolve_assignment_predio_source(schema)
+    model_context = _assignment_model_context(tenant)
+    normalized_schema = _normalized_schema_name(schema)
+    arb_work = _normalized_schema_name(model_context.schema_work)
+    predio_table_name, numero_field = _resolve_assignment_predio_source(
+        schema,
+        model_context,
+    )
     predio_table = _qualify(schema, predio_table_name)
     basket_table = _qualify(schema, "t_ili2db_basket")
     dataset_table = _qualify(schema, "t_ili2db_dataset")
+    asignacion_predio_table = app_table(tenant, "asignacion_predio")
     basket_ids: set[int] = set()
 
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            # For assignment workspaces in b_asignaciones_arb, use all dataset baskets.
-            # Exporting only predio baskets from a pruned workspace can leave
-            # cross-topic references out. For workspaces, export the whole
-            # dataset basket set that already belongs to the assignment.
-            if normalized_schema in {arb_work}:
-                cur.execute(
-                    f"""
-                    SELECT DISTINCT b.t_id
-                    FROM {basket_table} b
-                    JOIN {dataset_table} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                    """,
-                    (datasetname,),
-                )
-                for row in cur.fetchall() or []:
-                    if row and row[0] is not None:
-                        basket_ids.add(int(row[0]))
-
-                basket_ids_list = sorted(basket_ids)
-                basket_ids_list = _augment_export_basket_ids_with_references(schema, datasetname, basket_ids_list)
-                _ensure_basket_tili_tids(schema, basket_ids_list)
-                return _fetch_basket_bids(schema, basket_ids_list)
-
+    with conn.cursor() as cur:
+        # For assignment workspaces in b_asignaciones_arb, use all dataset baskets.
+        # Exporting only predio baskets from a pruned workspace can leave
+        # cross-topic references out. For workspaces, export the whole
+        # dataset basket set that already belongs to the assignment.
+        if normalized_schema in {arb_work}:
             cur.execute(
                 f"""
                 SELECT DISTINCT b.t_id
-                FROM {predio_table} p
-                JOIN {basket_table} b ON b.t_id = p.t_basket
+                FROM {basket_table} b
                 JOIN {dataset_table} d ON d.t_id = b.dataset
-                JOIN arbimaps_app.asignacion_predio ap
-                  ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.{numero_field}::text)
-                 AND ap.asignacion_id = %s
-                 AND ap.activo IS DISTINCT FROM FALSE
                 WHERE d.datasetname = %s
                 """,
-                (asignacion_id, datasetname),
+                (datasetname,),
             )
             for row in cur.fetchall() or []:
                 if row and row[0] is not None:
                     basket_ids.add(int(row[0]))
 
-            topic_list = [topic.strip() for topic in (required_topics or []) if topic and topic.strip()]
-            if topic_list and not basket_ids:
-                cur.execute(
-                    f"""
-                    SELECT DISTINCT b.t_id
-                    FROM {basket_table} b
-                    JOIN {dataset_table} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                      AND b.topic = ANY(%s)
-                    """,
-                    (datasetname, topic_list),
-                )
-                for row in cur.fetchall() or []:
-                    if row and row[0] is not None:
-                        basket_ids.add(int(row[0]))
+            basket_ids_list = sorted(basket_ids)
+            basket_ids_list = _augment_export_basket_ids_with_references(conn, schema, datasetname, basket_ids_list)
+            _ensure_basket_tili_tids(conn, schema, basket_ids_list)
+            return _fetch_basket_bids(conn, schema, basket_ids_list)
+
+        cur.execute(
+            f"""
+            SELECT DISTINCT b.t_id
+            FROM {predio_table} p
+            JOIN {basket_table} b ON b.t_id = p.t_basket
+            JOIN {dataset_table} d ON d.t_id = b.dataset
+            JOIN {asignacion_predio_table} ap
+              ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.{numero_field}::text)
+             AND ap.asignacion_id = %s
+             AND ap.activo IS DISTINCT FROM FALSE
+            WHERE d.datasetname = %s
+            """,
+            (asignacion_id, datasetname),
+        )
+        for row in cur.fetchall() or []:
+            if row and row[0] is not None:
+                basket_ids.add(int(row[0]))
+
+        topic_list = [topic.strip() for topic in (required_topics or []) if topic and topic.strip()]
+        if topic_list and not basket_ids:
+            cur.execute(
+                f"""
+                SELECT DISTINCT b.t_id
+                FROM {basket_table} b
+                JOIN {dataset_table} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+                  AND b.topic = ANY(%s)
+                """,
+                (datasetname, topic_list),
+            )
+            for row in cur.fetchall() or []:
+                if row and row[0] is not None:
+                    basket_ids.add(int(row[0]))
 
     basket_ids_list = sorted(basket_ids)
-    _ensure_basket_tili_tids(schema, basket_ids_list)
-    return _fetch_basket_bids(schema, basket_ids_list)
+    _ensure_basket_tili_tids(conn, schema, basket_ids_list)
+    return _fetch_basket_bids(conn, schema, basket_ids_list)
 
 
 def ili2pg_export_assignment(
+    conn,
+    tenant: TenantContext,
     schema: str,
     asignacion_id: int,
     datasetname: str,
@@ -3523,13 +3678,15 @@ def ili2pg_export_assignment(
         raise ExportServiceError(status_code=400, detail="Dataset no definido para exportar.")
 
     _prepare_assignment_export_arb(
+        conn,
         schema,
         datasetname,
         apply_dataset_sanitizers=apply_dataset_sanitizers,
     )
 
-    normalized_schema = (schema or "").strip().strip('"').lower()
-    arb_work = (ASIG_MODEL_CONTEXT.schema_work or "").strip().strip('"').lower()
+    model_context = _assignment_model_context(tenant)
+    normalized_schema = _normalized_schema_name(schema)
+    arb_work = _normalized_schema_name(model_context.schema_work)
 
     if normalized_schema and normalized_schema == arb_work:
         # Cuando exportamos desde el esquema de trabajo (workspace), debemos forzar
@@ -3538,6 +3695,7 @@ def ili2pg_export_assignment(
         # exportar por --baskets (t_ili_tid) arrastraría información de otras 
         # asignaciones que compartan el mismo contenedor transitoriamente.
         ili2pg_export_by_dataset(
+            tenant,
             schema,
             datasetname,
             xtf_path,
@@ -3547,6 +3705,8 @@ def ili2pg_export_assignment(
         return "dataset_full"
 
     return _export_assignment_baskets_with_fallback(
+        conn,
+        tenant,
         schema,
         asignacion_id,
         datasetname,
@@ -3558,6 +3718,8 @@ def ili2pg_export_assignment(
 
 
 def ili2pg_import(
+    conn,
+    tenant: TenantContext,
     schema: str,
     datasetname: str,
     xtf_path: str,
@@ -3565,51 +3727,48 @@ def ili2pg_import(
     ili2pg_cmd: str = "",
     timeout_sec: int = 600,
 ):
-    from core.asignaciones import ASIG_MODEL_CONTEXT
     from services.asignaciones_workspace import _arb_disable_workspace_unique_constraints
 
-    normalized_schema = (schema or "").strip().strip('"').lower()
-    arb_work = (ASIG_MODEL_CONTEXT.schema_work or "").strip().strip('"').lower()
+    safe_schema = _validate_pg_identifier(schema, "schema")
+    normalized_schema = _normalized_schema_name(schema)
+    arb_work = _normalized_schema_name(tenant.schemas.work)
 
     if normalized_schema and normalized_schema == arb_work:
         # Al importar datos de retorno de campo (XTF) al workspace, es vital
         # desactivar las llaves únicas para evitar colisiones transaccionales
         # con otras asignaciones que se procesan en paralelo.
-        _arb_disable_workspace_unique_constraints(schema)
+        _arb_disable_workspace_unique_constraints(conn, tenant, safe_schema)
 
-    db = db_env()
-    model_dir = _resolve_model_dir()
-    cmd_args = [
-        "ili2pg",
-        "--replace",
-        "--dbhost",
-        db["host"],
-        "--dbport",
-        db["port"],
-        "--dbusr",
-        db["user"],
-        "--dbpwd",
-        db["password"],
-        "--dbdatabase",
-        db["dbname"],
-        "--dbschema",
-        schema,
-        "--dataset",
-        datasetname,
-        "--disableValidation",
-    ]
-    if model_dir:
-        cmd_args.extend(["--modeldir", model_dir])
-    cmd_args.append(xtf_path)
-
+    db = _tenant_tool_db_params(tenant)
     run_ili2pg(
-        cmd_args,
+        [
+            "ili2pg",
+            "--replace",
+            "--dbhost",
+            db["host"],
+            "--dbport",
+            db["port"],
+            "--dbusr",
+            db["user"],
+            "--dbpwd",
+            db["password"],
+            "--dbdatabase",
+            db["dbname"],
+            "--dbschema",
+            safe_schema,
+            "--dataset",
+            datasetname,
+            "--disableValidation",
+            xtf_path,
+        ],
         ili2pg_cmd=ili2pg_cmd,
         timeout_sec=timeout_sec,
+        db_params=db,
     )
 
 
 def ogr_export_gdb(
+    tenant: TenantContext,
     schema: str,
     datasetname: str,
     gdb_path: str,
@@ -3618,41 +3777,48 @@ def ogr_export_gdb(
 ) -> None:
     if not datasetname:
         raise ExportServiceError(status_code=400, detail="Dataset no definido para exportar GDB.")
-    db = db_env()
-    conn_str = (
-        f"PG:host={db['host']} port={db['port']} dbname={db['dbname']} "
-        f"user={db['user']} password={db['password']}"
+    db = _tenant_tool_db_params(tenant)
+    safe_schema = _validate_pg_identifier(schema, "schema")
+    safe_app_schema = _validate_pg_identifier(tenant.schemas.app, "tenant.schemas.app")
+    model_context = _assignment_model_context(tenant)
+    predio_table_name, numero_field = _resolve_assignment_predio_source(
+        schema,
+        model_context,
     )
-    predio_table_name, numero_field = _resolve_assignment_predio_source(schema)
+    safe_predio_table_name = _validate_pg_identifier(predio_table_name, "predio_table_name")
+    safe_numero_field = _validate_pg_identifier(numero_field, "numero_field")
+    asignacion_predio_table = f"{safe_app_schema}.asignacion_predio"
+    conn_str = _build_ogr_pg_connection_string(db)
     ds_escaped = datasetname.replace("'", "''")
     if asignacion_id is not None:
         sql = (
-            f"SELECT p.* FROM {schema}.{predio_table_name} p "
-            f"JOIN {schema}.t_ili2db_basket b ON b.t_id = p.t_basket "
-            f"JOIN {schema}.t_ili2db_dataset d ON d.t_id = b.dataset "
-            f"JOIN arbimaps_app.asignacion_predio ap "
-            f"  ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.{numero_field}::text) "
+            f"SELECT p.* FROM {safe_schema}.{safe_predio_table_name} p "
+            f"JOIN {safe_schema}.t_ili2db_basket b ON b.t_id = p.t_basket "
+            f"JOIN {safe_schema}.t_ili2db_dataset d ON d.t_id = b.dataset "
+            f"JOIN {asignacion_predio_table} ap "
+            f"  ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.{safe_numero_field}::text) "
             f" AND ap.asignacion_id = {int(asignacion_id)} "
             f" AND ap.activo IS DISTINCT FROM FALSE "
             f"WHERE d.datasetname = '{ds_escaped}'"
         )
     else:
         sql = (
-            f"SELECT p.* FROM {schema}.{predio_table_name} p "
-            f"JOIN {schema}.t_ili2db_basket b ON b.t_id = p.t_basket "
-            f"JOIN {schema}.t_ili2db_dataset d ON d.t_id = b.dataset "
+            f"SELECT p.* FROM {safe_schema}.{safe_predio_table_name} p "
+            f"JOIN {safe_schema}.t_ili2db_basket b ON b.t_id = p.t_basket "
+            f"JOIN {safe_schema}.t_ili2db_dataset d ON d.t_id = b.dataset "
             f"WHERE d.datasetname = '{ds_escaped}'"
         )
     try:
         subprocess.run(
-            ["ogr2ogr", "-f", "FileGDB", gdb_path, conn_str, "-sql", sql, "-nln", predio_table_name],
+            ["ogr2ogr", "-f", "FileGDB", gdb_path, conn_str, "-sql", sql, "-nln", safe_predio_table_name],
             check=True,
             capture_output=True,
             text=True,
+            env=_build_process_env(db),
         )
     except subprocess.CalledProcessError as e:
-        stderr = (e.stderr or "").strip()
-        stdout = (e.stdout or "").strip()
+        stderr = _mask_sensitive_text((e.stderr or "").strip(), db["password"])
+        stdout = _mask_sensitive_text((e.stdout or "").strip(), db["password"])
         detail = "ogr2ogr falló al exportar GDB."
         if stderr:
             detail += f" STDERR: {stderr}"
@@ -3662,6 +3828,7 @@ def ogr_export_gdb(
 
 
 def ogr_export_gpkg(
+    tenant: TenantContext,
     schema: str,
     datasetname: str,
     gpkg_path: str,
@@ -3670,41 +3837,48 @@ def ogr_export_gpkg(
 ) -> None:
     if not datasetname:
         raise ExportServiceError(status_code=400, detail="Dataset no definido para exportar GPKG.")
-    db = db_env()
-    conn_str = (
-        f"PG:host={db['host']} port={db['port']} dbname={db['dbname']} "
-        f"user={db['user']} password={db['password']}"
+    db = _tenant_tool_db_params(tenant)
+    safe_schema = _validate_pg_identifier(schema, "schema")
+    safe_app_schema = _validate_pg_identifier(tenant.schemas.app, "tenant.schemas.app")
+    model_context = _assignment_model_context(tenant)
+    predio_table_name, numero_field = _resolve_assignment_predio_source(
+        schema,
+        model_context,
     )
-    predio_table_name, numero_field = _resolve_assignment_predio_source(schema)
+    safe_predio_table_name = _validate_pg_identifier(predio_table_name, "predio_table_name")
+    safe_numero_field = _validate_pg_identifier(numero_field, "numero_field")
+    asignacion_predio_table = f"{safe_app_schema}.asignacion_predio"
+    conn_str = _build_ogr_pg_connection_string(db)
     ds_escaped = datasetname.replace("'", "''")
     if asignacion_id is not None:
         sql_query = (
-            f"SELECT p.* FROM {schema}.{predio_table_name} p "
-            f"JOIN {schema}.t_ili2db_basket b ON b.t_id = p.t_basket "
-            f"JOIN {schema}.t_ili2db_dataset d ON d.t_id = b.dataset "
-            f"JOIN arbimaps_app.asignacion_predio ap "
-            f"  ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.{numero_field}::text) "
+            f"SELECT p.* FROM {safe_schema}.{safe_predio_table_name} p "
+            f"JOIN {safe_schema}.t_ili2db_basket b ON b.t_id = p.t_basket "
+            f"JOIN {safe_schema}.t_ili2db_dataset d ON d.t_id = b.dataset "
+            f"JOIN {asignacion_predio_table} ap "
+            f"  ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.{safe_numero_field}::text) "
             f" AND ap.asignacion_id = {int(asignacion_id)} "
             f" AND ap.activo IS DISTINCT FROM FALSE "
             f"WHERE d.datasetname = '{ds_escaped}'"
         )
     else:
         sql_query = (
-            f"SELECT p.* FROM {schema}.{predio_table_name} p "
-            f"JOIN {schema}.t_ili2db_basket b ON b.t_id = p.t_basket "
-            f"JOIN {schema}.t_ili2db_dataset d ON d.t_id = b.dataset "
+            f"SELECT p.* FROM {safe_schema}.{safe_predio_table_name} p "
+            f"JOIN {safe_schema}.t_ili2db_basket b ON b.t_id = p.t_basket "
+            f"JOIN {safe_schema}.t_ili2db_dataset d ON d.t_id = b.dataset "
             f"WHERE d.datasetname = '{ds_escaped}'"
         )
     try:
         subprocess.run(
-            ["ogr2ogr", "-f", "GPKG", gpkg_path, conn_str, "-sql", sql_query, "-nln", predio_table_name],
+            ["ogr2ogr", "-f", "GPKG", gpkg_path, conn_str, "-sql", sql_query, "-nln", safe_predio_table_name],
             check=True,
             capture_output=True,
             text=True,
+            env=_build_process_env(db),
         )
     except subprocess.CalledProcessError as e:
-        stderr = (e.stderr or "").strip()
-        stdout = (e.stdout or "").strip()
+        stderr = _mask_sensitive_text((e.stderr or "").strip(), db["password"])
+        stdout = _mask_sensitive_text((e.stdout or "").strip(), db["password"])
         detail = "ogr2ogr fallo al exportar GPKG."
         if stderr:
             detail += f" STDERR: {stderr}"

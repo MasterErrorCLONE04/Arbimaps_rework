@@ -2,14 +2,14 @@ import logging
 import os
 import tempfile
 from typing import Callable, List, Optional
-
 from psycopg2 import errorcodes, sql
 from psycopg2.extras import RealDictCursor
 
-from core.db import db_conn
 from services import asignaciones_export as export_service
 from services import asignaciones_workspace_schema as workspace_schema_service
 from services import asignaciones_workspace_sql as workspace_sql_service
+from tenants.context import TenantContext
+from tenants.sql import app_table, tenant_table, work_table
 
 
 _ARB_DIRECT_PREDIO_TABLES = (
@@ -61,7 +61,11 @@ _ARB_TILI_TID_REQUIRED_TABLES = frozenset(
 logger = logging.getLogger(__name__)
 
 
-def _arb_disable_workspace_unique_constraints(schema_work: str) -> None:
+def _arb_disable_workspace_unique_constraints(
+    conn,
+    tenant: TenantContext,
+    schema_work: str,
+) -> None:
     """
     Re-scope unique constraints/indexes in workspace to include t_basket.
     This keeps per-dataset integrity in shared workspace instead of dropping uniqueness.
@@ -73,230 +77,229 @@ def _arb_disable_workspace_unique_constraints(schema_work: str) -> None:
             detail="schema_work no definido para ajustar integridad del workspace Arbimaps.",
         )
 
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            try:
-                cur.execute("SET LOCAL lock_timeout = '5s'")
-                cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (f"ddl_{schema_sql}",))
-            except Exception as exc:
-                pg_code = str(getattr(exc, "pgcode", "") or "")
-                if pg_code in {errorcodes.LOCK_NOT_AVAILABLE, errorcodes.DEADLOCK_DETECTED}:
-                    raise export_service.ExportServiceError(
-                        status_code=503,
-                        detail=f"Alta concurrencia transaccional en {schema_sql}. El sistema esta ajustando reglas temporalmente. Reintente en unos segundos.",
-                    ) from exc
-                raise
-
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                """
-                SELECT
-                    rel.relname AS table_name,
-                    con.conname AS constraint_name,
-                    COALESCE(
-                        ARRAY_AGG(att.attname ORDER BY k.ord)
-                        FILTER (WHERE att.attname IS NOT NULL),
-                        '{}'::text[]
-                    ) AS columns
-                FROM pg_constraint con
-                JOIN pg_class rel
-                  ON rel.oid = con.conrelid
-                JOIN pg_namespace n
-                  ON n.oid = rel.relnamespace
-                LEFT JOIN LATERAL unnest(con.conkey) WITH ORDINALITY AS k(attnum, ord)
-                  ON TRUE
-                LEFT JOIN pg_attribute att
-                  ON att.attrelid = rel.oid
-                 AND att.attnum = k.attnum
-                WHERE n.nspname = %s
-                  AND con.contype = 'u'
-                GROUP BY rel.relname, con.conname
-                ORDER BY rel.relname, con.conname
-                """,
-                (schema_sql,),
-            )
-            unique_constraints = cur.fetchall() or []
-
-        for row in unique_constraints:
-            table_name = str(row.get("table_name") or "").strip()
-            constraint_name = str(row.get("constraint_name") or "").strip()
-            if not table_name or not constraint_name or table_name.startswith("t_ili2db"):
-                continue
-
-            columns = [str(c).strip() for c in (row.get("columns") or []) if c]
-            if not columns:
-                continue
-            if "t_basket" in columns:
-                continue
-            if "t_basket" not in set(_get_table_columns(conn, schema_sql, table_name)):
-                continue
-
-            cols_sql = sql.SQL(", ").join(sql.Identifier(col) for col in [*columns, "t_basket"])
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("SAVEPOINT ws_scope_uq")
-                    cur.execute(
-                        sql.SQL("ALTER TABLE {}.{} DROP CONSTRAINT IF EXISTS {} CASCADE").format(
-                            sql.Identifier(schema_sql),
-                            sql.Identifier(table_name),
-                            sql.Identifier(constraint_name),
-                        )
-                    )
-                    cur.execute(
-                        sql.SQL("ALTER TABLE {}.{} ADD CONSTRAINT {} UNIQUE ({})").format(
-                            sql.Identifier(schema_sql),
-                            sql.Identifier(table_name),
-                            sql.Identifier(constraint_name),
-                            cols_sql,
-                        )
-                    )
-                    cur.execute("RELEASE SAVEPOINT ws_scope_uq")
-            except Exception as exc:
-                with conn.cursor() as cur:
-                    cur.execute("ROLLBACK TO SAVEPOINT ws_scope_uq")
-                    cur.execute("RELEASE SAVEPOINT ws_scope_uq")
-                pg_code = str(getattr(exc, "pgcode", "") or "")
-                if pg_code in {
-                    errorcodes.INSUFFICIENT_PRIVILEGE,
-                    errorcodes.LOCK_NOT_AVAILABLE,
-                    errorcodes.DEADLOCK_DETECTED,
-                }:
-                    logger.warning(
-                        "Workspace integrity rescope skipped for constraint %s.%s.%s (%s): %s",
-                        schema_sql,
-                        table_name,
-                        constraint_name,
-                        pg_code or "no_pgcode",
-                        exc,
-                    )
-                    continue
-                if pg_code == errorcodes.UNIQUE_VIOLATION:
-                    raise export_service.ExportServiceError(
-                        status_code=409,
-                        detail=(
-                            f"No se pudo ajustar integridad en {schema_sql}.{table_name}.{constraint_name} "
-                            "porque hay duplicados dentro del mismo dataset (t_basket)."
-                        ),
-                    ) from exc
+    with conn.cursor() as cur:
+        try:
+            cur.execute("SET LOCAL lock_timeout = '5s'")
+            cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (f"ddl_{schema_sql}",))
+        except Exception as exc:
+            pg_code = str(getattr(exc, "pgcode", "") or "")
+            if pg_code in {errorcodes.LOCK_NOT_AVAILABLE, errorcodes.DEADLOCK_DETECTED}:
                 raise export_service.ExportServiceError(
-                    status_code=500,
+                    status_code=503,
+                    detail=f"Alta concurrencia transaccional en {schema_sql}. El sistema esta ajustando reglas temporalmente. Reintente en unos segundos.",
+                ) from exc
+            raise
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            """
+            SELECT
+                rel.relname AS table_name,
+                con.conname AS constraint_name,
+                COALESCE(
+                    ARRAY_AGG(att.attname ORDER BY k.ord)
+                    FILTER (WHERE att.attname IS NOT NULL),
+                    '{}'::text[]
+                ) AS columns
+            FROM pg_constraint con
+            JOIN pg_class rel
+              ON rel.oid = con.conrelid
+            JOIN pg_namespace n
+              ON n.oid = rel.relnamespace
+            LEFT JOIN LATERAL unnest(con.conkey) WITH ORDINALITY AS k(attnum, ord)
+              ON TRUE
+            LEFT JOIN pg_attribute att
+              ON att.attrelid = rel.oid
+             AND att.attnum = k.attnum
+            WHERE n.nspname = %s
+              AND con.contype = 'u'
+            GROUP BY rel.relname, con.conname
+            ORDER BY rel.relname, con.conname
+            """,
+            (schema_sql,),
+        )
+        unique_constraints = cur.fetchall() or []
+
+    for row in unique_constraints:
+        table_name = str(row.get("table_name") or "").strip()
+        constraint_name = str(row.get("constraint_name") or "").strip()
+        if not table_name or not constraint_name or table_name.startswith("t_ili2db"):
+            continue
+
+        columns = [str(c).strip() for c in (row.get("columns") or []) if c]
+        if not columns:
+            continue
+        if "t_basket" in columns:
+            continue
+        if "t_basket" not in set(_get_table_columns(conn, schema_sql, table_name)):
+            continue
+
+        cols_sql = sql.SQL(", ").join(sql.Identifier(col) for col in [*columns, "t_basket"])
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SAVEPOINT ws_scope_uq")
+                cur.execute(
+                    sql.SQL("ALTER TABLE {}.{} DROP CONSTRAINT IF EXISTS {} CASCADE").format(
+                        sql.Identifier(schema_sql),
+                        sql.Identifier(table_name),
+                        sql.Identifier(constraint_name),
+                    )
+                )
+                cur.execute(
+                    sql.SQL("ALTER TABLE {}.{} ADD CONSTRAINT {} UNIQUE ({})").format(
+                        sql.Identifier(schema_sql),
+                        sql.Identifier(table_name),
+                        sql.Identifier(constraint_name),
+                        cols_sql,
+                    )
+                )
+                cur.execute("RELEASE SAVEPOINT ws_scope_uq")
+        except Exception as exc:
+            with conn.cursor() as cur:
+                cur.execute("ROLLBACK TO SAVEPOINT ws_scope_uq")
+                cur.execute("RELEASE SAVEPOINT ws_scope_uq")
+            pg_code = str(getattr(exc, "pgcode", "") or "")
+            if pg_code in {
+                errorcodes.INSUFFICIENT_PRIVILEGE,
+                errorcodes.LOCK_NOT_AVAILABLE,
+                errorcodes.DEADLOCK_DETECTED,
+            }:
+                logger.warning(
+                    "Workspace integrity rescope skipped for constraint %s.%s.%s (%s): %s",
+                    schema_sql,
+                    table_name,
+                    constraint_name,
+                    pg_code or "no_pgcode",
+                    exc,
+                )
+                continue
+            if pg_code == errorcodes.UNIQUE_VIOLATION:
+                raise export_service.ExportServiceError(
+                    status_code=409,
                     detail=(
-                        f"Fallo al ajustar constraint unico {schema_sql}.{table_name}.{constraint_name}: "
-                        f"{exc}"
+                        f"No se pudo ajustar integridad en {schema_sql}.{table_name}.{constraint_name} "
+                        "porque hay duplicados dentro del mismo dataset (t_basket)."
                     ),
                 ) from exc
+            raise export_service.ExportServiceError(
+                status_code=500,
+                detail=(
+                    f"Fallo al ajustar constraint unico {schema_sql}.{table_name}.{constraint_name}: "
+                    f"{exc}"
+                ),
+            ) from exc
 
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                """
-                SELECT
-                    c.relname AS table_name,
-                    i.relname AS index_name,
-                    COALESCE(
-                        ARRAY_AGG(att.attname ORDER BY k.ord)
-                        FILTER (WHERE k.attnum > 0 AND att.attname IS NOT NULL),
-                        '{}'::text[]
-                    ) AS columns,
-                    COALESCE(BOOL_OR(k.attnum = 0), false) AS has_expression,
-                    pg_get_expr(ix.indpred, ix.indrelid) AS predicate
-                FROM pg_index ix
-                JOIN pg_class i
-                  ON i.oid = ix.indexrelid
-                JOIN pg_class c
-                  ON c.oid = ix.indrelid
-                JOIN pg_namespace n
-                  ON n.oid = c.relnamespace
-                LEFT JOIN LATERAL unnest(ix.indkey::int2[]) WITH ORDINALITY AS k(attnum, ord)
-                  ON TRUE
-                LEFT JOIN pg_attribute att
-                  ON att.attrelid = c.oid
-                 AND att.attnum = k.attnum
-                WHERE n.nspname = %s
-                  AND ix.indisunique = TRUE
-                  AND ix.indisprimary = FALSE
-                  AND NOT EXISTS (
-                      SELECT 1
-                      FROM pg_constraint con
-                      WHERE con.conindid = ix.indexrelid
-                  )
-                GROUP BY c.relname, i.relname, ix.indpred, ix.indrelid
-                ORDER BY c.relname, i.relname
-                """,
-                (schema_sql,),
-            )
-            unique_indexes = cur.fetchall() or []
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            """
+            SELECT
+                c.relname AS table_name,
+                i.relname AS index_name,
+                COALESCE(
+                    ARRAY_AGG(att.attname ORDER BY k.ord)
+                    FILTER (WHERE k.attnum > 0 AND att.attname IS NOT NULL),
+                    '{}'::text[]
+                ) AS columns,
+                COALESCE(BOOL_OR(k.attnum = 0), false) AS has_expression,
+                pg_get_expr(ix.indpred, ix.indrelid) AS predicate
+            FROM pg_index ix
+            JOIN pg_class i
+              ON i.oid = ix.indexrelid
+            JOIN pg_class c
+              ON c.oid = ix.indrelid
+            JOIN pg_namespace n
+              ON n.oid = c.relnamespace
+            LEFT JOIN LATERAL unnest(ix.indkey::int2[]) WITH ORDINALITY AS k(attnum, ord)
+              ON TRUE
+            LEFT JOIN pg_attribute att
+              ON att.attrelid = c.oid
+             AND att.attnum = k.attnum
+            WHERE n.nspname = %s
+              AND ix.indisunique = TRUE
+              AND ix.indisprimary = FALSE
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_constraint con
+                  WHERE con.conindid = ix.indexrelid
+              )
+            GROUP BY c.relname, i.relname, ix.indpred, ix.indrelid
+            ORDER BY c.relname, i.relname
+            """,
+            (schema_sql,),
+        )
+        unique_indexes = cur.fetchall() or []
 
-        for row in unique_indexes:
-            table_name = str(row.get("table_name") or "").strip()
-            index_name = str(row.get("index_name") or "").strip()
-            if not table_name or not index_name or table_name.startswith("t_ili2db"):
-                continue
+    for row in unique_indexes:
+        table_name = str(row.get("table_name") or "").strip()
+        index_name = str(row.get("index_name") or "").strip()
+        if not table_name or not index_name or table_name.startswith("t_ili2db"):
+            continue
 
-            columns = [str(c).strip() for c in (row.get("columns") or []) if c]
-            has_expression = bool(row.get("has_expression"))
-            predicate = str(row.get("predicate") or "").strip()
-            if not columns:
-                continue
-            if "t_basket" in columns:
-                continue
-            if has_expression:
-                continue
-            if "t_basket" not in set(_get_table_columns(conn, schema_sql, table_name)):
-                continue
+        columns = [str(c).strip() for c in (row.get("columns") or []) if c]
+        has_expression = bool(row.get("has_expression"))
+        predicate = str(row.get("predicate") or "").strip()
+        if not columns:
+            continue
+        if "t_basket" in columns:
+            continue
+        if has_expression:
+            continue
+        if "t_basket" not in set(_get_table_columns(conn, schema_sql, table_name)):
+            continue
 
-            cols_sql = sql.SQL(", ").join(sql.Identifier(col) for col in [*columns, "t_basket"])
-            create_stmt = sql.SQL("CREATE UNIQUE INDEX {} ON {}.{} ({})").format(
-                sql.Identifier(index_name),
-                sql.Identifier(schema_sql),
-                sql.Identifier(table_name),
-                cols_sql,
-            )
-            if predicate:
-                create_stmt = create_stmt + sql.SQL(" WHERE ") + sql.SQL(predicate)
+        cols_sql = sql.SQL(", ").join(sql.Identifier(col) for col in [*columns, "t_basket"])
+        create_stmt = sql.SQL("CREATE UNIQUE INDEX {} ON {}.{} ({})").format(
+            sql.Identifier(index_name),
+            sql.Identifier(schema_sql),
+            sql.Identifier(table_name),
+            cols_sql,
+        )
+        if predicate:
+            create_stmt = create_stmt + sql.SQL(" WHERE ") + sql.SQL(predicate)
 
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("SAVEPOINT ws_scope_ui")
-                    cur.execute(
-                        sql.SQL("DROP INDEX IF EXISTS {}.{} CASCADE").format(
-                            sql.Identifier(schema_sql),
-                            sql.Identifier(index_name),
-                        )
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SAVEPOINT ws_scope_ui")
+                cur.execute(
+                    sql.SQL("DROP INDEX IF EXISTS {}.{} CASCADE").format(
+                        sql.Identifier(schema_sql),
+                        sql.Identifier(index_name),
                     )
-                    cur.execute(create_stmt)
-                    cur.execute("RELEASE SAVEPOINT ws_scope_ui")
-            except Exception as exc:
-                with conn.cursor() as cur:
-                    cur.execute("ROLLBACK TO SAVEPOINT ws_scope_ui")
-                    cur.execute("RELEASE SAVEPOINT ws_scope_ui")
-                pg_code = str(getattr(exc, "pgcode", "") or "")
-                if pg_code in {
-                    errorcodes.INSUFFICIENT_PRIVILEGE,
-                    errorcodes.LOCK_NOT_AVAILABLE,
-                    errorcodes.DEADLOCK_DETECTED,
-                }:
-                    logger.warning(
-                        "Workspace integrity rescope skipped for index %s.%s (%s): %s",
-                        schema_sql,
-                        index_name,
-                        pg_code or "no_pgcode",
-                        exc,
-                    )
-                    continue
-                if pg_code == errorcodes.UNIQUE_VIOLATION:
-                    raise export_service.ExportServiceError(
-                        status_code=409,
-                        detail=(
-                            f"No se pudo ajustar integridad en index {schema_sql}.{index_name} "
-                            "porque hay duplicados dentro del mismo dataset (t_basket)."
-                        ),
-                    ) from exc
+                )
+                cur.execute(create_stmt)
+                cur.execute("RELEASE SAVEPOINT ws_scope_ui")
+        except Exception as exc:
+            with conn.cursor() as cur:
+                cur.execute("ROLLBACK TO SAVEPOINT ws_scope_ui")
+                cur.execute("RELEASE SAVEPOINT ws_scope_ui")
+            pg_code = str(getattr(exc, "pgcode", "") or "")
+            if pg_code in {
+                errorcodes.INSUFFICIENT_PRIVILEGE,
+                errorcodes.LOCK_NOT_AVAILABLE,
+                errorcodes.DEADLOCK_DETECTED,
+            }:
+                logger.warning(
+                    "Workspace integrity rescope skipped for index %s.%s (%s): %s",
+                    schema_sql,
+                    index_name,
+                    pg_code or "no_pgcode",
+                    exc,
+                )
+                continue
+            if pg_code == errorcodes.UNIQUE_VIOLATION:
                 raise export_service.ExportServiceError(
-                    status_code=500,
-                    detail=f"Fallo al ajustar unique index {schema_sql}.{index_name}: {exc}",
+                    status_code=409,
+                    detail=(
+                        f"No se pudo ajustar integridad en index {schema_sql}.{index_name} "
+                        "porque hay duplicados dentro del mismo dataset (t_basket)."
+                    ),
                 ) from exc
+            raise export_service.ExportServiceError(
+                status_code=500,
+                detail=f"Fallo al ajustar unique index {schema_sql}.{index_name}: {exc}",
+            ) from exc
 
-        conn.commit()
+    conn.commit()
 
 
 def _qualify(schema: str, table: str) -> str:
@@ -306,14 +309,20 @@ def _qualify(schema: str, table: str) -> str:
     return f"{schema}.{table}"
 
 
-def _actualizar_predio_ids_desde_workspace_conn(conn, asignacion_id: int, schema_work: str) -> None:
+def _actualizar_predio_ids_desde_workspace_conn(
+    conn,
+    tenant: TenantContext,
+    asignacion_id: int,
+    schema_work: str,
+) -> None:
     workspace_ctx = workspace_schema_service.get_workspace_context(schema_work)
     predio_table = _qualify(schema_work, workspace_ctx.predio_table)
     numero_field = workspace_ctx.predio_numero_field
     with conn.cursor() as cur:
+        asignacion_predio_table = app_table(tenant, "asignacion_predio")
         cur.execute(
             f"""
-            UPDATE arbimaps_app.asignacion_predio ap
+            UPDATE {asignacion_predio_table} ap
             SET predio_t_id = p.t_id
             FROM {predio_table} p
             WHERE BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.{numero_field}::text)
@@ -324,24 +333,19 @@ def _actualizar_predio_ids_desde_workspace_conn(conn, asignacion_id: int, schema
 
 
 def actualizar_predio_ids_desde_workspace(
+    conn,
+    tenant: TenantContext,
     asignacion_id: int,
-    schema_work: str,
-    conn=None,
     *,
     strict: bool = False,
 ) -> None:
     try:
-        if conn is not None:
-            _actualizar_predio_ids_desde_workspace_conn(conn, asignacion_id, schema_work)
-            return
-        with db_conn() as conn_local:
-            _actualizar_predio_ids_desde_workspace_conn(conn_local, asignacion_id, schema_work)
-            conn_local.commit()
+        _actualizar_predio_ids_desde_workspace_conn(conn, tenant, asignacion_id, tenant.schemas.work)
     except Exception as exc:
         logger.exception(
-            "actualizar_predio_ids_desde_workspace failed asignacion_id=%s schema_work=%s strict=%s",
+            "actualizar_predio_ids_desde_workspace failed asignacion_id=%s tenant=%s strict=%s",
             asignacion_id,
-            schema_work,
+            tenant.municipality_code,
             strict,
         )
         if strict:
@@ -355,6 +359,7 @@ def actualizar_predio_ids_desde_workspace(
 
 def prune_workspace_predios(
     conn,
+    tenant: TenantContext,
     asignacion_id: int,
     work_datasetname: str,
     schema_work: str,
@@ -367,6 +372,7 @@ def prune_workspace_predios(
     if workspace_ctx.model_name == "arb":
         return _prune_workspace_predios_arb(
             conn,
+            tenant,
             asignacion_id,
             work_datasetname,
             schema_work,
@@ -375,6 +381,7 @@ def prune_workspace_predios(
     predio_table = _qualify(schema_work, workspace_ctx.predio_table)
     numero_field = workspace_ctx.predio_numero_field
     with conn.cursor() as cur:
+        asignacion_predio_table = app_table(tenant, "asignacion_predio")
         cur.execute(
             f"""
             DELETE FROM {predio_table} wp
@@ -385,7 +392,7 @@ def prune_workspace_predios(
               AND wd.datasetname = %s
               AND NOT EXISTS (
                   SELECT 1
-                  FROM arbimaps_app.asignacion_predio ap
+                  FROM {asignacion_predio_table} ap
                   WHERE ap.asignacion_id = %s
                     AND ap.activo IS DISTINCT FROM FALSE
                     AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.{numero_field}::text)
@@ -423,6 +430,7 @@ def _arb_new_informal_predio_condition_sql(conn, schema_work: str, alias: str = 
 
 def _prune_workspace_predios_arb(
     conn,
+    tenant: TenantContext,
     asignacion_id: int,
     work_datasetname: str,
     schema_work: str,
@@ -448,6 +456,7 @@ def _prune_workspace_predios_arb(
             keep_new_filter = f" AND NOT {new_informal_sql}"
 
         cur.execute("DROP TABLE IF EXISTS _arb_ws_unassigned_predio")
+        asignacion_predio_table = app_table(tenant, "asignacion_predio")
         cur.execute(
             f"""
             CREATE TEMP TABLE _arb_ws_unassigned_predio AS
@@ -458,7 +467,7 @@ def _prune_workspace_predios_arb(
             WHERE d.datasetname = %s
               AND NOT EXISTS (
                   SELECT 1
-                  FROM arbimaps_app.asignacion_predio ap
+                  FROM {asignacion_predio_table} ap
                   WHERE ap.asignacion_id = %s
                     AND ap.activo IS DISTINCT FROM FALSE
                     AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
@@ -709,6 +718,7 @@ def _arb_create_sync_basket_map(conn, schema_main: str, schema_work: str, work_d
 
 def _arb_prepare_diagnostic_predio_map(
     conn,
+    tenant: TenantContext,
     asignacion_id: int,
     work_datasetname: str,
     schema_main: str,
@@ -716,6 +726,7 @@ def _arb_prepare_diagnostic_predio_map(
 ) -> dict:
     selected_count = _arb_create_sync_selected_predio_scope(
         conn,
+        tenant,
         asignacion_id,
         work_datasetname,
         schema_work,
@@ -747,16 +758,18 @@ def _arb_prepare_diagnostic_predio_map(
 
 def _arb_create_sync_selected_predio_scope(
     conn,
+    tenant: TenantContext,
     asignacion_id: int,
     work_datasetname: str,
     schema_work: str,
     *,
     include_new_informal_predios: bool = False,
 ) -> int:
-    scope_condition = """
+    asignacion_predio_table = app_table(tenant, "asignacion_predio")
+    scope_condition = f"""
     EXISTS (
         SELECT 1
-        FROM arbimaps_app.asignacion_predio ap
+        FROM {asignacion_predio_table} ap
         WHERE ap.asignacion_id = %s
           AND ap.activo IS DISTINCT FROM FALSE
           AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.numero_predial::text)
@@ -818,6 +831,7 @@ def _arb_assert_sync_selected_predio_unique(conn, schema_work: str, work_dataset
 
 def _arb_validate_workspace_assignment_coverage(
     conn,
+    tenant: TenantContext,
     asignacion_id: int,
     work_datasetname: str,
     schema_work: str,
@@ -825,10 +839,11 @@ def _arb_validate_workspace_assignment_coverage(
     allow_missing_predios: bool = False,
 ) -> dict:
     with conn.cursor() as cur:
+        asignacion_predio_table = app_table(tenant, "asignacion_predio")
         cur.execute(
-            """
+            f"""
             SELECT COUNT(DISTINCT BTRIM(ap.numero_predial_nacional::text))
-            FROM arbimaps_app.asignacion_predio ap
+            FROM {asignacion_predio_table} ap
             WHERE ap.asignacion_id = %s
               AND ap.activo IS DISTINCT FROM FALSE
             """,
@@ -846,7 +861,7 @@ def _arb_validate_workspace_assignment_coverage(
               ON d.t_id = b.dataset
             JOIN (
                 SELECT DISTINCT BTRIM(ap.numero_predial_nacional::text) AS numero_predial_nacional
-                FROM arbimaps_app.asignacion_predio ap
+                FROM {asignacion_predio_table} ap
                 WHERE ap.asignacion_id = %s
                   AND ap.activo IS DISTINCT FROM FALSE
             ) ap
@@ -869,7 +884,7 @@ def _arb_validate_workspace_assignment_coverage(
               ON d.t_id = b.dataset
             JOIN (
                 SELECT DISTINCT BTRIM(ap.numero_predial_nacional::text) AS numero_predial_nacional
-                FROM arbimaps_app.asignacion_predio ap
+                FROM {asignacion_predio_table} ap
                 WHERE ap.asignacion_id = %s
                   AND ap.activo IS DISTINCT FROM FALSE
             ) ap
@@ -889,7 +904,7 @@ def _arb_validate_workspace_assignment_coverage(
             SELECT ap.numero_predial_nacional
             FROM (
                 SELECT DISTINCT BTRIM(ap.numero_predial_nacional::text) AS numero_predial_nacional
-                FROM arbimaps_app.asignacion_predio ap
+                FROM {asignacion_predio_table} ap
                 WHERE ap.asignacion_id = %s
                   AND ap.activo IS DISTINCT FROM FALSE
             ) ap
@@ -900,7 +915,7 @@ def _arb_validate_workspace_assignment_coverage(
                   ON b.t_id = p.t_basket
                 JOIN {_qualify(schema_work, 't_ili2db_dataset')} d
                   ON d.t_id = b.dataset
-                JOIN arbimaps_app.asignacion_predio ap2
+                JOIN {asignacion_predio_table} ap2
                   ON BTRIM(ap2.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
                  AND ap2.asignacion_id = %s
                  AND ap2.activo IS DISTINCT FROM FALSE
@@ -949,6 +964,7 @@ def _arb_validate_workspace_assignment_coverage(
 
 def _arb_sync_predios_to_main(
     conn,
+    tenant: TenantContext,
     asignacion_id: int,
     work_datasetname: str,
     schema_main: str,
@@ -956,6 +972,7 @@ def _arb_sync_predios_to_main(
 ) -> int:
     coverage = _arb_validate_workspace_assignment_coverage(
         conn,
+        tenant,
         asignacion_id,
         work_datasetname,
         schema_work,
@@ -974,6 +991,7 @@ def _arb_sync_predios_to_main(
 
     selected_count = _arb_create_sync_selected_predio_scope(
         conn,
+        tenant,
         asignacion_id,
         work_datasetname,
         schema_work,
@@ -1077,9 +1095,10 @@ def _arb_sync_predios_to_main(
     _arb_validate_sync_identity_fields(conn, schema_main, schema_work, work_datasetname)
 
     with conn.cursor() as cur:
+        asignacion_predio_table = app_table(tenant, "asignacion_predio")
         cur.execute(
-            """
-            UPDATE arbimaps_app.asignacion_predio ap
+            f"""
+            UPDATE {asignacion_predio_table} ap
             SET predio_t_id = pm.main_predio_t_id
             FROM _arb_sync_predio_map pm
             WHERE ap.asignacion_id = %s
@@ -1687,7 +1706,8 @@ def validate_workspace_dataset_health(
     schema_work: str,
     work_datasetname: str,
     *,
-    conn=None,
+    conn,
+    tenant: TenantContext,
 ) -> None:
     if not work_datasetname:
         raise export_service.ExportServiceError(
@@ -1699,12 +1719,7 @@ def validate_workspace_dataset_health(
     if workspace_ctx.model_name != "arb":
         return
 
-    if conn is not None:
-        _arb_validate_workspace_dataset_health(conn, schema_work, work_datasetname)
-        return
-
-    with db_conn() as conn_local:
-        _arb_validate_workspace_dataset_health(conn_local, schema_work, work_datasetname)
+    _arb_validate_workspace_dataset_health(conn, schema_work, work_datasetname)
 
 
 def validate_workspace_assignment_coverage(
@@ -1712,7 +1727,8 @@ def validate_workspace_assignment_coverage(
     schema_work: str,
     work_datasetname: str,
     *,
-    conn=None,
+    conn,
+    tenant: TenantContext,
     allow_missing_predios: bool = False,
 ) -> dict:
     if not work_datasetname:
@@ -1723,7 +1739,7 @@ def validate_workspace_assignment_coverage(
 
     workspace_ctx = workspace_schema_service.get_workspace_context(schema_work)
     if workspace_ctx.model_name != "arb":
-        expected_predios = assignment_active_predio_count(asignacion_id)
+        expected_predios = assignment_active_predio_count(conn, tenant, asignacion_id)
         return {
             "expected_predios": expected_predios,
             "covered_predios": 0,
@@ -1731,23 +1747,14 @@ def validate_workspace_assignment_coverage(
             "missing_predios_preview": [],
         }
 
-    if conn is not None:
-        return _arb_validate_workspace_assignment_coverage(
-            conn,
-            asignacion_id,
-            work_datasetname,
-            schema_work,
-            allow_missing_predios=allow_missing_predios,
-        )
-
-    with db_conn() as conn_local:
-        return _arb_validate_workspace_assignment_coverage(
-            conn_local,
-            asignacion_id,
-            work_datasetname,
-            schema_work,
-            allow_missing_predios=allow_missing_predios,
-        )
+    return _arb_validate_workspace_assignment_coverage(
+        conn,
+        tenant,
+        asignacion_id,
+        work_datasetname,
+        schema_work,
+        allow_missing_predios=allow_missing_predios,
+    )
 
 
 def _arb_mark_missing_assignment_predios_inactive(
@@ -1768,11 +1775,12 @@ def _arb_mark_missing_assignment_predios_inactive(
     preview_size = max(int(preview_limit or 0), 1)
     with conn.cursor() as cur:
         cur.execute("DROP TABLE IF EXISTS _arb_ws_missing_assignment_predio")
+        asignacion_predio_table = app_table(tenant, "asignacion_predio")
         cur.execute(
             f"""
             CREATE TEMP TABLE _arb_ws_missing_assignment_predio AS
             SELECT DISTINCT BTRIM(ap.numero_predial_nacional::text) AS numero_predial_nacional
-            FROM arbimaps_app.asignacion_predio ap
+            FROM {asignacion_predio_table} ap
             WHERE ap.asignacion_id = %s
               AND ap.activo IS DISTINCT FROM FALSE
               AND NOT EXISTS (
@@ -1813,8 +1821,8 @@ def _arb_mark_missing_assignment_predios_inactive(
         ]
 
         cur.execute(
-            """
-            UPDATE arbimaps_app.asignacion_predio ap
+            f"""
+            UPDATE {asignacion_predio_table} ap
             SET activo = FALSE
             FROM _arb_ws_missing_assignment_predio mp
             WHERE ap.asignacion_id = %s
@@ -2155,6 +2163,7 @@ def _arb_sync_construccion_stack(conn, schema_main: str, schema_work: str) -> No
 
 def _sync_workspace_arb_to_main(
     conn,
+    tenant: TenantContext,
     asignacion_id: int,
     work_datasetname: str,
     schema_main: str,
@@ -2176,7 +2185,7 @@ def _sync_workspace_arb_to_main(
 
     _arb_assert_schema_parity(conn, schema_main, schema_work)
     _arb_create_sync_basket_map(conn, schema_main, schema_work, work_datasetname)
-    synced_predios = _arb_sync_predios_to_main(conn, asignacion_id, work_datasetname, schema_main, schema_work)
+    synced_predios = _arb_sync_predios_to_main(conn, tenant, asignacion_id, work_datasetname, schema_main, schema_work)
 
     direct_predio_tables = [
         ("arb_avaluovalor", "arb_predio_avaluo"),
@@ -2212,6 +2221,7 @@ def _sync_workspace_arb_to_main(
 
 def sync_workspace_predios_to_main(
     conn,
+    tenant: TenantContext,
     asignacion_id: int,
     work_datasetname: str,
     schema_main: str,
@@ -2223,6 +2233,7 @@ def sync_workspace_predios_to_main(
     if workspace_ctx.model_name == "arb":
         return _sync_workspace_arb_to_main(
             conn,
+            tenant,
             asignacion_id,
             work_datasetname,
             schema_main,
@@ -2247,7 +2258,7 @@ def sync_workspace_predios_to_main(
             FROM {work_predio} wp
             JOIN {work_basket} wb ON wb.t_id = wp.t_basket
             JOIN {work_dataset} wd ON wd.t_id = wb.dataset
-            JOIN arbimaps_app.asignacion_predio ap
+            JOIN {asignacion_predio} ap
               ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.numero_predial_nacional::text)
             WHERE ap.asignacion_id = %s
               AND ap.activo IS DISTINCT FROM FALSE
@@ -2260,6 +2271,7 @@ def sync_workspace_predios_to_main(
         work_predio=sql.Identifier(schema_work, "ilc_predio"),
         work_basket=sql.Identifier(schema_work, "t_ili2db_basket"),
         work_dataset=sql.Identifier(schema_work, "t_ili2db_dataset"),
+        asignacion_predio=sql.SQL(app_table(tenant, "asignacion_predio")),
         set_clause=set_clause,
     )
 
@@ -2268,86 +2280,111 @@ def sync_workspace_predios_to_main(
         return cur.rowcount or 0
 
 
-def workspace_dataset_exists(schema_work: str, datasetname: str) -> bool:
+def workspace_dataset_exists(
+    conn,
+    tenant: TenantContext,
+    datasetname: str,
+) -> bool:
     if not datasetname:
         return False
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT 1
-                FROM {_qualify(schema_work, 't_ili2db_dataset')}
-                WHERE datasetname = %s
-                LIMIT 1
-                """,
-                (datasetname,),
-            )
-            return cur.fetchone() is not None
+
+    dataset_table = tenant_table(tenant, "t_ili2db_dataset", schema_name="work")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT 1
+            FROM {dataset_table}
+            WHERE datasetname = %s
+            LIMIT 1
+            """,
+            (datasetname,),
+        )
+        return cur.fetchone() is not None
 
 
-def workspace_dataset_assignment_predio_count(schema_work: str, datasetname: str, asignacion_id: int) -> int:
+def workspace_dataset_assignment_predio_count(
+    conn,
+    tenant: TenantContext,
+    datasetname: str,
+    asignacion_id: int,
+) -> int:
     if not datasetname:
         return 0
-    workspace_ctx = workspace_schema_service.get_workspace_context(schema_work)
-    predio_table = _qualify(schema_work, workspace_ctx.predio_table)
+
+    workspace_ctx = workspace_schema_service.get_workspace_context(tenant.schemas.work)
+    predio_table = work_table(tenant, workspace_ctx.predio_table)
+    basket_table = tenant_table(tenant, "t_ili2db_basket", schema_name="work")
+    dataset_table = tenant_table(tenant, "t_ili2db_dataset", schema_name="work")
+    asignacion_predio_table = app_table(tenant, "asignacion_predio")
     numero_field = workspace_ctx.predio_numero_field
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT COUNT(DISTINCT p.{numero_field})
-                FROM {predio_table} p
-                JOIN {_qualify(schema_work, 't_ili2db_basket')} b ON b.t_id = p.t_basket
-                JOIN {_qualify(schema_work, 't_ili2db_dataset')} d ON d.t_id = b.dataset
-                JOIN arbimaps_app.asignacion_predio ap
-                  ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.{numero_field}::text)
-                WHERE d.datasetname = %s
-                  AND ap.asignacion_id = %s
-                  AND ap.activo IS DISTINCT FROM FALSE
-                """,
-                (datasetname, asignacion_id),
-            )
-            row = cur.fetchone()
-            return int((row[0] if row else 0) or 0)
+
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT COUNT(DISTINCT p.{numero_field})
+            FROM {predio_table} p
+            JOIN {basket_table} b ON b.t_id = p.t_basket
+            JOIN {dataset_table} d ON d.t_id = b.dataset
+            JOIN {asignacion_predio_table} ap
+              ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.{numero_field}::text)
+            WHERE d.datasetname = %s
+              AND ap.asignacion_id = %s
+              AND ap.activo IS DISTINCT FROM FALSE
+            """,
+            (datasetname, asignacion_id),
+        )
+        row = cur.fetchone()
+        return int((row[0] if row else 0) or 0)
 
 
-def workspace_dataset_total_predio_count(schema_work: str, datasetname: str) -> int:
+def workspace_dataset_total_predio_count(
+    conn,
+    tenant: TenantContext,
+    datasetname: str,
+) -> int:
     if not datasetname:
         return 0
-    workspace_ctx = workspace_schema_service.get_workspace_context(schema_work)
-    predio_table = _qualify(schema_work, workspace_ctx.predio_table)
-    basket_table = _qualify(schema_work, "t_ili2db_basket")
-    dataset_table = _qualify(schema_work, "t_ili2db_dataset")
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT COUNT(*)
-                FROM {predio_table} p
-                JOIN {basket_table} b ON b.t_id = p.t_basket
-                JOIN {dataset_table} d ON d.t_id = b.dataset
-                WHERE d.datasetname = %s
-                """,
-                (datasetname,),
-            )
-            row = cur.fetchone()
-            return int((row[0] if row else 0) or 0)
+
+    workspace_ctx = workspace_schema_service.get_workspace_context(tenant.schemas.work)
+    predio_table = work_table(tenant, workspace_ctx.predio_table)
+    basket_table = tenant_table(tenant, "t_ili2db_basket", schema_name="work")
+    dataset_table = tenant_table(tenant, "t_ili2db_dataset", schema_name="work")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT COUNT(*)
+            FROM {predio_table} p
+            JOIN {basket_table} b ON b.t_id = p.t_basket
+            JOIN {dataset_table} d ON d.t_id = b.dataset
+            WHERE d.datasetname = %s
+            """,
+            (datasetname,),
+        )
+        row = cur.fetchone()
+        return int((row[0] if row else 0) or 0)
 
 
-def assignment_active_predio_count(asignacion_id: int) -> int:
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT COUNT(DISTINCT ap.numero_predial_nacional)
-                FROM arbimaps_app.asignacion_predio ap
-                WHERE ap.asignacion_id = %s
-                  AND ap.activo IS DISTINCT FROM FALSE
-                """,
-                (asignacion_id,),
-            )
-            row = cur.fetchone()
-            return int((row[0] if row else 0) or 0)
+def assignment_active_predio_count(
+    conn,
+    tenant: TenantContext,
+    asignacion_id: int,
+) -> int:
+    asignacion_predio_table = app_table(tenant, "asignacion_predio")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT COUNT(DISTINCT ap.numero_predial_nacional)
+            FROM {asignacion_predio_table} ap
+            WHERE ap.asignacion_id = %s
+              AND ap.activo IS DISTINCT FROM FALSE
+            """,
+            (asignacion_id,),
+        )
+        row = cur.fetchone()
+        return int((row[0] if row else 0) or 0)
 
 
 def _dataset_exists_in_schema(conn, schema_name: str, datasetname: str) -> bool:
@@ -2404,13 +2441,19 @@ def _count_dataset_predios(conn, schema_name: str, datasetname: str, predio_tabl
         return int((row[0] if row else 0) or 0)
 
 
-def _count_main_assigned_predios(conn, schema_main: str, asignacion_id: int) -> int:
+def _count_main_assigned_predios(
+    conn,
+    tenant: TenantContext,
+    schema_main: str,
+    asignacion_id: int,
+) -> int:
     with conn.cursor() as cur:
+        asignacion_predio_table = app_table(tenant, "asignacion_predio")
         cur.execute(
             f"""
             SELECT COUNT(DISTINCT p.numero_predial)
             FROM {_qualify(schema_main, 'arb_predio')} p
-            JOIN arbimaps_app.asignacion_predio ap
+            JOIN {asignacion_predio_table} ap
               ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
             WHERE ap.asignacion_id = %s
               AND ap.activo IS DISTINCT FROM FALSE
@@ -2422,12 +2465,18 @@ def _count_main_assigned_predios(conn, schema_main: str, asignacion_id: int) -> 
 
 
 def run_arb_workspace_smoke_test(
+    conn,
+    tenant: TenantContext,
     asignacion_id: int,
     *,
     schema_main: str,
     schema_work: str,
 ) -> dict:
-    workspace_ctx = workspace_schema_service.ensure_workspace_schema_ready(schema_work)
+    workspace_ctx = workspace_schema_service.ensure_workspace_schema_ready(
+        conn,
+        tenant,
+        schema_work=schema_work,
+    )
     if workspace_ctx.model_name != "arb":
         raise export_service.ExportServiceError(
             status_code=400,
@@ -2454,26 +2503,26 @@ def run_arb_workspace_smoke_test(
     def add_check(name: str, ok: bool, detail: str) -> None:
         result["checks"].append({"name": name, "ok": ok, "detail": detail})
 
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                """
-                SELECT
-                    a.id,
-                    a.estado,
-                    a.titulo,
-                    a.usuario_asignado,
-                    a.creado_por,
-                    a.datasetname_main,
-                    a.work_datasetname,
-                    a.error_msg
-                FROM arbimaps_app.asignacion a
-                WHERE a.id = %s
-                LIMIT 1
-                """,
-                (asignacion_id,),
-            )
-            asignacion = cur.fetchone()
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        asignacion_table = app_table(tenant, "asignacion")
+        cur.execute(
+            f"""
+            SELECT
+                a.id,
+                a.estado,
+                a.titulo,
+                a.usuario_asignado,
+                a.creado_por,
+                a.datasetname_main,
+                a.work_datasetname,
+                a.error_msg
+            FROM {asignacion_table} a
+            WHERE a.id = %s
+            LIMIT 1
+            """,
+            (asignacion_id,),
+        )
+        asignacion = cur.fetchone()
 
         if not asignacion:
             raise export_service.ExportServiceError(
@@ -2482,10 +2531,11 @@ def run_arb_workspace_smoke_test(
             )
 
         with conn.cursor() as cur:
+            asignacion_predio_table = app_table(tenant, "asignacion_predio")
             cur.execute(
-                """
+                f"""
                 SELECT COUNT(DISTINCT ap.numero_predial_nacional)
-                FROM arbimaps_app.asignacion_predio ap
+                FROM {asignacion_predio_table} ap
                 WHERE ap.asignacion_id = %s
                   AND ap.activo IS DISTINCT FROM FALSE
                 """,
@@ -2507,7 +2557,7 @@ def run_arb_workspace_smoke_test(
         }
 
         result["counts"]["expected_predios"] = expected_predios
-        result["counts"]["main_assigned_predios"] = _count_main_assigned_predios(conn, schema_main, asignacion_id)
+        result["counts"]["main_assigned_predios"] = _count_main_assigned_predios(conn, tenant, schema_main, asignacion_id)
         result["counts"]["main_dataset_baskets"] = _count_dataset_baskets(conn, schema_main, datasetname_main)
         result["counts"]["main_dataset_predios"] = _count_dataset_predios(
             conn,
@@ -2543,7 +2593,8 @@ def run_arb_workspace_smoke_test(
                 "numero_predial",
             )
             result["counts"]["workspace_assignment_predios"] = workspace_dataset_assignment_predio_count(
-                schema_work,
+                conn,
+                tenant,
                 work_datasetname,
                 asignacion_id,
             )
@@ -2600,6 +2651,7 @@ def run_arb_workspace_smoke_test(
 
             scope_counts = _arb_prepare_diagnostic_predio_map(
                 conn,
+                tenant,
                 asignacion_id,
                 work_datasetname,
                 schema_main,
@@ -2663,7 +2715,12 @@ def run_arb_workspace_smoke_test(
     return result
 
 
-def remove_workspace_dataset(conn, datasetname: str, schema_work: str) -> dict:
+def remove_workspace_dataset(
+    conn,
+    tenant: TenantContext,
+    datasetname: str,
+    schema_work: str,
+) -> dict:
     """
     Delete all rows tied to a workspace dataset via t_basket, then remove baskets and dataset.
     This keeps b_asignaciones free of stale rows that block re-assignment by t_id.
@@ -2773,6 +2830,7 @@ def remove_workspace_dataset(conn, datasetname: str, schema_work: str) -> dict:
 
 def cleanup_orphan_workspace_datasets(
     conn,
+    tenant: TenantContext,
     schema_work: str,
     *,
     limit: int = 25,
@@ -2783,25 +2841,29 @@ def cleanup_orphan_workspace_datasets(
     max_items = max(int(limit or 0), 1)
     cleaned: list[dict] = []
     with conn.cursor() as cur:
+        asignacion_table = app_table(tenant, "asignacion")
         cur.execute(
             sql.SQL(
                 """
                 SELECT d.datasetname
                 FROM {} d
-                LEFT JOIN arbimaps_app.asignacion a
+                LEFT JOIN {} a
                   ON BTRIM(a.work_datasetname::text) = BTRIM(d.datasetname::text)
                  AND a.estado IS DISTINCT FROM 'CERRADA'
                 WHERE a.id IS NULL
                 ORDER BY d.datasetname
                 LIMIT %s
                 """
-            ).format(sql.Identifier(schema_work, "t_ili2db_dataset")),
+            ).format(
+                sql.Identifier(schema_work, "t_ili2db_dataset"),
+                sql.SQL(asignacion_table),
+            ),
             (max_items,),
         )
         orphan_rows = [str(r[0]).strip() for r in (cur.fetchall() or []) if r and r[0]]
 
     for ds_name in orphan_rows:
-        cleanup = remove_workspace_dataset(conn, ds_name, schema_work)
+        cleanup = remove_workspace_dataset(conn, tenant, ds_name, schema_work)
         if int(cleanup.get("dataset_deleted") or 0) > 0:
             cleaned.append(cleanup)
 
@@ -2813,6 +2875,8 @@ def cleanup_orphan_workspace_datasets(
 
 
 def build_workspace_for_assignment(
+    conn,
+    tenant: TenantContext,
     asignacion_id: int,
     *,
     schema_main: str,
@@ -2824,8 +2888,12 @@ def build_workspace_for_assignment(
     basket_tids_to_use: Optional[List[str]] = None,
     export_main_by_dataset: bool = False,
 ) -> dict:
-    workspace_ctx = workspace_schema_service.ensure_workspace_schema_ready(schema_work)
-    expected_predios = assignment_active_predio_count(asignacion_id)
+    workspace_ctx = workspace_schema_service.ensure_workspace_schema_ready(
+        conn,
+        tenant,
+        schema_work=schema_work,
+    )
+    expected_predios = assignment_active_predio_count(conn, tenant, asignacion_id)
     if expected_predios <= 0:
         raise export_service.ExportServiceError(
             status_code=400,
@@ -2845,13 +2913,12 @@ def build_workspace_for_assignment(
             detail="La asignacion no tiene dataset de workspace definido.",
         )
 
-    if workspace_dataset_exists(schema_work, work_datasetname):
-        with db_conn() as conn:
-            remove_workspace_dataset(conn, work_datasetname, schema_work)
-            conn.commit()
+    if workspace_dataset_exists(conn, tenant, work_datasetname):
+        remove_workspace_dataset(conn, tenant, work_datasetname, schema_work)
+        conn.commit()
 
     if workspace_ctx.model_name == "arb":
-        _arb_disable_workspace_unique_constraints(schema_work)
+        _arb_disable_workspace_unique_constraints(conn, tenant, schema_work)
 
     checkout_mode = "baskets"
     with tempfile.TemporaryDirectory() as td:
@@ -2861,9 +2928,11 @@ def build_workspace_for_assignment(
         if not basket_ids and not export_main_by_dataset:
             try:
                 basket_ids = export_service._list_assignment_basket_bids(
+                    conn,
+                    tenant,
                     schema_main,
                     asignacion_id,
-                    datasetname_main
+                    datasetname_main,
                 )
             except Exception:
                 pass
@@ -2871,6 +2940,7 @@ def build_workspace_for_assignment(
         if export_main_by_dataset or not basket_ids:
             checkout_mode = "dataset_full" if workspace_ctx.model_name == "arb" else "dataset"
             export_service.ili2pg_export_by_dataset(
+                tenant,
                 schema_main,
                 datasetname_main,
                 xtf_path,
@@ -2879,6 +2949,7 @@ def build_workspace_for_assignment(
             )
         else:
             export_service.ili2pg_export(
+                tenant,
                 schema_main,
                 basket_ids,
                 xtf_path,
@@ -2887,6 +2958,8 @@ def build_workspace_for_assignment(
             )
 
         export_service.ili2pg_import(
+            conn,
+            tenant,
             schema_work,
             work_datasetname,
             xtf_path,
@@ -2894,19 +2967,19 @@ def build_workspace_for_assignment(
             timeout_sec=timeout_sec,
         )
 
-    with db_conn() as conn:
-        removed_predios = prune_workspace_predios(conn, asignacion_id, work_datasetname, schema_work)
-        if workspace_ctx.model_name == "arb":
-            _arb_validate_workspace_dataset_health(conn, schema_work, work_datasetname)
-        actualizar_predio_ids_desde_workspace(asignacion_id, schema_work, conn=conn)
-        conn.commit()
+    removed_predios = prune_workspace_predios(conn, tenant, asignacion_id, work_datasetname, schema_work)
+    if workspace_ctx.model_name == "arb":
+        _arb_validate_workspace_dataset_health(conn, schema_work, work_datasetname)
+    actualizar_predio_ids_desde_workspace(conn, tenant, asignacion_id)
+    conn.commit()
 
-    predios_dataset = workspace_dataset_total_predio_count(schema_work, work_datasetname)
+    predios_dataset = workspace_dataset_total_predio_count(conn, tenant, work_datasetname)
     predios_asignacion = workspace_dataset_assignment_predio_count(
-        schema_work,
+        conn,
+        tenant,
         work_datasetname,
         asignacion_id,
-    )
+)
     predios_soporte_extra = max(predios_dataset - predios_asignacion, 0)
 
     if predios_asignacion < expected_predios:
@@ -2931,6 +3004,8 @@ def build_workspace_for_assignment(
 
 
 def ensure_workspace_ready_for_export(
+    conn,
+    tenant: TenantContext,
     asignacion_id: int,
     created_by: Optional[str],
     *,
@@ -2943,18 +3018,22 @@ def ensure_workspace_ready_for_export(
     update_asignacion_fields: Callable[..., None],
     safe_log_event: Callable[[int, str, Optional[str], Optional[str]], None],
 ) -> str:
-    workspace_ctx = workspace_schema_service.ensure_workspace_schema_ready(schema_work)
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                """
-                SELECT id, work_datasetname, datasetname_main
-                FROM arbimaps_app.asignacion
-                WHERE id = %s
-                """,
-                (asignacion_id,),
-            )
-            asignacion = cur.fetchone()
+    workspace_ctx = workspace_schema_service.ensure_workspace_schema_ready(
+        conn,
+        tenant,
+        schema_work=schema_work,
+    )
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        asignacion_table = app_table(tenant, "asignacion")
+        cur.execute(
+            f"""
+            SELECT id, work_datasetname, datasetname_main
+            FROM {asignacion_table}
+            WHERE id = %s
+            """,
+            (asignacion_id,),
+        )
+        asignacion = cur.fetchone()
 
     if not asignacion:
         raise export_service.ExportServiceError(status_code=404, detail="Asignacion no encontrada.")
@@ -2966,7 +3045,7 @@ def ensure_workspace_ready_for_export(
             detail="La asignacion no tiene workspace definido.",
         )
 
-    expected_predios = assignment_active_predio_count(asignacion_id)
+    expected_predios = assignment_active_predio_count(conn, tenant, asignacion_id)
     if expected_predios <= 0:
         raise export_service.ExportServiceError(
             status_code=400,
@@ -2977,18 +3056,18 @@ def ensure_workspace_ready_for_export(
 
     workspace_is_b_asig = workspace_ctx.build_strategy == "legacy_sql"
 
-    if workspace_dataset_exists(schema_work, work_dataset):
+    if workspace_dataset_exists(conn, tenant, work_dataset):
         predios_count = workspace_dataset_assignment_predio_count(
-            schema_work,
+            conn,
+            tenant,
             work_dataset,
             asignacion_id,
         )
-        total_predios = workspace_dataset_total_predio_count(schema_work, work_dataset)
+        total_predios = workspace_dataset_total_predio_count(conn, tenant, work_dataset)
         if predios_count >= expected_predios:
             if workspace_ctx.model_name == "arb":
                 try:
-                    with db_conn() as conn_validate:
-                        _arb_validate_workspace_dataset_health(conn_validate, schema_work, work_dataset)
+                    _arb_validate_workspace_dataset_health(conn, schema_work, work_dataset)
                 except export_service.ExportServiceError as exc:
                     safe_log_event(
                         asignacion_id,
@@ -3020,20 +3099,21 @@ def ensure_workspace_ready_for_export(
     # usando el SQL de workspace (no checkout parcial por ili2pg).
     if workspace_is_b_asig:
         result = workspace_sql_service.run_insertar_predios_for_asignacion(
+            conn,
+            tenant,
             asignacion_id,
             dataset_name=work_dataset,
             schema_work=schema_work,
         )
+        actualizar_predio_ids_desde_workspace(conn, tenant, asignacion_id)
+        conn.commit()
         dataset_sql = (result.get("dataset_name") or work_dataset or "").strip()
         if not dataset_sql:
             dataset_sql = work_dataset
 
-        with db_conn() as conn_local:
-            actualizar_predio_ids_desde_workspace(asignacion_id, schema_work, conn=conn_local)
-            conn_local.commit()
-
         final_predios = workspace_dataset_assignment_predio_count(
-            schema_work,
+            conn,
+            tenant,
             dataset_sql,
             asignacion_id,
         )
@@ -3056,8 +3136,8 @@ def ensure_workspace_ready_for_export(
             )
 
         try:
-            export_service._run_validate_derecho_with_retry(schema_work, dataset_sql)
-            export_service._run_validate_agrup_with_retry(schema_work, dataset_sql)
+            export_service._run_validate_derecho_with_retry(conn, schema_work, dataset_sql)
+            export_service._run_validate_agrup_with_retry(conn, schema_work, dataset_sql)
         except export_service.ExportServiceError as exc:
             safe_log_event(
                 asignacion_id,
@@ -3108,6 +3188,8 @@ def ensure_workspace_ready_for_export(
         checkout_mode = "dataset"
         try:
             checkout_mode = export_service.ili2pg_export_assignment(
+                conn,
+                tenant,
                 schema=schema_main,
                 asignacion_id=asignacion_id,
                 datasetname=datasetname_main,
@@ -3122,6 +3204,7 @@ def ensure_workspace_ready_for_export(
             if "no tiene baskets" not in detail:
                 raise
             export_service.ili2pg_export_by_dataset(
+                tenant,
                 schema_main,
                 datasetname_main,
                 xtf_path,
@@ -3131,10 +3214,12 @@ def ensure_workspace_ready_for_export(
             checkout_mode = "dataset_fallback_empty_assignment"
 
         if workspace_ctx.model_name == "arb":
-            _arb_disable_workspace_unique_constraints(schema_work)
+            _arb_disable_workspace_unique_constraints(conn, tenant, schema_work)
 
         try:
             export_service.ili2pg_import(
+                conn,
+                tenant,
                 schema_work,
                 work_dataset,
                 xtf_path,
@@ -3142,16 +3227,16 @@ def ensure_workspace_ready_for_export(
                 timeout_sec=timeout_sec,
             )
         except export_service.ExportServiceError:
-            if not workspace_dataset_exists(schema_work, work_dataset):
+            if not workspace_dataset_exists(conn, tenant, work_dataset):
                 raise
 
-    with db_conn() as conn_local:
-        removed_predios = prune_workspace_predios(conn_local, asignacion_id, work_dataset, schema_work)
-        actualizar_predio_ids_desde_workspace(asignacion_id, schema_work, conn=conn_local)
-        conn_local.commit()
+    removed_predios = prune_workspace_predios(conn, tenant, asignacion_id, work_dataset, schema_work)
+    actualizar_predio_ids_desde_workspace(conn, tenant, asignacion_id)
+    conn.commit()
 
     final_predios = workspace_dataset_assignment_predio_count(
-        schema_work,
+        conn,
+        tenant,
         work_dataset,
         asignacion_id,
     )

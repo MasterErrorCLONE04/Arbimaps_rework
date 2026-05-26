@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import FrozenSet, Optional
 
-from core.asignaciones import ASIG_MODEL_CONTEXT, AssignmentModelContext
-from core.db import db_conn
+from core.asignaciones import AssignmentModelContext, get_assignment_model_context
 from services.asignaciones_export import ExportServiceError
+from tenants import TenantContext
 
 
 @dataclass(frozen=True)
@@ -24,12 +24,43 @@ class WorkspaceSchemaStatus:
     missing_tables: FrozenSet[str]
 
 
+def resolve_assignment_model_context(
+    tenant: Optional[TenantContext] = None,
+) -> AssignmentModelContext:
+    base = get_assignment_model_context("arb")
+    schema_main = (
+        (tenant.schemas.main if tenant else "") or base.schema_main or ""
+    ).strip().strip('"')
+    schema_work = (
+        (tenant.schemas.work if tenant else "") or base.schema_work or ""
+    ).strip().strip('"')
+    return AssignmentModelContext(
+        name=base.name,
+        schema_main=schema_main,
+        schema_work=schema_work,
+        datasetname_main_default=base.datasetname_main_default,
+        required_baskets=base.required_baskets,
+        predio_table=base.predio_table,
+        predio_numero_field=base.predio_numero_field,
+    )
+
+
 def get_workspace_context(
-    schema_work: Optional[str] = None,
+    tenant: TenantContext | str | None,
     model_context: Optional[AssignmentModelContext] = None,
+    schema_work: Optional[str] = None,
 ) -> WorkspaceContext:
-    base = model_context or ASIG_MODEL_CONTEXT
-    resolved_schema = (schema_work or base.schema_work or "").strip().strip('"')
+    tenant_ctx = tenant if isinstance(tenant, TenantContext) else None
+    if tenant_ctx is None and isinstance(tenant, str) and schema_work is None:
+        schema_work = tenant
+
+    base = model_context or resolve_assignment_model_context(tenant_ctx)
+    resolved_schema = (
+        schema_work
+        or (tenant_ctx.schemas.work if tenant_ctx else "")
+        or base.schema_work
+        or ""
+    ).strip().strip('"')
     if not resolved_schema:
         raise ValueError("schema_work no definido para asignaciones.")
 
@@ -45,40 +76,41 @@ def get_workspace_context(
 
 
 def get_workspace_schema_status(
-    schema_work: Optional[str] = None,
+    conn,
+    tenant: TenantContext,
     model_context: Optional[AssignmentModelContext] = None,
+    schema_work: Optional[str] = None,
 ) -> WorkspaceSchemaStatus:
-    context = get_workspace_context(schema_work, model_context)
+    context = get_workspace_context(tenant, model_context, schema_work)
 
-    with db_conn() as conn:
-        with conn.cursor() as cur:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.schemata
+                WHERE schema_name = %s
+            )
+            """,
+            (context.schema_work,),
+        )
+        exists = bool((cur.fetchone() or [False])[0])
+
+        existing_tables: FrozenSet[str] = frozenset()
+        if exists:
             cur.execute(
                 """
-                SELECT EXISTS (
-                    SELECT 1
-                    FROM information_schema.schemata
-                    WHERE schema_name = %s
-                )
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = %s
                 """,
                 (context.schema_work,),
             )
-            exists = bool((cur.fetchone() or [False])[0])
-
-            existing_tables: FrozenSet[str] = frozenset()
-            if exists:
-                cur.execute(
-                    """
-                    SELECT table_name
-                    FROM information_schema.tables
-                    WHERE table_schema = %s
-                    """,
-                    (context.schema_work,),
-                )
-                existing_tables = frozenset(
-                    str(row[0]).strip()
-                    for row in (cur.fetchall() or [])
-                    if row and row[0]
-                )
+            existing_tables = frozenset(
+                str(row[0]).strip()
+                for row in (cur.fetchall() or [])
+                if row and row[0]
+            )
 
     missing_tables = frozenset(sorted(context.required_tables - existing_tables))
     return WorkspaceSchemaStatus(
@@ -90,10 +122,12 @@ def get_workspace_schema_status(
 
 
 def ensure_workspace_schema_ready(
-    schema_work: Optional[str] = None,
+    conn,
+    tenant: TenantContext,
     model_context: Optional[AssignmentModelContext] = None,
+    schema_work: Optional[str] = None,
 ) -> WorkspaceContext:
-    status = get_workspace_schema_status(schema_work, model_context)
+    status = get_workspace_schema_status(conn, tenant, model_context, schema_work)
     context = status.context
     if status.exists and not status.missing_tables:
         return context

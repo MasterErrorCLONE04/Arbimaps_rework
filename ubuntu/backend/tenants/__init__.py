@@ -15,6 +15,16 @@ from .exceptions import (
 )
 from .models import MunicipalityConfig, MunicipalityDbConfig, MunicipalitySchemas
 from .registry import MunicipalityRegistry
+from .sql import (
+    app_table,
+    history_table,
+    main_table,
+    tenant_schema,
+    tenant_table,
+    validate_identifier,
+    workflow_table,
+    work_table,
+)
 
 _dependency_exports = []
 try:
@@ -58,9 +68,17 @@ __all__ = [
     "MunicipalityRegistry",
     "MunicipalitySchemas",
     "TenantContext",
+    "app_table",
     "get_connection_manager",
     "get_registry",
+    "history_table",
     "init_connection_manager",
     "init_municipality_registry",
+    "main_table",
+    "tenant_schema",
+    "tenant_table",
+    "validate_identifier",
+    "workflow_table",
+    "work_table",
 ]
 __all__.extend(_dependency_exports)

@@ -131,6 +131,7 @@ def get_tenant_db_connection(
     tenant: Annotated[TenantContext, Depends(get_tenant_context_from_session)],
     manager: Annotated[ConnectionManager, Depends(get_connection_manager)],
 ):
+    conn = None
     try:
         conn = manager.get_connection(tenant)
     except ConnectionManagerError as exc:
@@ -140,11 +141,19 @@ def get_tenant_db_connection(
         ) from exc
     try:
         yield conn
-    finally:
-        try:
-            manager.release_connection(tenant, conn)
-        except ConnectionManagerError:
+    except Exception:
+        if conn is not None:
             try:
-                conn.close()
+                conn.rollback()
             except Exception:
                 pass
+        raise
+    finally:
+        if conn is not None:
+            try:
+                manager.release_connection(tenant, conn)
+            except ConnectionManagerError:
+                try:
+                    conn.close()
+                except Exception:
+                    pass

@@ -1,82 +1,88 @@
-import os
-
 from fastapi import APIRouter, Depends
 from psycopg2.extras import RealDictCursor
 
-from routers.auth import require_user
-from routers.db import db_conn, t
+from routers.auth import get_current_tenant, require_user
+from tenants import TenantContext, get_tenant_db_connection, main_table
 
 router = APIRouter(prefix="/resumenp", tags=["resumen_proyecto"])
-VISOR_DATA_SCHEMA = os.getenv("VISOR_DATA_SCHEMA", os.getenv("DATA_SCHEMA", "leiva"))
 
 
 @router.get("/proyecto")
-def resumen_proyecto(_user: str = Depends(require_user)):
+def resumen_proyecto(
+    _user: str = Depends(require_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
     """
     Resumen general del proyecto:
     - total de predios
-    - distribución por condición de predio
-    - distribución por tipo de predio
-    - distribución por destinación económica
-    - distribución por tipo de planta (unidad de construcción)
+    - distribucion por condicion de predio
+    - distribucion por tipo de predio
+    - distribucion por destinacion economica
+    - distribucion por tipo de planta (unidad de construccion)
     """
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            # 1) Distribución por condición del predio
-            sql_condicion = f"""
-            SELECT
-              COALESCE(c.dispname, 'SIN_DATO') AS condicion_predio,
-              COUNT(*)::bigint AS total
-            FROM {t('arb_predio', schema=VISOR_DATA_SCHEMA)} p
-            LEFT JOIN {t('arb_condicionprediotipo', schema=VISOR_DATA_SCHEMA)} c
-              ON c.t_id::text = p.condicion_predio::text
-            GROUP BY 1
-            ORDER BY total DESC;
-            """
-            cur.execute(sql_condicion)
-            condicion_rows = cur.fetchall()
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        # 1) Distribucion por condicion del predio
+        predio_table = main_table(tenant, "arb_predio")
+        condicion_predio_table = main_table(tenant, "arb_condicionprediotipo")
+        sql_condicion = f"""
+        SELECT
+          COALESCE(c.dispname, 'SIN_DATO') AS condicion_predio,
+          COUNT(*)::bigint AS total
+        FROM {predio_table} p
+        LEFT JOIN {condicion_predio_table} c
+          ON c.t_id::text = p.condicion_predio::text
+        GROUP BY 1
+        ORDER BY total DESC;
+        """
+        cur.execute(sql_condicion)
+        condicion_rows = cur.fetchall()
 
-            # 2) Distribución por tipo de predio (unidad administrativa básica)
-            sql_tipo = f"""
-            SELECT
-              COALESCE(tip.dispname, 'SIN_DATO') AS tipo_predio,
-              COUNT(*)::bigint AS total
-            FROM {t('arb_predio', schema=VISOR_DATA_SCHEMA)} p
-            LEFT JOIN {t('arb_prediotipo', schema=VISOR_DATA_SCHEMA)} tip
-              ON tip.t_id = p.tipo::bigint
-            GROUP BY 1
-            ORDER BY total DESC;
-            """
-            cur.execute(sql_tipo)
-            tipo_rows = cur.fetchall()
+        # 2) Distribucion por tipo de predio (unidad administrativa basica)
+        predio_tipo_table = main_table(tenant, "arb_prediotipo")
+        sql_tipo = f"""
+        SELECT
+          COALESCE(tip.dispname, 'SIN_DATO') AS tipo_predio,
+          COUNT(*)::bigint AS total
+        FROM {predio_table} p
+        LEFT JOIN {predio_tipo_table} tip
+          ON tip.t_id = p.tipo::bigint
+        GROUP BY 1
+        ORDER BY total DESC;
+        """
+        cur.execute(sql_tipo)
+        tipo_rows = cur.fetchall()
 
-            # 3) Distribución por destinación económica
-            sql_dest = f"""
-            SELECT
-              COALESCE(d.dispname, 'SIN_DATO') AS destinacion_economica,
-              COUNT(*)::bigint AS total
-            FROM {t('arb_predio', schema=VISOR_DATA_SCHEMA)} p
-            LEFT JOIN {t('arb_destinacioneconomicatipo', schema=VISOR_DATA_SCHEMA)} d
-              ON d.t_id = p.destinacion_economica::bigint
-            GROUP BY 1
-            ORDER BY total DESC;
-            """
-            cur.execute(sql_dest)
-            dest_rows = cur.fetchall()
+        # 3) Distribucion por destinacion economica
+        destinacion_economica_table = main_table(tenant, "arb_destinacioneconomicatipo")
+        sql_dest = f"""
+        SELECT
+          COALESCE(d.dispname, 'SIN_DATO') AS destinacion_economica,
+          COUNT(*)::bigint AS total
+        FROM {predio_table} p
+        LEFT JOIN {destinacion_economica_table} d
+          ON d.t_id = p.destinacion_economica::bigint
+        GROUP BY 1
+        ORDER BY total DESC;
+        """
+        cur.execute(sql_dest)
+        dest_rows = cur.fetchall()
 
-            # 4) Distribución por tipo de planta (arb_unidadconstruccion)
-            sql_tipo_planta = f"""
-            SELECT
-              COALESCE(tp.dispname, 'SIN_DATO') AS tipo_planta,
-              COUNT(*)::bigint AS total
-            FROM {t('arb_unidadconstruccion', schema=VISOR_DATA_SCHEMA)} uc
-            LEFT JOIN {t('arb_construccionplantatipo', schema=VISOR_DATA_SCHEMA)} tp
-              ON tp.t_id = uc.tipo_planta::bigint
-            GROUP BY 1
-            ORDER BY total DESC;
-            """
-            cur.execute(sql_tipo_planta)
-            tipo_planta_rows = cur.fetchall()
+        # 4) Distribucion por tipo de planta (arb_unidadconstruccion)
+        unidad_construccion_table = main_table(tenant, "arb_unidadconstruccion")
+        construccion_planta_tipo_table = main_table(tenant, "arb_construccionplantatipo")
+        sql_tipo_planta = f"""
+        SELECT
+          COALESCE(tp.dispname, 'SIN_DATO') AS tipo_planta,
+          COUNT(*)::bigint AS total
+        FROM {unidad_construccion_table} uc
+        LEFT JOIN {construccion_planta_tipo_table} tp
+          ON tp.t_id = uc.tipo_planta::bigint
+        GROUP BY 1
+        ORDER BY total DESC;
+        """
+        cur.execute(sql_tipo_planta)
+        tipo_planta_rows = cur.fetchall()
 
     total_predios = int(sum(int(r.get("total", 0)) for r in condicion_rows))
 
@@ -87,5 +93,3 @@ def resumen_proyecto(_user: str = Depends(require_user)):
         "destinacion_economica": dest_rows,
         "tipo_planta": tipo_planta_rows,
     }
-
-

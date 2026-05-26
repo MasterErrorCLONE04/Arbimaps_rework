@@ -1,15 +1,13 @@
 import os
 import re
-import time
 from pathlib import Path
 from typing import Optional
 
 import psycopg2
 from psycopg2 import errors as psy_errors
 
-from core.asignaciones import ASIG_MODEL_CONTEXT
-from core.db import db_conn
 from services.asignaciones_export import ExportServiceError
+from tenants import TenantContext, app_table, main_table, tenant_table, validate_identifier, work_table
 
 
 _SCRIPT_PATH = Path(__file__).resolve().parents[1] / "sql" / "asignaciones" / "insertar_predios.sql"
@@ -29,27 +27,6 @@ def _ms_literal(env_name: str, default_ms: int) -> str:
     return f"{ms}ms"
 
 
-def _workspace_retry_backoff_seconds(attempt: int) -> float:
-    base_ms = _safe_int(os.getenv("ASIG_WORKSPACE_RETRY_BACKOFF_MS"), 700, minimum=100)
-    scaled_ms = min(base_ms * max(1, attempt), 4000)
-    return scaled_ms / 1000.0
-
-
-def _workspace_retry_count() -> int:
-    return _safe_int(os.getenv("ASIG_WORKSPACE_DB_RETRIES"), 1, minimum=0)
-
-
-def _is_retryable_operational_error(exc: Exception) -> bool:
-    msg = str(exc or "").lower()
-    return (
-        "ssl connection has been closed unexpectedly" in msg
-        or "server closed the connection unexpectedly" in msg
-        or "terminating connection due to administrator command" in msg
-        or "connection not open" in msg
-        or "connection reset by peer" in msg
-    )
-
-
 def _set_workspace_session_guards(cur, asignacion_id: int) -> None:
     cur.execute("SET LOCAL lock_timeout = %s", (_ms_literal("ASIG_WORKSPACE_LOCK_TIMEOUT_MS", 5000),))
     cur.execute(
@@ -63,11 +40,15 @@ def _set_workspace_session_guards(cur, asignacion_id: int) -> None:
     cur.execute("SET LOCAL application_name = %s", (f"asig_workspace_{asignacion_id}",))
 
 
+def _schema_name_from_qualified(qualified_name: str) -> str:
+    schema_name, _, _ = str(qualified_name or "").partition(".")
+    return validate_identifier(schema_name, label="qualified_schema")
+
+
 def _qualify(schema: str, table: str) -> str:
-    schema = (schema or "").strip().strip('"')
-    if not schema:
-        return table
-    return f"{schema}.{table}"
+    safe_schema = validate_identifier(schema, label="schema")
+    safe_table = validate_identifier(table, label="table")
+    return f"{safe_schema}.{safe_table}"
 
 
 def _sanitize_dataset_name(value: str) -> str:
@@ -77,12 +58,13 @@ def _sanitize_dataset_name(value: str) -> str:
     return text or "asignacion"
 
 
-def _load_script_body() -> str:
+def _load_script_body(*, tenant: TenantContext, schema_work: str) -> str:
     if not _SCRIPT_PATH.exists():
         raise ExportServiceError(
             status_code=500,
             detail=f"No existe el script SQL base: {_SCRIPT_PATH}",
         )
+
     text = _SCRIPT_PATH.read_text(encoding="utf-8")
     idx = text.find(_SCRIPT_START_MARKER)
     if idx < 0:
@@ -93,16 +75,31 @@ def _load_script_body() -> str:
                 f"Marcador: {_SCRIPT_START_MARKER}"
             ),
         )
+
     body = text[idx:]
     body = re.sub(r"(?im)^\s*(ROLLBACK|BEGIN|COMMIT)\s*;\s*$", "", body)
+
+    source_schema = _schema_name_from_qualified(main_table(tenant, "ilc_predio"))
+    target_schema = validate_identifier(schema_work, label="schema_work")
+    app_schema = _schema_name_from_qualified(app_table(tenant, "asignacion"))
+
+    replacements = {
+        r"\bleiva\b": source_schema,
+        r"\bb_asignaciones\b": target_schema,
+        r"\barbimaps_app\b": app_schema,
+    }
+    for pattern, replacement in replacements.items():
+        body = re.sub(pattern, replacement, body)
+
     return body.strip()
 
 
-def _get_asignacion_meta(cur, asignacion_id: int) -> dict:
+def _get_asignacion_meta(cur, tenant: TenantContext, asignacion_id: int) -> dict:
+    asignacion_table = app_table(tenant, "asignacion")
     cur.execute(
-        """
+        f"""
         SELECT id, usuario_asignado, titulo, work_datasetname
-        FROM arbimaps_app.asignacion
+        FROM {asignacion_table}
         WHERE id = %s
         """,
         (asignacion_id,),
@@ -118,11 +115,12 @@ def _get_asignacion_meta(cur, asignacion_id: int) -> dict:
     }
 
 
-def _get_active_npns(cur, asignacion_id: int) -> list[str]:
+def _get_active_npns(cur, tenant: TenantContext, asignacion_id: int) -> list[str]:
+    asignacion_predio_table = app_table(tenant, "asignacion_predio")
     cur.execute(
-        """
+        f"""
         SELECT ap.numero_predial_nacional
-        FROM arbimaps_app.asignacion_predio ap
+        FROM {asignacion_predio_table} ap
         WHERE ap.asignacion_id = %s
           AND ap.activo IS DISTINCT FROM FALSE
         ORDER BY ap.numero_predial_nacional
@@ -147,18 +145,21 @@ def _resolve_dataset_name(meta: dict, dataset_name_override: Optional[str]) -> s
 
 def _validate_workspace_dataset(
     cur,
+    tenant: TenantContext,
     *,
     schema_work: str,
     dataset_name: str,
     asignacion_id: int,
     seed_count: int,
 ) -> dict:
-    predio_table = _qualify(schema_work, "ilc_predio")
-    basket_table = _qualify(schema_work, "t_ili2db_basket")
-    dataset_table = _qualify(schema_work, "t_ili2db_dataset")
-    dir_table = _qualify(schema_work, "extdireccion")
-    datos_table = _qualify(schema_work, "ilc_datosadicionaleslevantamientocatastral")
-    derecho_table = _qualify(schema_work, "ilc_derecho")
+    safe_schema_work = validate_identifier(schema_work, label="schema_work")
+    predio_table = _qualify(safe_schema_work, "ilc_predio")
+    basket_table = tenant_table(tenant, "t_ili2db_basket", schema_name="work")
+    dataset_table = tenant_table(tenant, "t_ili2db_dataset", schema_name="work")
+    dir_table = _qualify(safe_schema_work, "extdireccion")
+    datos_table = _qualify(safe_schema_work, "ilc_datosadicionaleslevantamientocatastral")
+    derecho_table = _qualify(safe_schema_work, "ilc_derecho")
+    asignacion_predio_table = app_table(tenant, "asignacion_predio")
 
     cur.execute(
         f"""
@@ -174,7 +175,7 @@ def _validate_workspace_dataset(
             (
                 SELECT COUNT(*)
                 FROM predios p
-                JOIN arbimaps_app.asignacion_predio ap
+                JOIN {asignacion_predio_table} ap
                   ON ap.numero_predial_nacional = p.numero_predial_nacional
                  AND ap.asignacion_id = %s
                  AND ap.activo IS DISTINCT FROM FALSE
@@ -182,7 +183,7 @@ def _validate_workspace_dataset(
             (
                 SELECT COUNT(DISTINCT ap.numero_predial_nacional)
                 FROM predios p
-                JOIN arbimaps_app.asignacion_predio ap
+                JOIN {asignacion_predio_table} ap
                   ON ap.numero_predial_nacional = p.numero_predial_nacional
                  AND ap.asignacion_id = %s
                  AND ap.activo IS DISTINCT FROM FALSE
@@ -230,12 +231,11 @@ def _validate_workspace_dataset(
         "predios_derecho_invalido": int(row[5] or 0),
     }
 
-    # Every active NPN selected in the assignment must exist in the workspace dataset.
     cur.execute(
         f"""
         WITH asignados AS (
             SELECT ap.numero_predial_nacional
-            FROM arbimaps_app.asignacion_predio ap
+            FROM {asignacion_predio_table} ap
             WHERE ap.asignacion_id = %s
               AND ap.activo IS DISTINCT FROM FALSE
         ),
@@ -264,11 +264,10 @@ def _validate_workspace_dataset(
             status_code=500,
             detail=(
                 f"Workspace SQL incompleto: dataset '{dataset_name}' sin predios "
-                f"en {schema_work}."
+                f"en {safe_schema_work}."
             ),
         )
 
-    # If no assigned predios are present, workspace build is unusable.
     if summary["predios_asignacion"] == 0:
         raise ExportServiceError(
             status_code=500,
@@ -279,10 +278,7 @@ def _validate_workspace_dataset(
             ),
         )
 
-    summary["predios_soporte_extra"] = max(
-        summary["predios_total"] - summary["predios_asignacion"],
-        0,
-    )
+    summary["predios_soporte_extra"] = max(summary["predios_total"] - summary["predios_asignacion"], 0)
     summary["predios_faltantes_dataset"] = max(seed_count - summary["predios_total"], 0)
     summary["predios_faltantes_asignacion"] = max(seed_count - summary["predios_asignacion"], 0)
     summary["has_integrity_warnings"] = (
@@ -298,130 +294,121 @@ def _validate_workspace_dataset(
 
 
 def run_insertar_predios_for_asignacion(
+    conn,
+    tenant: TenantContext,
     asignacion_id: int,
     *,
     dataset_name: Optional[str] = None,
     schema_work: Optional[str] = None,
 ) -> dict:
-    expected_schema = (ASIG_MODEL_CONTEXT.schema_work or "b_asignaciones_arb").strip()
-    resolved_schema_work = (schema_work or expected_schema).strip().strip('"')
-    if not resolved_schema_work:
-        raise ExportServiceError(
-            status_code=400,
-            detail="schema_work no definido para el flujo SQL de workspace.",
-        )
-    if resolved_schema_work.lower() != expected_schema.lower():
+    expected_schema = validate_identifier(tenant.schemas.work, label="tenant.schemas.work")
+    resolved_schema_work = validate_identifier(
+        (schema_work or expected_schema).strip().strip('"'),
+        label="schema_work",
+    )
+    if resolved_schema_work != expected_schema:
         raise ExportServiceError(
             status_code=400,
             detail=(
-                "Este flujo SQL esta disenado para schema_work="
-                f"{expected_schema}."
+                "Este flujo SQL esta restringido al schema_work del tenant activo "
+                f"({expected_schema})."
             ),
         )
 
-    sql_body = _load_script_body()
-    if resolved_schema_work.lower() != "b_asignaciones":
-        sql_body = re.sub(r"\bb_asignaciones\b", resolved_schema_work, sql_body)
-    retries = _workspace_retry_count()
-    attempt = 0
+    sql_body = _load_script_body(tenant=tenant, schema_work=resolved_schema_work)
 
-    while True:
-        attempt += 1
-        try:
-            with db_conn() as conn:
-                with conn.cursor() as cur:
-                    _set_workspace_session_guards(cur, asignacion_id)
-                    meta = _get_asignacion_meta(cur, asignacion_id)
-                    npn_list = _get_active_npns(cur, asignacion_id)
-                    if not npn_list:
-                        raise ExportServiceError(
-                            status_code=400,
-                            detail=f"La asignacion {asignacion_id} no tiene predios activos.",
-                        )
+    try:
+        with conn.cursor() as cur:
+            _set_workspace_session_guards(cur, asignacion_id)
+            meta = _get_asignacion_meta(cur, tenant, asignacion_id)
+            npn_list = _get_active_npns(cur, tenant, asignacion_id)
+            if not npn_list:
+                raise ExportServiceError(
+                    status_code=400,
+                    detail=f"La asignacion {asignacion_id} no tiene predios activos.",
+                )
 
-                    ds_name = _resolve_dataset_name(meta, dataset_name)
+            ds_name = _resolve_dataset_name(meta, dataset_name)
 
-                    cur.execute("DROP TABLE IF EXISTS _cfg")
-                    cur.execute(
-                        """
-                        CREATE TEMP TABLE _cfg AS
-                        SELECT %s::text AS dataset_name, %s::text[] AS npn_list
-                        """,
-                        (ds_name, npn_list),
-                    )
-                    cur.execute(sql_body)
+            cur.execute("DROP TABLE IF EXISTS _cfg")
+            cur.execute(
+                """
+                CREATE TEMP TABLE _cfg AS
+                SELECT %s::text AS dataset_name, %s::text[] AS npn_list
+                """,
+                (ds_name, npn_list),
+            )
+            cur.execute(sql_body)
 
-                    cur.execute(
-                        """
-                        SELECT count(*)
-                        FROM {predio_table} p
-                        JOIN {basket_table} b ON b.t_id = p.t_basket
-                        JOIN {dataset_table} d ON d.t_id = b.dataset
-                        WHERE d.datasetname = %s
-                        """.format(
-                            predio_table=_qualify(resolved_schema_work, "ilc_predio"),
-                            basket_table=_qualify(resolved_schema_work, "t_ili2db_basket"),
-                            dataset_table=_qualify(resolved_schema_work, "t_ili2db_dataset"),
-                        ),
-                        (ds_name,),
-                    )
-                    predios_cargados = int((cur.fetchone() or [0])[0] or 0)
-                    integrity = _validate_workspace_dataset(
-                        cur,
-                        schema_work=resolved_schema_work,
-                        dataset_name=ds_name,
-                        asignacion_id=asignacion_id,
-                        seed_count=len(npn_list),
-                    )
-
-                    cur.execute(
-                        """
-                        UPDATE arbimaps_app.asignacion
-                        SET work_datasetname = %s
-                        WHERE id = %s
-                        """,
-                        (ds_name, asignacion_id),
-                    )
-                conn.commit()
-
-            return {
-                "dataset_name": ds_name,
-                "seed_predios": len(npn_list),
-                "predios_cargados": predios_cargados,
-                "predios_asignacion": integrity["predios_asignacion"],
-                "predios_soporte_extra": integrity["predios_soporte_extra"],
-                "predios_faltantes_dataset": integrity["predios_faltantes_dataset"],
-                "predios_faltantes_asignacion": integrity["predios_faltantes_asignacion"],
-                "predios_direccion_invalida": integrity["predios_direccion_invalida"],
-                "predios_datos_invalido": integrity["predios_datos_invalido"],
-                "predios_derecho_invalido": integrity["predios_derecho_invalido"],
-                "has_integrity_warnings": integrity["has_integrity_warnings"],
-            }
-        except ExportServiceError:
-            raise
-        except psy_errors.QueryCanceled as exc:
-            raise ExportServiceError(
-                status_code=500,
-                detail=(
-                    "Workspace SQL excedio el tiempo configurado "
-                    "(ASIG_WORKSPACE_STATEMENT_TIMEOUT_MS)."
+            cur.execute(
+                """
+                SELECT count(*)
+                FROM {predio_table} p
+                JOIN {basket_table} b ON b.t_id = p.t_basket
+                JOIN {dataset_table} d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+                """.format(
+                    predio_table=work_table(tenant, "ilc_predio"),
+                    basket_table=tenant_table(tenant, "t_ili2db_basket", schema_name="work"),
+                    dataset_table=tenant_table(tenant, "t_ili2db_dataset", schema_name="work"),
                 ),
-            ) from exc
-        except psy_errors.LockNotAvailable as exc:
-            raise ExportServiceError(
-                status_code=500,
-                detail=(
-                    "Workspace SQL bloqueado por lock en base de datos "
-                    "(ASIG_WORKSPACE_LOCK_TIMEOUT_MS)."
-                ),
-            ) from exc
-        except psycopg2.OperationalError as exc:
-            if attempt <= retries and _is_retryable_operational_error(exc):
-                time.sleep(_workspace_retry_backoff_seconds(attempt))
-                continue
-            raise ExportServiceError(
-                status_code=500,
-                detail=f"Error de conexion creando workspace SQL: {exc}",
-            ) from exc
+                (ds_name,),
+            )
+            predios_cargados = int((cur.fetchone() or [0])[0] or 0)
+            integrity = _validate_workspace_dataset(
+                cur,
+                tenant,
+                schema_work=resolved_schema_work,
+                dataset_name=ds_name,
+                asignacion_id=asignacion_id,
+                seed_count=len(npn_list),
+            )
 
+            cur.execute(
+                f"""
+                UPDATE {app_table(tenant, 'asignacion')}
+                SET work_datasetname = %s
+                WHERE id = %s
+                """,
+                (ds_name, asignacion_id),
+            )
 
+        return {
+            "dataset_name": ds_name,
+            "seed_predios": len(npn_list),
+            "predios_cargados": predios_cargados,
+            "predios_asignacion": integrity["predios_asignacion"],
+            "predios_soporte_extra": integrity["predios_soporte_extra"],
+            "predios_faltantes_dataset": integrity["predios_faltantes_dataset"],
+            "predios_faltantes_asignacion": integrity["predios_faltantes_asignacion"],
+            "predios_direccion_invalida": integrity["predios_direccion_invalida"],
+            "predios_datos_invalido": integrity["predios_datos_invalido"],
+            "predios_derecho_invalido": integrity["predios_derecho_invalido"],
+            "has_integrity_warnings": integrity["has_integrity_warnings"],
+        }
+    except ExportServiceError:
+        raise
+    except psy_errors.QueryCanceled as exc:
+        raise ExportServiceError(
+            status_code=500,
+            detail=(
+                "Workspace SQL excedio el tiempo configurado "
+                "(ASIG_WORKSPACE_STATEMENT_TIMEOUT_MS)."
+            ),
+        ) from exc
+    except psy_errors.LockNotAvailable as exc:
+        raise ExportServiceError(
+            status_code=500,
+            detail=(
+                "Workspace SQL bloqueado por lock en base de datos "
+                "(ASIG_WORKSPACE_LOCK_TIMEOUT_MS)."
+            ),
+        ) from exc
+    except psycopg2.OperationalError as exc:
+        raise ExportServiceError(
+            status_code=500,
+            detail=(
+                "Error de conexion ejecutando workspace SQL tenant-aware. "
+                "El reintento debe ser manejado por el caller."
+            ),
+        ) from exc

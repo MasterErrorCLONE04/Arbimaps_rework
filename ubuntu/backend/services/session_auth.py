@@ -1,7 +1,6 @@
 import json
 import os
 from datetime import datetime, timezone
-import re
 from typing import Any
 
 from fastapi import HTTPException, Request, status
@@ -16,6 +15,7 @@ from tenants import (
     MunicipalityInactiveError,
     MunicipalityNotFoundError,
     TenantContext,
+    app_table,
     get_connection_manager,
     get_registry,
 )
@@ -41,23 +41,39 @@ SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "lax").strip().lo
 SESSION_COOKIE_PATH = os.getenv("SESSION_COOKIE_PATH", "/") or "/"
 
 signer = TimestampSigner(SECRET)
-IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
-def _validated_identifier(name: str) -> str:
-    value = (name or "").strip()
-    if not IDENT_RE.match(value):
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Schema tenant invalido.",
-        )
-    return value
+def _tenant_gis_payload(tenant: TenantContext) -> dict[str, Any]:
+    return {
+        "geoserver_base_url": tenant.geoserver_base_url,
+        "geoserver_workspace": tenant.geoserver_workspace,
+        "wms_base_url": tenant.wms_base_url,
+        "geoserver_layers": tenant.geoserver_layers,
+    }
+
+
+def _bind_tenant_state(request: Request, tenant: TenantContext) -> None:
+    request.state.tenant_context = tenant
+    request.state.tenant = tenant
+    request.state.db = tenant.db
+    request.state.schemas = tenant.schemas
+    request.state.gis = _tenant_gis_payload(tenant)
+    request.state.session_tenant_code = tenant.municipality_code
+
+
+def _bind_user_state(request: Request, user: dict[str, Any]) -> None:
+    request.state.current_user = user
+    request.state.user = user
 
 
 def _qualified_app_table(tenant: TenantContext, table_name: str) -> str:
-    schema = _validated_identifier(tenant.schemas.app)
-    table = _validated_identifier(table_name)
-    return f"{schema}.{table}"
+    try:
+        return app_table(tenant, table_name)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Schema tenant invalido.",
+        ) from exc
 
 
 def build_session_payload(
@@ -174,8 +190,7 @@ def get_current_tenant_from_session(request: Request) -> TenantContext:
         ) from exc
 
     tenant = TenantContext.from_config(config)
-    request.state.tenant_context = tenant
-    request.state.session_tenant_code = tenant.municipality_code
+    _bind_tenant_state(request, tenant)
     return tenant
 
 
@@ -257,7 +272,7 @@ def get_current_user_from_session(request: Request) -> dict[str, Any]:
 
     tenant = get_current_tenant_from_session(request)
     user = _fetch_active_user_for_tenant(request, tenant)
-    request.state.current_user = user
+    _bind_user_state(request, user)
     return user
 
 

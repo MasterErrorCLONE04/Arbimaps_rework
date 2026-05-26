@@ -4,49 +4,86 @@ import tempfile
 import traceback
 from datetime import datetime, timezone
 from typing import Literal, Optional
+from uuid import uuid4
 
 from core.asignaciones import (
-    ASIG_MODEL_CONTEXT,
     ASIG_EXPORT_JOB_DIR,
     ASIG_EXPORT_JOB_TTL_HOURS,
     ASIG_SKIP_WORKSPACE,
+    DATASETNAME_MAIN_DEFAULT,
     ILI2PG_CMD,
     ILI2PG_TIMEOUT_SEC,
+    REQUIRED_BASKETS,
+    assignment_access_denied_detail,
+    can_access_assignment_model,
 )
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import FileResponse
 
 from repositories import asignaciones_repo
-from routers.auth import require_assignment_roles
-from routers.db import db_conn
+from routers.auth import get_current_tenant, get_current_user, get_user_role, normalize_role
 from services import asignaciones_export as export_service
 from services import asignaciones_workspace as workspace_service
+from tenants import TenantContext, get_tenant_db_connection
 
 router = APIRouter(prefix="/asignaciones", tags=["asignaciones-export"])
 
 JOB_FORMAT = Literal["xtf", "gdb", "gpkg"]
 
 
-def _read_schema_main() -> str:
-    value = (ASIG_MODEL_CONTEXT.schema_main or "").strip()
+def _require_assignment_access(user: Optional[dict], *allowed_roles: str) -> None:
+    role = normalize_role(get_user_role(user or {}))
+    allowed = {normalize_role(item) for item in allowed_roles if item}
+    if allowed and role not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Rol '{role}' sin permisos para esta accion",
+        )
+    if not can_access_assignment_model(user or {}, role=role):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=assignment_access_denied_detail(),
+        )
+
+
+def _ensure_assignment_owner_access(user: Optional[dict], asignacion: Optional[dict]) -> None:
+    role = str(
+        (user or {}).get("role")
+        or (user or {}).get("rol")
+        or (user or {}).get("role_code")
+        or ""
+    ).strip().lower()
+    username = str((user or {}).get("username") or "").strip().lower()
+    if role not in {"digitalizador", "reconocedor"}:
+        return
+    owner = str((asignacion or {}).get("usuario_asignado") or "").strip().lower()
+    if not owner or owner != username:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="La asignacion no le pertenece al usuario autenticado.",
+        )
+
+
+def _read_schema_main(tenant: TenantContext) -> str:
+    value = (tenant.schemas.main or "").strip()
     if not value:
-        raise RuntimeError("schema_main no configurado para asignaciones arb.")
+        raise RuntimeError("tenant.schemas.main no configurado.")
     return value
 
 
-def _read_schema_work() -> str:
-    value = (ASIG_MODEL_CONTEXT.schema_work or "").strip()
+def _read_schema_work(tenant: TenantContext) -> str:
+    value = (tenant.schemas.work or "").strip()
     if not value:
-        raise RuntimeError("schema_work no configurado para asignaciones arb.")
+        raise RuntimeError("tenant.schemas.work no configurado.")
     return value
 
 
 def _read_datasetname_main_default() -> str:
-    return (ASIG_MODEL_CONTEXT.datasetname_main_default or "").strip()
+    return (DATASETNAME_MAIN_DEFAULT or "").strip()
 
 
 def _read_required_baskets() -> set[str]:
-    return set(ASIG_MODEL_CONTEXT.required_baskets or ())
+    return set(REQUIRED_BASKETS or ())
 
 
 def _raise_http_from_export_error(exc: Exception) -> None:
@@ -63,16 +100,9 @@ def _error_detail(exc: Exception) -> str:
     return str(exc) or exc.__class__.__name__
 
 
-def _safe_log_event(asignacion_id: int, evento: str, mensaje: Optional[str], usuario: Optional[str]) -> None:
-    asignaciones_repo.safe_log_event(asignacion_id, evento, mensaje, usuario)
-
-
 def _ensure_package_export_supported() -> None:
-    if ASIG_MODEL_CONTEXT.name != "arb":
-        raise export_service.ExportServiceError(
-            status_code=501,
-            detail=f"La exportacion de paquetes no esta implementada para el modelo {ASIG_MODEL_CONTEXT.name}.",
-        )
+    # Este router se deja acoplado al flujo Arb, pero ya sin contexto global mutable.
+    return
 
 
 def _ensure_package_export_supported_http() -> None:
@@ -82,106 +112,175 @@ def _ensure_package_export_supported_http() -> None:
         _raise_http_from_export_error(exc)
 
 
-def _ensure_workspace_ready_for_export_raw(asignacion_id: int, created_by: Optional[str]) -> str:
+def _ensure_assignment_access(
+    conn,
+    tenant: TenantContext,
+    asignacion_id: int,
+    user: Optional[dict],
+) -> dict:
+    asignaciones_repo.ensure_asignacion_tables(conn, tenant)
+    asignacion = asignaciones_repo.get_asignacion_detalle(conn, tenant, asignacion_id)
+    if not asignacion:
+        raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
+    _ensure_assignment_owner_access(user, asignacion)
+    return asignacion
+
+
+def _safe_log_event(
+    conn,
+    tenant: TenantContext,
+    asignacion_id: int,
+    evento: str,
+    mensaje: Optional[str],
+    usuario: Optional[str],
+) -> None:
+    asignaciones_repo.safe_log_event(conn, tenant, asignacion_id, evento, mensaje, usuario)
+
+
+def _ensure_workspace_ready_for_export_raw(
+    tenant: TenantContext,
+    connection_manager,
+    asignacion_id: int,
+    created_by: Optional[str],
+) -> str:
     _ensure_package_export_supported()
-    return workspace_service.ensure_workspace_ready_for_export(
-        asignacion_id,
-        created_by,
-        schema_main=_read_schema_main(),
-        schema_work=_read_schema_work(),
-        datasetname_main_default=_read_datasetname_main_default(),
-        ili2pg_cmd=ILI2PG_CMD,
-        timeout_sec=ILI2PG_TIMEOUT_SEC,
-        required_topics=sorted(_read_required_baskets()),
-        update_asignacion_fields=asignaciones_repo.update_asignacion_fields,
-        safe_log_event=_safe_log_event,
-    )
 
+    def _update_asignacion_fields_wrapper(target_asignacion_id: int, **kwargs) -> None:
+        with connection_manager.connection(tenant) as conn:
+            conn.autocommit = False
+            try:
+                asignaciones_repo.update_asignacion_fields(
+                    conn,
+                    tenant,
+                    target_asignacion_id,
+                    **kwargs,
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
 
-def _ensure_workspace_ready_for_export(asignacion_id: int, created_by: Optional[str]) -> str:
-    try:
-        return _ensure_workspace_ready_for_export_raw(asignacion_id, created_by)
-    except Exception as exc:
-        _raise_http_from_export_error(exc)
+    def _safe_log_event_wrapper(
+        target_asignacion_id: int,
+        evento: str,
+        mensaje: Optional[str],
+        usuario: Optional[str],
+    ) -> None:
+        with connection_manager.connection(tenant) as conn:
+            conn.autocommit = False
+            try:
+                asignaciones_repo.safe_log_event(
+                    conn,
+                    tenant,
+                    target_asignacion_id,
+                    evento,
+                    mensaje,
+                    usuario,
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
 
-
-def _ili2pg_export_asignacion(schema: str, asignacion_id: int, datasetname: str, xtf_path: str) -> str:
-    try:
-        return export_service.ili2pg_export_assignment(
-            schema=schema,
-            asignacion_id=asignacion_id,
-            datasetname=datasetname,
-            xtf_path=xtf_path,
-            required_topics=sorted(_read_required_baskets()),
+    with connection_manager.connection(tenant) as conn:
+        return workspace_service.ensure_workspace_ready_for_export(
+            conn,
+            tenant,
+            asignacion_id,
+            created_by,
+            schema_main=_read_schema_main(tenant),
+            schema_work=_read_schema_work(tenant),
+            datasetname_main_default=_read_datasetname_main_default(),
             ili2pg_cmd=ILI2PG_CMD,
             timeout_sec=ILI2PG_TIMEOUT_SEC,
+            required_topics=sorted(_read_required_baskets()),
+            update_asignacion_fields=_update_asignacion_fields_wrapper,
+            safe_log_event=_safe_log_event_wrapper,
         )
-    except Exception as exc:
-        _raise_http_from_export_error(exc)
 
 
-def _ogr_export_gdb(schema: str, datasetname: str, gdb_path: str, *, asignacion_id: Optional[int] = None) -> None:
+def _ensure_workspace_ready_for_export(
+    tenant: TenantContext,
+    connection_manager,
+    asignacion_id: int,
+    created_by: Optional[str],
+) -> str:
     try:
-        export_service.ogr_export_gdb(
-            schema=schema,
-            datasetname=datasetname,
-            gdb_path=gdb_path,
-            asignacion_id=asignacion_id,
+        return _ensure_workspace_ready_for_export_raw(
+            tenant,
+            connection_manager,
+            asignacion_id,
+            created_by,
         )
     except Exception as exc:
         _raise_http_from_export_error(exc)
 
 
-def _ogr_export_gpkg(schema: str, datasetname: str, gpkg_path: str, *, asignacion_id: Optional[int] = None) -> None:
-    try:
-        export_service.ogr_export_gpkg(
-            schema=schema,
-            datasetname=datasetname,
-            gpkg_path=gpkg_path,
-            asignacion_id=asignacion_id,
-        )
-    except Exception as exc:
-        _raise_http_from_export_error(exc)
-
-
-def _get_asignacion_for_export(asignacion_id: int) -> Optional[dict]:
-    with db_conn() as conn:
-        return asignaciones_repo.get_asignacion_for_paquete(conn, asignacion_id)
-
-
-def _resolve_export_context(asignacion_id: int, created_by: Optional[str]) -> tuple[str, str, dict]:
-    _ensure_package_export_supported()
-    asignacion = _get_asignacion_for_export(asignacion_id)
+def _get_asignacion_for_export(
+    conn,
+    tenant: TenantContext,
+    asignacion_id: int,
+    user: Optional[dict],
+) -> dict:
+    asignacion = asignaciones_repo.get_asignacion_for_paquete(conn, tenant, asignacion_id)
     if not asignacion:
-        raise export_service.ExportServiceError(status_code=404, detail="Asignacion no encontrada.")
+        raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
+    _ensure_assignment_owner_access(user, asignacion)
+    return asignacion
+
+
+def _resolve_export_context(
+    conn,
+    tenant: TenantContext,
+    connection_manager,
+    asignacion_id: int,
+    created_by: Optional[str],
+    user: Optional[dict],
+) -> tuple[str, str, dict]:
+    _ensure_package_export_supported()
+    asignacion = _get_asignacion_for_export(conn, tenant, asignacion_id, user)
 
     if ASIG_SKIP_WORKSPACE:
-        dataset = (asignacion.get("datasetname_main") or "").strip()
+        dataset = str(asignacion.get("datasetname_main") or "").strip()
         if not dataset:
             raise export_service.ExportServiceError(
                 status_code=400,
                 detail="La asignacion no tiene dataset principal para exportar.",
             )
-        return _read_schema_main(), dataset, asignacion
+        return _read_schema_main(tenant), dataset, asignacion
 
-    dataset = (asignacion.get("work_datasetname") or "").strip()
+    dataset = str(asignacion.get("work_datasetname") or "").strip()
     if not dataset:
         raise export_service.ExportServiceError(
             status_code=400,
             detail="La asignacion no tiene workspace disponible para exportar.",
         )
 
-    dataset = _ensure_workspace_ready_for_export_raw(asignacion_id, created_by)
-    return _read_schema_work(), dataset, asignacion
+    dataset = _ensure_workspace_ready_for_export_raw(
+        tenant,
+        connection_manager,
+        asignacion_id,
+        created_by,
+    )
+    return _read_schema_work(tenant), dataset, asignacion
 
 
-def _job_output_dir() -> str:
-    output_dir = ASIG_EXPORT_JOB_DIR or os.path.join(tempfile.gettempdir(), "asignacion_exports")
+def _job_output_dir(tenant: TenantContext) -> str:
+    base_dir = ASIG_EXPORT_JOB_DIR or os.path.join(tempfile.gettempdir(), "asignacion_exports")
+    tenant_dir = os.path.join(base_dir, tenant.municipality_code)
+    output_dir = os.path.join(tenant_dir, "jobs")
     os.makedirs(output_dir, exist_ok=True)
     return output_dir
 
 
-def _mark_job_failed(job_id: int, asignacion_id: int, created_by: Optional[str], exc: Exception) -> None:
+def _mark_job_failed(
+    connection_manager,
+    tenant: TenantContext,
+    job_id: int,
+    asignacion_id: int,
+    created_by: Optional[str],
+    exc: Exception,
+) -> None:
     detail = _error_detail(exc)
     if not isinstance(exc, export_service.ExportServiceError):
         tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)).strip()
@@ -189,74 +288,152 @@ def _mark_job_failed(job_id: int, asignacion_id: int, created_by: Optional[str],
             if len(tb) > 6000:
                 tb = tb[-6000:]
             detail = f"{detail}\nTRACEBACK:\n{tb}"
-    asignaciones_repo.mark_export_job_error(job_id, detail, mensaje="Exportacion fallida")
-    _safe_log_event(asignacion_id, "PAQUETE_JOB_ERROR", detail, created_by)
+
+    try:
+        with connection_manager.connection(tenant) as conn:
+            conn.autocommit = False
+            try:
+                asignaciones_repo.mark_export_job_error(
+                    conn,
+                    tenant,
+                    job_id,
+                    detail,
+                    mensaje="Exportacion fallida",
+                )
+                _safe_log_event(conn, tenant, asignacion_id, "PAQUETE_JOB_ERROR", detail, created_by)
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+    except Exception:
+        pass
 
 
-def _process_export_job(job_id: int, asignacion_id: int, formato: JOB_FORMAT, created_by: Optional[str]) -> None:
+def _process_export_job(
+    connection_manager,
+    tenant: TenantContext,
+    job_id: int,
+    asignacion_id: int,
+    formato: JOB_FORMAT,
+    created_by: Optional[str],
+) -> None:
     tmp_dir: Optional[str] = None
     try:
-        asignaciones_repo.mark_export_job_running(job_id, mensaje="Preparando exportacion")
-        asignaciones_repo.update_export_job_progress(job_id, 10, mensaje="Validando contexto de workspace")
+        artifact_suffix = f"{tenant.municipality_code}_{asignacion_id}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}_{uuid4().hex}"
 
-        schema, dataset, asignacion = _resolve_export_context(asignacion_id, created_by)
-        asignaciones_repo.update_export_job_progress(job_id, 35, mensaje=f"Contexto listo ({schema}:{dataset})")
+        with connection_manager.connection(tenant) as conn:
+            conn.autocommit = False
+            try:
+                asignaciones_repo.mark_export_job_running(conn, tenant, job_id, mensaje="Preparando exportacion")
+                asignaciones_repo.update_export_job_progress(
+                    conn,
+                    tenant,
+                    job_id,
+                    10,
+                    mensaje="Validando contexto de workspace",
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
 
-        output_dir = _job_output_dir()
-        ts = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        with connection_manager.connection(tenant) as conn:
+            schema, dataset, asignacion = _resolve_export_context(
+                conn,
+                tenant,
+                connection_manager,
+                asignacion_id,
+                created_by,
+                None,
+            )
+
+        with connection_manager.connection(tenant) as conn:
+            conn.autocommit = False
+            try:
+                asignaciones_repo.update_export_job_progress(
+                    conn,
+                    tenant,
+                    job_id,
+                    35,
+                    mensaje=f"Contexto listo ({schema}:{dataset})",
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+
+        output_dir = _job_output_dir(tenant)
 
         if formato == "xtf":
-            file_path = os.path.join(output_dir, f"asignacion_{asignacion_id}_{ts}.xtf")
-            export_mode = export_service.ili2pg_export_assignment(
-                schema=schema,
-                asignacion_id=asignacion_id,
-                datasetname=dataset,
-                xtf_path=file_path,
-                required_topics=sorted(_read_required_baskets()),
-                ili2pg_cmd=ILI2PG_CMD,
-                timeout_sec=ILI2PG_TIMEOUT_SEC,
+            file_path = os.path.join(output_dir, f"asignacion_{artifact_suffix}.xtf")
+            with connection_manager.connection(tenant) as conn:
+                export_mode = export_service.ili2pg_export_assignment(
+                    conn,
+                    tenant,
+                    schema=schema,
+                    asignacion_id=asignacion_id,
+                    datasetname=dataset,
+                    xtf_path=file_path,
+                    required_topics=sorted(_read_required_baskets()),
+                    ili2pg_cmd=ILI2PG_CMD,
+                    timeout_sec=ILI2PG_TIMEOUT_SEC,
+                )
+            file_name = (
+                f"asignacion_{tenant.municipality_code}_{asignacion_id}_"
+                f"{(asignacion.get('usuario_asignado') or '').strip()}_{uuid4().hex[:8]}.xtf"
             )
-            file_name = f"asignacion_{asignacion_id}_{(asignacion.get('usuario_asignado') or '').strip()}.xtf"
             done_msg = f"XTF generado. Modo: {export_mode}."
         elif formato == "gdb":
-            tmp_dir = tempfile.mkdtemp(prefix=f"asig_{asignacion_id}_", dir=output_dir)
-            gdb_dir = os.path.join(tmp_dir, "asignacion.gdb")
+            tmp_dir = tempfile.mkdtemp(prefix=f"asig_{artifact_suffix}_", dir=output_dir)
+            gdb_name = f"asignacion_{artifact_suffix}.gdb"
+            gdb_dir = os.path.join(tmp_dir, gdb_name)
             export_service.ogr_export_gdb(
+                tenant,
                 schema=schema,
                 datasetname=dataset,
                 gdb_path=gdb_dir,
                 asignacion_id=asignacion_id,
             )
-            zip_base = os.path.join(output_dir, f"asignacion_{asignacion_id}_{ts}")
-            file_path = shutil.make_archive(zip_base, "zip", tmp_dir, "asignacion.gdb")
-            file_name = f"asignacion_{asignacion_id}_gdb.zip"
+            zip_base = os.path.join(output_dir, f"asignacion_{artifact_suffix}")
+            file_path = shutil.make_archive(zip_base, "zip", tmp_dir, gdb_name)
+            file_name = f"asignacion_{tenant.municipality_code}_{asignacion_id}_{uuid4().hex[:8]}_gdb.zip"
             done_msg = "GDB generado."
         else:
-            file_path = os.path.join(output_dir, f"asignacion_{asignacion_id}_{ts}.gpkg")
+            file_path = os.path.join(output_dir, f"asignacion_{artifact_suffix}.gpkg")
             export_service.ogr_export_gpkg(
+                tenant,
                 schema=schema,
                 datasetname=dataset,
                 gpkg_path=file_path,
                 asignacion_id=asignacion_id,
             )
-            file_name = f"asignacion_{asignacion_id}.gpkg"
+            file_name = f"asignacion_{tenant.municipality_code}_{asignacion_id}_{uuid4().hex[:8]}.gpkg"
             done_msg = "GPKG generado."
 
         if not os.path.exists(file_path):
             raise RuntimeError("No se encontro archivo de salida generado.")
 
         file_size = os.path.getsize(file_path)
-        asignaciones_repo.mark_export_job_done(
-            job_id,
-            archivo_path=file_path,
-            archivo_nombre=file_name,
-            archivo_size=file_size,
-            ttl_hours=ASIG_EXPORT_JOB_TTL_HOURS,
-            mensaje=done_msg,
-        )
-        _safe_log_event(asignacion_id, "PAQUETE_JOB_DONE", done_msg, created_by)
+        with connection_manager.connection(tenant) as conn:
+            conn.autocommit = False
+            try:
+                asignaciones_repo.mark_export_job_done(
+                    conn,
+                    tenant,
+                    job_id,
+                    archivo_path=file_path,
+                    archivo_nombre=file_name,
+                    archivo_size=file_size,
+                    ttl_hours=ASIG_EXPORT_JOB_TTL_HOURS,
+                    mensaje=done_msg,
+                )
+                _safe_log_event(conn, tenant, asignacion_id, "PAQUETE_JOB_DONE", done_msg, created_by)
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
     except Exception as exc:
-        _mark_job_failed(job_id, asignacion_id, created_by, exc)
+        _mark_job_failed(connection_manager, tenant, job_id, asignacion_id, created_by, exc)
     finally:
         if tmp_dir:
             shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -264,19 +441,47 @@ def _process_export_job(job_id: int, asignacion_id: int, formato: JOB_FORMAT, cr
 
 @router.post("/{asignacion_id}/paquete/jobs", status_code=status.HTTP_202_ACCEPTED)
 def crear_job_paquete_asignacion(
+    request: Request,
     asignacion_id: int,
     background: BackgroundTasks,
     formato: JOB_FORMAT = "xtf",
-    user: dict = Depends(require_assignment_roles("admin", "coordinador")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
     _ensure_package_export_supported_http()
+    _require_assignment_access(user, "admin", "coordinador")
+    _ensure_assignment_access(conn, tenant, asignacion_id, user)
     created_by = user.get("username") if isinstance(user, dict) else None
 
-    asignacion = _get_asignacion_for_export(asignacion_id)
-    if not asignacion:
-        raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
+    try:
+        job, created = asignaciones_repo.get_or_create_active_export_job(
+            conn,
+            tenant,
+            asignacion_id,
+            formato,
+            created_by,
+        )
+        if created:
+            _safe_log_event(
+                conn,
+                tenant,
+                asignacion_id,
+                "PAQUETE_JOB_CREADO",
+                f"Job {job['id']} creado para formato {formato}.",
+                created_by,
+            )
+        conn.commit()
+    except ValueError as exc:
+        conn.rollback()
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as exc:
+        conn.rollback()
+        _raise_http_from_export_error(exc)
 
-    job, created = asignaciones_repo.get_or_create_active_export_job(asignacion_id, formato, created_by)
     if not created:
         return {
             "job_id": job.get("id"),
@@ -285,12 +490,13 @@ def crear_job_paquete_asignacion(
             "message": "Ya existe un job activo para esta asignacion y formato.",
         }
 
-    background.add_task(_process_export_job, int(job["id"]), asignacion_id, formato, created_by)
-
-    _safe_log_event(
+    background.add_task(
+        _process_export_job,
+        request.app.state.tenant_connection_manager,
+        tenant,
+        int(job["id"]),
         asignacion_id,
-        "PAQUETE_JOB_CREADO",
-        f"Job {job['id']} creado para formato {formato}.",
+        formato,
         created_by,
     )
 
@@ -304,8 +510,14 @@ def crear_job_paquete_asignacion(
 
 
 @router.get("/export-jobs/{job_id}")
-def ver_job_paquete(job_id: int, _user: dict = Depends(require_assignment_roles("admin", "coordinador"))):
-    job = asignaciones_repo.get_export_job(job_id)
+def ver_job_paquete(
+    job_id: int,
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
+    _require_assignment_access(user, "admin", "coordinador")
+    job = asignaciones_repo.get_export_job(conn, tenant, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job no encontrado.")
 
@@ -319,23 +531,33 @@ def ver_job_paquete(job_id: int, _user: dict = Depends(require_assignment_roles(
 def listar_jobs_paquete_asignacion(
     asignacion_id: int,
     limit: int = 20,
-    _user: dict = Depends(require_assignment_roles("admin", "coordinador")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
+    _require_assignment_access(user, "admin", "coordinador")
+    _ensure_assignment_access(conn, tenant, asignacion_id, user)
     if limit < 1:
         limit = 1
     if limit > 100:
         limit = 100
-    rows = asignaciones_repo.list_export_jobs_for_asignacion(asignacion_id, limit=limit)
+    rows = asignaciones_repo.list_export_jobs_for_asignacion(conn, tenant, asignacion_id, limit=limit)
     return rows
 
 
 @router.get("/export-jobs/{job_id}/download")
-def descargar_job_paquete(job_id: int, _user: dict = Depends(require_assignment_roles("admin", "coordinador"))):
-    job = asignaciones_repo.get_export_job(job_id)
+def descargar_job_paquete(
+    job_id: int,
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
+    _require_assignment_access(user, "admin", "coordinador")
+    job = asignaciones_repo.get_export_job(conn, tenant, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job no encontrado.")
 
-    estado_job = (job.get("estado") or "").upper()
+    estado_job = str(job.get("estado") or "").upper()
     if estado_job != "DONE":
         raise HTTPException(status_code=409, detail=f"El job aun no esta listo. Estado actual: {estado_job}")
 
@@ -365,13 +587,24 @@ def descargar_job_paquete(job_id: int, _user: dict = Depends(require_assignment_
 
 @router.get("/{asignacion_id}/paquete")
 def descargar_paquete_asignacion(
+    request: Request,
     asignacion_id: int,
     background: BackgroundTasks,
-    user: dict = Depends(require_assignment_roles("admin", "coordinador")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
+    _require_assignment_access(user, "admin", "coordinador")
     created_by = user.get("username") if isinstance(user, dict) else None
     try:
-        export_schema, export_dataset, asignacion = _resolve_export_context(asignacion_id, created_by)
+        export_schema, export_dataset, asignacion = _resolve_export_context(
+            conn,
+            tenant,
+            request.app.state.tenant_connection_manager,
+            asignacion_id,
+            created_by,
+            user,
+        )
     except Exception as exc:
         _raise_http_from_export_error(exc)
 
@@ -379,26 +612,37 @@ def descargar_paquete_asignacion(
     tmp_path = tmp_file.name
     tmp_file.close()
     try:
-        export_mode = _ili2pg_export_asignacion(
-            export_schema,
-            asignacion_id,
-            export_dataset,
-            tmp_path,
+        export_mode = export_service.ili2pg_export_assignment(
+            conn,
+            tenant,
+            schema=export_schema,
+            asignacion_id=asignacion_id,
+            datasetname=export_dataset,
+            xtf_path=tmp_path,
+            required_topics=sorted(_read_required_baskets()),
+            ili2pg_cmd=ILI2PG_CMD,
+            timeout_sec=ILI2PG_TIMEOUT_SEC,
         )
     except Exception:
         os.unlink(tmp_path)
         raise
 
-    _safe_log_event(
-        asignacion_id,
-        "PAQUETE_DESCARGADO",
-        (
-            f"Paquete exportado para {export_dataset} "
-            f"({'main' if export_schema == _read_schema_main() else 'work'}). "
-            f"Modo: {export_mode}."
-        ),
-        created_by,
-    )
+    try:
+        _safe_log_event(
+            conn,
+            tenant,
+            asignacion_id,
+            "PAQUETE_DESCARGADO",
+            (
+                f"Paquete exportado para {export_dataset} "
+                f"({'main' if export_schema == _read_schema_main(tenant) else 'work'}). "
+                f"Modo: {export_mode}."
+            ),
+            created_by,
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
 
     filename_parts = [
         "asignacion",
@@ -418,28 +662,32 @@ def descargar_paquete_asignacion(
 
 @router.get("/{asignacion_id}/paquete-gdb")
 def descargar_paquete_asignacion_gdb(
+    request: Request,
     asignacion_id: int,
     background: BackgroundTasks,
-    user: dict = Depends(require_assignment_roles("admin", "coordinador")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
     _ensure_package_export_supported_http()
-    asignacion = _get_asignacion_for_export(asignacion_id)
-    if not asignacion:
-        raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
+    _require_assignment_access(user, "admin", "coordinador")
+    asignacion = _get_asignacion_for_export(conn, tenant, asignacion_id, user)
 
-    work_dataset = asignacion.get("datasetname_main") if ASIG_SKIP_WORKSPACE else asignacion.get("work_datasetname")
-    if ASIG_SKIP_WORKSPACE and not work_dataset:
+    export_dataset = asignacion.get("datasetname_main") if ASIG_SKIP_WORKSPACE else asignacion.get("work_datasetname")
+    if ASIG_SKIP_WORKSPACE and not export_dataset:
         raise HTTPException(
             status_code=400,
             detail="La asignacion no tiene dataset principal para exportar.",
         )
-    if (not ASIG_SKIP_WORKSPACE) and (not work_dataset):
+    if (not ASIG_SKIP_WORKSPACE) and (not export_dataset):
         raise HTTPException(
             status_code=400,
             detail="La asignacion no tiene workspace disponible para exportar.",
         )
     if not ASIG_SKIP_WORKSPACE:
-        work_dataset = _ensure_workspace_ready_for_export(
+        export_dataset = _ensure_workspace_ready_for_export(
+            tenant,
+            request.app.state.tenant_connection_manager,
             asignacion_id,
             user.get("username") if isinstance(user, dict) else None,
         )
@@ -448,10 +696,11 @@ def descargar_paquete_asignacion_gdb(
     gdb_dir = os.path.join(tmp_dir, "asignacion.gdb")
 
     try:
-        _ogr_export_gdb(
-            _read_schema_main() if ASIG_SKIP_WORKSPACE else _read_schema_work(),
-            work_dataset,
-            gdb_dir,
+        export_service.ogr_export_gdb(
+            tenant,
+            schema=_read_schema_main(tenant) if ASIG_SKIP_WORKSPACE else _read_schema_work(tenant),
+            datasetname=export_dataset,
+            gdb_path=gdb_dir,
             asignacion_id=asignacion_id,
         )
     except Exception:
@@ -461,12 +710,21 @@ def descargar_paquete_asignacion_gdb(
     zip_base = os.path.join(tmp_dir, f"asignacion_{asignacion_id}")
     zip_path = shutil.make_archive(zip_base, "zip", tmp_dir, "asignacion.gdb")
 
-    _safe_log_event(
-        asignacion_id,
-        "PAQUETE_GDB_DESCARGADO",
-        f"Paquete GDB exportado para {work_dataset} ({'main' if ASIG_SKIP_WORKSPACE else 'work'}).",
-        user.get("username") if isinstance(user, dict) else None,
-    )
+    try:
+        _safe_log_event(
+            conn,
+            tenant,
+            asignacion_id,
+            "PAQUETE_GDB_DESCARGADO",
+            (
+                f"Paquete GDB exportado para {export_dataset} "
+                f"({'main' if ASIG_SKIP_WORKSPACE else 'work'})."
+            ),
+            user.get("username") if isinstance(user, dict) else None,
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
 
     filename_parts = [
         "asignacion",
@@ -487,19 +745,21 @@ def descargar_paquete_asignacion_gdb(
 
 @router.get("/{asignacion_id}/paquete-gpkg")
 def descargar_paquete_asignacion_gpkg(
+    request: Request,
     asignacion_id: int,
     background: BackgroundTasks,
-    user: dict = Depends(require_assignment_roles("admin", "coordinador")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
     _ensure_package_export_supported_http()
-    asignacion = _get_asignacion_for_export(asignacion_id)
-    if not asignacion:
-        raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
+    _require_assignment_access(user, "admin", "coordinador")
+    asignacion = _get_asignacion_for_export(conn, tenant, asignacion_id, user)
 
-    export_schema = _read_schema_work()
+    export_schema = _read_schema_work(tenant)
     export_dataset = asignacion.get("work_datasetname")
     if ASIG_SKIP_WORKSPACE:
-        export_schema = _read_schema_main()
+        export_schema = _read_schema_main(tenant)
         export_dataset = asignacion.get("datasetname_main")
         if not export_dataset:
             raise HTTPException(
@@ -513,6 +773,8 @@ def descargar_paquete_asignacion_gpkg(
                 detail="La asignacion no tiene workspace disponible para exportar.",
             )
         export_dataset = _ensure_workspace_ready_for_export(
+            tenant,
+            request.app.state.tenant_connection_manager,
             asignacion_id,
             user.get("username") if isinstance(user, dict) else None,
         )
@@ -521,18 +783,30 @@ def descargar_paquete_asignacion_gpkg(
     gpkg_path = tmp_file.name
     tmp_file.close()
     try:
-        _ogr_export_gpkg(export_schema, export_dataset, gpkg_path, asignacion_id=asignacion_id)
+        export_service.ogr_export_gpkg(
+            tenant,
+            export_schema,
+            export_dataset,
+            gpkg_path,
+            asignacion_id=asignacion_id,
+        )
     except Exception:
         if os.path.exists(gpkg_path):
             os.unlink(gpkg_path)
         raise
 
-    _safe_log_event(
-        asignacion_id,
-        "PAQUETE_GPKG_DESCARGADO",
-        f"Paquete GPKG exportado para {export_dataset} ({export_schema}).",
-        user.get("username") if isinstance(user, dict) else None,
-    )
+    try:
+        _safe_log_event(
+            conn,
+            tenant,
+            asignacion_id,
+            "PAQUETE_GPKG_DESCARGADO",
+            f"Paquete GPKG exportado para {export_dataset} ({export_schema}).",
+            user.get("username") if isinstance(user, dict) else None,
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
 
     background.add_task(os.remove, gpkg_path)
     return FileResponse(
