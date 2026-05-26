@@ -63,6 +63,8 @@ class MunicipalityConfig:
     schemas: MunicipalitySchemas = field(default_factory=MunicipalitySchemas)
     wms_base_url: str = ""
     geoserver_layers: str = ""
+    geoserver_base_url: str = ""
+    geoserver_workspace: str = ""
 
     def __post_init__(self) -> None:
         code = _clean_code(self.code)
@@ -77,6 +79,8 @@ class MunicipalityConfig:
         object.__setattr__(self, "name", name)
         object.__setattr__(self, "wms_base_url", _clean_name(self.wms_base_url))
         object.__setattr__(self, "geoserver_layers", _clean_name(self.geoserver_layers))
+        object.__setattr__(self, "geoserver_base_url", _clean_name(self.geoserver_base_url))
+        object.__setattr__(self, "geoserver_workspace", _clean_name(self.geoserver_workspace))
 
     @property
     def db_params(self) -> dict:

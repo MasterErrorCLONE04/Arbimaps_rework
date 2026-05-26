@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 def _qualify(schema: str, table: str) -> str:
+    if schema and not isinstance(schema, str) and hasattr(schema, "schemas"):
+        schema = schema.schemas.main
     schema = (schema or "").strip().strip('"')
     if not schema:
         return table
@@ -26,6 +28,8 @@ def _resolve_predio_source(
     schema_main: str,
     model_context: Optional[AssignmentModelContext] = None,
 ) -> tuple[str, str]:
+    if schema_main and not isinstance(schema_main, str) and hasattr(schema_main, "schemas"):
+        schema_main = schema_main.schemas.main
     context = model_context or get_assignment_model_context()
     predio_table = _qualify(schema_main, context.predio_table)
     return predio_table, context.predio_numero_field
@@ -51,7 +55,7 @@ def list_baskets_for_dataset(conn, schema_main: str, dataset_id: Optional[int]) 
         return cur.fetchall()
 
 
-def ensure_asignacion_tables(conn, *, force: bool = False) -> None:
+def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
     global _ASIG_TABLES_ENSURED
     # Evita DDL repetitivo en cada request (fuente de locks/caidas SSL).
     if _ASIG_TABLES_ENSURED:
@@ -62,16 +66,23 @@ def ensure_asignacion_tables(conn, *, force: bool = False) -> None:
         # En runtime solo asumimos que ya existe el esquema (migrado en startup).
         return
 
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor() as cur:
         # Nunca esperar indefinidamente por locks de DDL.
         cur.execute("SET LOCAL lock_timeout = '10s'")
         cur.execute("SET LOCAL statement_timeout = '60s'")
         try:
             cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_predio (
+                f"""
+                CREATE TABLE IF NOT EXISTS {app_schema}.asignacion_predio (
                     id SERIAL PRIMARY KEY,
-                    asignacion_id BIGINT REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
+                    asignacion_id BIGINT REFERENCES {app_schema}.asignacion(id) ON DELETE CASCADE,
                     numero_predial_nacional TEXT NOT NULL,
                     predio_t_id BIGINT,
                     activo BOOLEAN DEFAULT TRUE,
@@ -81,16 +92,16 @@ def ensure_asignacion_tables(conn, *, force: bool = False) -> None:
                 """
             )
             cur.execute(
-                """
-                ALTER TABLE IF EXISTS arbimaps_app.asignacion_predio
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion_predio
                 ADD COLUMN IF NOT EXISTS creado_por TEXT
                 """
             )
             cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_event_log (
+                f"""
+                CREATE TABLE IF NOT EXISTS {app_schema}.asignacion_event_log (
                     id SERIAL PRIMARY KEY,
-                    asignacion_id BIGINT REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
+                    asignacion_id BIGINT REFERENCES {app_schema}.asignacion(id) ON DELETE CASCADE,
                     evento TEXT,
                     usuario TEXT,
                     mensaje TEXT,
@@ -99,22 +110,22 @@ def ensure_asignacion_tables(conn, *, force: bool = False) -> None:
                 """
             )
             cur.execute(
-                """
-                ALTER TABLE IF EXISTS arbimaps_app.asignacion
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion
                 ADD COLUMN IF NOT EXISTS work_datasetname TEXT
                 """
             )
             cur.execute(
-                """
-                ALTER TABLE IF EXISTS arbimaps_app.asignacion
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion
                 ADD COLUMN IF NOT EXISTS predios_soporte_extra INTEGER NOT NULL DEFAULT 0
                 """
             )
             cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_export_job (
+                f"""
+                CREATE TABLE IF NOT EXISTS {app_schema}.asignacion_export_job (
                     id BIGSERIAL PRIMARY KEY,
-                    asignacion_id BIGINT NOT NULL REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
+                    asignacion_id BIGINT NOT NULL REFERENCES {app_schema}.asignacion(id) ON DELETE CASCADE,
                     formato TEXT NOT NULL,
                     estado TEXT NOT NULL DEFAULT 'PENDING',
                     progreso INTEGER NOT NULL DEFAULT 0,
@@ -132,10 +143,10 @@ def ensure_asignacion_tables(conn, *, force: bool = False) -> None:
                 """
             )
             cur.execute(
-                """
-                CREATE TABLE IF NOT EXISTS arbimaps_app.asignacion_retorno (
+                f"""
+                CREATE TABLE IF NOT EXISTS {app_schema}.asignacion_retorno (
                     id BIGSERIAL PRIMARY KEY,
-                    asignacion_id BIGINT NOT NULL REFERENCES arbimaps_app.asignacion(id) ON DELETE CASCADE,
+                    asignacion_id BIGINT NOT NULL REFERENCES {app_schema}.asignacion(id) ON DELETE CASCADE,
                     version INTEGER NOT NULL,
                     datasetname_retorno TEXT NOT NULL,
                     archivo_nombre_original TEXT,
@@ -153,96 +164,91 @@ def ensure_asignacion_tables(conn, *, force: bool = False) -> None:
                 )
                 """
             )
-            # Indices para acelerar busquedas/joins criticos de asignaciones y exportacion.
             cur.execute(
-                """
+                f"""
                 CREATE INDEX IF NOT EXISTS idx_asignacion_predio_asignacion
-                ON arbimaps_app.asignacion_predio (asignacion_id)
+                ON {app_schema}.asignacion_predio (asignacion_id)
                 """
             )
             cur.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_asignacion_predio_numero
-                ON arbimaps_app.asignacion_predio (numero_predial_nacional)
-                """
-            )
-            cur.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_asignacion_predio_asig_num_activo
-                ON arbimaps_app.asignacion_predio (asignacion_id, numero_predial_nacional)
-                WHERE activo IS DISTINCT FROM FALSE
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_asignacion_predio_nacional
+                ON {app_schema}.asignacion_predio (numero_predial_nacional)
                 """
             )
             cur.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_asignacion_event_log_asignacion_id
-                ON arbimaps_app.asignacion_event_log (asignacion_id, id)
-                """
-            )
-            cur.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_asignacion_estado_usuario
-                ON arbimaps_app.asignacion (estado, usuario_asignado)
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_asig_predio_lookup
+                ON {app_schema}.asignacion_predio (asignacion_id, numero_predial_nacional)
                 """
             )
             cur.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_asig_export_job_asig_formato_estado
-                ON arbimaps_app.asignacion_export_job (asignacion_id, formato, estado, id)
-                """
-            )
-            cur.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_asig_export_job_estado_id
-                ON arbimaps_app.asignacion_export_job (estado, id)
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_asig_event_log_lookup
+                ON {app_schema}.asignacion_event_log (asignacion_id, id)
                 """
             )
             cur.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_asig_export_job_expira
-                ON arbimaps_app.asignacion_export_job (expira_en)
-                """
-            )
-            cur.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_asig_retorno_asignacion_id
-                ON arbimaps_app.asignacion_retorno (asignacion_id, id)
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_asig_estado_user
+                ON {app_schema}.asignacion (estado, usuario_asignado)
                 """
             )
             cur.execute(
-                """
-                CREATE UNIQUE INDEX IF NOT EXISTS uq_asig_retorno_asig_version
-                ON arbimaps_app.asignacion_retorno (asignacion_id, version)
-                """
-            )
-            cur.execute(
-                """
-                CREATE INDEX IF NOT EXISTS idx_asig_retorno_estado_id
-                ON arbimaps_app.asignacion_retorno (estado, id)
-                """
-            )
-            # Ensure newer columns exist on legacy tables that predate them.
-            cur.execute(
-                """
-                ALTER TABLE IF EXISTS arbimaps_app.asignacion_retorno
-                ADD COLUMN IF NOT EXISTS archivo_sha256 TEXT
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_asig_exp_job_lookup
+                ON {app_schema}.asignacion_export_job (asignacion_id, formato, estado, id)
                 """
             )
             cur.execute(
-                """
-                ALTER TABLE IF EXISTS arbimaps_app.asignacion_retorno
-                ADD COLUMN IF NOT EXISTS correlation_id TEXT
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_asig_exp_job_status
+                ON {app_schema}.asignacion_export_job (estado, id)
                 """
             )
             cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_asig_exp_job_expiry
+                ON {app_schema}.asignacion_export_job (expira_en)
                 """
+            )
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_asig_retorno_lookup
+                ON {app_schema}.asignacion_retorno (asignacion_id, id)
+                """
+            )
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_asig_retorno_version
+                ON {app_schema}.asignacion_retorno (asignacion_id, version)
+                """
+            )
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_asig_retorno_status
+                ON {app_schema}.asignacion_retorno (estado, id)
+                """
+            )
+            cur.execute(
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion_retorno
+                ADD COLUMN IF NOT EXISTS expected_predios INTEGER NOT NULL DEFAULT 0
+                """
+            )
+            cur.execute(
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion_retorno
+                ADD COLUMN IF NOT EXISTS covered_predios INTEGER NOT NULL DEFAULT 0
+                """
+            )
+            cur.execute(
+                f"""
                 CREATE INDEX IF NOT EXISTS idx_asig_retorno_sha_asig
-                ON arbimaps_app.asignacion_retorno (asignacion_id, archivo_sha256)
+                ON {app_schema}.asignacion_retorno (asignacion_id, archivo_sha256)
                 """
             )
         except Exception as exc:
-            # Si falla por timeout de lock, logeamos y seguimos (puede que ya este migrado).
-            # psycopg2.errors.LockNotAvailable
             logger.warning("ensure_asignacion_tables: DDL omitido/fallido por contencion de locks: %s", exc)
     _ASIG_TABLES_ENSURED = True
 
@@ -509,7 +515,7 @@ def mark_export_job_error(job_id: int, error_msg: str, mensaje: Optional[str] = 
     return row
 
 
-def _asig_event_log_has_usuario_id(conn) -> bool:
+def _asig_event_log_has_usuario_id(conn, app_schema: str = "arbimaps_app") -> bool:
     global _ASIG_EVENT_LOG_HAS_USUARIO_ID
     if _ASIG_EVENT_LOG_HAS_USUARIO_ID is not None:
         return _ASIG_EVENT_LOG_HAS_USUARIO_ID
@@ -519,24 +525,44 @@ def _asig_event_log_has_usuario_id(conn) -> bool:
             """
             SELECT 1
             FROM information_schema.columns
-            WHERE table_schema = 'arbimaps_app'
+            WHERE table_schema = %s
               AND table_name = 'asignacion_event_log'
               AND column_name = 'usuario_id'
             LIMIT 1
-            """
+            """,
+            (app_schema,),
         )
         _ASIG_EVENT_LOG_HAS_USUARIO_ID = bool(cur.fetchone())
     return _ASIG_EVENT_LOG_HAS_USUARIO_ID
 
 
-def insert_asignacion_event(conn, asignacion_id: int, evento: str, mensaje: Optional[str], usuario: Optional[str]) -> None:
+def insert_asignacion_event(conn, *args, **kwargs) -> None:
+    tenant = None
+    if len(args) == 5:
+        tenant, asignacion_id, evento, mensaje, usuario = args
+    elif len(args) == 4:
+        asignacion_id, evento, mensaje, usuario = args
+    else:
+        tenant = kwargs.get("tenant")
+        asignacion_id = kwargs.get("asignacion_id")
+        evento = kwargs.get("evento")
+        mensaje = kwargs.get("mensaje")
+        usuario = kwargs.get("usuario")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     usuario_id: Optional[int] = None
-    if usuario and _asig_event_log_has_usuario_id(conn):
+    if usuario and _asig_event_log_has_usuario_id(conn, app_schema):
         with conn.cursor(cursor_factory=RealDictCursor) as cur_user:
             cur_user.execute(
-                """
+                f"""
                 SELECT id_global
-                FROM arbimaps_app.users
+                FROM {app_schema}.users
                 WHERE username = %s
                 LIMIT 1
                 """,
@@ -550,73 +576,102 @@ def insert_asignacion_event(conn, asignacion_id: int, evento: str, mensaje: Opti
                 usuario_id = None
 
     with conn.cursor() as cur:
-        if _asig_event_log_has_usuario_id(conn):
+        if _asig_event_log_has_usuario_id(conn, app_schema):
             cur.execute(
-                """
-                INSERT INTO arbimaps_app.asignacion_event_log (asignacion_id, evento, usuario, mensaje, usuario_id)
+                f"""
+                INSERT INTO {app_schema}.asignacion_event_log (asignacion_id, evento, usuario, mensaje, usuario_id)
                 VALUES (%s, %s, %s, %s, %s)
                 """,
                 (asignacion_id, evento, usuario, mensaje, usuario_id),
             )
         else:
             cur.execute(
-                """
-                INSERT INTO arbimaps_app.asignacion_event_log (asignacion_id, evento, usuario, mensaje)
+                f"""
+                INSERT INTO {app_schema}.asignacion_event_log (asignacion_id, evento, usuario, mensaje)
                 VALUES (%s, %s, %s, %s)
                 """,
                 (asignacion_id, evento, usuario, mensaje),
             )
 
 
-def safe_log_event(asignacion_id: int, evento: str, mensaje: Optional[str], usuario: Optional[str]) -> None:
-    try:
-        with db_conn() as conn:
-            try:
-                ensure_asignacion_tables(conn)
-                insert_asignacion_event(conn, asignacion_id, evento, mensaje, usuario)
-                conn.commit()
-            except Exception as exc:
-                conn.rollback()
-                pg_code = str(getattr(exc, "pgcode", "") or "")
-                if pg_code == pg_errorcodes.INVALID_TEXT_REPRESENTATION:
-                    # Compatibilidad con despliegues legacy donde `evento` es enum cerrado.
-                    fallback_evento = "CREADA"
-                    fallback_mensaje = f"[{evento}] {mensaje or ''}".strip()
-                    try:
-                        insert_asignacion_event(
-                            conn,
-                            asignacion_id,
-                            fallback_evento,
-                            fallback_mensaje,
-                            usuario,
-                        )
-                        conn.commit()
-                        return
-                    except Exception as fallback_exc:
-                        conn.rollback()
-                        logger.warning(
-                            "safe_log_event enum-fallback failed asignacion_id=%s evento=%s fallback=%s usuario=%s error=%s",
-                            asignacion_id,
-                            evento,
-                            fallback_evento,
-                            usuario,
-                            fallback_exc,
-                        )
-                logger.warning(
-                    "safe_log_event rollback asignacion_id=%s evento=%s usuario=%s error=%s",
-                    asignacion_id,
-                    evento,
-                    usuario,
-                    exc,
-                )
-    except Exception as exc:
-        logger.warning(
-            "safe_log_event connection error asignacion_id=%s evento=%s usuario=%s error=%s",
-            asignacion_id,
-            evento,
-            usuario,
-            exc,
-        )
+def safe_log_event(*args, **kwargs) -> None:
+    if len(args) >= 5:
+        # new multitenant signature: safe_log_event(conn, tenant, asignacion_id, evento, mensaje, usuario)
+        conn = args[0]
+        tenant = args[1]
+        asignacion_id = args[2]
+        evento = args[3]
+        mensaje = args[4]
+        usuario = args[5] if len(args) > 5 else kwargs.get("usuario")
+        
+        try:
+            ensure_asignacion_tables(conn, tenant)
+            insert_asignacion_event(conn, tenant, asignacion_id, evento, mensaje, usuario)
+        except Exception as exc:
+            logger.warning(
+                "safe_log_event (multitenant) failed asignacion_id=%s evento=%s usuario=%s error=%s",
+                asignacion_id,
+                evento,
+                usuario,
+                exc,
+            )
+    else:
+        # old signature: safe_log_event(asignacion_id, evento, mensaje, usuario)
+        if len(args) == 4:
+            asignacion_id, evento, mensaje, usuario = args
+        else:
+            asignacion_id = kwargs.get("asignacion_id")
+            evento = kwargs.get("evento")
+            mensaje = kwargs.get("mensaje")
+            usuario = kwargs.get("usuario")
+            
+        try:
+            with db_conn() as conn:
+                try:
+                    ensure_asignacion_tables(conn)
+                    insert_asignacion_event(conn, asignacion_id, evento, mensaje, usuario)
+                    conn.commit()
+                except Exception as exc:
+                    conn.rollback()
+                    pg_code = str(getattr(exc, "pgcode", "") or "")
+                    if pg_code == pg_errorcodes.INVALID_TEXT_REPRESENTATION:
+                        fallback_evento = "CREADA"
+                        fallback_mensaje = f"[{evento}] {mensaje or ''}".strip()
+                        try:
+                            insert_asignacion_event(
+                                conn,
+                                asignacion_id,
+                                fallback_evento,
+                                fallback_mensaje,
+                                usuario,
+                            )
+                            conn.commit()
+                            return
+                        except Exception as fallback_exc:
+                            conn.rollback()
+                            logger.warning(
+                                "safe_log_event enum-fallback failed asignacion_id=%s evento=%s fallback=%s usuario=%s error=%s",
+                                asignacion_id,
+                                evento,
+                                fallback_evento,
+                                usuario,
+                                fallback_exc,
+                            )
+                    logger.warning(
+                        "safe_log_event rollback asignacion_id=%s evento=%s usuario=%s error=%s",
+                        asignacion_id,
+                        evento,
+                        usuario,
+                        exc,
+                    )
+        except Exception as exc:
+            logger.warning(
+                "safe_log_event connection error asignacion_id=%s evento=%s usuario=%s error=%s",
+                asignacion_id,
+                evento,
+                usuario,
+                exc,
+            )
 
 
 def fetch_predios_metadata(
@@ -668,14 +723,31 @@ def fetch_predios_asignados(conn, numeros: list[str]) -> list[dict]:
         return cur.fetchall()
 
 
-def update_asignacion_fields(
-    asignacion_id: int,
-    *,
-    estado: Optional[str] = None,
-    work_datasetname: Optional[str] = None,
-    error_msg: Optional[str] = None,
-    predios_soporte_extra: Optional[int] = None,
-) -> None:
+def update_asignacion_fields(*args, **kwargs) -> None:
+    conn = None
+    tenant = None
+    if len(args) >= 3:
+        conn = args[0]
+        tenant = args[1]
+        asignacion_id = args[2]
+        has_conn = True
+    else:
+        asignacion_id = args[0] if len(args) > 0 else kwargs.get("asignacion_id")
+        tenant = kwargs.get("tenant")
+        has_conn = False
+
+    estado = kwargs.get("estado")
+    work_datasetname = kwargs.get("work_datasetname")
+    error_msg = kwargs.get("error_msg")
+    predios_soporte_extra = kwargs.get("predios_soporte_extra")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     sets: list[str] = []
     params: list[object] = []
     if estado is not None:
@@ -693,29 +765,42 @@ def update_asignacion_fields(
     if not sets:
         return
     params.append(asignacion_id)
-    sql = f"UPDATE arbimaps_app.asignacion SET {', '.join(sets)} WHERE id=%s"
-    with db_conn() as conn:
+    sql = f"UPDATE {app_schema}.asignacion SET {', '.join(sets)} WHERE id=%s"
+
+    if has_conn:
         with conn.cursor() as cur:
-            ensure_asignacion_tables(conn)
+            ensure_asignacion_tables(conn, tenant)
             cur.execute(sql, tuple(params))
-        conn.commit()
+    else:
+        with db_conn() as conn:
+            with conn.cursor() as cur:
+                ensure_asignacion_tables(conn, tenant)
+                cur.execute(sql, tuple(params))
+            conn.commit()
 
 
-def list_usuarios_disponibles(conn) -> list[dict]:
+def list_usuarios_disponibles(conn, tenant=None) -> list[dict]:
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            """
+            f"""
             SELECT
                 u.id_global,
                 u.username,
                 u.first_name,
                 u.last_name,
                 u.rol
-            FROM arbimaps_app.users u
+            FROM {app_schema}.users u
             LEFT JOIN (
                 SELECT DISTINCT a.usuario_asignado
-                FROM arbimaps_app.asignacion a
-                JOIN arbimaps_app.asignacion_predio ap
+                FROM {app_schema}.asignacion a
+                JOIN {app_schema}.asignacion_predio ap
                   ON ap.asignacion_id = a.id
                  AND ap.activo IS DISTINCT FROM FALSE
                 WHERE a.estado IS DISTINCT FROM 'CERRADA'
@@ -736,6 +821,10 @@ def buscar_predios_estado(
     model_context: Optional[AssignmentModelContext] = None,
 ) -> list[dict]:
     predio_table, numero_field = _resolve_predio_source(schema_main, model_context)
+    app_schema = "arbimaps_app"
+    if schema_main and not isinstance(schema_main, str) and hasattr(schema_main, "schemas"):
+        app_schema = schema_main.schemas.app
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
             f"""
@@ -743,16 +832,16 @@ def buscar_predios_estado(
               p.{numero_field} AS numero_predial_nacional,
               (
                 SELECT a.usuario_asignado
-                FROM arbimaps_app.asignacion a
-                JOIN arbimaps_app.asignacion_predio ap ON ap.asignacion_id = a.id
+                FROM {app_schema}.asignacion a
+                JOIN {app_schema}.asignacion_predio ap ON ap.asignacion_id = a.id
                 WHERE ap.numero_predial_nacional = p.{numero_field}
                   AND a.estado IS DISTINCT FROM 'CERRADA'
                 LIMIT 1
               ) AS asignado_a,
               (
                 SELECT a.creado_por
-                FROM arbimaps_app.asignacion a
-                JOIN arbimaps_app.asignacion_predio ap2 ON ap2.asignacion_id = a.id
+                FROM {app_schema}.asignacion a
+                JOIN {app_schema}.asignacion_predio ap2 ON ap2.asignacion_id = a.id
                 WHERE ap2.numero_predial_nacional = p.{numero_field}
                   AND a.estado IS DISTINCT FROM 'CERRADA'
                 LIMIT 1
@@ -814,12 +903,28 @@ def fetch_datasets_baskets_predio_counts(
     return dataset_rows, basket_rows, predio_count_rows
 
 
-def list_eventos_asignacion(conn, asignacion_id: int) -> list[dict]:
+def list_eventos_asignacion(conn, *args, **kwargs) -> list[dict]:
+    tenant = None
+    if len(args) == 2:
+        tenant, asignacion_id = args
+    elif len(args) == 1:
+        asignacion_id = args[0]
+    else:
+        tenant = kwargs.get("tenant")
+        asignacion_id = kwargs.get("asignacion_id")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            """
+            f"""
             SELECT id, asignacion_id, evento, usuario, mensaje, creado_en
-            FROM arbimaps_app.asignacion_event_log
+            FROM {app_schema}.asignacion_event_log
             WHERE asignacion_id = %s
             ORDER BY id ASC
             """,
@@ -828,13 +933,29 @@ def list_eventos_asignacion(conn, asignacion_id: int) -> list[dict]:
         return cur.fetchall()
 
 
-def allocate_asignacion_retorno_version(conn, asignacion_id: int) -> int:
+def allocate_asignacion_retorno_version(conn, *args, **kwargs) -> int:
+    tenant = None
+    if len(args) == 2:
+        tenant, asignacion_id = args
+    elif len(args) == 1:
+        asignacion_id = args[0]
+    else:
+        tenant = kwargs.get("tenant")
+        asignacion_id = kwargs.get("asignacion_id")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        ensure_asignacion_tables(conn, force=True)
+        ensure_asignacion_tables(conn, tenant, force=True)
         cur.execute(
-            """
+            f"""
             SELECT id
-            FROM arbimaps_app.asignacion
+            FROM {app_schema}.asignacion
             WHERE id = %s
             FOR UPDATE
             """,
@@ -844,9 +965,9 @@ def allocate_asignacion_retorno_version(conn, asignacion_id: int) -> int:
         if not row:
             raise ValueError(f"Asignacion no encontrada: {asignacion_id}")
         cur.execute(
-            """
+            f"""
             SELECT COALESCE(MAX(version), 0) + 1 AS next_version
-            FROM arbimaps_app.asignacion_retorno
+            FROM {app_schema}.asignacion_retorno
             WHERE asignacion_id = %s
             """,
             (asignacion_id,),
@@ -855,23 +976,36 @@ def allocate_asignacion_retorno_version(conn, asignacion_id: int) -> int:
         return int(next_row.get("next_version") or 1)
 
 
-def create_asignacion_retorno(
-    conn,
-    asignacion_id: int,
-    version: int,
-    datasetname_retorno: str,
-    *,
-    archivo_nombre_original: Optional[str] = None,
-    archivo_nombre_guardado: Optional[str] = None,
-    archivo_sha256: Optional[str] = None,
-    correlation_id: Optional[str] = None,
-    creado_por: Optional[str] = None,
-) -> dict:
+def create_asignacion_retorno(conn, *args, **kwargs) -> dict:
+    tenant = None
+    if len(args) >= 4:
+        tenant, asignacion_id, version, datasetname_retorno = args[:4]
+    elif len(args) == 3:
+        asignacion_id, version, datasetname_retorno = args
+    else:
+        tenant = kwargs.get("tenant")
+        asignacion_id = kwargs.get("asignacion_id")
+        version = kwargs.get("version")
+        datasetname_retorno = kwargs.get("datasetname_retorno")
+
+    archivo_nombre_original = kwargs.get("archivo_nombre_original")
+    archivo_nombre_guardado = kwargs.get("archivo_nombre_guardado")
+    archivo_sha256 = kwargs.get("archivo_sha256")
+    correlation_id = kwargs.get("correlation_id")
+    creado_por = kwargs.get("creado_por")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        ensure_asignacion_tables(conn, force=True)
+        ensure_asignacion_tables(conn, tenant, force=True)
         cur.execute(
-            """
-            INSERT INTO arbimaps_app.asignacion_retorno (
+            f"""
+            INSERT INTO {app_schema}.asignacion_retorno (
                 asignacion_id,
                 version,
                 datasetname_retorno,
@@ -899,17 +1033,30 @@ def create_asignacion_retorno(
     return row
 
 
-def update_asignacion_retorno(
-    conn,
-    retorno_id: int,
-    *,
-    estado: Optional[str] = None,
-    resultado_validacion: Optional[str] = None,
-    removed_predios: Optional[int] = None,
-    synced_predios: Optional[int] = None,
-    error_msg: Optional[str] = None,
-    sincronizado_en_now: bool = False,
-) -> Optional[dict]:
+def update_asignacion_retorno(conn, *args, **kwargs) -> Optional[dict]:
+    tenant = None
+    if len(args) == 2:
+        tenant, retorno_id = args
+    elif len(args) == 1:
+        retorno_id = args[0]
+    else:
+        tenant = kwargs.get("tenant")
+        retorno_id = kwargs.get("retorno_id")
+
+    estado = kwargs.get("estado")
+    resultado_validacion = kwargs.get("resultado_validacion")
+    removed_predios = kwargs.get("removed_predios")
+    synced_predios = kwargs.get("synced_predios")
+    error_msg = kwargs.get("error_msg")
+    sincronizado_en_now = kwargs.get("sincronizado_en_now", False)
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     sets: list[str] = []
     params: list[object] = []
     if estado is not None:
@@ -934,10 +1081,10 @@ def update_asignacion_retorno(
 
     params.append(retorno_id)
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        ensure_asignacion_tables(conn, force=True)
+        ensure_asignacion_tables(conn, tenant, force=True)
         cur.execute(
             f"""
-            UPDATE arbimaps_app.asignacion_retorno
+            UPDATE {app_schema}.asignacion_retorno
             SET {', '.join(sets)}
             WHERE id = %s
             RETURNING *
@@ -947,12 +1094,28 @@ def update_asignacion_retorno(
         return cur.fetchone()
 
 
-def get_asignacion_work_dataset(conn, asignacion_id: int) -> Optional[dict]:
+def get_asignacion_work_dataset(conn, *args, **kwargs) -> Optional[dict]:
+    tenant = None
+    if len(args) == 2:
+        tenant, asignacion_id = args
+    elif len(args) == 1:
+        asignacion_id = args[0]
+    else:
+        tenant = kwargs.get("tenant")
+        asignacion_id = kwargs.get("asignacion_id")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            """
+            f"""
             SELECT id, work_datasetname
-            FROM arbimaps_app.asignacion
+            FROM {app_schema}.asignacion
             WHERE id = %s
             """,
             (asignacion_id,),
@@ -960,14 +1123,36 @@ def get_asignacion_work_dataset(conn, asignacion_id: int) -> Optional[dict]:
         return cur.fetchone()
 
 
-def get_recent_retorno_by_sha256(conn, asignacion_id: int, archivo_sha256: str) -> Optional[dict]:
+def get_recent_retorno_by_sha256(conn, *args, **kwargs) -> Optional[dict]:
+    tenant = None
+    if len(args) == 3:
+        tenant, asignacion_id, archivo_sha256 = args
+    elif len(args) == 2:
+        if isinstance(args[0], (int, str)) or args[0] is None:
+            asignacion_id, archivo_sha256 = args
+        else:
+            tenant, asignacion_id = args
+            archivo_sha256 = kwargs.get("archivo_sha256")
+    else:
+        tenant = kwargs.get("tenant")
+        asignacion_id = kwargs.get("asignacion_id")
+        archivo_sha256 = kwargs.get("archivo_sha256")
+
     if not archivo_sha256:
         return None
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            """
+            f"""
             SELECT *
-            FROM arbimaps_app.asignacion_retorno
+            FROM {app_schema}.asignacion_retorno
             WHERE asignacion_id = %s
               AND archivo_sha256 = %s
             ORDER BY id DESC
@@ -978,12 +1163,28 @@ def get_recent_retorno_by_sha256(conn, asignacion_id: int, archivo_sha256: str) 
         return cur.fetchone()
 
 
-def get_asignacion_for_paquete(conn, asignacion_id: int) -> Optional[dict]:
+def get_asignacion_for_paquete(conn, *args, **kwargs) -> Optional[dict]:
+    tenant = None
+    if len(args) == 2:
+        tenant, asignacion_id = args
+    elif len(args) == 1:
+        asignacion_id = args[0]
+    else:
+        tenant = kwargs.get("tenant")
+        asignacion_id = kwargs.get("asignacion_id")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            """
+            f"""
             SELECT id, work_datasetname, datasetname_main, titulo, usuario_asignado
-            FROM arbimaps_app.asignacion
+            FROM {app_schema}.asignacion
             WHERE id = %s
             """,
             (asignacion_id,),
@@ -991,13 +1192,20 @@ def get_asignacion_for_paquete(conn, asignacion_id: int) -> Optional[dict]:
         return cur.fetchone()
 
 
-def list_asignaciones(conn) -> list[dict]:
+def list_asignaciones(conn, tenant=None) -> list[dict]:
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         # Evita que el endpoint quede "colgado" por bloqueos DDL/locks largos.
         cur.execute("SET LOCAL lock_timeout = '2s'")
         cur.execute("SET LOCAL statement_timeout = '20s'")
         cur.execute(
-            """
+            f"""
             SELECT
                 a.*,
                 cu.first_name AS coord_first_name,
@@ -1011,20 +1219,20 @@ def list_asignaciones(conn) -> list[dict]:
                     COALESCE(ret.synced_predios, 0) - COALESCE(stats.total_activos, 0),
                     COALESCE(stats.total_nuevos_raw, 0)
                 ) AS total_nuevos
-            FROM arbimaps_app.asignacion a
-            LEFT JOIN arbimaps_app.users cu ON cu.username = a.creado_por
-            LEFT JOIN arbimaps_app.users au ON au.username = a.usuario_asignado
+            FROM {app_schema}.asignacion a
+            LEFT JOIN {app_schema}.users cu ON cu.username = a.creado_por
+            LEFT JOIN {app_schema}.users au ON au.username = a.usuario_asignado
             LEFT JOIN LATERAL (
                 SELECT
                     COUNT(*) FILTER (WHERE ap.activo IS DISTINCT FROM FALSE) AS total_activos,
                     COUNT(*) FILTER (WHERE ap.activo IS FALSE) AS total_inactivos,
                     COUNT(*) FILTER (WHERE ap.predio_t_id IS NULL) AS total_nuevos_raw
-                FROM arbimaps_app.asignacion_predio ap
+                FROM {app_schema}.asignacion_predio ap
                 WHERE ap.asignacion_id = a.id
             ) stats ON TRUE
             LEFT JOIN LATERAL (
                 SELECT ar.synced_predios
-                FROM arbimaps_app.asignacion_retorno ar
+                FROM {app_schema}.asignacion_retorno ar
                 WHERE ar.asignacion_id = a.id
                   AND ar.estado IN ('SINCRONIZADO', 'VALIDADO')
                 ORDER BY ar.id DESC
@@ -1038,10 +1246,26 @@ def list_asignaciones(conn) -> list[dict]:
         return cur.fetchall()
 
 
-def get_asignacion_detalle(conn, asignacion_id: int) -> Optional[dict]:
+def get_asignacion_detalle(conn, *args, **kwargs) -> Optional[dict]:
+    tenant = None
+    if len(args) == 2:
+        tenant, asignacion_id = args
+    elif len(args) == 1:
+        asignacion_id = args[0]
+    else:
+        tenant = kwargs.get("tenant")
+        asignacion_id = kwargs.get("asignacion_id")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            """
+            f"""
             SELECT
                 a.*,
                 cu.first_name AS coord_first_name,
@@ -1055,21 +1279,21 @@ def get_asignacion_detalle(conn, asignacion_id: int) -> Optional[dict]:
                     COALESCE(ret.synced_predios, 0) - COALESCE(stats.total_activos, 0),
                     COALESCE(stats.total_nuevos_raw, 0)
                 ) AS total_nuevos
-            FROM arbimaps_app.asignacion a
-            LEFT JOIN arbimaps_app.users cu ON cu.username = a.creado_por
-            LEFT JOIN arbimaps_app.users au ON au.username = a.usuario_asignado
+            FROM {app_schema}.asignacion a
+            LEFT JOIN {app_schema}.users cu ON cu.username = a.creado_por
+            LEFT JOIN {app_schema}.users au ON au.username = a.usuario_asignado
             LEFT JOIN (
                 SELECT
                     ap.asignacion_id,
                     COUNT(*) FILTER (WHERE ap.activo IS DISTINCT FROM FALSE) AS total_activos,
                     COUNT(*) FILTER (WHERE ap.activo IS FALSE) AS total_inactivos,
                     COUNT(*) FILTER (WHERE ap.predio_t_id IS NULL) AS total_nuevos_raw
-                FROM arbimaps_app.asignacion_predio ap
+                FROM {app_schema}.asignacion_predio ap
                 GROUP BY ap.asignacion_id
             ) stats ON stats.asignacion_id = a.id
             LEFT JOIN LATERAL (
                 SELECT ar.synced_predios
-                FROM arbimaps_app.asignacion_retorno ar
+                FROM {app_schema}.asignacion_retorno ar
                 WHERE ar.asignacion_id = a.id
                   AND ar.estado IN ('SINCRONIZADO', 'VALIDADO')
                 ORDER BY ar.id DESC
@@ -1083,10 +1307,26 @@ def get_asignacion_detalle(conn, asignacion_id: int) -> Optional[dict]:
         return cur.fetchone()
 
 
-def list_predios_asignacion(conn, asignacion_id: int) -> list[dict]:
+def list_predios_asignacion(conn, *args, **kwargs) -> list[dict]:
+    tenant = None
+    if len(args) == 2:
+        tenant, asignacion_id = args
+    elif len(args) == 1:
+        asignacion_id = args[0]
+    else:
+        tenant = kwargs.get("tenant")
+        asignacion_id = kwargs.get("asignacion_id")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            """
+            f"""
             SELECT
                 ap.id,
                 ap.numero_predial_nacional,
@@ -1094,7 +1334,7 @@ def list_predios_asignacion(conn, asignacion_id: int) -> list[dict]:
                 ap.activo,
                 ap.creado_por,
                 ap.creado_en
-            FROM arbimaps_app.asignacion_predio ap
+            FROM {app_schema}.asignacion_predio ap
             WHERE ap.asignacion_id = %s
             ORDER BY ap.activo DESC, ap.numero_predial_nacional ASC
             """,

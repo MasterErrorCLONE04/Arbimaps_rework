@@ -109,6 +109,8 @@ def _load_from_env(code: str) -> MunicipalityConfig:
         schemas=schemas,
         wms_base_url=_env_str(f"{prefix}_WMS_BASE_URL"),
         geoserver_layers=_env_str(f"{prefix}_GEOSERVER_LAYERS"),
+        geoserver_base_url=_env_str(f"{prefix}_GEOSERVER_BASE_URL"),
+        geoserver_workspace=_env_str(f"{prefix}_GEOSERVER_WORKSPACE"),
     )
 
 
@@ -170,6 +172,8 @@ def _load_from_file(path: Path) -> list[MunicipalityConfig]:
                 ),
                 wms_base_url=str(item.get("wms_base_url", "")),
                 geoserver_layers=str(item.get("geoserver_layers", "")),
+                geoserver_base_url=str(item.get("geoserver_base_url", "")),
+                geoserver_workspace=str(item.get("geoserver_workspace", "")),
             )
         )
     return configs

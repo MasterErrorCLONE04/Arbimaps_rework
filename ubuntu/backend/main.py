@@ -14,7 +14,7 @@ from routers.asignaciones_paquetes import router as asignaciones_paquetes_router
 from routers.buscar_predio import router as predio_router
 from routers.logout_app import router as logout_router
 from routers.pages import router as pages_router
-from routers.proxy import router as proxy_router
+from routers.proxy import router as proxy_router, geoserver_router
 from routers.validacion import router as validacion_router
 from routers.predios_edit_api import router as predios_edit_router
 from routers.usuarios import router as usuarios_router
@@ -101,6 +101,7 @@ def create_app() -> FastAPI:
     app.include_router(visor_queries_router)
     app.include_router(resumenp_router)
     app.include_router(proxy_router)
+    app.include_router(geoserver_router)
     app.include_router(asignaciones_router)
     app.include_router(asignaciones_detalle_router)
     app.include_router(asignaciones_paquetes_router)

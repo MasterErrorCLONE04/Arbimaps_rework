@@ -8,7 +8,6 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from core.asignaciones import (
-    ASIG_MODEL_CONTEXT,
     can_access_assignment_model,
     is_assignment_internal_rollout_active,
     is_assignment_internal_user,
@@ -125,12 +124,12 @@ def _render_panel(
         "view": view,
         "effective_role": role,
         "can_access_asignaciones": can_access_asignaciones,
-        "asig_model_name": ASIG_MODEL_CONTEXT.name,
-        "asig_schema_main": (ASIG_MODEL_CONTEXT.schema_main or "").strip(),
-        "asig_schema_work": (ASIG_MODEL_CONTEXT.schema_work or "").strip(),
-        "asig_supports_package_export": ASIG_MODEL_CONTEXT.name in {"leiva", "arb"},
-        "asig_supports_retorno_xtf": ASIG_MODEL_CONTEXT.name in {"leiva", "arb"},
-        "asig_internal_rollout_active": is_assignment_internal_rollout_active(ASIG_MODEL_CONTEXT.name),
+        "asig_model_name": "arb",
+        "asig_schema_main": (tenant.schemas.main if tenant else "").strip(),
+        "asig_schema_work": (tenant.schemas.work if tenant else "").strip(),
+        "asig_supports_package_export": True,
+        "asig_supports_retorno_xtf": True,
+        "asig_internal_rollout_active": is_assignment_internal_rollout_active("arb"),
         "asig_internal_access_granted": is_assignment_internal_user(user, role=role),
         "visor_geoserver_layers": (
             tenant.geoserver_layers
@@ -224,6 +223,7 @@ def login_post(
     password: str = Form(...),
     remember: str | None = Form(None),
 ):
+    print("LOGIN POST ENTERED - municipality_code:", municipality_code, "username:", username, flush=True)
     municipality_code = (municipality_code or "").strip().lower()
     username = (username or "").strip()
     password = password or ""
@@ -232,7 +232,9 @@ def login_post(
     try:
         municipality = registry.require_active(municipality_code)
         tenant = TenantContext.from_config(municipality)
-    except Exception:
+    except Exception as exc:
+        print("LOGIN POST RESOLVE TENANT EXCEPTION:", exc, flush=True)
+        logger.exception("Error resolving tenant for code %r: %s", municipality_code, exc)
         return templates.TemplateResponse(
             "login.html",
             _login_template_context(

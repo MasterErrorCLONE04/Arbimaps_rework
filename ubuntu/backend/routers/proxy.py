@@ -68,3 +68,51 @@ def proxy_wms(request: Request) -> Response:
         raise HTTPException(status_code=400, detail="Faltan parametros de consulta WMS")
 
     return _forward_get(WMS_BASE_URL, params)
+
+
+# -----------------------------------------------------------------
+# Proxy de GeoServer para Desarrollo Local (evita 404/CORS)
+# -----------------------------------------------------------------
+import requests
+
+geoserver_router = APIRouter(tags=["geoserver"])
+
+# Calcular la URL base del GeoServer remoto a partir de WMS_BASE_URL
+wms_url = os.getenv("WMS_BASE_URL", "https://arbitriumsas.arbimaps.com/geoserver/wms")
+idx = wms_url.find("/geoserver")
+if idx != -1:
+    GEOSERVER_ROOT = wms_url[:idx + len("/geoserver")]
+else:
+    GEOSERVER_ROOT = "https://arbitriumsas.arbimaps.com/geoserver"
+
+
+@geoserver_router.route("/geoserver/{path:path}", methods=["GET", "POST", "OPTIONS"])
+async def proxy_geoserver(path: str, request: Request) -> Response:
+    """
+    Proxy de GeoServer: redirige las peticiones locales /geoserver/... al GeoServer remoto.
+    """
+    target_url = f"{GEOSERVER_ROOT}/{path}"
+    method = request.method
+    params = dict(request.query_params)
+    body = await request.body()
+
+    try:
+        resp = requests.request(
+            method=method,
+            url=target_url,
+            params=params,
+            data=body,
+            headers={k: v for k, v in request.headers.items() if k.lower() not in ("host", "content-length")},
+            timeout=30
+        )
+        content_type = resp.headers.get("Content-Type", "image/png")
+        headers = {
+            "Access-Control-Allow-Origin": "*",
+            "Content-Type": content_type,
+        }
+        return Response(content=resp.content, status_code=resp.status_code, headers=headers)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Error en proxy de GeoServer local al servidor remoto: {exc}"
+        )

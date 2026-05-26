@@ -12,22 +12,25 @@ from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 from core.asignaciones import (
-    ASIG_MODEL_CONTEXT,
+    DATASETNAME_MAIN_DEFAULT,
     ILI2PG_CMD,
     ILI2PG_TIMEOUT_SEC,
+    REQUIRED_BASKETS,
+    assignment_access_denied_detail,
+    can_access_assignment_model,
 )
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from psycopg2 import errorcodes
 from psycopg2.extras import RealDictCursor
 
 from repositories import asignaciones_repo
-from routers.auth import require_assignment_roles
-from routers.db import db_conn
+from routers.auth import get_current_tenant, get_current_user, get_user_role, normalize_role
 from services import asignaciones_export as export_service
 from services import asignaciones_workspace as workspace_service
 from services.xtf_validation_service import XTFValidationService
+from tenants import TenantContext, app_table, get_tenant_db_connection, main_table, work_table
 from quality_rules.components import COMPONENTS
 from quality_rules.loader import load_rule_group
 
@@ -59,26 +62,80 @@ def _ensure_assignment_owner_access(user: Optional[dict], asignacion: Optional[d
         )
 
 
-def _read_schema_main() -> str:
-    value = (ASIG_MODEL_CONTEXT.schema_main or "").strip()
+def _require_assignment_access(user: Optional[dict], *allowed_roles: str) -> None:
+    role = normalize_role(get_user_role(user or {}))
+    allowed = {normalize_role(item) for item in allowed_roles if item}
+    if allowed and role not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Rol '{role}' sin permisos para esta accion",
+        )
+    if not can_access_assignment_model(user or {}, role=role):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=assignment_access_denied_detail(),
+        )
+
+
+def _app_table(tenant: TenantContext, table_name: str) -> str:
+    try:
+        return app_table(tenant, table_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail="Identificador tenant invalido.") from exc
+
+
+def _main_table(tenant: TenantContext, table_name: str) -> str:
+    try:
+        return main_table(tenant, table_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail="Identificador tenant invalido.") from exc
+
+
+def _work_table(tenant: TenantContext, table_name: str) -> str:
+    try:
+        return work_table(tenant, table_name)
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail="Identificador tenant invalido.") from exc
+
+
+def _read_schema_main(tenant: TenantContext) -> str:
+    value = (tenant.schemas.main or "").strip()
     if not value:
-        raise RuntimeError("schema_main no configurado para asignaciones arb.")
+        raise RuntimeError("tenant.schemas.main no configurado.")
     return value
 
 
-def _read_schema_work() -> str:
-    value = (ASIG_MODEL_CONTEXT.schema_work or "").strip()
+def _read_schema_work(tenant: TenantContext) -> str:
+    value = (tenant.schemas.work or "").strip()
     if not value:
-        raise RuntimeError("schema_work no configurado para asignaciones arb.")
+        raise RuntimeError("tenant.schemas.work no configurado.")
     return value
 
 
 def _read_datasetname_main_default() -> str:
-    return (ASIG_MODEL_CONTEXT.datasetname_main_default or "").strip()
+    return (DATASETNAME_MAIN_DEFAULT or "").strip()
 
 
 def _read_required_baskets() -> set[str]:
-    return set(ASIG_MODEL_CONTEXT.required_baskets or ())
+    return set(REQUIRED_BASKETS or ())
+
+
+def _read_predio_numero_field() -> str:
+    return _safe_ident("numero_predial", fallback="numero_predial")
+
+
+def _ensure_assignment_access(
+    conn,
+    tenant: TenantContext,
+    asignacion_id: int,
+    user: Optional[dict],
+) -> dict:
+    asignaciones_repo.ensure_asignacion_tables(conn, tenant)
+    asignacion = asignaciones_repo.get_asignacion_detalle(conn, tenant, asignacion_id)
+    if not asignacion:
+        raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
+    _ensure_assignment_owner_access(user, asignacion)
+    return asignacion
 
 
 class BasketInfo(BaseModel):
@@ -197,7 +254,7 @@ def _fetch_rows(
     order_sql: str = "",
     limit: Optional[int] = None,
 ) -> list[dict]:
-    safe_schema = _safe_ident(schema, fallback="b_asignaciones_arb")
+    safe_schema = _safe_ident(schema, fallback="")
     safe_table = _safe_ident(table, fallback=table)
     specs = _table_column_specs(cur, safe_schema, safe_table)
     if not specs:
@@ -328,6 +385,7 @@ def _build_full_name(row: dict) -> str:
 def _resolve_domain_name(
     cur,
     *,
+    tenant: Optional[TenantContext] = None,
     schema: str,
     table_candidates: list[str],
     raw_value: Any,
@@ -336,7 +394,8 @@ def _resolve_domain_name(
         return None
     target = str(raw_value).strip()
     schema_candidates = []
-    for s in (schema, _safe_ident(_read_schema_main(), fallback="a_base_principal")):
+    main_schema = _read_schema_main(tenant) if tenant is not None else ""
+    for s in (schema, main_schema):
         safe_s = _safe_ident(s, fallback="")
         if safe_s and safe_s not in schema_candidates:
             schema_candidates.append(safe_s)
@@ -447,9 +506,11 @@ def _build_retorno_datasetname(work_datasetname: str, version: int) -> str:
     return f"{base}_ret_{int(version):02d}"
 
 
-def _ili2pg_import(schema: str, datasetname: str, xtf_path: str):
+def _ili2pg_import(conn, tenant, schema: str, datasetname: str, xtf_path: str):
     try:
         return export_service.ili2pg_import(
+            conn,
+            tenant,
             schema,
             datasetname,
             xtf_path,
@@ -677,8 +738,11 @@ def _validation_history_message(result: Optional[dict]) -> str:
 
 @router.get("/validadores-xtf")
 def listar_validadores_xtf(
-    _user: dict = Depends(require_assignment_roles("admin", "coordinador", "digitalizador")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
 ):
+    del tenant
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador")
     service = xtf_validation_service
     return {
         "pipeline": _validator_pipeline_labels(),
@@ -776,35 +840,84 @@ def _validate_retorno_xtf_rules(xtf_path: str) -> dict:
     return result
 
 
-def _ensure_workspace_ready_for_export(asignacion_id: int, created_by: Optional[str]) -> str:
+def _ensure_workspace_ready_for_export(
+    tenant: TenantContext,
+    connection_manager,
+    asignacion_id: int,
+    created_by: Optional[str],
+) -> str:
+    def _update_asignacion_fields_wrapper(
+        target_asignacion_id: int,
+        **kwargs,
+    ) -> None:
+        with connection_manager.connection(tenant) as conn:
+            conn.autocommit = False
+            try:
+                asignaciones_repo.update_asignacion_fields(
+                    conn,
+                    tenant,
+                    target_asignacion_id,
+                    **kwargs,
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+
+    def _safe_log_event_wrapper(
+        target_asignacion_id: int,
+        evento: str,
+        mensaje: Optional[str],
+        usuario: Optional[str],
+    ) -> None:
+        with connection_manager.connection(tenant) as conn:
+            conn.autocommit = False
+            try:
+                asignaciones_repo.safe_log_event(
+                    conn,
+                    tenant,
+                    target_asignacion_id,
+                    evento,
+                    mensaje,
+                    usuario,
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+
     try:
-        return workspace_service.ensure_workspace_ready_for_export(
-            asignacion_id,
-            created_by,
-            schema_main=_read_schema_main(),
-            schema_work=_read_schema_work(),
-            datasetname_main_default=_read_datasetname_main_default(),
-            ili2pg_cmd=ILI2PG_CMD,
-            timeout_sec=ILI2PG_TIMEOUT_SEC,
-            required_topics=sorted(_read_required_baskets()),
-            update_asignacion_fields=asignaciones_repo.update_asignacion_fields,
-            safe_log_event=asignaciones_repo.safe_log_event,
-        )
+        with connection_manager.connection(tenant) as conn:
+            return workspace_service.ensure_workspace_ready_for_export(
+                conn,
+                tenant,
+                asignacion_id,
+                created_by,
+                schema_main=_read_schema_main(tenant),
+                schema_work=_read_schema_work(tenant),
+                datasetname_main_default=_read_datasetname_main_default(),
+                ili2pg_cmd=ILI2PG_CMD,
+                timeout_sec=ILI2PG_TIMEOUT_SEC,
+                required_topics=sorted(_read_required_baskets()),
+                update_asignacion_fields=_update_asignacion_fields_wrapper,
+                safe_log_event=_safe_log_event_wrapper,
+            )
     except Exception as exc:
         _raise_http_from_export_error(exc, stage="ensure_workspace_ready_for_export")
 
 
 @router.get("/datasets", response_model=List[DatasetInfo])
 def listar_datasets_disponibles(
-    _user: dict = Depends(require_assignment_roles("admin", "coordinador")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
+    _require_assignment_access(user, "admin", "coordinador")
     try:
-        with db_conn() as conn:
-            dataset_rows, basket_rows, predio_count_rows = asignaciones_repo.fetch_datasets_baskets_predio_counts(
-                conn,
-                _read_schema_main(),
-                model_context=ASIG_MODEL_CONTEXT,
-            )
+        dataset_rows, basket_rows, predio_count_rows = asignaciones_repo.fetch_datasets_baskets_predio_counts(
+            conn,
+            tenant,
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"No se pudieron cargar los datasets: {e}")
 
@@ -848,30 +961,26 @@ def listar_datasets_disponibles(
 @router.get("/{asignacion_id}/eventos", response_model=List[AsignacionEvento])
 def listar_eventos_asignacion(
     asignacion_id: int,
-    _user: dict = Depends(require_assignment_roles("admin", "coordinador", "digitalizador", "reconocedor")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
-    with db_conn() as conn:
-        asignaciones_repo.ensure_asignacion_tables(conn)
-        asignacion = asignaciones_repo.get_asignacion_detalle(conn, asignacion_id)
-        if not asignacion:
-            raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
-        _ensure_assignment_owner_access(_user, asignacion)
-        rows = asignaciones_repo.list_eventos_asignacion(conn, asignacion_id)
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    _ensure_assignment_access(conn, tenant, asignacion_id, user)
+    rows = asignaciones_repo.list_eventos_asignacion(conn, tenant, asignacion_id)
     return rows
 
 
 @router.get("/{asignacion_id}/detalle", response_model=AsignacionDetalleResponse)
 def obtener_detalle_asignacion(
     asignacion_id: int,
-    _user: dict = Depends(require_assignment_roles("admin", "coordinador", "digitalizador", "reconocedor")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
-    with db_conn() as conn:
-        asignaciones_repo.ensure_asignacion_tables(conn)
-        asignacion = asignaciones_repo.get_asignacion_detalle(conn, asignacion_id)
-        if not asignacion:
-            raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
-        _ensure_assignment_owner_access(_user, asignacion)
-        predios_rows = asignaciones_repo.list_predios_asignacion(conn, asignacion_id)
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    asignacion = _ensure_assignment_access(conn, tenant, asignacion_id, user)
+    predios_rows = asignaciones_repo.list_predios_asignacion(conn, tenant, asignacion_id)
 
     def _display_name(first_name: Optional[str], last_name: Optional[str], username: Optional[str]) -> Optional[str]:
         full_name = " ".join(part for part in (first_name, last_name) if part).strip()
@@ -921,67 +1030,52 @@ def obtener_detalle_asignacion(
 @router.get("/{asignacion_id}/scope-geojson")
 def obtener_scope_geojson_asignacion(
     asignacion_id: int,
-    user: dict = Depends(require_assignment_roles("admin", "coordinador", "digitalizador", "reconocedor")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
-    schema_work = _safe_ident(_read_schema_work(), fallback="b_asignaciones_arb")
-    predio_numero_field = _safe_ident(
-        (ASIG_MODEL_CONTEXT.predio_numero_field or "numero_predial").strip(),
-        fallback="numero_predial",
-    )
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    schema_work = _safe_ident(_read_schema_work(tenant), fallback="")
+    predio_numero_field = _read_predio_numero_field()
+    asignacion_predio_table = _app_table(tenant, "asignacion_predio")
+    asignacion = _ensure_assignment_access(conn, tenant, asignacion_id, user)
+    work_datasetname = str(asignacion.get("work_datasetname") or "").strip()
+    if not work_datasetname:
+        raise HTTPException(
+            status_code=400,
+            detail="La asignacion no tiene workspace definido.",
+        )
 
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            asignaciones_repo.ensure_asignacion_tables(conn)
-            cur.execute(
-                """
-                SELECT id, usuario_asignado, work_datasetname
-                FROM arbimaps_app.asignacion
-                WHERE id = %s
-                LIMIT 1
-                """,
-                (asignacion_id,),
-            )
-            asignacion = cur.fetchone() or {}
-            if not asignacion:
-                raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
-            _ensure_assignment_owner_access(user, asignacion)
-
-            work_datasetname = str(asignacion.get("work_datasetname") or "").strip()
-            if not work_datasetname:
-                raise HTTPException(
-                    status_code=400,
-                    detail="La asignacion no tiene workspace definido.",
-                )
-
-            predio_specs = _table_column_specs(cur, schema_work, "arb_predio")
-            if not predio_specs:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"No existe tabla arb_predio en {schema_work}.",
-                )
-
-            predio_geom_col = next(
-                (
-                    str(col.get("column_name") or "").strip()
-                    for col in predio_specs
-                    if str(col.get("udt_name") or "").strip().lower() in {"geometry", "geography"}
-                ),
-                None,
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        predio_specs = _table_column_specs(cur, schema_work, "arb_predio")
+        if not predio_specs:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No existe tabla arb_predio en {schema_work}.",
             )
 
-            predio_geom_sql = (
-                f'ST_AsGeoJSON(p.{_qident(predio_geom_col)})::json'
-                if predio_geom_col
-                else "NULL::json"
-            )
+        predio_geom_col = next(
+            (
+                str(col.get("column_name") or "").strip()
+                for col in predio_specs
+                if str(col.get("udt_name") or "").strip().lower() in {"geometry", "geography"}
+            ),
+            None,
+        )
 
-            cur.execute(
+        predio_geom_sql = (
+            f'ST_AsGeoJSON(p.{_qident(predio_geom_col)})::json'
+            if predio_geom_col
+            else "NULL::json"
+        )
+
+        cur.execute(
                 f"""
                 WITH ap_sel AS (
                     SELECT DISTINCT
                         ap.predio_t_id,
                         NULLIF(BTRIM(ap.numero_predial_nacional::text), '') AS numero_predial_nacional
-                    FROM arbimaps_app.asignacion_predio ap
+                    FROM {asignacion_predio_table} ap
                     WHERE ap.asignacion_id = %s
                       AND ap.activo IS DISTINCT FROM FALSE
                 )
@@ -1010,12 +1104,12 @@ def obtener_scope_geojson_asignacion(
                 """,
                 (asignacion_id, work_datasetname),
             )
-            predio_rows = cur.fetchall() or []
+        predio_rows = cur.fetchall() or []
 
-            terrain_rows: list[dict] = []
-            uc_rows: list[dict] = []
-            basket_ids: list[int] = []
-            cur.execute(
+        terrain_rows: list[dict] = []
+        uc_rows: list[dict] = []
+        basket_ids: list[int] = []
+        cur.execute(
                 f"""
                 SELECT b."t_id"
                 FROM {_qident(schema_work)}."t_ili2db_basket" b
@@ -1026,31 +1120,31 @@ def obtener_scope_geojson_asignacion(
                 """,
                 (work_datasetname,),
             )
-            basket_ids = [
-                v
-                for v in (_maybe_int((row or {}).get("t_id")) for row in (cur.fetchall() or []))
-                if isinstance(v, int)
-            ]
+        basket_ids = [
+            v
+            for v in (_maybe_int((row or {}).get("t_id")) for row in (cur.fetchall() or []))
+            if isinstance(v, int)
+        ]
 
-            terrain_specs = _table_column_specs(cur, schema_work, "arb_terreno")
-            if terrain_specs:
-                terrain_cols = {str(col.get("column_name") or "").strip() for col in terrain_specs}
-                terrain_geom_col = next(
-                    (
-                        str(col.get("column_name") or "").strip()
-                        for col in terrain_specs
-                        if str(col.get("udt_name") or "").strip().lower() in {"geometry", "geography"}
-                    ),
-                    None,
-                )
-                if terrain_geom_col and "predio" in terrain_cols:
-                    cur.execute(
+        terrain_specs = _table_column_specs(cur, schema_work, "arb_terreno")
+        if terrain_specs:
+            terrain_cols = {str(col.get("column_name") or "").strip() for col in terrain_specs}
+            terrain_geom_col = next(
+                (
+                    str(col.get("column_name") or "").strip()
+                    for col in terrain_specs
+                    if str(col.get("udt_name") or "").strip().lower() in {"geometry", "geography"}
+                ),
+                None,
+            )
+            if terrain_geom_col and "predio" in terrain_cols:
+                cur.execute(
                         f"""
                         WITH ap_sel AS (
                             SELECT DISTINCT
                                 ap.predio_t_id,
                                 NULLIF(BTRIM(ap.numero_predial_nacional::text), '') AS numero_predial_nacional
-                            FROM arbimaps_app.asignacion_predio ap
+                            FROM {asignacion_predio_table} ap
                             WHERE ap.asignacion_id = %s
                               AND ap.activo IS DISTINCT FROM FALSE
                         )
@@ -1082,29 +1176,29 @@ def obtener_scope_geojson_asignacion(
                         """,
                         (asignacion_id, work_datasetname),
                     )
-                    terrain_rows = cur.fetchall() or []
+                terrain_rows = cur.fetchall() or []
 
-            uc_specs = _table_column_specs(cur, schema_work, "arb_unidadconstruccion")
-            constru_specs = _table_column_specs(cur, schema_work, "arb_construccion")
-            if uc_specs and constru_specs:
-                uc_cols = {str(col.get("column_name") or "").strip() for col in uc_specs}
-                constru_cols = {str(col.get("column_name") or "").strip() for col in constru_specs}
-                uc_geom_col = next(
-                    (
-                        str(col.get("column_name") or "").strip()
-                        for col in uc_specs
-                        if str(col.get("udt_name") or "").strip().lower() in {"geometry", "geography"}
-                    ),
-                    None,
-                )
-                if uc_geom_col and "construccion" in uc_cols and "predio" in constru_cols:
-                    cur.execute(
+        uc_specs = _table_column_specs(cur, schema_work, "arb_unidadconstruccion")
+        constru_specs = _table_column_specs(cur, schema_work, "arb_construccion")
+        if uc_specs and constru_specs:
+            uc_cols = {str(col.get("column_name") or "").strip() for col in uc_specs}
+            constru_cols = {str(col.get("column_name") or "").strip() for col in constru_specs}
+            uc_geom_col = next(
+                (
+                    str(col.get("column_name") or "").strip()
+                    for col in uc_specs
+                    if str(col.get("udt_name") or "").strip().lower() in {"geometry", "geography"}
+                ),
+                None,
+            )
+            if uc_geom_col and "construccion" in uc_cols and "predio" in constru_cols:
+                cur.execute(
                         f"""
                         WITH ap_sel AS (
                             SELECT DISTINCT
                                 ap.predio_t_id,
                                 NULLIF(BTRIM(ap.numero_predial_nacional::text), '') AS numero_predial_nacional
-                            FROM arbimaps_app.asignacion_predio ap
+                            FROM {asignacion_predio_table} ap
                             WHERE ap.asignacion_id = %s
                               AND ap.activo IS DISTINCT FROM FALSE
                         )
@@ -1139,7 +1233,7 @@ def obtener_scope_geojson_asignacion(
                         """,
                         (asignacion_id, work_datasetname),
                     )
-                    uc_rows = cur.fetchall() or []
+                uc_rows = cur.fetchall() or []
 
     predio_features = [
         {
@@ -1214,23 +1308,26 @@ def obtener_scope_geojson_asignacion(
 def obtener_detalle_predio_completo_asignacion(
     asignacion_id: int,
     predio_t_id: int,
-    user: dict = Depends(require_assignment_roles("admin", "coordinador", "digitalizador", "reconocedor")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
-    schema_work = _safe_ident(_read_schema_work(), fallback="b_asignaciones_arb")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    schema_work = _safe_ident(_read_schema_work(tenant), fallback="")
+    asignacion_table = _app_table(tenant, "asignacion")
+    asignacion_predio_table = _app_table(tenant, "asignacion_predio")
 
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            asignaciones_repo.ensure_asignacion_tables(conn)
-            cur.execute(
-                """
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+                f"""
                 SELECT
                     a.id,
                     a.usuario_asignado,
                     a.work_datasetname,
                     ap.activo,
                     ap.numero_predial_nacional
-                FROM arbimaps_app.asignacion a
-                JOIN arbimaps_app.asignacion_predio ap
+                FROM {asignacion_table} a
+                JOIN {asignacion_predio_table} ap
                   ON ap.asignacion_id = a.id
                 WHERE a.id = %s
                   AND ap.predio_t_id = %s
@@ -1238,47 +1335,44 @@ def obtener_detalle_predio_completo_asignacion(
                 """,
                 (asignacion_id, predio_t_id),
             )
-            rel = cur.fetchone() or {}
-            if not rel:
-                raise HTTPException(
-                    status_code=404,
-                    detail="El predio no pertenece a la asignacion indicada.",
-                )
-            if rel.get("activo") is False:
-                raise HTTPException(
-                    status_code=404,
-                    detail="El predio esta inactivo en la asignacion.",
-                )
-            _ensure_assignment_owner_access(user, rel)
-
-            numero_predial_rel = str(rel.get("numero_predial_nacional") or "").strip()
-            work_datasetname = str(rel.get("work_datasetname") or "").strip()
-            predio_numero_field = _safe_ident(
-                (ASIG_MODEL_CONTEXT.predio_numero_field or "numero_predial").strip(),
-                fallback="numero_predial",
+        rel = cur.fetchone() or {}
+        if not rel:
+            raise HTTPException(
+                status_code=404,
+                detail="El predio no pertenece a la asignacion indicada.",
             )
-            safe_schema = _safe_ident(schema_work, fallback="b_asignaciones_arb")
+        if rel.get("activo") is False:
+            raise HTTPException(
+                status_code=404,
+                detail="El predio esta inactivo en la asignacion.",
+            )
+        _ensure_assignment_owner_access(user, rel)
 
-            predio_rows: list[dict] = []
-            if numero_predial_rel and work_datasetname:
-                predio_rows = _fetch_rows(
-                    cur,
-                    schema=safe_schema,
-                    table="arb_predio",
-                    where_sql=(
-                        f'BTRIM(x.{_qident(predio_numero_field)}::text) = BTRIM(%s::text) '
-                        f'AND EXISTS ('
-                        f'  SELECT 1 '
-                        f'  FROM {_qident(safe_schema)}."t_ili2db_basket" b '
-                        f'  JOIN {_qident(safe_schema)}."t_ili2db_dataset" d '
-                        f'    ON d."t_id" = b."dataset" '
-                        f'  WHERE b."t_id" = x."t_basket" '
-                        f'    AND d."datasetname" = %s'
-                        f')'
-                    ),
-                    params=(numero_predial_rel, work_datasetname),
-                    limit=1,
-                )
+        numero_predial_rel = str(rel.get("numero_predial_nacional") or "").strip()
+        work_datasetname = str(rel.get("work_datasetname") or "").strip()
+        predio_numero_field = _read_predio_numero_field()
+        safe_schema = _safe_ident(schema_work, fallback="")
+
+        predio_rows: list[dict] = []
+        if numero_predial_rel and work_datasetname:
+            predio_rows = _fetch_rows(
+                cur,
+                schema=safe_schema,
+                table="arb_predio",
+                where_sql=(
+                    f'BTRIM(x.{_qident(predio_numero_field)}::text) = BTRIM(%s::text) '
+                    f'AND EXISTS ('
+                    f'  SELECT 1 '
+                    f'  FROM {_qident(safe_schema)}."t_ili2db_basket" b '
+                    f'  JOIN {_qident(safe_schema)}."t_ili2db_dataset" d '
+                    f'    ON d."t_id" = b."dataset" '
+                    f'  WHERE b."t_id" = x."t_basket" '
+                    f'    AND d."datasetname" = %s'
+                    f')'
+                ),
+                params=(numero_predial_rel, work_datasetname),
+                limit=1,
+            )
 
             if not predio_rows and numero_predial_rel:
                 predio_rows = _fetch_rows(
@@ -1327,6 +1421,7 @@ def obtener_detalle_predio_completo_asignacion(
             condicion_predio_raw = _first_non_empty(predio, "condicion_predio")
             predio["condicion_predio_nombre"] = _resolve_domain_name(
                 cur,
+                tenant=tenant,
                 schema=schema_work,
                 table_candidates=[
                     "arb_condicionprediotipo",
@@ -1339,6 +1434,7 @@ def obtener_detalle_predio_completo_asignacion(
             tipo_predio_raw = _first_non_empty(predio, "tipo_predio", "tipo")
             predio["tipo_predio_nombre"] = _resolve_domain_name(
                 cur,
+                tenant=tenant,
                 schema=schema_work,
                 table_candidates=[
                     "arb_prediotipo",
@@ -1351,6 +1447,7 @@ def obtener_detalle_predio_completo_asignacion(
             destinacion_raw = _first_non_empty(predio, "destinacion_economica")
             predio["destinacion_economica_nombre"] = _resolve_domain_name(
                 cur,
+                tenant=tenant,
                 schema=schema_work,
                 table_candidates=[
                     "arb_destinacioneconomicatipo",
@@ -1367,6 +1464,7 @@ def obtener_detalle_predio_completo_asignacion(
             estado_fmi_raw = _first_non_empty(predio, "estado_fmi")
             predio["estado_fmi_nombre"] = _resolve_domain_name(
                 cur,
+                tenant=tenant,
                 schema=schema_work,
                 table_candidates=[
                     "arb_estadofmitipo",
@@ -1398,6 +1496,7 @@ def obtener_detalle_predio_completo_asignacion(
                 resultado_visita_raw = _first_non_empty(row, "resultado_visita")
                 row["resultado_visita_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=[
                         "arb_resultadovisitatipo",
@@ -1481,20 +1580,15 @@ def obtener_detalle_predio_completo_asignacion(
                 tipo_cons_val = _first_non_empty(cons, "tipo_construccion")
                 cons["tipo_construccion_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_tipoconstrucciontipo"],
                     raw_value=tipo_cons_val,
                 ) or _first_non_empty(cons, "tipo_construccion_nombre", "tipo_construccion")
-                tipo_dominio_val = _first_non_empty(cons, "tipo_dominio")
-                cons["tipo_dominio_nombre"] = _resolve_domain_name(
-                    cur,
-                    schema=schema_work,
-                    table_candidates=["arb_tipodominioconstrucciontipo"],
-                    raw_value=tipo_dominio_val,
-                ) or _first_non_empty(cons, "tipo_dominio_nombre", "tipo_dominio")
                 estado_cons_val = _first_non_empty(cons, "estado_construccion")
                 cons["estado_construccion_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_estadoconstrucciontipo"],
                     raw_value=estado_cons_val,
@@ -1567,6 +1661,7 @@ def obtener_detalle_predio_completo_asignacion(
 
                 unidad["tipo_planta_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_construccionplantatipo"],
                     raw_value=_first_non_empty(unidad, "tipo_planta"),
@@ -1574,6 +1669,7 @@ def obtener_detalle_predio_completo_asignacion(
 
                 unidad["relacion_superficie_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_relacionsuperficietipo", "col_relacionsuperficietipo"],
                     raw_value=_first_non_empty(unidad, "relacion_superficie"),
@@ -1581,6 +1677,7 @@ def obtener_detalle_predio_completo_asignacion(
 
                 unidad["estado_unidad_construccion_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_estadoconstrucciontipo"],
                     raw_value=_first_non_empty(unidad, "estado_unidad_construccion"),
@@ -1596,6 +1693,7 @@ def obtener_detalle_predio_completo_asignacion(
                 )
                 unidad["tipo_unidad_construccion_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_unidadconstrucciontipo"],
                     raw_value=tipo_uc_val,
@@ -1635,61 +1733,6 @@ def obtener_detalle_predio_completo_asignacion(
                 fk_candidates=["rrr", "derecho", "derecho_id"],
                 fk_values=derecho_ids,
             )
-            
-            tramites = _fetch_rows(
-                cur,
-                schema=schema_work,
-                table="arb_tramite",
-                where_sql='x."predio"::text = %s',
-                params=(str(workspace_predio_t_id),),
-                order_sql='x."t_id" ASC',
-            )
-
-            marcas = _fetch_rows(
-                cur,
-                schema=schema_work,
-                table="arb_marca",
-                where_sql='x."predio"::text = %s',
-                params=(str(workspace_predio_t_id),),
-                order_sql='x."t_id" ASC',
-            )
-
-            puntos_referencia = _fetch_rows(
-                cur,
-                schema=schema_work,
-                table="arb_puntoreferencia",
-                where_sql='x."predio"::text = %s',
-                params=(str(workspace_predio_t_id),),
-                order_sql='x."t_id" ASC',
-            )
-
-            novedad_numero_predial_valor = _fetch_rows_by_fk_candidates(
-                cur,
-                schema=schema_work,
-                table_candidates=["arb_novedadnumeropredialvalor"],
-                fk_candidates=["arb_predio_novedad_numero_predial", "predio"],
-                fk_value=workspace_predio_t_id,
-                order_sql='x."t_id" ASC',
-            )
-
-            novedad_fmi_valor = _fetch_rows_by_fk_candidates(
-                cur,
-                schema=schema_work,
-                table_candidates=["arb_novedadfmivalor"],
-                fk_candidates=["arb_predio_novedad_fmi", "predio"],
-                fk_value=workspace_predio_t_id,
-                order_sql='x."t_id" ASC',
-            )
-
-            referencias_registrales = _fetch_rows_by_fk_candidates(
-                cur,
-                schema=schema_work,
-                table_candidates=["arb_referenciaregistralsistemaantiguovalor"],
-                fk_candidates=["arb_predio_referencia_registral_sistema_antiguo", "predio"],
-                fk_value=workspace_predio_t_id,
-                order_sql='x."t_id" ASC',
-            )
-
             interesados: list[dict] = []
             fuentes_admin: list[dict] = []
 
@@ -1713,30 +1756,26 @@ def obtener_detalle_predio_completo_asignacion(
                     "fraccion",
                     "d_fraccion",
                 )
-                item["telefono"] = _first_non_empty(item, "telefono", "i_telefono", "ic_telefono")
+                item["telefono"] = _first_non_empty(item, "telefono", "i_telefono")
                 item["correo_electronico"] = _first_non_empty(
                     item,
                     "correo_electronico",
                     "i_correo_electronico",
-                    "ic_correo_electronico",
                 )
                 item["direccion_residencia"] = _first_non_empty(
                     item,
                     "direccion_residencia",
                     "i_direccion_residencia",
-                    "ic_direccion_residencia",
                 )
                 item["domicilio_notificacion"] = _first_non_empty(
                     item,
                     "domicilio_notificacion",
                     "i_domicilio_notificacion",
-                    "ic_domicilio_notificacion",
                 )
                 item["autoriza_notificacion_correo"] = _first_non_empty(
                     item,
                     "autoriza_notificacion_correo",
                     "i_autoriza_notificacion_correo",
-                    "ic_autoriza_notificacion_correo",
                 )
                 item["autorreconocimiento_etnico"] = _first_non_empty(
                     item,
@@ -1753,14 +1792,12 @@ def obtener_detalle_predio_completo_asignacion(
                     "departamento_nombre",
                     "i_departamento_nombre",
                     "i_departamento",
-                    "ic_departamento",
                 )
                 item["municipio_nombre"] = _first_non_empty(
                     item,
                     "municipio_nombre",
                     "i_municipio_nombre",
                     "i_municipio",
-                    "ic_municipio",
                 )
                 nombre_completo = _build_full_name(item)
                 if nombre_completo:
@@ -1779,6 +1816,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["tipo_derecho"] = d_tipo
                 item["tipo_derecho_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_derechotipo"],
                     raw_value=d_tipo,
@@ -1787,6 +1825,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["tipo_fuente_administrativa"] = fa_tipo
                 item["tipo_fuente_administrativa_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_fuenteadministrativatipo"],
                     raw_value=fa_tipo,
@@ -1794,6 +1833,7 @@ def obtener_detalle_predio_completo_asignacion(
 
                 item["tipo_documento_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_interesadodocumentotipo"],
                     raw_value=i_tipo_doc,
@@ -1802,6 +1842,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["tipo_persona"] = i_tipo
                 item["tipo_persona_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_interesadotipo"],
                     raw_value=i_tipo,
@@ -1809,6 +1850,7 @@ def obtener_detalle_predio_completo_asignacion(
 
                 item["grupo_etnico_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_grupoetnicotipo"],
                     raw_value=i_grupo,
@@ -1816,6 +1858,7 @@ def obtener_detalle_predio_completo_asignacion(
 
                 item["naturaleza_juridica_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_naturalezajuridicatipo"],
                     raw_value=i_naturaleza,
@@ -1823,6 +1866,7 @@ def obtener_detalle_predio_completo_asignacion(
 
                 item["codigo_naturaleza_juridica_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_codigonaturalezajuridicatipo"],
                     raw_value=i_codigo_nat,
@@ -1835,6 +1879,7 @@ def obtener_detalle_predio_completo_asignacion(
 
                 item["sexo_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_sexotipo"],
                     raw_value=i_sexo,
@@ -1842,6 +1887,7 @@ def obtener_detalle_predio_completo_asignacion(
 
                 item["estado_disponibilidad_nombre"] = _resolve_domain_name(
                     cur,
+                    tenant=tenant,
                     schema=schema_work,
                     table_candidates=["arb_estadodisponibilidadtipo", "col_estadodisponibilidadtipo"],
                     raw_value=i_estado_disp,
@@ -1856,7 +1902,6 @@ def obtener_detalle_predio_completo_asignacion(
                     item,
                     "posesion_ancestral_tradicional",
                     "d_posesion_ancestral_tradicional",
-                    "d_posesion_ancestral_y_o_tradicional",
                 )
                 item["descripcion_derecho"] = _first_non_empty(item, "descripcion_derecho", "d_descripcion")
                 item["descripcion_fuente"] = _first_non_empty(
@@ -1873,7 +1918,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["numero_fuente"] = _first_non_empty(item, "numero_fuente", "fa_numero_fuente")
                 item["ente_emisor"] = _first_non_empty(item, "ente_emisor", "fa_ente_emisor")
                 item["oficina_origen"] = _first_non_empty(item, "oficina_origen", "fa_oficina_origen")
-                item["nombre_escritura"] = _first_non_empty(item, "nombre_escritura", "fa_nombre_escritura", "nombre")
+                item["nombre_escritura"] = _first_non_empty(item, "nombre_escritura", "fa_nombre_escritura")
                 item["ciudad_origen"] = _first_non_empty(item, "ciudad_origen", "fa_ciudad_origen")
 
                 interesados.append(item)
@@ -1911,23 +1956,23 @@ def obtener_detalle_predio_completo_asignacion(
         "estructura_novedad_np": estructura_novedad_np,
         "contacto_visita": contacto_visita,
         "rrr_interesado": rrr_interesado,
-        "tramites": tramites,
-        "marcas": marcas,
-        "puntos_referencia": puntos_referencia,
-        "novedad_numero_predial_valor": novedad_numero_predial_valor,
-        "novedad_fmi_valor": novedad_fmi_valor,
-        "referencias_registrales": referencias_registrales,
         "schema_work": schema_work,
     }
 
 
 def _procesar_retorno_xtf(
+    tenant: TenantContext,
+    connection_manager,
     asignacion_id: int,
     archivo: UploadFile,
     user: dict,
     *,
     publish_to_main: bool,
 ) -> dict:
+    asignacion_table = _app_table(tenant, "asignacion")
+    asignacion_predio_table = _app_table(tenant, "asignacion_predio")
+    schema_main = _read_schema_main(tenant)
+    schema_work = _read_schema_work(tenant)
     role = str((user or {}).get("role") or (user or {}).get("rol") or (user or {}).get("role_code") or "").strip().lower()
     if role in {"digitalizador", "reconocedor"}:
         publish_to_main = False
@@ -1938,13 +1983,14 @@ def _procesar_retorno_xtf(
         raise HTTPException(status_code=400, detail="El archivo debe tener extension .xtf.")
 
     try:
-        with db_conn() as conn:
-            asignacion = asignaciones_repo.get_asignacion_work_dataset(conn, asignacion_id)
+        with connection_manager.connection(tenant) as conn:
+            asignacion = asignaciones_repo.get_asignacion_work_dataset(conn, tenant, asignacion_id)
     except Exception as exc:
         _raise_http_from_export_error(exc, stage="read_assignment")
 
     if not asignacion:
         raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
+    _ensure_assignment_owner_access(user, asignacion)
 
     work_dataset = (asignacion.get("work_datasetname") or "").strip()
     if not work_dataset:
@@ -1952,12 +1998,13 @@ def _procesar_retorno_xtf(
 
     usuario_log = user.get("username") if isinstance(user, dict) else None
     correlation_id = _retorno_correlation_id(asignacion_id)
-    work_dataset = _ensure_workspace_ready_for_export(asignacion_id, usuario_log)
+    work_dataset = _ensure_workspace_ready_for_export(tenant, connection_manager, asignacion_id, usuario_log)
     try:
-        with db_conn() as conn_cleanup:
+        with connection_manager.connection(tenant) as conn_cleanup:
             cleanup_result = workspace_service.cleanup_orphan_workspace_datasets(
                 conn_cleanup,
-                _read_schema_work(),
+                tenant,
+                schema_work,
                 limit=25,
             )
             conn_cleanup.commit()
@@ -2019,11 +2066,11 @@ def _procesar_retorno_xtf(
         )
 
         stage = "create_retorno_record"
-        with db_conn() as conn:
+        with connection_manager.connection(tenant) as conn:
             conn.autocommit = False
             try:
-                asignaciones_repo.ensure_asignacion_tables(conn)
-                existente = asignaciones_repo.get_recent_retorno_by_sha256(conn, asignacion_id, archivo_sha256)
+                asignaciones_repo.ensure_asignacion_tables(conn, tenant)
+                existente = asignaciones_repo.get_recent_retorno_by_sha256(conn, tenant, asignacion_id, archivo_sha256)
                 if existente:
                     existing_id = _maybe_int(existente.get("id"))
                     existing_status = str(existente.get("estado") or "").strip().upper()
@@ -2035,13 +2082,14 @@ def _procesar_retorno_xtf(
                                 f"retorno_id={existing_id}, estado={existing_status}."
                             ),
                         )
-                retorno_version = asignaciones_repo.allocate_asignacion_retorno_version(conn, asignacion_id)
+                retorno_version = asignaciones_repo.allocate_asignacion_retorno_version(conn, tenant, asignacion_id)
                 if publish_to_main:
                     retorno_dataset = _build_retorno_datasetname(work_dataset, retorno_version)
                 else:
                     retorno_dataset = work_dataset
                 retorno_row = asignaciones_repo.create_asignacion_retorno(
                     conn,
+                    tenant,
                     asignacion_id,
                     retorno_version,
                     retorno_dataset,
@@ -2061,7 +2109,7 @@ def _procesar_retorno_xtf(
         xtf_validation_result = _validate_retorno_xtf_rules(tmp_path)
 
         stage = "sync_pipeline"
-        with db_conn() as conn:
+        with connection_manager.connection(tenant) as conn:
             conn.autocommit = False
             try:
                 with conn.cursor() as cur:
@@ -2073,18 +2121,18 @@ def _procesar_retorno_xtf(
                     workspace_service.remove_workspace_dataset(
                         conn,
                         work_dataset,
-                        _read_schema_work(),
+                        schema_work,
                     )
 
                 stage = "ili2pg_import"
-                _ili2pg_import(_read_schema_work(), target_dataset, tmp_path)
+                _ili2pg_import(conn, tenant, schema_work, target_dataset, tmp_path)
 
                 stage = "prune_workspace_predios"
                 removed_predios = workspace_service.prune_workspace_predios(
                     conn,
                     asignacion_id,
                     target_dataset,
-                    _read_schema_work(),
+                    schema_work,
                     keep_new_informal_predios=True,
                 )
                 if removed_predios > 0:
@@ -2097,17 +2145,19 @@ def _procesar_retorno_xtf(
                     )
                 stage = "validate_workspace_dataset_health"
                 workspace_service.validate_workspace_dataset_health(
-                    _read_schema_work(),
+                    schema_work,
                     target_dataset,
                     conn=conn,
+                    tenant=tenant,
                 )
                 stage = "validate_workspace_assignment_coverage"
                 allow_missing_predios = _allow_retorno_sync_with_missing_predios()
                 coverage_result = workspace_service.validate_workspace_assignment_coverage(
                     asignacion_id,
-                    _read_schema_work(),
+                    schema_work,
                     target_dataset,
                     conn=conn,
+                    tenant=tenant,
                     allow_missing_predios=allow_missing_predios,
                 )
 
@@ -2122,7 +2172,7 @@ def _procesar_retorno_xtf(
                     deactivation_result = workspace_service.mark_missing_assignment_predios_inactive(
                         conn,
                         asignacion_id,
-                        _read_schema_work(),
+                        schema_work,
                         target_dataset,
                     )
                     removed_assignment_predios = int(
@@ -2136,9 +2186,10 @@ def _procesar_retorno_xtf(
                     stage = "validate_workspace_assignment_coverage_post_deactivate"
                     coverage_result = workspace_service.validate_workspace_assignment_coverage(
                         asignacion_id,
-                        _read_schema_work(),
+                        schema_work,
                         target_dataset,
                         conn=conn,
+                        tenant=tenant,
                         allow_missing_predios=False,
                     )
                 elif removed_assignment_predios > 0:
@@ -2165,6 +2216,7 @@ def _procesar_retorno_xtf(
                     )
                     asignaciones_repo.update_asignacion_retorno(
                         conn,
+                        tenant,
                         retorno_id,
                         estado="VALIDADO",
                         resultado_validacion=(
@@ -2182,11 +2234,11 @@ def _procesar_retorno_xtf(
                     stage = "sync_workspace_predios_to_main"
                     synced_predios = workspace_service.sync_workspace_predios_to_main(
                         conn,
+                        tenant,
                         asignacion_id,
                         target_dataset,
-                        _read_schema_main(),
-                        _read_schema_work(),
-                        effective_role=role,
+                        schema_main,
+                        schema_work,
                     )
                     with conn.cursor() as cur:
                         cur.execute("SELECT to_regclass('pg_temp._arb_sync_predio_map')")
@@ -2217,7 +2269,7 @@ def _procesar_retorno_xtf(
                                 FROM _arb_sync_selected_predio sp
                                 WHERE NOT EXISTS (
                                     SELECT 1
-                                    FROM arbimaps_app.asignacion_predio ap
+                                    FROM {asignacion_predio_table} ap
                                     WHERE ap.asignacion_id = %s
                                       AND ap.activo IS DISTINCT FROM FALSE
                                       AND BTRIM(ap.numero_predial_nacional::text) =
@@ -2231,26 +2283,25 @@ def _procesar_retorno_xtf(
                             expected_predios_scope = int(coverage_result.get("expected_predios") or 0)
                             predios_nuevos_sync = max(int(synced_predios or 0) - expected_predios_scope, 0)
                         cur.execute(
-                            """
-                            UPDATE arbimaps_app.asignacion
+                            f"""
+                            UPDATE {asignacion_table}
                             SET predios_soporte_extra = %s
                             WHERE id = %s
-                            """
-                            ,
+                            """,
                             (predios_nuevos_sync, asignacion_id),
                         )
                 else:
                     stage = "refresh_workspace_predio_ids"
                     workspace_service.actualizar_predio_ids_desde_workspace(
                         asignacion_id,
-                        _read_schema_work(),
+                        schema_work,
                         conn=conn,
                     )
-                    work_schema_sql = _qident(_read_schema_work())
+                    work_schema_sql = _qident(schema_work)
                     with conn.cursor() as cur:
                         cur.execute(
                             f"""
-                            UPDATE arbimaps_app.asignacion
+                            UPDATE {asignacion_table}
                             SET predios_soporte_extra = GREATEST(
                                 (
                                     SELECT COUNT(DISTINCT BTRIM(p.numero_predial::text))
@@ -2287,6 +2338,7 @@ def _procesar_retorno_xtf(
                     )
                     asignaciones_repo.update_asignacion_retorno(
                         conn,
+                        tenant,
                         retorno_id,
                         estado="SINCRONIZADO",
                         resultado_validacion=(
@@ -2365,7 +2417,7 @@ def _procesar_retorno_xtf(
                             "RETORNO_PREDIOS_ELIMINADOS",
                             (
                                 f"[{correlation_id}] Retorno reporta {removed_assignment_predios} predio(s) eliminados del scope asignado. "
-                                "Se marcaron como inactivos en arbimaps_app.asignacion_predio."
+                                "Se marcaron como inactivos en la tabla tenant de asignacion_predio."
                                 f"{removed_preview_text}"
                             ),
                             usuario_log,
@@ -2377,7 +2429,7 @@ def _procesar_retorno_xtf(
                             "PUBLICACION_MAIN",
                             (
                                 f"[{correlation_id}] Sincronizados {synced_predios} predio(s) desde {retorno_dataset} "
-                                f"a {_read_schema_main()}. Removidos {removed_predios} no asignados."
+                                f"a {schema_main}. Removidos {removed_predios} no asignados."
                                 f" Predios nuevos detectados: {predios_nuevos_sync}."
                                 f" Eliminados en retorno: {removed_assignment_predios}."
                                 + (
@@ -2394,7 +2446,7 @@ def _procesar_retorno_xtf(
                         (
                             "CARGA_WORKSPACE",
                             (
-                                f"[{correlation_id}] Workspace {work_dataset} sincronizado en {_read_schema_work()} "
+                                f"[{correlation_id}] Workspace {work_dataset} sincronizado en {schema_work} "
                                 "y pendiente publicacion a main. "
                                 f"Cobertura {coverage_result.get('covered_predios', 0)}/"
                                 f"{coverage_result.get('expected_predios', 0)}. "
@@ -2405,7 +2457,14 @@ def _procesar_retorno_xtf(
                         )
                     )
                 for evento, mensaje, usuario in pending_events:
-                    asignaciones_repo.insert_asignacion_event(conn, asignacion_id, evento, mensaje, usuario)
+                    asignaciones_repo.insert_asignacion_event(
+                        conn,
+                        tenant,
+                        asignacion_id,
+                        evento,
+                        mensaje,
+                        usuario,
+                    )
                 stage = "commit_sync_pipeline"
                 conn.commit()
             except Exception:
@@ -2430,25 +2489,35 @@ def _procesar_retorno_xtf(
         )
     except Exception as exc:
         try:
-            asignaciones_repo.safe_log_event(
-                asignacion_id,
-                "RETORNO_XTF_VALIDACION_ERROR",
-                (
-                    f"[{correlation_id}] "
-                    + _history_error_message(stage, exc, validation_result=xtf_validation_result)
-                ),
-                usuario_log,
-            )
+            with connection_manager.connection(tenant) as conn_log:
+                conn_log.autocommit = False
+                try:
+                    asignaciones_repo.safe_log_event(
+                        conn_log,
+                        tenant,
+                        asignacion_id,
+                        "RETORNO_XTF_VALIDACION_ERROR",
+                        (
+                            f"[{correlation_id}] "
+                            + _history_error_message(stage, exc, validation_result=xtf_validation_result)
+                        ),
+                        usuario_log,
+                    )
+                    conn_log.commit()
+                except Exception:
+                    conn_log.rollback()
+                    raise
         except Exception:
             pass
 
         if retorno_id is not None:
             try:
-                with db_conn() as conn:
+                with connection_manager.connection(tenant) as conn:
                     conn.autocommit = False
                     try:
                         asignaciones_repo.update_asignacion_retorno(
                             conn,
+                            tenant,
                             retorno_id,
                             estado="ERROR",
                             error_msg=f"[{stage}] {_error_detail(exc)}",
@@ -2482,11 +2551,11 @@ def _procesar_retorno_xtf(
         archivo.file.close()
         if publish_to_main and retorno_dataset:
             try:
-                with db_conn() as conn_cleanup:
+                with connection_manager.connection(tenant) as conn_cleanup:
                     cleanup_tmp = workspace_service.remove_workspace_dataset(
                         conn_cleanup,
                         retorno_dataset,
-                        _read_schema_work(),
+                        schema_work,
                     )
                     conn_cleanup.commit()
                 _log_sync_event(
@@ -2544,11 +2613,18 @@ def _procesar_retorno_xtf(
 
 @router.post("/{asignacion_id}/retorno-xtf")
 def importar_retorno_xtf(
+    request: Request,
     asignacion_id: int,
     archivo: UploadFile = File(...),
-    user: dict = Depends(require_assignment_roles("admin", "coordinador")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
+    del conn
+    _require_assignment_access(user, "admin", "coordinador")
     return _procesar_retorno_xtf(
+        tenant,
+        request.app.state.tenant_connection_manager,
         asignacion_id,
         archivo,
         user,
@@ -2558,143 +2634,159 @@ def importar_retorno_xtf(
 
 @router.post("/{asignacion_id}/retorno-xtf-workspace")
 def importar_retorno_xtf_workspace(
+    request: Request,
     asignacion_id: int,
     archivo: UploadFile = File(...),
-    user: dict = Depends(
-        require_assignment_roles("admin", "coordinador", "digitalizador", "reconocedor")
-    ),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
+    del conn
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
     return _procesar_retorno_xtf(
+        tenant,
+        request.app.state.tenant_connection_manager,
         asignacion_id,
         archivo,
         user,
         publish_to_main=False,
     )
 
+
+# -----------------------------------------------------------------
+# Custom Endpoints (Merged Local Improvements)
+# -----------------------------------------------------------------
+
 @router.get("/{id}/predios/{predio_t_id}/detalle-basico")
 def obtener_detalle_basico_predio(
     id: int,
     predio_t_id: int,
-    user: dict = Depends(require_assignment_roles("admin", "coordinador", "digitalizador", "reconocedor"))
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
-    schema_work = _safe_ident((ASIG_MODEL_CONTEXT.schema_work or "b_asignaciones_arb").strip(), fallback="b_asignaciones_arb")
-    predio_table = _safe_ident((ASIG_MODEL_CONTEXT.predio_table or "arb_predio").strip(), fallback="arb_predio")
-    predio_numero_field = _safe_ident((ASIG_MODEL_CONTEXT.predio_numero_field or "numero_predial").strip(), fallback="numero_predial")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    
+    schema_work = _safe_ident((tenant.schemas.work or "b_asignaciones_arb").strip(), fallback="b_asignaciones_arb")
+    predio_table = _safe_ident("arb_predio", fallback="arb_predio")
+    predio_numero_field = _safe_ident("numero_predial", fallback="numero_predial")
 
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            # 1. Verificar asignacion
-            cur.execute("SELECT usuario_asignado, work_datasetname FROM arbimaps_app.asignacion WHERE id = %s", (id,))
-            asig = cur.fetchone()
-            if not asig:
-                raise HTTPException(status_code=404, detail="Asignación no encontrada")
-                
-            usuario_asignado = str(asig.get("usuario_asignado") or "").strip().lower()
-            work_datasetname = str(asig.get("work_datasetname") or "").strip()
+    asignacion_table = app_table(tenant, "asignacion")
+    asignacion_predio_table = app_table(tenant, "asignacion_predio")
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        # 1. Verificar asignacion
+        cur.execute(f"SELECT usuario_asignado, work_datasetname FROM {asignacion_table} WHERE id = %s", (id,))
+        asig = cur.fetchone()
+        if not asig:
+            raise HTTPException(status_code=404, detail="Asignación no encontrada")
             
-            # Verificación de rol
-            role = str(user.get("role") or user.get("role_code") or user.get("rol") or "").strip().lower()
-            if role in {"digitalizador", "reconocedor"}:
-                username = str(user.get("username") or "").strip().lower()
-                if usuario_asignado != username:
-                    raise HTTPException(status_code=403, detail="La asignación no le pertenece")
-                    
-            # 2. Buscar relacion asignacion_predio
-            cur.execute(
-                """
-                SELECT numero_predial_nacional 
-                FROM arbimaps_app.asignacion_predio 
-                WHERE predio_t_id = %s AND asignacion_id = %s AND activo = TRUE
-                LIMIT 1
-                """,
-                (predio_t_id, id)
-            )
-            ap = cur.fetchone()
-            if not ap:
-                raise HTTPException(status_code=404, detail="El predio no está asociado a esta asignación")
+        usuario_asignado = str(asig.get("usuario_asignado") or "").strip().lower()
+        work_datasetname = str(asig.get("work_datasetname") or "").strip()
+        
+        # Verificación de rol
+        role = normalize_role(get_user_role(user))
+        if role in {"digitalizador", "reconocedor"}:
+            username = str(user.get("username") or "").strip().lower()
+            if usuario_asignado != username:
+                raise HTTPException(status_code=403, detail="La asignación no le pertenece")
                 
-            numero_predial_nacional = str(ap.get("numero_predial_nacional") or "").strip()
+        # 2. Buscar relacion asignacion_predio
+        cur.execute(
+            f"""
+            SELECT numero_predial_nacional 
+            FROM {asignacion_predio_table} 
+            WHERE predio_t_id = %s AND asignacion_id = %s AND activo = TRUE
+            LIMIT 1
+            """,
+            (predio_t_id, id)
+        )
+        ap = cur.fetchone()
+        if not ap:
+            raise HTTPException(status_code=404, detail="El predio no está asociado a esta asignación")
+            
+        numero_predial_nacional = str(ap.get("numero_predial_nacional") or "").strip()
 
-            # 3. Localizar el predio en la canasta de trabajo
-            workspace_predio_t_id = None
-            if numero_predial_nacional and work_datasetname:
-                cur.execute(
-                    f"""
-                    SELECT p.t_id
-                    FROM {schema_work}.{predio_table} p
-                    JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
-                    JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s
-                      AND BTRIM(p.{predio_numero_field}::text) = BTRIM(%s::text)
-                    ORDER BY p.t_id DESC
-                    LIMIT 1
-                    """,
-                    (work_datasetname, numero_predial_nacional)
-                )
-                row = cur.fetchone()
-                if row and row.get("t_id") is not None:
-                    workspace_predio_t_id = int(row["t_id"])
-                    
-            if workspace_predio_t_id is None and numero_predial_nacional:
-                cur.execute(
-                    f"""
-                    SELECT p.t_id
-                    FROM {schema_work}.{predio_table} p
-                    WHERE BTRIM(p.{predio_numero_field}::text) = BTRIM(%s::text)
-                    ORDER BY p.t_id DESC
-                    LIMIT 1
-                    """,
-                    (numero_predial_nacional,)
-                )
-                row = cur.fetchone()
-                if row and row.get("t_id") is not None:
-                    workspace_predio_t_id = int(row["t_id"])
-
-            if workspace_predio_t_id is None:
-                cur.execute(
-                    f"SELECT t_id FROM {schema_work}.{predio_table} WHERE t_id = %s LIMIT 1",
-                    (predio_t_id,)
-                )
-                row = cur.fetchone()
-                if row and row.get("t_id") is not None:
-                    workspace_predio_t_id = int(row["t_id"])
-                    
-            if not workspace_predio_t_id:
-                raise HTTPException(status_code=404, detail="No se encontró el predio en la canasta de trabajo")
-
-            # 4. Extraer datos básicos
+        # 3. Localizar el predio en la canasta de trabajo
+        workspace_predio_t_id = None
+        if numero_predial_nacional and work_datasetname:
             cur.execute(
                 f"""
-                SELECT 
-                    numero_predial, 
-                    area_registral_m2, 
-                    condicion_predio, 
-                    destinacion_economica, 
-                    tipo as tipo_predio,
-                    area_catastral_terreno
-                FROM {schema_work}.{predio_table}
-                WHERE t_id = %s
+                SELECT p.t_id
+                FROM {schema_work}.{predio_table} p
+                JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
+                JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+                  AND BTRIM(p.{predio_numero_field}::text) = BTRIM(%s::text)
+                ORDER BY p.t_id DESC
+                LIMIT 1
                 """,
-                (workspace_predio_t_id,)
+                (work_datasetname, numero_predial_nacional)
             )
-            datos_predio = cur.fetchone()
-            
-            if not datos_predio:
-                raise HTTPException(status_code=404, detail="Datos del predio no encontrados")
+            row = cur.fetchone()
+            if row and row.get("t_id") is not None:
+                workspace_predio_t_id = int(row["t_id"])
+                
+        if workspace_predio_t_id is None and numero_predial_nacional:
+            cur.execute(
+                f"""
+                SELECT p.t_id
+                FROM {schema_work}.{predio_table} p
+                WHERE BTRIM(p.{predio_numero_field}::text) = BTRIM(%s::text)
+                ORDER BY p.t_id DESC
+                LIMIT 1
+                """,
+                (numero_predial_nacional,)
+            )
+            row = cur.fetchone()
+            if row and row.get("t_id") is not None:
+                workspace_predio_t_id = int(row["t_id"])
 
-            # Mapear los resultados
-            return {
-                "status": "success",
-                "predio": {
-                    "numero_predial_nacional": numero_predial_nacional,
-                    "numero_predial": datos_predio.get("numero_predial"),
-                    "area_registral_m2": float(datos_predio.get("area_registral_m2")) if datos_predio.get("area_registral_m2") is not None else None,
-                    "area_catastral_terreno": float(datos_predio.get("area_catastral_terreno")) if datos_predio.get("area_catastral_terreno") is not None else None,
-                    "condicion_predio": datos_predio.get("condicion_predio"),
-                    "destinacion_economica": datos_predio.get("destinacion_economica"),
-                    "tipo_predio": datos_predio.get("tipo_predio")
-                }
+        if workspace_predio_t_id is None:
+            cur.execute(
+                f"SELECT t_id FROM {schema_work}.{predio_table} WHERE t_id = %s LIMIT 1",
+                (predio_t_id,)
+            )
+            row = cur.fetchone()
+            if row and row.get("t_id") is not None:
+                workspace_predio_t_id = int(row["t_id"])
+                
+        if not workspace_predio_t_id:
+            raise HTTPException(status_code=404, detail="No se encontró el predio en la canasta de trabajo")
+
+        # 4. Extraer datos básicos
+        cur.execute(
+            f"""
+            SELECT 
+                numero_predial, 
+                area_registral_m2, 
+                condicion_predio, 
+                destinacion_economica, 
+                tipo as tipo_predio,
+                area_catastral_terreno
+            FROM {schema_work}.{predio_table}
+            WHERE t_id = %s
+            """,
+            (workspace_predio_t_id,)
+        )
+        datos_predio = cur.fetchone()
+        
+        if not datos_predio:
+            raise HTTPException(status_code=404, detail="Datos del predio no encontrados")
+
+        # Mapear los resultados
+        return {
+            "status": "success",
+            "predio": {
+                "numero_predial_nacional": numero_predial_nacional,
+                "numero_predial": datos_predio.get("numero_predial"),
+                "area_registral_m2": float(datos_predio.get("area_registral_m2")) if datos_predio.get("area_registral_m2") is not None else None,
+                "area_catastral_terreno": float(datos_predio.get("area_catastral_terreno")) if datos_predio.get("area_catastral_terreno") is not None else None,
+                "condicion_predio": datos_predio.get("condicion_predio"),
+                "destinacion_economica": datos_predio.get("destinacion_economica"),
+                "tipo_predio": datos_predio.get("tipo_predio")
             }
+        }
 
 
 def _table_exists(cur, schema: str, table_name: str) -> bool:
@@ -2742,10 +2834,10 @@ def _resolve_domain_label(cur, schema: str, table_name: str, pk_value) -> str | 
     if not selected:
         return None
 
-    select_sql = ", ".join(f"t.{_qident(c)} AS {_qident(c)}" for c in selected)
+    select_sql = ", ".join(f"t.{c} AS {c}" for c in selected)
     sql = (
         f"SELECT {select_sql} "
-        f"FROM {_qident(schema)}.{_qident(table)} t "
+        f"FROM {schema}.{table} t "
         "WHERE t.t_id::text = %s::text "
         "LIMIT 1;"
     )
@@ -2769,355 +2861,357 @@ def _resolve_domain_label(cur, schema: str, table_name: str, pk_value) -> str | 
 def asignaciones_unidad_detalle(
     unidad_id: int = Query(..., description="ID de arb_unidadconstruccion.t_id"),
     schema: Optional[str] = Query(None, description="Esquema opcional a consultar"),
-    _user: dict = Depends(require_assignment_roles("admin", "coordinador", "digitalizador", "reconocedor")),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
 ):
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
     if not schema:
-        schema = _safe_ident(_read_schema_work(), fallback="b_asignaciones_arb")
+        schema = _safe_ident(tenant.schemas.work, fallback="b_asignaciones_arb")
     else:
         schema = _safe_ident(schema, fallback="")
         if not schema:
             raise HTTPException(status_code=400, detail="Esquema invalido.")
 
     try:
-        with db_conn() as conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                if not _table_exists(cur, schema, "arb_unidadconstruccion"):
-                    return JSONResponse(
-                        {"error": "Tabla arb_unidadconstruccion no disponible en el esquema"},
-                        status_code=500,
-                    )
-
-                uc_cols = _table_columns(cur, schema, "arb_unidadconstruccion")
-                has_car = _table_exists(cur, schema, "arb_caracteristicasunidadconstruccion")
-                car_cols = (
-                    _table_columns(cur, schema, "arb_caracteristicasunidadconstruccion")
-                    if has_car
-                    else set()
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            if not _table_exists(cur, schema, "arb_unidadconstruccion"):
+                return JSONResponse(
+                    {"error": "Tabla arb_unidadconstruccion no disponible en el esquema"},
+                    status_code=500,
                 )
 
-                select_parts: list[str] = ["uc.*"]
-                join_parts: list[str] = []
+            uc_cols = _table_columns(cur, schema, "arb_unidadconstruccion")
+            has_car = _table_exists(cur, schema, "arb_caracteristicasunidadconstruccion")
+            car_cols = (
+                _table_columns(cur, schema, "arb_caracteristicasunidadconstruccion")
+                if has_car
+                else set()
+            )
 
-                def add_uc_domain(
-                    col_name: str, domain_table: str, domain_alias: str, output_alias: str
-                ) -> None:
-                    if col_name not in uc_cols:
-                        return
-                    table = _safe_ident(domain_table, fallback="")
+            select_parts: list[str] = ["uc.*"]
+            join_parts: list[str] = []
+
+            def add_uc_domain(
+                col_name: str, domain_table: str, domain_alias: str, output_alias: str
+            ) -> None:
+                if col_name not in uc_cols:
+                    return
+                table = _safe_ident(domain_table, fallback="")
+                if not table or not _table_exists(cur, schema, table):
+                    return
+                join_parts.append(
+                    f"LEFT JOIN {schema}.{table} {domain_alias} "
+                    f"ON {domain_alias}.t_id::text = uc.{col_name}::text"
+                )
+                select_parts.append(
+                    "COALESCE("
+                    f"{domain_alias}.dispname, "
+                    f"to_jsonb({domain_alias})->>'iliCode', "
+                    f"to_jsonb({domain_alias})->>'ilicode', "
+                    f"{domain_alias}.t_id::text"
+                    f") AS {output_alias}"
+                )
+
+            add_uc_domain("tipo_planta", "arb_construccionplantatipo", "dtp", "tipo_planta_nombre")
+            add_uc_domain(
+                "relacion_superficie",
+                "arb_relacionsuperficieconstrucciontipo",
+                "drs",
+                "relacion_superficie_nombre",
+            )
+            add_uc_domain(
+                "estado_unidad_construccion",
+                "arb_estadoconstrucciontipo",
+                "dec",
+                "estado_unidad_construccion_nombre",
+            )
+
+            has_uc_car_fk = has_car and "caracteristicasunidadconstruccion" in uc_cols
+            if has_uc_car_fk:
+                join_parts.append(
+                    f"LEFT JOIN {schema}.arb_caracteristicasunidadconstruccion car "
+                    "ON car.t_id = uc.caracteristicasunidadconstruccion"
+                )
+                for col in (
+                    "t_id",
+                    "identificador",
+                    "tipo_unidad_construccion",
+                    "total_plantas",
+                    "uso",
+                    "anio_construccion",
+                    "area_construida",
+                    "area_privada_construida",
+                    "observaciones",
+                    "usos_tradicionales_culturales",
+                    "comienzo_vida_util_version",
+                    "tipo_calificacion",
+                    "cc_armazon",
+                    "cc_muros",
+                    "cc_cubierta",
+                    "cc_conservacion_estructura",
+                    "cc_fachada",
+                    "cc_cubrimiento_muros",
+                    "cc_piso",
+                    "cc_conservacion_acabados",
+                    "cc_tamanio_banio",
+                    "cc_enchape_banio",
+                    "cc_mobiliario_banio",
+                    "cc_conservacion_banio",
+                    "cc_tamanio_cocina",
+                    "cc_enchape_cocina",
+                    "cc_mobiliario_cocina",
+                    "cc_conservacion_cocina",
+                    "cc_cerchas_complemento_industria",
+                    "cc_altura_cerchas_superior_6m",
+                    "cc_tipo_calificar",
+                    "ct_tipo_tipologia",
+                    "ct_conservacion_tipologia",
+                    "cnc_tipo_anexo",
+                    "cnc_conservacion_anexo",
+                ):
+                    if col in car_cols:
+                        select_parts.append(f"car.{col} AS car_{col}")
+
+                car_domains: list[tuple[str, str, str, str]] = [
+                    ("tipo_unidad_construccion", "arb_unidadconstrucciontipo", "d_tuc", "tipo_unidad_construccion_nombre"),
+                    ("uso", "arb_usouconstipo", "d_uso", "uso_nombre"),
+                    (
+                        "usos_tradicionales_culturales",
+                        "arb_usostradicionalesculturalestipo",
+                        "d_utc",
+                        "usos_tradicionales_culturales_nombre",
+                    ),
+                    ("tipo_calificacion", "arb_calificaciontipo", "d_tcal", "tipo_calificacion_nombre"),
+                    ("cc_armazon", "arb_armazontipo", "d_cc_armazon", "armazon_nombre"),
+                    ("cc_muros", "arb_murostipo", "d_cc_muros", "muros_nombre"),
+                    ("cc_cubierta", "arb_cubiertatipo", "d_cc_cubierta", "cubierta_nombre"),
+                    (
+                        "cc_conservacion_estructura",
+                        "arb_estadoconservaciontipo",
+                        "d_cc_cons_estr",
+                        "conservacion_estructura_nombre",
+                    ),
+                    ("cc_fachada", "arb_fachadatipo", "d_cc_fachada", "fachada_nombre"),
+                    (
+                        "cc_cubrimiento_muros",
+                        "arb_cubrimientomurostipo",
+                        "d_cc_cubr_muros",
+                        "cubrimiento_muros_nombre",
+                    ),
+                    ("cc_piso", "arb_pisotipo", "d_cc_piso", "piso_nombre"),
+                    (
+                        "cc_conservacion_acabados",
+                        "arb_estadoconservaciontipo",
+                        "d_cc_cons_aca",
+                        "conservacion_acabados_nombre",
+                    ),
+                    ("cc_tamanio_banio", "arb_tamaniobaniotipo", "d_cc_tam_ban", "tamanio_banio_nombre"),
+                    ("cc_enchape_banio", "arb_enchapebaniotipo", "d_cc_enc_ban", "enchape_banio_nombre"),
+                    (
+                        "cc_mobiliario_banio",
+                        "arb_mobiliariobaniotipo",
+                        "d_cc_mob_ban",
+                        "mobiliario_banio_nombre",
+                    ),
+                    (
+                        "cc_conservacion_banio",
+                        "arb_estadoconservaciontipo",
+                        "d_cc_cons_ban",
+                        "conservacion_banio_nombre",
+                    ),
+                    (
+                        "cc_tamanio_cocina",
+                        "arb_tamaniococinatipo",
+                        "d_cc_tam_coc",
+                        "tamanio_cocina_nombre",
+                    ),
+                    (
+                        "cc_enchape_cocina",
+                        "arb_enchapecocinatipo",
+                        "d_cc_enc_coc",
+                        "enchape_cocina_nombre",
+                    ),
+                    (
+                        "cc_mobiliario_cocina",
+                        "arb_mobiliariococinatipo",
+                        "d_cc_mob_coc",
+                        "mobiliario_cocina_nombre",
+                    ),
+                    (
+                        "cc_conservacion_cocina",
+                        "arb_estadoconservaciontipo",
+                        "d_cc_cons_coc",
+                        "conservacion_cocina_nombre",
+                    ),
+                    (
+                        "cc_cerchas_complemento_industria",
+                        "arb_cerchascomplementoindustriatipo",
+                        "d_cc_cer",
+                        "cerchas_complemento_industria_nombre",
+                    ),
+                    ("cc_tipo_calificar", "arb_calificartipo", "d_cc_tipo_cal", "tipo_calificar_nombre"),
+                    ("ct_tipo_tipologia", "arb_tipologiatipo", "d_ct_tip", "tipo_tipologia_nombre"),
+                    (
+                        "ct_conservacion_tipologia",
+                        "arb_estadoconservaciontipologiatipo",
+                        "d_ct_cons",
+                        "conservacion_nombre",
+                    ),
+                    ("cnc_tipo_anexo", "arb_anexotipo", "d_cnc_tip", "tipo_anexo_nombre"),
+                    (
+                        "cnc_conservacion_anexo",
+                        "arb_estadoconservaciontipologiatipo",
+                        "d_cnc_cons",
+                        "conservacion_anexo_nombre",
+                    ),
+                ]
+
+                for fk_col, dom_table, dom_alias, out_alias in car_domains:
+                    if fk_col not in car_cols:
+                        continue
+                    table = _safe_ident(dom_table, fallback="")
                     if not table or not _table_exists(cur, schema, table):
-                        return
+                        continue
                     join_parts.append(
-                        f"LEFT JOIN {_qident(schema)}.{_qident(table)} {domain_alias} "
-                        f"ON {domain_alias}.t_id::text = uc.{_qident(col_name)}::text"
+                        f"LEFT JOIN {schema}.{table} {dom_alias} "
+                        f"ON {dom_alias}.t_id::text = car.{fk_col}::text"
                     )
                     select_parts.append(
                         "COALESCE("
-                        f"{domain_alias}.dispname, "
-                        f"to_jsonb({domain_alias})->>'iliCode', "
-                        f"to_jsonb({domain_alias})->>'ilicode', "
-                        f"{domain_alias}.t_id::text"
-                        f") AS {output_alias}"
+                        f"{dom_alias}.dispname, "
+                        f"to_jsonb({dom_alias})->>'iliCode', "
+                        f"to_jsonb({dom_alias})->>'ilicode', "
+                        f"{dom_alias}.t_id::text"
+                        f") AS {out_alias}"
                     )
 
-                add_uc_domain("tipo_planta", "arb_construccionplantatipo", "dtp", "tipo_planta_nombre")
-                add_uc_domain(
-                    "relacion_superficie",
-                    "arb_relacionsuperficieconstrucciontipo",
-                    "drs",
-                    "relacion_superficie_nombre",
-                )
-                add_uc_domain(
-                    "estado_unidad_construccion",
-                    "arb_estadoconstrucciontipo",
-                    "dec",
-                    "estado_unidad_construccion_nombre",
-                )
+            sql_unidad = f"""
+            SELECT
+              {", ".join(select_parts)}
+            FROM {schema}.arb_unidadconstruccion uc
+            {" ".join(join_parts)}
+            WHERE uc.t_id = %s::bigint
+            LIMIT 1;
+            """
 
-                has_uc_car_fk = has_car and "caracteristicasunidadconstruccion" in uc_cols
-                if has_uc_car_fk:
-                    join_parts.append(
-                        f"LEFT JOIN {_qident(schema)}.arb_caracteristicasunidadconstruccion car "
-                        "ON car.t_id = uc.caracteristicasunidadconstruccion"
-                    )
-                    for col in (
-                        "t_id",
-                        "identificador",
-                        "tipo_unidad_construccion",
-                        "total_plantas",
-                        "uso",
-                        "anio_construccion",
-                        "area_construida",
-                        "area_privada_construida",
-                        "observaciones",
-                        "usos_tradicionales_culturales",
-                        "comienzo_vida_util_version",
-                        "tipo_calificacion",
-                        "cc_armazon",
-                        "cc_muros",
-                        "cc_cubierta",
-                        "cc_conservacion_estructura",
-                        "cc_fachada",
-                        "cc_cubrimiento_muros",
-                        "cc_piso",
-                        "cc_conservacion_acabados",
-                        "cc_tamanio_banio",
-                        "cc_enchape_banio",
-                        "cc_mobiliario_banio",
-                        "cc_conservacion_banio",
-                        "cc_tamanio_cocina",
-                        "cc_enchape_cocina",
-                        "cc_mobiliario_cocina",
-                        "cc_conservacion_cocina",
-                        "cc_cerchas_complemento_industria",
-                        "cc_altura_cerchas_superior_6m",
-                        "cc_tipo_calificar",
-                        "ct_tipo_tipologia",
-                        "ct_conservacion_tipologia",
-                        "cnc_tipo_anexo",
-                        "cnc_conservacion_anexo",
-                    ):
-                        if col in car_cols:
-                            select_parts.append(f"car.{_qident(col)} AS car_{col}")
-
-                    car_domains: list[tuple[str, str, str, str]] = [
-                        ("tipo_unidad_construccion", "arb_unidadconstrucciontipo", "d_tuc", "tipo_unidad_construccion_nombre"),
-                        ("uso", "arb_usouconstipo", "d_uso", "uso_nombre"),
-                        (
-                            "usos_tradicionales_culturales",
-                            "arb_usostradicionalesculturalestipo",
-                            "d_utc",
-                            "usos_tradicionales_culturales_nombre",
-                        ),
-                        ("tipo_calificacion", "arb_calificaciontipo", "d_tcal", "tipo_calificacion_nombre"),
-                        ("cc_armazon", "arb_armazontipo", "d_cc_armazon", "armazon_nombre"),
-                        ("cc_muros", "arb_murostipo", "d_cc_muros", "muros_nombre"),
-                        ("cc_cubierta", "arb_cubiertatipo", "d_cc_cubierta", "cubierta_nombre"),
-                        (
-                            "cc_conservacion_estructura",
-                            "arb_estadoconservaciontipo",
-                            "d_cc_cons_estr",
-                            "conservacion_estructura_nombre",
-                        ),
-                        ("cc_fachada", "arb_fachadatipo", "d_cc_fachada", "fachada_nombre"),
-                        (
-                            "cc_cubrimiento_muros",
-                            "arb_cubrimientomurostipo",
-                            "d_cc_cubr_muros",
-                            "cubrimiento_muros_nombre",
-                        ),
-                        ("cc_piso", "arb_pisotipo", "d_cc_piso", "piso_nombre"),
-                        (
-                            "cc_conservacion_acabados",
-                            "arb_estadoconservaciontipo",
-                            "d_cc_cons_aca",
-                            "conservacion_acabados_nombre",
-                        ),
-                        ("cc_tamanio_banio", "arb_tamaniobaniotipo", "d_cc_tam_ban", "tamanio_banio_nombre"),
-                        ("cc_enchape_banio", "arb_enchapebaniotipo", "d_cc_enc_ban", "enchape_banio_nombre"),
-                        (
-                            "cc_mobiliario_banio",
-                            "arb_mobiliariobaniotipo",
-                            "d_cc_mob_ban",
-                            "mobiliario_banio_nombre",
-                        ),
-                        (
-                            "cc_conservacion_banio",
-                            "arb_estadoconservaciontipo",
-                            "d_cc_cons_ban",
-                            "conservacion_banio_nombre",
-                        ),
-                        (
-                            "cc_tamanio_cocina",
-                            "arb_tamaniococinatipo",
-                            "d_cc_tam_coc",
-                            "tamanio_cocina_nombre",
-                        ),
-                        (
-                            "cc_enchape_cocina",
-                            "arb_enchapecocinatipo",
-                            "d_cc_enc_coc",
-                            "enchape_cocina_nombre",
-                        ),
-                        (
-                            "cc_mobiliario_cocina",
-                            "arb_mobiliariococinatipo",
-                            "d_cc_mob_coc",
-                            "mobiliario_cocina_nombre",
-                        ),
-                        (
-                            "cc_conservacion_cocina",
-                            "arb_estadoconservaciontipo",
-                            "d_cc_cons_coc",
-                            "conservacion_cocina_nombre",
-                        ),
-                        (
-                            "cc_cerchas_complemento_industria",
-                            "arb_cerchascomplementoindustriatipo",
-                            "d_cc_cer",
-                            "cerchas_complemento_industria_nombre",
-                        ),
-                        ("cc_tipo_calificar", "arb_calificartipo", "d_cc_tipo_cal", "tipo_calificar_nombre"),
-                        ("ct_tipo_tipologia", "arb_tipologiatipo", "d_ct_tip", "tipo_tipologia_nombre"),
-                        (
-                            "ct_conservacion_tipologia",
-                            "arb_estadoconservaciontipologiatipo",
-                            "d_ct_cons",
-                            "conservacion_nombre",
-                        ),
-                        ("cnc_tipo_anexo", "arb_anexotipo", "d_cnc_tip", "tipo_anexo_nombre"),
-                        (
-                            "cnc_conservacion_anexo",
-                            "arb_estadoconservaciontipologiatipo",
-                            "d_cnc_cons",
-                            "conservacion_anexo_nombre",
-                        ),
-                    ]
-
-                    for fk_col, dom_table, dom_alias, out_alias in car_domains:
-                        if fk_col not in car_cols:
-                            continue
-                        table = _safe_ident(dom_table, fallback="")
-                        if not table or not _table_exists(cur, schema, table):
-                            continue
-                        join_parts.append(
-                            f"LEFT JOIN {_qident(schema)}.{_qident(table)} {dom_alias} "
-                            f"ON {dom_alias}.t_id::text = car.{_qident(fk_col)}::text"
-                        )
-                        select_parts.append(
-                            "COALESCE("
-                            f"{dom_alias}.dispname, "
-                            f"to_jsonb({dom_alias})->>'iliCode', "
-                            f"to_jsonb({dom_alias})->>'ilicode', "
-                            f"{dom_alias}.t_id::text"
-                            f") AS {out_alias}"
-                        )
-
-                sql_unidad = f"""
-                SELECT
-                  {", ".join(select_parts)}
-                FROM {_qident(schema)}.arb_unidadconstruccion uc
-                {" ".join(join_parts)}
-                WHERE uc.t_id = %s::bigint
-                LIMIT 1;
-                """
-
-                cur.execute(sql_unidad, (unidad_id,))
-                row = cur.fetchone()
-                if not row:
-                    return JSONResponse(
-                        {"error": "Unidad de construcción no encontrada"},
-                        status_code=404,
-                    )
-
-                unidad = dict(row)
-                car_data: dict[str, object] = {}
-                for k, v in row.items():
-                    if k.startswith("car_"):
-                        car_data[k[4:]] = v
-                for k in (
-                    "tipo_unidad_construccion_nombre",
-                    "uso_nombre",
-                    "usos_tradicionales_culturales_nombre",
-                    "tipo_calificacion_nombre",
-                    "armazon_nombre",
-                    "muros_nombre",
-                    "cubierta_nombre",
-                    "conservacion_estructura_nombre",
-                    "fachada_nombre",
-                    "cubrimiento_muros_nombre",
-                    "piso_nombre",
-                    "conservacion_acabados_nombre",
-                    "tamanio_banio_nombre",
-                    "enchape_banio_nombre",
-                    "mobiliario_banio_nombre",
-                    "conservacion_banio_nombre",
-                    "tamanio_cocina_nombre",
-                    "enchape_cocina_nombre",
-                    "mobiliario_cocina_nombre",
-                    "conservacion_cocina_nombre",
-                    "cerchas_complemento_industria_nombre",
-                    "tipo_calificar_nombre",
-                    "tipo_tipologia_nombre",
-                    "conservacion_nombre",
-                    "tipo_anexo_nombre",
-                    "conservacion_anexo_nombre",
-                ):
-                    if k in row:
-                        car_data[k] = row.get(k)
-
-                has_car_values = any(v is not None and str(v).strip() != "" for v in car_data.values())
-                caracteristicas = car_data if has_car_values else None
-
-                cc_tipo_calificar_fk = car_data.get("cc_tipo_calificar")
-                cc_tipo_calificar_lbl = car_data.get("tipo_calificar_nombre")
-                if cc_tipo_calificar_fk is not None and (
-                    cc_tipo_calificar_lbl is None
-                    or not str(cc_tipo_calificar_lbl).strip()
-                    or str(cc_tipo_calificar_lbl).strip() == str(cc_tipo_calificar_fk).strip()
-                ):
-                    resolved = _resolve_domain_label(cur, schema, "arb_calificartipo", cc_tipo_calificar_fk)
-                    if resolved:
-                        car_data["tipo_calificar_nombre"] = resolved
-                    else:
-                        car_data["tipo_calificar_nombre"] = None
-
-                tipo_calif = (car_data.get("tipo_calificacion_nombre") or "").strip().lower()
-                tipo_modal = None
-                if "no convencional" in tipo_calif:
-                    tipo_modal = "no_convencional"
-                elif "tipolog" in tipo_calif:
-                    tipo_modal = "tipologia"
-                elif "convencional" in tipo_calif:
-                    tipo_modal = "convencional"
-
-                unidad["tipo_calificacion_modal"] = tipo_modal
-                if car_data.get("tipo_calificacion_nombre"):
-                    unidad["tipo_calificacion_clase"] = car_data.get("tipo_calificacion_nombre")
-
-                calificacion_convencional = None
-                if caracteristicas:
-                    calificacion_convencional = {
-                        "tipo_calificacion_nombre": car_data.get("tipo_calificacion_nombre"),
-                        "tipo_calificar_nombre": car_data.get("tipo_calificar_nombre"),
-                        "armazon_nombre": car_data.get("armazon_nombre"),
-                        "muros_nombre": car_data.get("muros_nombre"),
-                        "cubierta_nombre": car_data.get("cubierta_nombre"),
-                        "conservacion_estructura_nombre": car_data.get("conservacion_estructura_nombre"),
-                        "fachada_nombre": car_data.get("fachada_nombre"),
-                        "cubrimiento_muros_nombre": car_data.get("cubrimiento_muros_nombre"),
-                        "piso_nombre": car_data.get("piso_nombre"),
-                        "conservacion_acabados_nombre": car_data.get("conservacion_acabados_nombre"),
-                        "tamanio_banio_nombre": car_data.get("tamanio_banio_nombre"),
-                        "enchape_banio_nombre": car_data.get("enchape_banio_nombre"),
-                        "mobiliario_banio_nombre": car_data.get("mobiliario_banio_nombre"),
-                        "conservacion_banio_nombre": car_data.get("conservacion_banio_nombre"),
-                        "tamanio_cocina_nombre": car_data.get("tamanio_cocina_nombre"),
-                        "enchape_cocina_nombre": car_data.get("enchape_cocina_nombre"),
-                        "mobiliario_cocina_nombre": car_data.get("mobiliario_cocina_nombre"),
-                        "conservacion_cocina_nombre": car_data.get("conservacion_cocina_nombre"),
-                        "cerchas_complemento_industria_nombre": car_data.get("cerchas_complemento_industria_nombre"),
-                        "altura_cerchas_superior_6m": car_data.get("cc_altura_cerchas_superior_6m"),
-                    }
-                    if "total_calificacion" in car_data:
-                        calificacion_convencional["total_calificacion"] = car_data.get("total_calificacion")
-
-                tipologia_construccion = (
-                    {
-                        "tipo_tipologia_nombre": car_data.get("tipo_tipologia_nombre"),
-                        "conservacion_nombre": car_data.get("conservacion_nombre"),
-                    }
-                    if caracteristicas
-                    else None
+            cur.execute(sql_unidad, (unidad_id,))
+            row = cur.fetchone()
+            if not row:
+                return JSONResponse(
+                    {"error": "Unidad de construcción no encontrada"},
+                    status_code=404,
                 )
 
-                tipologia_no_convencional = (
-                    {
-                        "tipo_anexo_nombre": car_data.get("tipo_anexo_nombre"),
-                        "conservacion_anexo_nombre": car_data.get("conservacion_anexo_nombre"),
-                    }
-                    if caracteristicas
-                    else None
-                )
+            unidad = dict(row)
+            car_data: dict[str, object] = {}
+            for k, v in row.items():
+                if k.startswith("car_"):
+                    car_data[k[4:]] = v
+            for k in (
+                "tipo_unidad_construccion_nombre",
+                "uso_nombre",
+                "usos_tradicionales_culturales_nombre",
+                "tipo_calificacion_nombre",
+                "armazon_nombre",
+                "muros_nombre",
+                "cubierta_nombre",
+                "conservacion_estructura_nombre",
+                "fachada_nombre",
+                "cubrimiento_muros_nombre",
+                "piso_nombre",
+                "conservacion_acabados_nombre",
+                "tamanio_banio_nombre",
+                "enchape_banio_nombre",
+                "mobiliario_banio_nombre",
+                "conservacion_banio_nombre",
+                "tamanio_cocina_nombre",
+                "enchape_cocina_nombre",
+                "mobiliario_cocina_nombre",
+                "conservacion_cocina_nombre",
+                "cerchas_complemento_industria_nombre",
+                "tipo_calificar_nombre",
+                "tipo_tipologia_nombre",
+                "conservacion_nombre",
+                "tipo_anexo_nombre",
+                "conservacion_anexo_nombre",
+            ):
+                if k in row:
+                    car_data[k] = row.get(k)
+
+            has_car_values = any(v is not None and str(v).strip() != "" for v in car_data.values())
+            caracteristicas = car_data if has_car_values else None
+
+            cc_tipo_calificar_fk = car_data.get("cc_tipo_calificar")
+            cc_tipo_calificar_lbl = car_data.get("tipo_calificar_nombre")
+            if cc_tipo_calificar_fk is not None and (
+                cc_tipo_calificar_lbl is None
+                or not str(cc_tipo_calificar_lbl).strip()
+                or str(cc_tipo_calificar_lbl).strip() == str(cc_tipo_calificar_fk).strip()
+            ):
+                resolved = _resolve_domain_label(cur, schema, "arb_calificartipo", cc_tipo_calificar_fk)
+                if resolved:
+                    car_data["tipo_calificar_nombre"] = resolved
+                else:
+                    car_data["tipo_calificar_nombre"] = None
+
+            tipo_calif = (car_data.get("tipo_calificacion_nombre") or "").strip().lower()
+            tipo_modal = None
+            if "no convencional" in tipo_calif:
+                tipo_modal = "no_convencional"
+            elif "tipolog" in tipo_calif:
+                tipo_modal = "tipologia"
+            elif "convencional" in tipo_calif:
+                tipo_modal = "convencional"
+
+            unidad["tipo_calificacion_modal"] = tipo_modal
+            if car_data.get("tipo_calificacion_nombre"):
+                unidad["tipo_calificacion_clase"] = car_data.get("tipo_calificacion_nombre")
+
+            calificacion_convencional = None
+            if caracteristicas:
+                calificacion_convencional = {
+                    "tipo_calificacion_nombre": car_data.get("tipo_calificacion_nombre"),
+                    "tipo_calificar_nombre": car_data.get("tipo_calificar_nombre"),
+                    "armazon_nombre": car_data.get("armazon_nombre"),
+                    "muros_nombre": car_data.get("muros_nombre"),
+                    "cubierta_nombre": car_data.get("cubierta_nombre"),
+                    "conservacion_estructura_nombre": car_data.get("conservacion_estructura_nombre"),
+                    "fachada_nombre": car_data.get("fachada_nombre"),
+                    "cubrimiento_muros_nombre": car_data.get("cubrimiento_muros_nombre"),
+                    "piso_nombre": car_data.get("piso_nombre"),
+                    "conservacion_acabados_nombre": car_data.get("conservacion_acabados_nombre"),
+                    "tamanio_banio_nombre": car_data.get("tamanio_banio_nombre"),
+                    "enchape_banio_nombre": car_data.get("enchape_banio_nombre"),
+                    "mobiliario_banio_nombre": car_data.get("mobiliario_banio_nombre"),
+                    "conservacion_banio_nombre": car_data.get("conservacion_banio_nombre"),
+                    "tamanio_cocina_nombre": car_data.get("tamanio_cocina_nombre"),
+                    "enchape_cocina_nombre": car_data.get("enchape_cocina_nombre"),
+                    "mobiliario_cocina_nombre": car_data.get("mobiliario_cocina_nombre"),
+                    "conservacion_cocina_nombre": car_data.get("conservacion_cocina_nombre"),
+                    "cerchas_complemento_industria_nombre": car_data.get("cerchas_complemento_industria_nombre"),
+                    "altura_cerchas_superior_6m": car_data.get("cc_altura_cerchas_superior_6m"),
+                }
+                if "total_calificacion" in car_data:
+                    calificacion_convencional["total_calificacion"] = car_data.get("total_calificacion")
+
+            tipologia_construccion = (
+                {
+                    "tipo_tipologia_nombre": car_data.get("tipo_tipologia_nombre"),
+                    "conservacion_nombre": car_data.get("conservacion_nombre"),
+                }
+                if caracteristicas
+                else None
+            )
+
+            tipologia_no_convencional = (
+                {
+                    "tipo_anexo_nombre": car_data.get("tipo_anexo_nombre"),
+                    "conservacion_anexo_nombre": car_data.get("conservacion_anexo_nombre"),
+                }
+                if caracteristicas
+                else None
+            )
     except Exception as exc:
         logger.exception(
             "Error en /asignaciones/unidad_detalle unidad_id=%s schema=%s",
