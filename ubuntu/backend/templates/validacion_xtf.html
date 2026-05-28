@@ -6,861 +6,46 @@
 {% if validacion_embed %}
 {%     set form_action = (rp if rp else '') + '/panel/validacion-xtf' %}
 {% endif %}
-{% set show_title = not validacion_embed %}
-
-{% set validation_summary = result.validation.quality.summary if result and result.validation and result.validation.quality and result.validation.quality.summary else None %}
-{% set schema_errors = result.validation.schema_errors if result and result.validation and result.validation.schema_errors else [] %}
-{% set rule_errors = result.validation.rule_errors if result and result.validation and result.validation.rule_errors else [] %}
-
+{% set reload_href = (rp if rp else '') + ('/panel/validacion-xtf' if validacion_embed else '/validacion/xtf') %}
+{% set validation = result.validation if result and result.validation else {} %}
+{% set quality = validation.quality if validation and validation.quality else {} %}
+{% set validation_summary = quality.summary if quality and quality.summary else None %}
+{% set schema_errors = validation.schema_errors if validation and validation.schema_errors else [] %}
+{% set rule_errors = validation.rule_errors if validation and validation.rule_errors else [] %}
+{% set predio_summary = quality.predio_summary if quality and quality.predio_summary else [] %}
+{% set rule_catalog = quality.rule_catalog if quality and quality.rule_catalog else {} %}
 {% set total_schema_errors = schema_errors|length %}
 {% set total_rule_errors = rule_errors|length %}
 {% set total_errors = total_schema_errors + total_rule_errors %}
 {% set total_rules = validation_summary.total_rules if validation_summary else 0 %}
 {% set passed_rules = validation_summary.passed_rules if validation_summary else 0 %}
 {% set failed_rules = validation_summary.failed_rules if validation_summary else 0 %}
-{% set unimplemented_rules = validation_summary.unimplemented_rules if validation_summary else 0 %}
-
-{% set _validacion_styles %}
-<style>
-    :root {
-        --primary: #0b3a67;
-        --primary-2: #2f80ed;
-        --primary-3: #eef5ff;
-        --bg-page: #f4f7fb;
-        --card-bg: #ffffff;
-        --border: #d8e3f0;
-        --border-soft: #e8eef6;
-        --text: #123a63;
-        --muted: #7489a6;
-        --success-bg: #edf9f0;
-        --success-border: #b7e4c1;
-        --success-text: #1c7b3a;
-        --error-bg: #fff2f2;
-        --error-border: #f0c6c6;
-        --error-text: #b13c3c;
-        --warning-bg: #fff8ea;
-        --warning-border: #f4dd9b;
-        --warning-text: #8a6514;
-        --shadow: 0 10px 30px rgba(18, 58, 99, 0.07);
-        --radius-lg: 24px;
-        --radius-md: 18px;
-        --radius-sm: 14px;
-    }
-
-    body.validacion-xtf-standalone {
-        font-family: Arial, sans-serif;
-        margin: 24px;
-        background: var(--bg-page);
-        color: var(--text);
-    }
-
-    .validacion-xtf {
-        width: 100%;
-        max-width: 100%;
-        margin: 0 auto 32px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        color: var(--text);
-    }
-
-    .card {
-        background: var(--card-bg);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow);
-        padding: 28px;
-        width: 100%;
-    }
-
-    .page-title {
-        margin: 0 0 10px;
-        font-size: 34px;
-        font-weight: 800;
-        line-height: 1.1;
-        color: var(--text);
-    }
-
-    .section-title {
-        margin: 0 0 8px;
-        font-size: 24px;
-        font-weight: 800;
-        color: var(--text);
-    }
-
-    .subtitle {
-        margin: 0;
-        color: var(--muted);
-        font-size: 16px;
-        line-height: 1.5;
-    }
-
-    .upload-shell {
-        max-width: 920px;
-        margin: 0 auto;
-    }
-
-    .upload-form {
-        margin-top: 26px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .dropzone {
-        position: relative;
-        border: 2px dashed #bfd1e8;
-        background: linear-gradient(180deg, #f8fbff 0%, #fdfefe 100%);
-        border-radius: 22px;
-        padding: 34px 28px;
-        text-align: center;
-        transition: all .2s ease;
-        cursor: pointer;
-    }
-
-    .dropzone.dragover {
-        border-color: var(--primary-2);
-        background: #eef6ff;
-        box-shadow: inset 0 0 0 1px rgba(47, 128, 237, 0.12);
-    }
-
-    .dropzone-icon {
-        font-size: 42px;
-        line-height: 1;
-        margin-bottom: 14px;
-    }
-
-    .dropzone-title {
-        font-size: 20px;
-        font-weight: 800;
-        color: var(--text);
-        margin-bottom: 8px;
-    }
-
-    .dropzone-text {
-        font-size: 15px;
-        color: var(--muted);
-        line-height: 1.5;
-        margin-bottom: 16px;
-    }
-
-    .dropzone-file {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 16px;
-        border-radius: 999px;
-        background: var(--primary-3);
-        border: 1px solid #d8e7fb;
-        color: var(--primary-2);
-        font-weight: 700;
-        font-size: 14px;
-        min-height: 22px;
-    }
-
-    .dropzone-file.empty {
-        color: var(--muted);
-        background: #f5f8fc;
-        border-color: #e2eaf4;
-        font-weight: 600;
-    }
-
-    .dropzone-actions {
-        display: flex;
-        justify-content: center;
-        gap: 14px;
-        flex-wrap: wrap;
-    }
-
-    .hidden-file-input {
-        display: none;
-    }
-
-    .btn {
-        appearance: none;
-        border: none;
-        border-radius: 14px;
-        padding: 14px 24px;
-        font-size: 15px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all .18s ease;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .btn-primary {
-        background: var(--primary-2);
-        color: #fff;
-        box-shadow: 0 12px 24px rgba(47, 128, 237, 0.22);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-1px);
-    }
-
-    .btn-secondary {
-        background: #f4f7fb;
-        color: var(--text);
-        border: 1px solid var(--border);
-    }
-
-    .btn-secondary:hover {
-        background: #edf3fa;
-    }
-
-    .btn-pdf {
-        background: #0b3a67;
-        color: #fff;
-        box-shadow: 0 12px 24px rgba(11, 58, 103, 0.18);
-    }
-
-    .btn-pdf:hover {
-        transform: translateY(-1px);
-        background: #082f54;
-    }
-
-    .helper-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
-    }
-
-    .helper-card {
-        border: 1px solid var(--border);
-        border-radius: var(--radius-md);
-        background: #fbfdff;
-        padding: 18px;
-    }
-
-    .helper-card strong {
-        display: block;
-        margin-bottom: 8px;
-        font-size: 14px;
-        color: var(--text);
-    }
-
-    .helper-card span {
-        color: var(--muted);
-        font-size: 14px;
-        line-height: 1.5;
-    }
-
-    .alert {
-        border-radius: 16px;
-        padding: 16px 18px;
-        font-weight: 600;
-    }
-
-    .alert-error {
-        background: var(--error-bg);
-        border: 1px solid var(--error-border);
-        color: var(--error-text);
-    }
-
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        gap: 18px;
-        align-items: flex-start;
-        flex-wrap: wrap;
-    }
-
-    .result-title-row {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        flex-wrap: wrap;
-    }
-
-    .result-title-row .page-title {
-        margin-bottom: 0;
-    }
-
-    .header-actions {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-    }
-
-    .status-banner {
-        border-radius: 16px;
-        padding: 16px 18px;
-        font-weight: 700;
-        line-height: 1.45;
-        margin-top: 18px;
-    }
-
-    .status-ok {
-        background: var(--success-bg);
-        border: 1px solid var(--success-border);
-        color: var(--success-text);
-    }
-
-    .status-error {
-        background: var(--error-bg);
-        border: 1px solid var(--error-border);
-        color: var(--error-text);
-    }
-
-    .status-warning {
-        background: var(--warning-bg);
-        border: 1px solid var(--warning-border);
-        color: var(--warning-text);
-    }
-
-    .meta-grid {
-        margin-top: 20px;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-        gap: 14px;
-    }
-
-    .meta-chip {
-        border: 1px solid var(--border-soft);
-        background: #fbfdff;
-        border-radius: 16px;
-        padding: 14px 16px;
-    }
-
-    .meta-chip .label {
-        display: block;
-        font-size: 12px;
-        color: var(--muted);
-        margin-bottom: 6px;
-        text-transform: uppercase;
-        letter-spacing: .04em;
-        font-weight: 700;
-    }
-
-    .meta-chip .value {
-        font-size: 15px;
-        color: var(--text);
-        line-height: 1.45;
-        word-break: break-word;
-    }
-
-    .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 16px;
-    }
-
-    .kpi-card {
-        background: #fff;
-        border: 1px solid var(--border);
-        border-radius: 22px;
-        box-shadow: var(--shadow);
-        padding: 24px;
-    }
-
-    .kpi-label {
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: .04em;
-        margin-bottom: 10px;
-    }
-
-    .kpi-value {
-        font-size: 42px;
-        line-height: 1;
-        font-weight: 800;
-        color: var(--primary-2);
-    }
-
-    .section-head {
-        margin-bottom: 14px;
-    }
-
-    .section-head p {
-        margin: 0;
-        color: var(--muted);
-        line-height: 1.5;
-    }
-
-    .rule-status-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        gap: 16px;
-    }
-
-    .rule-status-card {
-        border-radius: 18px;
-        background: #fff;
-        border: 1px solid var(--border);
-        padding: 18px;
-        box-shadow: 0 8px 18px rgba(18, 58, 99, 0.04);
-    }
-
-    .rule-status-card h4 {
-        margin: 0 0 8px;
-        font-size: 18px;
-        font-weight: 800;
-        color: var(--text);
-    }
-
-    .rule-status-card p {
-        margin: 0;
-        color: var(--muted);
-        font-size: 14px;
-    }
-
-    .rule-pill {
-        display: inline-flex;
-        margin-top: 14px;
-        padding: 8px 12px;
-        border-radius: 999px;
-        font-size: 13px;
-        font-weight: 700;
-    }
-
-    .rule-pill.ok {
-        background: var(--success-bg);
-        color: var(--success-text);
-        border: 1px solid var(--success-border);
-    }
-
-    .rule-pill.error {
-        background: var(--error-bg);
-        color: var(--error-text);
-        border: 1px solid var(--error-border);
-    }
-
-    .details-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 16px;
-    }
-
-    .table-wrapper {
-        width: 100%;
-        overflow-x: auto;
-        border: 1px solid var(--border-soft);
-        border-radius: 16px;
-    }
-
-    table.validation-table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 720px;
-        background: #fff;
-    }
-
-    table.validation-table th,
-    table.validation-table td {
-        padding: 14px;
-        border-bottom: 1px solid var(--border-soft);
-        text-align: left;
-        vertical-align: top;
-    }
-
-    table.validation-table th {
-        background: #f7faff;
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: .05em;
-        color: var(--muted);
-        font-weight: 800;
-    }
-
-    table.validation-table tr:nth-child(even) td {
-        background: #fcfdff;
-    }
-
-    .tag {
-        display: inline-flex;
-        padding: 5px 10px;
-        border-radius: 999px;
-        background: var(--primary-3);
-        color: var(--primary-2);
-        font-size: 12px;
-        font-weight: 700;
-        border: 1px solid #d8e7fb;
-    }
-
-    .rule-message {
-        white-space: pre-wrap;
-        font-size: 14px;
-        color: var(--text);
-        line-height: 1.45;
-    }
-
-    tr.row-predio td {
-        background: #fffaf0 !important;
-    }
-
-    .muted {
-        color: var(--muted);
-        font-size: 14px;
-        line-height: 1.5;
-    }
-
-    pre {
-        background: #f6f9fd;
-        padding: 14px;
-        border-radius: 12px;
-        white-space: pre-wrap;
-        line-height: 1.45;
-        margin: 8px 0 0;
-        border: 1px solid var(--border);
-        color: var(--text);
-    }
-
-    .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(7, 27, 52, 0.72);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 99999;
-    padding: 20px;
-}
-
-.modal-backdrop.show {
-    display: flex;
-}
-
-.modal-card {
-    width: 100%;
-    max-width: 620px;
-    position: relative;
-    z-index: 100000;
-    background: #ffffff !important;
-    background-image: none !important;
-    border-radius: 28px;
-    border: none !important;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
-    padding: 42px 36px;
-    text-align: center;
-    opacity: 1 !important;
-    overflow: hidden;
-    isolation: isolate;
-    filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    mix-blend-mode: normal !important;
-}
-
-.modal-card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: #ffffff;
-    z-index: -1;
-}
-
-.modal-card.success {
-    max-width: 560px;
-}
-
-.modal-card h3 {
-    margin: 0 0 14px;
-    font-size: 28px;
-    font-weight: 800;
-    color: #0b2d57 !important;
-    line-height: 1.2;
-    position: relative;
-    z-index: 2;
-}
-
-.modal-card p {
-    margin: 0;
-    font-size: 15px;
-    line-height: 1.7;
-    color: #5f718c !important;
-    position: relative;
-    z-index: 2;
-}
-
-.modal-card * {
-    position: relative;
-    z-index: 2;
-}
-
-.modal-actions {
-    margin-top: 26px;
-    display: flex;
-    justify-content: center;
-}
-
-.spinner {
-    width: 74px;
-    height: 74px;
-    border: 6px solid #dbe4f0;
-    border-top-color: #1f6fe5;
-    border-radius: 50%;
-    margin: 28px auto 0;
-    animation: giro 0.85s linear infinite;
-}
-
-.modal-icon {
-    width: 88px;
-    height: 88px;
-    margin: 0 auto 22px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 38px;
-    font-weight: 800;
-}
-
-.modal-icon.upload {
-    background: #eaf2ff;
-    color: #1f6fe5;
-}
-
-.modal-icon.success {
-    background: #e8f7ea;
-    color: #22a447;
-}
-
-.modal-divider {
-    width: 100%;
-    height: 1px;
-    background: #e8edf4;
-    margin: 18px 0 20px;
-}
-
-.modal-success-title {
-    margin-bottom: 12px !important;
-}
-
-.modal-success-text {
-    max-width: 360px;
-    margin: 0 auto !important;
-}
-
-body.modal-open {
-    overflow: hidden;
-}
-
-@media (max-width: 768px) {
-    .modal-card {
-        max-width: 95%;
-        padding: 30px 22px;
-        border-radius: 22px;
-    }
-
-    .modal-card h3 {
-        font-size: 24px;
-    }
-
-    .modal-icon {
-        width: 74px;
-        height: 74px;
-        font-size: 32px;
-    }
-
-    .spinner {
-        width: 62px;
-        height: 62px;
-    }
-}
-    @keyframes giro {
-        to { transform: rotate(360deg); }
-    }
-
-    @media (max-width: 1100px) {
-        .kpi-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-
-    @media (max-width: 900px) {
-        .helper-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 768px) {
-        body.validacion-xtf-standalone {
-            margin: 14px;
-        }
-
-        .card,
-        .kpi-card {
-            padding: 20px;
-        }
-
-        .page-title {
-            font-size: 28px;
-        }
-
-        .kpi-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .dropzone {
-            padding: 24px 18px;
-        }
-
-        .dropzone-actions,
-        .result-title-row,
-        .header-actions {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .btn {
-            width: 100%;
-        }
-    }
-
-.rules-accordion {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.component-accordion {
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    background: #fff;
-    overflow: hidden;
-    box-shadow: 0 8px 18px rgba(18, 58, 99, 0.04);
-}
-
-.component-accordion summary {
-    list-style: none;
-    cursor: pointer;
-    padding: 20px 22px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.component-accordion summary::-webkit-details-marker {
-    display: none;
-}
-
-.component-summary-left {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.component-summary-left h3 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--text);
-}
-
-.component-summary-left p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 14px;
-}
-
-.component-summary-right {
-    color: var(--primary-2);
-    font-size: 22px;
-    font-weight: 800;
-    flex-shrink: 0;
-}
-
-.component-accordion[open] .component-summary-right {
-    transform: rotate(180deg);
-}
-
-.component-rules-body {
-    padding: 0 22px 20px;
-    border-top: 1px solid var(--border-soft);
-    background: #fcfdff;
-}
-
-.component-rule-item {
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border-soft);
-}
-
-.component-rule-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.component-rule-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 14px;
-    flex-wrap: wrap;
-}
-
-.component-rule-id {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--text);
-    margin-bottom: 6px;
-}
-
-.component-rule-description {
-    margin: 0;
-    color: var(--muted);
-    font-size: 14px;
-    line-height: 1.5;
-    max-width: 760px;
-}
-
-.component-rule-meta {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    flex-shrink: 0;
-}
-
-.component-rule-errors {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--muted);
-    background: #f3f7fc;
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 7px 12px;
-}
-
-.empty-rules {
-    padding: 18px;
-    border: 1px dashed var(--border);
-    border-radius: 16px;
-    background: #fbfdff;
-    color: var(--muted);
-}
-
-</style>
-{% endset %}
-
-{% if not validacion_embed %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Validación XTF</title>
-    {{ _validacion_styles | safe }}
-</head>
-<body class="validacion-xtf-standalone">
-{% else %}
-{{ _validacion_styles | safe }}
-{% endif %}
-
-{% set rule_catalog = result.validation.quality.rule_catalog if result and result.validation and result.validation.quality and result.validation.quality.rule_catalog else {} %}
+{% set total_predios = validation_summary.total_predios if validation_summary and validation_summary.total_predios is defined else 0 %}
+{% set predios_con_errores = validation_summary.predios_con_errores if validation_summary else predio_summary|length %}
+{% set predios_sin_errores = validation_summary.predios_sin_errores if validation_summary and validation_summary.predios_sin_errores is defined else (total_predios - predios_con_errores if total_predios else 0) %}
+{% set rules_percent = ((passed_rules / total_rules * 100)|round(0, 'common')|int) if total_rules else 0 %}
+{% set predios_percent = ((predios_sin_errores / total_predios * 100)|round(0, 'common')|int) if total_predios else 0 %}
+{% set validation_percent = predios_percent if total_predios else rules_percent %}
+{% set summary_success_label = 'Predio sin errores' if total_predios else 'Reglas cumplidas' %}
+{% set summary_error_label = 'Predio con errores' if total_predios else 'Reglas incumplidas' %}
+{% set summary_success_value = predios_sin_errores if total_predios else passed_rules %}
+{% set summary_error_value = predios_con_errores if total_predios else failed_rules %}
+{% set summary_donut_label = 'Predios sin errores' if total_predios else 'Reglas cumplidas' %}
+{% set filename = result.original_filename if result and result.original_filename else 'Archivo XTF' %}
+{% set generated_at = (result.generated_at|replace('T', ' ')) if result and result.generated_at else 'Sin fecha' %}
+{% set validation_status = validation.status if validation and validation.status else '' %}
+{% set validation_status_label = 'Validado sin hallazgos' if validation_status == 'success' and total_errors == 0 and failed_rules == 0 else 'Validado con hallazgos' if result and validation_status not in ['error', 'skipped'] else 'Validación no completada' %}
+{% set model_display = validation.model_name if validation and validation.model_name else ((validation.model_names|join(', ')) if validation and validation.model_names else 'No disponible') %}
+{% set show_runtime_error = result and validation_status in ['error', 'skipped'] and not schema_errors and not rule_errors %}
+{% set show_success_gate = result and validation_status == 'success' and total_errors == 0 and failed_rules == 0 %}
+{% set pdf_href = (rp if rp else '') + '/validacion/xtf/' + result.job_id + '/reporte.pdf' if result else '#' %}
+{% set excel_href = (rp if rp else '') + '/validacion/xtf/' + result.job_id + '/errores.xlsx' if result else '#' %}
 
 {% set rules_by_component = {} %}
-{% if result and result.validation and result.validation.quality and result.validation.quality.rules %}
-    {% for item in result.validation.quality.rules %}
+{% if quality and quality.rules %}
+    {% for item in quality.rules %}
         {% set catalog_item = rule_catalog.get(item.rule|string, {}) %}
         {% set component_name = item.component_label or catalog_item.get('component_label') or item.component or item.component_slug or catalog_item.get('component') or catalog_item.get('component_slug') or 'Sin componente' %}
-
         {% if component_name not in rules_by_component %}
             {% set _ = rules_by_component.update({component_name: []}) %}
         {% endif %}
@@ -868,369 +53,1500 @@ body.modal-open {
     {% endfor %}
 {% endif %}
 
-<div class="validacion-xtf">
-
-    {% if not result %}
-    <div class="upload-shell">
-        <div class="card">
-            {% if show_title %}
-            <h1 class="page-title">Validación XTF</h1>
-            <p class="subtitle">
-                Sube un archivo XTF para iniciar la revisión y generar el resultado de validación.
-            </p>
+{% macro validation_stepper(active_step) %}
+<div class="validation-stepper" aria-label="Progreso de validacion">
+    {% for step_num, label in [(1, 'Carga de archivo'), (2, 'Procesando'), (3, 'Resultado'), (4, 'Generar reporte')] %}
+    <div class="stepper-item {{ 'is-done' if step_num < active_step else 'is-active' if step_num == active_step else '' }}">
+        <span class="stepper-circle">
+            {% if step_num < active_step %}
+            <i class="bi bi-check"></i>
             {% else %}
-            <h2 class="section-title">Validación XTF</h2>
-            <p class="subtitle">
-                Selecciona o arrastra un archivo XTF dentro del panel.
-            </p>
+            {{ step_num }}
             {% endif %}
-
-            <form id="xtf-upload-form" class="upload-form" action="{{ form_action }}" method="post" enctype="multipart/form-data">
-                <input
-                    id="xtf-file-input"
-                    class="hidden-file-input"
-                    type="file"
-                    name="file"
-                    accept=".xtf"
-                    required
-                >
-
-                <div id="xtf-dropzone" class="dropzone">
-                    <div class="dropzone-icon">📄</div>
-                    <div class="dropzone-title">Arrastra tu archivo XTF aquí</div>
-                    <div class="dropzone-text">
-                        También puedes hacer clic para seleccionarlo desde tu equipo.
-                    </div>
-                    <div id="xtf-file-name" class="dropzone-file empty">
-                        Ningún archivo seleccionado
-                    </div>
-                </div>
-
-                <div class="dropzone-actions">
-                    <button id="xtf-select-btn" type="button" class="btn btn-secondary">
-                        Elegir archivo
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        Subir archivo
-                    </button>
-                </div>
-
-                <div class="helper-grid">
-                    <div class="helper-card">
-                        <strong>Formato permitido</strong>
-                        <span>Solo archivos con extensión .xtf</span>
-                    </div>
-                    <div class="helper-card">
-                        <strong>Proceso</strong>
-                        <span>El sistema cargará el archivo y ejecutará la validación automáticamente.</span>
-                    </div>
-                    <div class="helper-card">
-                        <strong>Resultado</strong>
-                        <span>Al finalizar verás el resumen general, reglas y detalle de errores.</span>
-                    </div>
-                </div>
-            </form>
-
-            {% if error %}
-            <div class="alert alert-error" style="margin-top:18px;">
-                {{ error }}
-            </div>
-            {% endif %}
-        </div>
+        </span>
+        <span class="stepper-label">{{ label }}</span>
     </div>
+    {% if not loop.last %}
+    <span class="stepper-line"></span>
     {% endif %}
+    {% endfor %}
+</div>
+{% endmacro %}
 
-    {% if result %}
-    <div id="resultado-anchor" class="card">
-        <div class="page-header">
-            <div>
-                <div class="result-title-row">
-                    <h1 class="page-title">Resultado de validación</h1>
-                    <a
-                        href="{{ (rp if rp else '') + '/validacion/xtf/' + result.job_id + '/reporte.pdf' }}"
-                        class="btn btn-pdf"
-                    >
-                        Descargar PDF
-                    </a>
+{% set _validacion_styles %}
+<style>
+    :root {
+        --validation-navy: #00345c;
+        --validation-navy-2: #002944;
+        --validation-blue: #6aa9dc;
+        --validation-blue-soft: #eaf3fb;
+        --validation-blue-line: #9fb9ce;
+        --validation-text: #00345c;
+        --validation-muted: #4c7192;
+        --validation-border: #b7cde0;
+        --validation-border-soft: #d9e6f1;
+        --validation-success: #00a332;
+        --validation-success-soft: #e2f6e5;
+        --validation-danger: #d71920;
+        --validation-danger-soft: #ffd8db;
+        --validation-warning-soft: #ffe9cd;
+        --validation-shadow: 0 4px 8px rgba(0, 52, 92, 0.2);
+    }
+
+    body.validacion-xtf-standalone {
+        margin: 0;
+        background: #fff;
+        color: var(--validation-text);
+        font-family: "Poppins", Arial, sans-serif;
+    }
+
+    .validacion-xtf {
+        width: 100%;
+        color: var(--validation-text);
+        font-family: "Poppins", Arial, sans-serif;
+        background: #fff;
+    }
+
+    .validation-page {
+        min-height: 660px;
+        padding: 8px 12px 24px;
+    }
+
+    body.validacion-xtf-standalone .validation-page {
+        padding: 12px 24px 30px;
+    }
+
+    .validation-title {
+        margin: 0;
+        color: var(--validation-navy);
+        font-size: clamp(1.45rem, 2vw, 1.75rem);
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: 0;
+    }
+
+    .validation-subtitle {
+        margin: 10px 0 0;
+        color: #214d76;
+        font-size: 0.94rem;
+        line-height: 1.5;
+    }
+
+    .validation-stepper {
+        width: min(850px, 100%);
+        margin: 74px auto 58px;
+        display: grid;
+        grid-template-columns: max-content 42px max-content 42px max-content 42px max-content;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        color: var(--validation-muted);
+        font-size: 0.88rem;
+    }
+
+    .stepper-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 0;
+        white-space: nowrap;
+    }
+
+    .stepper-circle {
+        width: 25px;
+        height: 25px;
+        border: 1.5px solid var(--validation-muted);
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--validation-muted);
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1;
+        flex: 0 0 auto;
+    }
+
+    .stepper-item.is-active .stepper-circle {
+        border-color: var(--validation-navy);
+        background: var(--validation-navy);
+        color: #fff;
+    }
+
+    .stepper-item.is-active .stepper-label,
+    .stepper-item.is-done .stepper-label {
+        color: var(--validation-navy);
+        font-weight: 800;
+    }
+
+    .stepper-item.is-done .stepper-circle {
+        border-color: var(--validation-navy);
+        color: var(--validation-navy);
+        font-size: 1rem;
+    }
+
+    .stepper-line {
+        width: 25px;
+        height: 2px;
+        background: #5b7f9e;
+        display: block;
+    }
+
+    .upload-form {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+    }
+
+    .hidden-file-input {
+        display: none;
+    }
+
+    .dropzone {
+        width: min(780px, 100%);
+        min-height: 268px;
+        border: 2px dashed var(--validation-blue-line);
+        background: #edf5fb;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .dropzone.dragover {
+        border-color: var(--validation-navy);
+        background: #e5f1fb;
+        transform: translateY(-1px);
+    }
+
+    .dropzone-inner {
+        padding: 28px;
+    }
+
+    .dropzone-cloud {
+        color: var(--validation-navy);
+        font-size: 2.7rem;
+        line-height: 1;
+        margin-bottom: 12px;
+    }
+
+    .dropzone-title {
+        margin: 0;
+        color: var(--validation-navy);
+        font-size: 1.02rem;
+        font-weight: 800;
+    }
+
+    .dropzone-text {
+        margin: 12px 0 18px;
+        color: #214d76;
+        font-size: 0.91rem;
+    }
+
+    .validation-button {
+        appearance: none;
+        border: 0;
+        border-radius: 5px;
+        min-height: 44px;
+        padding: 0 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: var(--validation-navy);
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 800;
+        text-decoration: none;
+        box-shadow: none;
+        cursor: pointer;
+        transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
+    }
+
+    .validation-button:hover,
+    .validation-button:focus {
+        background: var(--validation-navy-2);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+
+    .validation-button.blue {
+        background: var(--validation-blue);
+        box-shadow: var(--validation-shadow);
+    }
+
+    .validation-button.blue:hover,
+    .validation-button.blue:focus {
+        background: #579bd1;
+    }
+
+    .validation-button.light {
+        background: #fff;
+        color: var(--validation-navy);
+        box-shadow: none;
+    }
+
+    .validation-button.excel {
+        background: #1f8f4d;
+        box-shadow: var(--validation-shadow);
+    }
+
+    .validation-button.excel:hover,
+    .validation-button.excel:focus {
+        background: #18743e;
+    }
+
+    .format-note {
+        margin-top: 24px;
+        color: #214d76;
+        font-size: 0.9rem;
+    }
+
+    .uploaded-area {
+        width: min(780px, 100%);
+        display: none;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 44px;
+        margin-top: 10px;
+    }
+
+    .upload-form.is-ready .uploaded-area {
+        display: grid;
+    }
+
+    .upload-form.is-ready .dropzone {
+        min-height: 268px;
+    }
+
+    .uploaded-title {
+        grid-column: 1 / -1;
+        text-align: center;
+        color: var(--validation-navy);
+        font-size: 1rem;
+        font-weight: 800;
+        margin: 0 0 -2px;
+    }
+
+    .file-card {
+        border: 1px solid var(--validation-border);
+        background: #edf5fb;
+        border-radius: 9px;
+        min-height: 82px;
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr) 42px;
+        align-items: center;
+        gap: 18px;
+        padding: 12px 24px;
+    }
+
+    .file-ok-icon {
+        width: 38px;
+        height: 38px;
+        border: 3px solid var(--validation-success);
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--validation-success);
+        font-size: 1.35rem;
+        font-weight: 800;
+    }
+
+    .file-name {
+        display: block;
+        color: var(--validation-navy);
+        font-size: 1rem;
+        font-weight: 800;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .file-meta {
+        display: block;
+        margin-top: 5px;
+        color: var(--validation-navy);
+        font-size: 0.88rem;
+    }
+
+    .remove-file {
+        border: 0;
+        background: transparent;
+        color: #ff0016;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .process-view,
+    .center-state {
+        width: min(880px, 100%);
+        margin: 0 auto;
+        text-align: center;
+    }
+
+    .process-view[hidden],
+    .upload-step[hidden] {
+        display: none !important;
+    }
+
+    .process-ring {
+        width: 204px;
+        height: 204px;
+        margin: 0 auto 42px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #fff;
+        border: 1px solid var(--validation-border);
+        position: relative;
+    }
+
+    .process-ring::after {
+        content: "";
+        width: 148px;
+        height: 148px;
+        border-radius: 50%;
+        border: 12px solid #d6e8f7;
+        border-top-color: var(--validation-navy);
+        position: absolute;
+        animation: ringSpin 1s linear infinite;
+    }
+
+    .process-percent {
+        position: relative;
+        z-index: 1;
+        color: var(--validation-navy);
+        font-size: 1.1rem;
+        font-weight: 800;
+    }
+
+    .process-title,
+    .center-state-title {
+        color: var(--validation-navy);
+        font-size: 1.05rem;
+        font-weight: 800;
+        margin: 0 0 10px;
+    }
+
+    .process-text,
+    .center-state-text {
+        color: #214d76;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .process-checks {
+        margin: 46px auto 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 24px;
+        flex-wrap: wrap;
+        color: var(--validation-navy);
+        font-size: 0.9rem;
+    }
+
+    .process-check {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .process-check .circle {
+        width: 34px;
+        height: 34px;
+        border: 3px solid #55c779;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--validation-success);
+        font-size: 1.1rem;
+        font-weight: 800;
+    }
+
+    .process-check.pending {
+        color: #a9bac9;
+    }
+
+    .process-check.pending .circle {
+        border-color: #b7c7d5;
+        color: #9aaec0;
+    }
+
+    .process-separator {
+        width: 45px;
+        height: 2px;
+        background: #66cb77;
+    }
+
+    .process-separator.pending {
+        background: #aebfce;
+    }
+
+    .status-art {
+        width: 220px;
+        height: 220px;
+        margin: 30px auto 24px;
+        position: relative;
+    }
+
+    .status-art .dot {
+        position: absolute;
+        border-radius: 50%;
+        background: #65a4d8;
+    }
+
+    .status-art.success .dot:nth-child(1) { width: 8px; height: 8px; left: 22px; top: 74px; }
+    .status-art.success .dot:nth-child(2) { width: 10px; height: 10px; left: 78px; top: 40px; background: #56bf70; }
+    .status-art.success .dot:nth-child(3) { width: 13px; height: 13px; right: 32px; top: 104px; background: #56bf70; }
+    .status-art.success .dot:nth-child(4) { width: 7px; height: 7px; right: 68px; top: 50px; background: #9bd6ae; }
+    .status-art.success .dot:nth-child(5) { width: 9px; height: 9px; left: 46px; bottom: 48px; background: #9bd6ae; }
+
+    .status-bubble {
+        width: 126px;
+        height: 126px;
+        border-radius: 50%;
+        background: var(--validation-success-soft);
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        display: grid;
+        place-items: center;
+    }
+
+    .status-mark {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 3px solid #55c779;
+        color: var(--validation-success);
+        display: grid;
+        place-items: center;
+        font-size: 2rem;
+        font-weight: 800;
+    }
+
+    .status-art.error .status-bubble {
+        background: #ffd6d6;
+    }
+
+    .status-art.error .status-mark {
+        border-color: #e85c60;
+        color: var(--validation-danger);
+    }
+
+    .error-layout {
+        width: min(820px, 100%);
+        margin: 10px auto 0;
+        display: grid;
+        grid-template-columns: 1fr 1.15fr;
+        align-items: center;
+        gap: 70px;
+    }
+
+    .error-copy {
+        text-align: left;
+    }
+
+    .error-label {
+        margin: 0 0 12px;
+        color: var(--validation-navy);
+        font-weight: 800;
+        font-size: 1rem;
+    }
+
+    .error-pill {
+        display: inline-flex;
+        min-width: 285px;
+        min-height: 44px;
+        align-items: center;
+        justify-content: center;
+        background: var(--validation-danger-soft);
+        color: var(--validation-danger);
+        border-radius: 13px;
+        font-weight: 800;
+        padding: 8px 18px;
+        margin-bottom: 28px;
+    }
+
+    .recommendation-box {
+        background: var(--validation-warning-soft);
+        border-radius: 9px;
+        padding: 14px 20px;
+        color: var(--validation-navy);
+        font-size: 0.9rem;
+        line-height: 1.45;
+    }
+
+    .error-actions {
+        margin-top: 36px;
+        text-align: center;
+    }
+
+    .results-dashboard {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .results-dashboard[hidden] {
+        display: none !important;
+    }
+
+    .result-hero {
+        min-height: 107px;
+        background: var(--validation-navy-2);
+        color: #fff;
+        border-radius: 12px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 20px;
+        padding: 24px;
+    }
+
+    .result-file-meta {
+        display: grid;
+        grid-template-columns: 48px minmax(130px, 1fr) minmax(150px, 1fr) minmax(180px, 1.4fr);
+        align-items: center;
+        gap: 22px;
+    }
+
+    .result-file-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 999px;
+        background: #77b6e6;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 1.7rem;
+    }
+
+    .hero-label {
+        display: block;
+        font-weight: 800;
+        margin-bottom: 8px;
+        color: #fff;
+    }
+
+    .hero-value {
+        display: block;
+        color: #fff;
+        font-size: 0.88rem;
+        overflow-wrap: anywhere;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: minmax(330px, 435px) minmax(0, 1fr);
+        gap: 20px;
+        align-items: start;
+    }
+
+    .summary-card,
+    .component-card,
+    .rules-card,
+    .metric-card {
+        border: 1px solid var(--validation-border);
+        border-radius: 9px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .summary-card-title,
+    .rules-card-title {
+        background: #edf5fb;
+        padding: 20px;
+        color: var(--validation-navy);
+        font-weight: 800;
+        font-size: 1rem;
+    }
+
+    .summary-body {
+        padding: 28px 20px;
+        text-align: center;
+    }
+
+    .summary-donut {
+        --percent: {{ validation_percent }};
+        width: 164px;
+        height: 164px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        margin: 0 auto 18px;
+        background:
+            radial-gradient(circle at center, #fff 0 57%, transparent 58%),
+            conic-gradient(var(--validation-success) 0 calc(var(--percent) * 1%), var(--validation-danger) 0 100%);
+        transform: rotate(-90deg);
+    }
+
+    .summary-donut-inner {
+        transform: rotate(90deg);
+        text-align: center;
+        color: var(--validation-navy);
+    }
+
+    .summary-donut-value {
+        display: block;
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .summary-donut-label {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.68rem;
+    }
+
+    .legend-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--validation-navy);
+        font-size: 0.86rem;
+        margin: 16px auto 0;
+        max-width: 250px;
+    }
+
+    .legend-left {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .legend-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--validation-success);
+    }
+
+    .legend-dot.red {
+        background: var(--validation-danger);
+    }
+
+    .download-actions {
+        width: min(320px, 100%);
+        margin: 36px auto 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .predio-table-title {
+        background: #edf5fb;
+        padding: 12px 20px;
+        color: var(--validation-navy);
+        font-weight: 800;
+        font-size: 1rem;
+        border-top: 1px solid var(--validation-border-soft);
+    }
+
+    .predio-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: var(--validation-navy);
+        font-size: 0.85rem;
+    }
+
+    .predio-table th,
+    .predio-table td {
+        padding: 13px 20px;
+        text-align: left;
+        border-bottom: 1px solid #edf3f8;
+    }
+
+    .predio-table th:last-child,
+    .predio-table td:last-child {
+        text-align: right;
+    }
+
+    .predio-table tbody tr:first-child td {
+        background: #cfe2f2;
+    }
+
+    .count-pill {
+        min-width: 35px;
+        min-height: 35px;
+        padding: 6px 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: var(--validation-danger-soft);
+        color: var(--validation-danger);
+        font-weight: 800;
+    }
+
+    .predio-table-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px 16px;
+        color: var(--validation-navy);
+        font-size: 0.84rem;
+    }
+
+    .pager {
+        display: inline-flex;
+        gap: 8px;
+    }
+
+    .pager button {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        border: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--validation-navy);
+        color: #fff;
+        font-weight: 800;
+        font-size: 0.78rem;
+        cursor: pointer;
+    }
+
+    .pager button:disabled {
+        opacity: .45;
+        cursor: not-allowed;
+    }
+
+    .pager button.is-active {
+        background: #6aa9dc;
+    }
+
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 28px;
+        margin-bottom: 20px;
+    }
+
+    .metric-card {
+        min-height: 78px;
+        padding: 14px;
+        color: var(--validation-navy);
+    }
+
+    .metric-card.blue {
+        background: #b9d7ee;
+        border-color: #b9d7ee;
+    }
+
+    .metric-card.green {
+        background: #e2f6e5;
+        border-color: #e2f6e5;
+        color: var(--validation-success);
+    }
+
+    .metric-card.red {
+        background: #ffd0d4;
+        border-color: #ffd0d4;
+        color: var(--validation-danger);
+    }
+
+    .metric-label {
+        display: block;
+        font-size: 0.82rem;
+        margin-bottom: 8px;
+    }
+
+    .metric-value {
+        display: block;
+        font-size: 1.45rem;
+        line-height: 1;
+        font-weight: 800;
+    }
+
+    .validation-section-title {
+        margin: 0 0 20px;
+        color: var(--validation-navy);
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .result-detail-grid {
+        display: grid;
+        grid-template-columns: minmax(310px, 400px) minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .component-card {
+        background: #fff;
+    }
+
+    .component-card-head {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--validation-border-soft);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .component-card-head strong {
+        color: var(--validation-navy);
+        font-size: 1rem;
+    }
+
+    .component-total {
+        min-width: 58px;
+        min-height: 35px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #ff6a70;
+        background: #ffe4e6;
+        color: var(--validation-danger);
+        border-radius: 10px;
+        font-weight: 800;
+    }
+
+    .component-tab {
+        width: 100%;
+        border: 0;
+        background: #fff;
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr) 24px;
+        align-items: center;
+        gap: 18px;
+        padding: 12px 22px;
+        color: var(--validation-navy);
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .component-tab.is-active {
+        background: #cfe2f2;
+        border-left: 4px solid var(--validation-navy);
+        padding-left: 18px;
+    }
+
+    .component-tab .component-name {
+        display: block;
+        font-weight: 800;
+        font-size: 0.9rem;
+    }
+
+    .component-tab .component-description {
+        display: block;
+        margin-top: 4px;
+        font-size: 0.86rem;
+    }
+
+    .component-tab .bi {
+        justify-self: end;
+        font-size: 1rem;
+    }
+
+    .component-tab.good .count-pill {
+        background: var(--validation-success-soft);
+        color: var(--validation-success);
+    }
+
+    .rules-card {
+        min-height: 388px;
+    }
+
+    .rules-card-title {
+        border-bottom: 1px solid var(--validation-border-soft);
+    }
+
+    .rules-panel {
+        display: none;
+    }
+
+    .rules-panel.is-active {
+        display: block;
+    }
+
+    .rules-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: var(--validation-navy);
+        font-size: 0.82rem;
+    }
+
+    .rules-table th,
+    .rules-table td {
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--validation-border);
+        vertical-align: top;
+        text-align: left;
+    }
+
+    .rules-table th {
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .rules-table th:last-child,
+    .rules-table td:last-child {
+        width: 145px;
+        text-align: right;
+        font-weight: 800;
+        font-size: 0.98rem;
+    }
+
+    .empty-state {
+        padding: 24px;
+        color: var(--validation-muted);
+        font-size: 0.9rem;
+    }
+
+    @keyframes ringSpin {
+        to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 1200px) {
+        .dashboard-grid,
+        .result-detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .summary-card {
+            max-width: 520px;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .validation-stepper {
+            margin: 36px auto;
+            grid-template-columns: 1fr;
+            justify-items: start;
+            gap: 12px;
+            width: min(360px, 100%);
+        }
+
+        .stepper-line {
+            display: none;
+        }
+
+        .uploaded-area,
+        .result-hero,
+        .result-file-meta,
+        .metrics-grid,
+        .error-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .uploaded-area {
+            gap: 18px;
+        }
+
+        .result-hero {
+            align-items: start;
+        }
+
+        .validation-button,
+        .download-actions {
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .validation-page {
+            padding: 8px 0 18px;
+        }
+
+        .dropzone {
+            min-height: 230px;
+        }
+
+        .file-card {
+            grid-template-columns: 38px minmax(0, 1fr) 36px;
+            padding: 12px;
+        }
+
+        .predio-table-footer {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+</style>
+{% endset %}
+
+{% if not validacion_embed %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Validacion XTF</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    {{ _validacion_styles | safe }}
+</head>
+<body class="validacion-xtf-standalone">
+{% else %}
+{{ _validacion_styles | safe }}
+{% endif %}
+
+<div class="validacion-xtf">
+    <div class="validation-page">
+        {% if not result %}
+        <header>
+            <h1 class="validation-title">Validación de reglas de calidad</h1>
+            <p class="validation-subtitle">Analiza y revisa la calidad de los predios del archivo XTF cargado.</p>
+        </header>
+
+        {% if error %}
+            {{ validation_stepper(2) }}
+            <div class="error-layout">
+                <div class="center-state">
+                    <div class="status-art error" aria-hidden="true">
+                        <span class="dot" style="width: 7px; height: 7px; left: 26px; top: 44px; background:#dc6468;"></span>
+                        <span class="dot" style="width: 9px; height: 9px; left: 102px; top: 26px; background:#65a4d8;"></span>
+                        <span class="dot" style="width: 11px; height: 11px; right: 42px; top: 72px; background:#dc6468;"></span>
+                        <span class="dot" style="width: 8px; height: 8px; left: 18px; bottom: 68px; background:#65a4d8;"></span>
+                        <span class="status-bubble">
+                            <span class="status-mark"><i class="bi bi-x-lg"></i></span>
+                        </span>
+                    </div>
+                    <h2 class="center-state-title">¡Error en los validadores!</h2>
                 </div>
-                <p class="subtitle">
-                    Consulta el estado general del archivo y el detalle completo de la validación.
-                </p>
-
-                {% if result.validation %}
-                    {% if total_errors > 0 or failed_rules > 0 %}
-                    <div class="status-banner status-error">
-                        Se detectaron errores durante la validación. Revisa el detalle por regla y por predio en las secciones inferiores.
+                <div class="error-copy">
+                    <p class="error-label">Error encontrado</p>
+                    <div class="error-pill">{{ error }}</div>
+                    <p class="error-label">Recomendaciones</p>
+                    <div class="recommendation-box">
+                        Revisa tu archivo y verifica que el modelo corresponde al proyecto.
                     </div>
-                    {% elif result.validation.status == 'success' %}
-                    <div class="status-banner status-ok">
-                        El archivo pasó la validación correctamente.
-                    </div>
-                    {% else %}
-                    <div class="status-banner status-warning">
-                        No se pudo determinar correctamente el resultado de la validación.
-                    </div>
-                    {% endif %}
-                {% endif %}
+                </div>
             </div>
-
-            <div class="header-actions">
-                <a href="{{ (rp if rp else '') + ('/panel/validacion-xtf' if validacion_embed else '/validacion/xtf') }}" class="btn btn-secondary">
-                    Subir otro archivo
+            <div class="error-actions">
+                <a class="validation-button blue" href="{{ reload_href }}">
+                    <i class="bi bi-arrow-left"></i>
+                    Seleccionar archivo
                 </a>
             </div>
-        </div>
-    </div>
-
-    <div class="kpi-grid">
-        <div class="kpi-card">
-            <div class="kpi-label">Errores totales</div>
-            <div class="kpi-value">{{ total_errors }}</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Reglas evaluadas</div>
-            <div class="kpi-value">{{ total_rules }}</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Reglas cumplidas</div>
-            <div class="kpi-value">{{ passed_rules }}</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Reglas incumplidas</div>
-            <div class="kpi-value">{{ failed_rules }}</div>
-        </div>
-    </div>
-
-    {% if unimplemented_rules > 0 %}
-    <div class="card">
-        <div class="alert alert-error">
-            Se encontraron {{ unimplemented_rules }} reglas definidas en los archivos de configuración que aún no están implementadas en el motor de validación interna.
-        </div>
-    </div>
-    {% endif %}
-
-    <div class="card">
-        <div class="section-head">
-            <h2 class="section-title">Reglas evaluadas</h2>
-            <p>Agrupadas por componente.</p>
-        </div>
-
-        {% if rules_by_component %}
-        <div class="rules-accordion">
-            {% for component_name, component_rules in rules_by_component.items() %}
-                {% set total_component_rules = component_rules|length %}
-                {% set passed_component_rules = component_rules|selectattr('passed')|list|length %}
-                {% set failed_component_rules = total_component_rules - passed_component_rules %}
-                {% set component_label = component_name %}
-
-                <details class="component-accordion" {% if loop.first %}open{% endif %}>
-                    <summary>
-                        <div class="component-summary-left">
-                            <h3>{{ component_label }}</h3>
-                            <p>
-                                {{ total_component_rules }} reglas ·
-                                {{ passed_component_rules }} cumplidas ·
-                                {{ failed_component_rules }} incumplidas
-                            </p>
-                        </div>
-                        <div class="component-summary-right">⌃</div>
-                    </summary>
-
-                    <div class="component-rules-body">
-                        {% for item in component_rules %}
-                        <div class="component-rule-item">
-                            <div class="component-rule-top">
-                                <div>
-                                    {% set catalog_item = rule_catalog.get(item.rule|string, {}) %}
-                                    <div class="component-rule-id">Regla {{ item.rule }}</div>
-                                    <p class="component-rule-description">
-                                        {{ item.description or catalog_item.get('description') or 'Sin descripción disponible.' }}
-                                    </p>
-                                </div>
-
-                                <div class="component-rule-meta">
-                                    <span class="rule-pill {{ 'ok' if item.passed else 'error' }}">
-                                        {{ 'Cumplida' if item.passed else 'Incumplida' }}
-                                    </span>
-                                    <span class="component-rule-errors">
-                                        {{ item.issue_count }} errores
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </details>
-            {% endfor %}
-        </div>
         {% else %}
-        <div class="empty-rules">
-            No hay información de reglas disponible para este resultado.
+            <div id="upload-step-view" class="upload-step">
+                {{ validation_stepper(1) }}
+                <form id="xtf-upload-form" class="upload-form" action="{{ form_action }}" method="post" enctype="multipart/form-data">
+                    <input id="xtf-file-input" class="hidden-file-input" type="file" name="file" accept=".xtf" required>
+
+                    <div id="xtf-dropzone" class="dropzone">
+                        <div class="dropzone-inner">
+                            <div class="dropzone-cloud"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+                            <p class="dropzone-title">Arrastra y suelta tu archivo aqui</p>
+                            <p class="dropzone-text">o Selecciona un archivo desde tu computadora</p>
+                            <button id="xtf-select-btn" type="button" class="validation-button">
+                                Selecciona el archivo
+                            </button>
+                            <div class="format-note">Formato permitido: .XTF</div>
+                        </div>
+                    </div>
+
+                    <div class="uploaded-area">
+                        <h2 class="uploaded-title">Archivo subido</h2>
+                        <div class="file-card">
+                            <span class="file-ok-icon"><i class="bi bi-check-lg"></i></span>
+                            <span>
+                                <span id="xtf-file-name" class="file-name">Archivo XTF</span>
+                                <span id="xtf-file-meta" class="file-meta">Listo para validar</span>
+                            </span>
+                            <button id="xtf-remove-btn" class="remove-file" type="button" aria-label="Quitar archivo">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
+                        </div>
+                        <button id="xtf-submit-btn" type="submit" class="validation-button blue">
+                            Aplicar validadores
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="processing-step-view" class="process-view" hidden>
+                {{ validation_stepper(2) }}
+                <div class="process-ring">
+                    <span class="process-percent">Procesando</span>
+                </div>
+                <h2 class="process-title">Corriendo validadores</h2>
+                <p class="process-text">Por favor espera mientras se realiza el proceso. Esto puede tardar unos minutos</p>
+                <div class="process-checks" aria-hidden="true">
+                    <span class="process-check"><span class="circle"><i class="bi bi-check-lg"></i></span> Validando Modelo</span>
+                    <span class="process-separator"></span>
+                    <span class="process-check"><span class="circle"><i class="bi bi-check-lg"></i></span> Validando estructura</span>
+                    <span class="process-separator pending"></span>
+                    <span class="process-check pending"><span class="circle"><i class="bi bi-clock"></i></span> Analizando los predios</span>
+                </div>
+            </div>
+        {% endif %}
+        {% endif %}
+
+        {% if result and show_runtime_error %}
+        <header>
+            <h1 class="validation-title">Validación de reglas de calidad</h1>
+            <p class="validation-subtitle">Analiza y revisa la calidad de los predios del archivo XTF cargado.</p>
+        </header>
+        {{ validation_stepper(2) }}
+        <div class="error-layout">
+            <div class="center-state">
+                <div class="status-art error" aria-hidden="true">
+                    <span class="status-bubble">
+                        <span class="status-mark"><i class="bi bi-x-lg"></i></span>
+                    </span>
+                </div>
+                <h2 class="center-state-title">¡Error en los validadores!</h2>
+            </div>
+            <div class="error-copy">
+                <p class="error-label">Error encontrado</p>
+                <div class="error-pill">{{ validation.message or 'No fue posible ejecutar la validación.' }}</div>
+                <p class="error-label">Recomendaciones</p>
+                <div class="recommendation-box">Revisa tu archivo y verifica que el modelo corresponde al proyecto.</div>
+            </div>
+        </div>
+        <div class="error-actions">
+            <a class="validation-button blue" href="{{ reload_href }}">
+                <i class="bi bi-arrow-left"></i>
+                Seleccionar archivo
+            </a>
         </div>
         {% endif %}
-    </div>
 
-    {% if result.validation.quality and result.validation.quality.predio_summary %}
-    <div class="card">
-        <div class="section-head">
-            <h2 class="section-title">Resumen de errores por predio</h2>
-            <p>Distribución de hallazgos agrupados por predio o TID.</p>
-        </div>
+        {% if result and not show_runtime_error %}
+        {% if show_success_gate %}
+        <section id="success-step-view" class="center-state">
+            <header>
+                <h1 class="validation-title">Validación de reglas de calidad</h1>
+                <p class="validation-subtitle">Analiza y revisa la calidad de los predios del archivo XTF cargado.</p>
+            </header>
+            {{ validation_stepper(2) }}
+            <div class="status-art success" aria-hidden="true">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="status-bubble">
+                    <span class="status-mark"><i class="bi bi-check-lg"></i></span>
+                </span>
+            </div>
+            <h2 class="center-state-title">¡Validado con éxito!</h2>
+            <button id="show-results-btn" class="validation-button blue" type="button">Ver resultados</button>
+        </section>
+        {% endif %}
 
-        <div class="table-wrapper">
-            <table class="validation-table">
-                <thead>
-                    <tr>
-                        <th>Predio / TID</th>
-                        <th>Errores</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in result.validation.quality.predio_summary %}
-                    <tr>
-                        <td>{{ item.display_id or item.object_id or item.tid or 'Sin identificar' }}</td>
-                        <td>{{ item.issue_count }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endif %}
+        <section id="results-dashboard" class="results-dashboard" {% if show_success_gate %}hidden{% endif %}>
+            <div class="result-hero">
+                <div class="result-file-meta">
+                    <span class="result-file-icon"><i class="bi bi-file-earmark-arrow-up-fill"></i></span>
+                    <span>
+                        <span class="hero-label">{{ filename }}</span>
+                        <span class="hero-value">{{ validation_status_label }}</span>
+                    </span>
+                    <span>
+                        <span class="hero-label">Fecha de carga</span>
+                        <span class="hero-value">{{ generated_at }}</span>
+                    </span>
+                    <span>
+                        <span class="hero-label">Modelo validado</span>
+                        <span class="hero-value">{{ model_display }}</span>
+                    </span>
+                </div>
+                <a class="validation-button light" href="{{ reload_href }}">
+                    <i class="bi bi-arrow-left"></i>
+                    Seleccionar archivo
+                </a>
+            </div>
 
-    {% if schema_errors %}
-    <div class="card">
-        <div class="section-head">
-            <h2 class="section-title">Errores estructurales del archivo XTF</h2>
-            <p>Se listan {{ schema_errors|length }} errores detectados por el validador del modelo.</p>
-        </div>
+            <div class="dashboard-grid">
+                <aside class="summary-card">
+                    <div class="summary-card-title">Resumen general de validación</div>
+                    <div class="summary-body">
+                        <div class="summary-donut" aria-label="{{ validation_percent }} por ciento">
+                            <div class="summary-donut-inner">
+                                <span class="summary-donut-value">{{ validation_percent }} %</span>
+                                <span class="summary-donut-label">{{ summary_donut_label }}</span>
+                            </div>
+                        </div>
+                        <div class="legend-row">
+                            <span class="legend-left"><span class="legend-dot"></span> {{ summary_success_label }}</span>
+                            <span>{{ summary_success_value }}</span>
+                        </div>
+                        <div class="legend-row">
+                            <span class="legend-left"><span class="legend-dot red"></span> {{ summary_error_label }}</span>
+                            <span>{{ summary_error_value }}</span>
+                        </div>
 
-        <div class="table-wrapper">
-            <table class="validation-table">
-                <thead>
-                    <tr>
-                        <th>Predio / TID</th>
-                        <th>Clase</th>
-                        <th>Detalle</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for error in schema_errors %}
-                    <tr>
-                        <td>{{ error.display_id or error.object_id or error.tid or 'Sin identificar' }}</td>
-                        <td>
-                            {% if error.object_class %}
-                            <span class="tag">{{ error.object_class }}</span>
+                        <div class="download-actions">
+                            <a class="validation-button blue" href="{{ pdf_href }}">
+                                <i class="bi bi-download"></i>
+                                Descargar reporte
+                            </a>
+                            <a class="validation-button excel" href="{{ excel_href }}">
+                                <i class="bi bi-file-earmark-spreadsheet"></i>
+                                Descargar Excel
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="predio-table-title">Listado de predios con errores</div>
+                    <table class="predio-table">
+                        <thead>
+                            <tr>
+                                <th>Predio / TID</th>
+                                <th>Hallazgos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if predio_summary %}
+                                {% for item in predio_summary %}
+                                <tr data-predio-row>
+                                    <td>{{ item.display_id or item.object_id or item.tid or 'Sin identificar' }}</td>
+                                    <td><span class="count-pill">{{ item.issue_count }}</span></td>
+                                </tr>
+                                {% endfor %}
                             {% else %}
-                            <span class="tag">Clase no declarada</span>
+                                <tr>
+                                    <td colspan="2">Sin predios con errores</td>
+                                </tr>
                             {% endif %}
-                        </td>
-                        <td>
-                            <div class="rule-message">{{ error.message or 'Sin detalle adicional' }}</div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endif %}
+                        </tbody>
+                    </table>
+                    <div class="predio-table-footer" {% if not predio_summary %}hidden{% endif %}>
+                        <span id="predio-pagination-label">Mostrando {{ predio_summary|length }} de {{ predio_summary|length }} resultados</span>
+                        <span id="predio-pagination" class="pager" data-page-size="5">
+                            <button type="button" data-page-prev aria-label="Pagina anterior"><i class="bi bi-chevron-left"></i></button>
+                            <span data-page-buttons></span>
+                            <button type="button" data-page-next aria-label="Pagina siguiente"><i class="bi bi-chevron-right"></i></button>
+                        </span>
+                    </div>
+                </aside>
 
-    {% if rule_errors %}
-    <div class="card">
-        <div class="section-head">
-            <h2 class="section-title">Reglas incumplidas</h2>
-            <p>Se listan {{ rule_errors|length }} hallazgos asociados a reglas de calidad o negocio.</p>
-        </div>
+                <main>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <span class="metric-label">Predios evaluados</span>
+                            <span class="metric-value">{{ total_predios if total_predios else 'N/D' }}</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">Reglas evaluadas</span>
+                            <span class="metric-value">{{ total_rules }}</span>
+                        </div>
+                        <div class="metric-card blue">
+                            <span class="metric-label">Errores encontrados</span>
+                            <span class="metric-value">{{ total_errors }}</span>
+                        </div>
+                        <div class="metric-card green">
+                            <span class="metric-label">Reglas cumplidas</span>
+                            <span class="metric-value">{{ passed_rules }}</span>
+                        </div>
+                        <div class="metric-card red">
+                            <span class="metric-label">Reglas incumplidas</span>
+                            <span class="metric-value">{{ failed_rules }}</span>
+                        </div>
+                    </div>
 
-        <div class="table-wrapper">
-            <table class="validation-table">
-                <thead>
-                    <tr>
-                        <th>Predio / TID</th>
-                        <th>Clase</th>
-                        <th>Regla</th>
-                        <th>Detalle</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for error in rule_errors %}
-                    {% set is_predio = error.object_class and 'predio' in error.object_class|lower %}
-                    <tr class="{{ 'row-predio' if is_predio else '' }}">
-                        <td>{{ error.display_id or error.object_id or error.tid or 'Sin identificar' }}</td>
-                        <td>
-                            {% if error.object_class %}
-                            <span class="tag">{{ error.object_class }}</span>
+                    <h2 class="validation-section-title">Resultado de la validación</h2>
+                    <div class="result-detail-grid">
+                        <section class="component-card">
+                            <div class="component-card-head">
+                                <div>
+                                    <strong>Reglas incumplidas</strong>
+                                    <div>Total de reglas incumplidas</div>
+                                </div>
+                                <span class="component-total">{{ failed_rules }}</span>
+                            </div>
+
+                            {% if rules_by_component %}
+                                {% for component_name, component_rules in rules_by_component.items() %}
+                                    {% set component_counts = namespace(failed=0, issues=0) %}
+                                    {% for item in component_rules %}
+                                        {% if not item.passed %}
+                                            {% set component_counts.failed = component_counts.failed + 1 %}
+                                        {% endif %}
+                                        {% set component_counts.issues = component_counts.issues + (item.issue_count|int) %}
+                                    {% endfor %}
+                                    <button
+                                        class="component-tab {{ 'is-active' if loop.first else '' }} {{ 'good' if component_counts.failed == 0 else '' }}"
+                                        type="button"
+                                        data-component-target="component-panel-{{ loop.index }}"
+                                    >
+                                        <span class="count-pill">{{ component_counts.failed }}</span>
+                                        <span>
+                                            <span class="component-name">{{ component_name }}</span>
+                                            <span class="component-description">Reglas del componente {{ component_name|lower }}</span>
+                                        </span>
+                                        <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                {% endfor %}
+                                {% if schema_errors %}
+                                <button
+                                    class="component-tab {{ 'is-active' if not rules_by_component else '' }}"
+                                    type="button"
+                                    data-component-target="component-panel-schema"
+                                >
+                                    <span class="count-pill">{{ schema_errors|length }}</span>
+                                    <span>
+                                        <span class="component-name">Estructural XTF</span>
+                                        <span class="component-description">Errores detectados por el validador del modelo</span>
+                                    </span>
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                                {% endif %}
                             {% else %}
-                            <span class="tag">Clase no declarada</span>
+                                {% if schema_errors %}
+                                <button
+                                    class="component-tab is-active"
+                                    type="button"
+                                    data-component-target="component-panel-schema"
+                                >
+                                    <span class="count-pill">{{ schema_errors|length }}</span>
+                                    <span>
+                                        <span class="component-name">Estructural XTF</span>
+                                        <span class="component-description">Errores detectados por el validador del modelo</span>
+                                    </span>
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                                {% else %}
+                                <div class="empty-state">No hay información de componentes para este resultado.</div>
+                                {% endif %}
                             {% endif %}
-                        </td>
-                        <td>{{ error.rule }}</td>
-                        <td>
-                            <div class="rule-message">{{ error.message or 'Sin detalle adicional' }}</div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% endif %}
+                        </section>
 
-    {% if not schema_errors and not rule_errors and result.validation.status == 'invalid' %}
-    <div class="card">
-        <p class="muted">El informe no devolvió hallazgos detallados. Revisa el log interno para más información.</p>
-    </div>
-    {% endif %}
-    {% endif %}
-</div>
-
-<div id="upload-loading-modal" class="modal-backdrop" aria-hidden="true">
-    <div class="modal-card">
-        <div class="modal-icon upload">⤴</div>
-        <h3>Subiendo</h3>
-        <p>Estamos cargando el archivo XTF.</p>
-        <p>Este proceso puede tardar unos segundos.</p>
-        <div class="spinner"></div>
-    </div>
-</div>
-
-<div id="upload-success-modal" class="modal-backdrop" aria-hidden="true">
-    <div class="modal-card success">
-        <div class="modal-icon success">✓</div>
-        <h3 class="modal-success-title">Archivo cargado correctamente</h3>
-        <p class="modal-success-text">El archivo XTF se subió de forma exitosa.</p>
-        <p class="modal-success-text">Ahora verás el resultado de la validación.</p>
-        <div class="modal-divider"></div>
-        <div class="modal-actions">
-            <button id="upload-success-accept" type="button" class="btn btn-primary">Aceptar</button>
-        </div>
+                        <section class="rules-card">
+                            {% if rules_by_component %}
+                                {% for component_name, component_rules in rules_by_component.items() %}
+                                <div id="component-panel-{{ loop.index }}" class="rules-panel {{ 'is-active' if loop.first else '' }}">
+                                    <div class="rules-card-title">Desglose de hallazgos del componente {{ component_name|lower }}</div>
+                                    <table class="rules-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Descripción de la regla</th>
+                                                <th>Regla</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in component_rules if not item.passed %}
+                                                {% set catalog_item = rule_catalog.get(item.rule|string, {}) %}
+                                                <tr>
+                                                    <td>{{ item.description or catalog_item.get('description') or 'Sin descripción disponible.' }}</td>
+                                                    <td>Regla {{ item.rule }}</td>
+                                                </tr>
+                                            {% else %}
+                                                <tr>
+                                                    <td colspan="2">Este componente no tiene reglas incumplidas.</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% endfor %}
+                                {% if schema_errors %}
+                                <div id="component-panel-schema" class="rules-panel">
+                                    <div class="rules-card-title">Errores estructurales del archivo XTF</div>
+                                    <table class="rules-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Detalle</th>
+                                                <th>Objeto</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in schema_errors %}
+                                            <tr>
+                                                <td>{{ item.message or 'Sin detalle adicional' }}</td>
+                                                <td>{{ item.display_id or item.object_id or item.tid or item.object_class or 'Sin identificar' }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                {% if schema_errors %}
+                                <div id="component-panel-schema" class="rules-panel is-active">
+                                    <div class="rules-card-title">Errores estructurales del archivo XTF</div>
+                                    <table class="rules-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Detalle</th>
+                                                <th>Objeto</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in schema_errors %}
+                                            <tr>
+                                                <td>{{ item.message or 'Sin detalle adicional' }}</td>
+                                                <td>{{ item.display_id or item.object_id or item.tid or item.object_class or 'Sin identificar' }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <div class="rules-card-title">Desglose de hallazgos</div>
+                                <div class="empty-state">No hay reglas disponibles para mostrar.</div>
+                                {% endif %}
+                            {% endif %}
+                        </section>
+                    </div>
+                </main>
+            </div>
+        </section>
+        {% endif %}
     </div>
 </div>
 
 <script>
 (function () {
+    var root = document.querySelector('.validacion-xtf');
     var form = document.getElementById('xtf-upload-form');
     var input = document.getElementById('xtf-file-input');
     var dropzone = document.getElementById('xtf-dropzone');
-    var fileName = document.getElementById('xtf-file-name');
     var selectBtn = document.getElementById('xtf-select-btn');
-    var loadingModal = document.getElementById('upload-loading-modal');
-    var successModal = document.getElementById('upload-success-modal');
-    var successAccept = document.getElementById('upload-success-accept');
+    var fileName = document.getElementById('xtf-file-name');
+    var fileMeta = document.getElementById('xtf-file-meta');
+    var removeBtn = document.getElementById('xtf-remove-btn');
+    var uploadView = document.getElementById('upload-step-view');
+    var processingView = document.getElementById('processing-step-view');
+    var showResultsBtn = document.getElementById('show-results-btn');
+    var successView = document.getElementById('success-step-view');
+    var dashboard = document.getElementById('results-dashboard');
 
-    function updateFileName() {
-        if (input && input.files && input.files.length > 0) {
-            fileName.textContent = input.files[0].name;
-            fileName.classList.remove('empty');
-        } else if (fileName) {
-            fileName.textContent = 'Ningún archivo seleccionado';
-            fileName.classList.add('empty');
+    function formatSize(bytes) {
+        if (!bytes && bytes !== 0) return '';
+        if (bytes < 1024) return bytes + 'B';
+        var kb = bytes / 1024;
+        if (kb < 1024) return kb.toFixed(1) + 'KB';
+        return (kb / 1024).toFixed(1) + 'MB';
+    }
+
+    function updateSelectedFile() {
+        if (!input || !form) return;
+        if (input.files && input.files.length > 0) {
+            var file = input.files[0];
+            form.classList.add('is-ready');
+            if (fileName) fileName.textContent = file.name;
+            if (fileMeta) fileMeta.textContent = formatSize(file.size) + ' · Listo para validar';
+        } else {
+            form.classList.remove('is-ready');
+            if (fileName) fileName.textContent = 'Archivo XTF';
+            if (fileMeta) fileMeta.textContent = 'Listo para validar';
         }
     }
 
     if (selectBtn && input) {
-        selectBtn.addEventListener('click', function () {
+        selectBtn.addEventListener('click', function (event) {
+            event.stopPropagation();
             input.click();
         });
     }
@@ -1240,8 +1556,8 @@ body.modal-open {
             input.click();
         });
 
-        dropzone.addEventListener('dragover', function (e) {
-            e.preventDefault();
+        dropzone.addEventListener('dragover', function (event) {
+            event.preventDefault();
             dropzone.classList.add('dragover');
         });
 
@@ -1249,58 +1565,119 @@ body.modal-open {
             dropzone.classList.remove('dragover');
         });
 
-        dropzone.addEventListener('drop', function (e) {
-            e.preventDefault();
+        dropzone.addEventListener('drop', function (event) {
+            event.preventDefault();
             dropzone.classList.remove('dragover');
-
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                input.files = e.dataTransfer.files;
-                updateFileName();
+            if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+                input.files = event.dataTransfer.files;
+                updateSelectedFile();
             }
         });
     }
 
     if (input) {
-        input.addEventListener('change', updateFileName);
+        input.addEventListener('change', updateSelectedFile);
     }
 
-    if (form && loadingModal) {
+    if (removeBtn && input) {
+        removeBtn.addEventListener('click', function () {
+            input.value = '';
+            updateSelectedFile();
+        });
+    }
+
+    if (form) {
         form.addEventListener('submit', function () {
-            if (input.files && input.files.length > 0) {
-                loadingModal.classList.add('show');
-                loadingModal.setAttribute('aria-hidden', 'false');
-                document.body.classList.add('modal-open');
+            if (input && input.files && input.files.length > 0) {
+                if (uploadView) uploadView.hidden = true;
+                if (processingView) processingView.hidden = false;
+                if (root) root.scrollIntoView({ block: 'start' });
             }
         });
     }
-    const hasResult = "{{ 'true' if result else 'false' }}" === "true";
 
-    if (hasResult && successModal && successAccept) {
-        var app = document.querySelector('.validacion-xtf');
+    if (showResultsBtn && successView && dashboard) {
+        showResultsBtn.addEventListener('click', function () {
+            successView.hidden = true;
+            dashboard.hidden = false;
+            dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
 
-        successModal.classList.add('show');
-        successModal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
+    (function initPredioPagination() {
+        var rows = Array.prototype.slice.call(document.querySelectorAll('[data-predio-row]'));
+        var pager = document.getElementById('predio-pagination');
+        var label = document.getElementById('predio-pagination-label');
+        if (!rows.length || !pager || !label) return;
 
-        if (app) {
-            app.style.visibility = 'hidden';
+        var pageSize = Number(pager.getAttribute('data-page-size') || 5);
+        var pageCount = Math.max(Math.ceil(rows.length / pageSize), 1);
+        var currentPage = 0;
+        var prev = pager.querySelector('[data-page-prev]');
+        var next = pager.querySelector('[data-page-next]');
+        var buttonsBox = pager.querySelector('[data-page-buttons]');
+
+        function renderButtons() {
+            if (!buttonsBox) return;
+            buttonsBox.innerHTML = '';
+            for (var i = 0; i < pageCount; i += 1) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = String(i + 1);
+                button.setAttribute('aria-label', 'Pagina ' + String(i + 1));
+                button.className = i === currentPage ? 'is-active' : '';
+                button.addEventListener('click', function (event) {
+                    currentPage = Number(event.currentTarget.textContent) - 1;
+                    render();
+                });
+                buttonsBox.appendChild(button);
+            }
         }
 
-        successAccept.addEventListener('click', function () {
-            successModal.classList.remove('show');
-            successModal.setAttribute('aria-hidden', 'true');
-            document.body.classList.remove('modal-open');
+        function render() {
+            var start = currentPage * pageSize;
+            var end = Math.min(start + pageSize, rows.length);
+            rows.forEach(function (row, index) {
+                row.hidden = index < start || index >= end;
+            });
+            label.textContent = 'Mostrando ' + (start + 1) + '-' + end + ' de ' + rows.length + ' resultados';
+            if (prev) prev.disabled = currentPage === 0;
+            if (next) next.disabled = currentPage >= pageCount - 1;
+            renderButtons();
+        }
 
-            if (app) {
-                app.style.visibility = 'visible';
-            }
+        if (prev) {
+            prev.addEventListener('click', function () {
+                if (currentPage > 0) {
+                    currentPage -= 1;
+                    render();
+                }
+            });
+        }
 
-            var anchor = document.getElementById('resultado-anchor');
-            if (anchor) {
-                anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+        if (next) {
+            next.addEventListener('click', function () {
+                if (currentPage < pageCount - 1) {
+                    currentPage += 1;
+                    render();
+                }
+            });
+        }
+
+        render();
+    })();
+
+    document.querySelectorAll('.component-tab').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var targetId = button.getAttribute('data-component-target');
+            document.querySelectorAll('.component-tab').forEach(function (item) {
+                item.classList.toggle('is-active', item === button);
+            });
+            document.querySelectorAll('.rules-panel').forEach(function (panel) {
+                panel.classList.toggle('is-active', panel.id === targetId);
+            });
         });
-    }
+    });
 })();
 </script>
 

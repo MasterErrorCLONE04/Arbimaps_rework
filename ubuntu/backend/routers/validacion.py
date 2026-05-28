@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request, UploadFile, File, HTTPException
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
+from services.validation_excel_report import MIME_TYPE as EXCEL_MIME_TYPE
 from services.xtf_validation_service import XTFValidationService
 
 router = APIRouter(prefix="/validacion", tags=["Validación"])
@@ -96,6 +97,26 @@ def descargar_reporte_xtf(job_id: str):
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
+
+
+@router.get("/xtf/{job_id}/errores.xlsx")
+def descargar_errores_xtf_excel(job_id: str):
+    try:
+        excel_bytes, filename = _get_xtf_service().build_excel_report(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    return Response(
+        content=excel_bytes,
+        media_type=EXCEL_MIME_TYPE,
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
         },

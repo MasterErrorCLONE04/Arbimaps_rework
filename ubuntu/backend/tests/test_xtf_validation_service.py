@@ -1,3 +1,7 @@
+from io import BytesIO
+from zipfile import ZipFile
+
+from services.validation_excel_report import build_validation_errors_excel, validation_excel_filename
 from services.xtf_validation_service import XTFValidationService
 
 
@@ -95,3 +99,60 @@ def test_rule_errors_are_ordered_by_rule_number():
     _, rule_errors = service._quality_and_rule_errors(quality)
 
     assert [error["rule"] for error in rule_errors] == ["1.1", "1.2", "1.10"]
+
+
+def test_validation_excel_has_consolidated_and_component_sheets():
+    report = {
+        "generated_at": "2026-05-28T10:30:00",
+        "original_filename": "retorno.xtf",
+        "validation": {
+            "rule_errors": [
+                {
+                    "display_id": "PREDIO-1",
+                    "object_class": "Administrativo.Predio",
+                    "rule": "1.1",
+                    "message": "Falta direccion",
+                    "component_label": "Administrativo",
+                },
+                {
+                    "display_id": "PREDIO-2",
+                    "object_class": "Juridico.Derecho",
+                    "rule": "2.1",
+                    "message": "Falta interesado",
+                    "component_label": "Juridico",
+                },
+            ],
+            "schema_errors": [
+                {
+                    "object_id": "TID-1",
+                    "object_class": "Modelo.Clase",
+                    "message": "Error estructural",
+                }
+            ],
+            "quality": {
+                "rules": [],
+                "rule_catalog": {},
+            },
+        },
+    }
+
+    xlsx = build_validation_errors_excel(report)
+
+    with ZipFile(BytesIO(xlsx)) as workbook:
+        workbook_xml = workbook.read("xl/workbook.xml").decode("utf-8")
+        consolidated_xml = workbook.read("xl/worksheets/sheet1.xml").decode("utf-8")
+
+    assert 'name="Consolidado"' in workbook_xml
+    assert 'name="Administrativo"' in workbook_xml
+    assert 'name="Juridico"' in workbook_xml
+    assert 'name="Estructural XTF"' in workbook_xml
+    assert "Componente" in consolidated_xml
+    assert "PREDIO-1" in consolidated_xml
+    assert "Administrativo.Predio" in consolidated_xml
+    assert "Falta direccion" in consolidated_xml
+
+
+def test_validation_excel_filename_uses_generation_date():
+    filename = validation_excel_filename({"generated_at": "2026-05-28T10:30:00"})
+
+    assert filename == "Usuario_errores_validacion_20260528_1030.xlsx"

@@ -14,6 +14,7 @@ from typing import Any
 from uuid import uuid4
 
 from quality_rules.runner import run_quality_checks
+from services.validation_excel_report import build_validation_errors_excel, validation_excel_filename
 from services.validation_pdf_report import build_validation_pdf, validation_pdf_filename
 
 
@@ -67,6 +68,11 @@ class XTFValidationService:
         pdf_bytes = build_validation_pdf(result, watermark_path)
         return pdf_bytes, validation_pdf_filename(result)
 
+    def build_excel_report(self, job_id: str) -> tuple[bytes, str]:
+        result = self.load_job_result(job_id)
+        excel_bytes = build_validation_errors_excel(result)
+        return excel_bytes, validation_excel_filename(result)
+
     def load_job_result(self, job_id: str) -> dict[str, Any]:
         result_path = self._job_result_path(job_id)
         if not result_path.is_file():
@@ -92,6 +98,7 @@ class XTFValidationService:
     def _validate_xtf(self, job_id: str, file_path: Path) -> dict[str, Any]:
         log_path = (self.log_dir / f"{job_id}.log").resolve()
         report_path = (self.report_dir / f"{job_id}.xml").resolve()
+        model_names = self._extract_xtf_model_names(file_path)
         quality_result = self._run_internal_quality(file_path)
         quality, rule_errors = self._quality_and_rule_errors(quality_result)
 
@@ -111,6 +118,7 @@ class XTFValidationService:
                 schema_errors=[],
                 rule_errors=rule_errors,
                 quality=quality,
+                model_names=model_names,
             )
 
         java_bin = self.java_bin
@@ -128,6 +136,7 @@ class XTFValidationService:
                 schema_errors=[],
                 rule_errors=rule_errors,
                 quality=quality,
+                model_names=model_names,
             )
 
         if not self.model_dir.exists():
@@ -137,6 +146,7 @@ class XTFValidationService:
                 schema_errors=[],
                 rule_errors=rule_errors,
                 quality=quality,
+                model_names=model_names,
             )
 
         libs = self._gather_validator_libs(validator_path)
@@ -147,6 +157,7 @@ class XTFValidationService:
                 schema_errors=[],
                 rule_errors=rule_errors,
                 quality=quality,
+                model_names=model_names,
             )
 
         base_cmd = self._build_validator_base_cmd(java_bin, validator_path, libs)
@@ -205,6 +216,7 @@ class XTFValidationService:
             schema_errors=schema_errors,
             rule_errors=rule_errors,
             quality=quality,
+            model_names=model_names,
         )
 
     def _empty_quality_result(self) -> dict[str, Any]:
@@ -220,7 +232,9 @@ class XTFValidationService:
                 "failed_rules": 0,
                 "unimplemented_rules": 0,
                 "total_issues": 0,
+                "total_predios": 0,
                 "predios_con_errores": 0,
+                "predios_sin_errores": 0,
             },
         }
 
@@ -500,9 +514,20 @@ class XTFValidationService:
                 summary.get("total_issues"),
                 default=len(issues),
             ),
+            "total_predios": self._coerce_int(
+                summary.get("total_predios"),
+                default=0,
+            ),
             "predios_con_errores": self._coerce_int(
                 summary.get("predios_con_errores"),
                 default=len(predio_summary),
+            ),
+            "predios_sin_errores": self._coerce_int(
+                summary.get("predios_sin_errores"),
+                default=max(
+                    self._coerce_int(summary.get("total_predios"), default=0) - len(predio_summary),
+                    0,
+                ),
             ),
         }
 
@@ -812,6 +837,26 @@ class XTFValidationService:
 
         return dirs
 
+    def _extract_xtf_model_names(self, file_path: Path) -> list[str]:
+        if not file_path or not file_path.exists():
+            return []
+
+        try:
+            tree = ET.parse(file_path)
+        except (ET.ParseError, OSError):
+            return []
+
+        names: list[str] = []
+        for element in tree.getroot().iter():
+            tag_name = element.tag.split("}")[-1].lower()
+            if tag_name != "model":
+                continue
+            name = str(element.get("NAME") or element.get("name") or "").strip()
+            if name and name not in names:
+                names.append(name)
+
+        return names
+
     def _collect_validation_errors(
         self,
         report_path: Path,
@@ -1092,6 +1137,7 @@ class XTFValidationService:
         command: str | None = None,
         stdout_tail: str = "",
         stderr_tail: str = "",
+        model_names: list[str] | None = None,
     ) -> dict[str, Any]:
         """Construye la respuesta final conservando schema_errors y errores topológicos/calidad."""
         normalized_quality = self._normalize_quality_result(quality)
@@ -1116,6 +1162,8 @@ class XTFValidationService:
             "schema_errors": schema_errors,
             "rule_errors": rule_errors,
             "quality": normalized_quality,
+            "model_names": model_names or [],
+            "model_name": ", ".join(model_names or []),
             "log_path": log_path,
             "report_path": report_path,
             "command": command,

@@ -43,6 +43,14 @@ def _debug_tables(tables: dict[str, list[dict[str, Any]]]) -> None:
     print("=============================================")
 
 
+def _total_predios(tables: dict[str, list[dict[str, Any]]]) -> int:
+    for table_name in ("ARB_Predio", "arb_predio", "ILC_Predio", "ilc_predio"):
+        rows = tables.get(table_name)
+        if rows:
+            return len(rows)
+    return 0
+
+
 def run_quality_checks(xtf_path: Path) -> dict[str, Any]:
     try:
         tables = parse_xtf_tables(xtf_path, TARGET_CLASSES)
@@ -73,6 +81,7 @@ def run_quality_checks(xtf_path: Path) -> dict[str, Any]:
     dataset = InMemoryDataset(tables)
     component_results = run_all_components(dataset)
     available_rule_ids = _load_available_rule_ids()
+    total_predios = _total_predios(tables)
 
     issues: list[dict[str, Any]] = []
     for component_result in component_results:
@@ -166,6 +175,8 @@ def run_quality_checks(xtf_path: Path) -> dict[str, Any]:
             key=lambda item: (-item[1], item[0]),
         )
     ]
+    predios_con_errores = len(predio_summary)
+    predios_sin_errores = max(total_predios - predios_con_errores, 0)
 
     status = "passed" if not issues else "failed"
 
@@ -182,7 +193,9 @@ def run_quality_checks(xtf_path: Path) -> dict[str, Any]:
                 "passed_rules": len(passed_rules),
                 "failed_rules": len(failed_rules),
                 "total_issues": len(issues),
-                "predios_con_errores": len(predio_summary),
+                "total_predios": total_predios,
+                "predios_con_errores": predios_con_errores,
+                "predios_sin_errores": predios_sin_errores,
             },
             "rules": rule_status,
             "rule_catalog": rule_catalog,
