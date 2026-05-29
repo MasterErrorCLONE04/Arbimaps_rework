@@ -331,7 +331,8 @@
             campos_ocultos: recolectarInputsOcultos(),
             checks: recolectarChecks(),
             archivos: recolectarArchivos(),
-            interesados: datosPruebaOpcion4 || []
+            interesados: datosPruebaOpcion4 || [],
+            visita: typeof datosPruebaOpcion6 !== 'undefined' ? datosPruebaOpcion6 : null
         };
 
         const payloadInput = asegurarCampoPayload();

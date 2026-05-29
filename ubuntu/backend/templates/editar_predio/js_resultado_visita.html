@@ -1,5 +1,20 @@
 <script>
-    var datosPruebaOpcion6 = {};
+    var datosPruebaOpcion6 = {
+        visita: {
+            resultadoVisita: '',
+            fechaVisitaPredial: '',
+            observaciones: '',
+            controlCalidad: ''
+        },
+        atendioVisita: {
+            condicionPredio: '',
+            tipoDocumento: '',
+            numeroDocumento: '',
+            correoElectronico: '',
+            domicilioNotificaciones: '',
+            autorizaNotificaciones: false
+        }
+    };
 </script>
 
 <script>
@@ -488,6 +503,9 @@
 
         renderizarResultadoVisitaOpcion6();
     }
+
+    window.renderizarResultadoVisitaOpcion6 = renderizarResultadoVisitaOpcion6;
+    window.renderizarTablasOpcion6 = renderizarResultadoVisitaOpcion6;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', inicializarOpcion6ResultadoVisita);

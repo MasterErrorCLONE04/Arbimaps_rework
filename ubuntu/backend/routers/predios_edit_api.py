@@ -1,4 +1,4 @@
-﻿from typing import Optional
+from typing import Optional
 import logging
 import re
 import secrets
@@ -28,6 +28,7 @@ class EdicionPredioPayload(BaseModel):
     checks: dict
     archivos: dict
     interesados: Optional[list] = None
+    visita: Optional[dict] = None
 
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -414,6 +415,71 @@ async def guardar_edicion_predio(
                     )
                     if cur.rowcount:
                         updated_fields.append("arb_direccion.tipo_direccion")
+
+                # 4b. Update visita and atendioVisita fields in arb_predio
+                if payload.visita is not None:
+                    vis = payload.visita.get("visita") or {}
+                    ate = payload.visita.get("atendioVisita") or {}
+                    
+                    res_vis_id = resolve_lookup("arb_resultadovisitatipo", vis.get("resultadoVisita"))
+                    fec_vis = vis.get("fechaVisitaPredial") or None
+                    if fec_vis == "" or fec_vis == "----":
+                        fec_vis = None
+                    obs_vis = vis.get("observaciones") or None
+                    if obs_vis == "Sin datos..." or obs_vis == "----":
+                        obs_vis = None
+                    con_cal = vis.get("controlCalidad") or None
+                    if con_cal == "Sin datos..." or con_cal == "----":
+                        con_cal = None
+                        
+                    cond_pred_id = resolve_lookup("arb_condicionprediotipo", ate.get("condicionPredio"))
+                    tipo_doc_id = resolve_lookup("arb_interesadodocumentotipo", ate.get("tipoDocumento"))
+                    num_doc = ate.get("numeroDocumento") or None
+                    if num_doc == "Sin datos..." or num_doc == "----":
+                        num_doc = None
+                    corr_elec = ate.get("correoElectronico") or None
+                    if corr_elec == "Sin datos..." or corr_elec == "----":
+                        corr_elec = None
+                    dom_notif = ate.get("domicilioNotificaciones") or None
+                    if dom_notif == "Sin datos..." or dom_notif == "----":
+                        dom_notif = None
+                    aut_notif = bool(ate.get("autorizaNotificaciones"))
+                    
+                    cur.execute(
+                        f"""
+                        UPDATE {schema_work}.arb_predio
+                        SET resultado_visita = %s,
+                            fecha_visita_predial = %s,
+                            observaciones = %s,
+                            control_calidad = %s,
+                            condicion_predio = %s,
+                            tipo_documento_quien_atendio = %s,
+                            numero_documento_quien_atendio = %s,
+                            correo_electronico = %s,
+                            domicilio_notificaciones = %s,
+                            autoriza_notificaciones = %s
+                        WHERE t_id = %s
+                        """,
+                        (
+                            res_vis_id,
+                            fec_vis,
+                            obs_vis,
+                            con_cal,
+                            cond_pred_id,
+                            tipo_doc_id,
+                            num_doc,
+                            corr_elec,
+                            dom_notif,
+                            aut_notif,
+                            workspace_predio_t_id
+                        )
+                    )
+                    if cur.rowcount:
+                        updated_fields.extend([
+                            "resultado_visita", "fecha_visita_predial", "observaciones", "control_calidad",
+                            "condicion_predio", "tipo_documento_quien_atendio", "numero_documento_quien_atendio",
+                            "correo_electronico", "domicilio_notificaciones", "autoriza_notificaciones"
+                        ])
 
                 # 5. Sincronizar interesados (derecho/fuente/interesado)
                 if payload.interesados is not None:

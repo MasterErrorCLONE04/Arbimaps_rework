@@ -109,17 +109,24 @@
                                 if (typeof renderizarConstruccionesOpcion5 === 'function') renderizarConstruccionesOpcion5();
                             }
 
-                            if (data.contacto_visita && typeof datosPruebaOpcion6 !== 'undefined') {
+                            if (data.predio && typeof datosPruebaOpcion6 !== 'undefined') {
+                                const p = data.predio;
                                 datosPruebaOpcion6 = {
-                                    visita: { resultadoVisita: '', fechaVisitaPredial: '', observaciones: '', controlCalidad: '' },
-                                    atendioVisita: { condicionPredio: '', tipoDocumento: '' }
+                                    visita: {
+                                        resultadoVisita: p.resultado_visita_nombre || p.resultado_visita || '',
+                                        fechaVisitaPredial: p.fecha_visita_predial || '',
+                                        observaciones: p.observaciones || '',
+                                        controlCalidad: p.control_calidad || ''
+                                    },
+                                    atendioVisita: {
+                                        condicionPredio: p.condicion_predio_nombre || p.condicion_predio || '',
+                                        tipoDocumento: p.tipo_documento_quien_atendio_nombre || p.tipo_documento_quien_atendio || '',
+                                        numeroDocumento: p.numero_documento_quien_atendio || '',
+                                        correoElectronico: p.correo_electronico || '',
+                                        domicilioNotificaciones: p.domicilio_notificaciones || '',
+                                        autorizaNotificaciones: p.autoriza_notificaciones === true
+                                    }
                                 };
-                                if (data.contacto_visita.length > 0) {
-                                    const cv = data.contacto_visita[0];
-                                    datosPruebaOpcion6.visita.resultadoVisita = cv.tipo_contacto_nombre || cv.tipo_contacto || '';
-                                    datosPruebaOpcion6.visita.fechaVisitaPredial = cv.fecha_visita || '';
-                                    datosPruebaOpcion6.visita.observaciones = cv.observacion || '';
-                                }
                                 if (typeof window.renderizarTablasOpcion6 === 'function') window.renderizarTablasOpcion6();
                             }
 
