@@ -888,6 +888,11 @@
     }));
   }
 
+  function publishedWorkspaceGroupExists(availableNames, namespace) {
+    if (!availableNames || !namespace) return false;
+    return availableNames.has(String(namespace).toLowerCase());
+  }
+
   function listAvailableLayerNames(xmlDoc) {
     const nodes = getLayerNodes(xmlDoc);
     return new Set(
@@ -898,19 +903,57 @@
     );
   }
 
-  function defaultBasePrincipalSubLayers(namespace) {
-    if (!namespace) return [];
-    const defs = [
+  function defaultBasePrincipalLayerDefs() {
+    return [
       { suffix: "arb_terreno", title: "Terreno" },
       { suffix: "arb_terrenohistorico", title: "Terreno historico" },
       { suffix: "arb_construccion", title: "Construccion" },
       { suffix: "arb_unidadconstruccion", title: "Unidad construccion" },
       { suffix: "arb_direccion", title: "Direccion" },
     ];
+  }
+
+  function defaultBasePrincipalSubLayers(namespace, { qualified = true } = {}) {
+    const defs = [
+      ...defaultBasePrincipalLayerDefs(),
+    ];
     return defs.map((d) => ({
-      name: `${namespace}:${d.suffix}`,
+      name: qualified && namespace ? `${namespace}:${d.suffix}` : d.suffix,
       title: d.title,
     }));
+  }
+
+  function resolvePublishedBasePrincipalLayers(availableNames, namespace) {
+    const qualifiedDefaults = defaultBasePrincipalSubLayers(namespace, {
+      qualified: true,
+    });
+    const existingQualifiedDefaults = qualifiedDefaults.filter((layer) =>
+      availableNames.has(String(layer.name).toLowerCase()),
+    );
+    if (existingQualifiedDefaults.length) {
+      return existingQualifiedDefaults;
+    }
+
+    if (publishedWorkspaceGroupExists(availableNames, namespace)) {
+      return [
+        {
+          name: namespace,
+          title: layerTitleFromName(namespace),
+        },
+      ];
+    }
+
+    const unqualifiedDefaults = defaultBasePrincipalSubLayers(namespace, {
+      qualified: false,
+    });
+    const existingUnqualifiedDefaults = unqualifiedDefaults.filter((layer) =>
+      availableNames.has(String(layer.name).toLowerCase()),
+    );
+    if (existingUnqualifiedDefaults.length) {
+      return existingUnqualifiedDefaults;
+    }
+
+    return qualifiedDefaults;
   }
 
   function expandConfiguredLayers(configuredLayers) {
@@ -971,11 +1014,7 @@
 
       // Forzamos el desglose de Base_Principal en subcapas operativas
       if (String(layerPart || "").toLowerCase() === "base_principal") {
-        const defaults = defaultBasePrincipalSubLayers(namespace);
-        const existingDefaults = defaults.filter((l) =>
-          availableNames.has(String(l.name).toLowerCase()),
-        );
-        (existingDefaults.length ? existingDefaults : defaults).forEach(addLayer);
+        resolvePublishedBasePrincipalLayers(availableNames, namespace).forEach(addLayer);
         return;
       }
 

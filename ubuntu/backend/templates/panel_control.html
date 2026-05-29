@@ -869,6 +869,146 @@
         const GEOSERVER_LAYERS = String(
             {{ visor_geoserver_layers | default('A_Base_Principal:Base_Principal') | tojson }}
       ).split(',').map(n => n.trim()).filter(Boolean);
+        let wmsCapabilitiesDoc = null;
+
+    function defaultBasePrincipalLayers(namespace, qualified = true) {
+        const suffixes = ['arb_terreno', 'arb_terrenohistorico', 'arb_construccion', 'arb_unidadconstruccion', 'arb_direccion'];
+        return suffixes.map(suffix => (qualified && namespace ? `${namespace}:${suffix}` : suffix));
+    }
+
+    function getPublishedLayerNames(xmlDoc) {
+        if (!xmlDoc) return new Set();
+        return new Set(
+            Array.from(xmlDoc.getElementsByTagName('Name'))
+                .map(node => String(node.textContent || '').trim())
+                .filter(Boolean)
+                .map(name => name.toLowerCase())
+        );
+    }
+
+    async function getWmsCapabilitiesDoc() {
+        if (wmsCapabilitiesDoc) return wmsCapabilitiesDoc;
+        try {
+            const r = await fetch(`${WMS_URL}?service=WMS&request=GetCapabilities`);
+            if (!r.ok) return null;
+            const xmlText = await r.text();
+            wmsCapabilitiesDoc = new DOMParser().parseFromString(xmlText, 'text/xml');
+            return wmsCapabilitiesDoc;
+        } catch (_err) {
+            return null;
+        }
+    }
+
+    async function resolveDashboardWmsLayers() {
+        const xmlDoc = await getWmsCapabilitiesDoc();
+        const availableNames = getPublishedLayerNames(xmlDoc);
+        const resolved = [];
+        const seen = new Set();
+
+        const add = (name) => {
+            const clean = String(name || '').trim();
+            if (!clean) return;
+            const key = clean.toLowerCase();
+            if (seen.has(key)) return;
+            seen.add(key);
+            resolved.push(clean);
+        };
+
+        GEOSERVER_LAYERS.forEach((configuredName) => {
+            const clean = String(configuredName || '').trim();
+            if (!clean) return;
+            const [namespace, layerPart = ''] = clean.split(':');
+            if (String(layerPart || '').toLowerCase() !== 'base_principal') {
+                add(clean);
+                return;
+            }
+
+            const qualifiedDefaults = defaultBasePrincipalLayers(namespace, true);
+            const existingQualified = qualifiedDefaults.filter(name => availableNames.has(name.toLowerCase()));
+            if (existingQualified.length) {
+                existingQualified.forEach(add);
+                return;
+            }
+
+            if (availableNames.has(String(namespace).toLowerCase())) {
+                add(namespace);
+                return;
+            }
+
+            const unqualifiedDefaults = defaultBasePrincipalLayers(namespace, false);
+            const existingUnqualified = unqualifiedDefaults.filter(name => availableNames.has(name.toLowerCase()));
+            if (existingUnqualified.length) {
+                existingUnqualified.forEach(add);
+                return;
+            }
+
+            qualifiedDefaults.forEach(add);
+        });
+
+        return resolved.length ? resolved : GEOSERVER_LAYERS;
+    }
+
+    function resolveDashboardWmsLayersSync() {
+        try {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', `${WMS_URL}?service=WMS&request=GetCapabilities`, false);
+            xhr.send(null);
+            if (xhr.status < 200 || xhr.status >= 300 || !xhr.responseText) {
+                return GEOSERVER_LAYERS;
+            }
+
+            const xmlDoc = new DOMParser().parseFromString(xhr.responseText, 'text/xml');
+            const availableNames = getPublishedLayerNames(xmlDoc);
+            const resolved = [];
+            const seen = new Set();
+
+            const add = (name) => {
+                const clean = String(name || '').trim();
+                if (!clean) return;
+                const key = clean.toLowerCase();
+                if (seen.has(key)) return;
+                seen.add(key);
+                resolved.push(clean);
+            };
+
+            GEOSERVER_LAYERS.forEach((configuredName) => {
+                const clean = String(configuredName || '').trim();
+                if (!clean) return;
+                const [namespace, layerPart = ''] = clean.split(':');
+                if (String(layerPart || '').toLowerCase() !== 'base_principal') {
+                    add(clean);
+                    return;
+                }
+
+                const qualifiedDefaults = defaultBasePrincipalLayers(namespace, true);
+                const existingQualified = qualifiedDefaults.filter(name => availableNames.has(name.toLowerCase()));
+                if (existingQualified.length) {
+                    existingQualified.forEach(add);
+                    return;
+                }
+
+                if (availableNames.has(String(namespace).toLowerCase())) {
+                    add(namespace);
+                    return;
+                }
+
+                const unqualifiedDefaults = defaultBasePrincipalLayers(namespace, false);
+                const existingUnqualified = unqualifiedDefaults.filter(name => availableNames.has(name.toLowerCase()));
+                if (existingUnqualified.length) {
+                    existingUnqualified.forEach(add);
+                    return;
+                }
+
+                qualifiedDefaults.forEach(add);
+            });
+
+            return resolved.length ? resolved : GEOSERVER_LAYERS;
+        } catch (_err) {
+            return GEOSERVER_LAYERS;
+        }
+    }
+
+    const RESOLVED_GEOSERVER_LAYERS = resolveDashboardWmsLayersSync();
 
     const DEFAULT_EXTENT = [3630797.89, 1069522.77, 5709687.44, 3346020.28];
 
@@ -879,7 +1019,7 @@
     ol.proj.proj4.register(proj4);
     const projection = ol.proj.get("EPSG:9377");
 
-    const wmsLayers = GEOSERVER_LAYERS.map(layerName =>
+    const wmsLayers = RESOLVED_GEOSERVER_LAYERS.map(layerName =>
         new ol.layer.Tile({
             source: new ol.source.TileWMS({
                 url: WMS_URL,

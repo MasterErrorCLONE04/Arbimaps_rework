@@ -1,18 +1,23 @@
-import os
-
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
 from psycopg2.extras import RealDictCursor
 
-from routers.auth import require_user
-from routers.db import db_conn, t
+from routers.auth import get_current_tenant, require_user
+from tenants import TenantContext, get_connection_manager, main_table
 
 router = APIRouter(prefix="/visor", tags=["visor"])
-VISOR_DATA_SCHEMA = os.getenv("VISOR_DATA_SCHEMA", os.getenv("DATA_SCHEMA", "leiva"))
+
+
+def _main_table(tenant: TenantContext, table_name: str) -> str:
+    return main_table(tenant, table_name)
 
 
 @router.get("/project-extent")
-def project_extent(_user: str = Depends(require_user)):
+def project_extent(
+    request: Request,
+    _user: str = Depends(require_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+):
     """
     Extensión espacial del proyecto basada en arb_terreno.
     Se usa para centrar el mapa sin depender de un bbox fijo.
@@ -23,11 +28,12 @@ def project_extent(_user: str = Depends(require_user)):
       MIN(ST_YMin(geometria)) AS ymin,
       MAX(ST_XMax(geometria)) AS xmax,
       MAX(ST_YMax(geometria)) AS ymax
-    FROM {t('arb_terreno', schema=VISOR_DATA_SCHEMA)}
+    FROM {_main_table(tenant, 'arb_terreno')}
     WHERE geometria IS NOT NULL;
     """
 
-    with db_conn() as conn:
+    connection_manager = get_connection_manager(request.app)
+    with connection_manager.connection(tenant) as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql)
             row = cur.fetchone()
@@ -48,8 +54,10 @@ def project_extent(_user: str = Depends(require_user)):
 
 @router.get("/terreno/detalle")
 def terreno_detalle(
+    request: Request,
     terreno_id: int = Query(...),
     _user: str = Depends(require_user),
+    tenant: TenantContext = Depends(get_current_tenant),
 ):
     """
     Ficha para visor al seleccionar un terreno:
@@ -68,15 +76,16 @@ def terreno_detalle(
       c.dispname AS condicion_predio_nombre,
       p.tipo,
       p.destinacion_economica
-    FROM {t('arb_terreno', schema=VISOR_DATA_SCHEMA)} t
-    LEFT JOIN {t('arb_predio', schema=VISOR_DATA_SCHEMA)} p ON p.t_id = t.predio
-    LEFT JOIN {t('arb_condicionprediotipo', schema=VISOR_DATA_SCHEMA)} c
+    FROM {_main_table(tenant, 'arb_terreno')} t
+    LEFT JOIN {_main_table(tenant, 'arb_predio')} p ON p.t_id = t.predio
+    LEFT JOIN {_main_table(tenant, 'arb_condicionprediotipo')} c
       ON c.t_id::text = p.condicion_predio::text
     WHERE t.t_id = %s
     LIMIT 1;
     """
 
-    with db_conn() as conn:
+    connection_manager = get_connection_manager(request.app)
+    with connection_manager.connection(tenant) as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql, (terreno_id,))
             row = cur.fetchone()
@@ -88,7 +97,11 @@ def terreno_detalle(
 
 
 @router.get("/dashboard/condicion-predio")
-def dashboard_condicion_predio(_user: str = Depends(require_user)):
+def dashboard_condicion_predio(
+    request: Request,
+    _user: str = Depends(require_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+):
     """
     Conteo agregado para dashboard por condicion de predio.
     """
@@ -96,14 +109,15 @@ def dashboard_condicion_predio(_user: str = Depends(require_user)):
     SELECT
       COALESCE(c.dispname, 'SIN_DATO') AS condicion_predio,
       COUNT(*)::bigint AS total
-    FROM {t('arb_predio', schema=VISOR_DATA_SCHEMA)} p
-    LEFT JOIN {t('arb_condicionprediotipo', schema=VISOR_DATA_SCHEMA)} c
+    FROM {_main_table(tenant, 'arb_predio')} p
+    LEFT JOIN {_main_table(tenant, 'arb_condicionprediotipo')} c
       ON c.t_id::text = p.condicion_predio::text
     GROUP BY 1
     ORDER BY total DESC;
     """
 
-    with db_conn() as conn:
+    connection_manager = get_connection_manager(request.app)
+    with connection_manager.connection(tenant) as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql)
             rows = cur.fetchall()
@@ -112,13 +126,18 @@ def dashboard_condicion_predio(_user: str = Depends(require_user)):
 
 
 @router.get("/total-predios")
-def obtenertotalpredios(_user: str = Depends(require_user)):
+def obtenertotalpredios(
+    request: Request,
+    _user: str = Depends(require_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+):
     """
     Obtiene el conteo total de registros en la tabla arb_predio.
     """
     # Debug: Confirmando que este endpoint esta activo
-    sql = f"SELECT COUNT(*)::int AS total FROM {t('arb_predio', schema=VISOR_DATA_SCHEMA)}"
-    with db_conn() as conn:
+    sql = f"SELECT COUNT(*)::int AS total FROM {_main_table(tenant, 'arb_predio')}"
+    connection_manager = get_connection_manager(request.app)
+    with connection_manager.connection(tenant) as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql)
             row = cur.fetchone()

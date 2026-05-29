@@ -3,39 +3,51 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+
     container_name: arbitriumsas-api
+
     ports:
       - "8000:8000"
+
     volumes:
       - ./backend:/app
       - ./mergin_sync:/mergin_sync
-      # Exclude local venv from container to avoid conflicts
       - /app/venv
+
     env_file:
       - .env
+
     environment:
-      - DB_HOST=${DB_HOST:-db}
-      - DB_PORT=${DB_PORT:-5432}
-      - DB_NAME=${DB_NAME:-programacion}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-Arbitrium2026*}
-      - DB_SSLMODE=${DB_SSLMODE:-prefer}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: programacion
+      DB_USER: postgres
+      DB_PASSWORD: Arbitrium2026*
+      DB_SSLMODE: prefer
+
     depends_on:
       - db
+
     restart: always
 
   db:
     image: postgis/postgis:16-3.4
+
     container_name: arbitriumsas-db
+
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Arbitrium2026*
       POSTGRES_DB: programacion
+
+    # Cambia 5434 por 5435 si el puerto está ocupado
     ports:
-      - "5432:5432"
+      - "5435:5432"
+
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./SERVIDOR_AWS_FREE_08-05.sql:/docker-entrypoint-initdb.d/init.sql
+
     restart: always
 
 volumes:

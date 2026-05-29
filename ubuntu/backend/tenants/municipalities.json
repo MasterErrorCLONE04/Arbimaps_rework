@@ -18,8 +18,10 @@
         "work": "b_asignaciones_arb",
         "history": "c_base_historico"
       },
-      "wms_base_url": "",
-      "geoserver_layers": ""
+      "wms_base_url": "https://desarrollo.arbimaps.com/geoserver/SUCRE/wms",
+      "geoserver_base_url": "https://desarrollo.arbimaps.com/geoserver",
+      "geoserver_workspace": "SUCRE",
+      "geoserver_layers": "SUCRE:Base_Principal"
     },
     {
       "code": "saravena",
@@ -57,7 +59,11 @@
         "main": "a_base_principal",
         "work": "b_asignaciones_arb",
         "history": "c_base_historico"
-      }
+      },
+      "wms_base_url": "https://desarrollo.arbimaps.com/geoserver/ALMAGUER/wms",
+      "geoserver_base_url": "https://desarrollo.arbimaps.com/geoserver",
+      "geoserver_workspace": "ALMAGUER",
+      "geoserver_layers": "ALMAGUER:Base_Principal"
     },
     {
       "code": "neiva",

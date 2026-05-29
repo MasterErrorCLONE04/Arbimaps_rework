@@ -1534,6 +1534,91 @@
     .split(",")
     .map((name) => name.trim())
     .filter(Boolean);
+  let wmsCapabilitiesDoc = null;
+
+  function getPublishedLayerNames(xmlDoc) {
+    if (!xmlDoc) return new Set();
+    return new Set(
+      Array.from(xmlDoc.getElementsByTagName("Name"))
+        .map((node) => String(node.textContent || "").trim())
+        .filter(Boolean)
+        .map((name) => name.toLowerCase())
+    );
+  }
+
+  function defaultBasePrincipalLayers(namespace, qualified = true) {
+    const suffixes = [
+      "arb_terreno",
+      "arb_terrenohistorico",
+      "arb_construccion",
+      "arb_unidadconstruccion",
+      "arb_direccion",
+    ];
+    return suffixes.map((suffix) => (qualified && namespace ? `${namespace}:${suffix}` : suffix));
+  }
+
+  async function getWmsCapabilitiesDoc() {
+    if (wmsCapabilitiesDoc) return wmsCapabilitiesDoc;
+    const capUrl = `${WMS_URL}?service=WMS&request=GetCapabilities`;
+    try {
+      const r = await fetch(capUrl);
+      if (!r.ok) return null;
+      const xmlText = await r.text();
+      wmsCapabilitiesDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+      return wmsCapabilitiesDoc;
+    } catch (_err) {
+      return null;
+    }
+  }
+
+  async function resolveBackgroundWmsLayers() {
+    const xmlDoc = await getWmsCapabilitiesDoc();
+    const availableNames = getPublishedLayerNames(xmlDoc);
+    const resolved = [];
+    const seen = new Set();
+
+    const add = (name) => {
+      const clean = String(name || "").trim();
+      if (!clean) return;
+      const key = clean.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      resolved.push(clean);
+    };
+
+    GEOSERVER_LAYERS.forEach((configuredName) => {
+      const clean = String(configuredName || "").trim();
+      if (!clean) return;
+      const [namespace, layerPart = ""] = clean.split(":");
+      if (String(layerPart || "").toLowerCase() !== "base_principal") {
+        add(clean);
+        return;
+      }
+
+      const qualifiedDefaults = defaultBasePrincipalLayers(namespace, true);
+      const existingQualified = qualifiedDefaults.filter((name) => availableNames.has(name.toLowerCase()));
+      if (existingQualified.length) {
+        existingQualified.forEach(add);
+        return;
+      }
+
+      if (availableNames.has(String(namespace).toLowerCase())) {
+        add(namespace);
+        return;
+      }
+
+      const unqualifiedDefaults = defaultBasePrincipalLayers(namespace, false);
+      const existingUnqualified = unqualifiedDefaults.filter((name) => availableNames.has(name.toLowerCase()));
+      if (existingUnqualified.length) {
+        existingUnqualified.forEach(add);
+        return;
+      }
+
+      qualifiedDefaults.forEach(add);
+    });
+
+    return resolved.length ? resolved : GEOSERVER_LAYERS;
+  }
 
   function isValidExtent(extent) {
     if (!Array.isArray(extent) || extent.length !== 4) return false;
@@ -1564,7 +1649,7 @@
     }
   }
 
-  function initMap() {
+  async function initMap() {
     highlightLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
       style: new ol.style.Style({
@@ -1600,7 +1685,8 @@
       }),
     });
 
-    const wmsLayers = GEOSERVER_LAYERS.map(
+    const resolvedLayers = await resolveBackgroundWmsLayers();
+    const wmsLayers = resolvedLayers.map(
       (layerName) =>
         new ol.layer.Tile({
           source: new ol.source.TileWMS({
@@ -3310,8 +3396,8 @@
     }
   });
 
-  document.addEventListener("DOMContentLoaded", () => {
-    initMap();
+  document.addEventListener("DOMContentLoaded", async () => {
+    await initMap();
     loadProjectExtent();
     loadPredioDetalle();
 

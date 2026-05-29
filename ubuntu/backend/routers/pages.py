@@ -86,6 +86,19 @@ def _can_access_asignaciones(user: dict[str, Any]) -> bool:
     return False
 
 
+def _default_visor_geoserver_layers(tenant: TenantContext | None) -> str:
+    if tenant is not None:
+        configured_layers = str(tenant.geoserver_layers or "").strip()
+        if configured_layers:
+            return configured_layers
+
+        workspace = str(tenant.geoserver_workspace or "").strip()
+        if workspace:
+            return f"{workspace}:Base_Principal"
+
+    return os.getenv("VISOR_GEOSERVER_LAYERS", "A_Base_Principal:Base_Principal")
+
+
 def _session_json_safe(value: Any) -> Any:
     if value is None:
         return None
@@ -131,11 +144,7 @@ def _render_panel(
         "asig_supports_retorno_xtf": True,
         "asig_internal_rollout_active": is_assignment_internal_rollout_active("arb"),
         "asig_internal_access_granted": is_assignment_internal_user(user, role=role),
-        "visor_geoserver_layers": (
-            tenant.geoserver_layers
-            if tenant and tenant.geoserver_layers
-            else os.getenv("VISOR_GEOSERVER_LAYERS", "A_Base_Principal:Base_Principal")
-        ),
+        "visor_geoserver_layers": _default_visor_geoserver_layers(tenant),
         "current_municipality_code": user.get("municipality_code"),
         "current_municipality_name": user.get("municipality_name"),
     }

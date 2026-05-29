@@ -1,19 +1,67 @@
 import os
-import http.client
-import urllib.parse
 
 from fastapi import APIRouter, HTTPException, Request, Response
+import requests
 
 from core.env_loader import load_env_file_if_present
+from services.session_auth import get_current_tenant_from_session
 
 router = APIRouter(prefix="/proxy", tags=["proxy"])
 
 load_env_file_if_present()
 
-WMS_BASE_URL = os.getenv(
+DEFAULT_WMS_BASE_URL = os.getenv(
     "WMS_BASE_URL",
     "https://arbitriumsas.arbimaps.com/geoserver/wms",
 )
+
+
+def _strip_trailing_slash(value: str) -> str:
+    return str(value or "").strip().rstrip("/")
+
+
+def _derive_geoserver_root_from_wms(wms_url: str) -> str:
+    clean_url = str(wms_url or "").strip()
+    idx = clean_url.find("/geoserver")
+    if idx != -1:
+        return clean_url[: idx + len("/geoserver")]
+    return "https://arbitriumsas.arbimaps.com/geoserver"
+
+
+def _get_optional_tenant(request: Request):
+    try:
+        return get_current_tenant_from_session(request)
+    except HTTPException:
+        return None
+
+
+def _resolve_wms_base_url(request: Request) -> str:
+    tenant = _get_optional_tenant(request)
+    if tenant is not None:
+        configured_wms = _strip_trailing_slash(tenant.wms_base_url)
+        if configured_wms:
+            return configured_wms
+
+        base_url = _strip_trailing_slash(tenant.geoserver_base_url)
+        workspace = _strip_trailing_slash(tenant.geoserver_workspace)
+        if base_url and workspace:
+            return f"{base_url}/{workspace}/wms"
+
+    return _strip_trailing_slash(DEFAULT_WMS_BASE_URL)
+
+
+def _resolve_geoserver_root(request: Request) -> str:
+    tenant = _get_optional_tenant(request)
+    if tenant is not None:
+        configured_root = _strip_trailing_slash(tenant.geoserver_base_url)
+        if configured_root:
+            return configured_root
+
+        configured_wms = _strip_trailing_slash(tenant.wms_base_url)
+        if configured_wms:
+            return _derive_geoserver_root_from_wms(configured_wms)
+
+    return _derive_geoserver_root_from_wms(DEFAULT_WMS_BASE_URL)
 
 
 def _forward_get(base_url: str, params: dict) -> Response:
@@ -22,30 +70,21 @@ def _forward_get(base_url: str, params: dict) -> Response:
 
     Se usa para evitar problemas de CORS en el navegador.
     """
-    parsed = urllib.parse.urlsplit(base_url)
-    scheme = parsed.scheme or "http"
-    netloc = parsed.netloc
-    if not netloc:
+    if not base_url:
         raise HTTPException(status_code=500, detail="WMS_BASE_URL invalida")
 
-    query = urllib.parse.urlencode(params, doseq=True)
-    path = parsed.path or "/"
-    if query:
-        path = f"{path}?{query}"
-
-    conn_cls = http.client.HTTPSConnection if scheme == "https" else http.client.HTTPConnection
-    conn = conn_cls(netloc, timeout=30)
-
     try:
-        conn.request("GET", path)
-        resp = conn.getresponse()
-        body = resp.read()
-        content_type = resp.getheader("Content-Type", "image/png")
-        status_code = resp.status
-    except OSError as exc:
+        resp = requests.get(
+            base_url,
+            params=params,
+            timeout=30,
+            allow_redirects=True,
+        )
+        body = resp.content
+        content_type = resp.headers.get("Content-Type", "image/png")
+        status_code = resp.status_code
+    except requests.RequestException as exc:
         raise HTTPException(status_code=502, detail=f"Error al conectar con WMS: {exc}") from exc
-    finally:
-        conn.close()
 
     headers = {
         "Access-Control-Allow-Origin": "*",
@@ -67,23 +106,13 @@ def proxy_wms(request: Request) -> Response:
         # No tiene sentido llamar al WMS sin parametros
         raise HTTPException(status_code=400, detail="Faltan parametros de consulta WMS")
 
-    return _forward_get(WMS_BASE_URL, params)
+    return _forward_get(_resolve_wms_base_url(request), params)
 
 
 # -----------------------------------------------------------------
 # Proxy de GeoServer para Desarrollo Local (evita 404/CORS)
 # -----------------------------------------------------------------
-import requests
-
 geoserver_router = APIRouter(tags=["geoserver"])
-
-# Calcular la URL base del GeoServer remoto a partir de WMS_BASE_URL
-wms_url = os.getenv("WMS_BASE_URL", "https://arbitriumsas.arbimaps.com/geoserver/wms")
-idx = wms_url.find("/geoserver")
-if idx != -1:
-    GEOSERVER_ROOT = wms_url[:idx + len("/geoserver")]
-else:
-    GEOSERVER_ROOT = "https://arbitriumsas.arbimaps.com/geoserver"
 
 
 @geoserver_router.route("/geoserver/{path:path}", methods=["GET", "POST", "OPTIONS"])
@@ -91,7 +120,7 @@ async def proxy_geoserver(path: str, request: Request) -> Response:
     """
     Proxy de GeoServer: redirige las peticiones locales /geoserver/... al GeoServer remoto.
     """
-    target_url = f"{GEOSERVER_ROOT}/{path}"
+    target_url = f"{_resolve_geoserver_root(request)}/{path}"
     method = request.method
     params = dict(request.query_params)
     body = await request.body()
@@ -103,7 +132,8 @@ async def proxy_geoserver(path: str, request: Request) -> Response:
             params=params,
             data=body,
             headers={k: v for k, v in request.headers.items() if k.lower() not in ("host", "content-length")},
-            timeout=30
+            timeout=30,
+            allow_redirects=True,
         )
         content_type = resp.headers.get("Content-Type", "image/png")
         headers = {
