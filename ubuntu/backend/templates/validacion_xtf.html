@@ -21,8 +21,9 @@
 {% set passed_rules = validation_summary.passed_rules if validation_summary else 0 %}
 {% set failed_rules = validation_summary.failed_rules if validation_summary else 0 %}
 {% set total_predios = validation_summary.total_predios if validation_summary and validation_summary.total_predios is defined else 0 %}
-{% set predios_con_errores = validation_summary.predios_con_errores if validation_summary else predio_summary|length %}
-{% set predios_sin_errores = validation_summary.predios_sin_errores if validation_summary and validation_summary.predios_sin_errores is defined else (total_predios - predios_con_errores if total_predios else 0) %}
+{% set raw_predios_con_errores = validation_summary.predios_con_errores if validation_summary else predio_summary|length %}
+{% set predios_con_errores = ([raw_predios_con_errores, total_predios]|min) if total_predios else raw_predios_con_errores %}
+{% set predios_sin_errores = (total_predios - predios_con_errores) if total_predios else (validation_summary.predios_sin_errores if validation_summary and validation_summary.predios_sin_errores is defined else 0) %}
 {% set rules_percent = ((passed_rules / total_rules * 100)|round(0, 'common')|int) if total_rules else 0 %}
 {% set predios_percent = ((predios_sin_errores / total_predios * 100)|round(0, 'common')|int) if total_predios else 0 %}
 {% set validation_percent = predios_percent if total_predios else rules_percent %}
@@ -51,6 +52,30 @@
         {% endif %}
         {% set _ = rules_by_component[component_name].append(item) %}
     {% endfor %}
+{% endif %}
+
+{% set component_card_specs = [
+    {'slug': 'administrativo', 'label': 'Administrativo'},
+    {'slug': 'juridico', 'label': 'Juridico'},
+    {'slug': 'fisico', 'label': 'Fisico'},
+    {'slug': 'economico', 'label': 'Económico'},
+    {'slug': 'topologico', 'label': 'Topológico'},
+    {'slug': 'novedades', 'label': 'Novedades'},
+    {'slug': 'estructura', 'label': 'Estructura'},
+    {'slug': 'complementarias', 'label': 'Complementarias'},
+    {'slug': 'obligatorias', 'label': 'Obligatorias'},
+] %}
+{% set component_issue_counts = {} %}
+{% if quality and quality.rules %}
+    {% for item in quality.rules %}
+        {% set catalog_item = rule_catalog.get(item.rule|string, {}) %}
+        {% set raw_component_slug = item.component or item.component_slug or catalog_item.get('component_slug') or catalog_item.get('sheet_slug') or item.component_label or catalog_item.get('component_label') or catalog_item.get('component') or 'sin_componente' %}
+        {% set component_slug = raw_component_slug|string|lower|replace('á', 'a')|replace('é', 'e')|replace('í', 'i')|replace('ó', 'o')|replace('ú', 'u')|replace('ñ', 'n')|replace(' ', '_') %}
+        {% set _ = component_issue_counts.update({component_slug: component_issue_counts.get(component_slug, 0) + (item.issue_count|int)}) %}
+    {% endfor %}
+{% endif %}
+{% if total_schema_errors %}
+    {% set _ = component_issue_counts.update({'estructura': component_issue_counts.get('estructura', 0) + total_schema_errors}) %}
 {% endif %}
 
 {% macro validation_stepper(active_step) %}
@@ -879,6 +904,82 @@
         font-weight: 800;
     }
 
+    .component-summary-section {
+        margin-top: 26px;
+    }
+
+    .component-summary-title {
+        font-size: 1.12rem;
+        margin-bottom: 18px;
+    }
+
+    .component-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(190px, 1fr));
+        gap: 12px;
+    }
+
+    .component-summary-card {
+        appearance: none;
+        border: 1px solid var(--validation-border);
+        min-height: 112px;
+        border-radius: 9px;
+        background: #edf5fb;
+        padding: 14px 12px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        text-align: left;
+        cursor: pointer;
+        transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .component-summary-card:hover,
+    .component-summary-card:focus {
+        border-color: var(--validation-navy);
+        box-shadow: 0 3px 8px rgba(0, 52, 92, 0.16);
+        transform: translateY(-1px);
+        outline: none;
+    }
+
+    .component-summary-card.is-selected {
+        border-color: var(--validation-navy);
+        box-shadow: 0 0 0 3px rgba(0, 52, 92, 0.16);
+    }
+
+    .component-card-heading {
+        display: block;
+        margin: 0;
+        color: var(--validation-navy);
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.15;
+    }
+
+    .component-status-bar {
+        flex: 1;
+        min-height: 48px;
+        border-radius: 8px;
+        padding: 0 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: #fff;
+        font-size: 1.05rem;
+        font-weight: 800;
+        background: var(--validation-danger);
+    }
+
+    .component-summary-card.is-ok .component-status-bar {
+        background: var(--validation-success);
+    }
+
+    .component-status-bar .bi {
+        font-size: 1.1rem;
+        flex: 0 0 auto;
+    }
+
     .result-detail-grid {
         display: grid;
         grid-template-columns: minmax(310px, 400px) minmax(0, 1fr);
@@ -1040,6 +1141,7 @@
         .result-hero,
         .result-file-meta,
         .metrics-grid,
+        .component-summary-grid,
         .error-layout {
             grid-template-columns: 1fr;
         }
@@ -1287,17 +1389,18 @@
                         </div>
 
                         <div class="download-actions">
-                            <a class="validation-button blue" href="{{ pdf_href }}">
+                            <a class="validation-button blue" href="{{ pdf_href }}" data-component-download data-base-href="{{ pdf_href }}">
                                 <i class="bi bi-download"></i>
                                 Descargar reporte
                             </a>
-                            <a class="validation-button excel" href="{{ excel_href }}">
+                            <a class="validation-button excel" href="{{ excel_href }}" data-component-download data-base-href="{{ excel_href }}">
                                 <i class="bi bi-file-earmark-spreadsheet"></i>
                                 Descargar Excel
                             </a>
                         </div>
                     </div>
 
+                    <!--
                     <div class="predio-table-title">Listado de predios con errores</div>
                     <table class="predio-table">
                         <thead>
@@ -1328,15 +1431,17 @@
                             <span data-page-buttons></span>
                             <button type="button" data-page-next aria-label="Pagina siguiente"><i class="bi bi-chevron-right"></i></button>
                         </span>
-                    </div>
+                    </div> -->
+
                 </aside>
 
                 <main>
                     <div class="metrics-grid">
+                        <!--
                         <div class="metric-card">
                             <span class="metric-label">Predios evaluados</span>
                             <span class="metric-value">{{ total_predios if total_predios else 'N/D' }}</span>
-                        </div>
+                        </div>-->
                         <div class="metric-card">
                             <span class="metric-label">Reglas evaluadas</span>
                             <span class="metric-value">{{ total_rules }}</span>
@@ -1355,6 +1460,35 @@
                         </div>
                     </div>
 
+                    <section class="component-summary-section" aria-labelledby="component-summary-title">
+                        <h2 id="component-summary-title" class="validation-section-title component-summary-title">Resultado de la validación por componentes:</h2>
+                        <div class="component-summary-grid">
+                            {% for component in component_card_specs %}
+                                {% set component_errors = component_issue_counts.get(component.slug, 0) %}
+                                <button
+                                    class="component-summary-card {{ 'has-errors' if component_errors else 'is-ok' }}"
+                                    type="button"
+                                    data-component-filter="{{ component.slug }}"
+                                    data-component-label="{{ component.label }}"
+                                    aria-pressed="false"
+                                    aria-label="Filtrar descargas por {{ component.label }}"
+                                >
+                                    <span class="component-card-heading">{{ component.label }}</span>
+                                    <span class="component-status-bar">
+                                        {% if component_errors %}
+                                            <span>{{ component_errors }} {{ 'error' if component_errors == 1 else 'errores' }}</span>
+                                            <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                                        {% else %}
+                                            <span>OK</span>
+                                            <i class="bi bi-hand-thumbs-up-fill" aria-hidden="true"></i>
+                                        {% endif %}
+                                    </span>
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </section>
+
+                    <!--
                     <h2 class="validation-section-title">Resultado de la validación</h2>
                     <div class="result-detail-grid">
                         <section class="component-card">
@@ -1500,7 +1634,7 @@
                         </section>
                     </div>
                 </main>
-            </div>
+            </div>-->
         </section>
         {% endif %}
     </div>
@@ -1603,6 +1737,42 @@
             dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     }
+
+    (function initComponentDownloads() {
+        var componentButtons = Array.prototype.slice.call(document.querySelectorAll('[data-component-filter]'));
+        var downloadLinks = Array.prototype.slice.call(document.querySelectorAll('[data-component-download]'));
+        if (!componentButtons.length || !downloadLinks.length) return;
+
+        var selectedComponent = '';
+
+        function componentHref(baseHref) {
+            if (!selectedComponent) return baseHref;
+            return baseHref + (baseHref.indexOf('?') === -1 ? '?' : '&') + 'component=' + encodeURIComponent(selectedComponent);
+        }
+
+        function updateDownloads() {
+            downloadLinks.forEach(function (link) {
+                var baseHref = link.getAttribute('data-base-href') || link.getAttribute('href') || '#';
+                link.setAttribute('href', componentHref(baseHref));
+            });
+
+            componentButtons.forEach(function (button) {
+                var isSelected = button.getAttribute('data-component-filter') === selectedComponent;
+                button.classList.toggle('is-selected', isSelected);
+                button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+            });
+        }
+
+        componentButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                var component = button.getAttribute('data-component-filter') || '';
+                selectedComponent = selectedComponent === component ? '' : component;
+                updateDownloads();
+            });
+        });
+
+        updateDownloads();
+    })();
 
     (function initPredioPagination() {
         var rows = Array.prototype.slice.call(document.querySelectorAll('[data-predio-row]'));

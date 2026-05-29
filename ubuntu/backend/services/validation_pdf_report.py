@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from html import escape
 from io import BytesIO
@@ -114,8 +115,13 @@ def build_validation_pdf(report: dict[str, Any], watermark_path: Path) -> bytes:
             )
         canvas.restoreState()
 
+    selected_component_label = _safe_text(report.get("selected_component_label"))
+    title = "Reporte de validación de reglas de calidad"
+    if selected_component_label:
+        title = f"{title} - {selected_component_label}"
+
     story: list[Any] = [
-        Paragraph("Reporte de validación de reglas de calidad", title_style),
+        Paragraph(title, title_style),
         Paragraph(_intro_text(report), body_style),
         Spacer(1, 14),
     ]
@@ -214,6 +220,9 @@ def validation_pdf_filename(report: dict[str, Any]) -> str:
             generated_at = None
     if generated_at is None:
         generated_at = datetime.now()
+    component_slug = _filename_component(report)
+    if component_slug:
+        return f"Usuario_reporte_validacion_{component_slug}_{generated_at:%Y%m%d_%H%M}.pdf"
     return f"Usuario_reporte_validacion_{generated_at:%Y%m%d_%H%M}.pdf"
 
 
@@ -234,6 +243,11 @@ def _intro_text(report: dict[str, Any]) -> str:
         f"{prefix} A continuación, se presentan los resultados de las reglas de calidad "
         "definidas para dicho modelo."
     )
+
+
+def _filename_component(report: dict[str, Any]) -> str:
+    component = str(report.get("selected_component") or "").strip().lower()
+    return re.sub(r"[^a-z0-9_-]+", "_", component).strip("_")
 
 
 def _rules_for_report(report: dict[str, Any]) -> list[dict[str, Any]]:

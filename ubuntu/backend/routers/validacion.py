@@ -84,9 +84,9 @@ async def subir_xtf(request: Request, file: UploadFile = File(...)):
 
 
 @router.get("/xtf/{job_id}/reporte.pdf")
-def descargar_reporte_xtf(job_id: str):
+def descargar_reporte_xtf(job_id: str, component: str | None = None):
     try:
-        pdf_bytes, filename = _get_xtf_service().build_pdf_report(job_id)
+        pdf_bytes, filename = _get_xtf_service().build_pdf_report(job_id, component=component)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:
@@ -104,9 +104,9 @@ def descargar_reporte_xtf(job_id: str):
 
 
 @router.get("/xtf/{job_id}/errores.xlsx")
-def descargar_errores_xtf_excel(job_id: str):
+def descargar_errores_xtf_excel(job_id: str, component: str | None = None):
     try:
-        excel_bytes, filename = _get_xtf_service().build_excel_report(job_id)
+        excel_bytes, filename = _get_xtf_service().build_excel_report(job_id, component=component)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:

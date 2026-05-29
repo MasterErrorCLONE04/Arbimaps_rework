@@ -43,9 +43,13 @@ class ComplementariasHelper:
         "arb_unidadconstruccion",
     )
 
-    CARACTERISTICAS_UNIDAD_TABLES = (
-        "ARB_CaracteristicasUnidadConstruccion",
-        "arb_caracteristicasunidadconstruccion",
+    UNIDAD_CONSTRUCCION_TABLES = (
+        "ARB_UnidadConstruccion",
+        "arb_unidadconstruccion",
+        "D_Unidad_de_Construccion",
+        "d_unidad_de_construccion",
+        "ARB_Unidad_de_construccion",
+        "arb_unidad_de_construccion",
     )
 
     MARCA_PREDIAL_TABLES = (
@@ -110,6 +114,15 @@ class ComplementariasHelper:
                     return str(value).strip()
 
         return None
+    
+    def get_raw_field_value(self, row: dict[str, object], candidates: tuple[str, ...]) -> object | None:
+        normalized_candidates = {self._normalize_key(candidate) for candidate in candidates}
+
+        for key, value in row.items():
+            if self._normalize_key(str(key)) in normalized_candidates:
+                return value
+
+        return None
 
     def make_issue(
         self,
@@ -145,6 +158,22 @@ class ComplementariasHelper:
         )
         return "".join(ch for ch in text if ch.isalnum())
     
+def _is_empty(value: object) -> bool:
+    if value is None:
+        return True
+
+    text = str(value).strip()
+
+    return (
+        text == ""
+        or text.upper() in {"NULL", "<NULL>"}
+        or text.lower() in {"none", "nan"}
+    )
+
+
+def _is_not_empty(value: object) -> bool:
+    return not _is_empty(value)
+
 def _get_predio_nuevo_ids(helper: ComplementariasHelper) -> set[str]:
     ids = set()
 
@@ -167,17 +196,28 @@ def _pos(texto: str | None, n: int) -> str | None:
     return texto[n - 1] if len(texto) >= n else None
 
 def _get_tipo_planta_piso_ids(helper: ComplementariasHelper) -> set[str]:
-    ids: set[str] = set()
+    ids: set[str] = {"Piso", "piso", "1"}
 
     for _, row in helper._iter_table_rows((
         "ARB_ConstruccionPlantaTipo",
         "arb_construccionplantatipo",
+        "ARB_UnidadConstruccionPlantaTipo",
+        "ARB_PlantaTipo",
     )):
-        ilicode = helper.get_field_value(row, ("ilicode",))
-        t_id = helper.get_field_value(row, ("t_id", "id"))
+        ilicode = helper.get_field_value(row, ("iliCode", "ilicode"))
+        t_id = helper.get_field_value(row, ("T_Id", "t_id", "id"))
+        itf_code = helper.get_field_value(row, ("itfCode", "itfcode"))
+        disp_name = helper.get_field_value(row, ("dispName", "dispname"))
 
-        if ilicode and ilicode.strip().lower() == "piso" and t_id:
-            ids.add(str(t_id))
+        valores = {
+            ComplementariasHelper._normalize_key(ilicode or ""),
+            ComplementariasHelper._normalize_key(disp_name or ""),
+        }
+
+        if "piso" in valores:
+            for v in (t_id, itf_code, ilicode, disp_name):
+                if _is_not_empty(v):
+                    ids.add(str(v).strip())
 
     return ids
 
@@ -297,27 +337,29 @@ def rule_10_3(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     tipo_piso_ids = _get_tipo_planta_piso_ids(helper)
-
     unidades: list[dict[str, object]] = []
 
     for table_name, unidad in helper.iter_unidades_construccion():
         planta_raw = helper.get_field_value(unidad, ("planta_ubicacion",))
         tipo_planta = helper.get_field_value(unidad, ("tipo_planta",))
-        geom_raw = helper.get_field_value(unidad, ("geometria", "geometry", "geom"))
 
-        if not planta_raw or not tipo_planta:
+        if not _is_not_empty(planta_raw) or not _is_not_empty(tipo_planta):
             continue
 
-        if str(tipo_planta) not in tipo_piso_ids:
+        if str(tipo_planta).strip() not in tipo_piso_ids:
             continue
 
+        geom_raw = helper.get_raw_field_value(
+            unidad,
+            ("geometria", "geometry", "geom"),
+        )
         geom = _load_geometry(geom_raw)
 
         if geom is None:
             continue
 
         try:
-            planta = int(float(planta_raw))
+            planta = int(float(str(planta_raw).strip().replace(",", ".")))
         except Exception:
             continue
 
@@ -327,7 +369,10 @@ def rule_10_3(dataset: DatasetReader) -> list[RuleIssue]:
             "planta": planta,
             "geom": geom,
             "construccion": helper.get_field_value(unidad, ("construccion",)),
-            "identificador": helper.get_field_value(unidad, ("identificador", "t_id", "TID")),
+            "identificador": helper.get_field_value(
+                unidad,
+                ("identificador", "t_id", "TID", "t_ili_tid"),
+            ),
         })
 
     for unidad in unidades:
@@ -366,15 +411,10 @@ def rule_10_3(dataset: DatasetReader) -> list[RuleIssue]:
             )
             continue
 
-        tiene_superposicion = False
-
-        for inferior in inferiores:
-            try:
-                if unidad["geom"].intersects(inferior["geom"]):
-                    tiene_superposicion = True
-                    break
-            except Exception:
-                continue
+        tiene_superposicion = any(
+            unidad["geom"].intersects(inferior["geom"])
+            for inferior in inferiores
+        )
 
         if not tiene_superposicion:
             issues.append(

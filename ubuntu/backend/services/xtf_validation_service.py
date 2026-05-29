@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 import os
 import re
 import shlex
 import shutil
 import subprocess
+import unicodedata
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
@@ -16,6 +18,19 @@ from uuid import uuid4
 from quality_rules.runner import run_quality_checks
 from services.validation_excel_report import build_validation_errors_excel, validation_excel_filename
 from services.validation_pdf_report import build_validation_pdf, validation_pdf_filename
+
+
+COMPONENT_LABELS = {
+    "administrativo": "Administrativo",
+    "juridico": "Juridico",
+    "fisico": "Fisico",
+    "economico": "Económico",
+    "topologico": "Topológico",
+    "novedades": "Novedades",
+    "estructura": "Estructura",
+    "complementarias": "Complementarias",
+    "obligatorias": "Obligatorias",
+}
 
 
 class XTFValidationService:
@@ -62,14 +77,16 @@ class XTFValidationService:
         self._write_job_result(job_id, result)
         return result
 
-    def build_pdf_report(self, job_id: str) -> tuple[bytes, str]:
+    def build_pdf_report(self, job_id: str, *, component: str | None = None) -> tuple[bytes, str]:
         result = self.load_job_result(job_id)
+        result = self._filter_report_by_component(result, component)
         watermark_path = self._abs_path("static", "img", "marca_de_agua.png")
         pdf_bytes = build_validation_pdf(result, watermark_path)
         return pdf_bytes, validation_pdf_filename(result)
 
-    def build_excel_report(self, job_id: str) -> tuple[bytes, str]:
+    def build_excel_report(self, job_id: str, *, component: str | None = None) -> tuple[bytes, str]:
         result = self.load_job_result(job_id)
+        result = self._filter_report_by_component(result, component)
         excel_bytes = build_validation_errors_excel(result)
         return excel_bytes, validation_excel_filename(result)
 
@@ -88,6 +105,171 @@ class XTFValidationService:
             json.dumps(result, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+
+    def _filter_report_by_component(
+        self,
+        report: dict[str, Any],
+        component: str | None,
+    ) -> dict[str, Any]:
+        component_slug = self._normalize_component_slug(component)
+        if not component_slug:
+            return report
+
+        filtered = copy.deepcopy(report)
+        validation = filtered.get("validation")
+        if not isinstance(validation, dict):
+            validation = {}
+            filtered["validation"] = validation
+
+        quality = validation.get("quality")
+        if not isinstance(quality, dict):
+            quality = {}
+            validation["quality"] = quality
+
+        catalog = quality.get("rule_catalog") if isinstance(quality.get("rule_catalog"), dict) else {}
+        all_rules = [item for item in self._as_list(quality.get("rules")) if isinstance(item, dict)]
+        rule_meta_by_id = {
+            str(item.get("rule") or item.get("rule_id") or "").strip(): item
+            for item in all_rules
+            if str(item.get("rule") or item.get("rule_id") or "").strip()
+        }
+
+        selected_rules = [
+            item
+            for item in all_rules
+            if self._component_slug_from_item(item, catalog, rule_meta_by_id) == component_slug
+        ]
+        selected_rule_ids = {
+            str(item.get("rule") or item.get("rule_id") or "").strip()
+            for item in selected_rules
+            if str(item.get("rule") or item.get("rule_id") or "").strip()
+        }
+
+        selected_rule_errors = []
+        for item in self._as_list(validation.get("rule_errors")):
+            if not isinstance(item, dict):
+                continue
+            rule_id = str(item.get("rule") or item.get("rule_id") or "").strip()
+            item_slug = self._component_slug_from_item(item, catalog, rule_meta_by_id)
+            if item_slug == component_slug or rule_id in selected_rule_ids:
+                selected_rule_errors.append(item)
+
+        selected_schema_errors = (
+            [item for item in self._as_list(validation.get("schema_errors")) if isinstance(item, dict)]
+            if component_slug == "estructura"
+            else []
+        )
+
+        selected_quality_issues = []
+        for item in self._as_list(quality.get("issues")):
+            if not isinstance(item, dict):
+                continue
+            rule_id = str(item.get("rule") or item.get("rule_id") or "").strip()
+            item_slug = self._component_slug_from_item(item, catalog, rule_meta_by_id)
+            if item_slug == component_slug or rule_id in selected_rule_ids:
+                selected_quality_issues.append(item)
+
+        label = COMPONENT_LABELS.get(component_slug) or component_slug.replace("_", " ").title()
+        validation["rule_errors"] = selected_rule_errors
+        validation["schema_errors"] = selected_schema_errors
+        quality["rules"] = selected_rules
+        quality["issues"] = selected_quality_issues
+        quality["predio_summary"] = self._predio_summary_for_errors(
+            [*selected_rule_errors, *selected_schema_errors]
+        )
+
+        previous_summary = quality.get("summary") if isinstance(quality.get("summary"), dict) else {}
+        total_predios = self._coerce_int(previous_summary.get("total_predios"), default=0)
+        predios_con_errores = len(quality["predio_summary"])
+        passed_rules = sum(1 for item in selected_rules if bool(item.get("passed")))
+        failed_rules = max(len(selected_rules) - passed_rules, 0)
+        quality["summary"] = {
+            **previous_summary,
+            "total_rules": len(selected_rules),
+            "implemented_rules": len(selected_rules),
+            "passed_rules": passed_rules,
+            "failed_rules": failed_rules,
+            "total_issues": len(selected_rule_errors) + len(selected_schema_errors),
+            "predios_con_errores": predios_con_errores,
+            "predios_sin_errores": max(total_predios - predios_con_errores, 0),
+        }
+
+        filtered["selected_component"] = component_slug
+        filtered["selected_component_label"] = label
+        return filtered
+
+    @staticmethod
+    def _as_list(value: Any) -> list[Any]:
+        return value if isinstance(value, list) else []
+
+    @staticmethod
+    def _normalize_component_slug(value: Any) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return ""
+        text = unicodedata.normalize("NFKD", text.lower())
+        text = "".join(ch for ch in text if not unicodedata.combining(ch))
+        text = re.sub(r"[^a-z0-9]+", "_", text).strip("_")
+        aliases = {
+            "juridico": "juridico",
+            "juridica": "juridico",
+            "fisico": "fisico",
+            "fisica": "fisico",
+            "economico": "economico",
+            "economica": "economico",
+            "topologico": "topologico",
+            "topologica": "topologico",
+            "estructural": "estructura",
+            "estructural_xtf": "estructura",
+        }
+        return aliases.get(text, text)
+
+    def _component_slug_from_item(
+        self,
+        item: dict[str, Any],
+        catalog: dict[str, Any],
+        rule_meta_by_id: dict[str, dict[str, Any]],
+    ) -> str:
+        rule_id = str(item.get("rule") or item.get("rule_id") or "").strip()
+        rule_meta = rule_meta_by_id.get(rule_id, {})
+        catalog_item = catalog.get(rule_id) if isinstance(catalog, dict) else {}
+        if not isinstance(catalog_item, dict):
+            catalog_item = {}
+
+        raw_component = (
+            item.get("component")
+            or item.get("component_slug")
+            or rule_meta.get("component")
+            or rule_meta.get("component_slug")
+            or catalog_item.get("component_slug")
+            or catalog_item.get("sheet_slug")
+            or item.get("component_label")
+            or rule_meta.get("component_label")
+            or catalog_item.get("component_label")
+            or catalog_item.get("component")
+        )
+        return self._normalize_component_slug(raw_component)
+
+    @staticmethod
+    def _predio_summary_for_errors(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        issue_counts_by_object: dict[str, int] = {}
+        for item in errors:
+            object_id = (
+                item.get("display_id")
+                or item.get("object_id")
+                or item.get("tid")
+                or "Sin identificar"
+            )
+            object_id = str(object_id).strip() if object_id else "Sin identificar"
+            issue_counts_by_object[object_id] = issue_counts_by_object.get(object_id, 0) + 1
+
+        return [
+            {"object_id": object_id, "issue_count": count}
+            for object_id, count in sorted(
+                issue_counts_by_object.items(),
+                key=lambda item: (-item[1], item[0]),
+            )
+        ]
 
     def _job_result_path(self, job_id: str) -> Path:
         safe_job_id = str(job_id or "").strip()
@@ -503,6 +685,16 @@ class XTFValidationService:
         ):
             unimplemented_rules = unimplemented_default
 
+        total_predios_value = self._coerce_int(summary.get("total_predios"), default=0)
+        raw_predios_con_errores = self._coerce_int(
+            summary.get("predios_con_errores"),
+            default=len(predio_summary),
+        )
+        if total_predios_value:
+            predios_con_errores_value = min(raw_predios_con_errores, total_predios_value)
+        else:
+            predios_con_errores_value = raw_predios_con_errores
+
         quality["summary"] = {
             "available_rules": available_rules,
             "total_rules": computed_total_rules,
@@ -514,21 +706,9 @@ class XTFValidationService:
                 summary.get("total_issues"),
                 default=len(issues),
             ),
-            "total_predios": self._coerce_int(
-                summary.get("total_predios"),
-                default=0,
-            ),
-            "predios_con_errores": self._coerce_int(
-                summary.get("predios_con_errores"),
-                default=len(predio_summary),
-            ),
-            "predios_sin_errores": self._coerce_int(
-                summary.get("predios_sin_errores"),
-                default=max(
-                    self._coerce_int(summary.get("total_predios"), default=0) - len(predio_summary),
-                    0,
-                ),
-            ),
+            "total_predios": total_predios_value,
+            "predios_con_errores": predios_con_errores_value,
+            "predios_sin_errores": max(total_predios_value - predios_con_errores_value, 0),
         }
 
         return quality

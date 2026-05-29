@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -49,6 +50,137 @@ def _total_predios(tables: dict[str, list[dict[str, Any]]]) -> int:
         if rows:
             return len(rows)
     return 0
+
+
+PREDIO_TABLES = ("ARB_Predio", "arb_predio", "ILC_Predio", "ilc_predio")
+PREDIO_IDENTIFIER_FIELDS = (
+    "id_operacion",
+    "Id_Operacion",
+    "ID_OPERACION",
+    "id_predio",
+    "ID_PREDIO",
+    "predio_id",
+    "Predio_ID",
+    "t_id",
+    "T_ID",
+    "tid",
+    "TID",
+    "Numero_Predial_Nacional",
+    "numero_predial_nacional",
+    "Numero_Predial",
+    "numero_predial",
+)
+
+
+def _normalize_key(value: object) -> str:
+    text = unicodedata.normalize("NFKD", str(value or "").strip().lower())
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return "".join(ch for ch in text if ch.isalnum())
+
+
+def _clean_identifier(value: object) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    return text if text and text.lower() not in {"null", "none", "nan", "n/a", "na"} else ""
+
+
+def _predio_identifier_lookup(tables: dict[str, list[dict[str, Any]]]) -> dict[str, str]:
+    field_targets = {_normalize_key(field) for field in PREDIO_IDENTIFIER_FIELDS}
+    lookup: dict[str, str] = {}
+
+    for table_name in PREDIO_TABLES:
+        for row in tables.get(table_name, []):
+            identifiers: list[str] = []
+
+            for key, value in row.items():
+                if _normalize_key(key) not in field_targets:
+                    continue
+                identifier = _clean_identifier(value)
+                if identifier and identifier not in identifiers:
+                    identifiers.append(identifier)
+
+            if not identifiers:
+                continue
+
+            display_id = identifiers[0]
+            for identifier in identifiers:
+                lookup[identifier] = display_id
+
+    return lookup
+
+
+def _issue_predio_id(issue: dict[str, Any], predio_lookup: dict[str, str]) -> str | None:
+    details = issue.get("details")
+    if not isinstance(details, dict):
+        details = {}
+
+    candidates: list[object] = []
+    candidate_fields = (
+        "predio_id",
+        "id_predio",
+        "id_operacion",
+        "Id_Operacion",
+        "ID_OPERACION",
+        "arb_predio",
+        "ilc_predio",
+        "predio",
+        "display_id",
+        "object_id",
+        "tid",
+        "t_id",
+        "T_ID",
+        "Numero_Predial_Nacional",
+        "numero_predial_nacional",
+        "Numero_Predial",
+        "numero_predial",
+    )
+
+    for field in candidate_fields:
+        candidates.append(details.get(field))
+        candidates.append(issue.get(field))
+
+    for source in (details, issue):
+        for key, value in source.items():
+            normalized_key = _normalize_key(key)
+            if "predio" in normalized_key or normalized_key in {"tid", "idoperacion"}:
+                candidates.append(value)
+
+    object_class = _normalize_key(issue.get("object_class") or details.get("class") or details.get("tabla"))
+    is_predio_object = object_class in {"arbpredio", "ilcpredio"}
+
+    for candidate in candidates:
+        identifier = _clean_identifier(candidate)
+        if not identifier:
+            continue
+        if identifier in predio_lookup:
+            return predio_lookup[identifier]
+        if is_predio_object:
+            return identifier
+
+    return None
+
+
+def _build_predio_summary(
+    issues: list[dict[str, Any]],
+    tables: dict[str, list[dict[str, Any]]],
+) -> list[dict[str, Any]]:
+    predio_lookup = _predio_identifier_lookup(tables)
+    issue_counts_by_predio: dict[str, int] = {}
+
+    for issue in issues:
+        predio_id = _issue_predio_id(issue, predio_lookup)
+        if not predio_id:
+            continue
+        issue_counts_by_predio[predio_id] = issue_counts_by_predio.get(predio_id, 0) + 1
+
+    return [
+        {"object_id": object_id, "issue_count": count}
+        for object_id, count in sorted(
+            issue_counts_by_predio.items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+    ]
 
 
 def run_quality_checks(xtf_path: Path) -> dict[str, Any]:
@@ -158,24 +290,8 @@ def run_quality_checks(xtf_path: Path) -> dict[str, Any]:
         if rule_id not in implemented_rule_ids
     ]
 
-    issue_counts_by_object: dict[str, int] = {}
-    for issue in issues:
-        object_id = (
-            issue.get("display_id")
-            or issue.get("object_id")
-            or issue.get("tid")
-            or "Sin identificar"
-        )
-        issue_counts_by_object[object_id] = issue_counts_by_object.get(object_id, 0) + 1
-
-    predio_summary = [
-        {"object_id": object_id, "issue_count": count}
-        for object_id, count in sorted(
-            issue_counts_by_object.items(),
-            key=lambda item: (-item[1], item[0]),
-        )
-    ]
-    predios_con_errores = len(predio_summary)
+    predio_summary = _build_predio_summary(issues, tables)
+    predios_con_errores = min(len(predio_summary), total_predios) if total_predios else len(predio_summary)
     predios_sin_errores = max(total_predios - predios_con_errores, 0)
 
     status = "passed" if not issues else "failed"

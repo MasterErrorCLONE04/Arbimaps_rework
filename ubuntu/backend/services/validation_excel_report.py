@@ -45,19 +45,23 @@ def validation_excel_filename(report: dict[str, Any]) -> str:
             generated_at = None
     if generated_at is None:
         generated_at = datetime.now()
+    component_slug = _filename_component(report)
+    if component_slug:
+        return f"Usuario_errores_validacion_{component_slug}_{generated_at:%Y%m%d_%H%M}.xlsx"
     return f"Usuario_errores_validacion_{generated_at:%Y%m%d_%H%M}.xlsx"
 
 
 def _sheets_for_report(report: dict[str, Any]) -> list[dict[str, Any]]:
     rows = _error_rows(report)
     if not rows:
+        component_label = _clean_text(report.get("selected_component_label") or "Sin componente")
         rows = [
             {
-                "component": "Sin componente",
+                "component": component_label,
                 "id": "",
                 "layer": "",
                 "error": "",
-                "description": "No hay errores para exportar.",
+                "description": "No hay errores para exportar en este componente.",
             }
         ]
 
@@ -406,3 +410,8 @@ def _clean_text(value: Any) -> str:
         char if char in {"\t", "\n"} or ord(char) >= 32 else " "
         for char in text
     )
+
+
+def _filename_component(report: dict[str, Any]) -> str:
+    component = str(report.get("selected_component") or "").strip().lower()
+    return re.sub(r"[^a-z0-9_-]+", "_", component).strip("_")

@@ -395,9 +395,20 @@ def _rule_4_5(dataset: DatasetReader) -> list[RuleIssue]:
         "cc_mobiliario_cocina",
     )
 
+    tipos_validos = {"Residencial", "Comercial", "Industrial", "Institucional", "Anexo"}
+
     for table_name, row in helper.iter_caracteristicas_unidad_construccion():
-        tipo_calificar = helper.get_field_value(row, ("cc_tipo_calificar",))
+        tipo_calificar = helper.get_field_value(
+            row,
+            ("cc_tipo_calificar", "tipo_calificar"),
+        )
         tipo_calificar_str = _tipo_calificar_ilicode(tipo_calificar)
+
+        # Igual que QGIS: si no existe/no resuelve cc_tipo_calificar,
+        # usa tipo_unidad_construccion como respaldo.
+        if tipo_calificar_str not in tipos_validos:
+            tipo_unidad = helper.get_field_value(row, ("tipo_unidad_construccion",))
+            tipo_calificar_str = _unidad_construccion_tipo_ilicode(tipo_unidad)
 
         if tipo_calificar_str != "Industrial":
             continue

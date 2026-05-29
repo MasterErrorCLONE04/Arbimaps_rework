@@ -278,23 +278,36 @@ class NumeroPredialHelper:
 
     @staticmethod
     def _normalize_key(name: str) -> str:
-        text = str(name).strip().lower()
-        text = (
-            text.replace("á", "a")
-            .replace("é", "e")
-            .replace("í", "i")
-            .replace("ó", "o")
-            .replace("ú", "u")
-            .replace("ñ", "n")
-        )
+        text = str(name).strip()
+        replacements = {
+            "Ã¡": "a",
+            "Ã©": "e",
+            "Ã­": "i",
+            "Ã³": "o",
+            "Ãº": "u",
+            "Ã±": "n",
+            "ÃÁ": "a",
+            "Ã‰": "e",
+            "ÃÍ": "i",
+            "Ã“": "o",
+            "Ãš": "u",
+            "Ã‘": "n",
+        }
+        for source, target in replacements.items():
+            text = text.replace(source, target)
+
+        text = unicodedata.normalize("NFKD", text.lower())
+        text = "".join(ch for ch in text if not unicodedata.combining(ch))
         return "".join(ch for ch in text if ch.isalnum())
 
     @staticmethod
     def _is_empty(value: object) -> bool:
         if value is None:
             return True
+        if isinstance(value, float) and value != value:
+            return True
         if isinstance(value, str):
-            return value.strip() == ""
+            return value.strip().lower() in {"", "null", "none", "nan", "n/a", "na"}
         return False
 
     @classmethod
@@ -339,6 +352,62 @@ class NumeroPredialHelper:
             return ""
 
         return str(value).strip()
+
+
+def _get_t_id(row: dict[str, object]) -> str | None:
+    match = NumeroPredialHelper._extract_field(
+        row,
+        ("t_id", "T_ID", "tid", "TID"),
+        require_value=True,
+    )
+    if not match:
+        return None
+
+    _, value = match
+    return str(value).strip()
+
+
+def _required_field_value(
+    helper: NumeroPredialHelper,
+    row: dict[str, object],
+    issues: list[RuleIssue],
+    *,
+    rule_id: str,
+    table_name: str,
+    candidates: tuple[str, ...],
+    field_label: str,
+    message: str,
+    details: dict[str, object] | None = None,
+) -> tuple[str, object, str] | None:
+    match = helper._extract_field(row, candidates, require_value=False)
+    if match:
+        field_name, raw_value = match
+    else:
+        field_name, raw_value = field_label, None
+
+    if match and not helper._is_empty(raw_value):
+        return field_name, raw_value, str(raw_value).strip()
+
+    issue_details: dict[str, object] = {
+        "tabla": table_name,
+        "campo": field_name,
+        "class": table_name,
+        "valor": raw_value,
+    }
+    if not match:
+        issue_details["campo_no_encontrado"] = True
+    if details:
+        issue_details.update(details)
+
+    issues.append(
+        RuleIssue(
+            rule_id=rule_id,
+            object_ref=helper.identify(row),
+            message=message,
+            details=issue_details,
+        )
+    )
+    return None
 
 
 def _is_valid_numero_predial(numero: str) -> bool:
@@ -1547,126 +1616,97 @@ def _rule_1_15(dataset: DatasetReader) -> list[RuleIssue]:
         "LOTE_RURAL",
     }
 
-    def get_t_id(row: dict[str, object]) -> str | None:
-        for key, value in row.items():
-            if str(key).lower() == "t_id" and value not in (None, ""):
-                return str(value).strip()
-        return None
+    get_t_id = _get_t_id
 
     predios_restringidos: dict[str, dict[str, object]] = {}
     construcciones_de_predios_restringidos: dict[str, dict[str, object]] = {}
 
-    for table_name in predio_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(predio_tables):
+        destinacion_value = _required_field_value(
+            helper,
+            row,
+            issues,
+            rule_id="1.15",
+            table_name=table_name,
+            candidates=destinacion_fields,
+            field_label="destinacion_economica",
+            message="No se puede validar la regla 1.15 porque destinacion_economica no existe o está vacía.",
+        )
+        if not destinacion_value:
             continue
 
-        for row in dataset.get_records(table_name):
-            predio_id = get_t_id(row)
-            if not predio_id:
-                continue
+        field_name, raw_value, destinacion_str = destinacion_value
 
-            destinacion_match = helper._extract_field(
-                row,
-                destinacion_fields,
-                require_value=False,
-            )
+        predio_id = get_t_id(row)
+        if not predio_id:
+            continue
 
-            if not destinacion_match:
-                continue
-
-            field_name, raw_value = destinacion_match
-            destinacion_str = "" if raw_value in (None, "") else str(raw_value).strip()
-
-            if not destinacion_str:
-                issues.append(
-                    RuleIssue(
-                        rule_id="1.15",
-                        object_ref=helper.identify(row),
-                        message="No se puede validar la regla 1.15 porque destinacion_economica no existe o está vacía.",
-                        details={
-                            "tabla": table_name,
-                            "campo": field_name,
-                            "class": table_name,
-                            "valor": raw_value,
-                        },
-                    )
-                )
-                continue
-
-            if _normalize_destinacion(destinacion_str) in restricted_values:
-                predios_restringidos[predio_id] = {
-                    "tabla": table_name,
-                    "campo": field_name,
-                    "class": table_name,
-                    "destinacion_economica": destinacion_str,
-                    "object_ref": helper.identify(row),
-                }
+        if _normalize_destinacion(destinacion_str) in restricted_values:
+            predios_restringidos[predio_id] = {
+                "tabla": table_name,
+                "campo": field_name,
+                "class": table_name,
+                "destinacion_economica": destinacion_str,
+                "object_ref": helper.identify(row),
+            }
 
     if not predios_restringidos:
         return issues
 
-    for table_name in construccion_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(construccion_tables):
+        construccion_id = get_t_id(row)
+        if not construccion_id:
             continue
 
-        for row in dataset.get_records(table_name):
-            construccion_id = get_t_id(row)
-            if not construccion_id:
-                continue
+        predio_fk = row.get("predio")
+        if predio_fk in (None, ""):
+            continue
 
-            predio_fk = row.get("predio")
-            if predio_fk in (None, ""):
-                continue
-
-            predio_fk_str = str(predio_fk).strip()
-            if predio_fk_str in predios_restringidos:
-                construcciones_de_predios_restringidos[construccion_id] = {
-                    "predio_id": predio_fk_str,
-                    "tabla": table_name,
-                    "class": table_name,
-                }
+        predio_fk_str = str(predio_fk).strip()
+        if predio_fk_str in predios_restringidos:
+            construcciones_de_predios_restringidos[construccion_id] = {
+                "predio_id": predio_fk_str,
+                "tabla": table_name,
+                "class": table_name,
+            }
 
     if not construcciones_de_predios_restringidos:
         return issues
 
-    for table_name in unidad_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(unidad_tables):
+        construccion_fk = row.get("construccion")
+        if construccion_fk in (None, ""):
             continue
 
-        for row in dataset.get_records(table_name):
-            construccion_fk = row.get("construccion")
-            if construccion_fk in (None, ""):
-                continue
+        construccion_fk_str = str(construccion_fk).strip()
+        if construccion_fk_str not in construcciones_de_predios_restringidos:
+            continue
 
-            construccion_fk_str = str(construccion_fk).strip()
-            if construccion_fk_str not in construcciones_de_predios_restringidos:
-                continue
+        data_construccion = construcciones_de_predios_restringidos[construccion_fk_str]
+        predio_id = data_construccion["predio_id"]
+        predio_info = predios_restringidos[predio_id]
 
-            data_construccion = construcciones_de_predios_restringidos[construccion_fk_str]
-            predio_id = data_construccion["predio_id"]
-            predio_info = predios_restringidos[predio_id]
-
-            issues.append(
-                RuleIssue(
-                    rule_id="1.15",
-                    object_ref=predio_info["object_ref"],
-                    message=(
-                        "Para predios con destinación económica "
-                        "'Lote_Urbanizado_No_Construido' o 'Lote_Rural', "
-                        "no se deben relacionar ni ubicar espacialmente unidades de construcción."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "campo": "construccion",
-                        "class": table_name,
-                        "predio_id": predio_id,
-                        "construccion_id": construccion_fk_str,
-                        "destinacion_economica": predio_info["destinacion_economica"],
-                        "tabla_predio": predio_info["tabla"],
-                        "tabla_construccion": data_construccion["tabla"],
-                    },
-                )
+        issues.append(
+            RuleIssue(
+                rule_id="1.15",
+                object_ref=predio_info["object_ref"],
+                message=(
+                    "Para predios con destinación económica "
+                    "'Lote_Urbanizado_No_Construido' o 'Lote_Rural', "
+                    "no se deben relacionar ni ubicar espacialmente unidades de construcción."
+                ),
+                details={
+                    "tabla": table_name,
+                    "campo": "construccion",
+                    "class": table_name,
+                    "predio_id": predio_id,
+                    "construccion_id": construccion_fk_str,
+                    "destinacion_economica": predio_info["destinacion_economica"],
+                    "tabla_predio": predio_info["tabla"],
+                    "tabla_construccion": data_construccion["tabla"],
+                },
             )
+        )
 
     return issues
 
@@ -1705,11 +1745,7 @@ def _rule_1_16(dataset: DatasetReader) -> list[RuleIssue]:
         "Condicion",
     )
 
-    def get_t_id(row: dict[str, object]) -> str | None:
-        for key, value in row.items():
-            if str(key).lower() == "t_id" and value not in (None, ""):
-                return str(value).strip()
-        return None
+    get_t_id = _get_t_id
 
     def parse_float(value: object) -> float | None:
         if value in (None, ""):
@@ -1723,108 +1759,111 @@ def _rule_1_16(dataset: DatasetReader) -> list[RuleIssue]:
     construccion_to_predio: dict[str, str] = {}
     predios_con_unidades: set[str] = set()
 
-    for table_name in predio_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(predio_tables):
+        object_ref = helper.identify(row)
+
+        destinacion_value = _required_field_value(
+            helper,
+            row,
+            issues,
+            rule_id="1.16",
+            table_name=table_name,
+            candidates=destinacion_fields,
+            field_label="destinacion_economica",
+            message="No se puede validar la regla 1.16 porque destinacion_economica no existe o está vacía.",
+        )
+        if not destinacion_value:
             continue
 
-        for row in dataset.get_records(table_name):
-            predio_id = get_t_id(row)
-            if not predio_id:
-                continue
+        destinacion_field, destinacion_raw, destinacion_str = destinacion_value
 
-            object_ref = helper.identify(row)
+        numero_value = _required_field_value(
+            helper,
+            row,
+            issues,
+            rule_id="1.16",
+            table_name=table_name,
+            candidates=numero_predial_fields,
+            field_label="Numero_Predial_Nacional",
+            message="No se puede validar la regla 1.16 porque Numero_Predial_Nacional no existe o está vacío.",
+        )
+        if numero_value:
+            numero_field, numero_raw, numero_str = numero_value
+        else:
+            numero_field, numero_raw, numero_str = numero_predial_fields[0], None, ""
 
-            destinacion_match = helper._extract_field(
+        predio_id = get_t_id(row)
+        if not predio_id:
+            continue
+
+        area_match = helper._extract_field(
+            row,
+            area_fields,
+            require_value=False,
+        )
+        area_field = area_match[0] if area_match else area_fields[0]
+        area_raw = area_match[1] if area_match else None
+        area_value = parse_float(area_raw)
+
+        condicion_raw: object | None = None
+        condicion_norm = ""
+        if _normalize_destinacion(destinacion_str) == "LOTE_RURAL":
+            condicion_value = _required_field_value(
+                helper,
                 row,
-                destinacion_fields,
-                require_value=False,
+                issues,
+                rule_id="1.16",
+                table_name=table_name,
+                candidates=condicion_fields,
+                field_label="condicion_predio",
+                message="No se puede validar la regla 1.16 porque condicion_predio no existe o está vacío.",
+                details={
+                    "numero": numero_str,
+                    "destinacion_economica": destinacion_str,
+                },
             )
-            if not destinacion_match:
-                continue
+            if condicion_value:
+                _, condicion_raw, condicion_str = condicion_value
+                condicion_norm = _normalize_condicion(condicion_str)
 
-            destinacion_field, destinacion_raw = destinacion_match
-            destinacion_str = "" if destinacion_raw in (None, "") else str(destinacion_raw).strip()
-
-            if not destinacion_str:
+        if numero_str and area_value is not None and area_value < 500:
+            if len(numero_str) >= 6 and numero_str[4:6] != "00":
                 issues.append(
                     RuleIssue(
                         rule_id="1.16",
                         object_ref=object_ref,
-                        message="No se puede validar la regla 1.16 porque destinacion_economica no existe o está vacía.",
+                        message=(
+                            "Para predios con área menor a 500 m², los campos 5-6 del "
+                            "Numero_Predial_Nacional deben ser '00'."
+                        ),
                         details={
                             "tabla": table_name,
-                            "campo": destinacion_field,
+                            "campo": numero_field,
                             "class": table_name,
-                            "valor": destinacion_raw,
+                            "valor": numero_raw,
+                            "numero": numero_str,
+                            "area": area_value,
+                            "campo_5_6": numero_str[4:6],
+                            "valor_esperado_5_6": "00",
                         },
                     )
                 )
-                continue
 
-            numero_match = helper._extract_field(
-                row,
-                numero_predial_fields,
-                require_value=False,
-            )
-            if not numero_match:
-                continue
-
-            numero_field, numero_raw = numero_match
-            numero_str = "" if numero_raw in (None, "") else str(numero_raw).strip()
-
-            if not numero_str:
-                continue
-
-            area_match = helper._extract_field(
-                row,
-                area_fields,
-                require_value=False,
-            )
-            area_field = area_match[0] if area_match else area_fields[0]
-            area_raw = area_match[1] if area_match else None
-            area_value = parse_float(area_raw)
-
-            condicion_raw = helper.get_field_value(row, condicion_fields)
-            condicion_norm = _normalize_condicion(condicion_raw) if condicion_raw else ""
-
-            if area_value is not None and area_value < 500:
-                if len(numero_str) >= 6 and numero_str[4:6] != "00":
-                    issues.append(
-                        RuleIssue(
-                            rule_id="1.16",
-                            object_ref=object_ref,
-                            message=(
-                                "Para predios con área menor a 500 m², los campos 5-6 del "
-                                "Numero_Predial_Nacional deben ser '00'."
-                            ),
-                            details={
-                                "tabla": table_name,
-                                "campo": numero_field,
-                                "class": table_name,
-                                "valor": numero_raw,
-                                "numero": numero_str,
-                                "area": area_value,
-                                "campo_5_6": numero_str[4:6],
-                                "valor_esperado_5_6": "00",
-                            },
-                        )
-                    )
-
-            if _normalize_destinacion(destinacion_str) == "LOTE_RURAL":
-                predios_lote_rural[predio_id] = {
-                    "tabla": table_name,
-                    "campo_destinacion": destinacion_field,
-                    "campo_numero": numero_field,
-                    "campo_area": area_field,
-                    "class": table_name,
-                    "object_ref": object_ref,
-                    "destinacion_economica": destinacion_str,
-                    "numero": numero_str,
-                    "valor_numero": numero_raw,
-                    "area": area_value,
-                    "condicion_predio": condicion_raw,
-                    "condicion_predio_norm": condicion_norm,
-                }
+        if _normalize_destinacion(destinacion_str) == "LOTE_RURAL":
+            predios_lote_rural[predio_id] = {
+                "tabla": table_name,
+                "campo_destinacion": destinacion_field,
+                "campo_numero": numero_field,
+                "campo_area": area_field,
+                "class": table_name,
+                "object_ref": object_ref,
+                "destinacion_economica": destinacion_str,
+                "numero": numero_str,
+                "valor_numero": numero_raw,
+                "area": area_value,
+                "condicion_predio": condicion_raw,
+                "condicion_predio_norm": condicion_norm,
+            }
 
     if not predios_lote_rural:
         return issues
@@ -1906,39 +1945,31 @@ def _rule_1_16(dataset: DatasetReader) -> list[RuleIssue]:
                 )
             )
 
-    for table_name in construccion_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(construccion_tables):
+        construccion_id = get_t_id(row)
+        if not construccion_id:
             continue
 
-        for row in dataset.get_records(table_name):
-            construccion_id = get_t_id(row)
-            if not construccion_id:
-                continue
+        predio_fk = row.get("predio")
+        if predio_fk in (None, ""):
+            continue
 
-            predio_fk = row.get("predio")
-            if predio_fk in (None, ""):
-                continue
-
-            predio_fk_str = str(predio_fk).strip()
-            if predio_fk_str in predios_lote_rural:
-                construccion_to_predio[construccion_id] = predio_fk_str
+        predio_fk_str = str(predio_fk).strip()
+        if predio_fk_str in predios_lote_rural:
+            construccion_to_predio[construccion_id] = predio_fk_str
 
     if not construccion_to_predio:
         return issues
 
-    for table_name in unidad_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(unidad_tables):
+        construccion_fk = row.get("construccion")
+        if construccion_fk in (None, ""):
             continue
 
-        for row in dataset.get_records(table_name):
-            construccion_fk = row.get("construccion")
-            if construccion_fk in (None, ""):
-                continue
-
-            construccion_fk_str = str(construccion_fk).strip()
-            predio_id = construccion_to_predio.get(construccion_fk_str)
-            if predio_id:
-                predios_con_unidades.add(predio_id)
+        construccion_fk_str = str(construccion_fk).strip()
+        predio_id = construccion_to_predio.get(construccion_fk_str)
+        if predio_id:
+            predios_con_unidades.add(predio_id)
 
     for predio_id in predios_con_unidades:
         predio_info = predios_lote_rural[predio_id]
@@ -1987,77 +2018,53 @@ def _rule_1_17(dataset: DatasetReader) -> list[RuleIssue]:
         "SALUBRIDAD",
     }
 
-    def get_t_id(row: dict[str, object]) -> str | None:
-        for key, value in row.items():
-            if str(key).lower() == "t_id" and value not in (None, ""):
-                return str(value).strip()
-        return None
+    get_t_id = _get_t_id
 
     predios_requeridos: dict[str, dict[str, object]] = {}
     predios_con_construccion: set[str] = set()
 
-    for table_name in predio_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(predio_tables):
+        destinacion_value = _required_field_value(
+            helper,
+            row,
+            issues,
+            rule_id="1.17",
+            table_name=table_name,
+            candidates=destinacion_fields,
+            field_label="destinacion_economica",
+            message="No se puede validar la regla 1.17 porque destinacion_economica no existe o está vacía.",
+        )
+        if not destinacion_value:
             continue
 
-        for row in dataset.get_records(table_name):
-            predio_id = get_t_id(row)
-            if not predio_id:
-                continue
+        field_name, raw_value, destinacion_str = destinacion_value
 
-            destinacion_match = helper._extract_field(
-                row,
-                destinacion_fields,
-                require_value=False,
-            )
-            if not destinacion_match:
-                continue
+        predio_id = get_t_id(row)
+        if not predio_id:
+            continue
 
-            field_name, raw_value = destinacion_match
-            destinacion_str = "" if raw_value in (None, "") else str(raw_value).strip()
+        destinacion_norm = _normalize_destinacion(destinacion_str)
 
-            if not destinacion_str:
-                issues.append(
-                    RuleIssue(
-                        rule_id="1.17",
-                        object_ref=helper.identify(row),
-                        message="No se puede validar la regla 1.17 porque destinacion_economica no existe o está vacía.",
-                        details={
-                            "tabla": table_name,
-                            "campo": field_name,
-                            "class": table_name,
-                            "valor": raw_value,
-                        },
-                    )
-                )
-                continue
-
-            destinacion_norm = _normalize_destinacion(destinacion_str)
-
-            if destinacion_norm in required_values:
-                predios_requeridos[predio_id] = {
-                    "tabla": table_name,
-                    "campo": field_name,
-                    "class": table_name,
-                    "object_ref": helper.identify(row),
-                    "destinacion_economica": destinacion_str,
-                }
+        if destinacion_norm in required_values:
+            predios_requeridos[predio_id] = {
+                "tabla": table_name,
+                "campo": field_name,
+                "class": table_name,
+                "object_ref": helper.identify(row),
+                "destinacion_economica": destinacion_str,
+            }
 
     if not predios_requeridos:
         return issues
 
-    for table_name in construccion_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(construccion_tables):
+        predio_fk = row.get("predio")
+        if predio_fk in (None, ""):
             continue
 
-        for row in dataset.get_records(table_name):
-            predio_fk = row.get("predio")
-            if predio_fk in (None, ""):
-                continue
-
-            predio_fk_str = str(predio_fk).strip()
-            if predio_fk_str in predios_requeridos:
-                predios_con_construccion.add(predio_fk_str)
+        predio_fk_str = str(predio_fk).strip()
+        if predio_fk_str in predios_requeridos:
+            predios_con_construccion.add(predio_fk_str)
 
     for predio_id, predio_info in predios_requeridos.items():
         if predio_id in predios_con_construccion:
@@ -2236,11 +2243,7 @@ def _rule_1_19(dataset: DatasetReader) -> list[RuleIssue]:
         "CANCELACION_POR_ENGLOBE",
     }
 
-    def get_t_id(row: dict[str, object]) -> str | None:
-        for key, value in row.items():
-            if str(key).lower() == "t_id" and value not in (None, ""):
-                return str(value).strip()
-        return None
+    get_t_id = _get_t_id
 
     def normalize_relation_key(value: object) -> str:
         text = str(value).strip().lower()
@@ -2512,11 +2515,7 @@ def _rule_1_21(dataset: DatasetReader) -> list[RuleIssue]:
         "CONDOMINIO_UNIDAD_PREDIAL",
     }
 
-    def get_t_id(row: dict[str, object]) -> str | None:
-        for key, value in row.items():
-            if str(key).lower() == "t_id" and value not in (None, ""):
-                return str(value).strip()
-        return None
+    get_t_id = _get_t_id
 
     def parse_float(value: object) -> float | None:
         if value in (None, ""):
@@ -2531,138 +2530,126 @@ def _rule_1_21(dataset: DatasetReader) -> list[RuleIssue]:
     informacion_ph_por_predio: dict[str, dict[str, object]] = {}
 
     # 1. Leer ARB_InformacionPH
-    for table_name in informacion_ph_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(informacion_ph_tables):
+        predio_fk = row.get("arb_predio")
+        if predio_fk in (None, ""):
             continue
 
-        for row in dataset.get_records(table_name):
-            predio_fk = row.get("arb_predio")
-            if predio_fk in (None, ""):
-                continue
+        predio_id = str(predio_fk).strip()
 
-            predio_id = str(predio_fk).strip()
+        area_match = helper._extract_field(
+            row,
+            area_total_terreno_fields,
+            require_value=False,
+        )
+        area_field = area_match[0] if area_match else area_total_terreno_fields[0]
+        area_raw = area_match[1] if area_match else None
+        area_value = parse_float(area_raw)
 
+        informacion_ph_por_predio[predio_id] = {
+            "tabla": table_name,
+            "campo": area_field,
+            "class": table_name,
+            "valor": area_raw,
+            "area_total_terreno": area_value,
+            "object_ref": helper.identify(row),
+        }
+
+    # 2. Leer predios matriz y unidades
+    for table_name, row in helper._iter_table_rows(predio_tables):
+        object_ref = helper.identify(row)
+
+        condicion_value = _required_field_value(
+            helper,
+            row,
+            issues,
+            rule_id="1.21",
+            table_name=table_name,
+            candidates=condicion_fields,
+            field_label="condicion_predio",
+            message="No se puede validar la regla 1.21 porque condicion_predio no existe o está vacía.",
+        )
+        if not condicion_value:
+            continue
+
+        condicion_field, condicion_raw, condicion_str = condicion_value
+
+        predio_id = get_t_id(row)
+        if not predio_id:
+            continue
+
+        condicion_norm = _normalize_condicion(condicion_str)
+        if condicion_norm not in matrix_conditions and condicion_norm not in unit_conditions:
+            continue
+
+        numero_value = _required_field_value(
+            helper,
+            row,
+            issues,
+            rule_id="1.21",
+            table_name=table_name,
+            candidates=numero_predial_fields,
+            field_label="Numero_Predial_Nacional",
+            message="No se puede validar la regla 1.21 porque Numero_Predial_Nacional no existe o está vacío.",
+            details={
+                "predio_id": predio_id,
+                "condicion_predio": condicion_str,
+            },
+        )
+        if not numero_value:
+            continue
+
+        numero_field, numero_raw, numero_str = numero_value
+        numero_base = numero_str[:22]
+
+        if condicion_norm in matrix_conditions:
+            predios_matriz[predio_id] = {
+                "tabla": table_name,
+                "campo": numero_field,
+                "class": table_name,
+                "object_ref": object_ref,
+                "predio_id": predio_id,
+                "numero_predial": numero_str,
+                "numero_base_22": numero_base,
+                "condicion_predio": condicion_str,
+            }
+
+        elif condicion_norm in unit_conditions:
             area_match = helper._extract_field(
                 row,
-                area_total_terreno_fields,
+                area_coeficiente_fields,
                 require_value=False,
             )
-            area_field = area_match[0] if area_match else area_total_terreno_fields[0]
+            area_field = area_match[0] if area_match else area_coeficiente_fields[0]
             area_raw = area_match[1] if area_match else None
             area_value = parse_float(area_raw)
 
-            informacion_ph_por_predio[predio_id] = {
-                "tabla": table_name,
-                "campo": area_field,
-                "class": table_name,
-                "valor": area_raw,
-                "area_total_terreno": area_value,
-                "object_ref": helper.identify(row),
-            }
-
-    # 2. Leer predios matriz y unidades
-    for table_name in predio_tables:
-        if not dataset.has_table(table_name):
-            continue
-
-        for row in dataset.get_records(table_name):
-            predio_id = get_t_id(row)
-            if not predio_id:
-                continue
-
-            object_ref = helper.identify(row)
-
-            condicion_match = helper._extract_field(
-                row,
-                condicion_fields,
-                require_value=False,
-            )
-            if not condicion_match:
-                continue
-
-            condicion_field, condicion_raw = condicion_match
-            condicion_str = "" if condicion_raw in (None, "") else str(condicion_raw).strip()
-            if not condicion_str:
+            if area_value is None:
                 issues.append(
                     RuleIssue(
                         rule_id="1.21",
                         object_ref=object_ref,
-                        message="No se puede validar la regla 1.21 porque condicion_predio no existe o está vacía.",
+                        message=(
+                            "No se puede validar la regla 1.21 porque "
+                            "Area_Coeficiente_Copropiedad no existe o está vacía "
+                            "en una unidad predial."
+                        ),
                         details={
                             "tabla": table_name,
-                            "campo": condicion_field,
+                            "campo": area_field,
                             "class": table_name,
-                            "valor": condicion_raw,
+                            "valor": area_raw,
+                            "numero": numero_str,
+                            "condicion_predio": condicion_str,
                         },
                     )
                 )
                 continue
 
-            condicion_norm = _normalize_condicion(condicion_str)
-
-            numero_match = helper._extract_field(
-                row,
-                numero_predial_fields,
-                require_value=False,
+            suma_areas_unidades[numero_base] = round(
+                suma_areas_unidades.get(numero_base, 0.0) + area_value,
+                2,
             )
-            if not numero_match:
-                continue
-
-            numero_field, numero_raw = numero_match
-            numero_str = "" if numero_raw in (None, "") else str(numero_raw).strip()
-            if not numero_str:
-                continue
-
-            numero_base = numero_str[:22]
-
-            if condicion_norm in matrix_conditions:
-                predios_matriz[predio_id] = {
-                    "tabla": table_name,
-                    "campo": numero_field,
-                    "class": table_name,
-                    "object_ref": object_ref,
-                    "predio_id": predio_id,
-                    "numero_predial": numero_str,
-                    "numero_base_22": numero_base,
-                    "condicion_predio": condicion_str,
-                }
-
-            elif condicion_norm in unit_conditions:
-                area_match = helper._extract_field(
-                    row,
-                    area_coeficiente_fields,
-                    require_value=False,
-                )
-                area_field = area_match[0] if area_match else area_coeficiente_fields[0]
-                area_raw = area_match[1] if area_match else None
-                area_value = parse_float(area_raw)
-
-                if area_value is None:
-                    issues.append(
-                        RuleIssue(
-                            rule_id="1.21",
-                            object_ref=object_ref,
-                            message=(
-                                "No se puede validar la regla 1.21 porque "
-                                "Area_Coeficiente_Copropiedad no existe o está vacía "
-                                "en una unidad predial."
-                            ),
-                            details={
-                                "tabla": table_name,
-                                "campo": area_field,
-                                "class": table_name,
-                                "valor": area_raw,
-                                "numero": numero_str,
-                                "condicion_predio": condicion_str,
-                            },
-                        )
-                    )
-                    continue
-
-                suma_areas_unidades[numero_base] = round(
-                    suma_areas_unidades.get(numero_base, 0.0) + area_value,
-                    2,
-                )
 
     if not predios_matriz:
         return issues
@@ -2763,83 +2750,59 @@ def _rule_1_22(dataset: DatasetReader) -> list[RuleIssue]:
         "CONDOMINIO_MATRIZ",
     }
 
-    def get_t_id(row: dict[str, object]) -> str | None:
-        for key, value in row.items():
-            if str(key).lower() == "t_id" and value not in (None, ""):
-                return str(value).strip()
-        return None
+    get_t_id = _get_t_id
 
     predios: dict[str, dict[str, object]] = {}
     predios_con_informacion_ph: dict[str, list[dict[str, object]]] = {}
 
     # 1. Leer predios y su condición
-    for table_name in predio_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(predio_tables):
+        condicion_value = _required_field_value(
+            helper,
+            row,
+            issues,
+            rule_id="1.22",
+            table_name=table_name,
+            candidates=condicion_fields,
+            field_label="condicion_predio",
+            message="No se puede validar la regla 1.22 porque condicion_predio no existe o está vacía.",
+        )
+        if not condicion_value:
             continue
 
-        for row in dataset.get_records(table_name):
-            predio_id = get_t_id(row)
-            if not predio_id:
-                continue
+        condicion_field, condicion_raw, condicion_str = condicion_value
 
-            condicion_match = helper._extract_field(
-                row,
-                condicion_fields,
-                require_value=False,
-            )
-            if not condicion_match:
-                continue
+        predio_id = get_t_id(row)
+        if not predio_id:
+            continue
 
-            condicion_field, condicion_raw = condicion_match
-            condicion_str = "" if condicion_raw in (None, "") else str(condicion_raw).strip()
-
-            if not condicion_str:
-                issues.append(
-                    RuleIssue(
-                        rule_id="1.22",
-                        object_ref=helper.identify(row),
-                        message="No se puede validar la regla 1.22 porque condicion_predio no existe o está vacía.",
-                        details={
-                            "tabla": table_name,
-                            "campo": condicion_field,
-                            "class": table_name,
-                            "valor": condicion_raw,
-                        },
-                    )
-                )
-                continue
-
-            predios[predio_id] = {
-                "tabla": table_name,
-                "campo": condicion_field,
-                "class": table_name,
-                "object_ref": helper.identify(row),
-                "condicion_predio": condicion_str,
-                "condicion_predio_norm": _normalize_condicion(condicion_str),
-            }
+        predios[predio_id] = {
+            "tabla": table_name,
+            "campo": condicion_field,
+            "class": table_name,
+            "object_ref": helper.identify(row),
+            "condicion_predio": condicion_str,
+            "condicion_predio_norm": _normalize_condicion(condicion_str),
+        }
 
     if not predios:
         return issues
 
     # 2. Buscar registros relacionados en ARB_InformacionPH
-    for table_name in informacion_ph_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(informacion_ph_tables):
+        predio_fk = row.get("arb_predio")
+        if predio_fk in (None, ""):
             continue
 
-        for row in dataset.get_records(table_name):
-            predio_fk = row.get("arb_predio")
-            if predio_fk in (None, ""):
-                continue
-
-            predio_id = str(predio_fk).strip()
-            predios_con_informacion_ph.setdefault(predio_id, []).append(
-                {
-                    "tabla": table_name,
-                    "campo": "arb_predio",
-                    "class": table_name,
-                    "object_ref": helper.identify(row),
-                }
-            )
+        predio_id = str(predio_fk).strip()
+        predios_con_informacion_ph.setdefault(predio_id, []).append(
+            {
+                "tabla": table_name,
+                "campo": "arb_predio",
+                "class": table_name,
+                "object_ref": helper.identify(row),
+            }
+        )
 
     # 3. Validar obligación / prohibición de registro en ARB_InformacionPH
     for predio_id, predio_info in predios.items():
@@ -3024,113 +2987,93 @@ def _rule_1_24(dataset: DatasetReader) -> list[RuleIssue]:
         "CONDOMINIO_UNIDAD_PREDIAL",
     }
 
-    def get_t_id(row: dict[str, object]) -> str | None:
-        for key, value in row.items():
-            if str(key).lower() == "t_id" and value not in (None, ""):
-                return str(value).strip()
-        return None
+    get_t_id = _get_t_id
 
-    for table_name in predio_tables:
-        if not dataset.has_table(table_name):
+    for table_name, row in helper._iter_table_rows(predio_tables):
+        object_ref = helper.identify(row)
+
+        condicion_value = _required_field_value(
+            helper,
+            row,
+            issues,
+            rule_id="1.24",
+            table_name=table_name,
+            candidates=condicion_fields,
+            field_label="condicion_predio",
+            message="No se puede validar la regla 1.24 porque condicion_predio no existe o está vacía.",
+        )
+        if not condicion_value:
             continue
 
-        for row in dataset.get_records(table_name):
-            predio_id = get_t_id(row)
-            if not predio_id:
-                continue
+        condicion_field, condicion_raw, condicion_str = condicion_value
 
-            object_ref = helper.identify(row)
+        predio_id = get_t_id(row)
+        if not predio_id:
+            continue
 
-            condicion_match = helper._extract_field(
-                row,
-                condicion_fields,
-                require_value=False,
-            )
-            if not condicion_match:
-                continue
+        condicion_norm = _normalize_condicion(condicion_str)
+        if condicion_norm not in unit_conditions:
+            continue
 
-            condicion_field, condicion_raw = condicion_match
-            condicion_str = "" if condicion_raw in (None, "") else str(condicion_raw).strip()
+        numero_match = helper._extract_field(
+            row,
+            numero_predial_fields,
+            require_value=False,
+        )
+        numero_field = numero_match[0] if numero_match else numero_predial_fields[0]
+        numero_raw = numero_match[1] if numero_match else None
+        numero_str = "" if numero_raw in (None, "") else str(numero_raw).strip()
 
-            if not condicion_str:
-                issues.append(
-                    RuleIssue(
-                        rule_id="1.24",
-                        object_ref=object_ref,
-                        message="No se puede validar la regla 1.24 porque condicion_predio no existe o está vacía.",
-                        details={
-                            "tabla": table_name,
-                            "campo": condicion_field,
-                            "class": table_name,
-                            "valor": condicion_raw,
-                        },
-                    )
+        matriz_match = helper._extract_field(
+            row,
+            predio_matriz_fields,
+            require_value=False,
+        )
+
+        if not matriz_match:
+            issues.append(
+                RuleIssue(
+                    rule_id="1.24",
+                    object_ref=object_ref,
+                    message=(
+                        "El predio con condición de unidad predial PH o Condominio "
+                        "no tiene relacionado un predio matriz."
+                    ),
+                    details={
+                        "tabla": table_name,
+                        "campo": predio_matriz_fields[0],
+                        "class": table_name,
+                        "predio_id": predio_id,
+                        "numero_predial": numero_str,
+                        "condicion_predio": condicion_str,
+                    },
                 )
-                continue
-
-            condicion_norm = _normalize_condicion(condicion_str)
-            if condicion_norm not in unit_conditions:
-                continue
-
-            numero_match = helper._extract_field(
-                row,
-                numero_predial_fields,
-                require_value=False,
             )
-            numero_field = numero_match[0] if numero_match else numero_predial_fields[0]
-            numero_raw = numero_match[1] if numero_match else None
-            numero_str = "" if numero_raw in (None, "") else str(numero_raw).strip()
+            continue
 
-            matriz_match = helper._extract_field(
-                row,
-                predio_matriz_fields,
-                require_value=False,
+        matriz_field, matriz_raw = matriz_match
+        predio_matriz = "" if matriz_raw in (None, "") else str(matriz_raw).strip()
+
+        if not predio_matriz:
+            issues.append(
+                RuleIssue(
+                    rule_id="1.24",
+                    object_ref=object_ref,
+                    message=(
+                        "El predio con condición de unidad predial PH o Condominio "
+                        "no tiene relacionado un predio matriz."
+                    ),
+                    details={
+                        "tabla": table_name,
+                        "campo": matriz_field,
+                        "class": table_name,
+                        "predio_id": predio_id,
+                        "numero_predial": numero_str,
+                        "condicion_predio": condicion_str,
+                        "predio_matriz": matriz_raw,
+                    },
+                )
             )
-
-            if not matriz_match:
-                issues.append(
-                    RuleIssue(
-                        rule_id="1.24",
-                        object_ref=object_ref,
-                        message=(
-                            "El predio con condición de unidad predial PH o Condominio "
-                            "no tiene relacionado un predio matriz."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            "campo": predio_matriz_fields[0],
-                            "class": table_name,
-                            "predio_id": predio_id,
-                            "numero_predial": numero_str,
-                            "condicion_predio": condicion_str,
-                        },
-                    )
-                )
-                continue
-
-            matriz_field, matriz_raw = matriz_match
-            predio_matriz = "" if matriz_raw in (None, "") else str(matriz_raw).strip()
-
-            if not predio_matriz:
-                issues.append(
-                    RuleIssue(
-                        rule_id="1.24",
-                        object_ref=object_ref,
-                        message=(
-                            "El predio con condición de unidad predial PH o Condominio "
-                            "no tiene relacionado un predio matriz."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            "campo": matriz_field,
-                            "class": table_name,
-                            "predio_id": predio_id,
-                            "numero_predial": numero_str,
-                            "condicion_predio": condicion_str,
-                            "predio_matriz": matriz_raw,
-                        },
-                    )
-                )
 
     return issues
 
