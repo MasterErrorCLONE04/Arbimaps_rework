@@ -1,205 +1,455 @@
 <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_saas.css?v=16" />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="container-fluid usuarios-saas">
   <!-- Header -->
-  <div class="usuarios-header">
+  <div class="usuarios-header  py-3">
     <div class="title">
-      <h1>Módulo de gestión de usuarios</h1>
-      <p>Agrega, elimina o modifica usuarios de la plataforma.</p>
+      <h1>Módulo de gestión de usuarios y cuadrillas</h1>
+      <p>Agrega, elimina o modifica usuarios y equipos de trabajo (cuadrillas) de la plataforma.</p>
     </div>
-    <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalUsuario" id="btnAddNewUser">
-      <i class="bi bi-plus-lg"></i> Agregar nuevo usuario
+    <div class="header-actions">
+      <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalUsuario" id="btnAddNewUser">
+        <i class="bi bi-plus-lg"></i> Agregar nuevo usuario
+      </button>
+      <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalCuadrilla" id="btnAddNewCuadrilla"
+        style="display: none; background-color: #5ba4cf; border-color: #5ba4cf; box-shadow: 0 4px 12px rgba(91, 164, 207, 0.2);">
+        <i class="bi bi-people-fill"></i> Crear nueva cuadrilla
+      </button>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="usuarios-tabs">
+    <button class="tab-btn-usuarios active" id="tabUsuarios">
+      <i class="bi bi-person fs-5"></i> Usuarios <span class="tab-badge-usuarios" id="tabBadgeUsuarios">0</span>
+    </button>
+    <button class="tab-btn" id="tabCuadrillas">
+      <i class="bi bi-people fs-5"></i> Cuadrillas <span class="tab-badge" id="tabBadgeCuadrillas">0</span>
     </button>
   </div>
 
-  <!-- Cards de conteo -->
-  <div class="stats-grid">
-    <!-- Total -->
-    <div class="stat-card total">
-      <div class="stat-avatar">
-        <i class="bi bi-person-circle"></i>
-      </div>
-      <div class="stat-info">
-        <span class="label">Total de usuarios</span>
-        <span class="value" id="cntTotal">0</span>
+  <!-- SECCIÓN DE USUARIOS -->
+  <div id="usuariosTabContent">
+    <div class="container-fluid pb-3 px-lg-5">
+      <div class="row">
+        <div class="col-6 col-md  p-2">
+          <!-- Total -->
+          <div class="stat-card total">
+            <div class="stat-avatar">
+              <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="stat-info">
+              <small class="label">Total</small>
+              <span class="value" id="cntTotal">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md p-2">
+          <!-- Administrador -->
+          <div class="stat-card role-admin">
+            <div class="stat-avatar">
+              <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="stat-info">
+              <span class="label">Administrador</span>
+              <span class="value" id="cntAdmin">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md p-2">
+          <!-- Lider de reco -->
+          <div class="stat-card role-lider">
+            <div class="stat-avatar">
+              <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="stat-info">
+              <span class="label">Lider de reco.</span>
+              <span class="value" id="cntLider">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md p-2">
+          <!-- Coordinador -->
+          <div class="stat-card role-coordinador">
+            <div class="stat-avatar">
+              <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="stat-info">
+              <span class="label">Coordinador</span>
+              <span class="value" id="cntCoordinador">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md p-2">
+          <!-- Reconocedor -->
+          <div class="stat-card role-reconocedor">
+            <div class="stat-avatar">
+              <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="stat-info">
+              <span class="label">Reconocedor</span>
+              <span class="value" id="cntReconocedor">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md p-2">
+          <!-- Consolidador -->
+          <div class="stat-card role-consolidador">
+            <div class="stat-avatar">
+              <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="stat-info">
+              <span class="label">Consolidador</span>
+              <span class="value" id="cntConsolidador">0</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <!-- Administrador -->
-    <div class="stat-card role-admin">
-      <div class="stat-avatar">
-        <i class="bi bi-person-circle"></i>
+
+    <!-- Contenedor Principal (Tabla y Drawer) -->
+    <div class="usuarios-table-container ">
+      <!-- Tabla -->
+      <div class="table-card">
+        <div class="table-header-bar">
+          <h2>Usuarios</h2>
+          <p>Listado de todos los usuarios de la plataforma</p>
+        </div>
+
+        <div class="table-toolbar">
+          <div class="search-box">
+            <label for="usrSearch">Buscar</label>
+            <input type="text" id="usrSearch" placeholder="Buscar usuario...">
+          </div>
+        </div>
+
+        <div class="custom-table-wrap">
+          <table class="custom-table" id="tblUsuarios" style="display:none;">
+            <thead>
+              <tr>
+                <!-- <th style="width: 60px;">Id</th> -->
+                <th>Nombre del usuario</th>
+                <th>Email</th>
+                <!-- <th>Nombre</th> -->
+                <!-- <th>Apellido</th> -->
+                <th>Supervisor Encargado</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th style="width: 130px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyUsuarios">
+              <!-- Cargado vía JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginador Footer -->
+        <div class="table-footer">
+          <span class="table-info-text" id="usrListMsg">Cargando usuarios...</span>
+          <div class="pagination-controls" id="paginationControls">
+            <!-- Botones de paginado -->
+          </div>
+        </div>
       </div>
-      <div class="stat-info">
-        <span class="label">Administrador</span>
-        <span class="value" id="cntAdmin">0</span>
-      </div>
-    </div>
-    <!-- Lider de reco -->
-    <div class="stat-card role-lider">
-      <div class="stat-avatar">
-        <i class="bi bi-person-circle"></i>
-      </div>
-      <div class="stat-info">
-        <span class="label">Lider de reco.</span>
-        <span class="value" id="cntLider">0</span>
-      </div>
-    </div>
-    <!-- Coordinador -->
-    <div class="stat-card role-coordinador">
-      <div class="stat-avatar">
-        <i class="bi bi-person-circle"></i>
-      </div>
-      <div class="stat-info">
-        <span class="label">Coordinador</span>
-        <span class="value" id="cntCoordinador">0</span>
-      </div>
-    </div>
-    <!-- Reconocedor -->
-    <div class="stat-card role-reconocedor">
-      <div class="stat-avatar">
-        <i class="bi bi-person-circle"></i>
-      </div>
-      <div class="stat-info">
-        <span class="label">Reconocedor</span>
-        <span class="value" id="cntReconocedor">0</span>
-      </div>
-    </div>
-    <!-- Consolidador -->
-    <div class="stat-card role-consolidador">
-      <div class="stat-avatar">
-        <i class="bi bi-person-circle"></i>
-      </div>
-      <div class="stat-info">
-        <span class="label">Consolidador</span>
-        <span class="value" id="cntConsolidador">0</span>
+
+      <!-- Drawer de Detalle del Usuario -->
+      <div class="user-drawer " id="userDrawer">
+        <div class="drawer-header">
+          <div>
+            <h3>Detalle del Usuario</h3>
+            <small class="fw-light" style="font-size: 12px;">Información completa del usuario</small>
+          </div>
+          <button type="button" class="btn-close-drawer" id="btnCloseDrawer">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="drawer-body h-100 p-0">
+          <div class="drawer-profile p-3 border-bottom">
+            <div class="drawer-avatar" id="drawerAvatar">AC</div>
+            <div class="drawer-profile-info">
+              <h4 id="drawerFullName">Alex Calderón</h4>
+              <span class="username" id="drawerUsername">alex_calderon</span>
+              <div><span class="role-badge" id="drawerRoleBadge">Administrador</span></div>
+            </div>
+          </div>
+
+          <div class="drawer-info-block  px-3">
+            <div class="drawer-field pt-2">
+              <div class="drawer-field-content">
+                <span class="label">Teléfono</span>
+                <span class="value" id="drawerPhone">+57 322789561</span>
+              </div>
+              <button type="button" class="btn-copy" id="btnCopyPhone">
+                <i class="bi bi-copy"></i>
+              </button>
+            </div>
+
+            <div class="drawer-field border-bottom pb-4 ">
+              <div class="drawer-field-content">
+                <span class="label">Correo electrónico</span>
+                <span class="value" id="drawerEmail">tecnico2.arbitrium@gmail.com</span>
+              </div>
+              <button type="button" class="btn-copy" id="btnCopyEmail">
+                <i class="bi bi-copy"></i>
+              </button>
+            </div>
+
+            <div class="container-fluid pb-4 border-bottom">
+              <div class=" row pt-1 ">
+                <div class="col-12 px-0 drawer-section-title pb-2">Información contractual</div>
+                <div class="col-12 ps-0 col-md-6">
+                  <div class="drawer-field-content">
+                    <span class="label">Inicio de contrato</span>
+                    <span class="value" id="drawerStartDate">26/05/2026</span>
+                  </div>
+                </div>
+                <div class="col-12 pe-0 col-md-6">
+                  <div class="drawer-field-content">
+                    <span class="label">Fecha de finalización</span>
+                    <span class="value" id="drawerEndDate">26/05/2027</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+            <div class="workload-dropdowns pt-2">
+              <div class="drawer-section-title">Cargas de trabajo</div>
+
+              <!-- Asignaciones Pendientes -->
+              <div class="workload-accordion " id="accordionPending">
+                <button class="workload-header " type="button">
+                  <span class="workload-header-title">Asignaciones pendiente</span>
+                  <div class="workload-header-right">
+                    <span class="workload-badge pending">1</span>
+                    <i class="bi bi-chevron-down workload-icon"></i>
+                  </div>
+                </button>
+                <div class="workload-content">
+                  <div class="workload-content-inner">
+                    <div class="workload-card">
+                      <div class="workload-card-left">
+                        <h5 class="workload-card-title">Lote 27</h5>
+                        <span class="workload-card-date">Fecha de entrega: 28/06/2026</span>
+                        <div class="workload-card-assigned">
+                          <span class="workload-card-assigned-icon"><i class="bi bi-person-circle"></i></span>
+                          <div class="workload-card-assigned-info">
+                            <span class="workload-card-assigned-label">Encargado</span>
+                            <span class="workload-card-assigned-name">Coordinador1</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="workload-card-right">
+                        <span class="workload-tag pending">18 predios</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Asignaciones Entregadas -->
+              <div class="workload-accordion" id="accordionCompleted">
+                <button class="workload-header" type="button">
+                  <span class="workload-header-title">Asignaciones entregadas</span>
+                  <div class="workload-header-right">
+                    <span class="workload-badge completed">2</span>
+                    <i class="bi bi-chevron-down workload-icon"></i>
+                  </div>
+                </button>
+                <div class="workload-content">
+
+                  <div class="workload-content-inner">
+                    <div class="workload-card">
+                      <div class="workload-card-left">
+                        <h5 class="workload-card-title">Lote 47</h5>
+                        <span class="workload-card-date">Fecha de entrega: 8/06/2026</span>
+                        <div class="workload-card-assigned">
+                          <span class="workload-card-assigned-icon"><i class="bi bi-person-circle"></i></span>
+                          <div class="workload-card-assigned-info">
+                            <span class="workload-card-assigned-label">Encargado</span>
+                            <span class="workload-card-assigned-name">Coordinador1</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="workload-card-right">
+                        <span class="workload-tag completed">86 predios</span>
+                      </div>
+                    </div>
+
+                    <div class="workload-card">
+                      <div class="workload-card-left">
+                        <h5 class="workload-card-title">Lote 63_E</h5>
+                        <span class="workload-card-date">Fecha de entrega: 02/06/2026</span>
+                        <div class="workload-card-assigned">
+                          <span class="workload-card-assigned-icon"><i class="bi bi-person-circle"></i></span>
+                          <div class="workload-card-assigned-info">
+                            <span class="workload-card-assigned-label">Encargado</span>
+                            <span class="workload-card-assigned-name">Coordinador1</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="workload-card-right">
+                        <span class="workload-tag completed">20 predios</span>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="drawer-actions mt-auto  px-4 py-3">
+            <button type="button" class="btn-drawer-action edit" id="btnDrawerEdit">
+              <i class="bi bi-pencil-fill"></i> Editar
+              <button type="button" class="btn-drawer-action toggle-status" id="btnDrawerToggle">
+                <i class="bi bi-person-x-fill"></i> Desactivar
+              </button>
+              <button type="button" class="btn-drawer-action delete" id="btnDrawerDelete">
+                <i class="bi bi-trash-fill"></i> Eliminar
+              </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Contenedor Principal (Tabla y Drawer) -->
-  <div class="usuarios-table-container">
-    <!-- Tabla -->
-    <div class="table-card">
-      <div class="table-header-bar">
-        <h2>Usuarios</h2>
-        <p>Listado de todos los usuarios de la plataforma</p>
-      </div>
-
-      <div class="table-toolbar">
-        <div class="search-box">
-          <label for="usrSearch">Buscar</label>
-          <input type="text" id="usrSearch" placeholder="Buscar usuario...">
-        </div>
-      </div>
-
-      <div class="custom-table-wrap">
-        <table class="custom-table" id="tblUsuarios" style="display:none;">
-          <thead>
-            <tr>
-              <th style="width: 60px;">Id</th>
-              <th>Nombre del usuario</th>
-              <th>Email</th>
-              <th>Nombre</th>
-              <th>Apellido</th>
-              <th>Supervisor Encargado</th>
-              <th>Rol</th>
-              <th>Estado</th>
-              <th style="width: 130px;">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyUsuarios">
-            <!-- Cargado vía JS -->
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Paginador Footer -->
-      <div class="table-footer">
-        <span class="table-info-text" id="usrListMsg">Cargando usuarios...</span>
-        <div class="pagination-controls" id="paginationControls">
-          <!-- Botones de paginado -->
-        </div>
-      </div>
+  <!-- SECCIÓN DE CUADRILLAS -->
+  <div id="cuadrillasTabContent" class="cuadrillas-section" style="display: none;">
+    <div class="section-title-wrap">
+      <h2>Listado de cuadrillas</h2>
     </div>
-
-    <!-- Drawer de Detalle del Usuario -->
-    <div class="user-drawer" id="userDrawer">
-      <div class="drawer-header">
-        <h3>Detalle del Usuario</h3>
-        <button type="button" class="btn-close-drawer" id="btnCloseDrawer">
-          <i class="bi bi-x-lg"></i>
-        </button>
-      </div>
-      <div class="drawer-body">
-        <div class="drawer-profile">
-          <div class="drawer-avatar" id="drawerAvatar">AC</div>
-          <div class="drawer-profile-info">
-            <h4 id="drawerFullName">Alex Calderón</h4>
-            <span class="username" id="drawerUsername">alex_calderon</span>
-            <div><span class="role-badge" id="drawerRoleBadge">Administrador</span></div>
-          </div>
-        </div>
-
-        <div class="drawer-info-block">
-          <div class="drawer-field">
-            <div class="drawer-field-content">
-              <span class="label">Teléfono</span>
-              <span class="value" id="drawerPhone">+57 322789561</span>
-            </div>
-            <button type="button" class="btn-copy" id="btnCopyPhone">
-              <i class="bi bi-copy"></i>
-            </button>
-          </div>
-          <div class="drawer-field">
-            <div class="drawer-field-content">
-              <span class="label">Correo electrónico</span>
-              <span class="value" id="drawerEmail">tecnico2.arbitrium@gmail.com</span>
-            </div>
-            <button type="button" class="btn-copy" id="btnCopyEmail">
-              <i class="bi bi-copy"></i>
-            </button>
-          </div>
-        </div>
-
-        <hr class="drawer-divider" />
-
-        <div class="drawer-section-title">Información contractual</div>
-        <div class="drawer-grid-2">
-          <div class="drawer-field-content">
-            <span class="label">Fecha de inicio</span>
-            <span class="value" id="drawerStartDate">26/05/2026</span>
-          </div>
-          <div class="drawer-field-content">
-            <span class="label">Fecha de finalización</span>
-            <span class="value" id="drawerEndDate">26/05/2027</span>
-          </div>
-        </div>
-
-        <hr class="drawer-divider" />
-
-        <div class="drawer-section-title">Cargas de trabajo</div>
-        <div class="drawer-actions">
-          <button type="button" class="btn-drawer-action edit" id="btnDrawerEdit">
-            <i class="bi bi-pencil-fill"></i> Editar usuario
-          </button>
-          <button type="button" class="btn-drawer-action toggle-status" id="btnDrawerToggle">
-            <i class="bi bi-person-x-fill"></i> Desactivar usuario
-          </button>
-          <button type="button" class="btn-drawer-action delete" id="btnDrawerDelete">
-            <i class="bi bi-trash-fill"></i> Eliminar
-          </button>
-        </div>
-      </div>
+    <div class="cuadrillas-grid" id="cuadrillasGrid">
+      <!-- Cargado vía JS -->
     </div>
   </div>
 </div>
 
-<!-- Modal para Crear/Editar Usuario -->
-<div class="modal fade" id="modalUsuario" tabindex="-1" aria-labelledby="modalUsuarioLabel" aria-hidden="true">
+<!-- Modal para Crear/Editar Cuadrilla -->
+<div class="modal fade" id="modalCuadrilla" tabindex="-1" aria-labelledby="modalCuadrillaLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="modalUsuarioLabel">Crear nuevo usuario</h5>
+        <h5 class="modal-title" id="modalCuadrillaLabel">Crear nueva cuadrilla</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="formCuadrilla">
+        <div class="modal-body">
+          <div id="cuaMsg" class="msg"></div>
+          <div class="modal-form-grid">
+            <div class="form-group full-width">
+              <label class="form-label" for="cuaNombre">Nombre de la cuadrilla *</label>
+              <input type="text" id="cuaNombre" class="form-input" required placeholder="Ej: Cuadrilla 1">
+            </div>
+            <div class="form-group full-width">
+              <label class="form-label" for="cuaEncargado">Encargado (Coordinador) *</label>
+              <select id="cuaEncargado" class="form-input" required>
+                <option value="">Selecciona...</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label class="form-label" for="cuaZona">Zona de intervención</label>
+              <select id="cuaZona" class="form-input" required>
+                <option value="">Selecciona...</option>
+                <option value="Norte">Norte</option>
+                <option value="Sur">Sur</option>
+                <option value="Centro">Centro</option>
+                <option value="Este">Este</option>
+                <option value="Oeste">Oeste</option>
+                <option value="Sur/Oeste">Sur/Oeste</option>
+              </select>
+            </div>
+
+            <div class="form-group full-width">
+              <div class="reconocedores-container">
+                <div class="reconocedores-header">Listado de reconocedores</div>
+                <div class="reconocedores-list" id="selectedReconocedoresList">
+                  <!-- Selected recognizers loaded via JS -->
+                </div>
+                <div class="add-reconocedor-wrapper">
+                  <button type="button" class="btn-add-reconocedor" id="btnAddReconocedor">
+                    Añadir reconocedor <i class="bi bi-person-plus-fill"></i>
+                  </button>
+                  <div class="reconocedores-dropdown" id="reconocedoresDropdown">
+                    <!-- Available recognizers loaded dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-modal-ghost" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn-modal-primary" id="cuaSubmitBtn"> <i class="bi bi-floppy"></i> Guardar
+            cuadrilla</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Detalle de Cuadrilla -->
+<div class="modal fade " id="modalCuadrillaDetail" tabindex="-1" aria-labelledby="modalCuadrillaDetailLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header-detalle-cuadrilla d-flex justify-content-between">
+        <h5 class="modal-title" id="modalCuadrillaDetailLabel">Detalle de la Cuadrilla</h5>
+        <span class="mb-1 badge-modal-cuadrilla " id="detCuaNombre">Cuadrilla X</span>
+      </div>
+      <div class="modal-body py-0 pb-3">
+        <div class="d-flex align-items-center gap-3 mb-4 py-3 px-2"
+          style="border-radius: 10px; background-color: #F0F6FB;">
+          <div class="cuadrilla-avatar-modal">
+            <i class="bi bi-person-fill"></i>
+          </div>
+          <div class="d-flex flex-column" style="gap: 5px">
+            <p class="mb-0" id="detCuaNombre" style="font-weight: 700; color: var(--text-dark);">Encargado:</p>
+            <small class="text-white fw-bold"
+              style="background-color: var(--primary); padding: 5px 15px; border-radius: 10px;"
+              id="detCuaEncargado">Coordinador X</small>
+          </div>
+
+          <div class="ms-auto">
+            <div><span class="role-badge coordinador" id="drawerRoleBadge">Coordinador</span>
+            </div>
+          </div>
+        </div>
+
+        <div class=" p-3" style="border-radius: 10px; background-color: #F0F6FB;">
+          <p class="mb-2 borde py-2 text-center"
+            style="font-weight: 700; border-radius: 10px; background-color: #BAD5EB;">Listado de reconocedores:</p>
+          <ul class="list-group" id="detCuaIntegrantesList">
+            <!-- Cargado vía JS -->
+          </ul>
+        </div>
+
+        <div class="card p-3 mb-3 bg-light border-0 d-none">
+          <div class="mb-2"><strong>Zona de cobertura:</strong> <span id="detCuaZona">Sur</span></div>
+          <div><strong>Total de Integrantes:</strong> <span id="detCuaTotalIntegrantes">2 Reconocedores</span></div>
+        </div>
+
+      </div>
+      <div class="modal-footer border-0">
+        <button type="button" class="btn-modal-primary" data-bs-dismiss="modal"> <i class="bi bi-x-lg me-2"></i>
+          Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Modal para Crear/Editar Usuario -->
+<div class="modal fade modal-lg" id="modalUsuario" tabindex="-1" aria-labelledby="modalUsuarioLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" style="font-size: 1.2rem;" id="modalUsuarioLabel">Crear nuevo usuario</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form id="formUsuario">
@@ -207,30 +457,31 @@
           <div id="usrMsg" class="msg"></div>
           <div class="modal-form-grid">
             <div class="form-group">
-              <label class="form-label" for="usrUsername">Username *</label>
+              <label class="form-label" style="font-size: 0.8rem;" for="usrUsername">Nombre de usuario *</label>
               <input type="text" id="usrUsername" class="form-input" required placeholder="Ej: alex_calderon">
             </div>
             <div class="form-group">
-              <label class="form-label" for="usrEmail">Email</label>
+              <label class="form-label" style="font-size: 0.8rem;" for="usrEmail">Email</label>
               <input type="email" id="usrEmail" class="form-input" placeholder="Ej: email@ejemplo.com">
             </div>
             <div class="form-group">
-              <label class="form-label" for="usrFirstName">Nombre *</label>
+              <label class="form-label" style="font-size: 0.8rem;" for="usrFirstName">Nombre *</label>
               <input type="text" id="usrFirstName" class="form-input" required placeholder="Ej: Alex">
             </div>
             <div class="form-group">
-              <label class="form-label" for="usrLastName">Apellido *</label>
+              <label class="form-label" style="font-size: 0.8rem;" for="usrLastName">Apellido *</label>
               <input type="text" id="usrLastName" class="form-input" required placeholder="Ej: Calderón">
             </div>
             <div class="form-group full-width">
-              <label class="form-label" for="usrRol">Rol *</label>
+              <label class="form-label" style="font-size: 0.8rem;" for="usrRol">Rol *</label>
               <select id="usrRol" class="form-input" required>
                 <option value="">Cargando...</option>
               </select>
             </div>
             <div class="form-group full-width">
-              <label class="form-label" for="usrPassword">Contraseña inicial</label>
-              <input type="password" id="usrPassword" class="form-input" autocomplete="new-password" placeholder="(opcional en edición)">
+              <label class="form-label" style="font-size: 0.8rem;" for="usrPassword">Contraseña inicial</label>
+              <input type="password" id="usrPassword" class="form-input" autocomplete="new-password"
+                placeholder="(opcional en edición)">
             </div>
           </div>
         </div>
@@ -328,7 +579,7 @@
         const coord = usuariosCache.find(x => (x.rol || "").toLowerCase() === "coordinador");
         return coord ? coord.username : "Coordinador1";
       } else if (rolLower === "coordinador") {
-        const lider = usuariosCache.find(x => ["digitalizador", "lider", "lider de reco."].includes((x.rol || "").toLowerCase()));
+        const lider = usuariosCache.find(x => ["digitalizador", "lider", "lider_reconocimiento"].includes((x.rol || "").toLowerCase()));
         return lider ? lider.username : "L_reconocimiento";
       }
       return "-";
@@ -341,12 +592,16 @@
         const r = await fetch(`${rp}/usuarios/roles`, { credentials: "include" });
         const contentType = r.headers.get("content-type") || "";
 
+        console.log(r);
+
         if (!contentType.includes("application/json")) {
           const text = await r.text();
           throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 120)}`);
         }
 
+
         const roles = await r.json();
+        console.log(roles);
         if (!r.ok) throw new Error(roles.detail || "No se pudo cargar roles.");
 
         // Add standard roles to ensure we have mock roles if necessary
@@ -429,31 +684,31 @@
         const labelText = roleLabels[rolKey] || u.rol || "";
         const rolHtml = `<span class="role-badge ${badgeClass}">${labelText}</span>`;
 
-        const estadoHtml = u.activo 
-          ? '<span class="status-text">Activo</span>' 
+        const estadoHtml = u.activo
+          ? '<span class="status-text">Activo</span>'
           : '<span class="status-text inactive">Inactivo</span>';
 
         const supervisor = obtenerSupervisor(u.rol);
 
         tr.innerHTML = `
-          <td>${u.id_global ?? ""}</td>
+          
           <td><strong>${u.username ?? ""}</strong></td>
           <td>${u.email ?? ""}</td>
-          <td>${u.first_name ?? ""}</td>
-          <td>${u.last_name ?? ""}</td>
+          
+         
           <td>${supervisor}</td>
           <td>${rolHtml}</td>
           <td>${estadoHtml}</td>
           <td>
             <div class="actions-cell">
               <button type="button" class="btn-action-circle edit btnUsrEdit" data-id="${u.id_global}" title="Editar">
-                <i class="bi bi-pencil"></i>
+                <i class="bi bi-pen-fill"></i>
               </button>
               <button type="button" class="btn-action-circle delete btnUsrDelete" data-id="${u.id_global}" title="Eliminar">
-                <i class="bi bi-trash"></i>
+                <i class="fa-solid fa-trash" style="color: rgb(225, 27, 29);"></i>
               </button>
               <button type="button" class="btn-action-circle view btnUsrView" data-id="${u.id_global}" title="Ver Detalles">
-                <i class="bi bi-eye"></i>
+                <i class="bi bi-eye-fill"></i>
               </button>
             </div>
           </td>
@@ -518,7 +773,7 @@
         const v = typeof u.id_global === "number" ? u.id_global : parseInt(u.id_global || "0", 10);
         return Number.isFinite(v) && v > m ? v : m;
       }, 0);
-  
+
       if (!q) {
         const pageList = base.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
         listMsg.textContent = `Mostrando ${pageList.length} de ${base.length} resultados`;
@@ -538,7 +793,7 @@
         ].join(" ").toLowerCase();
         return texto.includes(q);
       });
-  
+
       const pageList = filtrados.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
       listMsg.textContent = filtrados.length
         ? `Mostrando ${pageList.length} de ${filtrados.length} resultados (Filtrados de ${base.length})`
@@ -629,9 +884,9 @@
 
       // Handle active state
       if (u.activo) {
-        btnDrawerToggle.innerHTML = '<i class="bi bi-toggle-on text-orange"></i> Desactivar usuario';
+        btnDrawerToggle.innerHTML = '<i class="bi bi-toggle-on text-orange"></i> Desactivar ';
       } else {
-        btnDrawerToggle.innerHTML = '<i class="bi bi-toggle-off text-muted"></i> Activar usuario';
+        btnDrawerToggle.innerHTML = '<i class="bi bi-toggle-off text-muted"></i> Activar ';
       }
 
       userDrawer.classList.add("open");
@@ -736,7 +991,11 @@
         aplicarBusqueda();
       } catch (err) {
         console.error(err);
-        alert(err.message || "Error cambiando el estado del usuario.");
+        Swal.fire({
+          title: 'Error',
+          text: err.message || "Error cambiando el estado del usuario.",
+          icon: 'error'
+        });
       }
     }
 
@@ -755,7 +1014,7 @@
       inputPassword.value = "";
 
       submitBtn.textContent = "Actualizar usuario";
-      
+
       // Clear alert messages
       msg.style.display = "none";
 
@@ -768,7 +1027,19 @@
     async function deleteUsuario(id) {
       const u = usuariosCache.find(x => x.id_global === id);
       const name = (u && u.username) || id;
-      if (!confirm(`¿Eliminar usuario ${name}?`)) return;
+
+      const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: `¿Deseas eliminar al usuario ${name}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#CD2023',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (!result.isConfirmed) return;
 
       try {
         const r = await fetch(`${rp}/usuarios/${id}`, {
@@ -788,10 +1059,22 @@
         if (!r.ok) throw new Error(data.detail || `No se pudo eliminar (HTTP ${r.status}).`);
 
         if (editingId === id) resetForm();
-        cargarUsuarios();
+        await cargarUsuarios();
+
+        Swal.fire({
+          title: '¡Eliminado!',
+          text: 'El usuario ha sido eliminado correctamente.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } catch (err) {
         console.error(err);
-        alert(err.message || "Error eliminando usuario.");
+        Swal.fire({
+          title: 'Error',
+          text: err.message || "Error eliminando usuario.",
+          icon: 'error'
+        });
       }
     }
 
@@ -852,7 +1135,7 @@
         }
 
         resetForm();
-        
+
         // Hide Bootstrap Modal
         const modalEl = document.getElementById("modalUsuario");
         const modalInstance = bootstrap.Modal.getInstance(modalEl);
@@ -869,6 +1152,409 @@
         submitBtn.textContent = isEdit ? "Actualizar usuario" : "Guardar usuario";
       }
     }
+    // Tabs Navigation
+    const tabUsuarios = document.getElementById("tabUsuarios");
+    const tabCuadrillas = document.getElementById("tabCuadrillas");
+    const usuariosTabContent = document.getElementById("usuariosTabContent");
+    const cuadrillasTabContent = document.getElementById("cuadrillasTabContent");
+    const btnAddNewCuadrilla = document.getElementById("btnAddNewCuadrilla");
+    const tabBadgeUsuarios = document.getElementById("tabBadgeUsuarios");
+    const tabBadgeCuadrillas = document.getElementById("tabBadgeCuadrillas");
+
+    // Cuadrillas CRUD selectors
+    const cuadrillasGrid = document.getElementById("cuadrillasGrid");
+    const formCuadrilla = document.getElementById("formCuadrilla");
+    const cuaNombre = document.getElementById("cuaNombre");
+    const cuaEncargado = document.getElementById("cuaEncargado");
+    const cuaZona = document.getElementById("cuaZona");
+    const cuaSubmitBtn = document.getElementById("cuaSubmitBtn");
+
+    // Custom select components
+    const btnAddReconocedor = document.getElementById("btnAddReconocedor");
+    const reconocedoresDropdown = document.getElementById("reconocedoresDropdown");
+    const selectedReconocedoresList = document.getElementById("selectedReconocedoresList");
+
+    let cuadrillasCache = [];
+    let editingCuadrillaId = null;
+    let selectedReconocedores = [];
+
+    // Tabs switcher events
+    tabUsuarios.addEventListener("click", () => {
+      tabUsuarios.classList.add("active");
+      tabCuadrillas.classList.remove("active");
+      usuariosTabContent.style.display = "block";
+      cuadrillasTabContent.style.display = "none";
+      btnAddNewUser.style.display = "inline-flex";
+      btnAddNewCuadrilla.style.display = "none";
+    });
+
+    tabCuadrillas.addEventListener("click", () => {
+      tabUsuarios.classList.remove("active");
+      tabCuadrillas.classList.add("active");
+      usuariosTabContent.style.display = "none";
+      cuadrillasTabContent.style.display = "flex";
+      btnAddNewUser.style.display = "none";
+      btnAddNewCuadrilla.style.display = "inline-flex";
+      populateCuadrillaFormSelects();
+      renderCuadrillas();
+    });
+
+    // Populate selects dynamically using users loaded from database
+    function populateCuadrillaFormSelects() {
+      // 1. Encargados (Coordinador)
+      const coordinadores = usuariosCache.filter(u => (u.rol || "").toLowerCase() === "coordinador" && u.activo);
+      cuaEncargado.innerHTML = '<option value="">Selecciona...</option>' +
+        coordinadores.map(u => `<option value="${u.first_name} ${u.last_name}">${u.first_name} ${u.last_name}</option>`).join("");
+
+      // 2. Render recognizers list and dropdown
+      renderSelectedReconocedores();
+      renderDropdownReconocedores();
+    }
+
+    function renderSelectedReconocedores() {
+      selectedReconocedoresList.innerHTML = "";
+      if (selectedReconocedores.length === 0) {
+        selectedReconocedoresList.innerHTML = '<div class="text-muted text-center py-2" style="font-size:12px;">No hay reconocedores seleccionados.</div>';
+        return;
+      }
+
+      selectedReconocedores.forEach(fullname => {
+        const initials = fullname.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "R";
+
+        const item = document.createElement("div");
+        item.className = "reconocedor-item";
+        item.innerHTML = `
+          <div class="reconocedor-avatar">${initials}</div>
+          <div class="reconocedor-info">
+            <h4 class="reconocedor-name">${fullname}</h4>
+            <p class="reconocedor-role">Reconocedor</p>
+          </div>
+          <button type="button" class="btn-delete-reconocedor btnRemoveReconocedor" data-name="${fullname}">
+            Eliminar <i class="bi bi-trash2-fill"></i>
+          </button>
+        `;
+        selectedReconocedoresList.appendChild(item);
+      });
+
+      // Attach remove events
+      selectedReconocedoresList.querySelectorAll(".btnRemoveReconocedor").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const name = btn.getAttribute("data-name");
+          selectedReconocedores = selectedReconocedores.filter(n => n !== name);
+          renderSelectedReconocedores();
+          renderDropdownReconocedores();
+        });
+      });
+    }
+
+    function renderDropdownReconocedores() {
+      const activeReconocedores = usuariosCache.filter(u => (u.rol || "").toLowerCase() === "reconocedor" && u.activo);
+      const available = activeReconocedores.filter(u => {
+        const fullname = `${u.first_name} ${u.last_name}`;
+        return !selectedReconocedores.includes(fullname);
+      });
+
+      if (available.length === 0) {
+        reconocedoresDropdown.innerHTML = '<div class="text-muted p-2 text-center" style="font-size:12px;">No hay más reconocedores disponibles.</div>';
+      } else {
+        reconocedoresDropdown.innerHTML = available.map(u => {
+          const fullname = `${u.first_name} ${u.last_name}`;
+          return `<div class="dropdown-item-reconocedor" data-name="${fullname}">${fullname}</div>`;
+        }).join("");
+
+        // Attach add events
+        reconocedoresDropdown.querySelectorAll(".dropdown-item-reconocedor").forEach(item => {
+          item.addEventListener("click", () => {
+            const name = item.getAttribute("data-name");
+            selectedReconocedores.push(name);
+            renderSelectedReconocedores();
+            renderDropdownReconocedores();
+            reconocedoresDropdown.classList.remove("show");
+          });
+        });
+      }
+    }
+
+    // Toggle dropdown visibility
+    btnAddReconocedor.addEventListener("click", (e) => {
+      e.stopPropagation();
+      reconocedoresDropdown.classList.toggle("show");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!reconocedoresDropdown.contains(e.target) && e.target !== btnAddReconocedor) {
+        reconocedoresDropdown.classList.remove("show");
+      }
+    });
+
+    // Persist Cuadrillas in localStorage
+    function cargarCuadrillas() {
+      const stored = localStorage.getItem("cuadrillas_data");
+      if (stored) {
+        cuadrillasCache = JSON.parse(stored);
+      } else {
+        // Initial mocked cuadrillas matching the user's screenshots
+        cuadrillasCache = [
+          {
+            id: 1,
+            nombre: "Cuadrilla 1",
+            encargado: "Alex Calderón",
+            integrantes: ["Juan Diego", "Carlos Mario"],
+            zona: "Sur"
+          },
+          {
+            id: 2,
+            nombre: "Cuadrilla 2",
+            encargado: "Juan Gonzáles",
+            integrantes: ["Felipe Andrés", "Maria Jose"],
+            zona: "Norte"
+          },
+          {
+            id: 3,
+            nombre: "Cuadrilla 3",
+            encargado: "Juan Gonzáles",
+            integrantes: ["Mateo Silva", "Gabriela Luna"],
+            zona: "Sur/Oeste"
+          }
+        ];
+        localStorage.setItem("cuadrillas_data", JSON.stringify(cuadrillasCache));
+      }
+      tabBadgeCuadrillas.textContent = cuadrillasCache.length;
+    }
+
+    function guardarCuadrillasCache() {
+      localStorage.setItem("cuadrillas_data", JSON.stringify(cuadrillasCache));
+      tabBadgeCuadrillas.textContent = cuadrillasCache.length;
+    }
+
+    function renderCuadrillas() {
+      cuadrillasGrid.innerHTML = "";
+      if (cuadrillasCache.length === 0) {
+        cuadrillasGrid.innerHTML = '<div class="w-100 text-center text-muted p-5">No hay cuadrillas registradas.</div>';
+        return;
+      }
+
+      cuadrillasCache.forEach(c => {
+        const card = document.createElement("div");
+        card.className = "cuadrilla-card";
+
+        // Mock team leader or fallback
+        const encargadoDisplay = c.encargado || "Coordinador";
+        const integrantesDisplay = c.integrantes && c.integrantes.length
+          ? `${c.integrantes.length} Reconocedor`
+          : "Sin integrantes";
+
+        card.innerHTML = `
+          <div class="cuadrilla-card-header">
+            <div class="cuadrilla-avatar">
+              <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="cuadrilla-title-info">
+              <h3>${c.nombre}</h3>
+              <span class="leader-name">${c.encargado.split(" ").join("_")}</span>
+            </div>
+          </div>
+          <div class="cuadrilla-details-list">
+            <div class="cuadrilla-detail-item">
+              <span class="label">Encargado:</span>
+              <span class="value">${encargadoDisplay}</span>
+            </div>
+            <div class="cuadrilla-detail-item">
+              <span class="label">Integrantes:</span>
+              <span class="value">${integrantesDisplay}</span>
+            </div>
+            <div class="cuadrilla-detail-item">
+              <span class="label">Zona:</span>
+              <span class="value">${c.zona}</span>
+            </div>
+          </div>
+          <div class="cuadrilla-card-footer ">
+            <button class="btn-card-action view btnCuaView w-75" data-id="${c.id}">
+              <i class="bi bi-eye-fill"></i> Ver detalles
+            </button>
+            <button class="btn-card-action edit btnCuaEdit" data-id="${c.id}">
+              <i class="bi bi-pen-fill"></i> Editar
+            </button>
+            <button class="btn-card-action delete btnCuaDelete px-3" data-id="${c.id}">
+              <i class="bi bi-trash2-fill"></i> 
+            </button>
+          </div>
+        `;
+        cuadrillasGrid.appendChild(card);
+      });
+
+      // Attach card button events
+      cuadrillasGrid.querySelectorAll(".btnCuaView").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = parseInt(btn.getAttribute("data-id"), 10);
+          verDetalleCuadrilla(id);
+        });
+      });
+
+      cuadrillasGrid.querySelectorAll(".btnCuaEdit").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = parseInt(btn.getAttribute("data-id"), 10);
+          startEditCuadrilla(id);
+        });
+      });
+
+      cuadrillasGrid.querySelectorAll(".btnCuaDelete").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = parseInt(btn.getAttribute("data-id"), 10);
+          deleteCuadrilla(id);
+        });
+      });
+    }
+
+    function verDetalleCuadrilla(id) {
+      const c = cuadrillasCache.find(x => x.id === id);
+      if (!c) return;
+
+      document.getElementById("detCuaNombre").textContent = c.nombre;
+      document.getElementById("detCuaEncargado").textContent = c.encargado;
+      document.getElementById("detCuaZona").textContent = c.zona;
+      document.getElementById("detCuaTotalIntegrantes").textContent = `${c.integrantes ? c.integrantes.length : 0} Reconocedor(es)`;
+
+      const listContainer = document.getElementById("detCuaIntegrantesList");
+      listContainer.innerHTML = "";
+      if (c.integrantes && c.integrantes.length > 0) {
+        c.integrantes.forEach(i => {
+          const li = document.createElement("li");
+          li.className = "list-group-item d-flex align-items-center gap-1 border-0 px-0 bg-transparent mb-3";
+          const initials = i.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "R";
+          li.innerHTML = `
+            <div class="reconocedor-avatar">${initials}</div>
+            <div class="reconocedor-info">
+              <h4 class="reconocedor-name mb-0" style="text-align: left;">${i}</h4>
+              <p class="reconocedor-role mb-0" style="text-align: left;">Reconocedor</p>
+            </div>
+          `;
+          listContainer.appendChild(li);
+        });
+      } else {
+        listContainer.innerHTML = '<li class="list-group-item border-0 px-0 bg-transparent text-muted">Sin integrantes registrados.</li>';
+      }
+
+      const modalEl = document.getElementById("modalCuadrillaDetail");
+      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      modalInstance.show();
+    }
+
+    async function deleteCuadrilla(id) {
+      const c = cuadrillasCache.find(x => x.id === id);
+      const name = c ? c.nombre : id;
+
+      const result = await Swal.fire({
+        title: '¿Estás seguro?',
+        text: `¿Deseas eliminar la cuadrilla "${name}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#CD2023',
+        cancelButtonColor: '#64748b',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (!result.isConfirmed) return;
+
+      cuadrillasCache = cuadrillasCache.filter(x => x.id !== id);
+      guardarCuadrillasCache();
+      renderCuadrillas();
+
+      Swal.fire({
+        title: '¡Eliminada!',
+        text: 'La cuadrilla ha sido eliminada correctamente.',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    }
+
+    function startEditCuadrilla(id) {
+      const c = cuadrillasCache.find(x => x.id === id);
+      if (!c) return;
+
+      editingCuadrillaId = id;
+      document.getElementById("modalCuadrillaLabel").textContent = "Editar cuadrilla";
+      cuaNombre.value = c.nombre || "";
+      cuaZona.value = c.zona || "";
+
+      // Set selected list
+      selectedReconocedores = c.integrantes ? [...c.integrantes] : [];
+
+      // Populate selects and match checks
+      populateCuadrillaFormSelects();
+      cuaEncargado.value = c.encargado || "";
+
+      // Clear alert messages
+      const msgCua = document.getElementById("cuaMsg");
+      msgCua.style.display = "none";
+
+      cuaSubmitBtn.textContent = "Actualizar cuadrilla";
+
+      // Show modal
+      const modalEl = document.getElementById("modalCuadrilla");
+      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      modalInstance.show();
+    }
+
+    btnAddNewCuadrilla.addEventListener("click", () => {
+      editingCuadrillaId = null;
+      document.getElementById("modalCuadrillaLabel").textContent = "Crear nueva cuadrilla";
+      formCuadrilla.reset();
+      selectedReconocedores = [];
+      populateCuadrillaFormSelects();
+      const msgCua = document.getElementById("cuaMsg");
+      msgCua.style.display = "none";
+      cuaSubmitBtn.textContent = "Guardar cuadrilla";
+    });
+
+    formCuadrilla.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const nameVal = cuaNombre.value.trim();
+      const encargadoVal = cuaEncargado.value;
+      const zonaVal = cuaZona.value;
+
+      const integrantesVal = selectedReconocedores;
+
+      if (!nameVal || !encargadoVal || !zonaVal || integrantesVal.length === 0) {
+        const msgCua = document.getElementById("cuaMsg");
+        msgCua.textContent = "Completa todos los campos obligatorios y selecciona al menos 1 integrante.";
+        msgCua.className = "msg error";
+        return;
+      }
+
+      if (editingCuadrillaId !== null) {
+        // Edit existing
+        const idx = cuadrillasCache.findIndex(x => x.id === editingCuadrillaId);
+        if (idx !== -1) {
+          cuadrillasCache[idx].nombre = nameVal;
+          cuadrillasCache[idx].encargado = encargadoVal;
+          cuadrillasCache[idx].zona = zonaVal;
+          cuadrillasCache[idx].integrantes = integrantesVal;
+        }
+      } else {
+        // Create new
+        const newId = cuadrillasCache.reduce((max, c) => c.id > max ? c.id : max, 0) + 1;
+        cuadrillasCache.push({
+          id: newId,
+          nombre: nameVal,
+          encargado: encargadoVal,
+          zona: zonaVal,
+          integrantes: integrantesVal
+        });
+      }
+
+      guardarCuadrillasCache();
+      renderCuadrillas();
+
+      // Hide modal
+      const modalEl = document.getElementById("modalCuadrilla");
+      const modalInstance = bootstrap.Modal.getInstance(modalEl);
+      if (modalInstance) {
+        modalInstance.hide();
+      }
+    });
 
     btnAddNewUser.addEventListener("click", () => {
       resetForm();
@@ -876,7 +1562,7 @@
     });
 
     form.addEventListener("submit", guardarUsuario);
-    
+
     if (resetBtn) {
       resetBtn.addEventListener("click", (e) => {
         e.preventDefault();
@@ -891,6 +1577,35 @@
         aplicarBusqueda();
       });
     }
+
+    // Override the user loaded callback to update tabBadgeUsuarios and load cuadrillas
+    const originalCargarUsuarios = cargarUsuarios;
+    cargarUsuarios = async function () {
+      await originalCargarUsuarios();
+      tabBadgeUsuarios.textContent = usuariosCache.length;
+      cargarCuadrillas();
+    };
+
+    // Workload accordions toggling logic
+    document.querySelectorAll(".workload-header").forEach(header => {
+      header.addEventListener("click", () => {
+        const accordion = header.closest(".workload-accordion");
+        const content = accordion.querySelector(".workload-content");
+        const icon = header.querySelector(".workload-icon");
+
+        const isOpen = content.classList.contains("open");
+
+        if (isOpen) {
+          content.classList.remove("open");
+          accordion.classList.remove("active");
+          icon.className = "bi bi-chevron-down workload-icon";
+        } else {
+          content.classList.add("open");
+          accordion.classList.add("active");
+          icon.className = "bi bi-chevron-up workload-icon";
+        }
+      });
+    });
 
     cargarRoles();
     cargarUsuarios();
