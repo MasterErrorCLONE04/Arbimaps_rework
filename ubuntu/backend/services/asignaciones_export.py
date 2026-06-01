@@ -3430,6 +3430,139 @@ def _prepare_assignment_export_legacy_disabled(schema: str, datasetname: str, *,
     )
 
 
+def _sanitize_assignment_enums_and_coords_arb(conn, schema: str, datasetname: str) -> None:
+    # Sanitiza valores de enums LADM_Col no soportados por el modelo de exportacion Captura_ArbiMaps_V1_0,
+    # y traslada coordenadas de localizacion fuera de rango a la ubicacion de los predios.
+    with conn.cursor() as cur:
+        # 1. DerechoInteresadoFuente
+        cur.execute(
+            f"""
+            UPDATE {schema}.arb_derechointeresadofuente
+            SET i_tipo = CASE WHEN i_tipo = 13 THEN 2 ELSE i_tipo END,
+                naturaleza_juridica = CASE WHEN naturaleza_juridica = 15 THEN NULL ELSE naturaleza_juridica END,
+                codigo_naturaleza_juridica = CASE WHEN codigo_naturaleza_juridica = 16 THEN NULL ELSE codigo_naturaleza_juridica END,
+                i_grupo_etnico = CASE WHEN i_grupo_etnico = 14 THEN 895 ELSE i_grupo_etnico END
+            WHERE i_tipo = 13 OR naturaleza_juridica = 15 OR codigo_naturaleza_juridica = 16 OR i_grupo_etnico = 14
+            """
+        )
+
+        # 2. Marca
+        cur.execute(
+            f"""
+            UPDATE {schema}.arb_marca
+            SET marca_tipo = 1450
+            WHERE marca_tipo = 22
+            """
+        )
+
+        # 3. PuntoReferencia
+        cur.execute(
+            f"""
+            UPDATE {schema}.arb_puntoreferencia
+            SET tipo_punto_referencia = 903
+            WHERE tipo_punto_referencia = 21
+            """
+        )
+
+        # 4. Tramite
+        cur.execute(
+            f"""
+            UPDATE {schema}.arb_tramite
+            SET tramite = NULL
+            WHERE tramite = 25
+            """
+        )
+
+        # 5. Predio
+        cur.execute(
+            f"""
+            UPDATE {schema}.arb_predio
+            SET estado_fmi = CASE WHEN estado_fmi = 32 THEN 15 ELSE estado_fmi END,
+                tipo = CASE WHEN tipo = 2 THEN NULL ELSE tipo END,
+                resultado_visita = CASE WHEN resultado_visita = 4 THEN 1495 ELSE resultado_visita END
+            WHERE estado_fmi = 32 OR tipo = 2 OR resultado_visita = 4
+            """
+        )
+
+        # 6. Direccion
+        cur.execute(
+            f"""
+            UPDATE {schema}.arb_direccion
+            SET tipo_direccion = CASE WHEN tipo_direccion = 20 THEN 1499 ELSE tipo_direccion END,
+                clase_via_principal = CASE WHEN clase_via_principal = 19 THEN 587 ELSE clase_via_principal END,
+                sector_ciudad = CASE WHEN sector_ciudad = 29 THEN NULL ELSE sector_ciudad END,
+                sector_predio = CASE WHEN sector_predio = 29 THEN NULL ELSE sector_predio END
+            WHERE tipo_direccion = 20 OR clase_via_principal = 19 OR sector_ciudad = 29 OR sector_predio = 29
+            """
+        )
+
+        # 7. Referencia Registral Sistema Antiguo
+        cur.execute(
+            f"""
+            UPDATE {schema}.arb_referenciaregistralsistemaantiguovalor
+            SET tipo_referencia = 948
+            WHERE tipo_referencia = 26
+            """
+        )
+
+        # 8. Novedad FMI Valor
+        cur.execute(
+            f"""
+            UPDATE {schema}.arb_novedadfmivalor
+            SET tipo_novedad_fmi = 753
+            WHERE tipo_novedad_fmi = 23
+            """
+        )
+
+        # 9. Novedad Numero Predial Valor
+        cur.execute(
+            f"""
+            UPDATE {schema}.arb_novedadnumeropredialvalor
+            SET tipo_novedad = 965
+            WHERE tipo_novedad = 24
+            """
+        )
+
+        # 10. Corregir coordenadas fuera de rango (límite mínimo CTM12 de ISO19107_PLANAS_V3_0 es X=3980000.0, Y=1080000.0)
+        cur.execute(
+            f"""
+            SELECT COALESCE(
+                ST_Centroid(ST_Union(geometria)),
+                ST_GeomFromText('POINT(4500000 2000000)', 9377)
+            )
+            FROM {schema}.arb_terreno
+            """
+        )
+        row = cur.fetchone()
+        centroid_geom = row[0] if row else None
+
+        if centroid_geom:
+            cur.execute(
+                f"""
+                UPDATE {schema}.arb_direccion
+                SET localizacion = %s
+                WHERE localizacion IS NOT NULL AND (ST_X(localizacion) < 3980000.0 OR ST_Y(localizacion) < 1080000.0)
+                """,
+                (centroid_geom,)
+            )
+            cur.execute(
+                f"""
+                UPDATE {schema}.arb_marca
+                SET geometria = %s
+                WHERE geometria IS NOT NULL AND (ST_X(geometria) < 3980000.0 OR ST_Y(geometria) < 1080000.0)
+                """,
+                (centroid_geom,)
+            )
+            cur.execute(
+                f"""
+                UPDATE {schema}.arb_puntoreferencia
+                SET geometria = %s
+                WHERE geometria IS NOT NULL AND (ST_X(geometria) < 3980000.0 OR ST_Y(geometria) < 1080000.0)
+                """,
+                (centroid_geom,)
+            )
+
+
 def _prepare_assignment_export_arb(
     conn,
     schema: str,
@@ -3440,6 +3573,7 @@ def _prepare_assignment_export_arb(
     # Arbimaps siempre debe garantizar identificadores exportables aunque
     # no use el pipeline de saneamiento del modelo Leiva.
     _prepare_export_dataset_arb(conn, schema, datasetname)
+    _sanitize_assignment_enums_and_coords_arb(conn, schema, datasetname)
 
 
 def _export_assignment_baskets_with_fallback(
@@ -3553,6 +3687,7 @@ def ili2pg_export_dataset(
         raise ExportServiceError(status_code=400, detail="Dataset no definido para exportar.")
     try:
         _prepare_export_dataset_arb(conn, schema, datasetname)
+        conn.commit()
 
         _export_dataset_baskets_with_fallback(
             conn,
@@ -3683,6 +3818,7 @@ def ili2pg_export_assignment(
         datasetname,
         apply_dataset_sanitizers=apply_dataset_sanitizers,
     )
+    conn.commit()
 
     model_context = _assignment_model_context(tenant)
     normalized_schema = _normalized_schema_name(schema)

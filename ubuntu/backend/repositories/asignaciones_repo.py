@@ -81,6 +81,33 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
         if in_transaction:
             cur.execute("SAVEPOINT ensure_asig_tables_sp")
         try:
+            # Asegurar que el enum asignacion_evento contiene todos los eventos esperados
+            # Para evitar "unsafe use of new value ... HINT: New enum values must be committed before they can be used",
+            # abrimos una conexion temporal con autocommit=True.
+            try:
+                from core.db.connection import get_db_params
+                import psycopg2
+                params = get_db_params()
+                with psycopg2.connect(**params) as temp_conn:
+                    temp_conn.autocommit = True
+                    with temp_conn.cursor() as temp_cur:
+                        for val in ["WORKSPACE_READY", "WORKSPACE_READY_WARN", "PAQUETE_JOB_CREADO", "PAQUETE_JOB_DONE", "PAQUETE_JOB_ERROR", "ERROR"]:
+                            temp_cur.execute(
+                                """
+                                SELECT 1 FROM pg_enum 
+                                JOIN pg_type ON pg_enum.enumtypid = pg_type.oid 
+                                WHERE pg_type.typname = 'asignacion_evento' AND pg_enum.enumlabel = %s
+                                """,
+                                (val,),
+                            )
+                            if not temp_cur.fetchone():
+                                try:
+                                    temp_cur.execute(f"ALTER TYPE {app_schema}.asignacion_evento ADD VALUE '{val}'")
+                                except Exception as e:
+                                    logger.warning("Fallo agregar valor enum %s en conexion autocommit: %s", val, e)
+            except Exception as e:
+                logger.error("No se pudo conectar a la base de datos para asegurar el enum: %s", e)
+
             cur.execute(
                 f"""
                 CREATE TABLE IF NOT EXISTS {app_schema}.asignacion_predio (
@@ -323,215 +350,300 @@ def create_export_job(asignacion_id: int, formato: str, created_by: Optional[str
     return row
 
 
-def get_export_job(job_id: int) -> Optional[dict]:
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            ensure_asignacion_tables(conn)
-            cur.execute(
-                """
-                SELECT *
-                FROM arbimaps_app.asignacion_export_job
-                WHERE id = %s
-                """,
-                (job_id,),
+def get_export_job(conn, *args, **kwargs) -> Optional[dict]:
+    tenant = None
+    pos_args = list(args)
+    if pos_args and not isinstance(pos_args[0], int):
+        tenant = pos_args.pop(0)
+    job_id = pos_args[0] if len(pos_args) > 0 else kwargs.get("job_id")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        ensure_asignacion_tables(conn, tenant)
+        cur.execute(
+            f"""
+            SELECT *
+            FROM {app_schema}.asignacion_export_job
+            WHERE id = %s
+            """,
+            (job_id,),
+        )
+        return cur.fetchone()
+
+
+def list_export_jobs_for_asignacion(conn, *args, **kwargs) -> list[dict]:
+    tenant = None
+    pos_args = list(args)
+    if pos_args and not isinstance(pos_args[0], int):
+        tenant = pos_args.pop(0)
+    asignacion_id = pos_args[0] if len(pos_args) > 0 else kwargs.get("asignacion_id")
+    limit = pos_args[1] if len(pos_args) > 1 else kwargs.get("limit", 20)
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        ensure_asignacion_tables(conn, tenant)
+        cur.execute(
+            f"""
+            SELECT *
+            FROM {app_schema}.asignacion_export_job
+            WHERE asignacion_id = %s
+            ORDER BY id DESC
+            LIMIT %s
+            """,
+            (asignacion_id, limit),
+        )
+        return cur.fetchall()
+
+
+def get_active_export_job(conn, *args, **kwargs) -> Optional[dict]:
+    tenant = None
+    pos_args = list(args)
+    if pos_args and not isinstance(pos_args[0], int):
+        tenant = pos_args.pop(0)
+    asignacion_id = pos_args[0] if len(pos_args) > 0 else kwargs.get("asignacion_id")
+    formato = pos_args[1] if len(pos_args) > 1 else kwargs.get("formato")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        ensure_asignacion_tables(conn, tenant)
+        cur.execute(
+            f"""
+            SELECT *
+            FROM {app_schema}.asignacion_export_job
+            WHERE asignacion_id = %s
+              AND formato = %s
+              AND estado IN ('PENDING', 'RUNNING')
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (asignacion_id, formato),
+        )
+        return cur.fetchone()
+
+
+def get_or_create_active_export_job(conn, *args, **kwargs) -> tuple[dict, bool]:
+    tenant = None
+    pos_args = list(args)
+    if pos_args and not isinstance(pos_args[0], int):
+        tenant = pos_args.pop(0)
+    asignacion_id = pos_args[0] if len(pos_args) > 0 else kwargs.get("asignacion_id")
+    formato = pos_args[1] if len(pos_args) > 1 else kwargs.get("formato")
+    created_by = pos_args[2] if len(pos_args) > 2 else kwargs.get("created_by")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        ensure_asignacion_tables(conn, tenant)
+
+        cur.execute(
+            f"""
+            SELECT id
+            FROM {app_schema}.asignacion
+            WHERE id = %s
+            FOR UPDATE
+            """,
+            (asignacion_id,),
+        )
+        asignacion = cur.fetchone()
+        if not asignacion:
+            raise ValueError(f"Asignacion no encontrada: {asignacion_id}")
+
+        cur.execute(
+            f"""
+            SELECT *
+            FROM {app_schema}.asignacion_export_job
+            WHERE asignacion_id = %s
+              AND formato = %s
+              AND estado IN ('PENDING', 'RUNNING')
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (asignacion_id, formato),
+        )
+        existing = cur.fetchone()
+        if existing:
+            return existing, False
+
+        cur.execute(
+            f"""
+            INSERT INTO {app_schema}.asignacion_export_job (
+                asignacion_id, formato, estado, progreso, mensaje, created_by
             )
-            return cur.fetchone()
-
-
-def list_export_jobs_for_asignacion(asignacion_id: int, limit: int = 20) -> list[dict]:
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            ensure_asignacion_tables(conn)
-            cur.execute(
-                """
-                SELECT *
-                FROM arbimaps_app.asignacion_export_job
-                WHERE asignacion_id = %s
-                ORDER BY id DESC
-                LIMIT %s
-                """,
-                (asignacion_id, limit),
-            )
-            return cur.fetchall()
-
-
-def get_active_export_job(asignacion_id: int, formato: str) -> Optional[dict]:
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            ensure_asignacion_tables(conn)
-            cur.execute(
-                """
-                SELECT *
-                FROM arbimaps_app.asignacion_export_job
-                WHERE asignacion_id = %s
-                  AND formato = %s
-                  AND estado IN ('PENDING', 'RUNNING')
-                ORDER BY id DESC
-                LIMIT 1
-                """,
-                (asignacion_id, formato),
-            )
-            return cur.fetchone()
-
-
-def get_or_create_active_export_job(
-    asignacion_id: int,
-    formato: str,
-    created_by: Optional[str],
-) -> tuple[dict, bool]:
-    """
-    Crea el job de exportacion de forma atomica por (asignacion, formato).
-
-    Retorna (job, created):
-    - created=True  -> se creo un nuevo job.
-    - created=False -> ya existia un job activo y se devuelve ese registro.
-    """
-    with db_conn() as conn:
-        conn.autocommit = False
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            ensure_asignacion_tables(conn)
-
-            cur.execute(
-                """
-                SELECT id
-                FROM arbimaps_app.asignacion
-                WHERE id = %s
-                FOR UPDATE
-                """,
-                (asignacion_id,),
-            )
-            asignacion = cur.fetchone()
-            if not asignacion:
-                raise ValueError(f"Asignacion no encontrada: {asignacion_id}")
-
-            cur.execute(
-                """
-                SELECT *
-                FROM arbimaps_app.asignacion_export_job
-                WHERE asignacion_id = %s
-                  AND formato = %s
-                  AND estado IN ('PENDING', 'RUNNING')
-                ORDER BY id DESC
-                LIMIT 1
-                """,
-                (asignacion_id, formato),
-            )
-            existing = cur.fetchone()
-            if existing:
-                conn.commit()
-                return existing, False
-
-            cur.execute(
-                """
-                INSERT INTO arbimaps_app.asignacion_export_job (
-                    asignacion_id, formato, estado, progreso, mensaje, created_by
-                )
-                VALUES (%s, %s, 'PENDING', 0, 'En cola', %s)
-                RETURNING *
-                """,
-                (asignacion_id, formato, created_by),
-            )
-            created = cur.fetchone()
-        conn.commit()
+            VALUES (%s, %s, 'PENDING', 0, 'En cola', %s)
+            RETURNING *
+            """,
+            (asignacion_id, formato, created_by),
+        )
+        created = cur.fetchone()
     return created, True
 
 
-def update_export_job_progress(job_id: int, progreso: int, mensaje: Optional[str] = None) -> Optional[dict]:
+def update_export_job_progress(conn, *args, **kwargs) -> Optional[dict]:
+    tenant = None
+    pos_args = list(args)
+    if pos_args and not isinstance(pos_args[0], int):
+        tenant = pos_args.pop(0)
+    job_id = pos_args[0] if len(pos_args) > 0 else kwargs.get("job_id")
+    progreso = pos_args[1] if len(pos_args) > 1 else kwargs.get("progreso")
+    mensaje = pos_args[2] if len(pos_args) > 2 else kwargs.get("mensaje")
+
     progreso = max(0, min(int(progreso), 100))
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            ensure_asignacion_tables(conn)
-            cur.execute(
-                """
-                UPDATE arbimaps_app.asignacion_export_job
-                SET progreso = %s,
-                    mensaje = COALESCE(%s, mensaje)
-                WHERE id = %s
-                RETURNING *
-                """,
-                (progreso, mensaje, job_id),
-            )
-            row = cur.fetchone()
-        conn.commit()
-    return row
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        ensure_asignacion_tables(conn, tenant)
+        cur.execute(
+            f"""
+            UPDATE {app_schema}.asignacion_export_job
+            SET progreso = %s,
+                mensaje = COALESCE(%s, mensaje)
+            WHERE id = %s
+            RETURNING *
+            """,
+            (progreso, mensaje, job_id),
+        )
+        return cur.fetchone()
 
 
-def mark_export_job_running(job_id: int, mensaje: Optional[str] = None) -> Optional[dict]:
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            ensure_asignacion_tables(conn)
-            cur.execute(
-                """
-                UPDATE arbimaps_app.asignacion_export_job
-                SET estado = 'RUNNING',
-                    progreso = GREATEST(progreso, 5),
-                    mensaje = COALESCE(%s, mensaje),
-                    iniciado_en = COALESCE(iniciado_en, now())
-                WHERE id = %s
-                RETURNING *
-                """,
-                (mensaje, job_id),
-            )
-            row = cur.fetchone()
-        conn.commit()
-    return row
+def mark_export_job_running(conn, *args, **kwargs) -> Optional[dict]:
+    tenant = None
+    pos_args = list(args)
+    if pos_args and not isinstance(pos_args[0], int):
+        tenant = pos_args.pop(0)
+    job_id = pos_args[0] if len(pos_args) > 0 else kwargs.get("job_id")
+    mensaje = pos_args[1] if len(pos_args) > 1 else kwargs.get("mensaje")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        ensure_asignacion_tables(conn, tenant)
+        cur.execute(
+            f"""
+            UPDATE {app_schema}.asignacion_export_job
+            SET estado = 'RUNNING',
+                progreso = GREATEST(progreso, 5),
+                mensaje = COALESCE(%s, mensaje),
+                iniciado_en = COALESCE(iniciado_en, now())
+            WHERE id = %s
+            RETURNING *
+            """,
+            (mensaje, job_id),
+        )
+        return cur.fetchone()
 
 
-def mark_export_job_done(
-    job_id: int,
-    archivo_path: str,
-    archivo_nombre: str,
-    archivo_size: int,
-    *,
-    ttl_hours: int = 24,
-    mensaje: Optional[str] = None,
-) -> Optional[dict]:
+def mark_export_job_done(conn, *args, **kwargs) -> Optional[dict]:
+    tenant = None
+    pos_args = list(args)
+    if pos_args and not isinstance(pos_args[0], int):
+        tenant = pos_args.pop(0)
+    job_id = pos_args[0] if len(pos_args) > 0 else kwargs.get("job_id")
+    archivo_path = pos_args[1] if len(pos_args) > 1 else kwargs.get("archivo_path")
+    archivo_nombre = pos_args[2] if len(pos_args) > 2 else kwargs.get("archivo_nombre")
+    archivo_size = pos_args[3] if len(pos_args) > 3 else kwargs.get("archivo_size")
+
+    ttl_hours = kwargs.get("ttl_hours", 24)
+    if ttl_hours is None:
+        ttl_hours = 24
     ttl_hours = max(1, int(ttl_hours))
+    mensaje = kwargs.get("mensaje")
+
     expires_at = datetime.now(timezone.utc) + timedelta(hours=ttl_hours)
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            ensure_asignacion_tables(conn)
-            cur.execute(
-                """
-                UPDATE arbimaps_app.asignacion_export_job
-                SET estado = 'DONE',
-                    progreso = 100,
-                    mensaje = COALESCE(%s, mensaje),
-                    error_msg = NULL,
-                    archivo_path = %s,
-                    archivo_nombre = %s,
-                    archivo_size = %s,
-                    finalizado_en = now(),
-                    expira_en = %s
-                WHERE id = %s
-                RETURNING *
-                """,
-                (mensaje, archivo_path, archivo_nombre, archivo_size, expires_at, job_id),
-            )
-            row = cur.fetchone()
-        conn.commit()
-    return row
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        ensure_asignacion_tables(conn, tenant)
+        cur.execute(
+            f"""
+            UPDATE {app_schema}.asignacion_export_job
+            SET estado = 'DONE',
+                progreso = 100,
+                mensaje = COALESCE(%s, mensaje),
+                error_msg = NULL,
+                archivo_path = %s,
+                archivo_nombre = %s,
+                archivo_size = %s,
+                finalizado_en = now(),
+                expira_en = %s
+            WHERE id = %s
+            RETURNING *
+            """,
+            (mensaje, archivo_path, archivo_nombre, archivo_size, expires_at, job_id),
+        )
+        return cur.fetchone()
 
 
-def mark_export_job_error(job_id: int, error_msg: str, mensaje: Optional[str] = None) -> Optional[dict]:
-    with db_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            ensure_asignacion_tables(conn)
-            cur.execute(
-                """
-                UPDATE arbimaps_app.asignacion_export_job
-                SET estado = 'ERROR',
-                    mensaje = COALESCE(%s, mensaje),
-                    error_msg = %s,
-                    finalizado_en = now()
-                WHERE id = %s
-                RETURNING *
-                """,
-                (mensaje, error_msg, job_id),
-            )
-            row = cur.fetchone()
-        conn.commit()
-    return row
+def mark_export_job_error(conn, *args, **kwargs) -> Optional[dict]:
+    tenant = None
+    pos_args = list(args)
+    if pos_args and not isinstance(pos_args[0], int):
+        tenant = pos_args.pop(0)
+    job_id = pos_args[0] if len(pos_args) > 0 else kwargs.get("job_id")
+    error_msg = pos_args[1] if len(pos_args) > 1 else kwargs.get("error_msg")
+    mensaje = pos_args[2] if len(pos_args) > 2 else kwargs.get("mensaje")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        ensure_asignacion_tables(conn, tenant)
+        cur.execute(
+            f"""
+            UPDATE {app_schema}.asignacion_export_job
+            SET estado = 'ERROR',
+                mensaje = COALESCE(%s, mensaje),
+                error_msg = %s,
+                finalizado_en = now()
+            WHERE id = %s
+            RETURNING *
+            """,
+            (mensaje, error_msg, job_id),
+        )
+        return cur.fetchone()
 
 
 def _asig_event_log_has_usuario_id(conn, app_schema: str = "arbimaps_app") -> bool:
