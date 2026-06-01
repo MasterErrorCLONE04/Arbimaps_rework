@@ -1826,28 +1826,9 @@ def _rule_1_16(dataset: DatasetReader) -> list[RuleIssue]:
                 _, condicion_raw, condicion_str = condicion_value
                 condicion_norm = _normalize_condicion(condicion_str)
 
-        if numero_str and area_value is not None and area_value < 500:
-            if len(numero_str) >= 6 and numero_str[4:6] != "00":
-                issues.append(
-                    RuleIssue(
-                        rule_id="1.16",
-                        object_ref=object_ref,
-                        message=(
-                            "Para predios con área menor a 500 m², los campos 5-6 del "
-                            "Numero_Predial_Nacional deben ser '00'."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            "campo": numero_field,
-                            "class": table_name,
-                            "valor": numero_raw,
-                            "numero": numero_str,
-                            "area": area_value,
-                            "campo_5_6": numero_str[4:6],
-                            "valor_esperado_5_6": "00",
-                        },
-                    )
-                )
+        # Se elimina la validación general por área < 500 m² porque genera falsos positivos.
+        # La validación de campos 5-6 = '00' debe aplicarse únicamente a predios LOTE_RURAL,
+        # y ya se valida más abajo dentro del bloque específico de Lote_Rural.
 
         if _normalize_destinacion(destinacion_str) == "LOTE_RURAL":
             predios_lote_rural[predio_id] = {
