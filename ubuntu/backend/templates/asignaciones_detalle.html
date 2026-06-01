@@ -4183,7 +4183,7 @@
       setModalTextFieldEdit("modal_numero_documento_atendio", pickFromRowsEdit(sourcesVisita, ["numero_documento_atendio", "numero_documento_quien_atendio"]));
       setModalTextFieldEdit("modal_autoriza_notificaciones", asSiNoEdit(pickFromRowsEdit(sourcesVisita, ["autoriza_notificaciones", "autoriza_notificacion_correo"])));
       setModalTextFieldEdit("modal_nombre_atendio", pickFromRowsEdit(sourcesVisita, ["nombre_atendio", "nombre_quien_atendio", "nombre_contacto"]) || nombreInteresadoEdit(primerInteresado));
-      setModalTextFieldEdit("modal_tipo_captura", pickFromRowsEdit(sourcesVisita, ["tipo_captura"]));
+      setModalTextFieldEdit("modal_tipo_captura", pickFromRowsEdit(sourcesVisita, ["tipo_captura_nombre", "tipo_captura"]));
 
       setModalTextFieldEdit("modal_juridico_nombre", nombreInteresadoEdit(primerInteresado));
       setModalTextFieldEdit("modal_beneficio_comunidades_indigenas", asSiNoEdit(pickFromRowsEdit(sourcesPredio, ["beneficio_comunidades_indigenas", "beneficio_comunidad_indigena"])));

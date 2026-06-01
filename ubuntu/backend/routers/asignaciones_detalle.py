@@ -1511,6 +1511,18 @@ def obtener_detalle_predio_completo_asignacion(
                 raw_value=estado_fmi_raw,
             ) or _first_non_empty(predio, "estado_fmi_nombre", "estado_fmi")
 
+            tipo_captura_raw = _first_non_empty(predio, "tipo_captura")
+            predio["tipo_captura_nombre"] = _resolve_domain_name(
+                cur,
+                tenant=tenant,
+                schema=schema_work,
+                table_candidates=[
+                    "arb_metodoproducciontipo",
+                    "ilc_metodoproducciontipo",
+                ],
+                raw_value=tipo_captura_raw,
+            ) or _first_non_empty(predio, "tipo_captura_nombre", "tipo_captura")
+
             direcciones = _fetch_rows(
                 cur,
                 schema=schema_work,
@@ -1715,7 +1727,7 @@ def obtener_detalle_predio_completo_asignacion(
                     cur,
                     tenant=tenant,
                     schema=schema_work,
-                    table_candidates=["arb_relacionsuperficietipo", "col_relacionsuperficietipo"],
+                    table_candidates=["arb_relacionsuperficieconstrucciontipo", "arb_relacionsuperficietipo", "col_relacionsuperficietipo"],
                     raw_value=_first_non_empty(unidad, "relacion_superficie"),
                 ) or _first_non_empty(unidad, "relacion_superficie_nombre", "relacion_superficie")
 

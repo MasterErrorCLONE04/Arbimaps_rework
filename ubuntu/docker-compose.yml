@@ -42,7 +42,7 @@ services:
 
     # Cambia 5434 por 5435 si el puerto está ocupado
     ports:
-      - "5435:5432"
+      - "5432:5432"
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
