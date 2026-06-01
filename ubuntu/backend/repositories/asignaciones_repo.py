@@ -707,13 +707,29 @@ def fetch_predios_metadata(
         return cur.fetchall()
 
 
-def fetch_predios_asignados(conn, numeros: list[str]) -> list[dict]:
+def fetch_predios_asignados(conn, *args, **kwargs) -> list[dict]:
+    tenant = None
+    if len(args) == 2:
+        tenant, numeros = args
+    elif len(args) == 1:
+        numeros = args[0]
+    else:
+        tenant = kwargs.get("tenant")
+        numeros = kwargs.get("numeros")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            """
+            f"""
             SELECT ap.numero_predial_nacional, a.usuario_asignado, ap.asignacion_id
-            FROM arbimaps_app.asignacion_predio ap
-            JOIN arbimaps_app.asignacion a ON ap.asignacion_id = a.id
+            FROM {app_schema}.asignacion_predio ap
+            JOIN {app_schema}.asignacion a ON ap.asignacion_id = a.id
             WHERE ap.numero_predial_nacional = ANY(%s)
               AND ap.activo IS DISTINCT FROM FALSE
               AND a.estado IS DISTINCT FROM 'CERRADA'
