@@ -314,6 +314,10 @@ class ObligatoriasHelper:
 #------------------ reglas ------------------------------
 
 def rule_11_1(dataset: DatasetReader) -> list[RuleIssue]:
+    # Regla 11.1 deshabilitada temporalmente
+    return []
+
+    """
     helper = ObligatoriasHelper(dataset)
     issues: list[RuleIssue] = []
 
@@ -352,6 +356,7 @@ def rule_11_1(dataset: DatasetReader) -> list[RuleIssue]:
         )
 
     return issues
+    """
 
 
 def rule_11_2(dataset: DatasetReader) -> list[RuleIssue]:

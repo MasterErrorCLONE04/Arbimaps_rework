@@ -1173,7 +1173,7 @@ def _rule_1_8(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
-def _rule_1_9(dataset: DatasetReader) -> list[RuleIssue]:
+#def _rule_1_9(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
 
@@ -1229,7 +1229,7 @@ def _rule_1_9(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
-def _rule_1_10(dataset: DatasetReader) -> list[RuleIssue]:
+#def _rule_1_10(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
 
@@ -1529,7 +1529,7 @@ def _rule_1_13(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
-def _rule_1_14(dataset: DatasetReader) -> list[RuleIssue]:
+#def _rule_1_14(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
 
@@ -7560,12 +7560,12 @@ RULE_FUNCTIONS = {
     "1.6": _rule_1_6,
     "1.7": _rule_1_7,
     "1.8": _rule_1_8,
-    "1.9": _rule_1_9,
-    "1.10": _rule_1_10,
+    #"1.9": _rule_1_9,
+    #"1.10": _rule_1_10,
     "1.11": _rule_1_11,
     "1.12": _rule_1_12,
     "1.13": _rule_1_13,
-    "1.14": _rule_1_14,
+    #"1.14": _rule_1_14,
     "1.15": _rule_1_15,
     "1.16": _rule_1_16,
     "1.17": _rule_1_17,
