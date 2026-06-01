@@ -113,6 +113,7 @@ def terreno_seleccion_por_coordenada(
     sql = f"""
     SELECT
       t.t_id AS terreno_id,
+      ST_AsGeoJSON(t.geometria)::json AS terreno_geom,
       p.t_id AS predio_id,
       COALESCE(NULLIF(p.id_operacion::text, ''), p.numero_predial::text) AS id_operacion,
       p.numero_predial AS numero_predial_nacional,
@@ -140,6 +141,85 @@ def terreno_seleccion_por_coordenada(
         return JSONResponse({"error": "Terreno no encontrado"}, status_code=404)
 
     return row
+
+
+@router.get("/terrenos/snap")
+def terrenos_snap(
+    request: Request,
+    minx: float = Query(...),
+    miny: float = Query(...),
+    maxx: float = Query(...),
+    maxy: float = Query(...),
+    layers: str = Query("arb_terreno"),
+    limit: int = Query(1500, ge=1, le=5000),
+    _user: str = Depends(require_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+):
+    """
+    Geometrias de apoyo para snapping de medicion en el visor.
+    Devuelve solo las capas permitidas y visibles dentro del bbox en EPSG:9377.
+    """
+    allowed_layers = {
+        "arb_terreno": "Terreno",
+        "arb_construccion": "Construccion",
+        "arb_unidadconstruccion": "Unidad construccion",
+    }
+    requested_layers = [
+        item.strip().lower()
+        for item in str(layers or "").split(",")
+        if item.strip()
+    ]
+    selected_layers = [
+        layer_name for layer_name in requested_layers if layer_name in allowed_layers
+    ] or ["arb_terreno"]
+
+    union_sql_parts = []
+    for layer_name in selected_layers:
+        table_name = _main_table(tenant, layer_name)
+        union_sql_parts.append(
+            f"""
+            SELECT
+              '{layer_name}'::text AS source_layer,
+              t_id,
+              ST_AsGeoJSON(geometria)::json AS geometry
+            FROM {table_name}
+            WHERE geometria && ST_MakeEnvelope(%s, %s, %s, %s, 9377)
+            """
+        )
+
+    sql = f"""
+    SELECT *
+    FROM (
+      {" UNION ALL ".join(union_sql_parts)}
+    ) snap_features
+    ORDER BY source_layer, t_id
+    LIMIT %s;
+    """
+    params = []
+    for _layer_name in selected_layers:
+        params.extend([minx, miny, maxx, maxy])
+    params.append(limit)
+
+    connection_manager = get_connection_manager(request.app)
+    with connection_manager.connection(tenant) as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(sql, tuple(params))
+            rows = cur.fetchall()
+
+    features = [
+        {
+            "type": "Feature",
+            "id": f'{row["source_layer"]}.{row["t_id"]}',
+            "geometry": row["geometry"],
+            "properties": {
+                "t_id": row["t_id"],
+                "source_layer": row["source_layer"],
+            },
+        }
+        for row in rows
+        if row.get("geometry")
+    ]
+    return {"type": "FeatureCollection", "features": features}
 
 
 @router.get("/dashboard/condicion-predio")

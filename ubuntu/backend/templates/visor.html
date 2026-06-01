@@ -291,12 +291,29 @@
           </div>
 
           <div id="map" style="height: 50px"></div>
+          <div id="vmSnapMarker" class="vm-snap-marker hidden" aria-hidden="true"></div>
+          <div class="vm-north-indicator" aria-label="Norte">
+            <div class="vm-north-arrow"></div>
+            <div class="vm-north-label">N</div>
+          </div>
+          <div id="vmMeasurePanel" class="vm-measure-panel hidden" aria-live="polite">
+            <div class="vm-measure-title">Medición</div>
+            <div id="vmMeasureStatus" class="vm-measure-status">Activa una herramienta para medir.</div>
+            <div id="vmMeasureValue" class="vm-measure-value">0 m</div>
+            <button id="vmMeasureClearBtn" class="vm-measure-clear" type="button">Limpiar</button>
+          </div>
           <div class="vm-zoom-stack" aria-label="Controles de zoom">
             <button id="vmZoomInBtn" class="vm-zoom-btn" type="button" title="Acercar">
               +
             </button>
             <button id="vmZoomOutBtn" class="vm-zoom-btn" type="button" title="Alejar">
               -
+            </button>
+            <button id="vmMeasureBtn" class="vm-zoom-btn" type="button" title="Medir distancia">
+              <i class="bi bi-rulers"></i>
+            </button>
+            <button id="vmMeasureAreaBtn" class="vm-zoom-btn" type="button" title="Medir área">
+              <i class="bi bi-bounding-box"></i>
             </button>
           </div>
         </div>
@@ -672,12 +689,169 @@
         cursor: pointer;
       }
 
+      .vm-map-shell .vm-scale-line,
+      #map .vm-scale-line {
+        position: absolute;
+        right: 16px;
+        left: auto;
+        bottom: 16px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 10px;
+        padding: 6px 10px 4px;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+        color: #163c62;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .vm-map-shell .vm-scale-line-inner,
+      #map .vm-scale-line-inner {
+        border-color: #163c62;
+        border-top: 0;
+        color: #163c62;
+        font-size: 11px;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .vm-snap-marker {
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        margin-left: -9px;
+        margin-top: -9px;
+        border-radius: 999px;
+        border: 2px solid #10b981;
+        background: rgba(16, 185, 129, 0.14);
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
+        z-index: 26;
+        pointer-events: none;
+      }
+
+      .vm-snap-marker::before,
+      .vm-snap-marker::after {
+        content: "";
+        position: absolute;
+        background: #059669;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .vm-snap-marker::before {
+        width: 2px;
+        height: 22px;
+      }
+
+      .vm-snap-marker::after {
+        width: 22px;
+        height: 2px;
+      }
+
+      .vm-snap-marker.hidden {
+        display: none;
+      }
+
+      .vm-measure-panel {
+        position: absolute;
+        right: 16px;
+        bottom: 118px;
+        z-index: 23;
+        width: 220px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.97);
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+      }
+
+      .vm-measure-panel.hidden {
+        display: none;
+      }
+
+      .vm-measure-title {
+        font-size: 13px;
+        font-weight: 800;
+        color: #163c62;
+      }
+
+      .vm-measure-status {
+        margin-top: 4px;
+        font-size: 11px;
+        color: #64748b;
+      }
+
+      .vm-measure-value {
+        margin-top: 8px;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.1;
+        color: #0f172a;
+      }
+
+      .vm-measure-clear {
+        margin-top: 10px;
+        border: 1px solid rgba(15, 23, 42, 0.14);
+        background: #fff;
+        color: #163c62;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .vm-zoom-btn.is-active {
+        background: #032f57;
+        color: #fff;
+        border-color: transparent;
+      }
+
+      .vm-north-indicator {
+        position: absolute;
+        left: 12px;
+        top: 198px;
+        z-index: 22;
+        width: 42px;
+        padding: 8px 6px 6px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .vm-north-arrow {
+        width: 0;
+        height: 0;
+        border-left: 9px solid transparent;
+        border-right: 9px solid transparent;
+        border-bottom: 16px solid #163c62;
+        filter: drop-shadow(0 3px 4px rgba(15, 23, 42, 0.16));
+      }
+
+      .vm-north-label {
+        font-size: 11px;
+        font-weight: 800;
+        line-height: 1;
+        color: #163c62;
+        letter-spacing: 0.08em;
+      }
+
       /* Oculta el zoom nativo de OL para usar solo los botones personalizados */
       .vm-map-shell .ol-zoom {
         display: none !important;
       }
 
       #map .ol-zoom {
+        display: none !important;
+      }
+
+      .vm-map-shell .ol-attribution,
+      #map .ol-attribution {
         display: none !important;
       }
 
@@ -708,6 +882,24 @@
           min-width: 220px;
           max-width: calc(100% - 20px);
         }
+
+        .vm-map-shell .vm-scale-line,
+        #map .vm-scale-line {
+          right: 10px;
+          bottom: 10px;
+        }
+
+        .vm-measure-panel {
+          right: 10px;
+          bottom: 108px;
+          width: 200px;
+        }
+
+        .vm-north-indicator {
+          left: 10px;
+          top: 192px;
+        }
+
       }
     </style>
 
@@ -852,6 +1044,16 @@
   let layerPanelBound = false;
   let zoomButtonsBound = false;
   let infoPopupBound = false;
+  let selectedTerrainLayer = null;
+  let measureLayer = null;
+  let measureDraw = null;
+  let measureMode = null;
+  let measureSketchListener = null;
+  let measureControlsBound = false;
+  let snapGuideLayer = null;
+  let snapInteraction = null;
+  let snapLoadAbortController = null;
+  let snapExtentKey = "";
 
   let dashboardState = {
     condicion: [],
@@ -1289,6 +1491,9 @@
         const next = !Boolean(entry.layer.getVisible());
         entry.layer.setVisible(next);
         renderLayerControls();
+        if (measureMode) {
+          loadSnapGuideFeatures(true);
+        }
       };
 
       sw.addEventListener("click", (e) => {
@@ -1391,6 +1596,9 @@
       const targetVisible = !anyVisible;
       wmsLayerEntries.forEach((entry) => entry.layer.setVisible(targetVisible));
       renderLayerControls();
+      if (measureMode) {
+        loadSnapGuideFeatures(true);
+      }
     });
 
     basemapSelect?.addEventListener("change", () => {
@@ -1428,6 +1636,294 @@
       const view = mapInstance.getView();
       const current = Number(view.getZoom() || 0);
       view.animate({ zoom: current - 1, duration: 180 });
+    });
+  }
+
+  function formatMeasureLength(lineGeometry) {
+    const length = Number(lineGeometry?.getLength?.() || 0);
+    if (!Number.isFinite(length) || length <= 0) return "0 m";
+    if (length >= 1000) return `${(length / 1000).toFixed(2)} km`;
+    return `${length.toFixed(length >= 100 ? 0 : 2)} m`;
+  }
+
+  function formatMeasureArea(polygonGeometry) {
+    const area = Number(polygonGeometry?.getArea?.() || 0);
+    if (!Number.isFinite(area) || area <= 0) return "0 m²";
+    if (area >= 1000000) return `${(area / 1000000).toFixed(2)} km²`;
+    if (area >= 10000) return `${area.toFixed(0)} m²`;
+    return `${area.toFixed(2)} m²`;
+  }
+
+  function getCurrentMapExtent() {
+    if (!mapInstance) return null;
+    const view = mapInstance.getView();
+    const size = mapInstance.getSize();
+    if (!view || !size) return null;
+    const extent = view.calculateExtent(size);
+    if (!isValidExtent(extent)) return null;
+    return extent;
+  }
+
+  function extentToSnapKey(extent) {
+    if (!Array.isArray(extent) || extent.length !== 4) return "";
+    return extent.map((value) => Number(value).toFixed(0)).join("|");
+  }
+
+  function getSnapEligibleVisibleLayers() {
+    const eligible = new Set([
+      "arb_terreno",
+      "arb_construccion",
+      "arb_unidadconstruccion",
+    ]);
+    return wmsLayerEntries
+      .filter((entry) => entry?.layer?.getVisible?.())
+      .map((entry) => String(entry?.name || "").split(":").pop().toLowerCase())
+      .filter((name) => eligible.has(name));
+  }
+
+  function updateMeasurePanel({ visible = Boolean(measureMode), status = "Activa una herramienta para medir.", value = "0 m" } = {}) {
+    const panel = document.getElementById("vmMeasurePanel");
+    const statusNode = document.getElementById("vmMeasureStatus");
+    const valueNode = document.getElementById("vmMeasureValue");
+    const distanceButton = document.getElementById("vmMeasureBtn");
+    const areaButton = document.getElementById("vmMeasureAreaBtn");
+    if (panel) panel.classList.toggle("hidden", !visible);
+    if (statusNode) statusNode.textContent = status;
+    if (valueNode) valueNode.textContent = value;
+    if (distanceButton) distanceButton.classList.toggle("is-active", measureMode === "distance");
+    if (areaButton) areaButton.classList.toggle("is-active", measureMode === "area");
+  }
+
+  function hideSnapMarker() {
+    const marker = document.getElementById("vmSnapMarker");
+    if (!marker) return;
+    marker.classList.add("hidden");
+  }
+
+  function showSnapMarker(coordinate) {
+    if (!mapInstance || !Array.isArray(coordinate)) return;
+    const marker = document.getElementById("vmSnapMarker");
+    if (!marker) return;
+    const pixel = mapInstance.getPixelFromCoordinate(coordinate);
+    if (!Array.isArray(pixel)) return;
+    marker.style.left = `${Number(pixel[0] || 0)}px`;
+    marker.style.top = `${Number(pixel[1] || 0)}px`;
+    marker.classList.remove("hidden");
+  }
+
+  async function loadSnapGuideFeatures(force = false) {
+    if (!snapGuideLayer || !mapInstance) return;
+    const visibleSnapLayers = getSnapEligibleVisibleLayers();
+    if (!visibleSnapLayers.length) {
+      snapGuideLayer.getSource().clear();
+      hideSnapMarker();
+      snapExtentKey = "";
+      return;
+    }
+    const extent = getCurrentMapExtent();
+    if (!extent) return;
+
+    const padded = [
+      extent[0] - 20,
+      extent[1] - 20,
+      extent[2] + 20,
+      extent[3] + 20,
+    ];
+    const nextKey = `${extentToSnapKey(padded)}::${visibleSnapLayers.join(",")}`;
+    if (!force && nextKey && nextKey === snapExtentKey) return;
+    snapExtentKey = nextKey;
+
+    if (snapLoadAbortController) {
+      snapLoadAbortController.abort();
+    }
+    snapLoadAbortController = new AbortController();
+
+    const url = `${rp}/visor/terrenos/snap?minx=${encodeURIComponent(padded[0])}&miny=${encodeURIComponent(padded[1])}&maxx=${encodeURIComponent(padded[2])}&maxy=${encodeURIComponent(padded[3])}&layers=${encodeURIComponent(visibleSnapLayers.join(","))}`;
+
+    try {
+      const resp = await fetch(url, { signal: snapLoadAbortController.signal });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const format = new ol.format.GeoJSON();
+      const features = format.readFeatures(data, {
+        dataProjection: "EPSG:9377",
+        featureProjection: "EPSG:9377",
+      });
+      const source = snapGuideLayer.getSource();
+      source.clear();
+      source.addFeatures(features);
+    } catch (err) {
+      if (err?.name !== "AbortError") {
+        console.warn("[visor] No se pudo cargar snapping de terrenos:", err);
+      }
+    } finally {
+      snapLoadAbortController = null;
+    }
+  }
+
+  function clearMeasureDrawing() {
+    measureLayer?.getSource?.()?.clear();
+    if (measureSketchListener && typeof ol?.Observable?.unByKey === "function") {
+      ol.Observable.unByKey(measureSketchListener);
+    }
+    measureSketchListener = null;
+    if (measureMode === "distance") {
+      updateMeasurePanel({
+        visible: true,
+        status: "Haz clic en el mapa para iniciar la medición.",
+        value: "0 m",
+      });
+    } else if (measureMode === "area") {
+      updateMeasurePanel({
+        visible: true,
+        status: "Haz clic en el mapa para iniciar el área.",
+        value: "0 m²",
+      });
+    } else {
+      updateMeasurePanel({ visible: false });
+    }
+  }
+
+  function disableMeasureTool() {
+    measureMode = null;
+    if (mapInstance && measureDraw) {
+      mapInstance.removeInteraction(measureDraw);
+    }
+    if (mapInstance && snapInteraction) {
+      mapInstance.removeInteraction(snapInteraction);
+    }
+    measureDraw = null;
+    snapInteraction = null;
+    if (snapGuideLayer) {
+      snapGuideLayer.setVisible(false);
+    }
+    hideSnapMarker();
+    clearMeasureDrawing();
+  }
+
+  async function enableMeasureTool(mode = "distance") {
+    if (!mapInstance || !measureLayer || typeof ol?.interaction?.Draw !== "function") return;
+    measureMode = mode === "area" ? "area" : "distance";
+    clearMeasureDrawing();
+    await loadSnapGuideFeatures(true);
+
+    measureDraw = new ol.interaction.Draw({
+      source: measureLayer.getSource(),
+      type: measureMode === "area" ? "Polygon" : "LineString",
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: "#ef4444",
+          width: 3,
+          lineDash: [10, 6],
+        }),
+        image: new ol.style.Circle({
+          radius: 5,
+          fill: new ol.style.Fill({ color: "#ef4444" }),
+          stroke: new ol.style.Stroke({ color: "#fff", width: 2 }),
+        }),
+      }),
+    });
+
+    measureDraw.on("drawstart", (evt) => {
+      measureLayer.getSource().clear();
+      hideSnapMarker();
+      updateMeasurePanel({
+        visible: true,
+        status: measureMode === "area"
+          ? "Delimita el polígono. Doble clic para terminar."
+          : "Mide con clics. Doble clic para terminar.",
+        value: measureMode === "area" ? "0 m²" : "0 m",
+      });
+      if (measureSketchListener && typeof ol?.Observable?.unByKey === "function") {
+        ol.Observable.unByKey(measureSketchListener);
+      }
+      measureSketchListener = evt.feature.getGeometry().on("change", (changeEvt) => {
+        updateMeasurePanel({
+          visible: true,
+          status: measureMode === "area"
+            ? "Delimita el polígono. Doble clic para terminar."
+            : "Mide con clics. Doble clic para terminar.",
+          value: measureMode === "area"
+            ? formatMeasureArea(changeEvt.target)
+            : formatMeasureLength(changeEvt.target),
+        });
+      });
+    });
+
+    measureDraw.on("drawend", (evt) => {
+      if (measureSketchListener && typeof ol?.Observable?.unByKey === "function") {
+        ol.Observable.unByKey(measureSketchListener);
+      }
+      measureSketchListener = null;
+      hideSnapMarker();
+      updateMeasurePanel({
+        visible: true,
+        status: "Medición lista.",
+        value: measureMode === "area"
+          ? formatMeasureArea(evt.feature.getGeometry())
+          : formatMeasureLength(evt.feature.getGeometry()),
+      });
+    });
+
+    mapInstance.addInteraction(measureDraw);
+
+    if (snapGuideLayer && typeof ol?.interaction?.Snap === "function") {
+      snapGuideLayer.setVisible(true);
+      snapInteraction = new ol.interaction.Snap({
+        source: snapGuideLayer.getSource(),
+        pixelTolerance: 36,
+        edge: true,
+        vertex: true,
+      });
+      snapInteraction.on("snap", (evt) => {
+        const vertex = Array.isArray(evt?.vertex) ? evt.vertex : Array.isArray(evt?.coordinate) ? evt.coordinate : null;
+        if (vertex) {
+          showSnapMarker(vertex);
+        }
+      });
+      snapInteraction.on("unsnap", () => {
+        hideSnapMarker();
+      });
+      mapInstance.addInteraction(snapInteraction);
+    }
+
+    updateMeasurePanel({
+      visible: true,
+      status: measureMode === "area"
+        ? "Haz clic en el mapa para iniciar el área. El autoensamblado está activo."
+        : "Haz clic en el mapa para iniciar la medición. El autoensamblado está activo.",
+      value: measureMode === "area" ? "0 m²" : "0 m",
+    });
+  }
+
+  function bindMeasureControls() {
+    if (measureControlsBound) return;
+    measureControlsBound = true;
+
+    const measureBtn = document.getElementById("vmMeasureBtn");
+    const measureAreaBtn = document.getElementById("vmMeasureAreaBtn");
+    const clearBtn = document.getElementById("vmMeasureClearBtn");
+
+    measureBtn?.addEventListener("click", async () => {
+      if (measureMode === "distance") {
+        disableMeasureTool();
+      } else {
+        disableMeasureTool();
+        await enableMeasureTool("distance");
+      }
+    });
+
+    measureAreaBtn?.addEventListener("click", async () => {
+      if (measureMode === "area") {
+        disableMeasureTool();
+      } else {
+        disableMeasureTool();
+        await enableMeasureTool("area");
+      }
+    });
+
+    clearBtn?.addEventListener("click", () => {
+      clearMeasureDrawing();
     });
   }
 
@@ -1472,6 +1968,36 @@
     popup.classList.add("hidden");
   }
 
+  function clearSelectedTerrainHighlight() {
+    if (!selectedTerrainLayer) return;
+    selectedTerrainLayer.getSource()?.clear();
+  }
+
+  function highlightSelectedTerrain(detail) {
+    if (!selectedTerrainLayer) return;
+    const source = selectedTerrainLayer.getSource();
+    source?.clear();
+    const geom = detail?.terreno_geom;
+    if (!geom) return;
+
+    try {
+      const feature = new ol.format.GeoJSON().readFeature(
+        {
+          type: "Feature",
+          geometry: geom,
+          properties: {},
+        },
+        {
+          dataProjection: "EPSG:9377",
+          featureProjection: "EPSG:9377",
+        },
+      );
+      source?.addFeature(feature);
+    } catch (err) {
+      console.warn("[visor] No se pudo resaltar el terreno seleccionado:", err);
+    }
+  }
+
   function showInfoPopup(detail, pixel) {
     const popup = document.getElementById("vmInfoPopup");
     const idOperacion = document.getElementById("vmInfoOperacion");
@@ -1501,10 +2027,12 @@
 
   async function handleTerrainInfoClick(evt) {
     if (!mapInstance) return;
+    if (measureMode) return;
 
     const terrainEntry = getTerrainLayerEntry();
     if (!terrainEntry || !terrainEntry.layer.getVisible()) {
       hideInfoPopup();
+      clearSelectedTerrainHighlight();
       return;
     }
 
@@ -1512,6 +2040,7 @@
       const [x, y] = Array.isArray(evt.coordinate) ? evt.coordinate : [];
       if (!Number.isFinite(Number(x)) || !Number.isFinite(Number(y))) {
         hideInfoPopup();
+        clearSelectedTerrainHighlight();
         return;
       }
       const tolerance = Math.max(
@@ -1524,6 +2053,7 @@
       );
       if (detailResp.ok) {
         const detail = await detailResp.json();
+        highlightSelectedTerrain(detail);
         showInfoPopup(detail, evt.pixel);
         return;
       }
@@ -1543,6 +2073,7 @@
       if (!featureInfoUrl) {
         console.warn("[visor] Seleccion de terreno sin resultado:", detailResp.status);
         hideInfoPopup();
+        clearSelectedTerrainHighlight();
         return;
       }
 
@@ -1550,6 +2081,7 @@
       if (!featureResp.ok) {
         console.warn("[visor] Seleccion de terreno sin resultado:", detailResp.status);
         hideInfoPopup();
+        clearSelectedTerrainHighlight();
         return;
       }
 
@@ -1557,6 +2089,7 @@
       const terrenoId = extractTerrenoIdFromFeatureInfo(featureData);
       if (!terrenoId) {
         hideInfoPopup();
+        clearSelectedTerrainHighlight();
         return;
       }
 
@@ -1565,14 +2098,17 @@
       );
       if (!detailByIdResp.ok) {
         hideInfoPopup();
+        clearSelectedTerrainHighlight();
         return;
       }
 
       const detailById = await detailByIdResp.json();
+      highlightSelectedTerrain(detailById);
       showInfoPopup(detailById, evt.pixel);
     } catch (err) {
       console.warn("[visor] No se pudo cargar el detalle del terreno:", err);
       hideInfoPopup();
+      clearSelectedTerrainHighlight();
     }
   }
 
@@ -1677,11 +2213,60 @@
       }),
     };
 
+    selectedTerrainLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      style: new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: "rgba(37, 99, 235, 0.18)",
+        }),
+        stroke: new ol.style.Stroke({
+          color: "#1d4ed8",
+          width: 3,
+        }),
+      }),
+    });
+
+    snapGuideLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      visible: false,
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: "rgba(15, 23, 42, 0.35)",
+          width: 1.5,
+          lineDash: [4, 4],
+        }),
+        fill: new ol.style.Fill({
+          color: "rgba(255, 255, 255, 0.02)",
+        }),
+        image: new ol.style.Circle({
+          radius: 3,
+          fill: new ol.style.Fill({ color: "#ffffff" }),
+          stroke: new ol.style.Stroke({ color: "#0f172a", width: 1 }),
+        }),
+      }),
+    });
+
+    measureLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: "#ef4444",
+          width: 3,
+          lineDash: [10, 6],
+        }),
+        image: new ol.style.Circle({
+          radius: 5,
+          fill: new ol.style.Fill({ color: "#ef4444" }),
+          stroke: new ol.style.Stroke({ color: "#fff", width: 2 }),
+        }),
+      }),
+    });
+
     const wmsLayers = wmsLayerEntries.map((entry) => entry.layer);
 
     const mapOptions = {
       target: "map",
-      layers: [basemapEntries.osm, basemapEntries.sat, ...wmsLayers],
+      layers: [basemapEntries.osm, basemapEntries.sat, ...wmsLayers, selectedTerrainLayer, snapGuideLayer, measureLayer],
       view: new ol.View({
         projection: projection,
         center: ol.extent.getCenter(extent9377),
@@ -1697,13 +2282,30 @@
 
     mapInstance = new ol.Map(mapOptions);
 
+    if (typeof ol?.control?.ScaleLine === "function") {
+      mapInstance.addControl(
+        new ol.control.ScaleLine({
+          units: "metric",
+          minWidth: 96,
+          className: "vm-scale-line",
+        }),
+      );
+    }
+
     setBasemap(activeBasemap);
     mapInstance.getView().fit(extent9377, { padding: [20, 20, 20, 20] });
     renderLayerControls();
     bindLayerPanelControls();
     bindCustomZoomButtons();
     bindInfoPopupControls();
+    bindMeasureControls();
+    updateMeasurePanel({ visible: false });
     mapInstance.on("singleclick", handleTerrainInfoClick);
+    mapInstance.on("moveend", () => {
+      if (measureMode) {
+        loadSnapGuideFeatures();
+      }
+    });
     setTimeout(() => {
       mapInstance.updateSize();
       mapInstance.renderSync();
