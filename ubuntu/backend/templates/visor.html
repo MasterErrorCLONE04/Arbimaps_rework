@@ -1,4 +1,4 @@
-﻿<div class="container-fluid page-wrapper">
+﻿﻿<div class="container-fluid page-wrapper">
   <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-2 mt-0 mb-4 pt-0 px-5">
     <div class="content-title text-start mb-2" style="width: auto">
       <h3 class="title-main mb-0">Resumen del proyecto</h3>
@@ -247,6 +247,49 @@
             </div>
           </div>
 
+          <div class="vm-legend-card" aria-label="Convenciones del mapa">
+            <div class="vm-legend-title">Convenciones</div>
+            <div class="vm-legend-list">
+              <div class="vm-legend-item">
+                <span class="vm-legend-swatch vm-legend-swatch-terreno"></span>
+                <span>Terreno</span>
+              </div>
+              <div class="vm-legend-item">
+                <span class="vm-legend-swatch vm-legend-swatch-historico"></span>
+                <span>Terreno histórico</span>
+              </div>
+              <div class="vm-legend-item">
+                <span class="vm-legend-swatch vm-legend-swatch-construccion"></span>
+                <span>Construcciones</span>
+              </div>
+              <div class="vm-legend-item">
+                <span class="vm-legend-swatch vm-legend-swatch-unidad"></span>
+                <span>Unidades de construcción</span>
+              </div>
+              <div class="vm-legend-item">
+                <span class="vm-legend-swatch vm-legend-swatch-direccion"></span>
+                <span>Direcciones</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="vmInfoPopup" class="vm-info-popup hidden" aria-live="polite">
+            <button id="vmInfoPopupClose" class="vm-info-popup-close" type="button" title="Cerrar">
+              x
+            </button>
+            <div class="vm-info-popup-title">Predio seleccionado</div>
+            <div class="vm-info-popup-grid">
+              <div class="vm-info-popup-row">
+                <span class="vm-info-popup-label">ID operación</span>
+                <span id="vmInfoOperacion" class="vm-info-popup-value">Sin dato</span>
+              </div>
+              <div class="vm-info-popup-row">
+                <span class="vm-info-popup-label">Número predial</span>
+                <span id="vmInfoNumeroPredial" class="vm-info-popup-value">Sin dato</span>
+              </div>
+            </div>
+          </div>
+
           <div id="map" style="height: 50px"></div>
           <div class="vm-zoom-stack" aria-label="Controles de zoom">
             <button id="vmZoomInBtn" class="vm-zoom-btn" type="button" title="Acercar">
@@ -481,6 +524,154 @@
         justify-content: center;
       }
 
+      .vm-legend-card {
+        position: absolute;
+        left: 16px;
+        bottom: 84px;
+        z-index: 20;
+        min-width: 248px;
+        max-width: 280px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+        backdrop-filter: blur(8px);
+      }
+
+      .vm-legend-title {
+        margin-bottom: 10px;
+        font-size: 13px;
+        font-weight: 800;
+        color: #163c62;
+      }
+
+      .vm-legend-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .vm-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #243b53;
+      }
+
+      .vm-legend-swatch {
+        display: inline-flex;
+        width: 20px;
+        height: 14px;
+        flex: 0 0 auto;
+        border-radius: 4px;
+      }
+
+      .vm-legend-swatch-terreno {
+        background: rgba(166, 206, 227, 0.75);
+        border: 1px solid rgba(16, 81, 2, 0.65);
+      }
+
+      .vm-legend-swatch-historico {
+        background: transparent;
+        border: 1.5px solid #cb7e1f;
+      }
+
+      .vm-legend-swatch-construccion {
+        border: 1px solid #111827;
+        background:
+          repeating-linear-gradient(
+            135deg,
+            #111827 0,
+            #111827 2px,
+            transparent 2px,
+            transparent 6px
+          );
+      }
+
+      .vm-legend-swatch-unidad {
+        border: 1px solid #111827;
+        background:
+          repeating-linear-gradient(
+            45deg,
+            #111827 0,
+            #111827 2px,
+            transparent 2px,
+            transparent 6px
+          );
+      }
+
+      .vm-legend-swatch-direccion {
+        width: 22px;
+        height: 4px;
+        border-radius: 999px;
+        background: #2563eb;
+      }
+
+      .vm-info-popup {
+        position: absolute;
+        min-width: 240px;
+        max-width: 300px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+        z-index: 40;
+      }
+
+      .vm-info-popup.hidden {
+        display: none;
+      }
+
+      .vm-info-popup-title {
+        margin-bottom: 10px;
+        padding-right: 18px;
+        font-size: 13px;
+        font-weight: 800;
+        color: #163c62;
+      }
+
+      .vm-info-popup-grid {
+        display: grid;
+        gap: 8px;
+      }
+
+      .vm-info-popup-row {
+        display: grid;
+        gap: 2px;
+      }
+
+      .vm-info-popup-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+
+      .vm-info-popup-value {
+        font-size: 13px;
+        font-weight: 700;
+        color: #0f172a;
+        word-break: break-word;
+      }
+
+      .vm-info-popup-close {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        border: 0;
+        background: transparent;
+        color: #64748b;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+      }
+
       /* Oculta el zoom nativo de OL para usar solo los botones personalizados */
       .vm-map-shell .ol-zoom {
         display: none !important;
@@ -504,6 +695,18 @@
         .vm-zoom-stack {
           right: 10px;
           bottom: 70px;
+        }
+
+        .vm-legend-card {
+          left: 10px;
+          bottom: 72px;
+          min-width: 0;
+          max-width: calc(100% - 20px);
+        }
+
+        .vm-info-popup {
+          min-width: 220px;
+          max-width: calc(100% - 20px);
         }
       }
     </style>
@@ -648,6 +851,7 @@
   let wmsCapabilitiesDoc = null;
   let layerPanelBound = false;
   let zoomButtonsBound = false;
+  let infoPopupBound = false;
 
   let dashboardState = {
     condicion: [],
@@ -934,15 +1138,6 @@
       return existingQualifiedDefaults;
     }
 
-    if (publishedWorkspaceGroupExists(availableNames, namespace)) {
-      return [
-        {
-          name: namespace,
-          title: layerTitleFromName(namespace),
-        },
-      ];
-    }
-
     const unqualifiedDefaults = defaultBasePrincipalSubLayers(namespace, {
       qualified: false,
     });
@@ -951,6 +1146,10 @@
     );
     if (existingUnqualifiedDefaults.length) {
       return existingUnqualifiedDefaults;
+    }
+
+    if (publishedWorkspaceGroupExists(availableNames, namespace)) {
+      return qualifiedDefaults;
     }
 
     return qualifiedDefaults;
@@ -1232,6 +1431,151 @@
     });
   }
 
+  function getTerrainLayerEntry() {
+    return (
+      wmsLayerEntries.find((entry) => {
+        const rawName = String(entry?.name || "").toLowerCase();
+        return rawName.includes("arb_terreno") && !rawName.includes("historico");
+      }) || null
+    );
+  }
+
+  function extractTerrenoIdFromFeatureInfo(data) {
+    const feature = Array.isArray(data?.features) ? data.features[0] : null;
+    if (!feature) return null;
+
+    const props = feature.properties || {};
+    const directCandidates = [
+      props.t_id,
+      props.terreno_id,
+      props.id,
+      props.pk,
+    ];
+
+    for (const candidate of directCandidates) {
+      const value = Number(candidate);
+      if (Number.isFinite(value) && value > 0) return value;
+    }
+
+    const rawFeatureId = String(feature.id || "");
+    const lastToken = rawFeatureId.split(".").pop();
+    const parsed = Number(lastToken);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+
+    console.warn("[visor] GetFeatureInfo sin terreno_id util:", feature);
+    return null;
+  }
+
+  function hideInfoPopup() {
+    const popup = document.getElementById("vmInfoPopup");
+    if (!popup) return;
+    popup.classList.add("hidden");
+  }
+
+  function showInfoPopup(detail, pixel) {
+    const popup = document.getElementById("vmInfoPopup");
+    const idOperacion = document.getElementById("vmInfoOperacion");
+    const numeroPredial = document.getElementById("vmInfoNumeroPredial");
+    const mapTarget = document.getElementById("map");
+    if (!popup || !idOperacion || !numeroPredial || !mapTarget || !Array.isArray(pixel)) return;
+
+    idOperacion.textContent = detail?.id_operacion || "Sin dato";
+    numeroPredial.textContent = detail?.numero_predial_nacional || "Sin dato";
+
+    const x = Math.min(Math.max(Number(pixel[0] || 0) + 14, 12), Math.max(mapTarget.clientWidth - 252, 12));
+    const y = Math.min(Math.max(Number(pixel[1] || 0) - 16, 12), Math.max(mapTarget.clientHeight - 120, 12));
+
+    popup.style.left = `${x}px`;
+    popup.style.top = `${y}px`;
+    popup.classList.remove("hidden");
+  }
+
+  function bindInfoPopupControls() {
+    if (infoPopupBound) return;
+    infoPopupBound = true;
+    const closeBtn = document.getElementById("vmInfoPopupClose");
+    closeBtn?.addEventListener("click", () => {
+      hideInfoPopup();
+    });
+  }
+
+  async function handleTerrainInfoClick(evt) {
+    if (!mapInstance) return;
+
+    const terrainEntry = getTerrainLayerEntry();
+    if (!terrainEntry || !terrainEntry.layer.getVisible()) {
+      hideInfoPopup();
+      return;
+    }
+
+    try {
+      const [x, y] = Array.isArray(evt.coordinate) ? evt.coordinate : [];
+      if (!Number.isFinite(Number(x)) || !Number.isFinite(Number(y))) {
+        hideInfoPopup();
+        return;
+      }
+      const tolerance = Math.max(
+        Number(mapInstance.getView()?.getResolution?.() || 0) * 6,
+        1.5,
+      );
+
+      const detailResp = await fetch(
+        `${rp}/visor/terreno/seleccion?x=${encodeURIComponent(x)}&y=${encodeURIComponent(y)}&tolerance=${encodeURIComponent(tolerance)}`,
+      );
+      if (detailResp.ok) {
+        const detail = await detailResp.json();
+        showInfoPopup(detail, evt.pixel);
+        return;
+      }
+
+      const source = terrainEntry.layer.getSource();
+      const view = mapInstance.getView();
+      const featureInfoUrl = source?.getFeatureInfoUrl?.(
+        evt.coordinate,
+        view.getResolution(),
+        view.getProjection(),
+        {
+          INFO_FORMAT: "application/json",
+          FEATURE_COUNT: 1,
+        },
+      );
+
+      if (!featureInfoUrl) {
+        console.warn("[visor] Seleccion de terreno sin resultado:", detailResp.status);
+        hideInfoPopup();
+        return;
+      }
+
+      const featureResp = await fetch(featureInfoUrl);
+      if (!featureResp.ok) {
+        console.warn("[visor] Seleccion de terreno sin resultado:", detailResp.status);
+        hideInfoPopup();
+        return;
+      }
+
+      const featureData = await featureResp.json();
+      const terrenoId = extractTerrenoIdFromFeatureInfo(featureData);
+      if (!terrenoId) {
+        hideInfoPopup();
+        return;
+      }
+
+      const detailByIdResp = await fetch(
+        `${rp}/visor/terreno/detalle?terreno_id=${encodeURIComponent(terrenoId)}`,
+      );
+      if (!detailByIdResp.ok) {
+        hideInfoPopup();
+        return;
+      }
+
+      const detailById = await detailByIdResp.json();
+      showInfoPopup(detailById, evt.pixel);
+    } catch (err) {
+      console.warn("[visor] No se pudo cargar el detalle del terreno:", err);
+      hideInfoPopup();
+    }
+  }
+
   async function loadExtentFromWmsCapabilities() {
     try {
       const xml = await getWmsCapabilitiesDoc();
@@ -1358,6 +1702,8 @@
     renderLayerControls();
     bindLayerPanelControls();
     bindCustomZoomButtons();
+    bindInfoPopupControls();
+    mapInstance.on("singleclick", handleTerrainInfoClick);
     setTimeout(() => {
       mapInstance.updateSize();
       mapInstance.renderSync();

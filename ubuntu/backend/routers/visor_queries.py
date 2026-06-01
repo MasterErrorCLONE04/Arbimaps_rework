@@ -70,6 +70,7 @@ def terreno_detalle(
       t.t_id AS terreno_id,
       ST_AsGeoJSON(t.geometria)::json AS terreno_geom,
       p.t_id AS predio_id,
+      COALESCE(NULLIF(p.id_operacion::text, ''), p.numero_predial::text) AS id_operacion,
       p.numero_predial AS numero_predial_nacional,
       p.matricula_inmobiliaria,
       p.condicion_predio,
@@ -88,6 +89,51 @@ def terreno_detalle(
     with connection_manager.connection(tenant) as conn:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql, (terreno_id,))
+            row = cur.fetchone()
+
+    if not row:
+        return JSONResponse({"error": "Terreno no encontrado"}, status_code=404)
+
+    return row
+
+
+@router.get("/terreno/seleccion")
+def terreno_seleccion_por_coordenada(
+    request: Request,
+    x: float = Query(...),
+    y: float = Query(...),
+    tolerance: float = Query(2.0, ge=0.0),
+    _user: str = Depends(require_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+):
+    """
+    Selecciona el terreno que intersecta el punto dado en EPSG:9377 y
+    devuelve la ficha minima para el popup del visor.
+    """
+    sql = f"""
+    SELECT
+      t.t_id AS terreno_id,
+      p.t_id AS predio_id,
+      COALESCE(NULLIF(p.id_operacion::text, ''), p.numero_predial::text) AS id_operacion,
+      p.numero_predial AS numero_predial_nacional,
+      p.matricula_inmobiliaria
+    FROM {_main_table(tenant, 'arb_terreno')} t
+    LEFT JOIN {_main_table(tenant, 'arb_predio')} p ON p.t_id = t.predio
+    WHERE
+      ST_Intersects(t.geometria, ST_SetSRID(ST_Point(%s, %s), 9377))
+      OR ST_DWithin(t.geometria, ST_SetSRID(ST_Point(%s, %s), 9377), %s)
+    ORDER BY
+      CASE WHEN ST_Intersects(t.geometria, ST_SetSRID(ST_Point(%s, %s), 9377)) THEN 0 ELSE 1 END,
+      ST_Distance(t.geometria, ST_SetSRID(ST_Point(%s, %s), 9377)) ASC,
+      ST_Area(t.geometria) ASC NULLS LAST,
+      t.t_id ASC
+    LIMIT 1;
+    """
+
+    connection_manager = get_connection_manager(request.app)
+    with connection_manager.connection(tenant) as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(sql, (x, y, x, y, tolerance, x, y, x, y))
             row = cur.fetchone()
 
     if not row:

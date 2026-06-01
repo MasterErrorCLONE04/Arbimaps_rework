@@ -226,7 +226,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   href="{{ rp }}/panel/usuarios"
                 >
                   <i class="bi bi-people"></i>
-                  <span>Usuarios</span>
+                  <span>Usuarios y Cuadrillas</span>
                 </a>
                 {% endif %} {% if not limited_assignment_role %}
                 <a class="menuBtn sidebar-link">
@@ -290,7 +290,14 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   <a href="{{ rp }}/panel" class="topbar-brand"
                     >Dirección de Gestión Catastral</a
                   >
-                  <p class="topbar-title-pri mt-2">Información de base</p>
+                                    {% set municipality_label = current_municipality_name|default(current_municipality, true)|default('', true) %}
+                  <p class="topbar-title-pri mt-2">
+                    {% if municipality_label %}
+                      Bienvenidos Municipio "{{ municipality_label }}"
+                    {% else %}
+                      Información de base
+                    {% endif %}
+                  </p>
                 </div>
               </div>
 
@@ -338,7 +345,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   class="content-shell h-100 overflow-auto px-0 px-md-1 px-xl-2 pt-1 pb-0"
                 >
                   <div
-                    class="page-header {% if view == 'visor' or view == 'usuarios' or view == 'validacion_xtf' %}d-none{% endif %}"
+                    class="page-header {% if view == 'visor' or view == 'usuarios' %}d-none{% endif %}"
                   >
                     <div>
                       <div class="page-title">
