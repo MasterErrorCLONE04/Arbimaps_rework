@@ -1647,7 +1647,7 @@ def _rule_3_19(dataset: DatasetReader) -> list[RuleIssue]:
 
     return issues
 
-def _rule_3_20(dataset: DatasetReader) -> list[RuleIssue]:
+#def _rule_3_20(dataset: DatasetReader) -> list[RuleIssue]:
     helper = FisicoHelper(dataset)
     issues: list[RuleIssue] = []
 
@@ -1694,28 +1694,32 @@ def _rule_3_20(dataset: DatasetReader) -> list[RuleIssue]:
         if area_construida is None:
             continue
 
+        # Igual que QGIS: round(...,1)
         area_total_calculada = round(area_total, 1)
-        diferencia = area_construida - area_total_calculada
+        area_construida_redondeada = round(area_construida, 1)
 
-        if diferencia < -0.1 or diferencia > 0.1:
+        diferencia = area_construida_redondeada - area_total_calculada
+
+        if diferencia != 0:
             issues.append(
                 helper.make_issue(
                     caracteristica,
                     rule_id="3.20",
                     message=(
                         "Error en área construida: el valor diligenciado "
-                        f"({area_construida}) no coincide con el área calculada "
+                        f"({area_construida_redondeada}) no coincide con el área calculada "
                         f"de las unidades ({area_total_calculada})."
                     ),
                     details={
                         "tabla": "ARB_CaracteristicasUnidadConstruccion",
                         "caracteristica_id": caracteristica_id,
-                        "area_construida": area_construida_raw,
+                        "area_construida": area_construida_redondeada,
                         "area_total_calculada": area_total_calculada,
-                        "diferencia": round(diferencia, 4),
+                        "diferencia": diferencia,
                     },
                 )
             )
+
     return issues
 
 def _rule_3_21(dataset: DatasetReader) -> list[RuleIssue]:
@@ -1740,5 +1744,5 @@ RULE_FUNCTIONS = {
     "3.17": _rule_3_17,
     "3.18": _rule_3_18,
     "3.19": _rule_3_19,
-    "3.20": _rule_3_20,
+    #"3.20": _rule_3_20,
 }
