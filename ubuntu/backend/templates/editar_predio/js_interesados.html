@@ -27,8 +27,9 @@
     function formatearFechaInputAVisual(valor) {
         if (!valor) return '----';
 
-        const partes = valor.split('-');
-        if (partes.length !== 3) return valor;
+        const valorStr = String(valor);
+        const partes = valorStr.split('-');
+        if (partes.length !== 3) return valorStr;
 
         const [anio, mes, dia] = partes;
         return `${dia}/${mes}/${anio}`;

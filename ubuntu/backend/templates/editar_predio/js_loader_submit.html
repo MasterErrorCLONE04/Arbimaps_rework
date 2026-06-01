@@ -84,29 +84,37 @@
                                     idConstruccion: c.t_id,
                                     identificadorConstruccion: c.identificador || `C-${c.t_id}`,
                                     tipoConstruccion: c.tipo_construccion_nombre || '',
-                                    numeroPisos: c.numero_pisos || 0,
-                                    numeroSotanos: c.numero_sotanos || 0,
-                                    numeroMezanines: c.numero_mezanines || 0,
-                                    numeroSemisotanos: c.numero_semisotanos || 0,
-                                    estadoConstruccion: c.estado_construccion_nombre || '',
+                                    numeroPisos: c.numero_pisos || c.total_pisos || 0,
+                                    numeroSotanos: c.numero_sotanos || c.total_sotanos || 0,
+                                    numeroMezanines: c.numero_mezanines || c.total_mezaninis || 0,
+                                    numeroSemisotanos: c.numero_semisotanos || c.total_semisotanos || 0,
+                                    estadoConstruccion: c.estado_construccion_nombre || c.estado_construccion || '',
                                     anioConstruccion: c.anio_construccion || '',
-                                    areaConstruccion: c.area_construccion || 0,
+                                    areaConstruccion: c.area_construccion || c.area_total_construccion || 0,
                                     observacion: c.observacion || '',
-                                    unidades: (c.unidades || []).map(u => ({
-                                        idUnidad: u.t_id,
-                                        identificadorUnidad: u.identificador || `U-${u.t_id}`,
-                                        tipoConstruccion: u.tipo_construccion_nombre || '',
-                                        usoUnidad: u.tipo_unidad_construccion_nombre || '',
-                                        estadoUnidad: u.estado_unidad_construccion_nombre || '',
-                                        areaConstruida: u.area_construida || 0,
-                                        totalHabitaciones: u.total_habitaciones || 0,
-                                        totalBanios: u.total_banios || 0,
-                                        totalLocales: u.total_locales || 0,
-                                        totalPlantas: u.total_plantas || 0,
-                                        observacion: u.observacion || ''
+                                    etiqueta: c.etiqueta || c.identificador || `C-${c.t_id}`,
+                                    predioAsociado: c.numero_predial_nacional || predioNacional || '',
+                                    unidadesConstruccion: (c.unidades || []).map(u => ({
+                                        idUnidadConstruccion: u.t_id,
+                                        identificador: u.identificador || `U-${u.t_id}`,
+                                        tipoPlantaUc: u.tipo_planta_nombre || u.tipo_planta || '',
+                                        plantaUbicacionUc: u.planta_ubicacion || 0,
+                                        alturaUc: u.altura || 0,
+                                        observacionesUc: u.observaciones || u.observacion || '',
+                                        tipoClaseUc: u.tipo_calificacion_clase || u.tipo_construccion_nombre || '',
+                                        tipoCalificacionUc: u.tipo_calificacion_resumen || u.tipo_calificacion_nombre || '',
+                                        usoUc: u.tipo_unidad_construccion_nombre || '',
+                                        areaPrivadaConstruidaUc: u.area_privada_construida || 0,
+                                        anioConstruccionUc: u.anio_construccion || '',
+                                        totalPlantasUc: u.total_plantas || 0,
+                                        areaConstruidaUc: u.area_construida || 0,
+                                        observacionesCaracteristicasUc: u.observaciones || u.observacion || '',
+                                        usosTradicionalesCulturalesUc: u.usos_tradicionales_culturales || '',
+                                        areaPrivadaConstruidaDosUc: u.area_privada_construida || 0,
+                                        adjunto: null
                                     }))
                                 }));
-                                if (typeof renderizarConstruccionesOpcion5 === 'function') renderizarConstruccionesOpcion5();
+                                if (typeof renderizarListadoConstruccionesOpcion5 === 'function') renderizarListadoConstruccionesOpcion5(datosPruebaOpcion5);
                             }
 
                             if (data.predio && typeof datosPruebaOpcion6 !== 'undefined') {

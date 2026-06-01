@@ -1638,6 +1638,12 @@ def obtener_detalle_predio_completo_asignacion(
                     if caracteristica_id is not None
                     else None
                 )
+                if caracteristica:
+                    for key, val in caracteristica.items():
+                        if key not in ("t_id", "t_basket", "t_ili_tid", "identificador", "observaciones"):
+                            unidad[key] = val
+                    if "observaciones" in caracteristica and caracteristica["observaciones"] is not None:
+                        unidad["observaciones"] = caracteristica["observaciones"]
 
                 unidad["construccion_id"] = construccion_id
                 unidad["construccion_identificador"] = (
@@ -1756,26 +1762,30 @@ def obtener_detalle_predio_completo_asignacion(
                     "fraccion",
                     "d_fraccion",
                 )
-                item["telefono"] = _first_non_empty(item, "telefono", "i_telefono")
+                item["telefono"] = _first_non_empty(item, "telefono", "i_telefono", "ic_telefono")
                 item["correo_electronico"] = _first_non_empty(
                     item,
                     "correo_electronico",
                     "i_correo_electronico",
+                    "ic_correo_electronico",
                 )
                 item["direccion_residencia"] = _first_non_empty(
                     item,
                     "direccion_residencia",
                     "i_direccion_residencia",
+                    "ic_direccion_residencia",
                 )
                 item["domicilio_notificacion"] = _first_non_empty(
                     item,
                     "domicilio_notificacion",
                     "i_domicilio_notificacion",
+                    "ic_domicilio_notificacion",
                 )
                 item["autoriza_notificacion_correo"] = _first_non_empty(
                     item,
                     "autoriza_notificacion_correo",
                     "i_autoriza_notificacion_correo",
+                    "ic_autoriza_notificacion_correo",
                 )
                 item["autorreconocimiento_etnico"] = _first_non_empty(
                     item,
@@ -1792,12 +1802,14 @@ def obtener_detalle_predio_completo_asignacion(
                     "departamento_nombre",
                     "i_departamento_nombre",
                     "i_departamento",
+                    "ic_departamento",
                 )
                 item["municipio_nombre"] = _first_non_empty(
                     item,
                     "municipio_nombre",
                     "i_municipio_nombre",
                     "i_municipio",
+                    "ic_municipio",
                 )
                 nombre_completo = _build_full_name(item)
                 if nombre_completo:
@@ -1942,8 +1954,28 @@ def obtener_detalle_predio_completo_asignacion(
                     u for u in unidades_enriquecidas if str(u.get("construccion_id")) == str(cons_id)
                 ]
 
+            puntos_referencia = _fetch_rows(
+                cur,
+                schema=schema_work,
+                table="arb_puntoreferencia",
+                where_sql='x."predio"::text = %s',
+                params=(str(workspace_predio_t_id),),
+                order_sql='x."t_id" ASC',
+            )
+            for pr in puntos_referencia:
+                tipo_pr_val = _first_non_empty(pr, "tipo_punto_referencia")
+                pr["tipo_punto_nombre"] = _resolve_domain_name(
+                    cur,
+                    tenant=tenant,
+                    schema=schema_work,
+                    table_candidates=["arb_puntoreferenciatipo", "ilc_puntoreferenciatipo"],
+                    raw_value=tipo_pr_val,
+                ) or _first_non_empty(pr, "tipo_punto_nombre", "tipo_punto_referencia")
+                pr["descripcion"] = pr.get("observacion") or ""
+
     return {
         "predio": predio,
+        "puntos_referencia": puntos_referencia,
         "direcciones": direcciones,
         "construcciones": construcciones,
         "unidades_construccion": unidades_enriquecidas,
