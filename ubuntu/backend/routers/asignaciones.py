@@ -482,7 +482,7 @@ def _procesar_workspace_asignacion(
                 ),
                 created_by,
             )
-            workspace_service.actualizar_predio_ids_desde_workspace(asignacion_id, schema_work, conn=conn)
+            workspace_service.actualizar_predio_ids_desde_workspace(conn, tenant, asignacion_id)
             conn.commit()
     except HTTPException as e:
         detail = e.detail if isinstance(e.detail, str) else "Error ejecutando ili2pg"

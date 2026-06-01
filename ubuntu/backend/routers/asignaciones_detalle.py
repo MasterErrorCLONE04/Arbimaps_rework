@@ -1318,7 +1318,45 @@ def obtener_detalle_predio_completo_asignacion(
     asignacion_predio_table = _app_table(tenant, "asignacion_predio")
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        cur.execute(
+        workspace_npn = None
+        if schema_work:
+            predio_numero_field = _read_predio_numero_field()
+            try:
+                cur.execute(
+                    f"""
+                    SELECT BTRIM({_qident(predio_numero_field)}::text) AS npn
+                    FROM {_qident(schema_work)}."arb_predio"
+                    WHERE "t_id" = %s
+                    LIMIT 1
+                    """,
+                    (predio_t_id,),
+                )
+                p_row = cur.fetchone()
+                if p_row:
+                    workspace_npn = p_row.get("npn")
+            except Exception:
+                pass
+
+        if workspace_npn:
+            cur.execute(
+                f"""
+                SELECT
+                    a.id,
+                    a.usuario_asignado,
+                    a.work_datasetname,
+                    ap.activo,
+                    ap.numero_predial_nacional
+                FROM {asignacion_table} a
+                JOIN {asignacion_predio_table} ap
+                  ON ap.asignacion_id = a.id
+                WHERE a.id = %s
+                  AND (ap.predio_t_id = %s OR BTRIM(ap.numero_predial_nacional::text) = BTRIM(%s::text))
+                LIMIT 1
+                """,
+                (asignacion_id, predio_t_id, workspace_npn),
+            )
+        else:
+            cur.execute(
                 f"""
                 SELECT
                     a.id,

@@ -77,6 +77,9 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
         # Nunca esperar indefinidamente por locks de DDL.
         cur.execute("SET LOCAL lock_timeout = '10s'")
         cur.execute("SET LOCAL statement_timeout = '60s'")
+        in_transaction = not conn.autocommit
+        if in_transaction:
+            cur.execute("SAVEPOINT ensure_asig_tables_sp")
         try:
             cur.execute(
                 f"""
@@ -244,11 +247,27 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
             )
             cur.execute(
                 f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion_retorno
+                ADD COLUMN IF NOT EXISTS archivo_nombre_original TEXT,
+                ADD COLUMN IF NOT EXISTS archivo_nombre_guardado TEXT,
+                ADD COLUMN IF NOT EXISTS archivo_sha256 TEXT,
+                ADD COLUMN IF NOT EXISTS correlation_id TEXT
+                """
+            )
+            cur.execute(
+                f"""
                 CREATE INDEX IF NOT EXISTS idx_asig_retorno_sha_asig
                 ON {app_schema}.asignacion_retorno (asignacion_id, archivo_sha256)
                 """
             )
+            if in_transaction:
+                cur.execute("RELEASE SAVEPOINT ensure_asig_tables_sp")
         except Exception as exc:
+            if in_transaction:
+                try:
+                    cur.execute("ROLLBACK TO SAVEPOINT ensure_asig_tables_sp")
+                except Exception as rollback_exc:
+                    logger.warning("Failed to rollback to savepoint: %s", rollback_exc)
             logger.warning("ensure_asignacion_tables: DDL omitido/fallido por contencion de locks: %s", exc)
     _ASIG_TABLES_ENSURED = True
 
@@ -604,9 +623,35 @@ def safe_log_event(*args, **kwargs) -> None:
         mensaje = args[4]
         usuario = args[5] if len(args) > 5 else kwargs.get("usuario")
         
+        in_transaction = not conn.autocommit
         try:
             ensure_asignacion_tables(conn, tenant)
-            insert_asignacion_event(conn, tenant, asignacion_id, evento, mensaje, usuario)
+            with conn.cursor() as sp_cur:
+                if in_transaction:
+                    sp_cur.execute("SAVEPOINT safe_log_event_sp")
+                try:
+                    insert_asignacion_event(conn, tenant, asignacion_id, evento, mensaje, usuario)
+                    if in_transaction:
+                        sp_cur.execute("RELEASE SAVEPOINT safe_log_event_sp")
+                except Exception as exc:
+                    if in_transaction:
+                        sp_cur.execute("ROLLBACK TO SAVEPOINT safe_log_event_sp")
+                    pg_code = str(getattr(exc, "pgcode", "") or "")
+                    if pg_code == pg_errorcodes.INVALID_TEXT_REPRESENTATION:
+                        fallback_evento = "CREADA"
+                        fallback_mensaje = f"[{evento}] {mensaje or ''}".strip()
+                        if in_transaction:
+                            sp_cur.execute("SAVEPOINT safe_log_event_fallback_sp")
+                        try:
+                            insert_asignacion_event(conn, tenant, asignacion_id, fallback_evento, fallback_mensaje, usuario)
+                            if in_transaction:
+                                sp_cur.execute("RELEASE SAVEPOINT safe_log_event_fallback_sp")
+                        except Exception as fallback_exc:
+                            if in_transaction:
+                                sp_cur.execute("ROLLBACK TO SAVEPOINT safe_log_event_fallback_sp")
+                            raise fallback_exc
+                    else:
+                        raise exc
         except Exception as exc:
             logger.warning(
                 "safe_log_event (multitenant) failed asignacion_id=%s evento=%s usuario=%s error=%s",
