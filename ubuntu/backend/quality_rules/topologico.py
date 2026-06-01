@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import math
+import unicodedata
 import xml.etree.ElementTree as ET
 from typing import Any, Iterable
 
@@ -34,6 +36,9 @@ class TopologicoHelper:
         "id_operacion",
         "Id_Operacion",
         "t_id",
+        "T_Id",
+        "T_ID",
+        "tid",
         "TID",
         "id",
         "identificador",
@@ -73,6 +78,22 @@ class TopologicoHelper:
         "ARB_Derecho Interesado Fuente",
         "Derecho Interesado Fuente",
         "derecho_interesado_fuente",
+    )
+
+    PREDIO_DERECHO_TABLES = (
+        "ARB_Predio_Derecho",
+        "ARB_PredioDerecho",
+        "arb_predio_derecho",
+        "arb_predioderecho",
+    )
+
+    PREDIO_TERRENO_TABLES = (
+        "ARB_Predio_Terreno",
+        "ARB_PredioTerreno",
+        "arb_predio_terreno",
+        "arb_predioterreno",
+        "CCA_Predio_Terreno",
+        "cca_predio_terreno",
     )
 
     DERECHO_TIPO_TABLES = (
@@ -140,6 +161,12 @@ class TopologicoHelper:
 
     def iter_derecho_interesado_fuente(self):
         yield from self._iter_table_rows(self.DERECHO_INTERESADO_FUENTE_TABLES)
+
+    def iter_predio_derecho(self):
+        yield from self._iter_table_rows(self.PREDIO_DERECHO_TABLES)
+
+    def iter_predio_terreno(self):
+        yield from self._iter_table_rows(self.PREDIO_TERRENO_TABLES)
 
     def iter_derecho_tipo(self):
         yield from self._iter_table_rows(self.DERECHO_TIPO_TABLES)
@@ -215,6 +242,8 @@ class TopologicoHelper:
             .replace("ú", "u")
             .replace("ñ", "n")
         )
+        text = unicodedata.normalize("NFKD", text)
+        text = "".join(ch for ch in text if not unicodedata.combining(ch))
         return "".join(ch for ch in text if ch.isalnum())
 
     @classmethod
@@ -237,9 +266,9 @@ class TopologicoHelper:
             "16": "Dominio",
             "dominio": "Dominio",
         }
-        if field_norm in {"dtipo", "tipoderecho"} and norm in derecho:
+        if field_norm in {"dtipo", "tipoderecho", "tipo"} and norm in derecho:
             return derecho[norm]
-        if field_norm in {"dtipo", "tipoderecho"}:
+        if field_norm in {"dtipo", "tipoderecho", "tipo"}:
             for suffix, ilicode in (
                 ("posesion", "Posesion"),
                 ("ocupacion", "Ocupacion"),
@@ -336,10 +365,193 @@ def _closed_ring(coords: list[tuple[float, float]]) -> list[tuple[float, float]]
     return ring
 
 
-def _load_xtf_geometry(xml_text: str):
-    if Polygon is None or Point is None:
+class _SimpleIntersection:
+    def __init__(self, area: float):
+        self.area = area
+        self.is_empty = area <= 0
+
+
+class _SimplePoint:
+    def __init__(self, coord: tuple[float, float]):
+        self.coord = coord
+
+    def intersection(self, other):
+        return _SimpleIntersection(0)
+
+    def overlaps(self, other) -> bool:
+        return False
+
+    def covers(self, other) -> bool:
+        if isinstance(other, _SimplePoint):
+            return self.coord == other.coord
+        return False
+
+
+class _SimplePolygon:
+    def __init__(self, outer: list[tuple[float, float]], holes: list[list[tuple[float, float]]] | None = None):
+        self.outer = _closed_ring(outer)
+        self.holes = [_closed_ring(hole) for hole in (holes or [])]
+        self.is_empty = len(self.outer) < 4 or _ring_area(self.outer) <= 0
+
+    def intersection(self, other):
+        if isinstance(other, _SimpleMultiPolygon):
+            return other.intersection(self)
+        if isinstance(other, _SimplePolygon):
+            return _SimpleIntersection(_polygon_intersection_area(self.outer, other.outer))
+        return _SimpleIntersection(0)
+
+    def overlaps(self, other) -> bool:
+        if isinstance(other, _SimpleMultiPolygon):
+            return other.overlaps(self)
+        if not isinstance(other, _SimplePolygon):
+            return False
+        inter = self.intersection(other)
+        if inter.is_empty or getattr(inter, "area", 0) <= 0:
+            return False
+        return not self.covers(other) and not other.covers(self)
+
+    def covers(self, other) -> bool:
+        if isinstance(other, _SimplePoint):
+            return _point_in_ring(other.coord, self.outer) and not any(
+                _point_in_ring(other.coord, hole) for hole in self.holes
+            )
+        if isinstance(other, _SimplePolygon):
+            return all(_point_in_ring(point, self.outer) for point in other.outer[:-1])
+        if isinstance(other, _SimpleMultiPolygon):
+            return all(self.covers(polygon) for polygon in other.polygons)
+        return False
+
+
+class _SimpleMultiPolygon:
+    def __init__(self, polygons: list[_SimplePolygon]):
+        self.polygons = [polygon for polygon in polygons if not polygon.is_empty]
+        self.is_empty = not self.polygons
+
+    def intersection(self, other):
+        area = 0.0
+        for polygon in self.polygons:
+            inter = polygon.intersection(other)
+            area += float(getattr(inter, "area", 0) or 0)
+        return _SimpleIntersection(area)
+
+    def overlaps(self, other) -> bool:
+        inter = self.intersection(other)
+        if inter.is_empty or getattr(inter, "area", 0) <= 0:
+            return False
+        return not self.covers(other) and not _geom_contains(other, self)
+
+    def covers(self, other) -> bool:
+        if isinstance(other, _SimpleMultiPolygon):
+            return all(self.covers(polygon) for polygon in other.polygons)
+        return any(polygon.covers(other) for polygon in self.polygons)
+
+
+def _ring_area(ring: list[tuple[float, float]]) -> float:
+    if len(ring) < 4:
+        return 0.0
+    total = 0.0
+    for i in range(len(ring) - 1):
+        x1, y1 = ring[i]
+        x2, y2 = ring[i + 1]
+        total += x1 * y2 - x2 * y1
+    return abs(total) / 2.0
+
+
+def _point_on_segment(point: tuple[float, float], a: tuple[float, float], b: tuple[float, float]) -> bool:
+    px, py = point
+    ax, ay = a
+    bx, by = b
+    cross = (px - ax) * (by - ay) - (py - ay) * (bx - ax)
+    if abs(cross) > 1e-9:
+        return False
+    return min(ax, bx) - 1e-9 <= px <= max(ax, bx) + 1e-9 and min(ay, by) - 1e-9 <= py <= max(ay, by) + 1e-9
+
+
+def _point_in_ring(point: tuple[float, float], ring: list[tuple[float, float]]) -> bool:
+    if len(ring) < 4:
+        return False
+
+    x, y = point
+    inside = False
+
+    for i in range(len(ring) - 1):
+        a = ring[i]
+        b = ring[i + 1]
+        if _point_on_segment(point, a, b):
+            return True
+
+        xi, yi = a
+        xj, yj = b
+        if (yi > y) != (yj > y):
+            x_intersection = (xj - xi) * (y - yi) / (yj - yi) + xi
+            if x <= x_intersection:
+                inside = not inside
+
+    return inside
+
+
+def _segment_intersection(
+    a1: tuple[float, float],
+    a2: tuple[float, float],
+    b1: tuple[float, float],
+    b2: tuple[float, float],
+) -> tuple[float, float] | None:
+    x1, y1 = a1
+    x2, y2 = a2
+    x3, y3 = b1
+    x4, y4 = b2
+    denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+
+    if abs(denom) < 1e-12:
+        for point in (a1, a2, b1, b2):
+            if _point_on_segment(point, a1, a2) and _point_on_segment(point, b1, b2):
+                return point
         return None
 
+    px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / denom
+    py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / denom
+    point = (px, py)
+
+    if _point_on_segment(point, a1, a2) and _point_on_segment(point, b1, b2):
+        return point
+    return None
+
+
+def _unique_points(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    seen = set()
+    unique = []
+    for x, y in points:
+        key = (round(x, 9), round(y, 9))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append((x, y))
+    return unique
+
+
+def _polygon_intersection_area(poly_a: list[tuple[float, float]], poly_b: list[tuple[float, float]]) -> float:
+    points: list[tuple[float, float]] = []
+
+    points.extend(point for point in poly_a[:-1] if _point_in_ring(point, poly_b))
+    points.extend(point for point in poly_b[:-1] if _point_in_ring(point, poly_a))
+
+    for i in range(len(poly_a) - 1):
+        for j in range(len(poly_b) - 1):
+            point = _segment_intersection(poly_a[i], poly_a[i + 1], poly_b[j], poly_b[j + 1])
+            if point is not None:
+                points.append(point)
+
+    points = _unique_points(points)
+    if len(points) < 3:
+        return 0.0
+
+    centroid_x = sum(x for x, _ in points) / len(points)
+    centroid_y = sum(y for _, y in points) / len(points)
+    points.sort(key=lambda p: math.atan2(p[1] - centroid_y, p[0] - centroid_x))
+    return _ring_area(_closed_ring(points))
+
+
+def _load_xtf_geometry(xml_text: str):
     try:
         root = ET.fromstring(xml_text)
     except Exception:
@@ -361,6 +573,12 @@ def _load_xtf_geometry(xml_text: str):
         if not rings:
             continue
 
+        if Polygon is None:
+            polygon = _SimplePolygon(rings[0], rings[1:])
+            if not polygon.is_empty:
+                polygons.append(polygon)
+            continue
+
         try:
             polygon = Polygon(rings[0], rings[1:])
             if not polygon.is_valid:
@@ -373,6 +591,11 @@ def _load_xtf_geometry(xml_text: str):
     if len(polygons) == 1:
         return polygons[0]
 
+    if len(polygons) > 1 and MultiPolygon is None:
+        simple_polygons = [polygon for polygon in polygons if isinstance(polygon, _SimplePolygon)]
+        if simple_polygons:
+            return _SimpleMultiPolygon(simple_polygons)
+
     if len(polygons) > 1 and MultiPolygon is not None:
         try:
             geom = MultiPolygon(polygons)
@@ -384,6 +607,8 @@ def _load_xtf_geometry(xml_text: str):
 
     coords = _coords_from_node(root)
     if len(coords) == 1:
+        if Point is None:
+            return _SimplePoint(coords[0])
         try:
             return Point(coords[0])
         except Exception:
@@ -399,16 +624,13 @@ def _load_geometry(value: object):
     if hasattr(value, "overlaps") or hasattr(value, "contains"):
         return value
 
-    if wkt is None or wkb is None or shape is None:
-        return None
-
-    if isinstance(value, dict):
+    if isinstance(value, dict) and shape is not None:
         try:
             return shape(value)
         except Exception:
             return None
 
-    if isinstance(value, (bytes, bytearray, memoryview)):
+    if isinstance(value, (bytes, bytearray, memoryview)) and wkb is not None:
         try:
             return wkb.loads(bytes(value))
         except Exception:
@@ -423,20 +645,25 @@ def _load_geometry(value: object):
         if geom is not None:
             return geom
 
-    try:
-        return wkt.loads(text)
-    except Exception:
-        pass
+    if wkt is not None:
+        try:
+            return wkt.loads(text)
+        except Exception:
+            pass
 
-    try:
-        return wkb.loads(bytes.fromhex(text))
-    except Exception:
-        pass
+    if wkb is not None:
+        try:
+            return wkb.loads(bytes.fromhex(text))
+        except Exception:
+            pass
 
-    try:
-        return shape(json.loads(text))
-    except Exception:
-        return None
+    if shape is not None:
+        try:
+            return shape(json.loads(text))
+        except Exception:
+            return None
+
+    return None
 
 
 def _derecho_tipo_map(helper: TopologicoHelper) -> dict[str, str]:
@@ -454,11 +681,14 @@ def _derecho_tipo_map(helper: TopologicoHelper) -> dict[str, str]:
 
 def _derecho_tipo(helper: TopologicoHelper, value: object, domain_map: dict[str, str] | None = None) -> str:
     tipo = TopologicoHelper.normalizar_valor_dominio("d_tipo", value)
+
     if tipo in {"Dominio", "Posesion", "Ocupacion"}:
         return tipo
 
     if domain_map and _is_not_empty(value):
-        return domain_map.get(str(value).strip(), tipo)
+        mapped = domain_map.get(str(value).strip())
+        if mapped in {"Dominio", "Posesion", "Ocupacion"}:
+            return mapped
 
     return tipo
 
@@ -468,19 +698,149 @@ def _predio_tipo(value: object) -> str:
 
 
 def _predio_key_fields() -> tuple[str, ...]:
-    return ("TID", "t_id", "id", "id_operacion", "Id_Operacion", "identificador", "t_ili_tid", "T_Ili_Tid", "T_ILI_TID")
+    return (
+        "TID",
+        "tid",
+        "t_id",
+        "T_Id",
+        "T_ID",
+        "id",
+        "id_operacion",
+        "Id_Operacion",
+        "identificador",
+        "identificacion",
+        "t_ili_tid",
+        "T_Ili_Tid",
+        "T_ILI_TID",
+        "numero_predial",
+        "Numero_Predial",
+        "numero_predial_nacional",
+        "Numero_Predial_Nacional",
+        "etiqueta",
+        "Etiqueta",
+    )
+
+
+def _predio_canonical_fields() -> tuple[str, ...]:
+    return (
+        "t_ili_tid",
+        "T_Ili_Tid",
+        "T_ILI_TID",
+        "TID",
+        "tid",
+        "t_id",
+        "T_Id",
+        "T_ID",
+        "id",
+        "id_operacion",
+        "Id_Operacion",
+        "identificador",
+        "identificacion",
+        "numero_predial",
+        "Numero_Predial",
+        "numero_predial_nacional",
+        "Numero_Predial_Nacional",
+        "etiqueta",
+        "Etiqueta",
+    )
 
 
 def _object_key_fields() -> tuple[str, ...]:
-    return ("TID", "t_id", "id", "t_ili_tid", "T_Ili_Tid", "T_ILI_TID")
+    return ("TID", "tid", "t_id", "T_Id", "T_ID", "id", "t_ili_tid", "T_Ili_Tid", "T_ILI_TID")
 
 
 def _terreno_predio_ref_fields() -> tuple[str, ...]:
-    return ("predio", "Predio", "id_operacion", "Id_Operacion", "etiqueta", "cca_predio_terreno")
+    return (
+        "predio",
+        "Predio",
+        "arb_predio",
+        "ARB_Predio",
+        "arb_predio_terreno",
+        "arb_predio_construccion",
+        "cca_predio_terreno",
+        "id_predio",
+        "Id_Predio",
+        "predio_id",
+        "Predio_ID",
+        "predio_asociado",
+        "id_operacion",
+        "Id_Operacion",
+        "id_grupo",
+        "Id_Grupo",
+        "numero_predial",
+        "Numero_Predial",
+        "numero_predial_nacional",
+        "Numero_Predial_Nacional",
+        "etiqueta",
+        "Etiqueta",
+    )
+
+
+def _association_predio_fields() -> tuple[str, ...]:
+    return (
+        "predio",
+        "Predio",
+        "arb_predio",
+        "ARB_Predio",
+        "id_predio",
+        "Id_Predio",
+        "predio_id",
+        "Predio_ID",
+        "predio_asociado",
+        "id_operacion",
+        "Id_Operacion",
+        "id_grupo",
+        "Id_Grupo",
+        "numero_predial",
+        "Numero_Predial",
+        "numero_predial_nacional",
+        "Numero_Predial_Nacional",
+        "etiqueta",
+        "Etiqueta",
+    )
+
+
+def _association_terreno_fields() -> tuple[str, ...]:
+    return (
+        "terreno",
+        "Terreno",
+        "arb_terreno",
+        "ARB_Terreno",
+        "id_terreno",
+        "terreno_id",
+    )
+
+
+def _association_derecho_fields() -> tuple[str, ...]:
+    return (
+        "derecho",
+        "Derecho",
+        "arb_derechointeresadofuente",
+        "ARB_DerechoInteresadoFuente",
+        "derecho_interesado_fuente",
+        "Derecho_Interesado_Fuente",
+        "id_derecho",
+        "derecho_id",
+    )
 
 
 def _unidad_predio_ref_fields() -> tuple[str, ...]:
-    return ("predio", "Predio", "id_operacion", "Id_Operacion", "etiqueta")
+    return (
+        "predio",
+        "Predio",
+        "id_operacion",
+        "Id_Operacion",
+        "id_grupo",
+        "Id_Grupo",
+        "numero_predial",
+        "Numero_Predial",
+        "baunit",
+        "BAUnit",
+        "ue_baunit",
+        "uebaunit",
+        "etiqueta",
+        "Etiqueta",
+    )
 
 
 def _unidad_construccion_ref_fields() -> tuple[str, ...]:
@@ -488,22 +848,176 @@ def _unidad_construccion_ref_fields() -> tuple[str, ...]:
 
 
 def _direccion_predio_ref_fields() -> tuple[str, ...]:
-    return ("arb_predio_direccion", "predio", "Predio", "id_operacion", "Id_Operacion", "etiqueta")
+    return (
+        "arb_predio_direccion",
+        "predio",
+        "Predio",
+        "id_operacion",
+        "Id_Operacion",
+        "id_grupo",
+        "Id_Grupo",
+        "numero_predial",
+        "Numero_Predial",
+        "etiqueta",
+        "Etiqueta",
+    )
 
 
 def _geometry_fields() -> tuple[str, ...]:
     return ("geometria", "Geometria", "geometry", "geom", "localizacion", "Localizacion")
 
 
-def _predios_por_derecho(helper: TopologicoHelper) -> tuple[set[str], set[str], set[str]]:
+def _derecho_predio_ref_fields() -> tuple[str, ...]:
+    return (
+        "predio",
+        "Predio",
+        "arb_predio",
+        "ARB_Predio",
+        "arb_predio_derecho",
+        "id_predio",
+        "Id_Predio",
+        "predio_id",
+        "Predio_ID",
+        "predio_asociado",
+        "id_operacion",
+        "Id_Operacion",
+        "id_grupo",
+        "Id_Grupo",
+        "numero_predial",
+        "Numero_Predial",
+        "numero_predial_nacional",
+        "Numero_Predial_Nacional",
+        "etiqueta",
+        "Etiqueta",
+    )
+
+
+def _derecho_tipo_fields() -> tuple[str, ...]:
+    return (
+        "d_tipo",
+        "D_Tipo",
+        "tipo_derecho",
+        "Tipo_Derecho",
+        "tipo",
+        "Tipo",
+    )
+
+
+def _association_map(
+    rows: Iterable[tuple[str, dict[str, object]]],
+    helper: TopologicoHelper,
+    *,
+    source_fields: tuple[str, ...],
+    target_fields: tuple[str, ...],
+) -> dict[str, set[str]]:
+    mapping: dict[str, set[str]] = {}
+
+    for _, row in rows:
+        sources = helper.all_keys(row, source_fields)
+        targets = helper.all_keys(row, target_fields)
+
+        if not sources or not targets:
+            continue
+
+        for target in targets:
+            mapping.setdefault(str(target), set()).update(str(source) for source in sources)
+
+    return mapping
+
+
+def _derecho_predios_by_id(helper: TopologicoHelper) -> dict[str, set[str]]:
+    return _association_map(
+        helper.iter_predio_derecho(),
+        helper,
+        source_fields=_association_predio_fields(),
+        target_fields=_association_derecho_fields(),
+    )
+
+
+def _terreno_predios_by_id(helper: TopologicoHelper) -> dict[str, set[str]]:
+    return _association_map(
+        helper.iter_predio_terreno(),
+        helper,
+        source_fields=_association_predio_fields(),
+        target_fields=_association_terreno_fields(),
+    )
+
+
+def _predio_refs_for_object(
+    helper: TopologicoHelper,
+    row: dict[str, object],
+    direct_fields: tuple[str, ...],
+    association_map: dict[str, set[str]],
+) -> set[str]:
+    predio_refs = helper.all_keys(row, direct_fields)
+
+    for key in helper.all_keys(row, _object_key_fields()):
+        predio_refs.update(association_map.get(str(key), set()))
+
+    return predio_refs
+
+
+def _predio_alias_index(helper: TopologicoHelper) -> dict[str, str]:
+    alias_index: dict[str, str] = {}
+
+    for _, predio in helper.iter_predio():
+        predio_keys = helper.all_keys(predio, _predio_key_fields())
+        canonical = None
+
+        for field_name in _predio_canonical_fields():
+            value = helper.get_field_value(predio, (field_name,))
+            if _is_not_empty(value):
+                canonical = str(value).strip()
+                break
+
+        if canonical is None:
+            canonical = next(iter(predio_keys), None)
+
+        if not canonical:
+            continue
+
+        canonical = str(canonical).strip()
+        for key in predio_keys:
+            alias_index.setdefault(str(key).strip(), canonical)
+        alias_index.setdefault(canonical, canonical)
+
+    return alias_index
+
+
+def _canonical_predio_refs(refs: set[str], alias_index: dict[str, str] | None) -> set[str]:
+    if not alias_index:
+        return {str(ref).strip() for ref in refs if _is_not_empty(ref)}
+
+    canonical_refs: set[str] = set()
+    for ref in refs:
+        if _is_empty(ref):
+            continue
+        ref_text = str(ref).strip()
+        canonical_refs.add(alias_index.get(ref_text, ref_text))
+    return canonical_refs
+
+
+def _predios_por_derecho(
+    helper: TopologicoHelper,
+    alias_index: dict[str, str] | None = None,
+) -> tuple[set[str], set[str], set[str]]:
     dominio: set[str] = set()
     posesion: set[str] = set()
     ocupacion: set[str] = set()
     domain_map = _derecho_tipo_map(helper)
+    derecho_predios = _derecho_predios_by_id(helper)
 
     for _, row in helper.iter_derecho_interesado_fuente():
-        tipo = _derecho_tipo(helper, helper.get_field_value(row, ("d_tipo", "D_Tipo", "tipo_derecho")), domain_map)
-        predio_refs = helper.all_keys(row, ("predio", "Predio", "id_operacion", "Id_Operacion"))
+        tipo_raw = helper.get_field_value(row, _derecho_tipo_fields())
+        tipo = _derecho_tipo(helper, tipo_raw, domain_map)
+        predio_refs = _predio_refs_for_object(
+            helper,
+            row,
+            _derecho_predio_ref_fields(),
+            derecho_predios,
+        )
+        predio_refs = _canonical_predio_refs(predio_refs, alias_index)
+
         if not predio_refs:
             continue
 
@@ -517,18 +1031,24 @@ def _predios_por_derecho(helper: TopologicoHelper) -> tuple[set[str], set[str], 
     return dominio, posesion, ocupacion
 
 
-def _index_predios(helper: TopologicoHelper) -> dict[str, dict[str, object]]:
+def _index_predios(helper: TopologicoHelper, alias_index: dict[str, str] | None = None) -> dict[str, dict[str, object]]:
     predios_by_id: dict[str, dict[str, object]] = {}
     for _, predio in helper.iter_predio():
         for key in helper.all_keys(predio, _predio_key_fields()):
             predios_by_id.setdefault(key, predio)
+            if alias_index and key in alias_index:
+                predios_by_id.setdefault(alias_index[key], predio)
     return predios_by_id
 
 
-def _construccion_predios_by_id(helper: TopologicoHelper) -> dict[str, set[str]]:
+def _construccion_predios_by_id(
+    helper: TopologicoHelper,
+    alias_index: dict[str, str] | None = None,
+) -> dict[str, set[str]]:
     predios_by_id: dict[str, set[str]] = {}
     for _, construccion in helper.iter_construccion():
         predio_refs = helper.all_keys(construccion, _terreno_predio_ref_fields())
+        predio_refs = _canonical_predio_refs(predio_refs, alias_index)
         if not predio_refs:
             continue
 
@@ -541,8 +1061,10 @@ def _predio_refs_for_unidad(
     helper: TopologicoHelper,
     unidad: dict[str, object],
     construccion_predios: dict[str, set[str]],
+    alias_index: dict[str, str] | None = None,
 ) -> set[str]:
     predio_refs = helper.all_keys(unidad, _unidad_predio_ref_fields())
+    predio_refs = _canonical_predio_refs(predio_refs, alias_index)
     construccion_refs = helper.all_keys(unidad, _unidad_construccion_ref_fields())
 
     for construccion_ref in construccion_refs:
@@ -562,37 +1084,72 @@ def _terrain_from_row(helper: TopologicoHelper, table_name: str, row: dict[str, 
         "predio": next(iter(predio_refs), None),
         "predio_refs": predio_refs,
         "geom": geom,
-        "id": helper.get_field_value(row, ("t_id", "TID", "id")),
+        "id": helper.get_field_value(row, ("t_id", "T_Id", "T_ID", "TID", "tid", "id")),
         "tid": helper.identify(row),
     }
 
 
-def _iter_terrenos_filtrados(helper: TopologicoHelper, predio_ids: set[str]) -> list[dict[str, object]]:
+def _iter_terrenos_filtrados(
+    helper: TopologicoHelper,
+    predio_ids: set[str],
+    alias_index: dict[str, str] | None = None,
+    *,
+    fallback_todos_si_no_hay_clasificacion: bool = False,
+) -> list[dict[str, object]]:
     terrenos = []
+    terreno_predios = _terreno_predios_by_id(helper)
+    predio_ids = _canonical_predio_refs(predio_ids, alias_index)
+
+    # En algunos XTF no viene la tabla ARB_DerechoInteresadoFuente.
+    # QGIS, en ese caso, valida 5.1/5.2 contra todos los terrenos cargados.
+    # Para igualar ese comportamiento, 5.1 y 5.2 activan este fallback.
+    if not predio_ids and not fallback_todos_si_no_hay_clasificacion:
+        return terrenos
+
     for table_name, row in helper.iter_terreno():
-        predio_refs = helper.all_keys(row, _terreno_predio_ref_fields())
-        if not predio_refs or predio_refs.isdisjoint(predio_ids):
+        predio_refs = _predio_refs_for_object(
+            helper,
+            row,
+            _terreno_predio_ref_fields(),
+            terreno_predios,
+        )
+        predio_refs_canonicas = _canonical_predio_refs(predio_refs, alias_index)
+
+        if predio_ids and (
+            not predio_refs_canonicas
+            or predio_refs_canonicas.isdisjoint(predio_ids)
+        ):
             continue
 
-        terreno = _terrain_from_row(helper, table_name, row, predio_refs)
+        terreno = _terrain_from_row(helper, table_name, row, predio_refs_canonicas)
         if terreno is not None:
             terrenos.append(terreno)
     return terrenos
 
 
-def _terrenos_por_predio(helper: TopologicoHelper) -> dict[str, list[dict[str, object]]]:
+def _terrenos_por_predio(
+    helper: TopologicoHelper,
+    alias_index: dict[str, str] | None = None,
+) -> dict[str, list[dict[str, object]]]:
     terrenos_por_predio: dict[str, list[dict[str, object]]] = {}
+    terreno_predios = _terreno_predios_by_id(helper)
 
     for table_name, row in helper.iter_terreno():
-        predio_refs = helper.all_keys(row, _terreno_predio_ref_fields())
-        if not predio_refs:
+        predio_refs = _predio_refs_for_object(
+            helper,
+            row,
+            _terreno_predio_ref_fields(),
+            terreno_predios,
+        )
+        predio_refs_canonicas = _canonical_predio_refs(predio_refs, alias_index)
+        if not predio_refs_canonicas:
             continue
 
-        terreno = _terrain_from_row(helper, table_name, row, predio_refs)
+        terreno = _terrain_from_row(helper, table_name, row, predio_refs_canonicas)
         if terreno is None:
             continue
 
-        for predio_ref in predio_refs:
+        for predio_ref in predio_refs_canonicas:
             terrenos_por_predio.setdefault(str(predio_ref), []).append(terreno)
 
     return terrenos_por_predio
@@ -600,8 +1157,15 @@ def _terrenos_por_predio(helper: TopologicoHelper) -> dict[str, list[dict[str, o
 
 def _geom_overlaps(g1, g2) -> bool:
     try:
+        if hasattr(g1, "overlaps"):
+            return bool(g1.overlaps(g2))
+
+        # Fallback para las geometrias simples cuando Shapely no esta disponible:
+        # superposicion = area comun positiva, sin que una geometria cubra totalmente a la otra.
         inter = g1.intersection(g2)
-        return bool(not inter.is_empty and getattr(inter, "area", 0) > 0)
+        if inter.is_empty or getattr(inter, "area", 0) <= 0:
+            return False
+        return not _geom_contains(g1, g2) and not _geom_contains(g2, g1)
     except Exception:
         return False
 
@@ -629,9 +1193,15 @@ def _pares_overlap(geoms: list[dict[str, object]]):
 def _rule_5_1(dataset: DatasetReader) -> list[RuleIssue]:
     helper = TopologicoHelper(dataset)
     issues: list[RuleIssue] = []
+    alias_index = _predio_alias_index(helper)
 
-    dominio, _, _ = _predios_por_derecho(helper)
-    terrenos = _iter_terrenos_filtrados(helper, dominio)
+    dominio, _, _ = _predios_por_derecho(helper, alias_index)
+    terrenos = _iter_terrenos_filtrados(
+        helper,
+        dominio,
+        alias_index,
+        fallback_todos_si_no_hay_clasificacion=True,
+    )
 
     for t1, t2 in _pares_overlap(terrenos):
         issues.append(
@@ -655,9 +1225,15 @@ def _rule_5_1(dataset: DatasetReader) -> list[RuleIssue]:
 def _rule_5_2(dataset: DatasetReader) -> list[RuleIssue]:
     helper = TopologicoHelper(dataset)
     issues: list[RuleIssue] = []
+    alias_index = _predio_alias_index(helper)
 
-    _, posesion, ocupacion = _predios_por_derecho(helper)
-    terrenos = _iter_terrenos_filtrados(helper, posesion | ocupacion)
+    _, posesion, ocupacion = _predios_por_derecho(helper, alias_index)
+    terrenos = _iter_terrenos_filtrados(
+        helper,
+        posesion | ocupacion,
+        alias_index,
+        fallback_todos_si_no_hay_clasificacion=True,
+    )
 
     for t1, t2 in _pares_overlap(terrenos):
         issues.append(
@@ -681,11 +1257,12 @@ def _rule_5_2(dataset: DatasetReader) -> list[RuleIssue]:
 def _rule_5_3(dataset: DatasetReader) -> list[RuleIssue]:
     helper = TopologicoHelper(dataset)
     issues: list[RuleIssue] = []
+    alias_index = _predio_alias_index(helper)
 
-    dominio, posesion, _ = _predios_por_derecho(helper)
-    predios_by_id = _index_predios(helper)
+    dominio, posesion, _ = _predios_por_derecho(helper, alias_index)
+    predios_by_id = _index_predios(helper, alias_index)
 
-    terrenos_posesion = _iter_terrenos_filtrados(helper, posesion)
+    terrenos_posesion = _iter_terrenos_filtrados(helper, posesion, alias_index)
     terrenos_publicos = []
 
     tipos_publicos = {
@@ -696,7 +1273,7 @@ def _rule_5_3(dataset: DatasetReader) -> list[RuleIssue]:
         "Predio.Publico.Presunto_Baldio",
     }
 
-    for terreno in _iter_terrenos_filtrados(helper, dominio):
+    for terreno in _iter_terrenos_filtrados(helper, dominio, alias_index):
         predio = predios_by_id.get(str(terreno["predio"]))
         tipo = _predio_tipo(helper.get_field_value(predio or {}, ("tipo", "Tipo")))
         if tipo in tipos_publicos:
@@ -731,11 +1308,12 @@ def _rule_5_3(dataset: DatasetReader) -> list[RuleIssue]:
 def _rule_5_4(dataset: DatasetReader) -> list[RuleIssue]:
     helper = TopologicoHelper(dataset)
     issues: list[RuleIssue] = []
+    alias_index = _predio_alias_index(helper)
 
-    dominio, _, ocupacion = _predios_por_derecho(helper)
-    predios_by_id = _index_predios(helper)
+    dominio, _, ocupacion = _predios_por_derecho(helper, alias_index)
+    predios_by_id = _index_predios(helper, alias_index)
 
-    terrenos_ocupacion = _iter_terrenos_filtrados(helper, ocupacion)
+    terrenos_ocupacion = _iter_terrenos_filtrados(helper, ocupacion, alias_index)
     terrenos_privados = []
 
     tipos_privados = {
@@ -743,7 +1321,7 @@ def _rule_5_4(dataset: DatasetReader) -> list[RuleIssue]:
         "Predio.Privado.Colectivo",
     }
 
-    for terreno in _iter_terrenos_filtrados(helper, dominio):
+    for terreno in _iter_terrenos_filtrados(helper, dominio, alias_index):
         predio = predios_by_id.get(str(terreno["predio"]))
         tipo = _predio_tipo(helper.get_field_value(predio or {}, ("tipo", "Tipo")))
         if tipo in tipos_privados:
@@ -836,16 +1414,17 @@ def _rule_5_5(dataset: DatasetReader) -> list[RuleIssue]:
 def _rule_5_6(dataset: DatasetReader) -> list[RuleIssue]:
     helper = TopologicoHelper(dataset)
     issues: list[RuleIssue] = []
+    alias_index = _predio_alias_index(helper)
 
-    terrenos_por_predio = _terrenos_por_predio(helper)
-    construccion_predios = _construccion_predios_by_id(helper)
+    terrenos_por_predio = _terrenos_por_predio(helper, alias_index)
+    construccion_predios = _construccion_predios_by_id(helper, alias_index)
 
     for table_name, row in helper.iter_unidad_construccion():
         planta_ubicacion = helper.get_field_value(row, ("planta_ubicacion", "Planta_Ubicacion"))
         if str(planta_ubicacion) != "1":
             continue
 
-        predio_refs = _predio_refs_for_unidad(helper, row, construccion_predios)
+        predio_refs = _predio_refs_for_unidad(helper, row, construccion_predios, alias_index)
         if not predio_refs:
             continue
 
@@ -879,11 +1458,13 @@ def _rule_5_6(dataset: DatasetReader) -> list[RuleIssue]:
 def _rule_5_7(dataset: DatasetReader) -> list[RuleIssue]:
     helper = TopologicoHelper(dataset)
     issues: list[RuleIssue] = []
+    alias_index = _predio_alias_index(helper)
 
-    terrenos_por_predio = _terrenos_por_predio(helper)
+    terrenos_por_predio = _terrenos_por_predio(helper, alias_index)
 
     for table_name, row in helper.iter_direccion():
         predio_refs = helper.all_keys(row, _direccion_predio_ref_fields())
+        predio_refs = _canonical_predio_refs(predio_refs, alias_index)
         if not predio_refs:
             continue
 

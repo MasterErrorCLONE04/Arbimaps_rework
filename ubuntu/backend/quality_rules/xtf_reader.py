@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import unicodedata
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Iterable
@@ -12,6 +13,7 @@ TARGET_CLASSES = {
 
     # ARB capas principales
     "ARB_MarcaPredial",
+    "ARB_Marca",
     "ARB_Direccion",
     "ARB_Dirección",
     "ARB_PuntoReferencia",
@@ -40,18 +42,25 @@ TARGET_CLASSES = {
 
     # Catálogos / apoyo
     "ARB_CondicionPredioTipo",
+    "ARB_NovedadNumeroPredialTipo",
+    "ARB_ConstruccionPlantaTipo",
     "ARB_Predio_Novedad_Numero_Predial",
+    "ARB_Predio_Derecho",
+    "ARB_Predio_Terreno",
+    "ARB_Predio_Construccion",
 
     # variantes minúsculas
     "ilc_predio",
     "ilc_datosadicionaleslevantamientocatastral",
 
     "arb_marcapredial",
+    "arb_marca",
     "arb_direccion",
     "arb_dirección",
     "arb_puntoreferencia",
     "arb_unidadconstruccion",
     "arb_construccion",
+    "arb_construccion_unidadconstruccion",
     "arb_terrenohistorico",
     "arb_terreno",
 
@@ -73,7 +82,12 @@ TARGET_CLASSES = {
     "arb_adjuntofuenteadministrativa",
 
     "arb_condicionprediotipo",
+    "arb_novedadnumeropredialtipo",
+    "arb_construccionplantatipo",
     "arb_predio_novedad_numero_predial",
+    "arb_predio_derecho",
+    "arb_predio_terreno",
+    "arb_predio_construccion",
 }
 
 
@@ -85,11 +99,13 @@ ALIASES_BY_NORMALIZED = {
 
     # Capas físicas / geográficas
     "arbmarcapredial": "ARB_MarcaPredial",
+    "arbmarca": "ARB_MarcaPredial",
     "arbpuntoreferencia": "ARB_PuntoReferencia",
     "arbunidadconstruccion": "ARB_UnidadConstruccion",
     "dunidaddeconstruccion": "ARB_UnidadConstruccion",
     "unidaddeconstruccion": "ARB_UnidadConstruccion",
     "arbconstruccion": "ARB_Construccion",
+    "arbconstruccionunidadconstruccion": "ARB_Construccion_UnidadConstruccion",
     "arbterrenohistorico": "ARB_TerrenoHistorico",
     "arbterreno": "ARB_Terreno",
     "eterreno": "ARB_Terreno",
@@ -119,7 +135,12 @@ ALIASES_BY_NORMALIZED = {
 
     # Catálogos / apoyo
     "arbcondicionprediotipo": "ARB_CondicionPredioTipo",
+    "arbnovedadnumeropredialtipo": "ARB_NovedadNumeroPredialTipo",
+    "arbconstruccionplantatipo": "ARB_ConstruccionPlantaTipo",
     "arbpredionovedadnumeropredial": "ARB_Predio_Novedad_Numero_Predial",
+    "arbpredioderecho": "arb_predio_derecho",
+    "arbpredioterreno": "arb_predio_terreno",
+    "arbpredioconstruccion": "arb_predio_construccion",
 
     # ILC
     "ilcpredio": "ILC_Predio",
@@ -143,6 +164,8 @@ def _normalize_text(value: str) -> str:
 
 def _normalize_key(value: str) -> str:
     text = _normalize_text(value)
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
     return "".join(ch for ch in text if ch.isalnum())
 
 
@@ -256,11 +279,27 @@ def parse_xtf_tables(
             if value:
                 record[child_key] = value
 
-        if canonical_class_name == "ARB_Direccion":
+        predio_relation_fields = {
+            "ARB_Direccion": "arb_predio_direccion",
+            "ARB_NovedadNumeroPredialValor": "arb_predio_novedad_numero_predial",
+            "ARB_MarcaPredial": "arb_predio_marca",
+            "ARB_Terreno": "arb_predio_terreno",
+            "ARB_DerechoInteresadoFuente": "arb_predio_derecho",
+            "ARB_Construccion": "arb_predio_construccion",
+        }
+
+        predio_relation_field = predio_relation_fields.get(canonical_class_name)
+        if predio_relation_field:
             predio_ref = _find_parent_ref(element, parents, "ARB_Predio", allowed_classes)
             if predio_ref:
                 record.setdefault("predio", predio_ref)
-                record.setdefault("arb_predio_direccion", predio_ref)
+                record.setdefault(predio_relation_field, predio_ref)
+
+        if canonical_class_name == "ARB_UnidadConstruccion":
+            construccion_ref = _find_parent_ref(element, parents, "ARB_Construccion", allowed_classes)
+            if construccion_ref:
+                record.setdefault("construccion", construccion_ref)
+                record.setdefault("arb_construccion_unidadconstruccion", construccion_ref)
 
         tables.setdefault(canonical_class_name, []).append(record)
 
@@ -286,7 +325,14 @@ def _find_parent_ref(
         raw_class_name = _clean_tag(parent.tag)
         normalized_class_name = _normalize_key(raw_class_name)
         if allowed_classes.get(normalized_class_name) == canonical_parent:
-            ref = parent.attrib.get("TID") or parent.attrib.get("t_id") or parent.attrib.get("id")
+            ref = (
+                parent.attrib.get("TID")
+                or parent.attrib.get("tid")
+                or parent.attrib.get("t_id")
+                or parent.attrib.get("T_Id")
+                or parent.attrib.get("T_ID")
+                or parent.attrib.get("id")
+            )
             return str(ref).strip() if ref else ""
         parent = parents.get(id(parent))
     return ""
