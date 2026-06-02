@@ -2212,6 +2212,7 @@ def _procesar_retorno_xtf(
                 stage = "prune_workspace_predios"
                 removed_predios = workspace_service.prune_workspace_predios(
                     conn,
+                    tenant,
                     asignacion_id,
                     target_dataset,
                     schema_work,
@@ -2346,7 +2347,7 @@ def _procesar_retorno_xtf(
                         has_sync_scope = bool((cur.fetchone() or [None])[0])
                         if has_sync_scope:
                             cur.execute(
-                                """
+                                f"""
                                 SELECT COUNT(*)
                                 FROM _arb_sync_selected_predio sp
                                 WHERE NOT EXISTS (
@@ -2375,9 +2376,9 @@ def _procesar_retorno_xtf(
                 else:
                     stage = "refresh_workspace_predio_ids"
                     workspace_service.actualizar_predio_ids_desde_workspace(
+                        conn,
+                        tenant,
                         asignacion_id,
-                        schema_work,
-                        conn=conn,
                     )
                     work_schema_sql = _qident(schema_work)
                     with conn.cursor() as cur:
@@ -2539,7 +2540,7 @@ def _procesar_retorno_xtf(
                         )
                     )
                 for evento, mensaje, usuario in pending_events:
-                    asignaciones_repo.insert_asignacion_event(
+                    asignaciones_repo.safe_log_event(
                         conn,
                         tenant,
                         asignacion_id,
