@@ -372,22 +372,14 @@ body {
 }
 
 .role-badge.admin {
-  border-left: 3px solid #5ba4cf;
+  border-left: 3px solid #002f55;
 }
 
 .drawer-profile-info .role-badge.admin {
-  border-left: 4px solid #5ba4cf;
-  border-right: 4px solid #5ba4cf;
+  border-left: 4px solid #002f55;
+  border-right: 4px solid #002f55;
 }
 
-.role-badge.lider {
-  border-left: 3px solid #22c55e;
-}
-
-.drawer-profile-info .role-badge.lider {
-  border-left: 4px solid #22c55e;
-  border-right: 4px solid #22c55e;
-}
 
 .role-badge.coordinador {
   border-left: 3px solid #f97316;
@@ -414,6 +406,24 @@ body {
 .drawer-profile-info .role-badge.role-consolidador {
   border-left: 4px solid #ef4444;
   border-right: 4px solid #ef4444;
+}
+
+.role-badge.lider_reconocimiento {
+  border-left: 3px solid #22c55e;
+}
+
+.drawer-profile-info .role-badge.lider_reconocimiento {
+  border-left: 4px solid #22c55e;
+  border-right: 4px solid #22c55e;
+}
+
+.role-badge.consulta {
+  border-left: 3px solid #ff00d4;
+}
+
+.drawer-profile-info .role-badge.consulta {
+  border-left: 4px solid #ff00d4;
+  border-right: 4px solid #ff00d4;
 }
 
 /* Status Text style */

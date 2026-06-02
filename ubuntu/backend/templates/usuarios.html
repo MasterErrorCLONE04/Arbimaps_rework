@@ -332,7 +332,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="modalCuadrillaLabel">Crear nueva cuadrilla</h5>
+        <h5 class="modal-title" id="modalCuadrillaLabel">Crear cuadrilla</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form id="formCuadrilla">
@@ -341,24 +341,18 @@
           <div class="modal-form-grid">
             <div class="form-group full-width">
               <label class="form-label" for="cuaNombre">Nombre de la cuadrilla *</label>
-              <input type="text" id="cuaNombre" class="form-input" required placeholder="Ej: Cuadrilla 1">
+              <input type="text" id="cuaNombre" class="form-input" required placeholder="Cuadrilla 2">
             </div>
             <div class="form-group full-width">
-              <label class="form-label" for="cuaEncargado">Encargado (Coordinador) *</label>
+              <label class="form-label" for="cuaEncargado">Nombre del encargado *</label>
               <select id="cuaEncargado" class="form-input" required>
-                <option value="">Selecciona...</option>
+                <option value="">Selecciona coordinador</option>
               </select>
             </div>
             <div class="form-group full-width">
               <label class="form-label" for="cuaZona">Zona de intervención</label>
               <select id="cuaZona" class="form-input" required>
-                <option value="">Selecciona...</option>
-                <option value="Norte">Norte</option>
-                <option value="Sur">Sur</option>
-                <option value="Centro">Centro</option>
-                <option value="Este">Este</option>
-                <option value="Oeste">Oeste</option>
-                <option value="Sur/Oeste">Sur/Oeste</option>
+                <option value="">Selecciona zona</option>
               </select>
             </div>
 
@@ -409,7 +403,7 @@
             <i class="bi bi-person-fill"></i>
           </div>
           <div class="d-flex flex-column" style="gap: 5px">
-            <p class="mb-0" id="detCuaNombre" style="font-weight: 700; color: var(--text-dark);">Encargado:</p>
+            <p class="mb-0" id="detCuaNombre" style="font-weight: 700; color: var(--text-dark);">Coordinador:</p>
             <small class="text-white fw-bold"
               style="background-color: var(--primary); padding: 5px 15px; border-radius: 10px;"
               id="detCuaEncargado">Coordinador X</small>
@@ -423,15 +417,14 @@
 
         <div class=" p-3" style="border-radius: 10px; background-color: #F0F6FB;">
           <p class="mb-2 borde py-2 text-center"
-            style="font-weight: 700; border-radius: 10px; background-color: #BAD5EB;">Listado de reconocedores:</p>
+            style="font-weight: 700; border-radius: 10px; background-color: #BAD5EB;">Listado de reconocedores</p>
           <ul class="list-group" id="detCuaIntegrantesList">
             <!-- Cargado vía JS -->
           </ul>
         </div>
 
         <div class="card p-3 mb-3 bg-light border-0 d-none">
-          <div class="mb-2"><strong>Zona de cobertura:</strong> <span id="detCuaZona">Sur</span></div>
-          <div><strong>Total de Integrantes:</strong> <span id="detCuaTotalIntegrantes">2 Reconocedores</span></div>
+          <div class="mb-2"><strong>Coordinador ID:</strong> <span id="detCuaZona">-</span></div>
         </div>
 
       </div>
@@ -478,6 +471,12 @@
                 <option value="">Cargando...</option>
               </select>
             </div>
+            <div class="form-group full-width d-none" id="usrSupervisorWrap">
+              <label class="form-label" style="font-size: 0.8rem;" for="usrSupervisor">Supervisor encargado</label>
+              <select id="usrSupervisor" class="form-input">
+                <option value="">Sin supervisor</option>
+              </select>
+            </div>
             <div class="form-group full-width">
               <label class="form-label" style="font-size: 0.8rem;" for="usrPassword">Contraseña inicial</label>
               <input type="password" id="usrPassword" class="form-input" autocomplete="new-password"
@@ -510,6 +509,8 @@
     const selectRol = document.getElementById("usrRol");
     const inputEmail = document.getElementById("usrEmail");
     const inputPassword = document.getElementById("usrPassword");
+    const selectSupervisor = document.getElementById("usrSupervisor");
+    const supervisorWrap = document.getElementById("usrSupervisorWrap");
     const submitBtn = document.getElementById("usrSubmitBtn");
     const resetBtn = document.getElementById("usrResetBtn");
     const inputSearch = document.getElementById("usrSearch");
@@ -544,19 +545,21 @@
     const rowsPerPage = 6;
 
     const roleLabels = {
-      "admin": "Admin",
       "coordinador": "Coordinador",
-      "digitalizador": "Lider de reco.",
+      "consolidador": "Consolidador",
       "reconocedor": "Reconocedor",
-      "consolidador": "Consolidador"
+      "admin": "Administrador",
+      "lider_reconocimiento": "Lider de reco.",
+      "consulta": "Consulta",
     };
 
     const roleBadges = {
       "admin": "admin",
+      "consolidador": "consolidador",
       "coordinador": "coordinador",
-      "digitalizador": "lider",
       "reconocedor": "reconocedor",
-      "consolidador": "consolidador"
+      "lider_reconocimiento": "lider_reconocimiento",
+      "consulta": "consulta"
     };
 
     // Realistic deterministic simulated values
@@ -572,17 +575,41 @@
       return { telefono, fechaInicio, fechaFin };
     }
 
-    // Deterministic supervisor assignment matching the mockup logic
-    function obtenerSupervisor(rol) {
-      const rolLower = (rol || "").toLowerCase().trim();
-      if (rolLower === "reconocedor") {
-        const coord = usuariosCache.find(x => (x.rol || "").toLowerCase() === "coordinador");
-        return coord ? coord.username : "Coordinador1";
-      } else if (rolLower === "coordinador") {
-        const lider = usuariosCache.find(x => ["digitalizador", "lider", "lider_reconocimiento"].includes((x.rol || "").toLowerCase()));
-        return lider ? lider.username : "L_reconocimiento";
+    function getCoordinadoresActivos() {
+      return usuariosCache.filter(u => (u.rol || "").toLowerCase() === "coordinador" && u.activo);
+    }
+
+function renderSupervisorOptions(selectedValue = "", selectedLabel = "") {
+  if (selectedValue && typeof selectedValue === "object") selectedValue = "";
+  if (selectedLabel && typeof selectedLabel === "object") selectedLabel = "";
+  const coordinadores = getCoordinadoresActivos();
+  const current = selectedValue ? String(selectedValue) : (selectSupervisor.value || "");
+  selectSupervisor.innerHTML =
+    '<option value="">Sin supervisor</option>' +
+    coordinadores.map(u => `<option value="${u.id_global}">${nombreUsuarioEquipo(u)}</option>`).join("");
+      if (current && !coordinadores.some(u => String(u.id_global) === String(current))) {
+        const fallbackOption = document.createElement("option");
+        fallbackOption.value = String(current);
+        fallbackOption.textContent = selectedLabel || `Supervisor ${current}`;
+        selectSupervisor.appendChild(fallbackOption);
       }
-      return "-";
+      if (current) {
+        selectSupervisor.value = current;
+      }
+    }
+
+function syncSupervisorField(selectedValue = "", selectedLabel = "") {
+  if (selectedValue && typeof selectedValue === "object") selectedValue = "";
+  if (selectedLabel && typeof selectedLabel === "object") selectedLabel = "";
+  const rol = (selectRol.value || "").toLowerCase();
+  const visible = rol === "reconocedor";
+  supervisorWrap.classList.toggle("d-none", !visible);
+  selectSupervisor.required = visible;
+  if (!visible) {
+        selectSupervisor.value = "";
+      } else {
+        renderSupervisorOptions(selectedValue, selectedLabel);
+      }
     }
 
     async function cargarRoles() {
@@ -605,7 +632,7 @@
         if (!r.ok) throw new Error(roles.detail || "No se pudo cargar roles.");
 
         // Add standard roles to ensure we have mock roles if necessary
-        const allRoles = [...new Set([...(roles || []), "admin", "coordinador", "digitalizador", "reconocedor"])];
+        const allRoles = [...new Set([...(roles || []), "admin", "coordinador", "reconocedor"])];
 
         selectRol.innerHTML =
           '<option value="">Selecciona...</option>' +
@@ -614,6 +641,53 @@
         console.error(err);
         selectRol.innerHTML = '<option value="">Error cargando roles</option>';
         showMsg(err.message || "Error cargando roles.", "error");
+      }
+    }
+
+    async function cargarZonasIntervencion() {
+      try {
+        const r = await fetch(`${rp}/usuarios/zonas-intervencion`, { credentials: "include" });
+        const contentType = r.headers.get("content-type") || "";
+
+        if (!contentType.includes("application/json")) {
+          const text = await r.text();
+          throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 120)}`);
+        }
+
+        const data = await r.json();
+        if (!r.ok) {
+          throw new Error(data.detail || "No se pudo cargar zonas.");
+        }
+
+        zonasIntervencionCache = Array.isArray(data) ? data : [];
+        populateCuadrillaFormSelects();
+      } catch (err) {
+        console.error("Error cargando zonas de intervención:", err);
+        zonasIntervencionCache = [];
+        populateCuadrillaFormSelects();
+      }
+    }
+
+    async function cargarEquiposTrabajo() {
+      try {
+        const r = await fetch(`${rp}/usuarios/equipos-trabajo`, { credentials: "include" });
+        const contentType = r.headers.get("content-type") || "";
+
+        if (!contentType.includes("application/json")) {
+          const text = await r.text();
+          throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 120)}`);
+        }
+
+        const data = await r.json();
+        if (!r.ok) {
+          throw new Error(data.detail || "No se pudo cargar equipos de trabajo.");
+        }
+
+        console.log("equipos_trabajo", data);
+        return data;
+      } catch (err) {
+        console.error("Error cargando equipos de trabajo:", err);
+        return [];
       }
     }
 
@@ -628,6 +702,8 @@
       inputUsername.disabled = false;
       submitBtn.textContent = "Guardar usuario";
       inputPassword.value = "";
+      selectSupervisor.value = "";
+      syncSupervisorField();
       msg.style.display = "none";
     }
 
@@ -642,7 +718,7 @@
       usuariosCache.forEach(u => {
         const rol = (u.rol || "").toLowerCase().trim();
         if (rol === "admin" || rol === "administrador") admin++;
-        else if (rol === "digitalizador" || rol === "lider de reco." || rol === "lider") lider++;
+        else if (rol === "lider_reconocimiento" || rol === "lider de reco." || rol === "lider") lider++;
         else if (rol === "coordinador") coordinador++;
         else if (rol === "reconocedor") reconocedor++;
         else if (rol === "consolidador") consolidador++;
@@ -688,15 +764,11 @@
           ? '<span class="status-text">Activo</span>'
           : '<span class="status-text inactive">Inactivo</span>';
 
-        const supervisor = obtenerSupervisor(u.rol);
-
         tr.innerHTML = `
           
           <td><strong>${u.username ?? ""}</strong></td>
           <td>${u.email ?? ""}</td>
-          
-         
-          <td>${supervisor}</td>
+          <td>${u.supervisor_encargado ?? u.supervisor_raw ?? "---"}</td>
           <td>${rolHtml}</td>
           <td>${estadoHtml}</td>
           <td>
@@ -1002,6 +1074,8 @@
     function startEditUsuario(id) {
       const u = usuariosCache.find(x => x.id_global === id);
       if (!u) return;
+      const supervisorSeleccionado = u.supervisor_id || u.supervisor_raw || "";
+      const supervisorEtiqueta = u.supervisor_encargado || u.supervisor_raw || "";
 
       editingId = id;
       document.getElementById("modalUsuarioLabel").textContent = "Editar usuario";
@@ -1012,6 +1086,8 @@
       selectRol.value = u.rol || "";
       inputEmail.value = u.email || "";
       inputPassword.value = "";
+      syncSupervisorField(supervisorSeleccionado, supervisorEtiqueta);
+      selectSupervisor.value = supervisorSeleccionado ? String(supervisorSeleccionado) : "";
 
       submitBtn.textContent = "Actualizar usuario";
 
@@ -1030,12 +1106,12 @@
 
       const result = await Swal.fire({
         title: '¿Estás seguro?',
-        text: `¿Deseas eliminar al usuario ${name}?`,
+        text: `¿Deseas suspender al usuario ${name}?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#CD2023',
         cancelButtonColor: '#64748b',
-        confirmButtonText: 'Sí, eliminar',
+        confirmButtonText: 'Sí, suspender',
         cancelButtonText: 'Cancelar'
       });
 
@@ -1090,6 +1166,7 @@
         last_name: inputLastName.value.trim(),
         rol: selectRol.value,
         email: inputEmail.value.trim() || null,
+        supervisor_id: selectRol.value === "reconocedor" && selectSupervisor.value ? parseInt(selectSupervisor.value, 10) : null,
         password: inputPassword.value || null,
       };
 
@@ -1175,6 +1252,7 @@
     const selectedReconocedoresList = document.getElementById("selectedReconocedoresList");
 
     let cuadrillasCache = [];
+    let zonasIntervencionCache = [];
     let editingCuadrillaId = null;
     let selectedReconocedores = [];
 
@@ -1188,27 +1266,46 @@
       btnAddNewCuadrilla.style.display = "none";
     });
 
-    tabCuadrillas.addEventListener("click", () => {
+    tabCuadrillas.addEventListener("click", async () => {
       tabUsuarios.classList.remove("active");
       tabCuadrillas.classList.add("active");
       usuariosTabContent.style.display = "none";
       cuadrillasTabContent.style.display = "flex";
       btnAddNewUser.style.display = "none";
       btnAddNewCuadrilla.style.display = "inline-flex";
-      populateCuadrillaFormSelects();
-      renderCuadrillas();
+      await cargarCuadrillas();
     });
+
+    function nombreUsuarioEquipo(u) {
+      const fullName = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
+      return fullName || u.username || "Sin nombre";
+    }
+
+    function inicialesUsuarioEquipo(u) {
+      const name = nombreUsuarioEquipo(u);
+      return name.split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase() || "R";
+    }
 
     // Populate selects dynamically using users loaded from database
     function populateCuadrillaFormSelects() {
-      // 1. Encargados (Coordinador)
       const coordinadores = usuariosCache.filter(u => (u.rol || "").toLowerCase() === "coordinador" && u.activo);
-      cuaEncargado.innerHTML = '<option value="">Selecciona...</option>' +
-        coordinadores.map(u => `<option value="${u.first_name} ${u.last_name}">${u.first_name} ${u.last_name}</option>`).join("");
+      cuaEncargado.innerHTML = '<option value="">Selecciona coordinador</option>' +
+        coordinadores.map(u => `<option value="${u.id_global}">${nombreUsuarioEquipo(u)}</option>`).join("");
 
-      // 2. Render recognizers list and dropdown
+      cuaZona.innerHTML = '<option value="">Selecciona zona</option>' +
+        zonasIntervencionCache.map(z => `<option value="${z.t_id}">${z.nombre}</option>`).join("");
+
       renderSelectedReconocedores();
       renderDropdownReconocedores();
+    }
+
+    function getCoordinadorLabelById(id) {
+      const coordinador = usuariosCache.find(u => Number(u.id_global) === Number(id));
+      return coordinador ? nombreUsuarioEquipo(coordinador) : `Coordinador ${id}`;
+    }
+
+    function getCuadrillaById(id) {
+      return cuadrillasCache.find(x => Number(x.equipo_id) === Number(id) || Number(x.id) === Number(id));
     }
 
     function renderSelectedReconocedores() {
@@ -1218,8 +1315,10 @@
         return;
       }
 
-      selectedReconocedores.forEach(fullname => {
-        const initials = fullname.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "R";
+      selectedReconocedores.forEach(id => {
+        const u = usuariosCache.find(item => Number(item.id_global) === Number(id));
+        const fullname = u ? nombreUsuarioEquipo(u) : `Reconocedor ${id}`;
+        const initials = u ? inicialesUsuarioEquipo(u) : "R";
 
         const item = document.createElement("div");
         item.className = "reconocedor-item";
@@ -1229,7 +1328,7 @@
             <h4 class="reconocedor-name">${fullname}</h4>
             <p class="reconocedor-role">Reconocedor</p>
           </div>
-          <button type="button" class="btn-delete-reconocedor btnRemoveReconocedor" data-name="${fullname}">
+          <button type="button" class="btn-delete-reconocedor btnRemoveReconocedor" data-id="${id}">
             Eliminar <i class="bi bi-trash2-fill"></i>
           </button>
         `;
@@ -1239,46 +1338,187 @@
       // Attach remove events
       selectedReconocedoresList.querySelectorAll(".btnRemoveReconocedor").forEach(btn => {
         btn.addEventListener("click", () => {
-          const name = btn.getAttribute("data-name");
-          selectedReconocedores = selectedReconocedores.filter(n => n !== name);
+          const id = parseInt(btn.getAttribute("data-id"), 10);
+          selectedReconocedores = selectedReconocedores.filter(n => Number(n) !== Number(id));
           renderSelectedReconocedores();
           renderDropdownReconocedores();
         });
       });
     }
 
-    function renderDropdownReconocedores() {
-      const activeReconocedores = usuariosCache.filter(u => (u.rol || "").toLowerCase() === "reconocedor" && u.activo);
-      const available = activeReconocedores.filter(u => {
-        const fullname = `${u.first_name} ${u.last_name}`;
-        return !selectedReconocedores.includes(fullname);
-      });
+    async function renderDropdownReconocedores(autoSelectAll = false) {
+      reconocedoresDropdown.innerHTML = '<div class="text-muted p-2 text-center" style="font-size:12px;">Cargando reconocedores...</div>';
 
-      if (available.length === 0) {
-        reconocedoresDropdown.innerHTML = '<div class="text-muted p-2 text-center" style="font-size:12px;">No hay más reconocedores disponibles.</div>';
-      } else {
+      try {
+        const coordinadorId = parseInt(cuaEncargado.value, 10);
+        if (!Number.isFinite(coordinadorId)) {
+          reconocedoresDropdown.innerHTML = '<div class="text-muted p-2 text-center" style="font-size:12px;">Selecciona primero un coordinador.</div>';
+          return;
+        }
+
+        const params = new URLSearchParams();
+        params.set("coordinador_id", String(coordinadorId));
+        if (editingCuadrillaId !== null) {
+          params.set("exclude_equipo_id", String(editingCuadrillaId));
+        }
+
+        const r = await fetch(`${rp}/usuarios/reconocedores-disponibles${params.toString() ? `?${params.toString()}` : ""}`, {
+          credentials: "include",
+        });
+        const contentType = r.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+          const text = await r.text();
+          throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 120)}`);
+        }
+
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.detail || "No se pudo cargar reconocedores disponibles.");
+
+        const available = (Array.isArray(data) ? data : []).filter(u => !selectedReconocedores.includes(Number(u.id_global)));
+        if (autoSelectAll && editingCuadrillaId === null) {
+          selectedReconocedores = available.map(u => Number(u.id_global)).filter(Number.isFinite);
+          renderSelectedReconocedores();
+        }
+        if (available.length === 0) {
+          reconocedoresDropdown.innerHTML = '<div class="text-muted p-2 text-center" style="font-size:12px;">No hay más reconocedores disponibles.</div>';
+          return;
+        }
+
         reconocedoresDropdown.innerHTML = available.map(u => {
-          const fullname = `${u.first_name} ${u.last_name}`;
-          return `<div class="dropdown-item-reconocedor" data-name="${fullname}">${fullname}</div>`;
+          const fullname = nombreUsuarioEquipo(u);
+          return `<div class="dropdown-item-reconocedor" data-id="${u.id_global}">${fullname}</div>`;
         }).join("");
 
-        // Attach add events
         reconocedoresDropdown.querySelectorAll(".dropdown-item-reconocedor").forEach(item => {
           item.addEventListener("click", () => {
-            const name = item.getAttribute("data-name");
-            selectedReconocedores.push(name);
+            const id = parseInt(item.getAttribute("data-id"), 10);
+            if (!selectedReconocedores.includes(id)) selectedReconocedores.push(id);
             renderSelectedReconocedores();
             renderDropdownReconocedores();
             reconocedoresDropdown.classList.remove("show");
           });
         });
+      } catch (err) {
+        console.error("Error cargando reconocedores disponibles:", err);
+        reconocedoresDropdown.innerHTML = '<div class="text-danger p-2 text-center" style="font-size:12px;">No se pudieron cargar los reconocedores.</div>';
       }
     }
 
+    async function guardarCuadrilla(e) {
+      e.preventDefault();
+
+      const nameVal = cuaNombre.value.trim();
+      const coordinadorId = parseInt(cuaEncargado.value, 10);
+      const zonaId = parseInt(cuaZona.value, 10);
+      let integrantesVal = [...new Set(selectedReconocedores.map(id => parseInt(id, 10)).filter(Number.isFinite))];
+
+      if (!nameVal || !Number.isFinite(coordinadorId) || !Number.isFinite(zonaId)) {
+        const msgCua = document.getElementById("cuaMsg");
+        msgCua.textContent = "Completa el nombre, coordinador y zona de intervención.";
+        msgCua.className = "msg error";
+        return;
+      }
+
+      if (integrantesVal.length === 0 && editingCuadrillaId === null) {
+        await renderDropdownReconocedores(true);
+        integrantesVal = [...new Set(selectedReconocedores.map(id => parseInt(id, 10)).filter(Number.isFinite))];
+      }
+
+      if (integrantesVal.length === 0) {
+        const msgCua = document.getElementById("cuaMsg");
+        msgCua.textContent = "Selecciona al menos 1 reconocedor para la cuadrilla.";
+        msgCua.className = "msg error";
+        return;
+      }
+
+      const isEdit = editingCuadrillaId !== null;
+      const endpoint = isEdit
+        ? `${rp}/usuarios/equipos-trabajo/${editingCuadrillaId}`
+        : `${rp}/usuarios/equipos-trabajo`;
+
+      const payload = {
+        nombre: nameVal,
+        coordinador_id: coordinadorId,
+        zona_id: zonaId,
+        reconocedor_ids: integrantesVal,
+      };
+
+      try {
+        const response = await fetch(endpoint, {
+          method: isEdit ? "PUT" : "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const contentType = response.headers.get("content-type") || "";
+        const data = contentType.includes("application/json") ? await response.json() : { detail: await response.text() };
+        if (!response.ok) throw new Error(data.detail || "No fue posible guardar la cuadrilla.");
+
+        const modalEl = document.getElementById("modalCuadrilla");
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+
+        editingCuadrillaId = null;
+        selectedReconocedores = [];
+        await cargarCuadrillas();
+        await cargarEquiposTrabajo();
+        Swal.fire({
+          title: "Guardado",
+          text: isEdit ? "La cuadrilla se actualizó correctamente." : "La cuadrilla se creó correctamente.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      } catch (err) {
+        console.error("Error guardando cuadrilla:", err);
+        const msgCua = document.getElementById("cuaMsg");
+        msgCua.textContent = err.message || "No se pudo guardar la cuadrilla.";
+        msgCua.className = "msg error";
+      }
+    }
+
+    function syncReconocedoresConCoordinador() {
+      const coordinadorId = parseInt(cuaEncargado.value, 10);
+      if (!Number.isFinite(coordinadorId)) {
+        selectedReconocedores = [];
+        renderSelectedReconocedores();
+        renderDropdownReconocedores();
+        return;
+      }
+
+      selectedReconocedores = selectedReconocedores.filter(id => {
+        const u = usuariosCache.find(item => Number(item.id_global) === Number(id));
+        const supervisorId = Number(u?.supervisor_id ?? u?.supervisor_raw ?? u?.supervisor);
+        return Number.isFinite(supervisorId) && supervisorId === coordinadorId;
+      });
+      renderSelectedReconocedores();
+      renderDropdownReconocedores();
+    }
+
     // Toggle dropdown visibility
-    btnAddReconocedor.addEventListener("click", (e) => {
+    btnAddReconocedor.addEventListener("click", async (e) => {
       e.stopPropagation();
+      if (!Number.isFinite(parseInt(cuaEncargado.value, 10))) {
+        const msgCua = document.getElementById("cuaMsg");
+        msgCua.textContent = "Selecciona primero el coordinador encargado.";
+        msgCua.className = "msg error";
+        return;
+      }
+      await renderDropdownReconocedores();
       reconocedoresDropdown.classList.toggle("show");
+    });
+
+    cuaEncargado.addEventListener("change", async () => {
+      if (editingCuadrillaId === null) {
+        selectedReconocedores = [];
+        await renderDropdownReconocedores(true);
+        return;
+      }
+      syncReconocedoresConCoordinador();
     });
 
     document.addEventListener("click", (e) => {
@@ -1288,102 +1528,140 @@
     });
 
     // Persist Cuadrillas in localStorage
-    function cargarCuadrillas() {
-      const stored = localStorage.getItem("cuadrillas_data");
-      if (stored) {
-        cuadrillasCache = JSON.parse(stored);
-      } else {
-        // Initial mocked cuadrillas matching the user's screenshots
-        cuadrillasCache = [
-          {
-            id: 1,
-            nombre: "Cuadrilla 1",
-            encargado: "Alex Calderón",
-            integrantes: ["Juan Diego", "Carlos Mario"],
-            zona: "Sur"
-          },
-          {
-            id: 2,
-            nombre: "Cuadrilla 2",
-            encargado: "Juan Gonzáles",
-            integrantes: ["Felipe Andrés", "Maria Jose"],
-            zona: "Norte"
-          },
-          {
-            id: 3,
-            nombre: "Cuadrilla 3",
-            encargado: "Juan Gonzáles",
-            integrantes: ["Mateo Silva", "Gabriela Luna"],
-            zona: "Sur/Oeste"
-          }
-        ];
-        localStorage.setItem("cuadrillas_data", JSON.stringify(cuadrillasCache));
+    async function cargarCuadrillas() {
+      try {
+        const r = await fetch(`${rp}/usuarios/equipos-trabajo`, { credentials: "include" });
+        const contentType = r.headers.get("content-type") || "";
+
+        if (!contentType.includes("application/json")) {
+          const text = await r.text();
+          throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 120)}`);
+        }
+
+        const data = await r.json();
+        if (!r.ok) {
+          throw new Error(data.detail || "No se pudo cargar equipos de trabajo.");
+        }
+
+        cuadrillasCache = Array.isArray(data) ? data : [];
+        tabBadgeCuadrillas.textContent = cuadrillasCache.length;
+        console.log("equipos_trabajo", cuadrillasCache);
+        populateCuadrillaFormSelects();
+        renderCuadrillas();
+      } catch (err) {
+        console.error("Error cargando equipos de trabajo:", err);
+        cuadrillasCache = [];
+        tabBadgeCuadrillas.textContent = "0";
+        populateCuadrillaFormSelects();
+        renderCuadrillas();
       }
-      tabBadgeCuadrillas.textContent = cuadrillasCache.length;
     }
 
-    function guardarCuadrillasCache() {
-      localStorage.setItem("cuadrillas_data", JSON.stringify(cuadrillasCache));
-      tabBadgeCuadrillas.textContent = cuadrillasCache.length;
+    function formatFechaCreacion(value) {
+      if (!value) return "Sin fecha";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleString("es-CO", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     }
 
     function renderCuadrillas() {
       cuadrillasGrid.innerHTML = "";
       if (cuadrillasCache.length === 0) {
-        cuadrillasGrid.innerHTML = '<div class="w-100 text-center text-muted p-5">No hay cuadrillas registradas.</div>';
+        cuadrillasGrid.innerHTML = '<div class="w-100 text-center text-muted p-5">No hay equipos de trabajo registrados.</div>';
         return;
       }
 
-      cuadrillasCache.forEach(c => {
-        const card = document.createElement("div");
-        card.className = "cuadrilla-card";
+      const grupos = cuadrillasCache.reduce((acc, c) => {
+        const key = String(c.coordinador_id ?? c.coordinador_username ?? "sin-coordinador");
+        if (!acc[key]) {
+          acc[key] = {
+            label: c.coordinador_id ? getCoordinadorLabelById(c.coordinador_id) : (c.coordinador_username ? `Coordinador: ${c.coordinador_username}` : "Coordinador sin usuario"),
+            items: [],
+          };
+        }
+        acc[key].items.push(c);
+        return acc;
+      }, {});
 
-        // Mock team leader or fallback
-        const encargadoDisplay = c.encargado || "Coordinador";
-        const integrantesDisplay = c.integrantes && c.integrantes.length
-          ? `${c.integrantes.length} Reconocedor`
-          : "Sin integrantes";
+      Object.values(grupos).forEach(grupo => {
+        const group = document.createElement("div");
+        group.style.width = "100%";
+        group.style.display = "flex";
+        group.style.flexDirection = "column";
+        group.style.gap = "12px";
 
-        card.innerHTML = `
+        const header = document.createElement("div");
+        header.className = "cuadrilla-group-header";
+        header.style.padding = "10px 14px";
+        header.style.borderRadius = "12px";
+        header.style.background = "#eaf2f8";
+        header.style.color = "#002f55";
+        header.style.fontWeight = "700";
+        header.textContent = `${grupo.label}`;
+        // header.textContent = `${grupo.label} (${grupo.items.length})`;
+
+        const wrap = document.createElement("div");
+        wrap.style.display = "grid";
+        wrap.style.gridTemplateColumns = "repeat(auto-fit, minmax(280px, 1fr))";
+        wrap.style.gap = "16px";
+
+        grupo.items.forEach(c => {
+          const card = document.createElement("div");
+          card.className = "cuadrilla-card";
+          card.innerHTML = `
           <div class="cuadrilla-card-header">
             <div class="cuadrilla-avatar">
               <i class="bi bi-people-fill"></i>
             </div>
             <div class="cuadrilla-title-info">
-              <h3>${c.nombre}</h3>
-              <span class="leader-name">${c.encargado.split(" ").join("_")}</span>
+              <h3>${c.nombre ?? ""}</h3>
+              <span class="leader-name">${c.coordinador_username ? `Coordinador: ${c.coordinador_username}` : "Coordinador sin usuario"}</span>
             </div>
           </div>
           <div class="cuadrilla-details-list">
             <div class="cuadrilla-detail-item">
-              <span class="label">Encargado:</span>
-              <span class="value">${encargadoDisplay}</span>
+              <span class="label">Fecha de creación:</span>
+              <span class="value">${formatFechaCreacion(c.fecha_creacion)}</span>
             </div>
             <div class="cuadrilla-detail-item">
-              <span class="label">Integrantes:</span>
-              <span class="value">${integrantesDisplay}</span>
+              <span class="label">Usuario coordinador:</span>
+              <span class="value">${c.coordinador_username ?? "Sin usuario"}</span>
             </div>
             <div class="cuadrilla-detail-item">
-              <span class="label">Zona:</span>
-              <span class="value">${c.zona}</span>
+              <span class="label">Zona intervención:</span>
+              <span class="value">${c.zona_nombre ?? "Sin zona"}</span>
+            </div>
+            <div class="cuadrilla-detail-item">
+              <span class="label">Reconocedores:</span>
+              <span class="value">${Array.isArray(c.reconocedores) ? c.reconocedores.length : 0}</span>
             </div>
           </div>
-          <div class="cuadrilla-card-footer ">
-            <button class="btn-card-action view btnCuaView w-75" data-id="${c.id}">
+          <div class="cuadrilla-card-footer">
+            <button class="btn-card-action view btnCuaView w-75" data-id="${c.equipo_id}">
               <i class="bi bi-eye-fill"></i> Ver detalles
             </button>
-            <button class="btn-card-action edit btnCuaEdit" data-id="${c.id}">
+            <button class="btn-card-action edit btnCuaEdit" data-id="${c.equipo_id}">
               <i class="bi bi-pen-fill"></i> Editar
             </button>
-            <button class="btn-card-action delete btnCuaDelete px-3" data-id="${c.id}">
-              <i class="bi bi-trash2-fill"></i> 
+            <button class="btn-card-action delete btnCuaDelete px-3" data-id="${c.equipo_id}">
+              <i class="bi bi-trash2-fill"></i>
             </button>
           </div>
         `;
-        cuadrillasGrid.appendChild(card);
+          wrap.appendChild(card);
+        });
+
+        group.appendChild(header);
+        group.appendChild(wrap);
+        cuadrillasGrid.appendChild(group);
       });
 
-      // Attach card button events
       cuadrillasGrid.querySelectorAll(".btnCuaView").forEach(btn => {
         btn.addEventListener("click", () => {
           const id = parseInt(btn.getAttribute("data-id"), 10);
@@ -1401,38 +1679,34 @@
       cuadrillasGrid.querySelectorAll(".btnCuaDelete").forEach(btn => {
         btn.addEventListener("click", () => {
           const id = parseInt(btn.getAttribute("data-id"), 10);
-          deleteCuadrilla(id);
+        deleteCuadrilla(id);
         });
       });
     }
 
     function verDetalleCuadrilla(id) {
-      const c = cuadrillasCache.find(x => x.id === id);
+      const c = getCuadrillaById(id);
       if (!c) return;
 
-      document.getElementById("detCuaNombre").textContent = c.nombre;
-      document.getElementById("detCuaEncargado").textContent = c.encargado;
-      document.getElementById("detCuaZona").textContent = c.zona;
-      document.getElementById("detCuaTotalIntegrantes").textContent = `${c.integrantes ? c.integrantes.length : 0} Reconocedor(es)`;
-
+      const reconocedores = Array.isArray(c.reconocedores) ? c.reconocedores : [];
       const listContainer = document.getElementById("detCuaIntegrantesList");
-      listContainer.innerHTML = "";
-      if (c.integrantes && c.integrantes.length > 0) {
-        c.integrantes.forEach(i => {
-          const li = document.createElement("li");
-          li.className = "list-group-item d-flex align-items-center gap-1 border-0 px-0 bg-transparent mb-3";
-          const initials = i.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "R";
-          li.innerHTML = `
-            <div class="reconocedor-avatar">${initials}</div>
+
+      document.getElementById("detCuaNombre").textContent = c.nombre || "Cuadrilla";
+      document.getElementById("detCuaEncargado").textContent = c.coordinador_username || "Sin coordinador";
+      document.getElementById("detCuaZona").textContent = c.coordinador_id ?? "-";
+
+      if (!reconocedores.length) {
+        listContainer.innerHTML = '<li class="list-group-item border-0 px-0 bg-transparent text-muted">Sin reconocedores registrados.</li>';
+      } else {
+        listContainer.innerHTML = reconocedores.map(u => `
+          <li class="list-group-item d-flex align-items-center gap-3 border-0 px-0 bg-transparent mb-0">
+            <div class="reconocedor-avatar">${inicialesUsuarioEquipo(u)}</div>
             <div class="reconocedor-info">
-              <h4 class="reconocedor-name mb-0" style="text-align: left;">${i}</h4>
+              <h4 class="reconocedor-name mb-0" style="text-align: left;">${nombreUsuarioEquipo(u)}</h4>
               <p class="reconocedor-role mb-0" style="text-align: left;">Reconocedor</p>
             </div>
-          `;
-          listContainer.appendChild(li);
-        });
-      } else {
-        listContainer.innerHTML = '<li class="list-group-item border-0 px-0 bg-transparent text-muted">Sin integrantes registrados.</li>';
+          </li>
+        `).join("");
       }
 
       const modalEl = document.getElementById("modalCuadrillaDetail");
@@ -1440,128 +1714,102 @@
       modalInstance.show();
     }
 
-    async function deleteCuadrilla(id) {
-      const c = cuadrillasCache.find(x => x.id === id);
-      const name = c ? c.nombre : id;
-
-      const result = await Swal.fire({
-        title: '¿Estás seguro?',
-        text: `¿Deseas eliminar la cuadrilla "${name}"?`,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#CD2023',
-        cancelButtonColor: '#64748b',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-      });
-
-      if (!result.isConfirmed) return;
-
-      cuadrillasCache = cuadrillasCache.filter(x => x.id !== id);
-      guardarCuadrillasCache();
-      renderCuadrillas();
-
-      Swal.fire({
-        title: '¡Eliminada!',
-        text: 'La cuadrilla ha sido eliminada correctamente.',
-        icon: 'success',
-        timer: 2000,
-        showConfirmButton: false
-      });
-    }
-
     function startEditCuadrilla(id) {
-      const c = cuadrillasCache.find(x => x.id === id);
-      if (!c) return;
+      const cEdit = getCuadrillaById(id);
+      if (!cEdit) return;
 
-      editingCuadrillaId = id;
+      editingCuadrillaId = Number(cEdit.equipo_id ?? cEdit.id);
       document.getElementById("modalCuadrillaLabel").textContent = "Editar cuadrilla";
-      cuaNombre.value = c.nombre || "";
-      cuaZona.value = c.zona || "";
-
-      // Set selected list
-      selectedReconocedores = c.integrantes ? [...c.integrantes] : [];
-
-      // Populate selects and match checks
+      cuaNombre.value = cEdit.nombre || "";
       populateCuadrillaFormSelects();
-      cuaEncargado.value = c.encargado || "";
+      cuaEncargado.value = String(cEdit.coordinador_id || "");
+      cuaZona.value = String(cEdit.zona_id || "");
+      selectedReconocedores = (Array.isArray(cEdit.reconocedores) ? cEdit.reconocedores : [])
+        .map(u => Number(u.id_global))
+        .filter(Number.isFinite);
+      renderSelectedReconocedores();
+      renderDropdownReconocedores();
+      syncReconocedoresConCoordinador();
 
-      // Clear alert messages
       const msgCua = document.getElementById("cuaMsg");
       msgCua.style.display = "none";
+      cuaSubmitBtn.innerHTML = '<i class="bi bi-floppy"></i> Guardar';
 
-      cuaSubmitBtn.textContent = "Actualizar cuadrilla";
-
-      // Show modal
       const modalEl = document.getElementById("modalCuadrilla");
       const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
       modalInstance.show();
     }
 
-    btnAddNewCuadrilla.addEventListener("click", () => {
-      editingCuadrillaId = null;
-      document.getElementById("modalCuadrillaLabel").textContent = "Crear nueva cuadrilla";
-      formCuadrilla.reset();
-      selectedReconocedores = [];
-      populateCuadrillaFormSelects();
-      const msgCua = document.getElementById("cuaMsg");
-      msgCua.style.display = "none";
-      cuaSubmitBtn.textContent = "Guardar cuadrilla";
-    });
+    async function deleteCuadrilla(id) {
+      const cDelete = cuadrillasCache.find(x => Number(x.equipo_id) === Number(id) || Number(x.id) === Number(id));
+      const result = await Swal.fire({
+        title: "¿Eliminar equipo?",
+        text: cDelete ? `Se respaldará el equipo "${cDelete.nombre}" antes de borrarlo.` : "Se respaldará la información antes de eliminarla.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#CD2023",
+        cancelButtonColor: "#64748b",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+      });
 
-    formCuadrilla.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const nameVal = cuaNombre.value.trim();
-      const encargadoVal = cuaEncargado.value;
-      const zonaVal = cuaZona.value;
+      if (!result.isConfirmed) return;
 
-      const integrantesVal = selectedReconocedores;
-
-      if (!nameVal || !encargadoVal || !zonaVal || integrantesVal.length === 0) {
-        const msgCua = document.getElementById("cuaMsg");
-        msgCua.textContent = "Completa todos los campos obligatorios y selecciona al menos 1 integrante.";
-        msgCua.className = "msg error";
-        return;
-      }
-
-      if (editingCuadrillaId !== null) {
-        // Edit existing
-        const idx = cuadrillasCache.findIndex(x => x.id === editingCuadrillaId);
-        if (idx !== -1) {
-          cuadrillasCache[idx].nombre = nameVal;
-          cuadrillasCache[idx].encargado = encargadoVal;
-          cuadrillasCache[idx].zona = zonaVal;
-          cuadrillasCache[idx].integrantes = integrantesVal;
+      try {
+        const response = await fetch(`${rp}/usuarios/equipos-trabajo/${id}`, {
+          method: "DELETE",
+          credentials: "include",
+          headers: { "Accept": "application/json" },
+        });
+        const contentType = response.headers.get("content-type") || "";
+        const payload = contentType.includes("application/json") ? await response.json() : { detail: await response.text() };
+        if (!response.ok) {
+          throw new Error(payload.detail || "No fue posible eliminar el equipo.");
         }
-      } else {
-        // Create new
-        const newId = cuadrillasCache.reduce((max, c) => c.id > max ? c.id : max, 0) + 1;
-        cuadrillasCache.push({
-          id: newId,
-          nombre: nameVal,
-          encargado: encargadoVal,
-          zona: zonaVal,
-          integrantes: integrantesVal
+
+        cuadrillasCache = cuadrillasCache.filter(x => Number(x.equipo_id) !== Number(id) && Number(x.id) !== Number(id));
+        tabBadgeCuadrillas.textContent = cuadrillasCache.length;
+        populateCuadrillaFormSelects();
+        renderCuadrillas();
+
+        Swal.fire({
+          title: "Eliminado",
+          text: payload.message || "El equipo fue respaldado y eliminado correctamente.",
+          icon: "success",
+          timer: 2200,
+          showConfirmButton: false,
+        });
+      } catch (err) {
+        console.error("Error eliminando equipo de trabajo:", err);
+        Swal.fire({
+          title: "Error",
+          text: err.message || "No se pudo eliminar el equipo de trabajo.",
+          icon: "error",
         });
       }
-
-      guardarCuadrillasCache();
-      renderCuadrillas();
-
-      // Hide modal
-      const modalEl = document.getElementById("modalCuadrilla");
-      const modalInstance = bootstrap.Modal.getInstance(modalEl);
-      if (modalInstance) {
-        modalInstance.hide();
-      }
-    });
+    }
 
     btnAddNewUser.addEventListener("click", () => {
       resetForm();
       document.getElementById("modalUsuarioLabel").textContent = "Crear nuevo usuario";
     });
 
+    btnAddNewCuadrilla.addEventListener("click", async () => {
+      editingCuadrillaId = null;
+      selectedReconocedores = [];
+      formCuadrilla.reset();
+      document.getElementById("modalCuadrillaLabel").textContent = "Crear cuadrilla";
+      populateCuadrillaFormSelects();
+      renderSelectedReconocedores();
+      await renderDropdownReconocedores(true);
+      const msgCua = document.getElementById("cuaMsg");
+      msgCua.style.display = "none";
+      cuaSubmitBtn.innerHTML = '<i class="bi bi-floppy"></i> Guardar';
+    });
+
     form.addEventListener("submit", guardarUsuario);
+    formCuadrilla.addEventListener("submit", guardarCuadrilla);
+selectRol.addEventListener("change", () => syncSupervisorField());
 
     if (resetBtn) {
       resetBtn.addEventListener("click", (e) => {
@@ -1583,7 +1831,9 @@
     cargarUsuarios = async function () {
       await originalCargarUsuarios();
       tabBadgeUsuarios.textContent = usuariosCache.length;
-      cargarCuadrillas();
+      await cargarZonasIntervencion();
+      await cargarCuadrillas();
+      await cargarEquiposTrabajo();
     };
 
     // Workload accordions toggling logic
