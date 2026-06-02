@@ -115,15 +115,52 @@ def proxy_wms(request: Request) -> Response:
 geoserver_router = APIRouter(tags=["geoserver"])
 
 
-@geoserver_router.route("/geoserver/{path:path}", methods=["GET", "POST", "OPTIONS"])
+@geoserver_router.api_route("/geoserver/{path:path}", methods=["GET", "POST", "OPTIONS"])
 async def proxy_geoserver(path: str, request: Request) -> Response:
     """
     Proxy de GeoServer: redirige las peticiones locales /geoserver/... al GeoServer remoto.
     """
-    target_url = f"{_resolve_geoserver_root(request)}/{path}"
-    method = request.method
     params = dict(request.query_params)
     body = await request.body()
+
+    tenant = _get_optional_tenant(request)
+    if tenant is not None and tenant.geoserver_workspace:
+        ws = tenant.geoserver_workspace.strip()
+        if ws and ws.lower() != "b_asignaciones_arb":
+            # 1. Rewrite path
+            if path.startswith("B_ASIGNACIONES_ARB/"):
+                path = path.replace("B_ASIGNACIONES_ARB/", f"{ws}/", 1)
+            elif path.startswith("b_asignaciones_arb/"):
+                path = path.replace("b_asignaciones_arb/", f"{ws}/", 1)
+            elif path == "B_ASIGNACIONES_ARB":
+                path = ws
+            elif path == "b_asignaciones_arb":
+                path = ws
+
+            # 2. Rewrite query parameters
+            new_params = {}
+            for k, v in params.items():
+                if isinstance(v, str):
+                    v = v.replace("B_ASIGNACIONES_ARB:ASIGNACIONES", f"{ws}:arb_terreno")
+                    v = v.replace("b_asignaciones_arb:ASIGNACIONES", f"{ws}:arb_terreno")
+                    v = v.replace("B_ASIGNACIONES_ARB", ws)
+                    v = v.replace("b_asignaciones_arb", ws)
+                new_params[k] = v
+            params = new_params
+
+            # 3. Rewrite request body
+            if body:
+                try:
+                    ws_bytes = ws.encode("utf-8")
+                    body = body.replace(b"B_ASIGNACIONES_ARB:ASIGNACIONES", ws_bytes + b":arb_terreno")
+                    body = body.replace(b"b_asignaciones_arb:ASIGNACIONES", ws_bytes + b":arb_terreno")
+                    body = body.replace(b"B_ASIGNACIONES_ARB", ws_bytes)
+                    body = body.replace(b"b_asignaciones_arb", ws_bytes)
+                except Exception:
+                    pass
+
+    target_url = f"{_resolve_geoserver_root(request)}/{path}"
+    method = request.method
 
     try:
         resp = requests.request(
