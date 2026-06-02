@@ -613,6 +613,8 @@ def unidad_detalle(
                     "ct_conservacion_tipologia",
                     "cnc_tipo_anexo",
                     "cnc_conservacion_anexo",
+                    "total_calificacion",
+                    "cc_total_calificacion",
                 ):
                     if col in car_cols:
                         select_parts.append(f"car.{col} AS car_{col}")
@@ -836,8 +838,9 @@ def unidad_detalle(
                     "cerchas_complemento_industria_nombre": car_data.get("cerchas_complemento_industria_nombre"),
                     "altura_cerchas_superior_6m": car_data.get("cc_altura_cerchas_superior_6m"),
                 }
-                if "total_calificacion" in car_data:
-                    calificacion_convencional["total_calificacion"] = car_data.get("total_calificacion")
+                tot_cal = car_data.get("cc_total_calificacion") if car_data.get("cc_total_calificacion") is not None else car_data.get("total_calificacion")
+                if tot_cal is not None:
+                    calificacion_convencional["total_calificacion"] = tot_cal
 
             tipologia_construccion = (
                 {

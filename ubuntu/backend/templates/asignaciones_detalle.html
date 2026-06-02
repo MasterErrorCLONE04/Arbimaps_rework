@@ -4183,13 +4183,13 @@
 
       setModalTextFieldEdit("modal_fecha_visita_predial", formatDateMaybeEdit(pickFromRowsEdit(sourcesVisita, ["fecha_visita_predial", "fecha_visita"])));
       setModalTextFieldEdit("modal_correo_visita", pickFromRowsEdit(sourcesVisita, ["correo_visita", "correo_electronico"]));
-      setModalTextFieldEdit("modal_resultado_visita_predial", pickFromRowsEdit(sourcesVisita, ["resultado_visita_predial", "resultado_visita_nombre", "resultado_visita"]));
+      setModalTextFieldEdit("modal_resultado_visita_predial", pickFromRowsEdit(sourcesVisita, ["resultado_visita_predial_nombre", "resultado_visita_nombre", "resultado_visita_predial", "resultado_visita"]));
       setModalTextFieldEdit("modal_celular_visita", pickFromRowsEdit(sourcesVisita, ["celular_visita", "celular", "telefono"]));
-      setModalTextFieldEdit("modal_tipo_documento_atendio", pickFromRowsEdit(sourcesVisita, ["tipo_documento_atendio", "tipo_documento_quien_atendio"]));
+      setModalTextFieldEdit("modal_tipo_documento_atendio", pickFromRowsEdit(sourcesVisita, ["tipo_documento_atendio_nombre", "tipo_documento_quien_atendio_nombre", "tipo_documento_atendio", "tipo_documento_quien_atendio"]));
       setModalTextFieldEdit("modal_domicilio_notificacion", pickFromRowsEdit(sourcesVisita, ["domicilio_notificacion"]));
       setModalTextFieldEdit("modal_numero_documento_atendio", pickFromRowsEdit(sourcesVisita, ["numero_documento_atendio", "numero_documento_quien_atendio"]));
       setModalTextFieldEdit("modal_autoriza_notificaciones", asSiNoEdit(pickFromRowsEdit(sourcesVisita, ["autoriza_notificaciones", "autoriza_notificacion_correo"])));
-      setModalTextFieldEdit("modal_nombre_atendio", pickFromRowsEdit(sourcesVisita, ["nombre_atendio", "nombre_quien_atendio", "nombre_contacto"]) || nombreInteresadoEdit(primerInteresado));
+      setModalTextFieldEdit("modal_nombre_atendio", pickFromRowsEdit(sourcesVisita, ["nombre_atendio", "nombre_quien_atendio", "nombre_contacto", "nombres_apellidos_quien_atendio"]) || nombreInteresadoEdit(primerInteresado));
       setModalTextFieldEdit("modal_tipo_captura", pickFromRowsEdit(sourcesVisita, ["tipo_captura_nombre", "tipo_captura"]));
 
       setModalTextFieldEdit("modal_juridico_nombre", nombreInteresadoEdit(primerInteresado));

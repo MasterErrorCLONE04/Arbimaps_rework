@@ -1816,6 +1816,30 @@ def obtener_detalle_predio_completo_asignacion(
                 raw_value=tipo_captura_raw,
             ) or _first_non_empty(predio, "tipo_captura_nombre", "tipo_captura")
 
+            resultado_visita_raw = _first_non_empty(predio, "resultado_visita")
+            predio["resultado_visita_nombre"] = _resolve_domain_name(
+                cur,
+                tenant=tenant,
+                schema=safe_schema,
+                table_candidates=[
+                    "arb_resultadovisitatipo",
+                    "ilc_resultadovisitatipo",
+                ],
+                raw_value=resultado_visita_raw,
+            ) or _first_non_empty(predio, "resultado_visita_nombre", "resultado_visita")
+
+            tipo_doc_quien_atendio_raw = _first_non_empty(predio, "tipo_documento_quien_atendio")
+            predio["tipo_documento_quien_atendio_nombre"] = _resolve_domain_name(
+                cur,
+                tenant=tenant,
+                schema=safe_schema,
+                table_candidates=[
+                    "arb_interesadodocumentotipo",
+                    "ilc_interesadodocumentotipo",
+                ],
+                raw_value=tipo_doc_quien_atendio_raw,
+            ) or _first_non_empty(predio, "tipo_documento_quien_atendio_nombre", "tipo_documento_quien_atendio")
+
             direcciones = _fetch_rows(
                 cur,
                 schema=safe_schema,
@@ -2518,6 +2542,7 @@ def _procesar_retorno_xtf(
                     stage = "replace_workspace_dataset"
                     workspace_service.remove_workspace_dataset(
                         conn,
+                        tenant,
                         work_dataset,
                         schema_work,
                     )
@@ -2981,6 +3006,7 @@ def _procesar_retorno_xtf(
                 with connection_manager.connection(tenant) as conn_cleanup:
                     cleanup_tmp = workspace_service.remove_workspace_dataset(
                         conn_cleanup,
+                        tenant,
                         retorno_dataset,
                         schema_work,
                     )
@@ -3406,6 +3432,7 @@ def asignaciones_unidad_detalle(
                     "ct_conservacion_tipologia",
                     "cnc_tipo_anexo",
                     "cnc_conservacion_anexo",
+                    "cc_total_calificacion",
                 ):
                     if col in car_cols:
                         select_parts.append(f"car.{col} AS car_{col}")
@@ -3637,8 +3664,9 @@ def asignaciones_unidad_detalle(
                     "cerchas_complemento_industria_nombre": car_data.get("cerchas_complemento_industria_nombre"),
                     "altura_cerchas_superior_6m": car_data.get("cc_altura_cerchas_superior_6m"),
                 }
-                if "total_calificacion" in car_data:
-                    calificacion_convencional["total_calificacion"] = car_data.get("total_calificacion")
+                tot_cal = car_data.get("cc_total_calificacion") if car_data.get("cc_total_calificacion") is not None else car_data.get("total_calificacion")
+                if tot_cal is not None:
+                    calificacion_convencional["total_calificacion"] = tot_cal
 
             tipologia_construccion = (
                 {

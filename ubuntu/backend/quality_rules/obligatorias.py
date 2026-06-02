@@ -1695,7 +1695,7 @@ def rule_11_42(dataset: DatasetReader) ->list[RuleIssue]:
     for table_name, caracteristicas_unidades in helper.iter_caracteristicas_unidades():
         total_calificacion = helper.get_field_value(
             caracteristicas_unidades,
-            ("cc_total_calificacion",),
+            ("cc_total_calificacion", "total_calificacion"),
         )
 
         if total_calificacion in (None,""):

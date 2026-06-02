@@ -386,6 +386,7 @@ def _cleanup_orphan_assignments(conn, tenant: TenantContext, usuario_log: Option
         if work_dataset:
             cleanup = workspace_service.remove_workspace_dataset(
                 conn,
+                tenant,
                 work_dataset,
                 schema_work,
             )
@@ -748,6 +749,7 @@ def asignar_predios(
                     if prev_dataset:
                         cleanup = workspace_service.remove_workspace_dataset(
                             conn,
+                            tenant,
                             prev_dataset,
                             tenant.schemas.work,
                         )
@@ -1009,6 +1011,7 @@ def cerrar_asignacion(
                     cleanup_conn.autocommit = False
                     workspace_cleanup = workspace_service.remove_workspace_dataset(
                         cleanup_conn,
+                        tenant,
                         work_datasetname,
                         tenant.schemas.work,
                     )
