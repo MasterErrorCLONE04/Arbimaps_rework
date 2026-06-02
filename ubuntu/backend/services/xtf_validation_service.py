@@ -686,10 +686,19 @@ class XTFValidationService:
             unimplemented_rules = unimplemented_default
 
         total_predios_value = self._coerce_int(summary.get("total_predios"), default=0)
+        total_issues_value = self._coerce_int(
+            summary.get("total_issues"),
+            default=len(issues),
+        )
         raw_predios_con_errores = self._coerce_int(
             summary.get("predios_con_errores"),
             default=len(predio_summary),
         )
+        if predio_summary:
+            raw_predios_con_errores = max(raw_predios_con_errores, len(predio_summary))
+        if total_predios_value == 1 and total_issues_value > 0:
+            raw_predios_con_errores = 1
+
         if total_predios_value:
             predios_con_errores_value = min(raw_predios_con_errores, total_predios_value)
         else:
@@ -702,10 +711,7 @@ class XTFValidationService:
             "passed_rules": computed_passed_rules,
             "failed_rules": computed_failed_rules,
             "unimplemented_rules": unimplemented_rules,
-            "total_issues": self._coerce_int(
-                summary.get("total_issues"),
-                default=len(issues),
-            ),
+            "total_issues": total_issues_value,
             "total_predios": total_predios_value,
             "predios_con_errores": predios_con_errores_value,
             "predios_sin_errores": max(total_predios_value - predios_con_errores_value, 0),

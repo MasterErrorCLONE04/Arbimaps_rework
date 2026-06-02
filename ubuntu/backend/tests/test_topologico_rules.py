@@ -138,3 +138,32 @@ def test_rule_5_2_uses_parent_refs_for_nested_xtf_predio_children(tmp_path):
     )
     assert len(issues) == 1
     assert issues[0].rule_id == "5.2"
+
+
+def test_xtf_reader_adds_predio_ref_to_nested_unidad_construccion(tmp_path):
+    xtf_path = tmp_path / "unidad_nested.xtf"
+    xtf_path.write_text(
+        """
+        <XTF>
+          <DATASECTION>
+            <Captura_ArbiMaps_V1_0.Captura_ArbiMaps.ARB_Predio TID="p1">
+              <Construccion>
+                <Captura_ArbiMaps_V1_0.Captura_ArbiMaps.ARB_Construccion TID="c1">
+                  <UnidadConstruccion>
+                    <Captura_ArbiMaps_V1_0.Captura_ArbiMaps.ARB_UnidadConstruccion TID="u1" />
+                  </UnidadConstruccion>
+                </Captura_ArbiMaps_V1_0.Captura_ArbiMaps.ARB_Construccion>
+              </Construccion>
+            </Captura_ArbiMaps_V1_0.Captura_ArbiMaps.ARB_Predio>
+          </DATASECTION>
+        </XTF>
+        """,
+        encoding="utf-8",
+    )
+
+    tables = parse_xtf_tables(xtf_path, TARGET_CLASSES)
+    unidad = tables["ARB_UnidadConstruccion"][0]
+
+    assert unidad["construccion"] == "c1"
+    assert unidad["predio"] == "p1"
+    assert unidad["arb_predio_unidadconstruccion"] == "p1"

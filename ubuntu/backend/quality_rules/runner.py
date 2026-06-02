@@ -166,12 +166,14 @@ def _build_predio_summary(
     tables: dict[str, list[dict[str, Any]]],
 ) -> list[dict[str, Any]]:
     predio_lookup = _predio_identifier_lookup(tables)
+    predio_display_ids = set(predio_lookup.values())
+    single_predio_id = next(iter(predio_display_ids)) if len(predio_display_ids) == 1 else None
     issue_counts_by_predio: dict[str, int] = {}
 
     for issue in issues:
         predio_id = _issue_predio_id(issue, predio_lookup)
         if not predio_id:
-            continue
+            predio_id = single_predio_id or "Sin identificar"
         issue_counts_by_predio[predio_id] = issue_counts_by_predio.get(predio_id, 0) + 1
 
     return [

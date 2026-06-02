@@ -3,6 +3,7 @@ from zipfile import ZipFile
 
 from services.validation_excel_report import build_validation_errors_excel, validation_excel_filename
 from services.xtf_validation_service import XTFValidationService
+from quality_rules.runner import _build_predio_summary
 
 
 def test_normalize_quality_expands_partial_rules_with_catalog_metadata():
@@ -47,6 +48,57 @@ def test_normalize_quality_expands_partial_rules_with_catalog_metadata():
     assert rule_218["component_label"] == "Juridico"
     assert rule_218["description"]
     assert "Administrativo" in {rule["component_label"] for rule in rules}
+
+
+def test_normalize_quality_marks_single_predio_with_unidentified_errors():
+    service = XTFValidationService()
+    service._implemented_rule_ids_from_components = lambda: []
+
+    quality = {
+        "issues": [
+            {
+                "rule": "3.20",
+                "message": "Error en area construida",
+                "details": {"tabla": "ARB_CaracteristicasUnidadConstruccion"},
+            }
+        ],
+        "rules": [
+            {
+                "rule": "3.20",
+                "issue_count": 1,
+                "passed": False,
+            }
+        ],
+        "rule_catalog": {
+            "3.20": {"description": "Regla fisica", "component_label": "Fisico"},
+        },
+        "summary": {
+            "total_predios": 1,
+            "predios_con_errores": 0,
+            "predios_sin_errores": 1,
+            "total_issues": 1,
+        },
+    }
+
+    normalized = service._normalize_quality_result(quality)
+
+    assert normalized["summary"]["predios_con_errores"] == 1
+    assert normalized["summary"]["predios_sin_errores"] == 0
+
+
+def test_predio_summary_assigns_unidentified_issue_to_single_predio():
+    predio_summary = _build_predio_summary(
+        [
+            {
+                "rule": "3.20",
+                "object_id": "caracteristica-1",
+                "details": {"tabla": "ARB_CaracteristicasUnidadConstruccion"},
+            }
+        ],
+        {"ARB_Predio": [{"numero_predial": "PREDIO-1", "TID": "p1"}]},
+    )
+
+    assert predio_summary == [{"object_id": "PREDIO-1", "issue_count": 1}]
 
 
 def test_normalize_quality_orders_rules_numerically():

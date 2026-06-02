@@ -300,6 +300,10 @@ def parse_xtf_tables(
             if construccion_ref:
                 record.setdefault("construccion", construccion_ref)
                 record.setdefault("arb_construccion_unidadconstruccion", construccion_ref)
+            predio_ref = _find_parent_ref(element, parents, "ARB_Predio", allowed_classes)
+            if predio_ref:
+                record.setdefault("predio", predio_ref)
+                record.setdefault("arb_predio_unidadconstruccion", predio_ref)
 
         tables.setdefault(canonical_class_name, []).append(record)
 

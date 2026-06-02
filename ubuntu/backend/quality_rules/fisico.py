@@ -286,8 +286,17 @@ def _destinacion_economica_ilicode(value: object) -> str:
 
 
 def _area_unidad(row: dict[str, object], helper: FisicoHelper) -> float:
-    geom_raw = None
+    # 1. Si viene desde QGIS, usar exactamente la geometría de QGIS: $area
+    feature = row.get("__qgis_feature__")
+    if feature is not None:
+        try:
+            geom = feature.geometry()
+            if geom is not None and not geom.isEmpty():
+                return round(float(geom.area()), 1)
+        except Exception:
+            pass
 
+    # 2. Si la geometría viene como campo QgsGeometry
     for key, value in row.items():
         if helper._normalize_key(str(key)) in {
             "geometria",
@@ -298,20 +307,36 @@ def _area_unidad(row: dict[str, object], helper: FisicoHelper) -> float:
         }:
             geom_raw = value
             break
+    else:
+        return 0.0
 
     if geom_raw in (None, ""):
         return 0.0
+
+    # QgsGeometry guardado directamente
+    try:
+        if hasattr(geom_raw, "area") and callable(geom_raw.area):
+            return round(float(geom_raw.area()), 1)
+    except Exception:
+        pass
+
+    # Shapely geometry
+    try:
+        if hasattr(geom_raw, "area") and not callable(geom_raw.area):
+            return round(float(geom_raw.area), 1)
+    except Exception:
+        pass
 
     text = str(geom_raw).strip()
 
     try:
         if text.upper().startswith(("POLYGON", "MULTIPOLYGON")):
-            return float(wkt.loads(text).area)
+            return round(float(wkt.loads(text).area), 1)
 
         if text.startswith("<"):
-            return _area_from_xtf_geometry(text)
+            return round(_area_from_xtf_geometry(text), 1)
 
-        return float(wkb.loads(bytes.fromhex(text)).area)
+        return round(float(wkb.loads(bytes.fromhex(text)).area), 1)
 
     except Exception:
         return 0.0
@@ -356,18 +381,24 @@ def _area_from_xtf_geometry(xml_text: str) -> float:
     if current_ring:
         rings.append(current_ring)
 
-    if not rings:
+    fixed_rings: list[list[tuple[float, float]]] = []
+
+    for ring in rings:
+        if len(ring) < 3:
+            continue
+
+        if ring[0] != ring[-1]:
+            ring = ring + [ring[0]]
+
+        fixed_rings.append(ring)
+
+    if not fixed_rings:
         return 0.0
 
-    exterior = rings[0]
+    exterior = fixed_rings[0]
+    holes = fixed_rings[1:]
 
-    if len(exterior) < 3:
-        return 0.0
-
-    if exterior[0] != exterior[-1]:
-        exterior.append(exterior[0])
-
-    polygon = Polygon(exterior)
+    polygon = Polygon(exterior, holes)
 
     if not polygon.is_valid:
         polygon = polygon.buffer(0)
@@ -1647,7 +1678,7 @@ def _rule_3_19(dataset: DatasetReader) -> list[RuleIssue]:
 
     return issues
 
-#def _rule_3_20(dataset: DatasetReader) -> list[RuleIssue]:
+def _rule_3_20(dataset: DatasetReader) -> list[RuleIssue]:
     helper = FisicoHelper(dataset)
     issues: list[RuleIssue] = []
 
@@ -1679,7 +1710,6 @@ def _rule_3_19(dataset: DatasetReader) -> list[RuleIssue]:
             area_geometrica_por_caracteristica.get(str(caracteristica_ref), 0.0)
             + area_unidad
         )
-
     for caracteristica_id, area_total in area_geometrica_por_caracteristica.items():
         caracteristica = caracteristicas_by_id.get(caracteristica_id)
         if not caracteristica:
@@ -1698,9 +1728,10 @@ def _rule_3_19(dataset: DatasetReader) -> list[RuleIssue]:
         area_total_calculada = round(area_total, 1)
         area_construida_redondeada = round(area_construida, 1)
 
-        diferencia = area_construida_redondeada - area_total_calculada
+        diferencia = round(area_construida_redondeada - area_total_calculada, 2)
+        tolerancia_area = 0.25
 
-        if diferencia != 0:
+        if abs(diferencia) > tolerancia_area:
             issues.append(
                 helper.make_issue(
                     caracteristica,
@@ -1716,6 +1747,7 @@ def _rule_3_19(dataset: DatasetReader) -> list[RuleIssue]:
                         "area_construida": area_construida_redondeada,
                         "area_total_calculada": area_total_calculada,
                         "diferencia": diferencia,
+                        "tolerancia_area": tolerancia_area,
                     },
                 )
             )
@@ -1744,5 +1776,5 @@ RULE_FUNCTIONS = {
     "3.17": _rule_3_17,
     "3.18": _rule_3_18,
     "3.19": _rule_3_19,
-    #"3.20": _rule_3_20,
+    "3.20": _rule_3_20,
 }

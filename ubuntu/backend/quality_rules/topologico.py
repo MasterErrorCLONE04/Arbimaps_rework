@@ -224,9 +224,16 @@ class TopologicoHelper:
         if "class" not in fixed_details and "tabla" in fixed_details:
             fixed_details["class"] = fixed_details["tabla"]
 
+        object_ref = (
+            fixed_details.get("object_ref")
+            or fixed_details.get("par_superposicion")
+            or fixed_details.get("par_validacion")
+            or self.identify(row)
+        )
+
         return RuleIssue(
             rule_id=rule_id,
-            object_ref=self.identify(row),
+            object_ref=str(object_ref) if _is_not_empty(object_ref) else self.identify(row),
             message=message,
             details=fixed_details,
         )
@@ -324,6 +331,16 @@ def _is_empty(value: Any) -> bool:
 
 def _is_not_empty(value: Any) -> bool:
     return not _is_empty(value)
+
+
+def _display_id(value: object, fallback: str = "sin ID") -> str:
+    if _is_empty(value):
+        return fallback
+    return str(value).strip()
+
+
+def _pair_ref(id1: object, id2: object) -> str:
+    return f"{_display_id(id1, 'sin_id_1')} <-> {_display_id(id2, 'sin_id_2')}"
 
 
 def _clean_xml_tag(tag: str) -> str:
@@ -1204,17 +1221,25 @@ def _rule_5_1(dataset: DatasetReader) -> list[RuleIssue]:
     )
 
     for t1, t2 in _pares_overlap(terrenos):
+        id_1 = _display_id(t1["tid"])
+        id_2 = _display_id(t2["tid"])
+        pair_id = _pair_ref(t1["tid"], t2["tid"])
         issues.append(
             helper.make_issue(
                 t1["row"],
                 rule_id="5.1",
-                message="El terreno formal 1 se superpone con el terreno formal numero 2.",
+                message=(
+                    f"El terreno formal con ID {id_1} se superpone con "
+                    f"el terreno formal con ID {id_2}."
+                ),
                 details={
                     "tabla": t1["tabla"],
                     "identificador_terreno_1": t1["tid"],
                     "identificador_terreno_2": t2["tid"],
                     "predio_1": t1["predio"],
                     "predio_2": t2["predio"],
+                    "par_superposicion": pair_id,
+                    "object_ref": pair_id,
                 },
             )
         )
@@ -1236,17 +1261,25 @@ def _rule_5_2(dataset: DatasetReader) -> list[RuleIssue]:
     )
 
     for t1, t2 in _pares_overlap(terrenos):
+        id_1 = _display_id(t1["tid"])
+        id_2 = _display_id(t2["tid"])
+        pair_id = _pair_ref(t1["tid"], t2["tid"])
         issues.append(
             helper.make_issue(
                 t1["row"],
                 rule_id="5.2",
-                message="El terreno informal 1 se superpone con el terreno informal numero 2.",
+                message=(
+                    f"El terreno informal con ID {id_1} se superpone con "
+                    f"el terreno informal con ID {id_2}."
+                ),
                 details={
                     "tabla": t1["tabla"],
                     "identificador_terreno_1": t1["tid"],
                     "identificador_terreno_2": t2["tid"],
                     "predio_1": t1["predio"],
                     "predio_2": t2["predio"],
+                    "par_superposicion": pair_id,
+                    "object_ref": pair_id,
                 },
             )
         )
@@ -1284,13 +1317,16 @@ def _rule_5_3(dataset: DatasetReader) -> list[RuleIssue]:
             if t1.get("id") and t1.get("id") == t2.get("id"):
                 continue
             if _geom_overlaps(t1["geom"], t2["geom"]):
+                id_1 = _display_id(t1["tid"])
+                id_2 = _display_id(t2["tid"])
+                pair_id = _pair_ref(t1["tid"], t2["tid"])
                 issues.append(
                     helper.make_issue(
                         t1["row"],
                         rule_id="5.3",
                         message=(
-                            "Todo terreno asociado a derecho de posesión no puede "
-                            "superponerse con un terreno asociado a un predio formal de tipo público."
+                            f"El terreno de posesión con ID {id_1} se superpone con "
+                            f"el terreno formal público con ID {id_2}."
                         ),
                         details={
                             "tabla": t1["tabla"],
@@ -1298,6 +1334,8 @@ def _rule_5_3(dataset: DatasetReader) -> list[RuleIssue]:
                             "id_terreno_publico": t2["tid"],
                             "predio_posesion": t1["predio"],
                             "predio_publico": t2["predio"],
+                            "par_superposicion": pair_id,
+                            "object_ref": pair_id,
                         },
                     )
                 )
@@ -1332,13 +1370,16 @@ def _rule_5_4(dataset: DatasetReader) -> list[RuleIssue]:
             if t1.get("id") and t1.get("id") == t2.get("id"):
                 continue
             if _geom_overlaps(t1["geom"], t2["geom"]):
+                id_1 = _display_id(t1["tid"])
+                id_2 = _display_id(t2["tid"])
+                pair_id = _pair_ref(t1["tid"], t2["tid"])
                 issues.append(
                     helper.make_issue(
                         t1["row"],
                         rule_id="5.4",
                         message=(
-                            "Todo terreno asociado a derecho de ocupación no puede "
-                            "superponerse con un terreno asociado a un predio formal de tipo privado."
+                            f"El terreno de ocupación con ID {id_1} se superpone con "
+                            f"el terreno formal privado con ID {id_2}."
                         ),
                         details={
                             "tabla": t1["tabla"],
@@ -1346,6 +1387,8 @@ def _rule_5_4(dataset: DatasetReader) -> list[RuleIssue]:
                             "id_terreno_privado": t2["tid"],
                             "predio_ocupacion": t1["predio"],
                             "predio_privado": t2["predio"],
+                            "par_superposicion": pair_id,
+                            "object_ref": pair_id,
                         },
                     )
                 )
@@ -1390,13 +1433,16 @@ def _rule_5_5(dataset: DatasetReader) -> list[RuleIssue]:
                 continue
 
             if _geom_overlaps(cu1["geom"], cu2["geom"]):
+                id_1 = _display_id(cu1["tid"])
+                id_2 = _display_id(cu2["tid"])
+                pair_id = _pair_ref(cu1["tid"], cu2["tid"])
                 issues.append(
                     helper.make_issue(
                         cu1["row"],
                         rule_id="5.5",
                         message=(
-                            "No debe existir superposición espacial entre unidades de construcción "
-                            "que compartan el mismo tipo de planta y la misma planta de ubicación."
+                            f"La unidad de construcción con ID {id_1} se superpone con "
+                            f"la unidad de construcción con ID {id_2}."
                         ),
                         details={
                             "tabla": cu1["tabla"],
@@ -1404,6 +1450,8 @@ def _rule_5_5(dataset: DatasetReader) -> list[RuleIssue]:
                             "id_unidad_construccion2": cu2["tid"],
                             "tipo_planta": cu1["tipo_planta"],
                             "planta_ubicacion": cu1["planta_ubicacion"],
+                            "par_superposicion": pair_id,
+                            "object_ref": pair_id,
                         },
                     )
                 )
@@ -1435,19 +1483,24 @@ def _rule_5_6(dataset: DatasetReader) -> list[RuleIssue]:
         for predio_ref in predio_refs:
             for terreno in terrenos_por_predio.get(str(predio_ref), []):
                 if not _geom_contains(terreno["geom"], geom_uc):
+                    id_unidad = _display_id(helper.identify(row))
+                    id_terreno = _display_id(terreno["tid"])
+                    pair_id = _pair_ref(helper.identify(row), terreno["tid"])
                     issues.append(
                         helper.make_issue(
                             row,
                             rule_id="5.6",
                             message=(
-                                "Cada unidad de construcción con planta de ubicación 1 "
-                                "debe estar completamente contenida dentro del terreno asociado al predio."
+                                f"La unidad de construcción con ID {id_unidad} no está "
+                                f"completamente contenida dentro del terreno asociado con ID {id_terreno}."
                             ),
                             details={
                                 "tabla": table_name,
                                 "id_terreno": terreno["tid"],
                                 "id_uconstruccion": helper.identify(row),
                                 "predio": predio_ref,
+                                "par_validacion": pair_id,
+                                "object_ref": pair_id,
                             },
                         )
                     )
@@ -1475,19 +1528,24 @@ def _rule_5_7(dataset: DatasetReader) -> list[RuleIssue]:
         for predio_ref in predio_refs:
             for terreno in terrenos_por_predio.get(str(predio_ref), []):
                 if not _geom_contains(terreno["geom"], geom_dir):
+                    id_direccion = _display_id(helper.identify(row))
+                    id_terreno = _display_id(terreno["tid"])
+                    pair_id = _pair_ref(helper.identify(row), terreno["tid"])
                     issues.append(
                         helper.make_issue(
                             row,
                             rule_id="5.7",
                             message=(
-                                "La dirección debe estar completamente contenida dentro "
-                                "del terreno asociado al predio."
+                                f"La dirección con ID {id_direccion} no está completamente "
+                                f"contenida dentro del terreno asociado con ID {id_terreno}."
                             ),
                             details={
                                 "tabla": table_name,
                                 "identificador_terreno": terreno["tid"],
                                 "identificador_direccion": helper.identify(row),
                                 "predio": predio_ref,
+                                "par_validacion": pair_id,
+                                "object_ref": pair_id,
                             },
                         )
                     )

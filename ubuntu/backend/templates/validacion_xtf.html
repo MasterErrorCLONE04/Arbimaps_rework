@@ -20,8 +20,12 @@
 {% set total_rules = validation_summary.total_rules if validation_summary else 0 %}
 {% set passed_rules = validation_summary.passed_rules if validation_summary else 0 %}
 {% set failed_rules = validation_summary.failed_rules if validation_summary else 0 %}
+{% set has_validation_errors = total_errors > 0 or failed_rules > 0 %}
 {% set total_predios = validation_summary.total_predios if validation_summary and validation_summary.total_predios is defined else 0 %}
 {% set raw_predios_con_errores = validation_summary.predios_con_errores if validation_summary else predio_summary|length %}
+{% if total_predios and has_validation_errors and raw_predios_con_errores < 1 %}
+{%     set raw_predios_con_errores = 1 %}
+{% endif %}
 {% set predios_con_errores = ([raw_predios_con_errores, total_predios]|min) if total_predios else raw_predios_con_errores %}
 {% set predios_sin_errores = (total_predios - predios_con_errores) if total_predios else (validation_summary.predios_sin_errores if validation_summary and validation_summary.predios_sin_errores is defined else 0) %}
 {% set rules_percent = ((passed_rules / total_rules * 100)|round(0, 'common')|int) if total_rules else 0 %}
