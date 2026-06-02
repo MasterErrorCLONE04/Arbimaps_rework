@@ -1008,6 +1008,7 @@ def buscar_predios_estado(
                 FROM {app_schema}.asignacion a
                 JOIN {app_schema}.asignacion_predio ap ON ap.asignacion_id = a.id
                 WHERE ap.numero_predial_nacional = p.{numero_field}
+                  AND ap.activo IS DISTINCT FROM FALSE
                   AND a.estado IS DISTINCT FROM 'CERRADA'
                 LIMIT 1
               ) AS asignado_a,
@@ -1016,6 +1017,7 @@ def buscar_predios_estado(
                 FROM {app_schema}.asignacion a
                 JOIN {app_schema}.asignacion_predio ap2 ON ap2.asignacion_id = a.id
                 WHERE ap2.numero_predial_nacional = p.{numero_field}
+                  AND ap2.activo IS DISTINCT FROM FALSE
                   AND a.estado IS DISTINCT FROM 'CERRADA'
                 LIMIT 1
               ) AS asignado_por
@@ -1381,17 +1383,34 @@ def list_asignaciones(conn, tenant=None) -> list[dict]:
             f"""
             SELECT
                 a.*,
+                CASE
+                    WHEN COALESCE(pub_main.publicado_main, FALSE) THEN 'SINCRONIZADO'
+                    WHEN a.estado::text = 'CERRADA' THEN a.estado::text
+                    ELSE a.estado::text
+                END AS estado_resuelto,
                 cu.first_name AS coord_first_name,
                 cu.last_name AS coord_last_name,
                 au.first_name AS asignado_first_name,
                 au.last_name AS asignado_last_name,
-                stats.total_activos,
-                stats.total_inactivos,
-                GREATEST(
-                    COALESCE(a.predios_soporte_extra, 0),
-                    COALESCE(ret.synced_predios, 0) - COALESCE(stats.total_activos, 0),
-                    COALESCE(stats.total_nuevos_raw, 0)
-                ) AS total_nuevos
+                CASE
+                    WHEN COALESCE(pub_main.publicado_main, FALSE) AND COALESCE(NULLIF(BTRIM(a.work_datasetname::text), ''), '') = ''
+                        THEN GREATEST(COALESCE(ret.synced_predios, 0), COALESCE(ret.covered_predios, 0))
+                    ELSE stats.total_activos
+                END AS total_activos,
+                CASE
+                    WHEN COALESCE(pub_main.publicado_main, FALSE) AND COALESCE(NULLIF(BTRIM(a.work_datasetname::text), ''), '') = ''
+                        THEN GREATEST(COALESCE(ret.expected_predios, 0) - COALESCE(ret.covered_predios, 0), 0)
+                    ELSE stats.total_inactivos
+                END AS total_inactivos,
+                CASE
+                    WHEN COALESCE(pub_main.publicado_main, FALSE) AND COALESCE(NULLIF(BTRIM(a.work_datasetname::text), ''), '') = ''
+                        THEN GREATEST(COALESCE(ret.synced_predios, 0) - COALESCE(ret.covered_predios, 0), 0)
+                    ELSE GREATEST(
+                        COALESCE(a.predios_soporte_extra, 0),
+                        COALESCE(ret.synced_predios, 0) - COALESCE(stats.total_activos, 0),
+                        COALESCE(stats.total_nuevos_raw, 0)
+                    )
+                END AS total_nuevos
             FROM {app_schema}.asignacion a
             LEFT JOIN {app_schema}.users cu ON cu.username = a.creado_por
             LEFT JOIN {app_schema}.users au ON au.username = a.usuario_asignado
@@ -1404,15 +1423,26 @@ def list_asignaciones(conn, tenant=None) -> list[dict]:
                 WHERE ap.asignacion_id = a.id
             ) stats ON TRUE
             LEFT JOIN LATERAL (
-                SELECT ar.synced_predios
+                SELECT ar.synced_predios, ar.expected_predios, ar.covered_predios
                 FROM {app_schema}.asignacion_retorno ar
                 WHERE ar.asignacion_id = a.id
                   AND ar.estado IN ('SINCRONIZADO', 'VALIDADO')
                 ORDER BY ar.id DESC
                 LIMIT 1
             ) ret ON TRUE
-            WHERE COALESCE(stats.total_activos, 0) > 0
-              AND a.estado::text <> 'CERRADA'
+            LEFT JOIN LATERAL (
+                SELECT TRUE AS publicado_main
+                FROM {app_schema}.asignacion_event_log el
+                WHERE el.asignacion_id = a.id
+                  AND (
+                        el.evento::text = 'PUBLICACION_MAIN'
+                     OR el.mensaje LIKE '[PUBLICACION_MAIN]%'
+                  )
+                ORDER BY el.id DESC
+                LIMIT 1
+            ) pub_main ON TRUE
+            WHERE a.estado::text <> 'CERRADA'
+               OR COALESCE(pub_main.publicado_main, FALSE)
             ORDER BY a.id DESC
             """
         )
@@ -1441,17 +1471,34 @@ def get_asignacion_detalle(conn, *args, **kwargs) -> Optional[dict]:
             f"""
             SELECT
                 a.*,
+                CASE
+                    WHEN COALESCE(pub_main.publicado_main, FALSE) THEN 'SINCRONIZADO'
+                    WHEN a.estado::text = 'CERRADA' THEN a.estado::text
+                    ELSE a.estado::text
+                END AS estado_resuelto,
                 cu.first_name AS coord_first_name,
                 cu.last_name AS coord_last_name,
                 au.first_name AS asignado_first_name,
                 au.last_name AS asignado_last_name,
-                stats.total_activos,
-                stats.total_inactivos,
-                GREATEST(
-                    COALESCE(a.predios_soporte_extra, 0),
-                    COALESCE(ret.synced_predios, 0) - COALESCE(stats.total_activos, 0),
-                    COALESCE(stats.total_nuevos_raw, 0)
-                ) AS total_nuevos
+                CASE
+                    WHEN COALESCE(pub_main.publicado_main, FALSE) AND COALESCE(NULLIF(BTRIM(a.work_datasetname::text), ''), '') = ''
+                        THEN GREATEST(COALESCE(ret.synced_predios, 0), COALESCE(ret.covered_predios, 0))
+                    ELSE stats.total_activos
+                END AS total_activos,
+                CASE
+                    WHEN COALESCE(pub_main.publicado_main, FALSE) AND COALESCE(NULLIF(BTRIM(a.work_datasetname::text), ''), '') = ''
+                        THEN GREATEST(COALESCE(ret.expected_predios, 0) - COALESCE(ret.covered_predios, 0), 0)
+                    ELSE stats.total_inactivos
+                END AS total_inactivos,
+                CASE
+                    WHEN COALESCE(pub_main.publicado_main, FALSE) AND COALESCE(NULLIF(BTRIM(a.work_datasetname::text), ''), '') = ''
+                        THEN GREATEST(COALESCE(ret.synced_predios, 0) - COALESCE(ret.covered_predios, 0), 0)
+                    ELSE GREATEST(
+                        COALESCE(a.predios_soporte_extra, 0),
+                        COALESCE(ret.synced_predios, 0) - COALESCE(stats.total_activos, 0),
+                        COALESCE(stats.total_nuevos_raw, 0)
+                    )
+                END AS total_nuevos
             FROM {app_schema}.asignacion a
             LEFT JOIN {app_schema}.users cu ON cu.username = a.creado_por
             LEFT JOIN {app_schema}.users au ON au.username = a.usuario_asignado
@@ -1465,13 +1512,24 @@ def get_asignacion_detalle(conn, *args, **kwargs) -> Optional[dict]:
                 GROUP BY ap.asignacion_id
             ) stats ON stats.asignacion_id = a.id
             LEFT JOIN LATERAL (
-                SELECT ar.synced_predios
+                SELECT ar.synced_predios, ar.expected_predios, ar.covered_predios
                 FROM {app_schema}.asignacion_retorno ar
                 WHERE ar.asignacion_id = a.id
                   AND ar.estado IN ('SINCRONIZADO', 'VALIDADO')
                 ORDER BY ar.id DESC
                 LIMIT 1
             ) ret ON TRUE
+            LEFT JOIN LATERAL (
+                SELECT TRUE AS publicado_main
+                FROM {app_schema}.asignacion_event_log el
+                WHERE el.asignacion_id = a.id
+                  AND (
+                        el.evento::text = 'PUBLICACION_MAIN'
+                     OR el.mensaje LIKE '[PUBLICACION_MAIN]%'
+                  )
+                ORDER BY el.id DESC
+                LIMIT 1
+            ) pub_main ON TRUE
             WHERE a.id = %s
             LIMIT 1
             """,

@@ -205,15 +205,14 @@
     const encargado = item.usuario_asignado || "—";
     const titulo = item.titulo || "SIN NOMBRE";
     const estado = item.estado || "—";
-    const isClosed = String(estado).toUpperCase() === "CERRADA";
-
     const estadoUpper = String(estado).toUpperCase();
+    const isHistorical = estadoUpper === "CERRADA" || estadoUpper === "SINCRONIZADO";
     const estadoClass =
       estadoUpper === "EN_TRABAJO"
         ? "estado-chip estado-trabajo"
         : "estado-chip";
 
-    const closeBtn = isClosed
+    const closeBtn = isHistorical
       ? `<span class="d-inline-block" style="width:24px;height:24px;"></span>`
       : `
         <button
@@ -226,7 +225,7 @@
         </button>
       `;
 
-    const exportButtons = asigSupportsPackageExport
+    const exportButtons = asigSupportsPackageExport && !isHistorical
       ? `
         <div class="d-flex justify-content-center align-items-center gap-2 flex-nowrap">
           <button
@@ -257,7 +256,9 @@
           </button>
         </div>
       `
-      : `
+      : isHistorical
+        ? `<span class="text-muted small">Histórico</span>`
+        : `
         <div class="d-flex justify-content-center align-items-center gap-2 flex-nowrap">
           <button type="button" class="btn btn-export-mini btn-export-dark" disabled title="No disponible para el modelo ${esc(asigModelName)}">XTF</button>
           <button type="button" class="btn btn-export-mini btn-export-mid" disabled title="No disponible para el modelo ${esc(asigModelName)}">GDB</button>

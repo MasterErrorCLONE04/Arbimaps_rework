@@ -159,7 +159,7 @@ def _patch_common(monkeypatch):
     monkeypatch.setattr(
         asignaciones_detalle.workspace_service,
         "remove_workspace_dataset",
-        lambda conn, datasetname, schema_work: {},
+        lambda conn, tenant, datasetname, schema_work: {},
     )
     monkeypatch.setattr(
         asignaciones_detalle.workspace_service,
@@ -262,6 +262,8 @@ def test_procesar_retorno_xtf_workspace_refreshes_predio_ids_with_conn_and_tenan
 
 def test_procesar_retorno_xtf_publish_main_interpolates_assignment_table_sql(monkeypatch):
     _patch_common(monkeypatch)
+    imported_datasets = []
+    removed_datasets = []
     logged_events = []
     monkeypatch.setattr(
         asignaciones_detalle.workspace_service,
@@ -272,6 +274,16 @@ def test_procesar_retorno_xtf_publish_main_interpolates_assignment_table_sql(mon
         asignaciones_detalle.workspace_service,
         "sync_workspace_predios_to_main",
         lambda conn, tenant, asignacion_id, datasetname, schema_main, schema_work: 1,
+    )
+    monkeypatch.setattr(
+        asignaciones_detalle.workspace_service,
+        "remove_workspace_dataset",
+        lambda conn, tenant, datasetname, schema_work: removed_datasets.append(datasetname) or {},
+    )
+    monkeypatch.setattr(
+        asignaciones_detalle,
+        "_ili2pg_import",
+        lambda conn, tenant, schema, datasetname, xtf_path: imported_datasets.append(datasetname),
     )
     monkeypatch.setattr(
         asignaciones_detalle.asignaciones_repo,
@@ -299,11 +311,27 @@ def test_procesar_retorno_xtf_publish_main_interpolates_assignment_table_sql(mon
 
     assert result["asignacion_id"] == 136
     assert "PUBLICACION_MAIN" in logged_events
+    assert imported_datasets == ["ws_asg_1_ret_2"]
+    assert removed_datasets == ["ws_asg_1"]
     sync_sql = "\n".join(
         sql
         for conn in manager.connections
         for sql in conn.executed_sql
         if "_arb_sync_selected_predio sp" in sql
     )
+    assignment_release_sql = "\n".join(
+        sql
+        for conn in manager.connections
+        for sql in conn.executed_sql
+        if "SET estado = 'CERRADA'" in sql
+    )
+    predio_release_sql = "\n".join(
+        sql
+        for conn in manager.connections
+        for sql in conn.executed_sql
+        if "UPDATE arbimaps_app.asignacion_predio" in sql and "SET activo = FALSE" in sql
+    )
     assert "FROM {" not in sync_sql
     assert "arbimaps_app.asignacion_predio" in sync_sql
+    assert "SET estado = 'CERRADA'" in assignment_release_sql
+    assert "SET activo = FALSE" in predio_release_sql

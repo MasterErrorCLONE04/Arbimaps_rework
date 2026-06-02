@@ -1915,6 +1915,7 @@ def _arb_replace_direct_child_table(
               ON w.{predio_fk} = pm.work_predio_t_id
             LEFT JOIN _arb_sync_basket_map bm
               ON bm.work_basket = w.t_basket
+            ORDER BY w.t_id
             """
         )
         return cur.rowcount or 0
@@ -2083,6 +2084,56 @@ def _arb_sync_construccion_stack(conn, schema_main: str, schema_work: str) -> No
     if "arb_unidadconstruccion" not in existing_main or "arb_unidadconstruccion" not in existing_work:
         return
 
+    constru_main_cols = set(_get_table_columns(conn, schema_main, "arb_construccion"))
+    constru_work_cols = set(_get_table_columns(conn, schema_work, "arb_construccion"))
+    constru_order_work: list[str] = []
+    constru_order_main: list[str] = []
+    for col in ("t_ili_tid", "identificador", "codigo", "etiqueta"):
+        if col in constru_main_cols and col in constru_work_cols:
+            constru_order_work.append(f"COALESCE(NULLIF(BTRIM(wc.{col}::text), ''), '')")
+            constru_order_main.append(f"COALESCE(NULLIF(BTRIM(mc.{col}::text), ''), '')")
+    constru_order_work.append("wc.t_id")
+    constru_order_main.append("mc.t_id")
+
+    with conn.cursor() as cur:
+        cur.execute("DROP TABLE IF EXISTS _arb_sync_construccion_map")
+        cur.execute(
+            f"""
+            CREATE TEMP TABLE _arb_sync_construccion_map AS
+            WITH work_ranked AS (
+                SELECT
+                    wc.t_id AS work_construccion_t_id,
+                    pm.main_predio_t_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY pm.main_predio_t_id
+                        ORDER BY {', '.join(constru_order_work)}
+                    ) AS rn
+                FROM {_qualify(schema_work, 'arb_construccion')} wc
+                JOIN _arb_sync_predio_map pm
+                  ON pm.work_predio_t_id = wc.predio
+            ),
+            main_ranked AS (
+                SELECT
+                    mc.t_id AS main_construccion_t_id,
+                    mc.predio AS main_predio_t_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY mc.predio
+                        ORDER BY {', '.join(constru_order_main)}
+                    ) AS rn
+                FROM {_qualify(schema_main, 'arb_construccion')} mc
+                JOIN _arb_sync_predio_map pm
+                  ON pm.main_predio_t_id = mc.predio
+            )
+            SELECT
+                w.work_construccion_t_id,
+                m.main_construccion_t_id
+            FROM work_ranked w
+            JOIN main_ranked m
+              ON m.main_predio_t_id = w.main_predio_t_id
+             AND m.rn = w.rn
+            """
+        )
+
     copy_cols = _get_common_table_columns(
         conn,
         schema_main,
@@ -2115,13 +2166,64 @@ def _arb_sync_construccion_stack(conn, schema_main: str, schema_work: str) -> No
             FROM {_qualify(schema_work, 'arb_unidadconstruccion')} u
             JOIN {_qualify(schema_work, 'arb_construccion')} wc
               ON wc.t_id = u.construccion
-            JOIN _arb_sync_predio_map pm
-              ON pm.work_predio_t_id = wc.predio
+            JOIN _arb_sync_construccion_map cm
+              ON cm.work_construccion_t_id = wc.t_id
             JOIN {_qualify(schema_main, 'arb_construccion')} mc
-              ON BTRIM(mc.t_ili_tid::text) = BTRIM(wc.t_ili_tid::text)
+              ON mc.t_id = cm.main_construccion_t_id
             {cuc_join_sql}
             LEFT JOIN _arb_sync_basket_map bm
               ON bm.work_basket = u.t_basket
+            ORDER BY u.t_id
+            """
+        )
+
+    unidad_main_cols = set(_get_table_columns(conn, schema_main, "arb_unidadconstruccion"))
+    unidad_work_cols = set(_get_table_columns(conn, schema_work, "arb_unidadconstruccion"))
+    unidad_order_work: list[str] = []
+    unidad_order_main: list[str] = []
+    for col in ("t_ili_tid", "identificador", "codigo"):
+        if col in unidad_main_cols and col in unidad_work_cols:
+            unidad_order_work.append(f"COALESCE(NULLIF(BTRIM(wu.{col}::text), ''), '')")
+            unidad_order_main.append(f"COALESCE(NULLIF(BTRIM(mu.{col}::text), ''), '')")
+    unidad_order_work.append("wu.t_id")
+    unidad_order_main.append("mu.t_id")
+
+    with conn.cursor() as cur:
+        cur.execute("DROP TABLE IF EXISTS _arb_sync_unidad_map")
+        cur.execute(
+            f"""
+            CREATE TEMP TABLE _arb_sync_unidad_map AS
+            WITH work_ranked AS (
+                SELECT
+                    wu.t_id AS work_unidad_t_id,
+                    cm.main_construccion_t_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY cm.main_construccion_t_id
+                        ORDER BY {', '.join(unidad_order_work)}
+                    ) AS rn
+                FROM {_qualify(schema_work, 'arb_unidadconstruccion')} wu
+                JOIN _arb_sync_construccion_map cm
+                  ON cm.work_construccion_t_id = wu.construccion
+            ),
+            main_ranked AS (
+                SELECT
+                    mu.t_id AS main_unidad_t_id,
+                    mu.construccion AS main_construccion_t_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY mu.construccion
+                        ORDER BY {', '.join(unidad_order_main)}
+                    ) AS rn
+                FROM {_qualify(schema_main, 'arb_unidadconstruccion')} mu
+                JOIN _arb_sync_construccion_map cm
+                  ON cm.main_construccion_t_id = mu.construccion
+            )
+            SELECT
+                w.work_unidad_t_id,
+                m.main_unidad_t_id
+            FROM work_ranked w
+            JOIN main_ranked m
+              ON m.main_construccion_t_id = w.main_construccion_t_id
+             AND m.rn = w.rn
             """
         )
 
@@ -2144,21 +2246,22 @@ def _arb_sync_construccion_stack(conn, schema_main: str, schema_work: str) -> No
         with conn.cursor() as cur:
             cur.execute(
                 f"""
-                INSERT INTO {_qualify(schema_main, 'arb_adjuntounidadconstruccionvalor')} ({', '.join(insert_cols)})
-                SELECT {', '.join(select_exprs)}
-                FROM {_qualify(schema_work, 'arb_adjuntounidadconstruccionvalor')} a
-                JOIN {_qualify(schema_work, 'arb_unidadconstruccion')} wu
-                  ON wu.t_id = a.arb_unidadconstruccion_adjunto
-                JOIN {_qualify(schema_work, 'arb_construccion')} wc
-                  ON wc.t_id = wu.construccion
-                JOIN _arb_sync_predio_map pm
-                  ON pm.work_predio_t_id = wc.predio
-                JOIN {_qualify(schema_main, 'arb_unidadconstruccion')} mu
-                  ON BTRIM(mu.t_ili_tid::text) = BTRIM(wu.t_ili_tid::text)
-                LEFT JOIN _arb_sync_basket_map bm
-                  ON bm.work_basket = a.t_basket
-                """
-            )
+            INSERT INTO {_qualify(schema_main, 'arb_adjuntounidadconstruccionvalor')} ({', '.join(insert_cols)})
+            SELECT {', '.join(select_exprs)}
+            FROM {_qualify(schema_work, 'arb_adjuntounidadconstruccionvalor')} a
+            JOIN {_qualify(schema_work, 'arb_unidadconstruccion')} wu
+              ON wu.t_id = a.arb_unidadconstruccion_adjunto
+            JOIN {_qualify(schema_work, 'arb_construccion')} wc
+              ON wc.t_id = wu.construccion
+            JOIN _arb_sync_unidad_map um
+              ON um.work_unidad_t_id = wu.t_id
+            JOIN {_qualify(schema_main, 'arb_unidadconstruccion')} mu
+              ON mu.t_id = um.main_unidad_t_id
+            LEFT JOIN _arb_sync_basket_map bm
+              ON bm.work_basket = a.t_basket
+            ORDER BY a.t_id
+            """
+        )
 
 
 def _sync_workspace_arb_to_main(

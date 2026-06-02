@@ -1,6 +1,8 @@
+import logging
 import os
 import shutil
 import tempfile
+from threading import Thread
 import traceback
 from datetime import datetime, timezone
 from typing import Literal, Optional
@@ -24,9 +26,10 @@ from repositories import asignaciones_repo
 from routers.auth import get_current_tenant, get_current_user, get_user_role, normalize_role
 from services import asignaciones_export as export_service
 from services import asignaciones_workspace as workspace_service
-from tenants import TenantContext, get_tenant_db_connection
+from tenants import TenantContext, get_connection_manager, get_tenant_db_connection
 
 router = APIRouter(prefix="/asignaciones", tags=["asignaciones-export"])
+logger = logging.getLogger(__name__)
 
 JOB_FORMAT = Literal["xtf", "gdb", "gpkg"]
 
@@ -89,7 +92,12 @@ def _read_required_baskets() -> set[str]:
 def _raise_http_from_export_error(exc: Exception) -> None:
     if isinstance(exc, export_service.ExportServiceError):
         raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
-    raise exc
+    if isinstance(exc, HTTPException):
+        raise exc
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail=_error_detail(exc),
+    ) from exc
 
 
 def _error_detail(exc: Exception) -> str:
@@ -119,7 +127,7 @@ def _ensure_assignment_access(
     user: Optional[dict],
 ) -> dict:
     asignaciones_repo.ensure_asignacion_tables(conn, tenant)
-    asignacion = asignaciones_repo.get_asignacion_detalle(conn, tenant, asignacion_id)
+    asignacion = asignaciones_repo.get_asignacion_for_paquete(conn, tenant, asignacion_id)
     if not asignacion:
         raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
     _ensure_assignment_owner_access(user, asignacion)
@@ -282,6 +290,12 @@ def _mark_job_failed(
     exc: Exception,
 ) -> None:
     detail = _error_detail(exc)
+    logger.exception(
+        "Export job failed before persistence update job_id=%s asignacion_id=%s formato_error=%s",
+        job_id,
+        asignacion_id,
+        detail,
+    )
     if not isinstance(exc, export_service.ExportServiceError):
         tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)).strip()
         if tb:
@@ -306,7 +320,11 @@ def _mark_job_failed(
                 conn.rollback()
                 raise
     except Exception:
-        pass
+        logger.exception(
+            "No se pudo persistir estado ERROR del export job job_id=%s asignacion_id=%s",
+            job_id,
+            asignacion_id,
+        )
 
 
 def _process_export_job(
@@ -319,6 +337,13 @@ def _process_export_job(
 ) -> None:
     tmp_dir: Optional[str] = None
     try:
+        logger.info(
+            "Iniciando export job job_id=%s asignacion_id=%s formato=%s tenant=%s",
+            job_id,
+            asignacion_id,
+            formato,
+            tenant.municipality_code,
+        )
         artifact_suffix = f"{tenant.municipality_code}_{asignacion_id}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}_{uuid4().hex}"
 
         with connection_manager.connection(tenant) as conn:
@@ -433,6 +458,12 @@ def _process_export_job(
                 conn.rollback()
                 raise
     except Exception as exc:
+        logger.exception(
+            "Excepcion ejecutando export job job_id=%s asignacion_id=%s formato=%s",
+            job_id,
+            asignacion_id,
+            formato,
+        )
         _mark_job_failed(connection_manager, tenant, job_id, asignacion_id, created_by, exc)
     finally:
         if tmp_dir:
@@ -490,15 +521,19 @@ def crear_job_paquete_asignacion(
             "message": "Ya existe un job activo para esta asignacion y formato.",
         }
 
-    background.add_task(
-        _process_export_job,
-        request.app.state.tenant_connection_manager,
-        tenant,
-        int(job["id"]),
-        asignacion_id,
-        formato,
-        created_by,
-    )
+    connection_manager = get_connection_manager(request.app)
+    Thread(
+        target=_process_export_job,
+        args=(
+            connection_manager,
+            tenant,
+            int(job["id"]),
+            asignacion_id,
+            formato,
+            created_by,
+        ),
+        daemon=True,
+    ).start()
 
     return {
         "job_id": job.get("id"),

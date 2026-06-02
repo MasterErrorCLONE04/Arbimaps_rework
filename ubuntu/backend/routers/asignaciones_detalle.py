@@ -131,7 +131,18 @@ def _ensure_assignment_access(
     user: Optional[dict],
 ) -> dict:
     asignaciones_repo.ensure_asignacion_tables(conn, tenant)
-    asignacion = asignaciones_repo.get_asignacion_detalle(conn, tenant, asignacion_id)
+    asignacion_table = _app_table(tenant, "asignacion")
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            f"""
+            SELECT id, usuario_asignado, work_datasetname, estado
+            FROM {asignacion_table}
+            WHERE id = %s
+            LIMIT 1
+            """,
+            (asignacion_id,),
+        )
+        asignacion = cur.fetchone()
     if not asignacion:
         raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
     _ensure_assignment_owner_access(user, asignacion)
@@ -979,7 +990,116 @@ def obtener_detalle_asignacion(
     conn=Depends(get_tenant_db_connection),
 ):
     _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
-    asignacion = _ensure_assignment_access(conn, tenant, asignacion_id, user)
+    _ensure_assignment_access(conn, tenant, asignacion_id, user)
+    asignacion_table = _app_table(tenant, "asignacion")
+    asignacion_predio_table = _app_table(tenant, "asignacion_predio")
+    users_table = _app_table(tenant, "users")
+    event_log_table = _app_table(tenant, "asignacion_event_log")
+    retorno_table = _app_table(tenant, "asignacion_retorno")
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            f"""
+            SELECT
+                a.id,
+                a.estado,
+                a.creado_en,
+                a.creado_por,
+                a.usuario_asignado,
+                a.titulo,
+                a.observaciones,
+                a.datasetname_main,
+                a.work_datasetname,
+                a.error_msg,
+                a.predios_soporte_extra,
+                cu.first_name AS coord_first_name,
+                cu.last_name AS coord_last_name,
+                au.first_name AS asignado_first_name,
+                au.last_name AS asignado_last_name
+            FROM {asignacion_table} a
+            LEFT JOIN {users_table} cu ON cu.username = a.creado_por
+            LEFT JOIN {users_table} au ON au.username = a.usuario_asignado
+            WHERE a.id = %s
+            LIMIT 1
+            """,
+            (asignacion_id,),
+        )
+        asignacion = cur.fetchone()
+        if not asignacion:
+            raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
+
+        cur.execute(
+            f"""
+            SELECT
+                COUNT(*) FILTER (WHERE activo IS DISTINCT FROM FALSE) AS total_activos,
+                COUNT(*) FILTER (WHERE activo IS FALSE) AS total_inactivos,
+                COUNT(*) FILTER (WHERE predio_t_id IS NULL) AS total_nuevos_raw
+            FROM {asignacion_predio_table}
+            WHERE asignacion_id = %s
+            """,
+            (asignacion_id,),
+        )
+        stats = cur.fetchone() or {}
+
+        cur.execute(
+            f"""
+            SELECT
+                synced_predios,
+                expected_predios,
+                covered_predios
+            FROM {retorno_table}
+            WHERE asignacion_id = %s
+              AND estado IN ('SINCRONIZADO', 'VALIDADO')
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (asignacion_id,),
+        )
+        retorno = cur.fetchone() or {}
+
+        cur.execute(
+            f"""
+            SELECT 1
+            FROM {event_log_table}
+            WHERE asignacion_id = %s
+              AND (
+                    evento::text = 'PUBLICACION_MAIN'
+                 OR mensaje LIKE '[PUBLICACION_MAIN]%%'
+              )
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (asignacion_id,),
+        )
+        published_main = bool(cur.fetchone())
+
+    total_activos = int(stats.get("total_activos") or 0)
+    total_inactivos = int(stats.get("total_inactivos") or 0)
+    total_nuevos_raw = int(stats.get("total_nuevos_raw") or 0)
+    synced_predios = int(retorno.get("synced_predios") or 0)
+    expected_predios = int(retorno.get("expected_predios") or 0)
+    covered_predios = int(retorno.get("covered_predios") or 0)
+    estado_resuelto = (
+        "SINCRONIZADO"
+        if published_main
+        else ("CERRADA" if str(asignacion.get("estado") or "").strip().upper() == "CERRADA" else asignacion.get("estado"))
+    )
+    assignment_closed = estado_resuelto in {"CERRADA", "SINCRONIZADO"} and not str(
+        asignacion.get("work_datasetname") or ""
+    ).strip()
+    if assignment_closed:
+        original_scope_predios = expected_predios if expected_predios > 0 else (total_activos + total_inactivos)
+        total_asignados = max(synced_predios, covered_predios)
+        total_eliminados = max(original_scope_predios - synced_predios, 0)
+        total_nuevos = max(synced_predios - original_scope_predios, 0)
+    else:
+        total_asignados = total_activos
+        total_eliminados = total_inactivos
+        total_nuevos = max(
+            int(asignacion.get("predios_soporte_extra") or 0),
+            synced_predios - total_activos,
+            total_nuevos_raw,
+        )
     predios_rows = asignaciones_repo.list_predios_asignacion(conn, tenant, asignacion_id)
 
     def _display_name(first_name: Optional[str], last_name: Optional[str], username: Optional[str]) -> Optional[str]:
@@ -989,13 +1109,14 @@ def obtener_detalle_asignacion(
         return full_name or username
 
     predios: List[AsignacionPredioDetalle] = []
+    predios_should_show_active = assignment_closed and total_eliminados == 0 and total_asignados > 0
     for row in predios_rows:
         predios.append(
             AsignacionPredioDetalle(
                 id=row.get("id"),
                 numero_predial_nacional=row.get("numero_predial_nacional") or "",
                 predio_t_id=_maybe_int(row.get("predio_t_id")),
-                activo=row.get("activo"),
+                activo=True if predios_should_show_active else (False if assignment_closed else row.get("activo")),
                 creado_por=row.get("creado_por"),
                 creado_en=row.get("creado_en"),
             )
@@ -1003,7 +1124,7 @@ def obtener_detalle_asignacion(
 
     return AsignacionDetalleResponse(
         id=asignacion.get("id"),
-        estado=asignacion.get("estado"),
+        estado=estado_resuelto,
         fecha_creacion=asignacion.get("creado_en"),
         coordinador=_display_name(
             asignacion.get("coord_first_name"),
@@ -1020,9 +1141,9 @@ def obtener_detalle_asignacion(
         datasetname_main=asignacion.get("datasetname_main"),
         work_datasetname=asignacion.get("work_datasetname"),
         error_msg=asignacion.get("error_msg"),
-        total_asignados=int(asignacion.get("total_activos") or 0),
-        total_eliminados=int(asignacion.get("total_inactivos") or 0),
-        total_nuevos=int(asignacion.get("total_nuevos") or 0),
+        total_asignados=total_asignados,
+        total_eliminados=total_eliminados,
+        total_nuevos=total_nuevos,
         predios=predios,
     )
 
@@ -1036,22 +1157,20 @@ def obtener_scope_geojson_asignacion(
 ):
     _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
     schema_work = _safe_ident(_read_schema_work(tenant), fallback="")
+    schema_main = _safe_ident(_read_schema_main(tenant), fallback="")
     predio_numero_field = _read_predio_numero_field()
     asignacion_predio_table = _app_table(tenant, "asignacion_predio")
     asignacion = _ensure_assignment_access(conn, tenant, asignacion_id, user)
     work_datasetname = str(asignacion.get("work_datasetname") or "").strip()
-    if not work_datasetname:
-        raise HTTPException(
-            status_code=400,
-            detail="La asignacion no tiene workspace definido.",
-        )
+    source_schema = schema_work if work_datasetname else schema_main
+    include_inactive = not bool(work_datasetname)
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        predio_specs = _table_column_specs(cur, schema_work, "arb_predio")
+        predio_specs = _table_column_specs(cur, source_schema, "arb_predio")
         if not predio_specs:
             raise HTTPException(
                 status_code=404,
-                detail=f"No existe tabla arb_predio en {schema_work}.",
+                detail=f"No existe tabla arb_predio en {source_schema}.",
             )
 
         predio_geom_col = next(
@@ -1069,64 +1188,92 @@ def obtener_scope_geojson_asignacion(
             else "NULL::json"
         )
 
-        cur.execute(
-                f"""
-                WITH ap_sel AS (
-                    SELECT DISTINCT
-                        ap.predio_t_id,
-                        NULLIF(BTRIM(ap.numero_predial_nacional::text), '') AS numero_predial_nacional
-                    FROM {asignacion_predio_table} ap
-                    WHERE ap.asignacion_id = %s
-                      AND ap.activo IS DISTINCT FROM FALSE
-                )
-                SELECT DISTINCT ON (p."t_id")
-                    p."t_id" AS predio_t_id,
-                    b."t_id" AS basket_id,
-                    BTRIM(p.{_qident(predio_numero_field)}::text) AS numero_predial_nacional,
-                    {predio_geom_sql} AS geometry
-                FROM {_qident(schema_work)}."arb_predio" p
-                JOIN {_qident(schema_work)}."t_ili2db_basket" b
-                  ON b."t_id" = p."t_basket"
-                JOIN {_qident(schema_work)}."t_ili2db_dataset" d
-                  ON d."t_id" = b."dataset"
-                JOIN ap_sel ap
-                  ON (
-                        ap.predio_t_id IS NOT NULL
-                    AND ap.predio_t_id = p."t_id"
-                  )
-                  OR (
-                        ap.predio_t_id IS NULL
-                    AND ap.numero_predial_nacional IS NOT NULL
-                    AND ap.numero_predial_nacional = BTRIM(p.{_qident(predio_numero_field)}::text)
-                  )
-                WHERE d."datasetname" = %s
-                ORDER BY p."t_id" ASC
-                """,
-                (asignacion_id, work_datasetname),
+        predio_sql = f"""
+            WITH ap_sel AS (
+                SELECT DISTINCT
+                    ap.predio_t_id,
+                    NULLIF(BTRIM(ap.numero_predial_nacional::text), '') AS numero_predial_nacional
+                FROM {asignacion_predio_table} ap
+                WHERE ap.asignacion_id = %s
+                  AND (%s OR ap.activo IS DISTINCT FROM FALSE)
             )
+            SELECT DISTINCT ON (p."t_id")
+                p."t_id" AS predio_t_id,
+                b."t_id" AS basket_id,
+                BTRIM(p.{_qident(predio_numero_field)}::text) AS numero_predial_nacional,
+                {predio_geom_sql} AS geometry
+            FROM {_qident(source_schema)}."arb_predio" p
+            JOIN {_qident(source_schema)}."t_ili2db_basket" b
+              ON b."t_id" = p."t_basket"
+            JOIN {_qident(source_schema)}."t_ili2db_dataset" d
+              ON d."t_id" = b."dataset"
+            JOIN ap_sel ap
+              ON (
+                    ap.predio_t_id IS NOT NULL
+                AND ap.predio_t_id = p."t_id"
+              )
+              OR (
+                    ap.numero_predial_nacional IS NOT NULL
+                AND ap.numero_predial_nacional = BTRIM(p.{_qident(predio_numero_field)}::text)
+              )
+        """
+        predio_params: list[object] = [asignacion_id, include_inactive]
+        if work_datasetname:
+            predio_sql += ' WHERE d."datasetname" = %s'
+            predio_params.append(work_datasetname)
+        predio_sql += ' ORDER BY p."t_id" ASC'
+        cur.execute(predio_sql, tuple(predio_params))
         predio_rows = cur.fetchall() or []
 
         terrain_rows: list[dict] = []
         uc_rows: list[dict] = []
         basket_ids: list[int] = []
-        cur.execute(
-                f"""
-                SELECT b."t_id"
-                FROM {_qident(schema_work)}."t_ili2db_basket" b
-                JOIN {_qident(schema_work)}."t_ili2db_dataset" d
-                  ON d."t_id" = b."dataset"
-                WHERE d."datasetname" = %s
-                ORDER BY b."t_id" ASC
-                """,
-                (work_datasetname,),
-            )
+        if work_datasetname:
+            cur.execute(
+                    f"""
+                    SELECT b."t_id"
+                    FROM {_qident(source_schema)}."t_ili2db_basket" b
+                    JOIN {_qident(source_schema)}."t_ili2db_dataset" d
+                      ON d."t_id" = b."dataset"
+                    WHERE d."datasetname" = %s
+                    ORDER BY b."t_id" ASC
+                    """,
+                    (work_datasetname,),
+                )
+        else:
+            cur.execute(
+                    f"""
+                    WITH ap_sel AS (
+                        SELECT DISTINCT
+                            ap.predio_t_id,
+                            NULLIF(BTRIM(ap.numero_predial_nacional::text), '') AS numero_predial_nacional
+                        FROM {asignacion_predio_table} ap
+                        WHERE ap.asignacion_id = %s
+                    )
+                    SELECT DISTINCT b."t_id"
+                    FROM {_qident(source_schema)}."t_ili2db_basket" b
+                    JOIN {_qident(source_schema)}."arb_predio" p
+                      ON p."t_basket" = b."t_id"
+                    JOIN ap_sel ap
+                      ON (
+                            ap.predio_t_id IS NOT NULL
+                        AND ap.predio_t_id = p."t_id"
+                      )
+                      OR (
+                            ap.numero_predial_nacional IS NOT NULL
+                        AND ap.numero_predial_nacional = BTRIM(p.{_qident(predio_numero_field)}::text)
+                      )
+                    ORDER BY b."t_id" ASC
+                    """,
+                    (asignacion_id,),
+                )
         basket_ids = [
             v
             for v in (_maybe_int((row or {}).get("t_id")) for row in (cur.fetchall() or []))
             if isinstance(v, int)
         ]
 
-        terrain_specs = _table_column_specs(cur, schema_work, "arb_terreno")
+        terrain_specs = _table_column_specs(cur, source_schema, "arb_terreno")
         if terrain_specs:
             terrain_cols = {str(col.get("column_name") or "").strip() for col in terrain_specs}
             terrain_geom_col = next(
@@ -1138,48 +1285,48 @@ def obtener_scope_geojson_asignacion(
                 None,
             )
             if terrain_geom_col and "predio" in terrain_cols:
-                cur.execute(
-                        f"""
-                        WITH ap_sel AS (
-                            SELECT DISTINCT
-                                ap.predio_t_id,
-                                NULLIF(BTRIM(ap.numero_predial_nacional::text), '') AS numero_predial_nacional
-                            FROM {asignacion_predio_table} ap
-                            WHERE ap.asignacion_id = %s
-                              AND ap.activo IS DISTINCT FROM FALSE
-                        )
-                        SELECT
-                            t."t_id" AS terreno_t_id,
-                            t."predio" AS predio_t_id,
-                            b."t_id" AS basket_id,
-                            BTRIM(p.{_qident(predio_numero_field)}::text) AS numero_predial_nacional,
-                            ST_AsGeoJSON(t.{_qident(terrain_geom_col)})::json AS geometry
-                        FROM {_qident(schema_work)}."arb_terreno" t
-                        JOIN {_qident(schema_work)}."arb_predio" p
-                          ON p."t_id" = t."predio"
-                        JOIN {_qident(schema_work)}."t_ili2db_basket" b
-                          ON b."t_id" = p."t_basket"
-                        JOIN {_qident(schema_work)}."t_ili2db_dataset" d
-                          ON d."t_id" = b."dataset"
-                        JOIN ap_sel ap
-                          ON (
-                                ap.predio_t_id IS NOT NULL
-                            AND ap.predio_t_id = p."t_id"
-                          )
-                          OR (
-                                ap.predio_t_id IS NULL
-                            AND ap.numero_predial_nacional IS NOT NULL
-                            AND ap.numero_predial_nacional = BTRIM(p.{_qident(predio_numero_field)}::text)
-                          )
-                        WHERE d."datasetname" = %s
-                        ORDER BY t."t_id" ASC
-                        """,
-                        (asignacion_id, work_datasetname),
+                terrain_sql = f"""
+                    WITH ap_sel AS (
+                        SELECT DISTINCT
+                            ap.predio_t_id,
+                            NULLIF(BTRIM(ap.numero_predial_nacional::text), '') AS numero_predial_nacional
+                        FROM {asignacion_predio_table} ap
+                        WHERE ap.asignacion_id = %s
+                          AND (%s OR ap.activo IS DISTINCT FROM FALSE)
                     )
+                    SELECT
+                        t."t_id" AS terreno_t_id,
+                        t."predio" AS predio_t_id,
+                        b."t_id" AS basket_id,
+                        BTRIM(p.{_qident(predio_numero_field)}::text) AS numero_predial_nacional,
+                        ST_AsGeoJSON(t.{_qident(terrain_geom_col)})::json AS geometry
+                    FROM {_qident(source_schema)}."arb_terreno" t
+                    JOIN {_qident(source_schema)}."arb_predio" p
+                      ON p."t_id" = t."predio"
+                    JOIN {_qident(source_schema)}."t_ili2db_basket" b
+                      ON b."t_id" = p."t_basket"
+                    JOIN {_qident(source_schema)}."t_ili2db_dataset" d
+                      ON d."t_id" = b."dataset"
+                    JOIN ap_sel ap
+                      ON (
+                            ap.predio_t_id IS NOT NULL
+                        AND ap.predio_t_id = p."t_id"
+                      )
+                      OR (
+                            ap.numero_predial_nacional IS NOT NULL
+                        AND ap.numero_predial_nacional = BTRIM(p.{_qident(predio_numero_field)}::text)
+                      )
+                """
+                terrain_params: list[object] = [asignacion_id, include_inactive]
+                if work_datasetname:
+                    terrain_sql += ' WHERE d."datasetname" = %s'
+                    terrain_params.append(work_datasetname)
+                terrain_sql += ' ORDER BY t."t_id" ASC'
+                cur.execute(terrain_sql, tuple(terrain_params))
                 terrain_rows = cur.fetchall() or []
 
-        uc_specs = _table_column_specs(cur, schema_work, "arb_unidadconstruccion")
-        constru_specs = _table_column_specs(cur, schema_work, "arb_construccion")
+        uc_specs = _table_column_specs(cur, source_schema, "arb_unidadconstruccion")
+        constru_specs = _table_column_specs(cur, source_schema, "arb_construccion")
         if uc_specs and constru_specs:
             uc_cols = {str(col.get("column_name") or "").strip() for col in uc_specs}
             constru_cols = {str(col.get("column_name") or "").strip() for col in constru_specs}
@@ -1192,47 +1339,47 @@ def obtener_scope_geojson_asignacion(
                 None,
             )
             if uc_geom_col and "construccion" in uc_cols and "predio" in constru_cols:
-                cur.execute(
-                        f"""
-                        WITH ap_sel AS (
-                            SELECT DISTINCT
-                                ap.predio_t_id,
-                                NULLIF(BTRIM(ap.numero_predial_nacional::text), '') AS numero_predial_nacional
-                            FROM {asignacion_predio_table} ap
-                            WHERE ap.asignacion_id = %s
-                              AND ap.activo IS DISTINCT FROM FALSE
-                        )
-                        SELECT
-                            uc."t_id" AS unidad_construccion_t_id,
-                            uc."construccion" AS construccion_t_id,
-                            c."predio" AS predio_t_id,
-                            b."t_id" AS basket_id,
-                            BTRIM(p.{_qident(predio_numero_field)}::text) AS numero_predial_nacional,
-                            ST_AsGeoJSON(uc.{_qident(uc_geom_col)})::json AS geometry
-                        FROM {_qident(schema_work)}."arb_unidadconstruccion" uc
-                        JOIN {_qident(schema_work)}."arb_construccion" c
-                          ON c."t_id" = uc."construccion"
-                        JOIN {_qident(schema_work)}."arb_predio" p
-                          ON p."t_id" = c."predio"
-                        JOIN {_qident(schema_work)}."t_ili2db_basket" b
-                          ON b."t_id" = p."t_basket"
-                        JOIN {_qident(schema_work)}."t_ili2db_dataset" d
-                          ON d."t_id" = b."dataset"
-                        JOIN ap_sel ap
-                          ON (
-                                ap.predio_t_id IS NOT NULL
-                            AND ap.predio_t_id = p."t_id"
-                          )
-                          OR (
-                                ap.predio_t_id IS NULL
-                            AND ap.numero_predial_nacional IS NOT NULL
-                            AND ap.numero_predial_nacional = BTRIM(p.{_qident(predio_numero_field)}::text)
-                          )
-                        WHERE d."datasetname" = %s
-                        ORDER BY uc."t_id" ASC
-                        """,
-                        (asignacion_id, work_datasetname),
+                uc_sql = f"""
+                    WITH ap_sel AS (
+                        SELECT DISTINCT
+                            ap.predio_t_id,
+                            NULLIF(BTRIM(ap.numero_predial_nacional::text), '') AS numero_predial_nacional
+                        FROM {asignacion_predio_table} ap
+                        WHERE ap.asignacion_id = %s
+                          AND (%s OR ap.activo IS DISTINCT FROM FALSE)
                     )
+                    SELECT
+                        uc."t_id" AS unidad_construccion_t_id,
+                        uc."construccion" AS construccion_t_id,
+                        c."predio" AS predio_t_id,
+                        b."t_id" AS basket_id,
+                        BTRIM(p.{_qident(predio_numero_field)}::text) AS numero_predial_nacional,
+                        ST_AsGeoJSON(uc.{_qident(uc_geom_col)})::json AS geometry
+                    FROM {_qident(source_schema)}."arb_unidadconstruccion" uc
+                    JOIN {_qident(source_schema)}."arb_construccion" c
+                      ON c."t_id" = uc."construccion"
+                    JOIN {_qident(source_schema)}."arb_predio" p
+                      ON p."t_id" = c."predio"
+                    JOIN {_qident(source_schema)}."t_ili2db_basket" b
+                      ON b."t_id" = p."t_basket"
+                    JOIN {_qident(source_schema)}."t_ili2db_dataset" d
+                      ON d."t_id" = b."dataset"
+                    JOIN ap_sel ap
+                      ON (
+                            ap.predio_t_id IS NOT NULL
+                        AND ap.predio_t_id = p."t_id"
+                      )
+                      OR (
+                            ap.numero_predial_nacional IS NOT NULL
+                        AND ap.numero_predial_nacional = BTRIM(p.{_qident(predio_numero_field)}::text)
+                      )
+                """
+                uc_params: list[object] = [asignacion_id, include_inactive]
+                if work_datasetname:
+                    uc_sql += ' WHERE d."datasetname" = %s'
+                    uc_params.append(work_datasetname)
+                uc_sql += ' ORDER BY uc."t_id" ASC'
+                cur.execute(uc_sql, tuple(uc_params))
                 uc_rows = cur.fetchall() or []
 
     predio_features = [
@@ -1281,7 +1428,7 @@ def obtener_scope_geojson_asignacion(
 
     return {
         "asignacion_id": asignacion_id,
-        "schema_work": schema_work,
+        "schema_work": source_schema,
         "work_datasetname": work_datasetname,
         "predios": {
             "type": "FeatureCollection",
@@ -1314,6 +1461,7 @@ def obtener_detalle_predio_completo_asignacion(
 ):
     _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
     schema_work = _safe_ident(_read_schema_work(tenant), fallback="")
+    schema_main = _safe_ident(_read_schema_main(tenant), fallback="")
     asignacion_table = _app_table(tenant, "asignacion")
     asignacion_predio_table = _app_table(tenant, "asignacion_predio")
 
@@ -1379,7 +1527,7 @@ def obtener_detalle_predio_completo_asignacion(
                 status_code=404,
                 detail="El predio no pertenece a la asignacion indicada.",
             )
-        if rel.get("activo") is False:
+        if rel.get("activo") is False and rel.get("work_datasetname"):
             raise HTTPException(
                 status_code=404,
                 detail="El predio esta inactivo en la asignacion.",
@@ -1389,7 +1537,9 @@ def obtener_detalle_predio_completo_asignacion(
         numero_predial_rel = str(rel.get("numero_predial_nacional") or "").strip()
         work_datasetname = str(rel.get("work_datasetname") or "").strip()
         predio_numero_field = _read_predio_numero_field()
-        safe_schema = _safe_ident(schema_work, fallback="")
+        source_schema = schema_work if work_datasetname else schema_main
+        safe_schema = _safe_ident(source_schema, fallback="")
+        schema_work = safe_schema
 
         predio_rows: list[dict] = []
         if numero_predial_rel and work_datasetname:
@@ -1410,70 +1560,71 @@ def obtener_detalle_predio_completo_asignacion(
                 ),
                 params=(numero_predial_rel, work_datasetname),
                 limit=1,
+                )
+
+        if not predio_rows and numero_predial_rel:
+            predio_rows = _fetch_rows(
+                cur,
+                schema=safe_schema,
+                table="arb_predio",
+                where_sql=f'BTRIM(x.{_qident(predio_numero_field)}::text) = BTRIM(%s::text)',
+                params=(numero_predial_rel,),
+                limit=1,
             )
 
-            if not predio_rows and numero_predial_rel:
-                predio_rows = _fetch_rows(
-                    cur,
-                    schema=safe_schema,
-                    table="arb_predio",
-                    where_sql=f'BTRIM(x.{_qident(predio_numero_field)}::text) = BTRIM(%s::text)',
-                    params=(numero_predial_rel,),
-                    limit=1,
-                )
-
-            if not predio_rows and numero_predial_rel:
-                predio_rows = _fetch_rows(
-                    cur,
-                    schema=safe_schema,
-                    table="arb_predio",
-                    where_sql='BTRIM(x."numero_predial_anterior"::text) = BTRIM(%s::text)',
-                    params=(numero_predial_rel,),
-                    limit=1,
-                )
-
-            if not predio_rows:
-                predio_rows = _fetch_rows(
-                    cur,
-                    schema=safe_schema,
-                    table="arb_predio",
-                    where_sql='x."t_id"::text = %s',
-                    params=(str(predio_t_id),),
-                    limit=1,
-                )
-            if not predio_rows:
-                raise HTTPException(
-                    status_code=404,
-                    detail=(
-                        f"Predio {predio_t_id} no encontrado en {schema_work}. "
-                        f"NPN asociado: {numero_predial_rel or '-'}."
-                    ),
-                )
-            predio = dict(predio_rows[0] or {})
-            workspace_predio_t_id = _maybe_int(_first_non_empty(predio, "t_id")) or predio_t_id
-            numero_predial = _first_non_empty(predio, "numero_predial_nacional", "numero_predial")
-            if numero_predial and not predio.get("numero_predial_nacional"):
-                predio["numero_predial_nacional"] = str(numero_predial)
-
-            # Resolver dominios para evitar exponer codigos crudos (ej: 863).
-            condicion_predio_raw = _first_non_empty(predio, "condicion_predio")
-            predio["condicion_predio_nombre"] = _resolve_domain_name(
+        if not predio_rows and numero_predial_rel:
+            predio_rows = _fetch_rows(
                 cur,
-                tenant=tenant,
-                schema=schema_work,
-                table_candidates=[
-                    "arb_condicionprediotipo",
-                    "ilc_condicionprediotipo",
-                    "col_condicionprediotipo",
-                ],
-                raw_value=condicion_predio_raw,
-            ) or _first_non_empty(predio, "condicion_predio_nombre", "condicion_predio")
+                schema=safe_schema,
+                table="arb_predio",
+                where_sql='BTRIM(x."numero_predial_anterior"::text) = BTRIM(%s::text)',
+                params=(numero_predial_rel,),
+                limit=1,
+            )
 
+        if not predio_rows:
+            predio_rows = _fetch_rows(
+                cur,
+                schema=safe_schema,
+                table="arb_predio",
+                where_sql='x."t_id"::text = %s',
+                params=(str(predio_t_id),),
+                limit=1,
+            )
+        if not predio_rows:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"Predio {predio_t_id} no encontrado en {source_schema}. "
+                    f"NPN asociado: {numero_predial_rel or '-'}."
+                ),
+            )
+        predio = dict(predio_rows[0] or {})
+        workspace_predio_t_id = _maybe_int(_first_non_empty(predio, "t_id")) or predio_t_id
+        numero_predial = _first_non_empty(predio, "numero_predial_nacional", "numero_predial")
+        if numero_predial and not predio.get("numero_predial_nacional"):
+            predio["numero_predial_nacional"] = str(numero_predial)
+
+        # Resolver dominios para evitar exponer codigos crudos (ej: 863).
+        condicion_predio_raw = _first_non_empty(predio, "condicion_predio")
+        predio["condicion_predio_nombre"] = _resolve_domain_name(
+            cur,
+            tenant=tenant,
+            schema=safe_schema,
+            table_candidates=[
+                "arb_condicionprediotipo",
+                "ilc_condicionprediotipo",
+                "col_condicionprediotipo",
+            ],
+            raw_value=condicion_predio_raw,
+        ) or _first_non_empty(predio, "condicion_predio_nombre", "condicion_predio")
+
+        if True:
             tipo_predio_raw = _first_non_empty(predio, "tipo_predio", "tipo")
             predio["tipo_predio_nombre"] = _resolve_domain_name(
                 cur,
                 tenant=tenant,
-                schema=schema_work,
+                schema=safe_schema,
                 table_candidates=[
                     "arb_prediotipo",
                     "ilc_prediotipo",
@@ -1486,7 +1637,7 @@ def obtener_detalle_predio_completo_asignacion(
             predio["destinacion_economica_nombre"] = _resolve_domain_name(
                 cur,
                 tenant=tenant,
-                schema=schema_work,
+                schema=safe_schema,
                 table_candidates=[
                     "arb_destinacioneconomicatipo",
                     "ilc_destinacioneconomicatipo",
@@ -1503,7 +1654,7 @@ def obtener_detalle_predio_completo_asignacion(
             predio["estado_fmi_nombre"] = _resolve_domain_name(
                 cur,
                 tenant=tenant,
-                schema=schema_work,
+                schema=safe_schema,
                 table_candidates=[
                     "arb_estadofmitipo",
                     "ilc_estadofmitipo",
@@ -1515,7 +1666,7 @@ def obtener_detalle_predio_completo_asignacion(
             predio["tipo_captura_nombre"] = _resolve_domain_name(
                 cur,
                 tenant=tenant,
-                schema=schema_work,
+                schema=safe_schema,
                 table_candidates=[
                     "arb_metodoproducciontipo",
                     "ilc_metodoproducciontipo",
@@ -1525,7 +1676,7 @@ def obtener_detalle_predio_completo_asignacion(
 
             direcciones = _fetch_rows(
                 cur,
-                schema=schema_work,
+                schema=safe_schema,
                 table="arb_direccion",
                 where_sql='x."arb_predio_direccion"::text = %s',
                 params=(str(workspace_predio_t_id),),
@@ -1534,7 +1685,7 @@ def obtener_detalle_predio_completo_asignacion(
 
             datos_adicionales = _fetch_rows_by_fk_candidates(
                 cur,
-                schema=schema_work,
+                schema=safe_schema,
                 table_candidates=[
                     "arb_datosadicionaleslevantamientocatastral",
                     "ilc_datosadicionaleslevantamientocatastral",
@@ -1712,8 +1863,19 @@ def obtener_detalle_predio_completo_asignacion(
                     or _first_non_empty(cons or {}, "tipo_construccion")
                     or "Construccion"
                 )
-                unidad["tipo_calificacion_clase"] = unidad["tipo_construccion_nombre"]
-                unidad["tipo_calificacion_resumen"] = unidad["tipo_construccion_nombre"]
+                tipo_calificacion_uc = _resolve_domain_name(
+                    cur,
+                    tenant=tenant,
+                    schema=schema_work,
+                    table_candidates=["arb_calificaciontipo"],
+                    raw_value=_first_non_empty(caracteristica or {}, "tipo_calificacion"),
+                ) or _first_non_empty(
+                    unidad,
+                    "tipo_calificacion_nombre",
+                    "tipo_calificacion",
+                )
+                unidad["tipo_calificacion_clase"] = tipo_calificacion_uc or unidad["tipo_construccion_nombre"]
+                unidad["tipo_calificacion_resumen"] = tipo_calificacion_uc or unidad["tipo_construccion_nombre"]
 
                 unidad["tipo_planta_nombre"] = _resolve_domain_name(
                     cur,
@@ -2373,6 +2535,34 @@ def _procesar_retorno_xtf(
                             """,
                             (predios_nuevos_sync, asignacion_id),
                         )
+                    stage = "release_assignment_after_main_sync"
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            f"""
+                            UPDATE {asignacion_predio_table}
+                            SET activo = FALSE
+                            WHERE asignacion_id = %s
+                              AND activo IS DISTINCT FROM FALSE
+                            """,
+                            (asignacion_id,),
+                        )
+                        cur.execute(
+                            f"""
+                            UPDATE {asignacion_table}
+                            SET estado = 'CERRADA',
+                                work_datasetname = NULL,
+                                predios_soporte_extra = 0,
+                                error_msg = NULL
+                            WHERE id = %s
+                            """,
+                            (asignacion_id,),
+                        )
+                    workspace_service.remove_workspace_dataset(
+                        conn,
+                        tenant,
+                        work_dataset,
+                        schema_work,
+                    )
                 else:
                     stage = "refresh_workspace_predio_ids"
                     workspace_service.actualizar_predio_ids_desde_workspace(
@@ -2955,10 +3145,19 @@ def asignaciones_unidad_detalle(
         schema = _safe_ident(schema, fallback="")
         if not schema:
             raise HTTPException(status_code=400, detail="Esquema invalido.")
+    schema_main = _safe_ident(_read_schema_main(tenant), fallback="")
 
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             if not _table_exists(cur, schema, "arb_unidadconstruccion"):
+                if schema_main and schema_main != schema:
+                    return asignaciones_unidad_detalle(
+                        unidad_id=unidad_id,
+                        schema=schema_main,
+                        user=user,
+                        tenant=tenant,
+                        conn=conn,
+                    )
                 return JSONResponse(
                     {"error": "Tabla arb_unidadconstruccion no disponible en el esquema"},
                     status_code=500,
@@ -3029,6 +3228,7 @@ def asignaciones_unidad_detalle(
                     "usos_tradicionales_culturales",
                     "comienzo_vida_util_version",
                     "tipo_calificacion",
+                    "total_calificacion",
                     "cc_armazon",
                     "cc_muros",
                     "cc_cubierta",
@@ -3181,6 +3381,14 @@ def asignaciones_unidad_detalle(
             cur.execute(sql_unidad, (unidad_id,))
             row = cur.fetchone()
             if not row:
+                if schema_main and schema_main != schema:
+                    return asignaciones_unidad_detalle(
+                        unidad_id=unidad_id,
+                        schema=schema_main,
+                        user=user,
+                        tenant=tenant,
+                        conn=conn,
+                    )
                 return JSONResponse(
                     {"error": "Unidad de construcción no encontrada"},
                     status_code=404,

@@ -2043,6 +2043,7 @@
 
       msg.textContent = "Cargando detalle...";
       predioSeleccionadoDetalleId = null;
+      invalidarCachesDetalleAsignacion();
 
       // Reset coordinator avatar to default state
       const avatarImg = document.getElementById("d_coord_avatar");
@@ -2110,9 +2111,12 @@
         const eventos = Array.isArray(dataEvt) ? dataEvt : [];
         let lastSyncDate = "-";
         const syncEvents = eventos.filter(e =>
-          e && (e.evento === "PUBLICACION_MAIN" ||
+          e && (
+            e.evento === "PUBLICACION_MAIN" ||
             e.evento === "CARGA_WORKSPACE" ||
-            e.evento === "RETORNO_XTF_VALIDACION_ERROR")
+            String(e.mensaje || "").startsWith("[PUBLICACION_MAIN]") ||
+            String(e.mensaje || "").startsWith("[CARGA_WORKSPACE]")
+          )
         );
         if (syncEvents.length > 0) {
           lastSyncDate = fmtDate(syncEvents[syncEvents.length - 1].creado_en);
@@ -2252,6 +2256,7 @@
         const successSuffix = rulesWithIssues.length ? ` | reglas: ${rulesWithIssues.join(", ")}` : "";
         setXtfSyncState("success", successSuffix);
         msg.textContent = data?.message || "Retorno XTF importado.";
+        invalidarCachesDetalleAsignacion();
         await cargarDetalle();
       } catch (err) {
         setXtfSyncState("error");
@@ -2503,6 +2508,7 @@
         }
 
         // Reload parent detail page
+        invalidarCachesDetalleAsignacion();
         await cargarDetalle();
 
       } catch (err) {
@@ -2851,6 +2857,7 @@
       if (!SHOULD_USE_WMS_DETAIL || !assignmentWmsLayerDetail?.getSource) return false;
       const asigId = Number(scopePayload?.asignacion_id);
       const workDataset = String(scopePayload?.work_datasetname ?? "").trim();
+      if (!workDataset) return false;
       const basketIdsSet = new Set();
       const predialSet = new Set();
       const pushBasket = (v) => {
@@ -4246,58 +4253,107 @@
     }
 
     function agruparConstruccionesDesdeDetalleEdit(unidades = [], numeroPredial = "", construccionesRaw = []) {
-      const grupos = new Map();
+      const normalizarUnidad = (unidad = {}, construccionId = null) => ({
+        ...unidad,
+        construccion_id: unidad?.construccion_id ?? unidad?.construccion_t_id ?? construccionId,
+        identificador:
+          unidad?.identificador ??
+          unidad?.caracteristica_identificador ??
+          unidad?.codigo ??
+          unidad?.t_id ??
+          "---",
+        tipo_unidad_construccion_nombre:
+          unidad?.tipo_unidad_construccion_nombre ??
+          unidad?.tipo_calificacion_resumen ??
+          unidad?.tipo_calificacion_clase ??
+          "---",
+      });
 
-      const constMap = new Map();
-      if (Array.isArray(construccionesRaw)) {
-        construccionesRaw.forEach((c) => {
-          if (c?.t_id) {
-            constMap.set(String(c.t_id), c);
-          }
+      if (Array.isArray(construccionesRaw) && construccionesRaw.length) {
+        return construccionesRaw.map((c) => {
+          const consId = c?.t_id ?? c?.id ?? null;
+          const nestedUnits = Array.isArray(c?.unidades) ? c.unidades : [];
+          const fallbackUnits = Array.isArray(unidades)
+            ? unidades.filter((unidad) => String(unidad?.construccion_id ?? unidad?.construccion_t_id ?? "") === String(consId ?? ""))
+            : [];
+          const unidadesMap = new Map();
+
+          [...nestedUnits, ...fallbackUnits].forEach((unidad) => {
+            const normalizada = normalizarUnidad(unidad, consId);
+            const key = String(normalizada?.t_id ?? normalizada?.unidad_id ?? normalizada?.id ?? `${consId}-${unidadesMap.size}`);
+            if (!unidadesMap.has(key)) {
+              unidadesMap.set(key, normalizada);
+            }
+          });
+
+          return {
+            id: consId,
+            t_id: consId,
+            identificador: c?.identificador || c?.etiqueta || consId,
+            tipo_construccion_nombre: c?.tipo_construccion_nombre,
+            predio_numero_predial: c?.numero_predial_nacional || c?.predio_numero_predial || numeroPredial,
+            tipo_dominio_nombre: c?.tipo_dominio_nombre,
+            total_mezaninis: c?.total_mezaninis,
+            etiqueta: c?.etiqueta,
+            total_pisos: c?.total_pisos,
+            total_semisotanos: c?.total_semisotanos,
+            estado_construccion_nombre: c?.estado_construccion_nombre,
+            total_sotanos: c?.total_sotanos,
+            area_total_construccion: c?.area_total_construccion,
+            observacion: c?.observacion,
+            unidades: Array.from(unidadesMap.values()),
+          };
         });
       }
 
+      const grupos = new Map();
       unidades.forEach((unidad) => {
-        const consId = unidad.construccion_id || unidad.construccion_t_id;
+        const consId = unidad?.construccion_id || unidad?.construccion_t_id;
         if (!consId) return;
+        const consKey = String(consId);
 
-        if (!grupos.has(consId)) {
-          const consInfo = constMap.get(String(consId)) || {};
-          grupos.set(consId, {
+        if (!grupos.has(consKey)) {
+          grupos.set(consKey, {
             id: consId,
-            identificador: unidad.construccion_identificador || unidad.identificador || consInfo.identificador,
-            tipo_construccion_nombre: unidad.tipo_construccion_nombre || consInfo.tipo_construccion_nombre,
-            predio_numero_predial: unidad.predio_numero_predial || numeroPredial,
-            tipo_dominio_nombre: consInfo.tipo_dominio_nombre,
-            total_mezaninis: consInfo.total_mezaninis,
-            etiqueta: consInfo.etiqueta,
-            total_pisos: consInfo.total_pisos,
-            total_semisotanos: consInfo.total_semisotanos,
-            estado_construccion_nombre: consInfo.estado_construccion_nombre,
-            total_sotanos: consInfo.total_sotanos,
-            area_total_construccion: consInfo.area_total_construccion,
-            observacion: consInfo.observacion,
+            t_id: consId,
+            identificador: unidad?.construccion_identificador || unidad?.identificador || consId,
+            tipo_construccion_nombre: unidad?.tipo_construccion_nombre,
+            predio_numero_predial: unidad?.predio_numero_predial || numeroPredial,
+            tipo_dominio_nombre: unidad?.tipo_dominio_nombre,
+            total_mezaninis: unidad?.total_mezaninis,
+            etiqueta: unidad?.etiqueta,
+            total_pisos: unidad?.total_pisos,
+            total_semisotanos: unidad?.total_semisotanos,
+            estado_construccion_nombre: unidad?.estado_construccion_nombre,
+            total_sotanos: unidad?.total_sotanos,
+            area_total_construccion: unidad?.area_total_construccion,
+            observacion: unidad?.observacion,
             unidades: [],
           });
         }
 
-        grupos.get(consId).unidades.push({
-          ...unidad,
-          identificador:
-            unidad?.identificador ??
-            unidad?.caracteristica_identificador ??
-            unidad?.codigo ??
-            unidad?.t_id ??
-            "---",
-          tipo_unidad_construccion_nombre:
-            unidad?.tipo_unidad_construccion_nombre ??
-            unidad?.tipo_calificacion_resumen ??
-            unidad?.tipo_calificacion_clase ??
-            "---",
+        const grupo = grupos.get(consKey);
+        const normalizada = normalizarUnidad(unidad, consId);
+        const unitKey = String(normalizada?.t_id ?? normalizada?.unidad_id ?? normalizada?.id ?? "");
+        const yaExiste = Array.isArray(grupo?.unidades) && grupo.unidades.some((item) => {
+          const itemKey = String(item?.t_id ?? item?.unidad_id ?? item?.id ?? "");
+          return unitKey && itemKey === unitKey;
         });
+
+        if (!yaExiste) {
+          grupo.unidades.push(normalizada);
+        }
       });
 
       return Array.from(grupos.values());
+    }
+
+    function invalidarCachesDetalleAsignacion() {
+      detallePredioCacheDetail = new Map();
+      detallePredioCacheEdit = new Map();
+      unidadDetalleCacheEdit = new Map();
+      detallePredioActualEdit = null;
+      unidadDetalleActualEdit = null;
     }
 
     async function aplicarDetallePredioSeleccionadoEdit(predio, detalle = {}) {

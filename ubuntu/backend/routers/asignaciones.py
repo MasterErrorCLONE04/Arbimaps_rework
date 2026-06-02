@@ -27,7 +27,14 @@ from tenants import TenantContext, app_table, get_tenant_db_connection, main_tab
 router = APIRouter(prefix="/asignaciones", tags=["asignaciones"])
 logger = logging.getLogger(__name__)
 
-AsignacionEstado = Literal["CREANDO_WORKSPACE", "EN_TRABAJO", "ERROR_WORKSPACE", "CERRADA"]
+AsignacionEstado = Literal[
+    "CREANDO_WORKSPACE",
+    "EN_TRABAJO",
+    "ERROR_WORKSPACE",
+    "PENDIENTE_PUBLICACION",
+    "SINCRONIZADO",
+    "CERRADA",
+]
 
 
 def _user_role_scope(user: Optional[dict]) -> tuple[str, str]:
@@ -1154,7 +1161,7 @@ def listar_asignaciones(
         data.append(
             AsignacionListadoItem(
                 id=asig_id,
-                estado=row.get("estado", "CREANDO_WORKSPACE"),
+                estado=row.get("estado_resuelto") or row.get("estado", "CREANDO_WORKSPACE"),
                 fecha_creacion=(fecha.isoformat() if isinstance(fecha, datetime) else str(fecha)) if fecha else None,
                 coordinador=coordinador_display,
                 usuario_asignado=usuario_display,
