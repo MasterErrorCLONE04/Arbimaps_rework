@@ -6,6 +6,7 @@ import tempfile
 import hashlib
 import json
 import time
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -122,6 +123,147 @@ def _read_required_baskets() -> set[str]:
 
 def _read_predio_numero_field() -> str:
     return _safe_ident("numero_predial", fallback="numero_predial")
+
+
+def _extract_retorno_xtf_bids(xtf_path: str) -> list[str]:
+    try:
+        root = ET.parse(xtf_path).getroot()
+    except (ET.ParseError, OSError) as exc:
+        raise export_service.ExportServiceError(
+            status_code=400,
+            detail=f"No se pudo leer el XTF de retorno: {exc}",
+        ) from exc
+
+    bids: list[str] = []
+    seen: set[str] = set()
+    data_section = None
+    for child in root:
+        tag = child.tag.split("}")[-1].strip().lower()
+        if tag == "datasection":
+            data_section = child
+            break
+
+    basket_nodes = list(data_section) if data_section is not None else list(root.iter())
+    for node in basket_nodes:
+        bid = str(node.attrib.get("BID") or node.attrib.get("bid") or "").strip()
+        if bid and bid not in seen:
+            seen.add(bid)
+            bids.append(bid)
+
+    return bids
+
+
+_RETURN_FILENAME_ASSIGNMENT_RE = re.compile(
+    r"^asignacion(?:_[a-z0-9]+)?_(?P<assignment_id>\d+)_",
+    re.IGNORECASE,
+)
+
+
+def _extract_assignment_id_from_generated_xtf_filename(filename: str) -> Optional[int]:
+    name = os.path.basename(str(filename or "").strip())
+    if not name:
+        return None
+    match = _RETURN_FILENAME_ASSIGNMENT_RE.match(name)
+    if not match:
+        return None
+    try:
+        return int(match.group("assignment_id"))
+    except (TypeError, ValueError):
+        return None
+
+
+def _validate_retorno_xtf_filename_identity(filename: str, asignacion_id: int) -> None:
+    source_assignment_id = _extract_assignment_id_from_generated_xtf_filename(filename)
+    if source_assignment_id is None:
+        return
+    if int(source_assignment_id) != int(asignacion_id):
+        raise export_service.ExportServiceError(
+            status_code=409,
+            detail=(
+                "El archivo XTF pertenece a otra asignacion. "
+                f"Fue generado para la asignacion {source_assignment_id} y no para la asignacion {asignacion_id}."
+            ),
+        )
+
+
+def _fetch_assignment_work_basket_tids(
+    conn,
+    *,
+    schema_work: str,
+    work_datasetname: str,
+) -> list[str]:
+    if not work_datasetname:
+        return []
+
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT DISTINCT BTRIM(b.t_ili_tid::text) AS basket_tid
+            FROM {_qident(schema_work)}.t_ili2db_basket b
+            JOIN {_qident(schema_work)}.t_ili2db_dataset d
+              ON d.t_id = b.dataset
+            WHERE d.datasetname = %s
+              AND NULLIF(BTRIM(b.t_ili_tid::text), '') IS NOT NULL
+            ORDER BY 1
+            """,
+            (work_datasetname,),
+        )
+        return [
+            str(row[0]).strip()
+            for row in (cur.fetchall() or [])
+            if row and row[0] is not None and str(row[0]).strip()
+        ]
+
+
+def _validate_retorno_xtf_assignment_identity(
+    conn,
+    *,
+    schema_work: str,
+    work_datasetname: str,
+    xtf_path: str,
+) -> dict[str, list[str]]:
+    expected_bids = _fetch_assignment_work_basket_tids(
+        conn,
+        schema_work=schema_work,
+        work_datasetname=work_datasetname,
+    )
+    incoming_bids = _extract_retorno_xtf_bids(xtf_path)
+
+    expected_set = {item.strip() for item in expected_bids if str(item).strip()}
+    incoming_set = {item.strip() for item in incoming_bids if str(item).strip()}
+
+    if not expected_set:
+        logger.warning(
+            "No expected basket tids found for work_datasetname=%s; skipping retorno identity check.",
+            work_datasetname,
+        )
+        return {
+            "expected_bids": sorted(expected_set),
+            "incoming_bids": sorted(incoming_set),
+        }
+
+    if not incoming_set:
+        raise export_service.ExportServiceError(
+            status_code=409,
+            detail=(
+                "El XTF de retorno no contiene baskets identificables (BID). "
+                "No se puede comprobar que pertenezca a la asignacion actual."
+            ),
+        )
+
+    if not incoming_set.issubset(expected_set):
+        raise export_service.ExportServiceError(
+            status_code=409,
+            detail=(
+                "El XTF de retorno no corresponde a la asignacion actual. "
+                "Los baskets del archivo no coinciden con el workspace activo de la asignacion."
+            ),
+        )
+
+    return {
+        "expected_bids": sorted(expected_set),
+        "incoming_bids": sorted(incoming_set),
+    }
 
 
 def _ensure_assignment_access(
@@ -2308,6 +2450,18 @@ def _procesar_retorno_xtf(
                 "publish_to_main": publish_to_main,
             },
         )
+
+        stage = "validate_xtf_filename_identity"
+        _validate_retorno_xtf_filename_identity(archivo.filename, asignacion_id)
+
+        stage = "validate_xtf_assignment_identity"
+        with connection_manager.connection(tenant) as conn:
+            _validate_retorno_xtf_assignment_identity(
+                conn,
+                schema_work=schema_work,
+                work_datasetname=work_dataset,
+                xtf_path=tmp_path,
+            )
 
         stage = "create_retorno_record"
         with connection_manager.connection(tenant) as conn:

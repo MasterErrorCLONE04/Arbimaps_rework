@@ -1,4 +1,4 @@
-{% set rp = rp if rp is defined else request.scope.get('root_path','') %} {% set
+﻿{% set rp = rp if rp is defined else request.scope.get('root_path','') %} {% set
 view = view if view is defined else 'visor' %} {% set limited_assignment_role =
 effective_role in ['digitalizador', 'reconocedor'] %}
 <!doctype html>
@@ -197,7 +197,6 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                           <span>Ver asignaciones</span>
                         </a>
 
-                        {% if not limited_assignment_role %}
                         <a
                           class="popupItem {% if asig_tab == 'detalle' %}active{% endif %}"
                           href="{{ rp }}/panel/asignaciones/detalle#asig-open"
@@ -205,7 +204,6 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                           <i class="bi bi-binoculars"></i>
                           <span>Detalles Asignación</span>
                         </a>
-                        {% endif %}
                       </div>
                     </div>
                   </div>
@@ -412,7 +410,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
       </div>
     </div>
 
-    <!-- SIDEBAR MÓVIL -->
+    <!-- SIDEBAR M�"VIL -->
     <div
       class="offcanvas offcanvas-start d-lg-none mobile-offcanvas-sidebar"
       tabindex="-1"
@@ -515,7 +513,6 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                     <span>Ver asignaciones</span>
                   </a>
 
-                  {% if not limited_assignment_role %}
                   <a
                     class="popupItem {% if asig_tab == 'detalle' %}active{% endif %}"
                     href="{{ rp }}/panel/asignaciones/detalle#asig-open"
@@ -523,7 +520,6 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                     <i class="bi bi-binoculars"></i>
                     <span>Detalles Asignación</span>
                   </a>
-                  {% endif %}
                 </div>
               </div>
             </div>
@@ -635,3 +631,4 @@ effective_role in ['digitalizador', 'reconocedor'] %}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
+

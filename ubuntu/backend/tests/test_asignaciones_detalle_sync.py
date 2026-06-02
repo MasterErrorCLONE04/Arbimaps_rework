@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from io import BytesIO
 
 from fastapi import UploadFile
+import pytest
 
 from routers import asignaciones_detalle
 from tenants import TenantContext
@@ -120,6 +121,14 @@ def _patch_common(monkeypatch):
         asignaciones_detalle,
         "_ili2pg_import",
         lambda conn, tenant, schema, datasetname, xtf_path: None,
+    )
+    monkeypatch.setattr(
+        asignaciones_detalle,
+        "_validate_retorno_xtf_assignment_identity",
+        lambda conn, schema_work, work_datasetname, xtf_path: {
+            "expected_bids": ["basket-current"],
+            "incoming_bids": ["basket-current"],
+        },
     )
 
     monkeypatch.setattr(
@@ -335,3 +344,61 @@ def test_procesar_retorno_xtf_publish_main_interpolates_assignment_table_sql(mon
     assert "arbimaps_app.asignacion_predio" in sync_sql
     assert "SET estado = 'CERRADA'" in assignment_release_sql
     assert "SET activo = FALSE" in predio_release_sql
+
+
+def test_procesar_retorno_xtf_rejects_stale_xtf_from_other_assignment(monkeypatch):
+    _patch_common(monkeypatch)
+    monkeypatch.setattr(
+        asignaciones_detalle,
+        "_validate_retorno_xtf_assignment_identity",
+        lambda conn, schema_work, work_datasetname, xtf_path: (_ for _ in ()).throw(
+            asignaciones_detalle.export_service.ExportServiceError(
+                status_code=409,
+                detail=(
+                    "El XTF de retorno no corresponde a la asignacion actual. "
+                    "Los baskets del archivo no coinciden con el workspace activo de la asignacion."
+                ),
+            )
+        ),
+    )
+
+    tenant = _tenant()
+    archivo = UploadFile(filename="retorno_viejo.xtf", file=BytesIO(b"<xtf/>"))
+
+    with pytest.raises(Exception) as exc_info:
+        asignaciones_detalle._procesar_retorno_xtf(
+            tenant,
+            _FakeConnectionManager(),
+            142,
+            archivo,
+            {"username": "coord1", "role": "coordinador"},
+            publish_to_main=True,
+        )
+
+    exc = exc_info.value
+    assert getattr(exc, "status_code", None) == 409
+    assert "no corresponde a la asignacion actual" in str(getattr(exc, "detail", "")).lower()
+
+
+def test_procesar_retorno_xtf_rejects_filename_from_other_assignment(monkeypatch):
+    _patch_common(monkeypatch)
+
+    tenant = _tenant()
+    archivo = UploadFile(
+        filename="asignacion_sucre_143_juan_manuel_abcd1234.xtf",
+        file=BytesIO(b"<xtf/>"),
+    )
+
+    with pytest.raises(Exception) as exc_info:
+        asignaciones_detalle._procesar_retorno_xtf(
+            tenant,
+            _FakeConnectionManager(),
+            146,
+            archivo,
+            {"username": "coord1", "role": "coordinador"},
+            publish_to_main=True,
+        )
+
+    exc = exc_info.value
+    assert getattr(exc, "status_code", None) == 409
+    assert "fue generado para la asignacion 143" in str(getattr(exc, "detail", "")).lower()

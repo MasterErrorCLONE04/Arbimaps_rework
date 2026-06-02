@@ -37,7 +37,7 @@ xtf_service = XTFValidationService()
 
 # si algn da usas /api
 BASE_PATH = os.getenv("APP_BASE_PATH", "").rstrip("/")
-ASIGNACIONES_ROLES = {"admin", "coordinador"}
+ASIGNACIONES_ROLES = {"admin", "coordinador", "digitalizador", "reconocedor"}
 
 
 # -------------------------------------------------
