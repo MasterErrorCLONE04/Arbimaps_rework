@@ -4472,6 +4472,12 @@
         const autorizaNotif = item.autoriza_notificacion_correo === true || item.autoriza_notificacion_correo === 'true' || item.autoriza_notificacion_correo === 't' ? 'Sí' :
           (item.autoriza_notificacion_correo === false || item.autoriza_notificacion_correo === 'false' || item.autoriza_notificacion_correo === 'f' ? 'No' : '---');
 
+        const campesinoTexto = item.autorreconocimiento_campesino === true || item.autorreconocimiento_campesino === 'true' || item.autorreconocimiento_campesino === 't' ? 'Sí' :
+          (item.autorreconocimiento_campesino === false || item.autorreconocimiento_campesino === 'false' || item.autorreconocimiento_campesino === 'f' ? 'No' : '---');
+
+        const etnicoTexto = item.autorreconocimiento_etnico === true || item.autorreconocimiento_etnico === 'true' || item.autorreconocimiento_etnico === 't' ? 'Sí' :
+          (item.autorreconocimiento_etnico === false || item.autorreconocimiento_etnico === 'false' || item.autorreconocimiento_etnico === 'f' ? 'No' : '---');
+
         return `
             <tr class="fila-interesado-principal-edit" data-detalle-id="detalleInteresadoEdit_${index}">
                 <td>
@@ -4565,7 +4571,7 @@
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Autorreconocimiento étnico</div>
-                                                <div class="text-end mb-0">${item.autorreconocimiento_etnico || "---"}</div>
+                                                <div class="text-end mb-0">${etnicoTexto}</div>
                                             </div>
                                         </div>
 
@@ -4579,7 +4585,7 @@
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Autorreconocimiento campesino</div>
-                                                <div class="text-end mb-0">${item.autorreconocimiento_campesino || "---"}</div>
+                                                <div class="text-end mb-0">${campesinoTexto}</div>
                                             </div>
                                         </div>
                                     </div>
