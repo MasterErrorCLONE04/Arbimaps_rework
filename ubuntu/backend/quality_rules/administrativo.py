@@ -2,6 +2,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from .base import DatasetReader, RuleIssue
+from .municipality_context import get_dataset_municipality_context
 
 COMPONENT_SLUG = "administrativo"
 DEFAULT_RULE_IDS = frozenset({
@@ -1173,8 +1174,10 @@ def _rule_1_8(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
-#def _rule_1_9(dataset: DatasetReader) -> list[RuleIssue]:
+def _rule_1_9(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
+    municipality_context = get_dataset_municipality_context(dataset)
+    expected_department = municipality_context.department_code
     issues: list[RuleIssue] = []
 
     for table_name, row in helper.iter_predios():
@@ -1208,7 +1211,7 @@ def _rule_1_8(dataset: DatasetReader) -> list[RuleIssue]:
         field_name, numero_str, raw_value = result
         departamento = numero_str[0:2]
 
-        if departamento != "41":
+        if departamento != expected_department:
             issues.append(
                 RuleIssue(
                     rule_id="1.9",
@@ -1221,7 +1224,9 @@ def _rule_1_8(dataset: DatasetReader) -> list[RuleIssue]:
                         "valor": raw_value,
                         "numero": numero_str,
                         "valor_encontrado_1_2": departamento,
-                        "valores_permitidos_1_2": ["41"],
+                        "valores_permitidos_1_2": [expected_department],
+                        "municipio_validacion": municipality_context.tenant_code,
+                        "departamento_esperado": municipality_context.department_name,
                     }
                 )
             )
@@ -1229,8 +1234,10 @@ def _rule_1_8(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
-#def _rule_1_10(dataset: DatasetReader) -> list[RuleIssue]:
+def _rule_1_10(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
+    municipality_context = get_dataset_municipality_context(dataset)
+    expected_municipality = municipality_context.municipality_code
     issues: list[RuleIssue] = []
 
     for table_name, row in helper.iter_predios():
@@ -1264,7 +1271,7 @@ def _rule_1_8(dataset: DatasetReader) -> list[RuleIssue]:
         field_name, numero_str, raw_value = result
         municipio = numero_str[2:5]
 
-        if municipio != "001":
+        if municipio != expected_municipality:
             issues.append(
                 RuleIssue(
                     rule_id="1.10",
@@ -1277,7 +1284,9 @@ def _rule_1_8(dataset: DatasetReader) -> list[RuleIssue]:
                         "valor": raw_value,
                         "numero": numero_str,
                         "valor_encontrado_3_5": municipio,
-                        "valores_permitidos_3_5": ["001"],
+                        "valores_permitidos_3_5": [expected_municipality],
+                        "municipio_validacion": municipality_context.tenant_code,
+                        "municipio_esperado": municipality_context.municipality_name,
                     }
                 )
             )
@@ -1529,9 +1538,14 @@ def _rule_1_13(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
-#def _rule_1_14(dataset: DatasetReader) -> list[RuleIssue]:
+def _rule_1_14(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
+    municipality_context = get_dataset_municipality_context(dataset)
+    expected_orip = municipality_context.orip_code
     issues: list[RuleIssue] = []
+
+    if not expected_orip:
+        return issues
 
     for table_name, row in helper.iter_predios():
         codigo_orip_match = helper._extract_field(
@@ -1574,9 +1588,7 @@ def _rule_1_13(dataset: DatasetReader) -> list[RuleIssue]:
             )
             continue
 
-        orip = "200"
-
-        if codigo_orip_str != orip:
+        if codigo_orip_str != expected_orip:
             issues.append(
                 RuleIssue(
                     rule_id="1.14",
@@ -1588,7 +1600,9 @@ def _rule_1_13(dataset: DatasetReader) -> list[RuleIssue]:
                         "class": table_name,
                         "valor": raw_value,
                         "codigo_orip": codigo_orip_str,
-                        "orip_esperado": orip,
+                        "orip_esperado": expected_orip,
+                        "municipio_validacion": municipality_context.tenant_code,
+                        "municipio_esperado": municipality_context.municipality_name,
                     },
                 )
             )
@@ -1860,7 +1874,7 @@ def _rule_1_16(dataset: DatasetReader) -> list[RuleIssue]:
                     object_ref=object_ref,
                     message=(
                         "Los predios con destinación económica 'Lote_Rural' deben estar "
-                        "relacionados a números prediales rurales; los campos 5-6 del "
+                        "relacionados a números prediales rurales; los campos 6-7 del "
                         "Numero_Predial_Nacional deben ser '00'."
                     ),
                     details={
@@ -7541,12 +7555,12 @@ RULE_FUNCTIONS = {
     "1.6": _rule_1_6,
     "1.7": _rule_1_7,
     "1.8": _rule_1_8,
-    #"1.9": _rule_1_9,
-    #"1.10": _rule_1_10,
+    "1.9": _rule_1_9,
+    "1.10": _rule_1_10,
     "1.11": _rule_1_11,
     "1.12": _rule_1_12,
     "1.13": _rule_1_13,
-    #"1.14": _rule_1_14,
+    "1.14": _rule_1_14,
     "1.15": _rule_1_15,
     "1.16": _rule_1_16,
     "1.17": _rule_1_17,

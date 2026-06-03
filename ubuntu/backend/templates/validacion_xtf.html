@@ -939,7 +939,7 @@
     }
 
     .component-summary-card:hover,
-    .component-summary-card:focus {
+    .component-summary-card:focus-visible {
         border-color: var(--validation-navy);
         box-shadow: 0 3px 8px rgba(0, 52, 92, 0.16);
         transform: translateY(-1px);
@@ -1773,6 +1773,15 @@
                 selectedComponent = selectedComponent === component ? '' : component;
                 updateDownloads();
             });
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!selectedComponent) return;
+            if (event.target.closest('[data-component-filter]')) return;
+            if (event.target.closest('[data-component-download]')) return;
+
+            selectedComponent = '';
+            updateDownloads();
         });
 
         updateDownloads();

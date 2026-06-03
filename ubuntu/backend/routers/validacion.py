@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 
 from services.validation_excel_report import MIME_TYPE as EXCEL_MIME_TYPE
 from services.xtf_validation_service import XTFValidationService
+from routers.auth import get_user
 
 router = APIRouter(prefix="/validacion", tags=["Validación"])
 templates = Jinja2Templates(directory="templates")
@@ -58,7 +59,11 @@ async def subir_xtf(request: Request, file: UploadFile = File(...)):
                 status_code=400,
             )
 
-        result = await _get_xtf_service().save_xtf(file)
+        user = get_user(request) or {}
+        result = await _get_xtf_service().save_xtf(
+            file,
+            municipality_code=user.get("municipality_code"),
+        )
 
         return templates.TemplateResponse(
             "validacion_xtf.html",

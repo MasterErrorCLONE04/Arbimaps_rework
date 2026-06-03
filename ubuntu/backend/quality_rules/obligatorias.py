@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .base import DatasetReader, RuleIssue
+from .municipality_context import get_dataset_municipality_context
 import json
 import re
 
@@ -314,11 +315,10 @@ class ObligatoriasHelper:
 #------------------ reglas ------------------------------
 
 def rule_11_1(dataset: DatasetReader) -> list[RuleIssue]:
-    # Regla 11.1 deshabilitada temporalmente
-    return []
-
-    """
     helper = ObligatoriasHelper(dataset)
+    municipality_context = get_dataset_municipality_context(dataset)
+    expected_department = municipality_context.department_code
+    expected_municipality = municipality_context.municipality_code
     issues: list[RuleIssue] = []
 
     for table_name, row in helper.iter_predios():
@@ -330,7 +330,7 @@ def rule_11_1(dataset: DatasetReader) -> list[RuleIssue]:
         codigo_departamento = numero_predial[0:2]
         codigo_municipio = numero_predial[2:5]
 
-        if codigo_departamento == "41" and codigo_municipio == "001":
+        if codigo_departamento == expected_department and codigo_municipio == expected_municipality:
             continue
 
         issues.append(
@@ -346,17 +346,17 @@ def rule_11_1(dataset: DatasetReader) -> list[RuleIssue]:
                     "campo": "numero_predial",
                     "numero_predial": numero_predial,
                     "valor_encontrado_1_2": codigo_departamento,
-                    "valor_esperado_1_2": "41",
-                    "departamento_esperado": "HUILA",
+                    "valor_esperado_1_2": expected_department,
+                    "departamento_esperado": municipality_context.department_name,
                     "valor_encontrado_3_5": codigo_municipio,
-                    "valor_esperado_3_5": "001",
-                    "municipio_esperado": "NEIVA",
+                    "valor_esperado_3_5": expected_municipality,
+                    "municipio_esperado": municipality_context.municipality_name,
+                    "municipio_validacion": municipality_context.tenant_code,
                 },
             )
         )
 
     return issues
-    """
 
 
 def rule_11_2(dataset: DatasetReader) -> list[RuleIssue]:

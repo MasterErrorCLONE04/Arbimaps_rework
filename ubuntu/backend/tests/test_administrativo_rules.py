@@ -1,4 +1,7 @@
 from quality_rules.administrativo import (
+    _rule_1_9,
+    _rule_1_10,
+    _rule_1_14,
     _rule_1_15,
     _rule_1_16,
     _rule_1_17,
@@ -7,6 +10,7 @@ from quality_rules.administrativo import (
     _rule_1_24,
 )
 from quality_rules.dataset import InMemoryDataset
+from quality_rules.obligatorias import rule_11_1
 
 
 def test_empty_destinacion_errors_are_not_duplicated_by_table_aliases():
@@ -53,3 +57,72 @@ def test_empty_required_fields_are_reported_before_missing_t_id():
 
     assert len(_rule_1_15(predio_sin_t_id)) == 1
     assert len(_rule_1_21(condicion_sin_t_id)) == 1
+
+
+def test_divipola_rules_use_selected_municipality_context():
+    dataset = InMemoryDataset(
+        {
+            "ARB_Predio": [
+                {
+                    "t_id": "predio-almaguer",
+                    "Numero_Predial_Nacional": "19022" + "0" * 25,
+                    "Codigo_ORIP": "122",
+                }
+            ],
+        },
+        metadata={"municipality_code": "almaguer"},
+    )
+
+    assert _rule_1_9(dataset) == []
+    assert _rule_1_10(dataset) == []
+    assert _rule_1_14(dataset) == []
+
+
+def test_divipola_rule_11_1_uses_selected_municipality_context():
+    dataset = InMemoryDataset(
+        {
+            "ARB_Predio": [
+                {
+                    "t_id": "predio-saravena",
+                    "numero_predial": "81736" + "0" * 25,
+                }
+            ],
+        },
+        metadata={"municipality_code": "saravena"},
+    )
+
+    assert rule_11_1(dataset) == []
+
+
+def test_orip_rule_uses_selected_municipality_context():
+    dataset = InMemoryDataset(
+        {
+            "ARB_Predio": [
+                {
+                    "t_id": "predio-sucre",
+                    "Numero_Predial_Nacional": "19785" + "0" * 25,
+                    "Codigo_ORIP": "122",
+                }
+            ],
+        },
+        metadata={"municipality_code": "sucre"},
+    )
+
+    assert _rule_1_14(dataset) == []
+
+
+def test_orip_rule_uses_saravena_orip_context():
+    dataset = InMemoryDataset(
+        {
+            "ARB_Predio": [
+                {
+                    "t_id": "predio-saravena",
+                    "Numero_Predial_Nacional": "81736" + "0" * 25,
+                    "Codigo_ORIP": "410",
+                }
+            ],
+        },
+        metadata={"municipality_code": "saravena"},
+    )
+
+    assert _rule_1_14(dataset) == []

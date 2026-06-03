@@ -56,7 +56,7 @@ class XTFValidationService:
         extra_args = os.getenv("ILIVALIDATOR_EXTRA_ARGS", "")
         self.extra_args = shlex.split(extra_args) if extra_args else []
 
-    async def save_xtf(self, uploaded_file):
+    async def save_xtf(self, uploaded_file, *, municipality_code: str | None = None):
         job_id = str(uuid4())
         safe_name = uploaded_file.filename.replace(" ", "_")
         file_path = self.upload_dir / f"{job_id}_{safe_name}"
@@ -64,7 +64,12 @@ class XTFValidationService:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(uploaded_file.file, buffer)
 
-        validation = await asyncio.to_thread(self._validate_xtf, job_id, file_path)
+        validation = await asyncio.to_thread(
+            self._validate_xtf,
+            job_id,
+            file_path,
+            municipality_code,
+        )
 
         result = {
             "job_id": job_id,
@@ -72,6 +77,7 @@ class XTFValidationService:
             "stored_path": str(file_path),
             "stored_name": file_path.name,
             "generated_at": datetime.now().isoformat(timespec="seconds"),
+            "municipality_code": municipality_code,
             "validation": validation,
         }
         self._write_job_result(job_id, result)
@@ -277,11 +283,19 @@ class XTFValidationService:
             raise FileNotFoundError("Identificador de validacion no valido.")
         return (self.report_dir / f"{safe_job_id}.json").resolve()
 
-    def _validate_xtf(self, job_id: str, file_path: Path) -> dict[str, Any]:
+    def _validate_xtf(
+        self,
+        job_id: str,
+        file_path: Path,
+        municipality_code: str | None = None,
+    ) -> dict[str, Any]:
         log_path = (self.log_dir / f"{job_id}.log").resolve()
         report_path = (self.report_dir / f"{job_id}.xml").resolve()
         model_names = self._extract_xtf_model_names(file_path)
-        quality_result = self._run_internal_quality(file_path)
+        quality_result = self._run_internal_quality(
+            file_path,
+            municipality_code=municipality_code,
+        )
         quality, rule_errors = self._quality_and_rule_errors(quality_result)
 
         validator_path = self.validator_jar
@@ -1211,10 +1225,18 @@ class XTFValidationService:
         message = str(error.get("message") or "").strip()
         return (self._rule_sort_key(rule_id), object_id, object_class, message)
 
-    def _run_internal_quality(self, file_path: Path) -> dict[str, Any]:
+    def _run_internal_quality(
+        self,
+        file_path: Path,
+        *,
+        municipality_code: str | None = None,
+    ) -> dict[str, Any]:
         """Ejecuta las reglas internas de calidad y siempre devuelve una estructura válida."""
         try:
-            result = run_quality_checks(file_path)
+            result = run_quality_checks(
+                file_path,
+                municipality_code=municipality_code,
+            )
         except Exception as exc:
             empty = self._empty_quality_result()
             empty["issues"] = [

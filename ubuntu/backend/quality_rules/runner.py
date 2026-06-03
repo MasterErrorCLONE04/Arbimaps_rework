@@ -185,7 +185,11 @@ def _build_predio_summary(
     ]
 
 
-def run_quality_checks(xtf_path: Path) -> dict[str, Any]:
+def run_quality_checks(
+    xtf_path: Path,
+    *,
+    municipality_code: str | None = None,
+) -> dict[str, Any]:
     try:
         tables = parse_xtf_tables(xtf_path, TARGET_CLASSES)
         _debug_tables(tables)
@@ -212,7 +216,10 @@ def run_quality_checks(xtf_path: Path) -> dict[str, Any]:
             },
         }
 
-    dataset = InMemoryDataset(tables)
+    dataset = InMemoryDataset(
+        tables,
+        metadata={"municipality_code": municipality_code},
+    )
     component_results = run_all_components(dataset)
     available_rule_ids = _load_available_rule_ids()
     total_predios = _total_predios(tables)

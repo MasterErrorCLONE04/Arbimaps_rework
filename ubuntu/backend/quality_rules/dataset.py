@@ -7,8 +7,13 @@ from .base import DatasetReader
 
 
 class InMemoryDataset(DatasetReader):
-    def __init__(self, tables: dict[str, Iterable[dict[str, Any]]]):
+    def __init__(
+        self,
+        tables: dict[str, Iterable[dict[str, Any]]],
+        metadata: dict[str, Any] | None = None,
+    ):
         self._tables = {name.lower(): list(rows) for name, rows in tables.items()}
+        self.metadata = metadata or {}
 
     def get_records(self, table: str) -> Iterable[dict[str, Any]]:
         return list(self._tables.get(table.lower(), []))

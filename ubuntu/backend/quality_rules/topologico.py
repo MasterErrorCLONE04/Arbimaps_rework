@@ -333,6 +333,15 @@ def _is_not_empty(value: Any) -> bool:
     return not _is_empty(value)
 
 
+def _to_int(value: Any) -> int | None:
+    if _is_empty(value):
+        return None
+    try:
+        return int(float(str(value).strip().replace(",", ".")))
+    except Exception:
+        return None
+
+
 def _display_id(value: object, fallback: str = "sin ID") -> str:
     if _is_empty(value):
         return fallback
@@ -1189,10 +1198,34 @@ def _geom_overlaps(g1, g2) -> bool:
 
 def _geom_contains(g1, g2) -> bool:
     try:
-        return bool(g1.covers(g2))
+        # covers permite que la unidad toque el borde del terreno.
+        if bool(g1.covers(g2)):
+            return True
+
+        # Respaldo estricto: si la geometría viene inválida, se repara con buffer(0)
+        # y se vuelve a evaluar covers. No se usa tolerancia de área porque eso
+        # puede ocultar errores reales.
+        try:
+            g1_fixed = g1.buffer(0) if hasattr(g1, "buffer") else g1
+            g2_fixed = g2.buffer(0) if hasattr(g2, "buffer") else g2
+            return bool(g1_fixed.covers(g2_fixed))
+        except Exception:
+            return False
     except Exception:
         return False
 
+def _geom_contains_5_6(g1, g2) -> bool:
+    try:
+        if bool(g1.covers(g2)):
+            return True
+    except Exception:
+        pass
+
+    try:
+        diff = g2.difference(g1)
+        return float(getattr(diff, "area", 0) or 0) == 0
+    except Exception:
+        return False
 
 def _pares_overlap(geoms: list[dict[str, object]]):
     for i in range(len(geoms)):
@@ -1469,7 +1502,7 @@ def _rule_5_6(dataset: DatasetReader) -> list[RuleIssue]:
 
     for table_name, row in helper.iter_unidad_construccion():
         planta_ubicacion = helper.get_field_value(row, ("planta_ubicacion", "Planta_Ubicacion"))
-        if str(planta_ubicacion) != "1":
+        if _to_int(planta_ubicacion) != 1:
             continue
 
         predio_refs = _predio_refs_for_unidad(helper, row, construccion_predios, alias_index)
@@ -1482,7 +1515,23 @@ def _rule_5_6(dataset: DatasetReader) -> list[RuleIssue]:
 
         for predio_ref in predio_refs:
             for terreno in terrenos_por_predio.get(str(predio_ref), []):
-                if not _geom_contains(terreno["geom"], geom_uc):
+
+                if (
+                    helper.identify(row) == "ae3bb1e4-c573-4570-b9a7-75ee13ceec87"
+                    and terreno["tid"] == "76cca731-aea6-495c-9488-4944194394d2"
+                ):
+                    print("DEBUG WEB 5.6")
+                    print("unidad:", helper.identify(row))
+                    print("terreno:", terreno["tid"])
+                    print("tipo terreno geom:", type(terreno["geom"]))
+                    print("tipo unidad geom:", type(geom_uc))
+                    print("covers:", terreno["geom"].covers(geom_uc))
+                    print("contains:", terreno["geom"].contains(geom_uc))
+                    print("within:", geom_uc.within(terreno["geom"]))
+                    print("area unidad:", geom_uc.area)
+                    print("area diferencia:", geom_uc.difference(terreno["geom"]).area)
+
+                if not _geom_contains_5_6(terreno["geom"], geom_uc):
                     id_unidad = _display_id(helper.identify(row))
                     id_terreno = _display_id(terreno["tid"])
                     pair_id = _pair_ref(helper.identify(row), terreno["tid"])
