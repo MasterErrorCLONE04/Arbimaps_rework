@@ -1,311 +1,243 @@
-﻿{% set rp = rp if rp is defined else request.scope.get('root_path','') %} {% set
+{% set rp = rp if rp is defined else request.scope.get('root_path','') %} {% set
 view = view if view is defined else 'visor' %} {% set limited_assignment_role =
 effective_role in ['digitalizador', 'reconocedor'] %}
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Panel de administración</title>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <link rel="icon" type="image/png" href="{{ rp }}/static/icon.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+  <title>Panel de administración</title>
 
-    <link
-      rel="stylesheet"
-      href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ol@9.2.4/dist/ol.js"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/ol@9.2.4/ol.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    />
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-    />
+  <link rel="icon" type="image/png" href="{{ rp }}/static/icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
 
-    {% if view == 'usuarios' %}
-    <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_saas.css?v=16" />
-    {% endif %} {% if view == 'visor' %}
-    <link rel="stylesheet" href="{{ rp }}/static/css/visor/visor.css?v=1" />
-    
-    {% endif %} {% if view == 'buscar' or view == 'buscar_predio' %}
-    <link rel="stylesheet" href="{{ rp }}/static/css/buscar/buscar.css" />
-    <link
-      rel="stylesheet"
-      href="{{ rp }}/static/css/buscar/informacion_predio.css"
-    />
-    {% endif %} {% if view == 'panel_control' %}
-    <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel_control.css" />
-    {% endif %} {% if view == 'asignaciones' %}
-    <link
-      rel="stylesheet"
-      href="{{ rp }}/static/css/asignaciones/cargas_trabajo.css"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ rp }}/static/css/asignaciones/ver_asignaciones.css"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ rp }}/static/css/asignaciones/asignaciones_detalles.css?v=6"
-    />
-    {% if asig_tab == 'edicion' or asig_tab == 'editar_predio' or asig_tab == 'detalle' %}
-    <link
-      rel="stylesheet"
-      href="{{ rp }}/static/css/edicion_asignacion/edicion_asignacion.css"
-    />
-    {% if asig_tab == 'editar_predio' %}
-    <link
-      rel="stylesheet"
-      href="{{ rp }}/static/css/edicion_asignacion/editar.css"
-    />
-    {% endif %} {% endif %} {% endif %} {% if view == 'edicion_asignaciones' %}
-    <link
-      rel="stylesheet"
-      href="{{ rp }}/static/css/edicion_asignacion/edicion_asignacion.css"
-    />
-    {% if predio is defined and predio %}
-    <link
-      rel="stylesheet"
-      href="{{ rp }}/static/css/edicion_asignacion/editar.css"
-    />
-    {% endif %} {% endif %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ol@9.2.4/dist/ol.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@9.2.4/ol.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
 
-    <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel.css?v=7" />
-  </head>
+  {% if view == 'usuarios' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_saas.css?v=16" />
+  {% endif %} {% if view == 'visor' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/visor/visor.css?v=1" />
 
-  <body class="panel-body">
-    <div class="container-fluid panel-wrapper px-2 py-2">
-      <div class="row g-2 vh-100">
-        <aside class="col-lg-3 col-xl-2 d-none d-lg-block h-100 pb-2 pb-xl-4">
-          <div class="sidebar d-flex flex-column mt-1 h-100">
-            <div class="sidebar-top d-flex flex-column h-100">
-              <div
-                class="card-info mt-4 d-flex justify-content-center align-items-center text-center"
-              >
-                <div class="card-info-img me-0">
-                  <img
-                    src="{{ rp }}/static/img/PNG/logoArbi.png"
-                    alt="Logo Arbimaps"
-                    class="logo-sidebar"
-                  />
-                </div>
+  {% endif %} {% if view == 'buscar' or view == 'buscar_predio' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/buscar/buscar.css" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/buscar/informacion_predio.css" />
+  {% endif %} {% if view == 'panel_control' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel_control.css" />
+  {% endif %} {% if view == 'asignaciones' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/cargas_trabajo.css" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/ver_asignaciones.css" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/asignaciones_detalles.css?v=6" />
+  {% if asig_tab == 'edicion' or asig_tab == 'editar_predio' or asig_tab == 'detalle' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/edicion_asignacion/edicion_asignacion.css" />
+  {% if asig_tab == 'editar_predio' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/edicion_asignacion/editar.css" />
+  {% endif %} {% endif %} {% endif %} {% if view == 'edicion_asignaciones' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/edicion_asignacion/edicion_asignacion.css" />
+  {% if predio is defined and predio %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/edicion_asignacion/editar.css" />
+  {% endif %} {% endif %}
 
-                <div class="card-info-title text-start">
-                  <span class="title-arbi text-white fw-bold d-block mb-0"
-                    >ARBIMaaps</span
-                  >
-                  <span
-                    class="text-white d-block mb-0 fw-normal"
-                    style="font-size: 0.633rem; line-height: 1.1"
-                  >
-                    Aplicativo de Gestión Catastral
-                  </span>
-                </div>
+  <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel.css?v=8" />
+</head>
+
+<body class="panel-body">
+  <div class="container-fluid panel-wrapper px-2 py-2">
+    <div class="row g-2 vh-100">
+      <aside class="col-lg-3 col-xl-2 d-none d-lg-block h-100 pb-2 pb-xl-4">
+        <div class="sidebar d-flex flex-column mt-1 h-100">
+          <div class="sidebar-top d-flex flex-column h-100">
+            <div class="card-info mt-4 d-flex justify-content-center align-items-center text-center">
+              <div class="card-info-img me-0">
+                <img src="{{ rp }}/static/img/PNG/logoArbi.png" alt="Logo Arbimaps" class="logo-sidebar" />
               </div>
 
-              <div class="px-3">
-                <hr class="border-light opacity-25 mt-3 mb-0" />
+              <div class="card-info-title text-start">
+                <span class="title-arbi text-white fw-bold d-block mb-0">ARBIMaaps</span>
+                <span class="text-white d-block mb-0 fw-normal" style="font-size: 0.633rem; line-height: 1.1">
+                  Aplicativo de Gestión Catastral
+                </span>
               </div>
+            </div>
 
-              <nav class="menu sidebar-nav d-flex flex-column gap-2 mt-2">
-                <span class="titleHerr text-white"
-                  >Herramientas principales</span
-                >
+            <div class="px-3">
+              <hr class="border-light opacity-25 mt-3 mb-0" />
+            </div>
 
-                {% if not limited_assignment_role %}
-                <a
-                  class="menuBtn sidebar-link {{ 'active' if view == 'visor' else '' }}"
-                  href="{{ rp }}/panel"
-                >
-                  <i class="bi bi-house-fill"></i>
-                  <span>Inicio</span>
-                </a>
-                {% endif %}
+            <nav class="menu sidebar-nav d-flex flex-column gap-2 mt-2">
+              <span class="titleHerr text-white">Herramientas principales</span>
 
-                <a
-                  class="menuBtn sidebar-link {{ 'active' if view == 'buscar' else '' }}"
-                  href="{{ rp }}/panel/buscar"
-                >
-                  <i class="bi bi-search"></i>
-                  <span>Consultar predio</span>
-                </a>
+              {% if not limited_assignment_role %}
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'visor' else '' }}" href="{{ rp }}/panel">
+                <i class="bi bi-house-fill"></i>
+                <span>Inicio</span>
+              </a>
+              {% endif %}
 
-                {% if can_access_asignaciones %}
-                <div class="accordion" style="border-radius: 12px;" id="asignacionesAccordionDesktop">
-                  <div class="accordion-item bg-transparent border-0 p-0">
-                    <h2 class="accordion-header">
-                      <button
-                        class="accordion-button collapsed menuBtn sidebar-toggle-custom {{ 'active' if view == 'asignaciones' else '' }}"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#collapseAsignacionesDesktop"
-                        aria-expanded="{{ 'true' if view == 'asignaciones' else 'false' }}"
-                        aria-controls="collapseAsignacionesDesktop"
-                      >
-                        <span class="sidebar-group-main">
-                          <span class="sidebar-group-left">
-                            <i class="bi bi-journal-check"></i>
-                            <span>Asignaciones</span>
-                          </span>
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'buscar' else '' }}" href="{{ rp }}/panel/buscar">
+                <i class="bi bi-search"></i>
+                <span>Consultar predio</span>
+              </a>
+
+              {% if can_access_asignaciones %}
+              <div class="accordion" style="border-radius: 12px;" id="asignacionesAccordionDesktop">
+                <div class="accordion-item bg-transparent border-0 p-0">
+                  <h2 class="accordion-header">
+                    <button
+                      class="accordion-button collapsed menuBtn sidebar-toggle-custom {{ 'active' if view == 'asignaciones' else '' }}"
+                      type="button" data-bs-toggle="collapse" data-bs-target="#collapseAsignacionesDesktop"
+                      aria-expanded="{{ 'true' if view == 'asignaciones' else 'false' }}"
+                      aria-controls="collapseAsignacionesDesktop">
+                      <span class="sidebar-group-main">
+                        <span class="sidebar-group-left">
+                          <i class="bi bi-journal-check"></i>
+                          <span>Asignaciones</span>
                         </span>
-                      </button>
-                    </h2>
+                      </span>
+                    </button>
+                  </h2>
 
-                    <div
-                      id="collapseAsignacionesDesktop"
-                      class="accordion-collapse collapse {% if view == 'asignaciones' %}show{% endif %}"
-                      data-bs-parent="#asignacionesAccordionDesktop"
-                    >
-                      <div class="accordion-body p-2">
-                        {% if not limited_assignment_role %}
-                        <a
-                          class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
-                          href="{{ rp }}/panel/asignaciones/cargas#asig-open"
-                        >
-                          <img
-                            src="{{ rp }}/static/img/PNG/cargaicon.png"
-                            alt="logo cargas"
-                            class="logo-submenu"
-                          />
-                          <span>Cargas de trabajo</span>
-                        </a>
-                        {% endif %}
+                  <div id="collapseAsignacionesDesktop"
+                    class="accordion-collapse collapse {% if view == 'asignaciones' %}show{% endif %}"
+                    data-bs-parent="#asignacionesAccordionDesktop">
+                    <div class="accordion-body p-2">
+                      {% if not limited_assignment_role %}
+                      <a class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
+                        href="{{ rp }}/panel/asignaciones/cargas#asig-open">
+                        <img src="{{ rp }}/static/img/PNG/cargaicon.png" alt="logo cargas" class="logo-submenu" />
+                        <span>Cargas de trabajo</span>
+                      </a>
+                      {% endif %}
 
-                        <a
-                          class="popupItem {% if asig_tab == 'ver' %}active{% endif %}"
-                          href="{{ rp }}/panel/asignaciones/ver#asig-open"
-                        >
-                          <i class="bi bi-person-workspace"></i>
-                          <span>Ver asignaciones</span>
-                        </a>
+                      <a class="popupItem {% if asig_tab == 'ver' %}active{% endif %}"
+                        href="{{ rp }}/panel/asignaciones/ver#asig-open">
+                        <i class="bi bi-person-workspace"></i>
+                        <span>Ver asignaciones</span>
+                      </a>
 
-                        <a
-                          class="popupItem {% if asig_tab == 'detalle' %}active{% endif %}"
-                          href="{{ rp }}/panel/asignaciones/detalle#asig-open"
-                        >
-                          <i class="bi bi-binoculars"></i>
-                          <span>Detalles Asignación</span>
-                        </a>
-                      </div>
+                      <a class="popupItem {% if asig_tab == 'detalle' %}active{% endif %}"
+                        href="{{ rp }}/panel/asignaciones/detalle#asig-open">
+                        <i class="bi bi-binoculars"></i>
+                        <span>Detalles Asignación</span>
+                      </a>
                     </div>
                   </div>
                 </div>
-                {% endif %}
+              </div>
+              {% endif %}
 
-                <a
-                  class="menuBtn sidebar-link {{ 'active' if view == 'validacion_xtf' else '' }}"
-                  href="{{ rp }}/panel/validacion-xtf"
-                >
-                  <i class="bi bi-check-circle"></i>
-                  <span>Validación XTF</span>
-                </a>
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'validacion_xtf' else '' }}"
+                href="{{ rp }}/panel/validacion-xtf">
+                <i class="bi bi-check-circle"></i>
+                <span>Validación XTF</span>
+              </a>
 
-                {% if not limited_assignment_role %}
-                <a
-                  class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}"
-                  href="{{ rp }}/panel/usuarios"
-                >
-                  <i class="bi bi-people"></i>
-                  <span>Usuarios y Cuadrillas</span>
-                </a>
-                {% endif %} {% if not limited_assignment_role %}
-                <a class="menuBtn sidebar-link">
-                  <i class="bi bi-slash-circle"></i>
-                  <span>Restricción de predios</span>
-                </a>
-                {% endif %}
+              {% if not limited_assignment_role %}
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}"
+                href="{{ rp }}/panel/usuarios">
+                <i class="bi bi-people"></i>
+                <span>Usuarios y Cuadrillas</span>
+              </a>
+              {% endif %} {% if not limited_assignment_role %}
+              <a class="menuBtn sidebar-link">
+                <i class="bi bi-slash-circle"></i>
+                <span>Restricción de predios</span>
+              </a>
+              {% endif %}
 
-                <a
-                  class="menuBtn sidebar-link {{ 'active' if view == 'box_explorer' else '' }}"
-                  href="{{ rp }}/panel/soportes/explorar"
-                >
-                  <i class="bi bi-folder"></i>
-                  <span>Documentos</span>
-                </a>
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'box_explorer' else '' }}"
+                href="{{ rp }}/panel/soportes/explorar">
+                <i class="bi bi-folder"></i>
+                <span>Documentos</span>
+              </a>
 
-                {% if not limited_assignment_role %}
-                <a class="menuBtn sidebar-link">
-                  <i class="bi bi-arrow-down-up"></i>
-                  <span>Reporte SINIC</span>
-                </a>
-                {% endif %}
+              {% if not limited_assignment_role %}
+              <a class="menuBtn sidebar-link">
+                <i class="bi bi-arrow-down-up"></i>
+                <span>Reporte SINIC</span>
+              </a>
+              {% endif %}
 
-                <div class="px-3">
-                  <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
-                </div>
+              <div class="px-3">
+                <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
+              </div>
 
-                <span class="titleHerr text-white">Seguimiento</span>
+              <span class="titleHerr text-white">Seguimiento</span>
 
-                <a
-                  class="menuBtn sidebar-link {{ 'active' if view == 'panel_control' else '' }}"
-                  href="{{ rp }}/panel/panel_control"
-                >
-                  <i class="bi bi-columns-gap"></i>
-                  <span>Panel de control</span>
-                </a>
-              </nav>
-            </div>
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'panel_control' else '' }}"
+                href="{{ rp }}/panel/panel_control">
+                <i class="bi bi-columns-gap"></i>
+                <span>Panel de control</span>
+              </a>
+            </nav>
           </div>
-        </aside>
+        </div>
+      </aside>
 
-        <!-- CONTENIDO -->
-        <div class="col-12 col-lg-9 col-xl-10 h-100">
-          <div class="h-100 d-flex flex-column panel-content-column">
-            <nav
-              class="panel-topbar d-flex align-items-center justify-content-between flex-shrink-0 px-3 px-md-4 mb-2 mb-md-3"
-            >
-              <div class="d-flex align-items-center min-w-0">
-                <button
-                  class="btn text-white d-inline-flex d-lg-none align-items-center justify-content-center me-2 mobile-sidebar-toggle"
-                  type="button"
-                  data-bs-toggle="offcanvas"
-                  data-bs-target="#mobileSidebar"
-                  aria-controls="mobileSidebar"
-                  aria-label="Abrir menú"
-                >
-                  <i class="bi bi-filter fs-4"></i>
+      <!-- CONTENIDO -->
+      <div class="col-12 col-lg-9 col-xl-10 h-100">
+        <div class="h-100 d-flex flex-column panel-content-column">
+          <nav
+            class="panel-topbar d-flex align-items-center justify-content-between flex-shrink-0 px-3 px-md-4 mb-2 mb-md-3">
+            <div class="d-flex align-items-center min-w-0">
+              <button
+                class="btn text-white d-inline-flex d-lg-none align-items-center justify-content-center me-2 mobile-sidebar-toggle"
+                type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar" aria-controls="mobileSidebar"
+                aria-label="Abrir menú">
+                <i class="bi bi-filter fs-4"></i>
+              </button>
+
+              <div class="topbar-content-title">
+                <a href="{{ rp }}/panel" class="topbar-brand">Dirección de Gestión Catastral</a>
+                {% set municipality_label = current_municipality_name|default(current_municipality, true)|default('',
+                true) %}
+                <p class="topbar-title-pri mt-2">
+                  {% if municipality_label %}
+                  Bienvenidos Municipio "{{ municipality_label }}"
+                  {% else %}
+                  Información de base
+                  {% endif %}
+                </p>
+              </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+              <div class="dropdown notification-dropdown">
+                <button id="notificationToggle"
+                  class="btn p-0 border-0 bg-transparent d-inline-flex align-items-center justify-content-center notification-toggle text-white"
+                  type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notificaciones">
+                  <i class="bi bi-bell-fill" style="color: #ffffff !important;"></i>
+                  <span id="notificationBadge" class="notification-badge d-none">0</span>
                 </button>
 
-                <div class="topbar-content-title">
-                  <a href="{{ rp }}/panel" class="topbar-brand"
-                    >Dirección de Gestión Catastral</a
-                  >
-                                    {% set municipality_label = current_municipality_name|default(current_municipality, true)|default('', true) %}
-                  <p class="topbar-title-pri mt-2">
-                    {% if municipality_label %}
-                      Bienvenidos Municipio "{{ municipality_label }}"
-                    {% else %}
-                      Información de base
-                    {% endif %}
-                  </p>
+                <div class="dropdown-menu dropdown-menu-end shadow-sm border-0 notification-menu">
+                  <div
+                    class="notification-menu-head d-flex align-items-center justify-content-between gap-2 px-3 py-2 border-bottom">
+                    <div class="fw-semibold text-dark">Notificaciones</div>
+                    <button id="markAllNotifications" type="button"
+                      class="btn btn-link btn-sm p-0 text-decoration-none notification-action">
+                      Marcar todas
+                    </button>
+                  </div>
+                  <div id="notificationList" class="notification-list">
+                    <div class="notification-empty px-3 py-4 text-muted">Cargando...</div>
+                  </div>
                 </div>
               </div>
 
               <div class="dropdown">
-                <button
-                  class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2"
-                  type="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >
+                <button class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2" type="button"
+                  data-bs-toggle="dropdown" aria-expanded="false">
                   <div class="topbar-user-meta d-none d-md-block">
                     <div class="name">
                       ¡Bienvenido!,<br />
@@ -317,318 +249,421 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   </div>
                 </button>
 
-                <ul
-                  class="dropdown-menu dropdown-menu-end shadow-sm border-0 user-dropdown"
-                >
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 user-dropdown">
                   <li class="px-3 py-2 border-bottom">
                     <div class="fw-semibold text-dark">{{ user }}</div>
                     <div class="small text-muted">Panel de administración</div>
                   </li>
                   <li>
-                    <a
-                      class="dropdown-item d-flex align-items-center gap-2"
-                      href="{{ rp }}/logout-app"
-                    >
+                    <a class="dropdown-item d-flex align-items-center gap-2" href="{{ rp }}/logout-app">
                       <i class="bi bi-box-arrow-right"></i>
                       <span>Cerrar sesión</span>
                     </a>
                   </li>
                 </ul>
               </div>
-            </nav>
-
-            <div class="page-shell d-flex flex-column">
-              <main class="main flex-grow-1">
-                <div
-                  class="content-shell h-100 overflow-auto px-0 px-md-1 px-xl-2 pt-1 pb-0"
-                >
-                  <div
-                    class="page-header {% if view == 'visor' or view == 'usuarios' %}d-none{% endif %}"
-                  >
-                    <div>
-                      <div class="page-title">
-                        {% if view == 'usuarios' %}Usuarios {% elif view ==
-                        'validacion_xtf' %}Validación XTF {% elif view ==
-                        'box_explorer' %} {% endif %}
-                      </div>
-
-                      <div class="page-subtitle">
-                        {% if view == 'usuarios' %}Administración de usuarios
-                        del sistema {% elif view == 'validacion_xtf' %}Revisión
-                        y validación de archivos XTF {% endif %}
-                      </div>
-                    </div>
-                  </div>
-
-                  <section>
-                    {% if view == 'visor' %} {% include "visor.html" %} {% elif
-                    view == 'buscar' %} {% include "buscar.html" %} {% elif view
-                    == 'buscar_predio' %} {% include "buscar_predio.html" %} {%
-                    elif view == 'asignaciones' %} {% if asig_tab == 'ver' %} {%
-                    include "asignaciones_ver.html" %} {% elif asig_tab ==
-                    'detalle' %} {% include "asignaciones_detalle.html" %} {%
-                    elif asig_tab == 'edicion' %} {% include
-                    "edicion_asignaciones.html" %} {% elif asig_tab ==
-                    'editar_predio' %} {% include "editar_predio.html" %} {%
-                    else %} {% include "asignaciones_cargas.html" %} {% endif %}
-                    {% elif view == 'panel_control' %} {% include
-                    "panel_control.html" %} {% elif view == 'usuarios' %} {%
-                    include "usuarios.html" %} {% elif view == 'validacion_xtf'
-                    %} {% set validacion_embed = True %} {% include
-                    "validacion_xtf.html" %} {% set validacion_embed = False %}
-                    {% elif view == 'box_explorer' %} {% include
-                    "box_explorer.html" %} {% elif view == 'error' %}
-                    <div class="card p-3">
-                      <h6 class="mb-2">
-                        No se pudo cargar la vista solicitada.
-                      </h6>
-                      <p class="sub mb-0">
-                        {{ error_msg if error_msg is defined else 'Error no
-                        especificado.' }}
-                      </p>
-                    </div>
-                    {% elif view == 'edicion_asignaciones' %} {% if predio is
-                    defined and predio %} {% include "editar_predio.html" %} {%
-                    else %} {% include "edicion_asignaciones.html" %} {% endif
-                    %} {% else %}
-                    <div class="card">
-                      <p class="sub">Vista no disponible.</p>
-                    </div>
-                    {% endif %}
-                  </section>
-                </div>
-              </main>
-
-              <footer
-                class="footer-simple app-footer flex-shrink-0 d-flex flex-column justify-content-center align-items-center gap-1 px-2 py-2 rounded-2 shadow-sm text-center"
-              >
-                <div class="small fw-medium">© 2026 Gestión Catastral</div>
-              </footer>
             </div>
+          </nav>
+
+          <div class="page-shell d-flex flex-column">
+            <main class="main flex-grow-1">
+              <div class="content-shell h-100 overflow-auto px-0 px-md-1 px-xl-2 pt-1 pb-0">
+                <div class="page-header {% if view == 'visor' or view == 'usuarios' %}d-none{% endif %}">
+                  <div>
+                  </div>
+                </div>
+
+                <section>
+                  {% if view == 'visor' %} {% include "visor.html" %} {% elif
+                  view == 'buscar' %} {% include "buscar.html" %} {% elif view
+                  == 'buscar_predio' %} {% include "buscar_predio.html" %} {%
+                  elif view == 'asignaciones' %} {% if asig_tab == 'ver' %} {%
+                  include "asignaciones_ver.html" %} {% elif asig_tab ==
+                  'detalle' %} {% include "asignaciones_detalle.html" %} {%
+                  elif asig_tab == 'editar_predio' %} {% include "editar_predio.html" %} {%
+                  else %} {% include "asignaciones_cargas.html" %} {% endif %}
+                  {% elif view == 'panel_control' %} {% include
+                  "panel_control.html" %} {% elif view == 'usuarios' %} {%
+                  include "usuarios.html" %} {% elif view == 'validacion_xtf'
+                  %} {% set validacion_embed = True %} {% include
+                  "validacion_xtf.html" %} {% set validacion_embed = False %}
+                  {% elif view == 'box_explorer' %} {% include
+                  "box_explorer.html" %} {% elif view == 'error' %}
+                  <div class="card p-3">
+                    <h6 class="mb-2">
+                      No se pudo cargar la vista solicitada.
+                    </h6>
+                    <p class="sub mb-0">
+                      {{ error_msg if error_msg is defined else 'Error no
+                      especificado.' }}
+                    </p>
+                  </div>
+                  {% else %}
+                  <div class="card">
+                    <p class="sub">Vista no disponible.</p>
+                  </div>
+                  {% endif %}
+                </section>
+              </div>
+            </main>
+
+            <footer
+              class="footer-simple app-footer flex-shrink-0 d-flex flex-column justify-content-center align-items-center gap-1 px-2 py-2 rounded-2 shadow-sm text-center">
+              <div class="small fw-medium">© 2026 Gestión Catastral</div>
+            </footer>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- SIDEBAR M�"VIL -->
-    <div
-      class="offcanvas offcanvas-start d-lg-none mobile-offcanvas-sidebar"
-      tabindex="-1"
-      id="mobileSidebar"
-      aria-labelledby="mobileSidebarLabel"
-    >
-      <div
-        class="offcanvas-header border-bottom border-light border-opacity-25"
-      >
-        <div class="d-flex align-items-center gap-2">
-          <img
-            src="{{ rp }}/static/img/PNG/logoArbi.png"
-            alt="Logo Arbimaps"
-            class="logo-sidebar"
-          />
-          <div>
-            <div class="fw-bold text-white">ARBIMaps</div>
-            <small class="text-white">Aplicativo de Gestión Catastral</small>
-          </div>
+  <!-- SIDEBAR M�"VIL -->
+  <div class="offcanvas offcanvas-start d-lg-none mobile-offcanvas-sidebar" tabindex="-1" id="mobileSidebar"
+    aria-labelledby="mobileSidebarLabel">
+    <div class="offcanvas-header border-bottom border-light border-opacity-25">
+      <div class="d-flex align-items-center gap-2">
+        <img src="{{ rp }}/static/img/PNG/logoArbi.png" alt="Logo Arbimaps" class="logo-sidebar" />
+        <div>
+          <div class="fw-bold text-white">ARBIMaps</div>
+          <small class="text-white">Aplicativo de Gestión Catastral</small>
         </div>
-
-        <button
-          type="button"
-          class="btn-close btn-close-white shadow-none"
-          data-bs-dismiss="offcanvas"
-          aria-label="Cerrar menú"
-        ></button>
       </div>
 
-      <div class="offcanvas-body">
-        <nav class="menu sidebar-nav d-flex flex-column gap-2">
-          <span class="titleHerr text-white mb-2"
-            >Herramientas principales</span
-          >
+      <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="offcanvas"
+        aria-label="Cerrar menú"></button>
+    </div>
 
-          {% if not limited_assignment_role %}
-          <a
-            class="menuBtn sidebar-link {{ 'active' if view == 'visor' else '' }}"
-            href="{{ rp }}/panel"
-          >
-            <i class="bi bi-house-fill"></i>
-            <span>Inicio</span>
-          </a>
-          {% endif %}
+    <div class="offcanvas-body">
+      <nav class="menu sidebar-nav d-flex flex-column gap-2">
+        <span class="titleHerr text-white mb-2">Herramientas principales</span>
 
-          <a
-            class="menuBtn sidebar-link {{ 'active' if view == 'buscar' else '' }}"
-            href="{{ rp }}/panel/buscar"
-          >
-            <i class="bi bi-search"></i>
-            <span>Consultar predio</span>
-          </a>
+        {% if not limited_assignment_role %}
+        <a class="menuBtn sidebar-link {{ 'active' if view == 'visor' else '' }}" href="{{ rp }}/panel">
+          <i class="bi bi-house-fill"></i>
+          <span>Inicio</span>
+        </a>
+        {% endif %}
 
-          {% if can_access_asignaciones %}
-          <div class="accordion" id="asignacionesAccordionMobile">
-            <div class="accordion-item bg-transparent border-0 p-0">
-              <h2 class="accordion-header">
-                <button
-                  class="accordion-button collapsed menuBtn sidebar-toggle-custom {{ 'active' if view == 'asignaciones' else '' }}"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseAsignacionesMobile"
-                  aria-expanded="{{ 'true' if view == 'asignaciones' else 'false' }}"
-                  aria-controls="collapseAsignacionesMobile"
-                >
-                  <span class="sidebar-group-main">
-                    <span class="sidebar-group-left">
-                      <i class="bi bi-journal-check"></i>
-                      <span>Asignaciones</span>
-                    </span>
+        <a class="menuBtn sidebar-link {{ 'active' if view == 'buscar' else '' }}" href="{{ rp }}/panel/buscar">
+          <i class="bi bi-search"></i>
+          <span>Consultar predio</span>
+        </a>
+
+        {% if can_access_asignaciones %}
+        <div class="accordion" id="asignacionesAccordionMobile">
+          <div class="accordion-item bg-transparent border-0 p-0">
+            <h2 class="accordion-header">
+              <button
+                class="accordion-button collapsed menuBtn sidebar-toggle-custom {{ 'active' if view == 'asignaciones' else '' }}"
+                type="button" data-bs-toggle="collapse" data-bs-target="#collapseAsignacionesMobile"
+                aria-expanded="{{ 'true' if view == 'asignaciones' else 'false' }}"
+                aria-controls="collapseAsignacionesMobile">
+                <span class="sidebar-group-main">
+                  <span class="sidebar-group-left">
+                    <i class="bi bi-journal-check"></i>
+                    <span>Asignaciones</span>
                   </span>
-                </button>
-              </h2>
+                </span>
+              </button>
+            </h2>
 
-              <div
-                id="collapseAsignacionesMobile"
-                class="accordion-collapse collapse {% if view == 'asignaciones' %}show{% endif %}"
-                data-bs-parent="#asignacionesAccordionMobile"
-              >
-                <div class="accordion-body p-2">
-                  {% if not limited_assignment_role %}
-                  <a
-                    class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
-                    href="{{ rp }}/panel/asignaciones/cargas#asig-open"
-                  >
-                    <img
-                      src="{{ rp }}/static/img/PNG/cargaicon.png"
-                      alt="logo cargas"
-                      class="logo-submenu"
-                    />
-                    <span>Cargas de trabajo</span>
-                  </a>
-                  {% endif %}
+            <div id="collapseAsignacionesMobile"
+              class="accordion-collapse collapse {% if view == 'asignaciones' %}show{% endif %}"
+              data-bs-parent="#asignacionesAccordionMobile">
+              <div class="accordion-body p-2">
+                {% if not limited_assignment_role %}
+                <a class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
+                  href="{{ rp }}/panel/asignaciones/cargas#asig-open">
+                  <img src="{{ rp }}/static/img/PNG/cargaicon.png" alt="logo cargas" class="logo-submenu" />
+                  <span>Cargas de trabajo</span>
+                </a>
+                {% endif %}
 
-                  <a
-                    class="popupItem {% if asig_tab == 'ver' %}active{% endif %}"
-                    href="{{ rp }}/panel/asignaciones/ver#asig-open"
-                  >
-                    <i class="bi bi-person-workspace"></i>
-                    <span>Ver asignaciones</span>
-                  </a>
+                <a class="popupItem {% if asig_tab == 'ver' %}active{% endif %}"
+                  href="{{ rp }}/panel/asignaciones/ver#asig-open">
+                  <i class="bi bi-person-workspace"></i>
+                  <span>Ver asignaciones</span>
+                </a>
 
-                  <a
-                    class="popupItem {% if asig_tab == 'detalle' %}active{% endif %}"
-                    href="{{ rp }}/panel/asignaciones/detalle#asig-open"
-                  >
-                    <i class="bi bi-binoculars"></i>
-                    <span>Detalles Asignación</span>
-                  </a>
-                </div>
+                <a class="popupItem {% if asig_tab == 'detalle' %}active{% endif %}"
+                  href="{{ rp }}/panel/asignaciones/detalle#asig-open">
+                  <i class="bi bi-binoculars"></i>
+                  <span>Detalles Asignación</span>
+                </a>
               </div>
             </div>
           </div>
-          {% endif %}
+        </div>
+        {% endif %}
 
-          <a
-            class="menuBtn sidebar-link {{ 'active' if view == 'validacion_xtf' else '' }}"
-            href="{{ rp }}/panel/validacion-xtf"
-          >
-            <i class="bi bi-check-circle"></i>
-            <span>Validación XTF</span>
-          </a>
+        <a class="menuBtn sidebar-link {{ 'active' if view == 'validacion_xtf' else '' }}"
+          href="{{ rp }}/panel/validacion-xtf">
+          <i class="bi bi-check-circle"></i>
+          <span>Validación XTF</span>
+        </a>
 
-          {% if not limited_assignment_role %}
-          <a
-            class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}"
-            href="{{ rp }}/panel/usuarios"
-          >
-            <i class="bi bi-people"></i>
-            <span>Usuarios</span>
-          </a>
-          {% endif %} {% if not limited_assignment_role %}
-          <a class="menuBtn sidebar-link">
-            <i class="bi bi-slash-circle"></i>
-            <span>Restricción de predios</span>
-          </a>
-          {% endif %}
+        {% if not limited_assignment_role %}
+        <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}" href="{{ rp }}/panel/usuarios">
+          <i class="bi bi-people"></i>
+          <span>Usuarios</span>
+        </a>
+        {% endif %} {% if not limited_assignment_role %}
+        <a class="menuBtn sidebar-link">
+          <i class="bi bi-slash-circle"></i>
+          <span>Restricción de predios</span>
+        </a>
+        {% endif %}
 
-          <a
-            class="menuBtn sidebar-link {{ 'active' if view == 'box_explorer' else '' }}"
-            href="{{ rp }}/panel/soportes/explorar"
-          >
-            <i class="bi bi-folder"></i>
-            <span>Documentos</span>
-          </a>
+        <a class="menuBtn sidebar-link {{ 'active' if view == 'box_explorer' else '' }}"
+          href="{{ rp }}/panel/soportes/explorar">
+          <i class="bi bi-folder"></i>
+          <span>Documentos</span>
+        </a>
 
-          {% if not limited_assignment_role %}
-          <a class="menuBtn sidebar-link">
-            <i class="bi bi-arrow-down-up"></i>
-            <span>Reporte SINIC</span>
-          </a>
-          {% endif %}
-        </nav>
-      </div>
+        {% if not limited_assignment_role %}
+        <a class="menuBtn sidebar-link">
+          <i class="bi bi-arrow-down-up"></i>
+          <span>Reporte SINIC</span>
+        </a>
+        {% endif %}
+      </nav>
     </div>
+  </div>
 
-    <script>
-      async function loadSidebarTotalPredios() {
-        const totalEl = document.getElementById("sidebarTotalPredios");
-        if (!totalEl) return;
+  <script>
+    async function loadSidebarTotalPredios() {
+      const totalEl = document.getElementById("sidebarTotalPredios");
+      if (!totalEl) return;
 
-        try {
-          const r = await fetch(`${rp}/resumenp/proyecto`);
-          if (!r.ok) {
-            totalEl.textContent = "0";
-            return;
-          }
-
-          const data = await r.json();
-          totalEl.textContent = Number(data.total_predios || 0).toLocaleString(
-            "es-CO",
-          );
-        } catch (e) {
+      try {
+        const r = await fetch(`${rp}/resumenp/proyecto`);
+        if (!r.ok) {
           totalEl.textContent = "0";
+          return;
         }
+
+        const data = await r.json();
+        totalEl.textContent = Number(data.total_predios || 0).toLocaleString(
+          "es-CO",
+        );
+      } catch (e) {
+        totalEl.textContent = "0";
       }
+    }
 
-      function syncFixedPanelBars() {
-        const panelColumn = document.querySelector(".panel-content-column");
-        const topbar = document.querySelector(".panel-topbar");
-        const footer = document.querySelector(".footer-simple");
-        if (!panelColumn || !topbar || !footer) return;
-
-        const rect = panelColumn.getBoundingClientRect();
-        const styles = getComputedStyle(panelColumn);
-        const padLeft = parseFloat(styles.paddingLeft) || 0;
-        const padRight = parseFloat(styles.paddingRight) || 0;
-        const left = Math.max(rect.left + padLeft, 0);
-        const width = Math.max(rect.width - padLeft - padRight, 0);
-
-        document.documentElement.style.setProperty(
-          "--panel-fixed-left",
-          `${left}px`,
-        );
-        document.documentElement.style.setProperty(
-          "--panel-fixed-width",
-          `${width}px`,
-        );
-        document.documentElement.style.setProperty(
-          "--panel-topbar-height",
-          `${Math.ceil(topbar.offsetHeight)}px`,
-        );
-        document.documentElement.style.setProperty(
-          "--panel-footer-height",
-          `${Math.ceil(footer.offsetHeight)}px`,
-        );
-      }
-
-      document.addEventListener("DOMContentLoaded", () => {
-        loadSidebarTotalPredios();
-        syncFixedPanelBars();
+    function formatNotificationDate(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return date.toLocaleString("es-CO", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
       });
+    }
 
-      window.addEventListener("resize", syncFixedPanelBars);
-      window.addEventListener("load", syncFixedPanelBars);
-    </script>
+    function getNotificationIcon(tipo) {
+      const value = String(tipo || "").toLowerCase();
+      if (value.includes("error")) return "bi-exclamation-triangle-fill";
+      if (value.includes("cierre")) return "bi-check2-circle";
+      if (value.includes("workspace")) return "bi-diagram-3-fill";
+      return "bi-bell-fill";
+    }
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
+    function escapeHtml(value) {
+      return String(value || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function syncNotificationBadge(total) {
+      const badge = document.getElementById("notificationBadge");
+      if (!badge) return;
+      const value = Number(total || 0);
+      if (value > 0) {
+        badge.textContent = value > 99 ? "99+" : String(value);
+        badge.classList.remove("d-none");
+      } else {
+        badge.textContent = "0";
+        badge.classList.add("d-none");
+      }
+    }
+
+    function renderNotifications(items) {
+      const list = document.getElementById("notificationList");
+      if (!list) return;
+
+      if (!Array.isArray(items) || items.length === 0) {
+        list.innerHTML = '<div class="notification-empty px-3 py-4 text-muted">No hay notificaciones.</div>';
+        return;
+      }
+
+      list.innerHTML = items.map((item) => {
+        const unread = item.leido === false;
+        const title = escapeHtml(item.titulo || "Notificacion");
+        const message = escapeHtml(item.mensaje || "");
+        const url = escapeHtml(item.url_destino || "");
+        const fecha = formatNotificationDate(item.fecha_creacion);
+        return `
+          <button type="button"
+            class="notification-item dropdown-item text-start ${unread ? "is-unread" : ""}"
+            data-notif-id="${item.id}"
+            data-notif-url="${url}">
+            <div class="notification-item-top d-flex align-items-start gap-2">
+              <span class="notification-item-icon">
+                <i class="bi ${getNotificationIcon(item.tipo)}"></i>
+              </span>
+              <div class="notification-item-body flex-grow-1">
+                <div class="notification-item-title">${title}</div>
+                <div class="notification-item-text">${message}</div>
+                <div class="notification-item-meta">${fecha}</div>
+              </div>
+            </div>
+          </button>
+        `;
+      }).join("");
+    }
+
+    async function fetchJson(url, options = {}) {
+      const response = await fetch(url, {
+        credentials: "same-origin",
+        ...options,
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return response.json();
+    }
+
+    function resolveNotificationUrl(url) {
+      const value = String(url || "").trim();
+      if (!value) return "";
+      if (/^(https?:)?\/\//i.test(value)) return value;
+      if (panelRp && value.startsWith(panelRp)) return value;
+      if (panelRp) {
+        return `${panelRp}${value.startsWith("/") ? "" : "/"}${value}`;
+      }
+      return value.startsWith("/") ? value : `/${value}`;
+    }
+
+    function closeNotificationDropdown() {
+      const toggle = document.getElementById("notificationToggle");
+      if (!toggle || !window.bootstrap) return;
+      const instance = window.bootstrap.Dropdown.getOrCreateInstance(toggle);
+      instance.hide();
+    }
+
+    async function loadNotifications() {
+      const list = document.getElementById("notificationList");
+      if (!list) return;
+
+      try {
+        const [countData, items] = await Promise.all([
+          fetchJson(`${panelRp}/notificaciones/no-leidas`),
+          fetchJson(`${panelRp}/notificaciones/mis-notificaciones?limit=8`),
+        ]);
+        syncNotificationBadge(countData?.total || 0);
+        renderNotifications(items);
+      } catch (error) {
+        syncNotificationBadge(0);
+        list.innerHTML = '<div class="notification-empty px-3 py-4 text-muted">No se pudieron cargar las notificaciones.</div>';
+      }
+    }
+
+    async function markNotificationRead(id, url) {
+      try {
+        await fetchJson(`${panelRp}/notificaciones/${id}/leer`, { method: "POST" });
+      } catch (error) {
+        // Seguimos con la navegacion aunque falle el marcado.
+      }
+      await loadNotifications();
+      closeNotificationDropdown();
+      const resolvedUrl = resolveNotificationUrl(url);
+      if (resolvedUrl) {
+        window.location.href = resolvedUrl;
+      }
+    }
+
+    async function markAllNotificationsRead() {
+      try {
+        await fetchJson(`${panelRp}/notificaciones/leer-todas`, { method: "POST" });
+      } catch (error) {
+        // Nada critico.
+      }
+      await loadNotifications();
+    }
+
+    function syncFixedPanelBars() {
+      const panelColumn = document.querySelector(".panel-content-column");
+      const topbar = document.querySelector(".panel-topbar");
+      const footer = document.querySelector(".footer-simple");
+      if (!panelColumn || !topbar || !footer) return;
+
+      const rect = panelColumn.getBoundingClientRect();
+      const styles = getComputedStyle(panelColumn);
+      const padLeft = parseFloat(styles.paddingLeft) || 0;
+      const padRight = parseFloat(styles.paddingRight) || 0;
+      const left = Math.max(rect.left + padLeft, 0);
+      const width = Math.max(rect.width - padLeft - padRight, 0);
+
+      document.documentElement.style.setProperty(
+        "--panel-fixed-left",
+        `${left}px`,
+      );
+      document.documentElement.style.setProperty(
+        "--panel-fixed-width",
+        `${width}px`,
+      );
+      document.documentElement.style.setProperty(
+        "--panel-topbar-height",
+        `${Math.ceil(topbar.offsetHeight)}px`,
+      );
+      document.documentElement.style.setProperty(
+        "--panel-footer-height",
+        `${Math.ceil(footer.offsetHeight)}px`,
+      );
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadSidebarTotalPredios();
+      loadNotifications();
+
+      const notificationList = document.getElementById("notificationList");
+      const markAllNotifications = document.getElementById("markAllNotifications");
+
+      if (notificationList) {
+        notificationList.addEventListener("click", (event) => {
+          const target = event.target.closest("[data-notif-id]");
+          if (!target) return;
+          event.preventDefault();
+          const id = target.getAttribute("data-notif-id");
+          const url = target.getAttribute("data-notif-url") || "";
+          if (id) {
+            markNotificationRead(id, url);
+          }
+        });
+      }
+
+      if (markAllNotifications) {
+        markAllNotifications.addEventListener("click", (event) => {
+          event.preventDefault();
+          markAllNotificationsRead();
+        });
+      }
+
+
+      syncFixedPanelBars();
+    });
+
+    window.addEventListener("resize", syncFixedPanelBars);
+    window.addEventListener("load", syncFixedPanelBars);
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
 </html>
-

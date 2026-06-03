@@ -878,6 +878,29 @@ def asignar_predios(
                 created_by,
             )
 
+            asignaciones_repo.safe_crear_notificacion(
+                conn,
+                tenant=tenant,
+                id_asignacion=asignacion_id,
+                id_usuario_destino=usuario_destino_id,
+                id_usuario_origen=created_by_id,
+                rol_origen="coordinador",
+                rol_destino="digitalizador",
+                tipo="asignacion",
+                titulo="Nueva asignación recibida",
+                mensaje=(
+                    f"Se te asignaron "
+                    f"{len(numeros)} predio(s). "
+                    f"Título: {titulo_final}"
+                ),
+                url_destino=f"/panel/asignaciones/detalle?id={asignacion_id}#asig-open",
+                prioridad="alta",
+                metadata={
+                    "cantidad_predios": len(numeros),
+                    "dataset": datasetname_main,
+                },
+            )
+
             insert_sql = (
                 f"INSERT INTO {asignacion_predio_table}"
                 " (asignacion_id, numero_predial_nacional, predio_t_id, activo, creado_por)"

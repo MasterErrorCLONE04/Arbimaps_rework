@@ -287,6 +287,36 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 ON {app_schema}.asignacion_retorno (asignacion_id, archivo_sha256)
                 """
             )
+            cur.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {app_schema}.notificaciones (
+                    id SERIAL PRIMARY KEY,
+                    cod_tramite TEXT,
+                    id_asignacion BIGINT REFERENCES {app_schema}.asignacion(id) ON DELETE SET NULL,
+                    id_usuario_destino BIGINT NOT NULL,
+                    id_usuario_origen BIGINT,
+                    rol_origen TEXT,
+                    rol_destino TEXT,
+                    tipo TEXT DEFAULT 'asignacion',
+                    titulo TEXT NOT NULL,
+                    mensaje TEXT NOT NULL,
+                    url_destino TEXT,
+                    prioridad TEXT DEFAULT 'normal',
+                    fecha_limite TIMESTAMPTZ,
+                    metadata JSONB,
+                    leido BOOLEAN DEFAULT FALSE,
+                    archivado BOOLEAN DEFAULT FALSE,
+                    fecha_creacion TIMESTAMPTZ DEFAULT now(),
+                    fecha_lectura TIMESTAMPTZ
+                )
+                """
+            )
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_notificaciones_usuario_destino
+                ON {app_schema}.notificaciones (id_usuario_destino, archivado, leido)
+                """
+            )
             if in_transaction:
                 cur.execute("RELEASE SAVEPOINT ensure_asig_tables_sp")
         except Exception as exc:
@@ -1149,6 +1179,93 @@ def allocate_asignacion_retorno_version(conn, *args, **kwargs) -> int:
         )
         next_row = cur.fetchone() or {}
         return int(next_row.get("next_version") or 1)
+
+
+def crear_notificacion(
+    conn,
+    *,
+    tenant=None,
+    cod_tramite=None,
+    id_asignacion=None,
+    id_usuario_destino: int,
+    id_usuario_origen: int | None,
+    rol_origen=None,
+    rol_destino=None,
+    tipo="asignacion",
+    titulo: str,
+    mensaje: str,
+    url_destino=None,
+    prioridad="normal",
+    fecha_limite=None,
+    metadata=None,
+):
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    metadata_value = json.dumps(metadata, ensure_ascii=False) if metadata is not None else None
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            INSERT INTO {app_schema}.notificaciones (
+                cod_tramite,
+                id_asignacion,
+                id_usuario_destino,
+                id_usuario_origen,
+                rol_origen,
+                rol_destino,
+                tipo,
+                titulo,
+                mensaje,
+                url_destino,
+                prioridad,
+                fecha_limite,
+                metadata
+            )
+            VALUES (
+                %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb
+            )
+            """,
+            (
+                cod_tramite,
+                id_asignacion,
+                id_usuario_destino,
+                id_usuario_origen,
+                rol_origen,
+                rol_destino,
+                tipo,
+                titulo,
+                mensaje,
+                url_destino,
+                prioridad,
+                fecha_limite,
+                metadata_value,
+            ),
+        )
+
+
+def safe_crear_notificacion(conn, tenant=None, **kwargs) -> bool:
+    """
+    Intenta crear la notificacion sin romper la transaccion principal.
+    """
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SAVEPOINT notif_savepoint")
+            try:
+                crear_notificacion(conn, tenant=tenant, **kwargs)
+                cur.execute("RELEASE SAVEPOINT notif_savepoint")
+                return True
+            except Exception:
+                cur.execute("ROLLBACK TO SAVEPOINT notif_savepoint")
+                cur.execute("RELEASE SAVEPOINT notif_savepoint")
+                logger.exception("No se pudo crear la notificacion")
+                return False
+    except Exception:
+        logger.exception("No se pudo preparar el savepoint de notificaciones")
+        return False
 
 
 def create_asignacion_retorno(conn, *args, **kwargs) -> dict:

@@ -3,10 +3,11 @@ import importlib
 import logging
 from dataclasses import dataclass
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware  # 👈 IMPORTANTE
+from fastapi.templating import Jinja2Templates
 
 from routers.asignaciones import router as asignaciones_router
 from routers.asignaciones_detalle import router as asignaciones_detalle_router
@@ -96,6 +97,32 @@ def create_app() -> FastAPI:
 
     app.mount(settings.static_url, StaticFiles(directory=settings.static_dir), name="static")
 
+    templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+
+    @app.exception_handler(HTTPException)
+    async def custom_http_exception_handler(request: Request, exc: HTTPException):
+        if exc.status_code == 404:
+            rp = os.getenv("APP_BASE_PATH", "").rstrip("/")
+            return templates.TemplateResponse(
+                "404.html",
+                {"request": request, "rp": rp, "detail": exc.detail},
+                status_code=404
+            )
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail}
+        )
+
+    @app.exception_handler(404)
+    async def custom_404_handler(request: Request, exc: Exception):
+        rp = os.getenv("APP_BASE_PATH", "").rstrip("/")
+        return templates.TemplateResponse(
+            "404.html",
+            {"request": request, "rp": rp, "detail": "La página solicitada no está disponible."},
+            status_code=404
+        )
+
     app.include_router(pages_router)
     app.include_router(predio_router)
     app.include_router(visor_queries_router)
@@ -123,6 +150,10 @@ def create_app() -> FastAPI:
     docs_router = _load_optional_router("routers.docs_services")
     if docs_router is not None:
         app.include_router(docs_router)
+
+    notificaciones_router = _load_optional_router("routers.notificaciones")
+    if notificaciones_router is not None:
+        app.include_router(notificaciones_router)
 
     @app.get("/health", tags=["system"])
     def health():

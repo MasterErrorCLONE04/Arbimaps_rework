@@ -550,14 +550,9 @@ def panel_asignaciones_edicion(request: Request):
             status_code=302
         )
 
-    subview = (request.query_params.get("subview") or "").strip().lower()
-    asig_tab = "editar_predio" if subview == "editar_predio" else "edicion"
-
-    return _render_panel(
-        request,
-        user,
-        view="asignaciones",
-        asig_tab=asig_tab
+    raise HTTPException(
+        status_code=404,
+        detail="La página de edición no está disponible."
     )
 
 

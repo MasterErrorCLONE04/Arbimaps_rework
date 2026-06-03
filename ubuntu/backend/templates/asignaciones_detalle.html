@@ -229,7 +229,7 @@
                           <table id="tablaPredios" class="asigDetailTable table mb-0">
                             <thead>
                               <tr>
-                                <th>Editar</th>
+                                <!-- <th>Editar</th> -->
                                 <th>Número predial</th>
                                 <th>T_ID</th>
                                 <th>Estado</th>
@@ -2130,17 +2130,6 @@
         if (predios.length) {
           predios.forEach(p => {
             const rowNode = tablaPrediosDT.row.add([
-              `
-              <a href="#" class="btn-editar-predio d-inline-flex align-items-center" 
-                 data-predio-t-id="${esc(p.predio_t_id ?? "")}" 
-                 data-predio-id="${esc(p.id ?? "")}" 
-                 data-numero="${esc(p.numero_predial_nacional || "")}"
-                 style="color: #021f3c; transition: transform 0.2s ease; cursor: pointer;"
-                 onmouseover="this.style.transform='scale(1.25)'"
-                 onmouseout="this.style.transform='scale(1)'">
-                <i class="fa-solid fa-pen-to-square fs-5"></i>
-              </a>
-            `,
               esc(p.numero_predial_nacional || ""),
               esc(p.predio_t_id ?? "-"),
               `<span class="chip ${p.activo ? "ok" : "off"}">${p.activo ? "Activo" : "Inactivo"}</span>`,
@@ -2194,7 +2183,7 @@
         msg.textContent = "";
       } catch (err) {
         msg.textContent = err?.message || "Error cargando detalle.";
-        prediosBody.innerHTML = '<tr><td colspan="5">Error cargando predios.</td></tr>';
+        prediosBody.innerHTML = '<tr><td colspan="4">Error cargando predios.</td></tr>';
         eventosBody.innerHTML = '<tr><td colspan="3">Error cargando eventos.</td></tr>';
         const breadcrumbName = document.getElementById("breadcrumbAssignmentName");
         if (breadcrumbName) breadcrumbName.textContent = "";
