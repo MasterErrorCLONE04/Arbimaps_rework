@@ -579,14 +579,14 @@
       return usuariosCache.filter(u => (u.rol || "").toLowerCase() === "coordinador" && u.activo);
     }
 
-function renderSupervisorOptions(selectedValue = "", selectedLabel = "") {
-  if (selectedValue && typeof selectedValue === "object") selectedValue = "";
-  if (selectedLabel && typeof selectedLabel === "object") selectedLabel = "";
-  const coordinadores = getCoordinadoresActivos();
-  const current = selectedValue ? String(selectedValue) : (selectSupervisor.value || "");
-  selectSupervisor.innerHTML =
-    '<option value="">Sin supervisor</option>' +
-    coordinadores.map(u => `<option value="${u.id_global}">${nombreUsuarioEquipo(u)}</option>`).join("");
+    function renderSupervisorOptions(selectedValue = "", selectedLabel = "") {
+      if (selectedValue && typeof selectedValue === "object") selectedValue = "";
+      if (selectedLabel && typeof selectedLabel === "object") selectedLabel = "";
+      const coordinadores = getCoordinadoresActivos();
+      const current = selectedValue ? String(selectedValue) : (selectSupervisor.value || "");
+      selectSupervisor.innerHTML =
+        '<option value="">Sin supervisor</option>' +
+        coordinadores.map(u => `<option value="${u.id_global}">${nombreUsuarioEquipo(u)}</option>`).join("");
       if (current && !coordinadores.some(u => String(u.id_global) === String(current))) {
         const fallbackOption = document.createElement("option");
         fallbackOption.value = String(current);
@@ -598,14 +598,14 @@ function renderSupervisorOptions(selectedValue = "", selectedLabel = "") {
       }
     }
 
-function syncSupervisorField(selectedValue = "", selectedLabel = "") {
-  if (selectedValue && typeof selectedValue === "object") selectedValue = "";
-  if (selectedLabel && typeof selectedLabel === "object") selectedLabel = "";
-  const rol = (selectRol.value || "").toLowerCase();
-  const visible = rol === "reconocedor";
-  supervisorWrap.classList.toggle("d-none", !visible);
-  selectSupervisor.required = visible;
-  if (!visible) {
+    function syncSupervisorField(selectedValue = "", selectedLabel = "") {
+      if (selectedValue && typeof selectedValue === "object") selectedValue = "";
+      if (selectedLabel && typeof selectedLabel === "object") selectedLabel = "";
+      const rol = (selectRol.value || "").toLowerCase();
+      const visible = rol === "reconocedor";
+      supervisorWrap.classList.toggle("d-none", !visible);
+      selectSupervisor.required = visible;
+      if (!visible) {
         selectSupervisor.value = "";
       } else {
         renderSupervisorOptions(selectedValue, selectedLabel);
@@ -1679,7 +1679,7 @@ function syncSupervisorField(selectedValue = "", selectedLabel = "") {
       cuadrillasGrid.querySelectorAll(".btnCuaDelete").forEach(btn => {
         btn.addEventListener("click", () => {
           const id = parseInt(btn.getAttribute("data-id"), 10);
-        deleteCuadrilla(id);
+          deleteCuadrilla(id);
         });
       });
     }
@@ -1809,7 +1809,7 @@ function syncSupervisorField(selectedValue = "", selectedLabel = "") {
 
     form.addEventListener("submit", guardarUsuario);
     formCuadrilla.addEventListener("submit", guardarCuadrilla);
-selectRol.addEventListener("change", () => syncSupervisorField());
+    selectRol.addEventListener("change", () => syncSupervisorField());
 
     if (resetBtn) {
       resetBtn.addEventListener("click", (e) => {

@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 AsignacionEstado = Literal[
     "CREANDO_WORKSPACE",
-    "EN_TRABAJO",
     "ERROR_WORKSPACE",
     "PENDIENTE_PUBLICACION",
     "SINCRONIZADO",
@@ -475,7 +474,7 @@ def _procesar_workspace_asignacion(
                 conn,
                 tenant,
                 asignacion_id,
-                estado="EN_TRABAJO",
+                estado="EN_CAMPO",
                 error_msg=None,
                 work_datasetname=result.get("dataset_name") or work_datasetname,
                 predios_soporte_extra=predios_soporte_extra,
@@ -956,7 +955,7 @@ def asignar_predios(
     export_main_by_dataset = bool(missing_basket_tids) or not basket_tids_to_use
 
     if ASIG_SKIP_WORKSPACE:
-        _update_asignacion_fields(conn, tenant, asignacion_id, estado="EN_TRABAJO", error_msg=None)
+        _update_asignacion_fields(conn, tenant, asignacion_id, estado="EN_CAMPO", error_msg=None)
         _safe_log_event(
             conn,
             tenant,
