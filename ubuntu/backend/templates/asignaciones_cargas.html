@@ -177,9 +177,9 @@
               Selecciona usuario de destino
             </label>
 
-            <input id="inpUsuarioDestino" class="form-control consultaInput w-100 mt-2" placeholder="Selecciona rol"
-              list="usuariosList">
-            <datalist id="usuariosList"></datalist>
+            <select id="inpUsuarioDestino" class="form-select consultaInput w-100 mt-2" style="padding-right: 45px !important;">
+              <option value="" disabled selected>Selecciona un reconocedor...</option>
+            </select>
 
             <div class="for-noti mt-4">
               <div class="for-noti-parrafo d-flex align-items-start gap-2">
@@ -735,16 +735,20 @@
         if (!r.ok) return;
 
         const users = await r.json();
-        const dl = document.getElementById("usuariosList");
-        dl.innerHTML = "";
+        const select = document.getElementById("inpUsuarioDestino");
+        if (!select) return;
 
-        users.forEach(u => {
+        select.innerHTML = '<option value="" disabled selected>Selecciona un reconocedor...</option>';
+
+        const reconocedores = users.filter(u => u.rol && u.rol.toLowerCase() === "reconocedor");
+
+        reconocedores.forEach(u => {
           const opt = document.createElement("option");
           opt.value = u.username;
-          opt.text = u.first_name && u.last_name
+          opt.textContent = u.first_name && u.last_name
             ? `${u.first_name} ${u.last_name} (${u.username})`
             : u.username;
-          dl.appendChild(opt);
+          select.appendChild(opt);
         });
       } catch (e) {
         console.warn("No se pudieron cargar usuarios", e);

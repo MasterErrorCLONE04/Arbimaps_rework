@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from routers.asignaciones_workflow import get_command_service, router
 from routers.auth import get_current_user_from_session
 from tenants.context import TenantContext
-from tenants.dependencies import get_tenant_context_from_session
+from tenants.dependencies import get_tenant_context_from_session, get_tenant_db_connection
 from tenants.models import MunicipalityDbConfig, MunicipalitySchemas
 from workflow.enums import WorkflowRole, WorkflowState
 from workflow.exceptions import InvalidTransitionError
@@ -31,8 +31,13 @@ def mock_get_current_user():
     return {"id_global": "user-123", "username": "admin1", "role_code": "administrador"}
 
 
+def mock_get_tenant_db_connection():
+    return MagicMock()
+
+
 app.dependency_overrides[get_tenant_context_from_session] = mock_get_tenant_context
 app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
+app.dependency_overrides[get_tenant_db_connection] = mock_get_tenant_db_connection
 
 
 @pytest.fixture

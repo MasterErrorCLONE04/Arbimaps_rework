@@ -431,12 +431,15 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   </div>
 
   <script>
+    window.rp = "{{ rp }}";
+    var panelRp = window.rp;
+
     async function loadSidebarTotalPredios() {
       const totalEl = document.getElementById("sidebarTotalPredios");
       if (!totalEl) return;
 
       try {
-        const r = await fetch(`${rp}/resumenp/proyecto`);
+        const r = await fetch(`${window.rp}/resumenp/proyecto`);
         if (!r.ok) {
           totalEl.textContent = "0";
           return;

@@ -34,6 +34,11 @@ AsignacionEstado = Literal[
     "PENDIENTE_PUBLICACION",
     "SINCRONIZADO",
     "CERRADA",
+    "EN_CAMPO",
+    "CONTROL_CALIDAD",
+    "DEVUELTO_A_CAMPO",
+    "EN_APROBACION",
+    "EN_SINCRONIZACION",
 ]
 
 
@@ -632,7 +637,7 @@ def asignar_predios(
         with conn.cursor(cursor_factory=RealDictCursor) as cur_user:
             cur_user.execute(
                 f"""
-                SELECT id_global
+                SELECT id_global, rol
                 FROM {users_table}
                 WHERE username = %s
                   AND activo IS TRUE
@@ -645,6 +650,13 @@ def asignar_predios(
             raise HTTPException(
                 status_code=400,
                 detail=f"El usuario destino '{username_destino}' no existe o esta inactivo.",
+            )
+
+        usuario_destino_rol = (dest_row.get("rol") or "").strip().lower()
+        if usuario_destino_rol != "reconocedor":
+            raise HTTPException(
+                status_code=400,
+                detail="Solo se permite asignar trabajos a usuarios con el rol de Reconocedor.",
             )
 
         usuario_destino_id = int(dest_row["id_global"])
