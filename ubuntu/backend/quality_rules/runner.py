@@ -7,6 +7,13 @@ from typing import Any
 from .dataset import InMemoryDataset
 from .components import COMPONENTS, run_all_components
 from .loader import load_rule_group
+from .validation_exceptions import (
+    DEFAULT_EXCEPTION_PROFILE,
+    VALIDATION_MODE_EXCEPTIONS,
+    exception_rule_metadata,
+    excluded_rule_ids_for_mode,
+    normalize_validation_mode,
+)
 from .xtf_reader import parse_xtf_tables, TARGET_CLASSES
 
 
@@ -54,6 +61,9 @@ def _total_predios(tables: dict[str, list[dict[str, Any]]]) -> int:
 
 PREDIO_TABLES = ("ARB_Predio", "arb_predio", "ILC_Predio", "ilc_predio")
 PREDIO_IDENTIFIER_FIELDS = (
+    "t_ili_tid",
+    "T_Ili_Tid",
+    "T_ILI_TID",
     "id_operacion",
     "Id_Operacion",
     "ID_OPERACION",
@@ -65,10 +75,6 @@ PREDIO_IDENTIFIER_FIELDS = (
     "T_ID",
     "tid",
     "TID",
-    "Numero_Predial_Nacional",
-    "numero_predial_nacional",
-    "Numero_Predial",
-    "numero_predial",
 )
 
 
@@ -117,6 +123,9 @@ def _issue_predio_id(issue: dict[str, Any], predio_lookup: dict[str, str]) -> st
 
     candidates: list[object] = []
     candidate_fields = (
+        "t_ili_tid",
+        "T_Ili_Tid",
+        "T_ILI_TID",
         "predio_id",
         "id_predio",
         "id_operacion",
@@ -130,10 +139,6 @@ def _issue_predio_id(issue: dict[str, Any], predio_lookup: dict[str, str]) -> st
         "tid",
         "t_id",
         "T_ID",
-        "Numero_Predial_Nacional",
-        "numero_predial_nacional",
-        "Numero_Predial",
-        "numero_predial",
     )
 
     for field in candidate_fields:
@@ -189,7 +194,22 @@ def run_quality_checks(
     xtf_path: Path,
     *,
     municipality_code: str | None = None,
+    validation_mode: str | None = None,
+    exception_profile: str | None = DEFAULT_EXCEPTION_PROFILE,
 ) -> dict[str, Any]:
+    selected_validation_mode = normalize_validation_mode(validation_mode)
+    selected_exception_profile = exception_profile or DEFAULT_EXCEPTION_PROFILE
+    excluded_rule_ids = excluded_rule_ids_for_mode(
+        selected_validation_mode,
+        selected_exception_profile,
+    )
+    excluded_rule_id_list = sorted(excluded_rule_ids)
+    exception_rules = (
+        exception_rule_metadata(selected_exception_profile)
+        if selected_validation_mode == VALIDATION_MODE_EXCEPTIONS
+        else []
+    )
+
     try:
         tables = parse_xtf_tables(xtf_path, TARGET_CLASSES)
         _debug_tables(tables)
@@ -204,6 +224,7 @@ def run_quality_checks(
                     "available_rules": 0,
                     "implemented_rules": 0,
                     "unimplemented_rules": 0,
+                    "excluded_rules": len(excluded_rule_ids),
                     "passed_rules": 0,
                     "failed_rules": 0,
                     "total_issues": 0,
@@ -213,6 +234,10 @@ def run_quality_checks(
                 "rule_catalog": {},
                 "predio_summary": [],
                 "unimplemented_rule_ids": [],
+                "excluded_rule_ids": excluded_rule_id_list,
+                "exception_rules": exception_rules,
+                "validation_mode": selected_validation_mode,
+                "exception_profile": selected_exception_profile,
             },
         }
 
@@ -220,7 +245,10 @@ def run_quality_checks(
         tables,
         metadata={"municipality_code": municipality_code},
     )
-    component_results = run_all_components(dataset)
+    component_results = run_all_components(
+        dataset,
+        excluded_rule_ids=excluded_rule_ids,
+    )
     available_rule_ids = _load_available_rule_ids()
     total_predios = _total_predios(tables)
 
@@ -229,11 +257,14 @@ def run_quality_checks(
         result = component_result.result
         for issue in result.issues:
             display_id = (
-                issue.details.get("id_operacion")
+                issue.details.get("t_ili_tid")
+                or issue.details.get("T_Ili_Tid")
+                or issue.details.get("T_ILI_TID")
+                or issue.object_ref
+                or issue.details.get("id_operacion")
                 or issue.details.get("Id_Operacion")
                 or issue.details.get("id_predio")
                 or issue.details.get("predio_id")
-                or issue.object_ref
             )
 
             issues.append(
@@ -296,7 +327,7 @@ def run_quality_checks(
     implemented_rule_ids = [item["rule"] for item in rule_status]
     unimplemented_rule_ids = [
         rule_id for rule_id in available_rule_ids
-        if rule_id not in implemented_rule_ids
+        if rule_id not in implemented_rule_ids and rule_id not in excluded_rule_ids
     ]
 
     predio_summary = _build_predio_summary(issues, tables)
@@ -315,6 +346,7 @@ def run_quality_checks(
                 "available_rules": len(available_rule_ids),
                 "implemented_rules": len(rule_status),
                 "unimplemented_rules": len(unimplemented_rule_ids),
+                "excluded_rules": len(excluded_rule_ids),
                 "passed_rules": len(passed_rules),
                 "failed_rules": len(failed_rules),
                 "total_issues": len(issues),
@@ -326,5 +358,9 @@ def run_quality_checks(
             "rule_catalog": rule_catalog,
             "predio_summary": predio_summary,
             "unimplemented_rule_ids": unimplemented_rule_ids,
+            "excluded_rule_ids": excluded_rule_id_list,
+            "exception_rules": exception_rules,
+            "validation_mode": selected_validation_mode,
+            "exception_profile": selected_exception_profile,
         },
     }

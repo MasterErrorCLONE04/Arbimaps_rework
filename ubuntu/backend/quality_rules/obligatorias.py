@@ -77,7 +77,6 @@ class ObligatoriasHelper:
         "TID",
         "id",
         "identificador",
-        "numero_predial",
         "etiqueta",
     )
 

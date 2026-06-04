@@ -17,16 +17,15 @@ DEFAULT_RULE_IDS = frozenset({
 class ComplementariasHelper:
     """Utilidades compartidas para reglas complementarias."""
     IDENTIFIER_FIELDS = (
+        "t_ili_tid",
+        "T_Ili_Tid",
+        "T_ILI_TID",
         "id_operacion",
         "Id_Operacion",
         "t_id",
         "T_Id",
         "id",
         "TID",
-        "t_ili_tid",
-        "T_Ili_Tid",
-        "numero_predial",
-        "Numero_Predial",
     )
 
     PREDIO_TABLES = (

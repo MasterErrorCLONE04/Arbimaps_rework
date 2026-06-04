@@ -39,6 +39,10 @@
 {% set filename = result.original_filename if result and result.original_filename else 'Archivo XTF' %}
 {% set generated_at = (result.generated_at|replace('T', ' ')) if result and result.generated_at else 'Sin fecha' %}
 {% set validation_status = validation.status if validation and validation.status else '' %}
+{% set validation_mode = quality.validation_mode if quality and quality.validation_mode else (result.validation_mode if result and result.validation_mode else 'all') %}
+{% set excluded_rule_ids = quality.excluded_rule_ids if quality and quality.excluded_rule_ids else [] %}
+{% set validation_mode_label = 'Con excepciones' if validation_mode == 'exceptions' else 'Validar todo' %}
+{% set excluded_rule_display = excluded_rule_ids|join(', ') %}
 {% set validation_status_label = 'Validado sin hallazgos' if validation_status == 'success' and total_errors == 0 and failed_rules == 0 else 'Validado con hallazgos' if result and validation_status not in ['error', 'skipped'] else 'Validación no completada' %}
 {% set model_display = validation.model_name if validation and validation.model_name else ((validation.model_names|join(', ')) if validation and validation.model_names else 'No disponible') %}
 {% set show_runtime_error = result and validation_status in ['error', 'skipped'] and not schema_errors and not rule_errors %}
@@ -231,6 +235,73 @@
 
     .hidden-file-input {
         display: none;
+    }
+
+    .validation-mode-control {
+        width: min(780px, 100%);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border: 1px solid var(--validation-border);
+        border-radius: 7px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .validation-mode-option {
+        position: relative;
+        min-width: 0;
+    }
+
+    .validation-mode-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .validation-mode-label {
+        min-height: 64px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--validation-navy);
+        cursor: pointer;
+        border-right: 1px solid var(--validation-border-soft);
+    }
+
+    .validation-mode-option:last-child .validation-mode-label {
+        border-right: 0;
+    }
+
+    .validation-mode-label i {
+        font-size: 1.3rem;
+        flex: 0 0 auto;
+    }
+
+    .validation-mode-label strong,
+    .validation-mode-label small {
+        display: block;
+        line-height: 1.2;
+    }
+
+    .validation-mode-label strong {
+        font-size: 0.94rem;
+        font-weight: 800;
+    }
+
+    .validation-mode-label small {
+        margin-top: 4px;
+        font-size: 0.78rem;
+        color: var(--validation-muted);
+    }
+
+    .validation-mode-option input:checked + .validation-mode-label {
+        background: var(--validation-navy);
+        color: #fff;
+    }
+
+    .validation-mode-option input:checked + .validation-mode-label small {
+        color: #d8e8f4;
     }
 
     .dropzone {
@@ -1142,6 +1213,7 @@
         }
 
         .uploaded-area,
+        .validation-mode-control,
         .result-hero,
         .result-file-meta,
         .metrics-grid,
@@ -1152,6 +1224,15 @@
 
         .uploaded-area {
             gap: 18px;
+        }
+
+        .validation-mode-label {
+            border-right: 0;
+            border-bottom: 1px solid var(--validation-border-soft);
+        }
+
+        .validation-mode-option:last-child .validation-mode-label {
+            border-bottom: 0;
         }
 
         .result-hero {
@@ -1247,6 +1328,29 @@
                 {{ validation_stepper(1) }}
                 <form id="xtf-upload-form" class="upload-form" action="{{ form_action }}" method="post" enctype="multipart/form-data">
                     <input id="xtf-file-input" class="hidden-file-input" type="file" name="file" accept=".xtf" required>
+
+                    <div class="validation-mode-control" role="radiogroup" aria-label="Modo de validacion">
+                        <label class="validation-mode-option">
+                            <input type="radio" name="validation_mode" value="all" checked>
+                            <span class="validation-mode-label">
+                                <i class="bi bi-check2-circle"></i>
+                                <span>
+                                    <strong>Validar todo</strong>
+                                    <small>Todas las reglas activas</small>
+                                </span>
+                            </span>
+                        </label>
+                        <label class="validation-mode-option">
+                            <input type="radio" name="validation_mode" value="exceptions">
+                            <span class="validation-mode-label">
+                                <i class="bi bi-slash-circle"></i>
+                                <span>
+                                    <strong>Con excepciones</strong>
+                                    <small>Omite 4.9</small>
+                                </span>
+                            </span>
+                        </label>
+                    </div>
 
                     <div id="xtf-dropzone" class="dropzone">
                         <div class="dropzone-inner">
@@ -1365,6 +1469,10 @@
                     <span>
                         <span class="hero-label">Modelo validado</span>
                         <span class="hero-value">{{ model_display }}</span>
+                    </span>
+                    <span>
+                        <span class="hero-label">Modo</span>
+                        <span class="hero-value">{{ validation_mode_label }}{% if excluded_rule_display %} ({{ excluded_rule_display }}){% endif %}</span>
                     </span>
                 </div>
                 <a class="validation-button light" href="{{ reload_href }}">

@@ -23,11 +23,13 @@ class NovedadescoHelper:
     """Utilidades compartidas para reglas novedades."""
 
     IDENTIFIER_FIELDS = (
+        "t_ili_tid",
+        "T_Ili_Tid",
+        "T_ILI_TID",
         "id_operacion",
         "t_id",
         "TID",
         "id",
-        "t_ili_tid",
     )
 
     PREDIO_TABLES = (

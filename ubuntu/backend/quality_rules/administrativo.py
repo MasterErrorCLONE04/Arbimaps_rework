@@ -18,6 +18,9 @@ class NumeroPredialHelper:
     """Utilidades compartidas para reglas administrativas."""
 
     IDENTIFIER_FIELDS = (
+        "t_ili_tid",
+        "T_Ili_Tid",
+        "T_ILI_TID",
         "id_predio",
         "ID_PREDIO",
         "predio_id",
@@ -174,6 +177,9 @@ class NumeroPredialHelper:
 
     def identify(self, row: dict[str, object]) -> str | None:
         preferred_fields = (
+            "t_ili_tid",
+            "T_Ili_Tid",
+            "T_ILI_TID",
             "id_operacion",
             "Id_Operacion",
             "ID_OPERACION",
@@ -210,17 +216,6 @@ class NumeroPredialHelper:
                 return str(candidate).strip()
 
         # 4. fallback útil para predios si no apareció el id_operacion
-        fallback_fields = (
-            "numero_predial",
-            "Numero_Predial",
-            "numero_predial_nacional",
-            "Numero_Predial_Nacional",
-        )
-        normalized_fallbacks = {self._normalize_key(field) for field in fallback_fields}
-        for key, candidate in row.items():
-            if self._normalize_key(str(key)) in normalized_fallbacks and candidate not in (None, ""):
-                return str(candidate).strip()
-
         return None
 
     def get_field_value(self, row: dict[str, object], candidates: tuple[str, ...]) -> str | None:
@@ -1384,39 +1379,9 @@ def _rule_1_12(dataset: DatasetReader) -> list[RuleIssue]:
             require_value=False,
         )
 
-        if not matricula_match:
-            issues.append(
-                RuleIssue(
-                    rule_id="1.12",
-                    object_ref=helper.identify(row),
-                    message="Matricula_inmobiliaria no existe en el registro.",
-                    details={
-                        "tabla": table_name,
-                        "campo": "Matricula_inmobiliaria",
-                        "class": table_name,
-                    },
-                )
-            )
-            continue
-
         matricula_field, matricula_raw = matricula_match
         matricula_str = "" if matricula_raw in (None, "") else str(matricula_raw).strip()
 
-        if not matricula_str:
-            issues.append(
-                RuleIssue(
-                    rule_id="1.12",
-                    object_ref=helper.identify(row),
-                    message="No se puede validar la regla 1.12 porque Matricula_inmobiliaria no existe o está vacía.",
-                    details={
-                        "tabla": table_name,
-                        "campo": matricula_field,
-                        "class": table_name,
-                        "valor": matricula_raw,
-                    },
-                )
-            )
-            continue
 
         predial_match = helper._extract_field(
             row,
@@ -1485,39 +1450,8 @@ def _rule_1_13(dataset: DatasetReader) -> list[RuleIssue]:
             require_value=False,
         )
 
-        if not matricula_match:
-            issues.append(
-                RuleIssue(
-                    rule_id="1.13",
-                    object_ref=helper.identify(row),
-                    message="Matricula_inmobiliaria no existe en el registro.",
-                    details={
-                        "tabla": table_name,
-                        "campo": "Matricula_inmobiliaria",
-                        "class": table_name,
-                    },
-                )
-            )
-            continue
-
         field_name, raw_value = matricula_match
         matricula_str = "" if raw_value in (None, "") else str(raw_value).strip()
-
-        if not matricula_str:
-            issues.append(
-                RuleIssue(
-                    rule_id="1.13",
-                    object_ref=helper.identify(row),
-                    message="No se puede validar la regla 1.13 porque Matricula_inmobiliaria no existe o está vacía.",
-                    details={
-                        "tabla": table_name,
-                        "campo": field_name,
-                        "class": table_name,
-                        "valor": raw_value,
-                    },
-                )
-            )
-            continue
 
         if not matricula_str.isdigit():
             issues.append(

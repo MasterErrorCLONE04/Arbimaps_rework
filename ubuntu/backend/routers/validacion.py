@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter, Request, UploadFile, File, HTTPException
+from fastapi import APIRouter, Request, UploadFile, File, Form, HTTPException
 from fastapi.responses import HTMLResponse, Response
 from fastapi.templating import Jinja2Templates
 
@@ -42,7 +42,11 @@ async def vista_validacion_xtf(request: Request):
 
 
 @router.post("/xtf/subir", response_class=HTMLResponse)
-async def subir_xtf(request: Request, file: UploadFile = File(...)):
+async def subir_xtf(
+    request: Request,
+    file: UploadFile = File(...),
+    validation_mode: str = Form("all"),
+):
     try:
         if not file.filename:
             raise HTTPException(status_code=400, detail="No se recibió archivo.")
@@ -63,6 +67,7 @@ async def subir_xtf(request: Request, file: UploadFile = File(...)):
         result = await _get_xtf_service().save_xtf(
             file,
             municipality_code=user.get("municipality_code"),
+            validation_mode=validation_mode,
         )
 
         return templates.TemplateResponse(

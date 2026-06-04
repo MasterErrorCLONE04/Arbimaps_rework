@@ -12,10 +12,12 @@ DEFAULT_RULE_IDS = frozenset({
 class EconomicoHelper:
     """Utilidades compartidas para reglas economicas."""
     IDENTIFIER_FIELDS = (
+        "t_ili_tid",
+        "T_Ili_Tid",
+        "T_ILI_TID",
         "id_operacion",
         "t_id",
         "TID",
-        "t_ili_tid",
     )
 
     CARACTERISTICAS_UC_TABLES = (

@@ -14,11 +14,12 @@ DEFAULT_RULE_IDS = frozenset({
 class EstructuraHelper:
     """Utilidades compartidas para reglas estructurales."""
     IDENTIFIER_FIELDS = (
+        "t_ili_tid",
+        "T_Ili_Tid",
+        "T_ILI_TID",
         "id_operacion",
         "t_id",
         "TID",
-        "t_ili_tid",
-        "numero_predial",
     )
 
     PREDIO_TABLES = (
