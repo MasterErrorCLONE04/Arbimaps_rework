@@ -16,7 +16,6 @@ from typing import Any
 from uuid import uuid4
 
 from quality_rules.runner import run_quality_checks
-from quality_rules.validation_exceptions import normalize_validation_mode
 from services.validation_excel_report import build_validation_errors_excel, validation_excel_filename
 from services.validation_pdf_report import build_validation_pdf, validation_pdf_filename
 
@@ -62,12 +61,10 @@ class XTFValidationService:
         uploaded_file,
         *,
         municipality_code: str | None = None,
-        validation_mode: str | None = None,
     ):
         job_id = str(uuid4())
         safe_name = uploaded_file.filename.replace(" ", "_")
         file_path = self.upload_dir / f"{job_id}_{safe_name}"
-        selected_validation_mode = normalize_validation_mode(validation_mode)
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(uploaded_file.file, buffer)
@@ -77,7 +74,6 @@ class XTFValidationService:
             job_id,
             file_path,
             municipality_code,
-            selected_validation_mode,
         )
 
         result = {
@@ -87,7 +83,6 @@ class XTFValidationService:
             "stored_name": file_path.name,
             "generated_at": datetime.now().isoformat(timespec="seconds"),
             "municipality_code": municipality_code,
-            "validation_mode": selected_validation_mode,
             "validation": validation,
         }
         self._write_job_result(job_id, result)
@@ -298,7 +293,6 @@ class XTFValidationService:
         job_id: str,
         file_path: Path,
         municipality_code: str | None = None,
-        validation_mode: str | None = None,
     ) -> dict[str, Any]:
         log_path = (self.log_dir / f"{job_id}.log").resolve()
         report_path = (self.report_dir / f"{job_id}.xml").resolve()
@@ -306,7 +300,6 @@ class XTFValidationService:
         quality_result = self._run_internal_quality(
             file_path,
             municipality_code=municipality_code,
-            validation_mode=validation_mode,
         )
         quality, rule_errors = self._quality_and_rule_errors(quality_result)
 
@@ -468,27 +461,6 @@ class XTFValidationService:
         if not isinstance(rules, list):
             rules = []
 
-        excluded_rule_ids_raw = quality.get("excluded_rule_ids")
-        if not isinstance(excluded_rule_ids_raw, (list, tuple, set)):
-            excluded_rule_ids_raw = []
-        excluded_rule_ids = {
-            str(rule_id).strip()
-            for rule_id in excluded_rule_ids_raw
-            if str(rule_id or "").strip()
-        }
-        if excluded_rule_ids:
-            issues = [
-                issue for issue in issues
-                if not (
-                    isinstance(issue, dict)
-                    and str(
-                        issue.get("rule")
-                        or issue.get("rule_id")
-                        or issue.get("codigo")
-                        or ""
-                    ).strip() in excluded_rule_ids
-                )
-            ]
 
         # Traer catálogo. Si el motor no lo entrega, cargarlo desde resource/quality_rules/*.json.
         rule_catalog = quality.get("rule_catalog")
@@ -518,18 +490,14 @@ class XTFValidationService:
             issues_by_rule[rule_id] = issues_by_rule.get(rule_id, 0) + 1
 
         implemented_rule_ids = self._implemented_rule_ids_from_components()
-        catalog_rule_ids = [
-            rule_id
-            for rule_id in (implemented_rule_ids or sorted(rule_catalog.keys(), key=self._rule_sort_key))
-            if rule_id not in excluded_rule_ids
-        ]
+        catalog_rule_ids = implemented_rule_ids or sorted(rule_catalog.keys(), key=self._rule_sort_key)
 
         rules_by_id: dict[str, dict[str, Any]] = {}
         for rule in rules:
             if not isinstance(rule, dict):
                 continue
             rule_id = str(rule.get("rule") or rule.get("rule_id") or "").strip()
-            if not rule_id or rule_id in excluded_rule_ids:
+            if not rule_id:
                 continue
             rules_by_id[rule_id] = rule
 
@@ -626,7 +594,6 @@ class XTFValidationService:
                     "passed": issue_count == 0,
                 }
                 for rule_id, issue_count in sorted(issues_by_rule.items())
-                if rule_id not in excluded_rule_ids
             ]
 
         implemented_rule_ids: list[str] = []
@@ -637,7 +604,7 @@ class XTFValidationService:
                 continue
 
             rule_id = str(item.get("rule") or item.get("rule_id") or "").strip()
-            if not rule_id or rule_id in excluded_rule_ids:
+            if not rule_id:
                 continue
 
             issue_count = self._coerce_int(
@@ -677,11 +644,6 @@ class XTFValidationService:
         unimplemented_rule_ids = quality.get("unimplemented_rule_ids") or []
         if not isinstance(unimplemented_rule_ids, list):
             unimplemented_rule_ids = []
-        unimplemented_rule_ids = [
-            str(rule_id).strip()
-            for rule_id in unimplemented_rule_ids
-            if str(rule_id or "").strip() and str(rule_id).strip() not in excluded_rule_ids
-        ]
 
         predio_summary = quality.get("predio_summary") or []
         if not isinstance(predio_summary, list):
@@ -722,15 +684,6 @@ class XTFValidationService:
         quality["issues"] = issues
         quality["rules"] = normalized_rules
         quality["predio_summary"] = predio_summary
-        quality["excluded_rule_ids"] = sorted(excluded_rule_ids, key=self._rule_sort_key)
-        quality["exception_rules"] = (
-            quality.get("exception_rules")
-            if isinstance(quality.get("exception_rules"), list)
-            else []
-        )
-        quality["validation_mode"] = normalize_validation_mode(quality.get("validation_mode"))
-        quality["exception_profile"] = quality.get("exception_profile") or "default"
-
         computed_total_rules = len(normalized_rules)
         computed_passed_rules = sum(1 for rule in normalized_rules if rule["passed"])
         computed_failed_rules = computed_total_rules - computed_passed_rules
@@ -739,7 +692,7 @@ class XTFValidationService:
         if available_rules < computed_total_rules:
             available_rules = max(computed_total_rules, available_default)
 
-        unimplemented_default = max(available_rules - computed_total_rules - len(excluded_rule_ids), 0)
+        unimplemented_default = max(available_rules - computed_total_rules, 0)
         unimplemented_rules = self._coerce_int(
             summary.get("unimplemented_rules"),
             default=unimplemented_default,
@@ -777,7 +730,6 @@ class XTFValidationService:
             "passed_rules": computed_passed_rules,
             "failed_rules": computed_failed_rules,
             "unimplemented_rules": unimplemented_rules,
-            "excluded_rules": len(excluded_rule_ids),
             "total_issues": total_issues_value,
             "total_predios": total_predios_value,
             "predios_con_errores": predios_con_errores_value,
@@ -1283,14 +1235,12 @@ class XTFValidationService:
         file_path: Path,
         *,
         municipality_code: str | None = None,
-        validation_mode: str | None = None,
     ) -> dict[str, Any]:
         """Ejecuta las reglas internas de calidad y siempre devuelve una estructura válida."""
         try:
             result = run_quality_checks(
                 file_path,
                 municipality_code=municipality_code,
-                validation_mode=validation_mode,
             )
         except Exception as exc:
             empty = self._empty_quality_result()

@@ -24,14 +24,10 @@ class Component:
         self,
         dataset: DatasetReader,
         rule_ids: Iterable[str] | None = None,
-        excluded_rule_ids: Iterable[str] | None = None,
     ) -> list[RuleResult]:
         selected = list(rule_ids) if rule_ids else list(self.default_rule_ids)
-        excluded = {str(rule_id).strip() for rule_id in (excluded_rule_ids or [])}
         results: list[RuleResult] = []
         for rule_id in selected:
-            if rule_id in excluded:
-                continue
             func = self.rule_functions.get(rule_id)
             if not func:
                 continue
@@ -102,14 +98,10 @@ COMPONENTS: dict[str, Component] = {
     ),
 }
 
-def run_all_components(
-    dataset: DatasetReader,
-    *,
-    excluded_rule_ids: Iterable[str] | None = None,
-) -> list[ComponentResult]:
+def run_all_components(dataset: DatasetReader) -> list[ComponentResult]:
     results: list[ComponentResult] = []
     for component in COMPONENTS.values():
-        rule_results = component.run(dataset, excluded_rule_ids=excluded_rule_ids)
+        rule_results = component.run(dataset)
         for rule_result in rule_results:
             results.append(ComponentResult(component=component.slug, result=rule_result))
     return results

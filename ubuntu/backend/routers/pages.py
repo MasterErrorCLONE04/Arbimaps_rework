@@ -595,7 +595,6 @@ def panel_validacion_xtf(request: Request):
 async def panel_validacion_xtf_upload(
     request: Request,
     file: UploadFile = File(...),
-    validation_mode: str = Form("all"),
 ):
 
     user = get_user(request)
@@ -621,7 +620,6 @@ async def panel_validacion_xtf_upload(
             result = await xtf_service.save_xtf(
                 file,
                 municipality_code=user.get("municipality_code"),
-                validation_mode=validation_mode,
             )
         except Exception as exc:
             error = f"Error al subir el archivo: {exc}"

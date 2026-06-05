@@ -39,14 +39,16 @@
 {% set filename = result.original_filename if result and result.original_filename else 'Archivo XTF' %}
 {% set generated_at = (result.generated_at|replace('T', ' ')) if result and result.generated_at else 'Sin fecha' %}
 {% set validation_status = validation.status if validation and validation.status else '' %}
-{% set validation_mode = quality.validation_mode if quality and quality.validation_mode else (result.validation_mode if result and result.validation_mode else 'all') %}
-{% set excluded_rule_ids = quality.excluded_rule_ids if quality and quality.excluded_rule_ids else [] %}
-{% set validation_mode_label = 'Con excepciones' if validation_mode == 'exceptions' else 'Validar todo' %}
-{% set excluded_rule_display = excluded_rule_ids|join(', ') %}
+{% set result_is_clean = validation_status == 'success' and total_errors == 0 and failed_rules == 0 %}
+{% set result_state_class = 'is-ok' if result_is_clean else 'has-errors' %}
+{% set result_gate_art = 'success' if result_is_clean else 'error' %}
+{% set result_gate_title = '¡Validado con éxito!' if result_is_clean else 'Validado con hallazgos' %}
+{% set show_model_error = result and validation_status == 'invalid' and total_schema_errors > 0 and total_rule_errors == 0 and failed_rules == 0 %}
+{% set result_gate_title = 'Validado con exito' if result_is_clean else 'Validado con hallazgos' %}
 {% set validation_status_label = 'Validado sin hallazgos' if validation_status == 'success' and total_errors == 0 and failed_rules == 0 else 'Validado con hallazgos' if result and validation_status not in ['error', 'skipped'] else 'Validación no completada' %}
 {% set model_display = validation.model_name if validation and validation.model_name else ((validation.model_names|join(', ')) if validation and validation.model_names else 'No disponible') %}
 {% set show_runtime_error = result and validation_status in ['error', 'skipped'] and not schema_errors and not rule_errors %}
-{% set show_success_gate = result and validation_status == 'success' and total_errors == 0 and failed_rules == 0 %}
+{% set show_result_gate = result and not show_runtime_error and not show_model_error %}
 {% set pdf_href = (rp if rp else '') + '/validacion/xtf/' + result.job_id + '/reporte.pdf' if result else '#' %}
 {% set excel_href = (rp if rp else '') + '/validacion/xtf/' + result.job_id + '/errores.xlsx' if result else '#' %}
 
@@ -235,73 +237,6 @@
 
     .hidden-file-input {
         display: none;
-    }
-
-    .validation-mode-control {
-        width: min(780px, 100%);
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        border: 1px solid var(--validation-border);
-        border-radius: 7px;
-        overflow: hidden;
-        background: #fff;
-    }
-
-    .validation-mode-option {
-        position: relative;
-        min-width: 0;
-    }
-
-    .validation-mode-option input {
-        position: absolute;
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .validation-mode-label {
-        min-height: 64px;
-        padding: 12px 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: var(--validation-navy);
-        cursor: pointer;
-        border-right: 1px solid var(--validation-border-soft);
-    }
-
-    .validation-mode-option:last-child .validation-mode-label {
-        border-right: 0;
-    }
-
-    .validation-mode-label i {
-        font-size: 1.3rem;
-        flex: 0 0 auto;
-    }
-
-    .validation-mode-label strong,
-    .validation-mode-label small {
-        display: block;
-        line-height: 1.2;
-    }
-
-    .validation-mode-label strong {
-        font-size: 0.94rem;
-        font-weight: 800;
-    }
-
-    .validation-mode-label small {
-        margin-top: 4px;
-        font-size: 0.78rem;
-        color: var(--validation-muted);
-    }
-
-    .validation-mode-option input:checked + .validation-mode-label {
-        background: var(--validation-navy);
-        color: #fff;
-    }
-
-    .validation-mode-option input:checked + .validation-mode-label small {
-        color: #d8e8f4;
     }
 
     .dropzone {
@@ -496,33 +431,29 @@
     }
 
     .process-ring {
+        --progress: 0;
         width: 204px;
         height: 204px;
         margin: 0 auto 42px;
         border-radius: 50%;
         display: grid;
         place-items: center;
-        background: #fff;
+        background:
+            radial-gradient(circle at center, #fff 0 58%, transparent 59%),
+            conic-gradient(var(--validation-navy) calc(var(--progress) * 1%), #d6e8f7 0 100%);
         border: 1px solid var(--validation-border);
         position: relative;
     }
 
     .process-ring::after {
-        content: "";
-        width: 148px;
-        height: 148px;
-        border-radius: 50%;
-        border: 12px solid #d6e8f7;
-        border-top-color: var(--validation-navy);
-        position: absolute;
-        animation: ringSpin 1s linear infinite;
+        content: none;
     }
 
     .process-percent {
         position: relative;
         z-index: 1;
         color: var(--validation-navy);
-        font-size: 1.1rem;
+        font-size: 1.3rem;
         font-weight: 800;
     }
 
@@ -711,13 +642,27 @@
         align-items: center;
         gap: 20px;
         padding: 24px;
+        overflow: hidden;
+    }
+
+    .result-hero.is-ok {
+        background: #08743d;
+    }
+
+    .result-hero.has-errors {
+        background: #9d1f2d;
     }
 
     .result-file-meta {
         display: grid;
-        grid-template-columns: 48px minmax(130px, 1fr) minmax(150px, 1fr) minmax(180px, 1.4fr);
+        grid-template-columns: 54px minmax(0, 2fr) minmax(150px, .9fr) minmax(180px, 1.1fr);
         align-items: center;
         gap: 22px;
+        min-width: 0;
+    }
+
+    .result-file-meta > span {
+        min-width: 0;
     }
 
     .result-file-icon {
@@ -731,18 +676,47 @@
         font-size: 1.7rem;
     }
 
+    .result-hero.is-ok .result-file-icon {
+        background: #55c779;
+    }
+
+    .result-hero.has-errors .result-file-icon {
+        background: #e85c60;
+    }
+
     .hero-label {
         display: block;
         font-weight: 800;
         margin-bottom: 8px;
         color: #fff;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .hero-value {
         display: block;
         color: #fff;
         font-size: 0.88rem;
-        overflow-wrap: anywhere;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .result-hero .validation-button {
+        white-space: nowrap;
+    }
+
+    .summary-card.is-ok .summary-card-title {
+        background: var(--validation-success-soft);
+        color: var(--validation-success);
+    }
+
+    .summary-card.has-errors .summary-card-title {
+        background: var(--validation-danger-soft);
+        color: var(--validation-danger);
     }
 
     .dashboard-grid {
@@ -1213,7 +1187,6 @@
         }
 
         .uploaded-area,
-        .validation-mode-control,
         .result-hero,
         .result-file-meta,
         .metrics-grid,
@@ -1224,15 +1197,6 @@
 
         .uploaded-area {
             gap: 18px;
-        }
-
-        .validation-mode-label {
-            border-right: 0;
-            border-bottom: 1px solid var(--validation-border-soft);
-        }
-
-        .validation-mode-option:last-child .validation-mode-label {
-            border-bottom: 0;
         }
 
         .result-hero {
@@ -1329,29 +1293,6 @@
                 <form id="xtf-upload-form" class="upload-form" action="{{ form_action }}" method="post" enctype="multipart/form-data">
                     <input id="xtf-file-input" class="hidden-file-input" type="file" name="file" accept=".xtf" required>
 
-                    <div class="validation-mode-control" role="radiogroup" aria-label="Modo de validacion">
-                        <label class="validation-mode-option">
-                            <input type="radio" name="validation_mode" value="all" checked>
-                            <span class="validation-mode-label">
-                                <i class="bi bi-check2-circle"></i>
-                                <span>
-                                    <strong>Validar todo</strong>
-                                    <small>Todas las reglas activas</small>
-                                </span>
-                            </span>
-                        </label>
-                        <label class="validation-mode-option">
-                            <input type="radio" name="validation_mode" value="exceptions">
-                            <span class="validation-mode-label">
-                                <i class="bi bi-slash-circle"></i>
-                                <span>
-                                    <strong>Con excepciones</strong>
-                                    <small>Omite 4.9</small>
-                                </span>
-                            </span>
-                        </label>
-                    </div>
-
                     <div id="xtf-dropzone" class="dropzone">
                         <div class="dropzone-inner">
                             <div class="dropzone-cloud"><i class="bi bi-cloud-arrow-up-fill"></i></div>
@@ -1386,7 +1327,7 @@
             <div id="processing-step-view" class="process-view" hidden>
                 {{ validation_stepper(2) }}
                 <div class="process-ring">
-                    <span class="process-percent">Procesando</span>
+                    <span id="process-percent" class="process-percent">0 %</span>
                 </div>
                 <h2 class="process-title">Corriendo validadores</h2>
                 <p class="process-text">Por favor espera mientras se realiza el proceso. Esto puede tardar unos minutos</p>
@@ -1406,7 +1347,7 @@
             <h1 class="validation-title">Validación de reglas de calidad</h1>
             <p class="validation-subtitle">Analiza y revisa la calidad de los predios del archivo XTF cargado.</p>
         </header>
-        {{ validation_stepper(2) }}
+        {{ validation_stepper(3) }}
         <div class="error-layout">
             <div class="center-state">
                 <div class="status-art error" aria-hidden="true">
@@ -1431,35 +1372,75 @@
         </div>
         {% endif %}
 
-        {% if result and not show_runtime_error %}
-        {% if show_success_gate %}
-        <section id="success-step-view" class="center-state">
+        {% if result and show_model_error %}
+        <header>
+            <h1 class="validation-title">Validación de reglas de calidad</h1>
+            <p class="validation-subtitle">Analiza y revisa la calidad de los predios del archivo XTF cargado.</p>
+        </header>
+        {{ validation_stepper(3) }}
+        <div class="error-layout">
+            <div class="center-state">
+                <div class="status-art error" aria-hidden="true">
+                    <span class="dot" style="width: 7px; height: 7px; left: 26px; top: 44px; background:#dc6468;"></span>
+                    <span class="dot" style="width: 9px; height: 9px; left: 102px; top: 26px; background:#65a4d8;"></span>
+                    <span class="dot" style="width: 11px; height: 11px; right: 42px; top: 72px; background:#dc6468;"></span>
+                    <span class="dot" style="width: 8px; height: 8px; left: 18px; bottom: 68px; background:#65a4d8;"></span>
+                    <span class="status-bubble">
+                        <span class="status-mark"><i class="bi bi-x-lg"></i></span>
+                    </span>
+                </div>
+                <h2 class="center-state-title">¡Error en los validadores!</h2>
+            </div>
+            <div class="error-copy">
+                <p class="error-label">Error encontrado</p>
+                <div class="error-pill">Modelo no correspondiente</div>
+                <p class="error-label">Recomendaciones</p>
+                <div class="recommendation-box">Revisa tu archivo y verifica que el modelo corresponde al proyecto.</div>
+            </div>
+        </div>
+        <div class="error-actions">
+            <a class="validation-button blue" href="{{ reload_href }}">
+                <i class="bi bi-arrow-left"></i>
+                Seleccionar archivo
+            </a>
+        </div>
+        {% endif %}
+
+        {% if show_result_gate %}
+        <section id="result-step-view" class="center-state">
             <header>
                 <h1 class="validation-title">Validación de reglas de calidad</h1>
                 <p class="validation-subtitle">Analiza y revisa la calidad de los predios del archivo XTF cargado.</p>
             </header>
-            {{ validation_stepper(2) }}
-            <div class="status-art success" aria-hidden="true">
+            {{ validation_stepper(3) }}
+            <div class="status-art {{ result_gate_art }}" aria-hidden="true">
+                {% if result_is_clean %}
                 <span class="dot"></span>
                 <span class="dot"></span>
                 <span class="dot"></span>
                 <span class="dot"></span>
                 <span class="dot"></span>
+                {% else %}
+                <span class="dot" style="width: 7px; height: 7px; left: 26px; top: 44px; background:#dc6468;"></span>
+                <span class="dot" style="width: 9px; height: 9px; left: 102px; top: 26px; background:#65a4d8;"></span>
+                <span class="dot" style="width: 11px; height: 11px; right: 42px; top: 72px; background:#dc6468;"></span>
+                <span class="dot" style="width: 8px; height: 8px; left: 18px; bottom: 68px; background:#65a4d8;"></span>
+                {% endif %}
                 <span class="status-bubble">
-                    <span class="status-mark"><i class="bi bi-check-lg"></i></span>
+                    <span class="status-mark"><i class="bi {{ 'bi-check-lg' if result_is_clean else 'bi-x-lg' }}"></i></span>
                 </span>
             </div>
-            <h2 class="center-state-title">¡Validado con éxito!</h2>
+            <h2 class="center-state-title">{{ result_gate_title }}</h2>
             <button id="show-results-btn" class="validation-button blue" type="button">Ver resultados</button>
         </section>
-        {% endif %}
 
-        <section id="results-dashboard" class="results-dashboard" {% if show_success_gate %}hidden{% endif %}>
-            <div class="result-hero">
+        <section id="results-dashboard" class="results-dashboard" hidden>
+            {# {{ validation_stepper(4) }} #}
+            <div class="result-hero {{ result_state_class }}">
                 <div class="result-file-meta">
                     <span class="result-file-icon"><i class="bi bi-file-earmark-arrow-up-fill"></i></span>
                     <span>
-                        <span class="hero-label">{{ filename }}</span>
+                        <span class="hero-label" title="{{ filename }}">{{ filename }}</span>
                         <span class="hero-value">{{ validation_status_label }}</span>
                     </span>
                     <span>
@@ -1468,11 +1449,7 @@
                     </span>
                     <span>
                         <span class="hero-label">Modelo validado</span>
-                        <span class="hero-value">{{ model_display }}</span>
-                    </span>
-                    <span>
-                        <span class="hero-label">Modo</span>
-                        <span class="hero-value">{{ validation_mode_label }}{% if excluded_rule_display %} ({{ excluded_rule_display }}){% endif %}</span>
+                        <span class="hero-value" title="{{ model_display }}">{{ model_display }}</span>
                     </span>
                 </div>
                 <a class="validation-button light" href="{{ reload_href }}">
@@ -1482,7 +1459,7 @@
             </div>
 
             <div class="dashboard-grid">
-                <aside class="summary-card">
+                <aside class="summary-card {{ result_state_class }}">
                     <div class="summary-card-title">Resumen general de validación</div>
                     <div class="summary-body">
                         <div class="summary-donut" aria-label="{{ validation_percent }} por ciento">
@@ -1764,9 +1741,12 @@
     var removeBtn = document.getElementById('xtf-remove-btn');
     var uploadView = document.getElementById('upload-step-view');
     var processingView = document.getElementById('processing-step-view');
+    var processRing = document.querySelector('.process-ring');
+    var processPercent = document.getElementById('process-percent');
     var showResultsBtn = document.getElementById('show-results-btn');
-    var successView = document.getElementById('success-step-view');
+    var resultStepView = document.getElementById('result-step-view');
     var dashboard = document.getElementById('results-dashboard');
+    var progressTimer = null;
 
     function formatSize(bytes) {
         if (!bytes && bytes !== 0) return '';
@@ -1788,6 +1768,21 @@
             if (fileName) fileName.textContent = 'Archivo XTF';
             if (fileMeta) fileMeta.textContent = 'Listo para validar';
         }
+    }
+
+    function startProcessingProgress() {
+        var progress = 0;
+        if (progressTimer) clearInterval(progressTimer);
+        if (processRing) processRing.style.setProperty('--progress', '0');
+        if (processPercent) processPercent.textContent = '0 %';
+
+        progressTimer = setInterval(function () {
+            var step = progress < 45 ? 6 : progress < 75 ? 4 : progress < 90 ? 2 : 0.7;
+            progress = Math.min(95, progress + step);
+            var shown = Math.floor(progress);
+            if (processRing) processRing.style.setProperty('--progress', String(shown));
+            if (processPercent) processPercent.textContent = shown + ' %';
+        }, 420);
     }
 
     if (selectBtn && input) {
@@ -1837,14 +1832,19 @@
             if (input && input.files && input.files.length > 0) {
                 if (uploadView) uploadView.hidden = true;
                 if (processingView) processingView.hidden = false;
+                startProcessingProgress();
                 if (root) root.scrollIntoView({ block: 'start' });
             }
         });
     }
 
-    if (showResultsBtn && successView && dashboard) {
+    window.addEventListener('pagehide', function () {
+        if (progressTimer) clearInterval(progressTimer);
+    });
+
+    if (showResultsBtn && resultStepView && dashboard) {
         showResultsBtn.addEventListener('click', function () {
-            successView.hidden = true;
+            resultStepView.hidden = true;
             dashboard.hidden = false;
             dashboard.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
