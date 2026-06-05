@@ -36,6 +36,8 @@ JOB_FORMAT = Literal["xtf", "gdb", "gpkg"]
 
 def _require_assignment_access(user: Optional[dict], *allowed_roles: str) -> None:
     role = normalize_role(get_user_role(user or {}))
+    if role == "soporte":
+        return
     allowed = {normalize_role(item) for item in allowed_roles if item}
     if allowed and role not in allowed:
         raise HTTPException(

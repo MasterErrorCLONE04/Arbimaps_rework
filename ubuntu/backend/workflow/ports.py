@@ -48,7 +48,11 @@ class AbstractUnitOfWork(abc.ABC):
         if exc_type is not None:
             self.rollback()
         else:
-            self.commit()
+            try:
+                self.commit()
+            except Exception:
+                self.rollback()
+                raise
 
     @abc.abstractmethod
     def commit(self) -> None:

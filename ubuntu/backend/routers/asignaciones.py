@@ -30,14 +30,17 @@ logger = logging.getLogger(__name__)
 AsignacionEstado = Literal[
     "CREANDO_WORKSPACE",
     "ERROR_WORKSPACE",
-    "PENDIENTE_PUBLICACION",
-    "SINCRONIZADO",
     "CERRADA",
     "EN_CAMPO",
-    "CONTROL_CALIDAD",
-    "DEVUELTO_A_CAMPO",
+    "CONTROL_CALIDAD_1",
+    "GENERACION_XTF_CAMPO",
+    "DEVUELTO_CAMPO",
+    "EN_DIGITALIZACION",
+    "CONTROL_CALIDAD_2",
     "EN_APROBACION",
+    "DEVUELTO_DIGITALIZACION",
     "EN_SINCRONIZACION",
+    "SINCRONIZADO",
 ]
 
 
@@ -54,6 +57,8 @@ def _user_role_scope(user: Optional[dict]) -> tuple[str, str]:
 
 def _require_assignment_access(user: dict, *allowed_roles: str) -> None:
     role = normalize_role(get_user_role(user))
+    if role == "soporte":
+        return
     allowed = {normalize_role(item) for item in allowed_roles if item}
     if allowed and role not in allowed:
         raise HTTPException(
@@ -78,6 +83,7 @@ class UsuarioAsignable(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     rol: Optional[str] = None
+    supervisor: Optional[str] = None
 
 
 class BuscarPrediosBody(BaseModel):
@@ -107,6 +113,7 @@ class AsignarBody(BaseModel):
     titulo: Optional[str] = None
     observaciones: Optional[str] = None
     forzar_reasignacion: bool = False
+    coordinador_id: Optional[int] = None
 
 
 class AsignacionListadoItem(BaseModel):
@@ -636,7 +643,7 @@ def asignar_predios(
         with conn.cursor(cursor_factory=RealDictCursor) as cur_user:
             cur_user.execute(
                 f"""
-                SELECT id_global, rol
+                SELECT id_global, rol, supervisor
                 FROM {users_table}
                 WHERE username = %s
                   AND activo IS TRUE
@@ -659,6 +666,38 @@ def asignar_predios(
             )
 
         usuario_destino_id = int(dest_row["id_global"])
+
+        if body.coordinador_id is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Debe seleccionar un coordinador para la asignación."
+            )
+
+        with conn.cursor(cursor_factory=RealDictCursor) as cur_coord:
+            cur_coord.execute(
+                f"""
+                SELECT id_global, username, rol
+                FROM {users_table}
+                WHERE id_global = %s
+                  AND activo IS TRUE
+                """,
+                (body.coordinador_id,),
+            )
+            coord_row = cur_coord.fetchone()
+
+        if not coord_row or (coord_row.get("rol") or "").strip().lower() != "coordinador":
+            raise HTTPException(
+                status_code=400,
+                detail="El coordinador seleccionado no existe o está inactivo."
+            )
+
+        # Validación de seguridad: el reconocedor debe pertenecer al coordinador seleccionado
+        dest_supervisor = (dest_row.get("supervisor") or "").strip()
+        if dest_supervisor != str(body.coordinador_id):
+            raise HTTPException(
+                status_code=400,
+                detail="El reconocedor seleccionado no pertenece al coordinador elegido."
+            )
 
         # Si no tenemos id numerico del creador, usamos el de destino solo
         # para no violar restricciones NOT NULL en creado_por_id cuando exista.
@@ -862,8 +901,9 @@ def asignar_predios(
                        titulo,
                        observaciones,
                        usuario_asignado_id,
-                       creado_por_id)
-                    VALUES (%s, %s, %s, %s, 'CREANDO_WORKSPACE', %s, %s, %s, %s)
+                       creado_por_id,
+                       coordinador_asignado_id)
+                    VALUES (%s, %s, %s, %s, 'CREANDO_WORKSPACE', %s, %s, %s, %s, %s)
                     RETURNING id
                     """,
                 (
@@ -875,6 +915,7 @@ def asignar_predios(
                     observaciones,
                     usuario_destino_id,
                     created_by_id,
+                    body.coordinador_id,
                 ),
             )
             row = cur.fetchone()
@@ -889,6 +930,7 @@ def asignar_predios(
                 created_by,
             )
 
+            # Notificación al reconocedor
             asignaciones_repo.safe_crear_notificacion(
                 conn,
                 tenant=tenant,
@@ -911,6 +953,32 @@ def asignar_predios(
                     "dataset": datasetname_main,
                 },
             )
+
+            # Notificación al coordinador asignado
+            if body.coordinador_id is not None:
+                asignaciones_repo.safe_crear_notificacion(
+                    conn,
+                    tenant=tenant,
+                    id_asignacion=asignacion_id,
+                    id_usuario_destino=body.coordinador_id,
+                    id_usuario_origen=created_by_id,
+                    rol_origen="admin",
+                    rol_destino="coordinador",
+                    tipo="asignacion",
+                    titulo="Nueva asignación a su reconocedor",
+                    mensaje=(
+                        f"Se creó la asignación para {username_destino} con "
+                        f"{len(numeros)} predio(s). "
+                        f"Título: {titulo_final}"
+                    ),
+                    url_destino=f"/panel/asignaciones/detalle?id={asignacion_id}#asig-open",
+                    prioridad="normal",
+                    metadata={
+                        "cantidad_predios": len(numeros),
+                        "dataset": datasetname_main,
+                        "reconocedor": username_destino,
+                    },
+                )
 
             insert_sql = (
                 f"INSERT INTO {asignacion_predio_table}"

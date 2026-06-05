@@ -192,9 +192,9 @@ transition_specs: dict[WorkflowEvent, TransitionSpec] = {
     ),
     WorkflowEvent.SUBMIT_FOR_QA: TransitionSpec(
         event=WorkflowEvent.SUBMIT_FOR_QA,
-        from_states=(WorkflowState.EN_CAMPO,),
+        from_states=(WorkflowState.EN_CAMPO, WorkflowState.DEVUELTO),
         allowed_roles=(WorkflowRole.RECONOCEDOR,),
-        target_state=WorkflowState.CONTROL_CALIDAD,
+        target_state=WorkflowState.CONTROL_CALIDAD_1,
         owner_required=True,
         preconditions=(_ensure_workspace_ready,),
         audit_events=("assignment.submitted_for_qa",),
@@ -204,7 +204,7 @@ transition_specs: dict[WorkflowEvent, TransitionSpec] = {
     ),
     WorkflowEvent.RETURN_TO_FIELD: TransitionSpec(
         event=WorkflowEvent.RETURN_TO_FIELD,
-        from_states=(WorkflowState.CONTROL_CALIDAD,),
+        from_states=(WorkflowState.CONTROL_CALIDAD_1,),
         allowed_roles=(
             WorkflowRole.ADMINISTRADOR,
             WorkflowRole.LIDER,
@@ -229,7 +229,7 @@ transition_specs: dict[WorkflowEvent, TransitionSpec] = {
     ),
     WorkflowEvent.APPROVE: TransitionSpec(
         event=WorkflowEvent.APPROVE,
-        from_states=(WorkflowState.CONTROL_CALIDAD,),
+        from_states=(WorkflowState.CONTROL_CALIDAD_1,),
         allowed_roles=(
             WorkflowRole.ADMINISTRADOR,
             WorkflowRole.LIDER,
@@ -293,7 +293,7 @@ transition_specs: dict[WorkflowEvent, TransitionSpec] = {
         from_states=(
             WorkflowState.EN_CAMPO,
             WorkflowState.DEVUELTO,
-            WorkflowState.CONTROL_CALIDAD,
+            WorkflowState.CONTROL_CALIDAD_1,
             WorkflowState.APROBACION,
         ),
         allowed_roles=(
@@ -315,7 +315,7 @@ transition_specs: dict[WorkflowEvent, TransitionSpec] = {
             WorkflowState.SIN_ASIGNAR,
             WorkflowState.EN_CAMPO,
             WorkflowState.DEVUELTO,
-            WorkflowState.CONTROL_CALIDAD,
+            WorkflowState.CONTROL_CALIDAD_1,
             WorkflowState.APROBACION,
         ),
         allowed_roles=(WorkflowRole.ADMINISTRADOR, WorkflowRole.COORDINADOR),
@@ -373,7 +373,7 @@ def validate_transition(
     if assignment.tenant_code != actor.tenant_code:
         raise TenantMismatchError("El actor no puede operar una asignacion de otro tenant.")
 
-    if actor.role not in spec.allowed_roles:
+    if actor.role != WorkflowRole.SOPORTE and actor.role not in spec.allowed_roles:
         raise RoleNotAllowedError(
             f"El rol {actor.role.value} no puede ejecutar {event.value}."
         )

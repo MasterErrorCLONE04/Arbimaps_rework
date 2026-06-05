@@ -110,7 +110,7 @@ def test_service_reassign_generates_reassign_and_workspace_events():
     service = AssignmentWorkflowService(correlation_id_factory=lambda: "corr-456")
     result = service.apply_event(
         _assignment(
-            workflow_state=WorkflowState.CONTROL_CALIDAD,
+            workflow_state=WorkflowState.CONTROL_CALIDAD_1,
             workspace_state=WorkspaceState.READY,
             retorno_state=RetornoState.VALIDATED,
             assigned_user_id="rec-1",

@@ -65,6 +65,8 @@ def _ensure_assignment_owner_access(user: Optional[dict], asignacion: Optional[d
 
 def _require_assignment_access(user: Optional[dict], *allowed_roles: str) -> None:
     role = normalize_role(get_user_role(user or {}))
+    if role == "soporte":
+        return
     allowed = {normalize_role(item) for item in allowed_roles if item}
     if allowed and role not in allowed:
         raise HTTPException(
@@ -331,6 +333,10 @@ class AsignacionDetalleResponse(BaseModel):
     fecha_creacion: Optional[datetime] = None
     coordinador: Optional[str] = None
     usuario_asignado: Optional[str] = None
+    usuario_asignado_username: Optional[str] = None
+    enlace_control_calidad: Optional[str] = None
+    enlace_soporte: Optional[str] = None
+    enlace_digitalizacion: Optional[str] = None
     titulo: Optional[str] = None
     observaciones: Optional[str] = None
     datasetname_main: Optional[str] = None
@@ -1148,6 +1154,9 @@ def obtener_detalle_asignacion(
                 a.creado_en,
                 a.creado_por,
                 a.usuario_asignado,
+                a.enlace_control_calidad,
+                a.enlace_soporte,
+                a.enlace_digitalizacion,
                 a.titulo,
                 a.observaciones,
                 a.datasetname_main,
@@ -1278,6 +1287,10 @@ def obtener_detalle_asignacion(
             asignacion.get("asignado_last_name"),
             asignacion.get("usuario_asignado"),
         ),
+        usuario_asignado_username=asignacion.get("usuario_asignado"),
+        enlace_control_calidad=asignacion.get("enlace_control_calidad"),
+        enlace_soporte=asignacion.get("enlace_soporte"),
+        enlace_digitalizacion=asignacion.get("enlace_digitalizacion"),
         titulo=asignacion.get("titulo"),
         observaciones=asignacion.get("observaciones"),
         datasetname_main=asignacion.get("datasetname_main"),

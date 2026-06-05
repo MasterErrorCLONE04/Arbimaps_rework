@@ -50,6 +50,48 @@
             <i class="fa-solid fa-code-branch"></i>
             <span>Sincronizar XTF</span>
           </button>
+          <button id="btnHeaderSubmitQA" type="button"
+            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            style="background-color: #22c55e; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#16a34a'" onmouseout="this.style.backgroundColor='#22c55e'">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Enviar a Control de Calidad</span>
+          </button>
+          <button id="btnHeaderQCReview" type="button"
+            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            style="background-color: #f59e0b; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#d97706'" onmouseout="this.style.backgroundColor='#f59e0b'">
+            <i class="fa-solid fa-clipboard-check"></i>
+            <span>Revisar Control de Calidad</span>
+          </button>
+          <button id="btnHeaderSubmitSoporteLink" type="button"
+            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            style="background-color: #8b5cf6; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#7c3aed'" onmouseout="this.style.backgroundColor='#8b5cf6'">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Enviar enlace a Coordinador</span>
+          </button>
+          <button id="btnHeaderViewSoporteLink" type="button"
+            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            style="background-color: #06b6d4; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#0891b2'" onmouseout="this.style.backgroundColor='#06b6d4'">
+            <i class="fa-solid fa-link"></i>
+            <span>Ver enlace de Soporte</span>
+          </button>
+          <button id="btnHeaderSubmitQA2" type="button"
+            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            style="background-color: #14b8a6; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#0d9488'" onmouseout="this.style.backgroundColor='#14b8a6'">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Enviar a Control de Calidad 2</span>
+          </button>
+          <button id="btnHeaderQCReview2" type="button"
+            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            style="background-color: #f97316; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#ea580c'" onmouseout="this.style.backgroundColor='#f97316'">
+            <i class="fa-solid fa-clipboard-check"></i>
+            <span>Revisar Control de Calidad 2</span>
+          </button>
           <button id="btnHeaderHistorial" type="button"
             class="btn rounded-pill fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
             data-bs-toggle="modal" data-bs-target="#modalHistorial"
@@ -133,6 +175,19 @@
                 <small id="d_last_sync" class="d-block text-white fw-bold" style="font-size: 0.85rem;">-</small>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- QA LINK ROW -->
+        <div id="d_qa_link_row" class="mt-3 p-3 rounded-4 d-none" style="background-color: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15);">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+              <small class="d-block fw-bold text-uppercase text-white-50" style="font-size: 0.65rem; letter-spacing: 0.05em;">
+                ENLACE DE CONTROL DE CALIDAD:
+              </small>
+              <a id="d_qa_link" href="#" target="_blank" class="text-info fw-bold text-decoration-underline" style="font-size: 0.9rem; word-break: break-all;">-</a>
+            </div>
+            <i class="fa-solid fa-link text-white-50 fs-5 me-2"></i>
           </div>
         </div>
 
@@ -1749,6 +1804,255 @@
   {% include 'modales/modal_sincronizar_xtf.html' %}
   {% include 'modales/modal_historial.html' %}
 
+  <!-- Modal Enviar a Control de Calidad -->
+  <div class="modal fade" id="modalSubmitQA" tabindex="-1" aria-labelledby="modalSubmitQALabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #032F57; color: white;">
+          <h5 class="modal-title fw-bold" id="modalSubmitQALabel">
+            <i class="fa-solid fa-paper-plane me-2"></i>Enviar a Control de Calidad
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            Ingresa el enlace del entregable o carpeta de control de calidad para que el coordinador pueda revisar tu trabajo.
+          </p>
+          <div class="mb-3">
+            <label for="inpQALink" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Enlace del Entregable *</label>
+            <div class="input-group">
+              <span class="input-group-text" style="background-color: #fff; border-right: none; border-radius: 10px 0 0 10px;">
+                <i class="fa-solid fa-link text-muted"></i>
+              </span>
+              <input type="url" class="form-control" id="inpQALink" placeholder="https://..." required
+                style="border-left: none; border-radius: 0 10px 10px 0; font-size: 0.9rem; padding: 10px 12px; box-shadow: none; border-color: #dee2e6;" />
+            </div>
+            <div id="qaLinkError" class="text-danger small mt-1 d-none">Por favor ingresa un enlace válido.</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal" style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <button id="btnConfirmSubmitQA" type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-white border-0" style="background-color: #22c55e; font-size: 0.85rem;">
+            Enviar trabajo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Coordinador Revisión Control de Calidad -->
+  <div class="modal fade" id="modalQCReview" tabindex="-1" aria-labelledby="modalQCReviewLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #032F57; color: white;">
+          <h5 class="modal-title fw-bold" id="modalQCReviewLabel">
+            <i class="fa-solid fa-clipboard-check me-2"></i>Revisión de Control de Calidad
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            El reconocedor ha enviado este enlace como evidencia de su trabajo. Por favor, revísalo y selecciona si deseas devolver la asignación o aprobarla.
+          </p>
+          <div class="mb-4 p-3 rounded-3" style="background-color: #fff; border: 1px solid #dee2e6;">
+            <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace de Evidencia:</label>
+            <a id="qcReviewEvidenceLink" href="#" target="_blank" class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal" style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <div class="d-flex gap-2">
+            <button id="btnQCReject" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0" style="background-color: #ef4444; font-size: 0.85rem;">
+              <i class="fa-solid fa-xmark me-1"></i>Devolver a Campo
+            </button>
+            <button id="btnQCApprove" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0" style="background-color: #22c55e; font-size: 0.85rem;">
+              <i class="fa-solid fa-check me-1"></i>Aprobar Trabajo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Enviar Enlace de Soporte -->
+  <div class="modal fade" id="modalSubmitSoporteLink" tabindex="-1" aria-labelledby="modalSubmitSoporteLinkLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #8b5cf6; color: white;">
+          <h5 class="modal-title fw-bold" id="modalSubmitSoporteLinkLabel">
+            <i class="fa-solid fa-paper-plane me-2"></i>Enviar Enlace a Coordinador
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            Ingresa el enlace de resultados de soporte para enviárselo al coordinador.
+          </p>
+          <div class="mb-3">
+            <label for="inpSoporteLink" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Enlace de Soporte *</label>
+            <div class="input-group">
+              <span class="input-group-text" style="background-color: #fff; border-right: none; border-radius: 10px 0 0 10px;">
+                <i class="fa-solid fa-link text-muted"></i>
+              </span>
+              <input type="url" class="form-control" id="inpSoporteLink" placeholder="https://..." required
+                style="border-left: none; border-radius: 0 10px 10px 0; font-size: 0.9rem; padding: 10px 12px; box-shadow: none; border-color: #dee2e6;" />
+            </div>
+            <div id="soporteLinkError" class="text-danger small mt-1 d-none">Por favor ingresa un enlace válido.</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal" style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <button id="btnConfirmSubmitSoporteLink" type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-white border-0" style="background-color: #8b5cf6; font-size: 0.85rem;">
+            Enviar enlace
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ver Enlace de Soporte -->
+  <div class="modal fade" id="modalViewSoporteLink" tabindex="-1" aria-labelledby="modalViewSoporteLinkLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #06b6d4; color: white;">
+          <h5 class="modal-title fw-bold" id="modalViewSoporteLinkLabel">
+            <i class="fa-solid fa-link me-2"></i>Enlace de Soporte
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <div id="viewSoporteMainContent">
+            <p class="text-muted small mb-3">
+              El usuario de soporte ha enviado este enlace como resultado del trabajo:
+            </p>
+            <div class="mb-4 p-3 rounded-3" style="background-color: #fff; border: 1px solid #dee2e6;">
+              <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace del Entregable:</label>
+              <a id="viewSoporteEvidenceLink" href="#" target="_blank" class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
+            </div>
+          </div>
+          
+          <!-- Hidden Digitalizador selector section -->
+          <div id="selectDigitalizadorContainer" class="d-none mb-3">
+            <label for="selectDigitalizador" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Selecciona un Digitalizador *</label>
+            <select id="selectDigitalizador" class="form-select" style="border-radius: 10px; font-size: 0.9rem; padding: 10px 12px; border-color: #dee2e6; box-shadow: none;">
+              <option value="" disabled selected>Selecciona un digitalizador...</option>
+            </select>
+            <div id="digitalizadorSelectError" class="text-danger small mt-1 d-none">Por favor selecciona un digitalizador válido.</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
+          <!-- Default actions footer -->
+          <div id="viewSoporteDefaultFooter" class="d-flex flex-wrap gap-2 justify-content-between w-100">
+            <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal" style="background-color: #e2e8f0; font-size: 0.85rem;">
+              Cancelar
+            </button>
+            <div class="d-flex gap-2">
+              <button id="btnViewSoporteDevolver" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0" style="background-color: #ef4444; font-size: 0.85rem;">
+                <i class="fa-solid fa-xmark me-1"></i>Devolver a Soporte
+              </button>
+              <button id="btnViewSoporteIntegrarDigit" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0" style="background-color: #3b82f6; font-size: 0.85rem;">
+                <i class="fa-solid fa-user-plus me-1"></i>Integrar Digitalizador
+              </button>
+              <button id="btnViewSoporteContinuarRecon" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0" style="background-color: #22c55e; font-size: 0.85rem;">
+                <i class="fa-solid fa-check me-1"></i>Continuar con Reconocedor
+              </button>
+            </div>
+          </div>
+          
+          <!-- Selector actions footer -->
+          <div id="viewSoporteSelectorFooter" class="d-none justify-content-between w-100">
+            <button id="btnCancelIntegrarDigit" type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-dark border-0" style="background-color: #e2e8f0; font-size: 0.85rem;">
+              Volver
+            </button>
+            <button id="btnConfirmIntegrarDigit" type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-white border-0" style="background-color: #3b82f6; font-size: 0.85rem;">
+              Asignar y Continuar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Enviar a Control de Calidad 2 -->
+  <div class="modal fade" id="modalSubmitQA2" tabindex="-1" aria-labelledby="modalSubmitQA2Label" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #14b8a6; color: white;">
+          <h5 class="modal-title fw-bold" id="modalSubmitQA2Label">
+            <i class="fa-solid fa-paper-plane me-2"></i>Enviar a Control de Calidad 2
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            Ingresa el enlace del entregable o carpeta de digitalización para que el coordinador pueda revisar tu trabajo.
+          </p>
+          <div class="mb-3">
+            <label for="inpQA2Link" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Enlace del Entregable *</label>
+            <div class="input-group">
+              <span class="input-group-text" style="background-color: #fff; border-right: none; border-radius: 10px 0 0 10px;">
+                <i class="fa-solid fa-link text-muted"></i>
+              </span>
+              <input type="url" class="form-control" id="inpQA2Link" placeholder="https://..." required
+                style="border-left: none; border-radius: 0 10px 10px 0; font-size: 0.9rem; padding: 10px 12px; box-shadow: none; border-color: #dee2e6;" />
+            </div>
+            <div id="qa2LinkError" class="text-danger small mt-1 d-none">Por favor ingresa un enlace válido.</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal" style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <button id="btnConfirmSubmitQA2" type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-white border-0" style="background-color: #14b8a6; font-size: 0.85rem;">
+            Enviar trabajo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Coordinador Revisión Control de Calidad 2 -->
+  <div class="modal fade" id="modalQCReview2" tabindex="-1" aria-labelledby="modalQCReview2Label" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #f97316; color: white;">
+          <h5 class="modal-title fw-bold" id="modalQCReview2Label">
+            <i class="fa-solid fa-clipboard-check me-2"></i>Revisión de Control de Calidad 2
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            El digitalizador o reconocedor ha enviado este enlace como evidencia de su trabajo de digitalización. Por favor, revísalo y selecciona si deseas devolver la asignación a digitalización o aprobarla.
+          </p>
+          <div class="mb-4 p-3 rounded-3" style="background-color: #fff; border: 1px solid #dee2e6;">
+            <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace de Evidencia:</label>
+            <a id="qcReview2EvidenceLink" href="#" target="_blank" class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal" style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <div class="d-flex gap-2">
+            <button id="btnQC2Reject" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0" style="background-color: #ef4444; font-size: 0.85rem;">
+              <i class="fa-solid fa-xmark me-1"></i>Devolver a Digitalización
+            </button>
+            <button id="btnQC2Approve" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0" style="background-color: #22c55e; font-size: 0.85rem;">
+              <i class="fa-solid fa-check me-1"></i>Aprobar Digitalización
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
@@ -1756,6 +2060,7 @@
   <script>
     let tablaPrediosDT;
     let tablaHistorialDT;
+    let currentAssignmentData = null;
 
     $(document).ready(function () {
       $.fn.DataTable.ext.pager.numbers_length = 3;
@@ -1810,6 +2115,8 @@
 
   <script>
     const rp = "{{ rp }}";
+    const currentLoggedUser = "{{ user }}";
+    const currentLoggedRole = "{{ effective_role }}";
     const asigSchemaWork = {{ asig_schema_work | tojson }};
     const params = new URLSearchParams(window.location.search);
     const idFromUrl = params.get("id");
@@ -2067,6 +2374,7 @@
 
         const dataDet = await respDet.json().catch(() => ({}));
         const dataEvt = await respEvt.json().catch(() => ([]));
+        currentAssignmentData = dataDet;
 
         if (!respDet.ok) throw new Error(dataDet?.detail || "No se pudo cargar el detalle.");
         if (!respEvt.ok) throw new Error(dataEvt?.detail || "No se pudieron cargar los eventos.");
@@ -2107,6 +2415,112 @@
         setText("d_asig", dataDet.total_asignados ?? 0);
         setText("d_elim", dataDet.total_eliminados ?? 0);
         setText("d_new", dataDet.total_nuevos ?? 0);
+
+        // 1. Mostrar/Ocultar botón de Enviar a Control de Calidad
+        const btnSubmitQA = document.getElementById("btnHeaderSubmitQA");
+        if (btnSubmitQA) {
+          const isReconocedor = currentLoggedRole === "reconocedor";
+          const isOwner = dataDet.usuario_asignado_username === currentLoggedUser;
+          const isEnCampo = dataDet.estado === "EN_CAMPO" || dataDet.estado === "DEVUELTO_CAMPO";
+
+          if (isReconocedor && isOwner && isEnCampo) {
+            btnSubmitQA.classList.remove("d-none");
+            btnSubmitQA.classList.add("d-inline-flex");
+          } else {
+            btnSubmitQA.classList.add("d-none");
+            btnSubmitQA.classList.remove("d-inline-flex");
+          }
+        }
+
+        // 1.1 Mostrar/Ocultar botón de Revisar Control de Calidad (para Coordinador/Admin)
+        const btnQCReview = document.getElementById("btnHeaderQCReview");
+        if (btnQCReview) {
+          const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
+          const isUnderReview = dataDet.estado === "CONTROL_CALIDAD_1";
+
+          if (isReviewerRole && isUnderReview) {
+            btnQCReview.classList.remove("d-none");
+            btnQCReview.classList.add("d-inline-flex");
+          } else {
+            btnQCReview.classList.add("d-none");
+            btnQCReview.classList.remove("d-inline-flex");
+          }
+        }
+
+        // 1.2 Mostrar/Ocultar botón de Enviar Enlace a Coordinador (para Soporte/Admin)
+        const btnSubmitSoporteLink = document.getElementById("btnHeaderSubmitSoporteLink");
+        if (btnSubmitSoporteLink) {
+          const isSoporteOrAdmin = currentLoggedRole === "soporte" || currentLoggedRole === "admin";
+          const isGeneracionXtf = dataDet.estado === "GENERACION_XTF_CAMPO";
+          const hasNoSoporteLink = !dataDet.enlace_soporte;
+
+          if (isSoporteOrAdmin && isGeneracionXtf && hasNoSoporteLink) {
+            btnSubmitSoporteLink.classList.remove("d-none");
+            btnSubmitSoporteLink.classList.add("d-inline-flex");
+          } else {
+            btnSubmitSoporteLink.classList.add("d-none");
+            btnSubmitSoporteLink.classList.remove("d-inline-flex");
+          }
+        }
+
+        // 1.3 Mostrar/Ocultar botón de Ver Enlace de Soporte (para Coordinador/Admin/Lider)
+        const btnViewSoporteLink = document.getElementById("btnHeaderViewSoporteLink");
+        if (btnViewSoporteLink) {
+          const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
+          const hasSoporteLink = !!dataDet.enlace_soporte;
+
+          if (isReviewerRole && hasSoporteLink) {
+            btnViewSoporteLink.classList.remove("d-none");
+            btnViewSoporteLink.classList.add("d-inline-flex");
+          } else {
+            btnViewSoporteLink.classList.add("d-none");
+            btnViewSoporteLink.classList.remove("d-inline-flex");
+          }
+        }
+
+        // 1.4 Mostrar/Ocultar botón de Enviar a Control de Calidad 2 (para digitalizador/reconocedor dueño)
+        const btnSubmitQA2 = document.getElementById("btnHeaderSubmitQA2");
+        if (btnSubmitQA2) {
+          const isAssignee = currentLoggedRole === "digitalizador" || currentLoggedRole === "reconocedor";
+          const isOwner = dataDet.usuario_asignado_username === currentLoggedUser;
+          const isEnDigitalizacion = dataDet.estado === "EN_DIGITALIZACION" || dataDet.estado === "DEVUELTO_DIGITALIZACION";
+
+          if (isAssignee && isOwner && isEnDigitalizacion) {
+            btnSubmitQA2.classList.remove("d-none");
+            btnSubmitQA2.classList.add("d-inline-flex");
+          } else {
+            btnSubmitQA2.classList.add("d-none");
+            btnSubmitQA2.classList.remove("d-inline-flex");
+          }
+        }
+
+        // 1.5 Mostrar/Ocultar botón de Revisar Control de Calidad 2 (para Coordinador/Admin/Lider)
+        const btnQCReview2 = document.getElementById("btnHeaderQCReview2");
+        if (btnQCReview2) {
+          const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
+          const isUnderReview2 = dataDet.estado === "CONTROL_CALIDAD_2";
+
+          if (isReviewerRole && isUnderReview2) {
+            btnQCReview2.classList.remove("d-none");
+            btnQCReview2.classList.add("d-inline-flex");
+          } else {
+            btnQCReview2.classList.add("d-none");
+            btnQCReview2.classList.remove("d-inline-flex");
+          }
+        }
+
+        // 2. Mostrar/Ocultar enlace de control de calidad
+        const qaLinkRow = document.getElementById("d_qa_link_row");
+        const qaLink = document.getElementById("d_qa_link");
+        if (qaLinkRow && qaLink) {
+          if (dataDet.enlace_control_calidad) {
+            qaLink.href = dataDet.enlace_control_calidad;
+            qaLink.textContent = dataDet.enlace_control_calidad;
+            qaLinkRow.classList.remove("d-none");
+          } else {
+            qaLinkRow.classList.add("d-none");
+          }
+        }
 
         const eventos = Array.isArray(dataEvt) ? dataEvt : [];
         let lastSyncDate = "-";
@@ -2343,6 +2757,733 @@
 
 
     document.getElementById("btnCargarDetalle")?.addEventListener("click", cargarDetalle);
+
+    // Submit QA button click opens the modal
+    document.getElementById("btnHeaderSubmitQA")?.addEventListener("click", () => {
+      const inpLink = document.getElementById("inpQALink");
+      const errEl = document.getElementById("qaLinkError");
+      if (inpLink) inpLink.value = "";
+      if (errEl) errEl.classList.add("d-none");
+      
+      const modalEl = document.getElementById("modalSubmitQA");
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    });
+
+    // Confirm button inside modal
+    document.getElementById("btnConfirmSubmitQA")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      const inpLink = document.getElementById("inpQALink");
+      const errEl = document.getElementById("qaLinkError");
+      const linkVal = inpLink?.value?.trim() || "";
+
+      if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
+        if (errEl) {
+          errEl.textContent = "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
+          errEl.classList.remove("d-none");
+        }
+        return;
+      }
+
+      if (errEl) errEl.classList.add("d-none");
+
+      const btnConfirm = document.getElementById("btnConfirmSubmitQA");
+      const btnCancel = document.querySelector("#modalSubmitQA .btn-close, #modalSubmitQA [data-bs-dismiss='modal']");
+      if (btnConfirm) btnConfirm.disabled = true;
+      if (btnCancel) btnCancel.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/submit-for-qa`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ enlace_control_calidad: linkVal }),
+          credentials: "same-origin"
+        });
+
+        const rawText = await response.text();
+        let data = {};
+        if (rawText) {
+          try {
+            data = JSON.parse(rawText);
+          } catch (e) {
+            data = {};
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(data?.detail || rawText || "Error al enviar a control de calidad.");
+        }
+
+        const modalEl = document.getElementById("modalSubmitQA");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("El trabajo ha sido enviado exitosamente a control de calidad.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        if (btnConfirm) btnConfirm.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+      }
+    });
+
+    // QC Review button click opens the review modal
+    document.getElementById("btnHeaderQCReview")?.addEventListener("click", () => {
+      const modalEl = document.getElementById("modalQCReview");
+      const qcLinkEl = document.getElementById("qcReviewEvidenceLink");
+      
+      const currentLink = currentAssignmentData?.enlace_control_calidad || "";
+      if (qcLinkEl) {
+        qcLinkEl.href = currentLink;
+        qcLinkEl.textContent = currentLink || "Sin enlace de evidencia";
+      }
+
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    });
+
+    // Confirm Return to Field (Reject) button click inside coordinator modal
+    document.getElementById("btnQCReject")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      if (!confirm("¿Estás seguro de que deseas devolver esta asignación al reconocedor?")) {
+        return;
+      }
+
+      const btnReject = document.getElementById("btnQCReject");
+      const btnApprove = document.getElementById("btnQCApprove");
+      const btnCancel = document.querySelector("#modalQCReview .btn-close, #modalQCReview [data-bs-dismiss='modal']");
+      if (btnReject) btnReject.disabled = true;
+      if (btnApprove) btnApprove.disabled = true;
+      if (btnCancel) btnCancel.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/return-to-field`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          credentials: "same-origin"
+        });
+
+        const rawText = await response.text();
+        let data = {};
+        if (rawText) {
+          try {
+            data = JSON.parse(rawText);
+          } catch (e) {
+            data = {};
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(data?.detail || rawText || "Error al devolver la asignación a campo.");
+        }
+
+        const modalEl = document.getElementById("modalQCReview");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("La asignación ha sido devuelta exitosamente a campo.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        if (btnReject) btnReject.disabled = false;
+        if (btnApprove) btnApprove.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+      }
+    });
+
+    // Confirm Approve button click inside coordinator modal
+    document.getElementById("btnQCApprove")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      if (!confirm("¿Estás seguro de que deseas aprobar este trabajo y enviarlo a generación XTF?")) {
+        return;
+      }
+
+      const btnReject = document.getElementById("btnQCReject");
+      const btnApprove = document.getElementById("btnQCApprove");
+      const btnCancel = document.querySelector("#modalQCReview .btn-close, #modalQCReview [data-bs-dismiss='modal']");
+      if (btnReject) btnReject.disabled = true;
+      if (btnApprove) btnApprove.disabled = true;
+      if (btnCancel) btnCancel.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/approve`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          credentials: "same-origin"
+        });
+
+        const rawText = await response.text();
+        let data = {};
+        if (rawText) {
+          try {
+            data = JSON.parse(rawText);
+          } catch (e) {
+            data = {};
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(data?.detail || rawText || "Error al aprobar la asignación.");
+        }
+
+        const modalEl = document.getElementById("modalQCReview");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("El trabajo ha sido aprobado exitosamente y enviado a generación XTF.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        if (btnReject) btnReject.disabled = false;
+        if (btnApprove) btnApprove.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+      }
+    });
+
+    // Submit Soporte Link button click opens the submit modal
+    document.getElementById("btnHeaderSubmitSoporteLink")?.addEventListener("click", () => {
+      const inpLink = document.getElementById("inpSoporteLink");
+      const errEl = document.getElementById("soporteLinkError");
+      if (inpLink) inpLink.value = "";
+      if (errEl) errEl.classList.add("d-none");
+      
+      const modalEl = document.getElementById("modalSubmitSoporteLink");
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    });
+
+    // Confirm button inside Submit Soporte Link modal
+    document.getElementById("btnConfirmSubmitSoporteLink")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      const inpLink = document.getElementById("inpSoporteLink");
+      const errEl = document.getElementById("soporteLinkError");
+      const linkVal = inpLink?.value?.trim() || "";
+
+      if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
+        if (errEl) {
+          errEl.textContent = "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
+          errEl.classList.remove("d-none");
+        }
+        return;
+      }
+
+      if (errEl) errEl.classList.add("d-none");
+
+      const btnConfirm = document.getElementById("btnConfirmSubmitSoporteLink");
+      const btnCancel = document.querySelector("#modalSubmitSoporteLink .btn-close, #modalSubmitSoporteLink [data-bs-dismiss='modal']");
+      if (btnConfirm) btnConfirm.disabled = true;
+      if (btnCancel) btnCancel.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/submit-soporte-link`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ enlace_soporte: linkVal }),
+          credentials: "same-origin"
+        });
+
+        const rawText = await response.text();
+        let data = {};
+        if (rawText) {
+          try {
+            data = JSON.parse(rawText);
+          } catch (e) {
+            data = {};
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(data?.detail || rawText || "Error al enviar el enlace de soporte.");
+        }
+
+        const modalEl = document.getElementById("modalSubmitSoporteLink");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("El enlace de soporte ha sido enviado exitosamente al coordinador.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        if (btnConfirm) btnConfirm.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+      }
+    });
+
+    // View Soporte Link button click opens the view modal and resets its subviews
+    document.getElementById("btnHeaderViewSoporteLink")?.addEventListener("click", () => {
+      const modalEl = document.getElementById("modalViewSoporteLink");
+      const linkEl = document.getElementById("viewSoporteEvidenceLink");
+      
+      const currentLink = currentAssignmentData?.enlace_soporte || "";
+      if (linkEl) {
+        linkEl.href = currentLink;
+        linkEl.textContent = currentLink || "Sin enlace";
+      }
+
+      // Reset internal modal subviews to default state
+      document.getElementById("selectDigitalizadorContainer")?.classList.add("d-none");
+      document.getElementById("viewSoporteMainContent")?.classList.remove("d-none");
+      document.getElementById("viewSoporteDefaultFooter")?.classList.remove("d-none");
+      document.getElementById("viewSoporteSelectorFooter")?.classList.add("d-none");
+      document.getElementById("digitalizadorSelectError")?.classList.add("d-none");
+      
+      const selectEl = document.getElementById("selectDigitalizador");
+      if (selectEl) {
+        selectEl.innerHTML = '<option value="" disabled selected>Selecciona un digitalizador...</option>';
+      }
+
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    });
+
+    // Devolver a Soporte action inside View Soporte modal
+    document.getElementById("btnViewSoporteDevolver")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      if (!confirm("¿Estás seguro de que deseas devolver esta asignación al soporte para que corrija?")) {
+        return;
+      }
+
+      const btnDevolver = document.getElementById("btnViewSoporteDevolver");
+      const btnIntegrar = document.getElementById("btnViewSoporteIntegrarDigit");
+      const btnContinuar = document.getElementById("btnViewSoporteContinuarRecon");
+      if (btnDevolver) btnDevolver.disabled = true;
+      if (btnIntegrar) btnIntegrar.disabled = true;
+      if (btnContinuar) btnContinuar.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/return-to-support`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          const rawText = await response.text();
+          let data = {};
+          try { data = JSON.parse(rawText); } catch (e) {}
+          throw new Error(data?.detail || rawText || "Error al devolver al soporte.");
+        }
+
+        const modalEl = document.getElementById("modalViewSoporteLink");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("El trabajo ha sido devuelto al soporte exitosamente.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        if (btnDevolver) btnDevolver.disabled = false;
+        if (btnIntegrar) btnIntegrar.disabled = false;
+        if (btnContinuar) btnContinuar.disabled = false;
+      }
+    });
+
+    // Integrar Digitalizador triggers subview inside View Soporte modal
+    document.getElementById("btnViewSoporteIntegrarDigit")?.addEventListener("click", async () => {
+      document.getElementById("viewSoporteMainContent")?.classList.add("d-none");
+      document.getElementById("viewSoporteDefaultFooter")?.classList.add("d-none");
+      document.getElementById("selectDigitalizadorContainer")?.classList.remove("d-none");
+      document.getElementById("viewSoporteSelectorFooter")?.classList.remove("d-none");
+      document.getElementById("digitalizadorSelectError")?.classList.add("d-none");
+
+      const selectEl = document.getElementById("selectDigitalizador");
+      if (selectEl) {
+        selectEl.innerHTML = '<option value="" disabled selected>Cargando digitalizadores...</option>';
+        try {
+          const response = await fetch(`${rp}/asignaciones/usuarios-disponibles`, { credentials: "same-origin" });
+          const users = await response.json().catch(() => []);
+          if (response.ok && Array.isArray(users)) {
+            const digitalizadores = users.filter(u => u.rol && u.rol.toLowerCase() === "digitalizador");
+            selectEl.innerHTML = '<option value="" disabled selected>Selecciona un digitalizador...</option>';
+            digitalizadores.forEach(u => {
+              const opt = document.createElement("option");
+              opt.value = String(u.id_global);
+              opt.textContent = `${u.first_name || ""} ${u.last_name || ""} (${u.username})`;
+              selectEl.appendChild(opt);
+            });
+          } else {
+            selectEl.innerHTML = '<option value="" disabled selected>Error al cargar digitalizadores</option>';
+          }
+        } catch (err) {
+          selectEl.innerHTML = '<option value="" disabled selected>Error al cargar digitalizadores</option>';
+        }
+      }
+    });
+
+    // Volver inside selector view
+    document.getElementById("btnCancelIntegrarDigit")?.addEventListener("click", () => {
+      document.getElementById("selectDigitalizadorContainer")?.classList.add("d-none");
+      document.getElementById("viewSoporteSelectorFooter")?.classList.add("d-none");
+      document.getElementById("viewSoporteMainContent")?.classList.remove("d-none");
+      document.getElementById("viewSoporteDefaultFooter")?.classList.remove("d-none");
+      document.getElementById("digitalizadorSelectError")?.classList.add("d-none");
+    });
+
+    // Confirm digitalizador assignment
+    document.getElementById("btnConfirmIntegrarDigit")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      const selectEl = document.getElementById("selectDigitalizador");
+      const selectedId = selectEl?.value;
+      const errEl = document.getElementById("digitalizadorSelectError");
+
+      if (!selectedId) {
+        if (errEl) errEl.classList.remove("d-none");
+        return;
+      }
+      if (errEl) errEl.classList.add("d-none");
+
+      const btnConfirm = document.getElementById("btnConfirmIntegrarDigit");
+      const btnCancel = document.getElementById("btnCancelIntegrarDigit");
+      if (btnConfirm) btnConfirm.disabled = true;
+      if (btnCancel) btnCancel.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/assign-digitalizador`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ digitalizador_id: selectedId }),
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          const rawText = await response.text();
+          let data = {};
+          try { data = JSON.parse(rawText); } catch (e) {}
+          throw new Error(data?.detail || rawText || "Error al asignar digitalizador.");
+        }
+
+        const modalEl = document.getElementById("modalViewSoporteLink");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("Se ha integrado el digitalizador al trabajo exitosamente.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        if (btnConfirm) btnConfirm.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+      }
+    });
+
+    // Continuar con Reconocedor action inside View Soporte modal
+    document.getElementById("btnViewSoporteContinuarRecon")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      if (!confirm("¿Estás seguro de que deseas continuar con el mismo reconocedor para digitalización?")) {
+        return;
+      }
+
+      const btnDevolver = document.getElementById("btnViewSoporteDevolver");
+      const btnIntegrar = document.getElementById("btnViewSoporteIntegrarDigit");
+      const btnContinuar = document.getElementById("btnViewSoporteContinuarRecon");
+      if (btnDevolver) btnDevolver.disabled = true;
+      if (btnIntegrar) btnIntegrar.disabled = true;
+      if (btnContinuar) btnContinuar.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/continue-with-reconocedor`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          const rawText = await response.text();
+          let data = {};
+          try { data = JSON.parse(rawText); } catch (e) {}
+          throw new Error(data?.detail || rawText || "Error al continuar con reconocedor.");
+        }
+
+        const modalEl = document.getElementById("modalViewSoporteLink");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("Se ha continuado el trabajo con el reconocedor exitosamente.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        if (btnDevolver) btnDevolver.disabled = false;
+        if (btnIntegrar) btnIntegrar.disabled = false;
+        if (btnContinuar) btnContinuar.disabled = false;
+      }
+    });
+
+    // Submit QA2 button click opens the submit QA2 modal
+    document.getElementById("btnHeaderSubmitQA2")?.addEventListener("click", () => {
+      const inpLink = document.getElementById("inpQA2Link");
+      const errEl = document.getElementById("qa2LinkError");
+      if (inpLink) inpLink.value = "";
+      if (errEl) errEl.classList.add("d-none");
+      
+      const modalEl = document.getElementById("modalSubmitQA2");
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    });
+
+    // Confirm button inside Submit QA2 modal
+    document.getElementById("btnConfirmSubmitQA2")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      const inpLink = document.getElementById("inpQA2Link");
+      const errEl = document.getElementById("qa2LinkError");
+      const linkVal = inpLink?.value?.trim() || "";
+
+      if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
+        if (errEl) {
+          errEl.textContent = "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
+          errEl.classList.remove("d-none");
+        }
+        return;
+      }
+
+      if (errEl) errEl.classList.add("d-none");
+
+      const btnConfirm = document.getElementById("btnConfirmSubmitQA2");
+      const btnCancel = document.querySelector("#modalSubmitQA2 .btn-close, #modalSubmitQA2 [data-bs-dismiss='modal']");
+      if (btnConfirm) btnConfirm.disabled = true;
+      if (btnCancel) btnCancel.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/submit-for-qa2`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ enlace_digitalizacion: linkVal }),
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          const rawText = await response.text();
+          let data = {};
+          try { data = JSON.parse(rawText); } catch (e) {}
+          throw new Error(data?.detail || rawText || "Error al enviar a control de calidad 2.");
+        }
+
+        const modalEl = document.getElementById("modalSubmitQA2");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("El trabajo de digitalización ha sido enviado exitosamente a control de calidad 2.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        if (btnConfirm) btnConfirm.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+      }
+    });
+
+    // QC Review 2 button click opens the review modal
+    document.getElementById("btnHeaderQCReview2")?.addEventListener("click", () => {
+      const modalEl = document.getElementById("modalQCReview2");
+      const qcLinkEl = document.getElementById("qcReview2EvidenceLink");
+      
+      const currentLink = currentAssignmentData?.enlace_digitalizacion || "";
+      if (qcLinkEl) {
+        qcLinkEl.href = currentLink;
+        qcLinkEl.textContent = currentLink || "Sin enlace de evidencia";
+      }
+
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    });
+
+    // Confirm Return to Digitalization (Reject) button click inside coordinator modal
+    document.getElementById("btnQC2Reject")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      if (!confirm("¿Estás seguro de que deseas devolver esta asignación para corrección de digitalización?")) {
+        return;
+      }
+
+      const btnReject = document.getElementById("btnQC2Reject");
+      const btnApprove = document.getElementById("btnQC2Approve");
+      const btnCancel = document.querySelector("#modalQCReview2 .btn-close, #modalQCReview2 [data-bs-dismiss='modal']");
+      if (btnReject) btnReject.disabled = true;
+      if (btnApprove) btnApprove.disabled = true;
+      if (btnCancel) btnCancel.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/return-to-digitalization`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          const rawText = await response.text();
+          let data = {};
+          try { data = JSON.parse(rawText); } catch (e) {}
+          throw new Error(data?.detail || rawText || "Error al devolver la asignación.");
+        }
+
+        const modalEl = document.getElementById("modalQCReview2");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("La asignación ha sido devuelta exitosamente a digitalización.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        if (btnReject) btnReject.disabled = false;
+        if (btnApprove) btnApprove.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+      }
+    });
+
+    // Confirm Approve Digitalization button click inside coordinator modal
+    document.getElementById("btnQC2Approve")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      if (!confirm("¿Estás seguro de que deseas aprobar este trabajo de digitalización?")) {
+        return;
+      }
+
+      const btnReject = document.getElementById("btnQC2Reject");
+      const btnApprove = document.getElementById("btnQC2Approve");
+      const btnCancel = document.querySelector("#modalQCReview2 .btn-close, #modalQCReview2 [data-bs-dismiss='modal']");
+      if (btnReject) btnReject.disabled = true;
+      if (btnApprove) btnApprove.disabled = true;
+      if (btnCancel) btnCancel.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/approve-digitalization`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          const rawText = await response.text();
+          let data = {};
+          try { data = JSON.parse(rawText); } catch (e) {}
+          throw new Error(data?.detail || rawText || "Error al aprobar digitalización.");
+        }
+
+        const modalEl = document.getElementById("modalQCReview2");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("El trabajo de digitalización ha sido aprobado exitosamente.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        if (btnReject) btnReject.disabled = false;
+        if (btnApprove) btnApprove.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+      }
+    });
+
     btnImportarRetorno?.addEventListener("click", importarRetorno);
 
     document.getElementById("btnResetSearch")?.addEventListener("click", () => {

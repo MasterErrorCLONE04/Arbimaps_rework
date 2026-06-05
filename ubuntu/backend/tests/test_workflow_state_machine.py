@@ -78,8 +78,40 @@ def test_submit_for_qa_requires_owner_and_workspace_ready():
 
     result = apply_transition(assignment, actor, WorkflowEvent.SUBMIT_FOR_QA)
 
-    assert result.assignment.workflow_state == WorkflowState.CONTROL_CALIDAD
+    assert result.assignment.workflow_state == WorkflowState.CONTROL_CALIDAD_1
     assert result.audit_events == ("assignment.submitted_for_qa",)
+
+
+def test_submit_for_qa_allowed_from_devuelto():
+    assignment = _assignment(
+        workflow_state=WorkflowState.DEVUELTO,
+        workspace_state=WorkspaceState.READY,
+        assigned_user_id="rec-1",
+        assigned_role=WorkflowRole.RECONOCEDOR,
+    )
+    actor = _actor(role=WorkflowRole.RECONOCEDOR, user_id="rec-1")
+
+    result = apply_transition(assignment, actor, WorkflowEvent.SUBMIT_FOR_QA)
+
+    assert result.assignment.workflow_state == WorkflowState.CONTROL_CALIDAD_1
+    assert result.audit_events == ("assignment.submitted_for_qa",)
+
+
+def test_submit_for_qa_allowed_for_soporte_owner():
+    assignment = _assignment(
+        workflow_state=WorkflowState.EN_CAMPO,
+        workspace_state=WorkspaceState.READY,
+        assigned_user_id="soporte-1",
+        assigned_role=WorkflowRole.SOPORTE,
+    )
+    actor = _actor(role=WorkflowRole.SOPORTE, user_id="soporte-1")
+
+    result = apply_transition(assignment, actor, WorkflowEvent.SUBMIT_FOR_QA)
+
+    assert result.assignment.workflow_state == WorkflowState.CONTROL_CALIDAD_1
+    assert result.audit_events == ("assignment.submitted_for_qa",)
+
+
 
 
 def test_invalid_role_is_rejected():
@@ -176,7 +208,7 @@ def test_mark_synced_closes_assignment_and_archives_workspace():
 
 def test_reassign_keeps_workflow_state_and_resets_technical_states():
     assignment = _assignment(
-        workflow_state=WorkflowState.CONTROL_CALIDAD,
+        workflow_state=WorkflowState.CONTROL_CALIDAD_1,
         workspace_state=WorkspaceState.READY,
         retorno_state=RetornoState.VALIDATED,
         sync_state=SyncState.NONE,
@@ -191,7 +223,7 @@ def test_reassign_keeps_workflow_state_and_resets_technical_states():
         metadata={"target_user_id": "rec-2"},
     )
 
-    assert result.assignment.workflow_state == WorkflowState.CONTROL_CALIDAD
+    assert result.assignment.workflow_state == WorkflowState.CONTROL_CALIDAD_1
     assert result.assignment.assigned_user_id == "rec-2"
     assert result.assignment.workspace_state == WorkspaceState.PENDING
     assert result.assignment.retorno_state == RetornoState.NONE

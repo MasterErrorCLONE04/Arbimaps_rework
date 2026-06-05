@@ -14,6 +14,7 @@ from workflow.postgres_uow import PostgresUnitOfWork
 
 class MockSchemas:
     workflow = "d_workflow"
+    app = "arbimaps_app"
 
 
 class MockTenantContext:

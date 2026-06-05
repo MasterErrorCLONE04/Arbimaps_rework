@@ -15,9 +15,10 @@ from workflow.service import PreparedOutboxMessage
 
 
 class PostgresAssignmentRepository(AbstractAssignmentRepository):
-    def __init__(self, cursor, schema: str):
+    def __init__(self, cursor, schema: str, app_schema: str = "arbimaps_app"):
         self.cursor = cursor
         self.schema = schema
+        self.app_schema = app_schema
 
     def get(self, tenant_code: str, assignment_id: str) -> Optional[AssignmentSnapshot]:
         query = f"""
@@ -31,7 +32,64 @@ class PostgresAssignmentRepository(AbstractAssignmentRepository):
         self.cursor.execute(query, (tenant_code, assignment_id))
         row = self.cursor.fetchone()
         if not row:
-            return None
+            try:
+                asig_id_int = int(assignment_id)
+            except (ValueError, TypeError):
+                return None
+
+            self.cursor.execute(
+                f"""
+                SELECT estado, usuario_asignado_id 
+                FROM {self.app_schema}.asignacion 
+                WHERE id = %s
+                """,
+                (asig_id_int,)
+            )
+            main_row = self.cursor.fetchone()
+            if not main_row:
+                return None
+
+            main_estado = main_row[0]
+            assigned_user_id = str(main_row[1]) if main_row[1] is not None else None
+
+            state_map = {
+                "EN_CAMPO": "EN_CAMPO",
+                "CONTROL_CALIDAD_1": "CONTROL_CALIDAD_1",
+                "DEVUELTO_CAMPO": "DEVUELTO",
+                "EN_APROBACION": "APROBACION",
+                "GENERACION_XTF_CAMPO": "APROBACION",
+                "EN_SINCRONIZACION": "SINCRONIZACION",
+                "SINCRONIZADO": "SINCRONIZADO",
+                "EN_DIGITALIZACION": "EN_CAMPO",
+                "DEVUELTO_DIGITALIZACION": "DEVUELTO",
+                "CONTROL_CALIDAD_2": "CONTROL_CALIDAD_1"
+            }
+            workflow_state = state_map.get(main_estado, "SIN_ASIGNAR")
+            is_closed = (main_estado == "CERRADA")
+
+            if main_estado == "CREANDO_WORKSPACE":
+                workspace_state = "BUILDING"
+            elif main_estado == "ERROR_WORKSPACE":
+                workspace_state = "ERROR"
+            else:
+                workspace_state = "READY"
+
+            snapshot = AssignmentSnapshot(
+                assignment_id=assignment_id,
+                tenant_code=tenant_code,
+                workflow_state=WorkflowState(workflow_state),
+                workspace_state=WorkspaceState(workspace_state),
+                retorno_state=RetornoState.NONE,
+                sync_state=SyncState.NONE,
+                assigned_user_id=assigned_user_id,
+                assigned_role=WorkflowRole.RECONOCEDOR if assigned_user_id else None,
+                is_closed=is_closed,
+                version=1,
+                metadata={}
+            )
+
+            self.save(snapshot)
+            return snapshot
         
         return AssignmentSnapshot(
             assignment_id=row[0],
@@ -46,6 +104,7 @@ class PostgresAssignmentRepository(AbstractAssignmentRepository):
             version=row[9],
             metadata=row[10] if isinstance(row[10], dict) else (json.loads(row[10]) if row[10] else {})
         )
+
 
     def save(self, assignment: AssignmentSnapshot) -> None:
         query = f"""
@@ -111,7 +170,7 @@ class PostgresAuditRepository(AbstractAuditRepository):
             event.from_state.value if event.from_state else None,
             event.to_state.value if event.to_state else None,
             event.occurred_at, event.correlation_id, event.source,
-            json.dumps(event.metadata) if event.metadata else None
+            json.dumps(event.metadata or {})
         ))
 
 
@@ -132,7 +191,7 @@ class PostgresOutboxRepository(AbstractOutboxRepository):
         self.cursor.execute(query, (
             message.job_type, message.tenant_code, message.assignment_id,
             message.correlation_id, message.idempotency_key,
-            json.dumps(message.payload) if message.payload else None
+            json.dumps(message.payload or {})
         ))
 
 
@@ -166,5 +225,5 @@ class PostgresTransitionRepository(AbstractTransitionRepository):
             occurred_at,
             audit_context.correlation_id,
 
-            json.dumps(transition.metadata) if transition.metadata else None
+            json.dumps(transition.metadata or {})
         ))

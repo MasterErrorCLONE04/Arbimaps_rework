@@ -15,7 +15,7 @@ from tenants import TenantContext, get_tenant_db_connection
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 logger = logging.getLogger(__name__)
 
-ALLOWED_ROLES = ("admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento", "consulta", "consolidador")
+ALLOWED_ROLES = ("admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento", "consulta", "consolidador", "soporte")
 IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 

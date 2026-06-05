@@ -18,7 +18,7 @@ def normalize_token(value: str) -> str:
 class WorkflowState(_StrEnum):
     SIN_ASIGNAR = "SIN_ASIGNAR"
     EN_CAMPO = "EN_CAMPO"
-    CONTROL_CALIDAD = "CONTROL_CALIDAD"
+    CONTROL_CALIDAD_1 = "CONTROL_CALIDAD_1"
     DEVUELTO = "DEVUELTO"
     APROBACION = "APROBACION"
     SINCRONIZACION = "SINCRONIZACION"
@@ -71,6 +71,7 @@ class WorkflowRole(_StrEnum):
     ASIGNADOR = "asignador"
     RECONOCEDOR = "reconocedor"
     CONSULTA = "consulta"
+    SOPORTE = "soporte"
 
     @classmethod
     def parse(cls, value: str | WorkflowRole) -> "WorkflowRole":
@@ -85,7 +86,9 @@ class WorkflowRole(_StrEnum):
             "coordinador": cls.COORDINADOR,
             "asignador": cls.ASIGNADOR,
             "reconocedor": cls.RECONOCEDOR,
+            "digitalizador": cls.RECONOCEDOR,
             "consulta": cls.CONSULTA,
+            "soporte": cls.SOPORTE,
         }
         role = alias_map.get(normalized)
         if role is None:

@@ -82,7 +82,7 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
         if in_transaction:
             cur.execute("SAVEPOINT ensure_asig_tables_sp")
         try:
-            # Asegurar que el enum asignacion_evento contiene todos los eventos esperados
+            # Asegurar que los enums contienen todos los valores esperados
             # Para evitar "unsafe use of new value ... HINT: New enum values must be committed before they can be used",
             # abrimos una conexion temporal con autocommit=True.
             try:
@@ -92,6 +92,7 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 with psycopg2.connect(**params) as temp_conn:
                     temp_conn.autocommit = True
                     with temp_conn.cursor() as temp_cur:
+                        # 1. Asegurar asignacion_evento
                         for val in ["WORKSPACE_READY", "WORKSPACE_READY_WARN", "PAQUETE_JOB_CREADO", "PAQUETE_JOB_DONE", "PAQUETE_JOB_ERROR", "ERROR"]:
                             temp_cur.execute(
                                 """
@@ -106,8 +107,22 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                                     temp_cur.execute(f"ALTER TYPE {app_schema}.asignacion_evento ADD VALUE '{val}'")
                                 except Exception as e:
                                     logger.warning("Fallo agregar valor enum %s en conexion autocommit: %s", val, e)
+                        
+                        # 2. Asegurar asignacion_estado contiene 'CONTROL_CALIDAD_1'
+                        temp_cur.execute(
+                            """
+                            SELECT 1 FROM pg_enum 
+                            JOIN pg_type ON pg_enum.enumtypid = pg_type.oid 
+                            WHERE pg_type.typname = 'asignacion_estado' AND pg_enum.enumlabel = 'CONTROL_CALIDAD_1'
+                            """
+                        )
+                        if not temp_cur.fetchone():
+                            try:
+                                temp_cur.execute(f"ALTER TYPE {app_schema}.asignacion_estado ADD VALUE 'CONTROL_CALIDAD_1'")
+                            except Exception as e:
+                                logger.warning("Fallo agregar valor enum CONTROL_CALIDAD_1 en conexion autocommit: %s", e)
             except Exception as e:
-                logger.error("No se pudo conectar a la base de datos para asegurar el enum: %s", e)
+                logger.error("No se pudo conectar a la base de datos para asegurar los enums: %s", e)
 
             cur.execute(
                 f"""
@@ -152,6 +167,47 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 ADD COLUMN IF NOT EXISTS predios_soporte_extra INTEGER NOT NULL DEFAULT 0
                 """
             )
+            cur.execute(
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion
+                ADD COLUMN IF NOT EXISTS coordinador_asignado_id BIGINT
+                """
+            )
+            cur.execute(
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion
+                ADD COLUMN IF NOT EXISTS enlace_control_calidad TEXT
+                """
+            )
+            cur.execute(
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion
+                ADD COLUMN IF NOT EXISTS enlace_soporte TEXT
+                """
+            )
+            cur.execute(
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion
+                ADD COLUMN IF NOT EXISTS enlace_digitalizacion TEXT
+                """
+            )
+            cur.execute(
+                """
+                SELECT 1
+                FROM pg_constraint
+                WHERE conname = 'fk_asignacion_coordinador'
+                """
+            )
+            if not cur.fetchone():
+                cur.execute(
+                    f"""
+                    ALTER TABLE {app_schema}.asignacion
+                    ADD CONSTRAINT fk_asignacion_coordinador
+                    FOREIGN KEY (coordinador_asignado_id)
+                    REFERENCES {app_schema}.users(id_global)
+                    ON DELETE SET NULL
+                    """
+                )
             cur.execute(
                 f"""
                 CREATE TABLE IF NOT EXISTS {app_schema}.asignacion_export_job (
@@ -944,6 +1000,9 @@ def update_asignacion_fields(*args, **kwargs) -> None:
     work_datasetname = kwargs.get("work_datasetname")
     error_msg = kwargs.get("error_msg")
     predios_soporte_extra = kwargs.get("predios_soporte_extra")
+    enlace_control_calidad = kwargs.get("enlace_control_calidad")
+    enlace_soporte = kwargs.get("enlace_soporte")
+    enlace_digitalizacion = kwargs.get("enlace_digitalizacion")
 
     app_schema = "arbimaps_app"
     if tenant is not None:
@@ -966,6 +1025,15 @@ def update_asignacion_fields(*args, **kwargs) -> None:
     if predios_soporte_extra is not None:
         sets.append("predios_soporte_extra=%s")
         params.append(max(int(predios_soporte_extra), 0))
+    if enlace_control_calidad is not None:
+        sets.append("enlace_control_calidad=%s")
+        params.append(enlace_control_calidad)
+    if enlace_soporte is not None:
+        sets.append("enlace_soporte=%s")
+        params.append(enlace_soporte)
+    if enlace_digitalizacion is not None:
+        sets.append("enlace_digitalizacion=%s")
+        params.append(enlace_digitalizacion)
     if not sets:
         return
     params.append(asignacion_id)
@@ -999,7 +1067,8 @@ def list_usuarios_disponibles(conn, tenant=None) -> list[dict]:
                 u.username,
                 u.first_name,
                 u.last_name,
-                u.rol
+                u.rol,
+                u.supervisor
             FROM {app_schema}.users u
             LEFT JOIN (
                 SELECT DISTINCT a.usuario_asignado
@@ -1506,8 +1575,9 @@ def list_asignaciones(conn, tenant=None) -> list[dict]:
                     WHEN a.estado::text = 'CERRADA' THEN a.estado::text
                     ELSE a.estado::text
                 END AS estado_resuelto,
-                cu.first_name AS coord_first_name,
-                cu.last_name AS coord_last_name,
+                COALESCE(coo.first_name, cu.first_name) AS coord_first_name,
+                COALESCE(coo.last_name, cu.last_name) AS coord_last_name,
+                COALESCE(coo.username, a.creado_por) AS creado_por,
                 au.first_name AS asignado_first_name,
                 au.last_name AS asignado_last_name,
                 CASE
@@ -1532,6 +1602,7 @@ def list_asignaciones(conn, tenant=None) -> list[dict]:
             FROM {app_schema}.asignacion a
             LEFT JOIN {app_schema}.users cu ON cu.username = a.creado_por
             LEFT JOIN {app_schema}.users au ON au.username = a.usuario_asignado
+            LEFT JOIN {app_schema}.users coo ON coo.id_global = a.coordinador_asignado_id
             LEFT JOIN LATERAL (
                 SELECT
                     COUNT(*) FILTER (WHERE ap.activo IS DISTINCT FROM FALSE) AS total_activos,
@@ -1594,8 +1665,9 @@ def get_asignacion_detalle(conn, *args, **kwargs) -> Optional[dict]:
                     WHEN a.estado::text = 'CERRADA' THEN a.estado::text
                     ELSE a.estado::text
                 END AS estado_resuelto,
-                cu.first_name AS coord_first_name,
-                cu.last_name AS coord_last_name,
+                COALESCE(coo.first_name, cu.first_name) AS coord_first_name,
+                COALESCE(coo.last_name, cu.last_name) AS coord_last_name,
+                COALESCE(coo.username, a.creado_por) AS creado_por,
                 au.first_name AS asignado_first_name,
                 au.last_name AS asignado_last_name,
                 CASE
@@ -1620,6 +1692,7 @@ def get_asignacion_detalle(conn, *args, **kwargs) -> Optional[dict]:
             FROM {app_schema}.asignacion a
             LEFT JOIN {app_schema}.users cu ON cu.username = a.creado_por
             LEFT JOIN {app_schema}.users au ON au.username = a.usuario_asignado
+            LEFT JOIN {app_schema}.users coo ON coo.id_global = a.coordinador_asignado_id
             LEFT JOIN (
                 SELECT
                     ap.asignacion_id,

@@ -31,7 +31,12 @@ class PostgresUnitOfWork(AbstractUnitOfWork):
         if not schema or not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", schema):
             raise ValueError(f"Invalid schema name: {schema}")
 
-        self.assignments = PostgresAssignmentRepository(self.cursor, schema)
+        self.assignments = PostgresAssignmentRepository(
+            self.cursor, 
+            schema, 
+            app_schema=self.tenant_context.schemas.app
+        )
+
         self.audit = PostgresAuditRepository(self.cursor, schema)
         self.outbox = PostgresOutboxRepository(self.cursor, schema)
         self.transitions = PostgresTransitionRepository(self.cursor, schema)

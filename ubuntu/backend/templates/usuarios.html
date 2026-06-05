@@ -94,13 +94,13 @@
           </div>
         </div>
         <div class="col-6 col-md p-2">
-          <!-- Consolidador -->
+          <!-- Soporte -->
           <div class="stat-card role-consolidador">
             <div class="stat-avatar">
               <i class="bi bi-person-circle"></i>
             </div>
             <div class="stat-info">
-              <span class="label">Consolidador</span>
+              <span class="label">Soporte</span>
               <span class="value" id="cntConsolidador">0</span>
             </div>
           </div>
@@ -546,20 +546,22 @@
 
     const roleLabels = {
       "coordinador": "Coordinador",
-      "consolidador": "Consolidador",
+      "soporte": "Soporte",
       "reconocedor": "Reconocedor",
       "admin": "Administrador",
       "lider_reconocimiento": "Lider de reco.",
       "consulta": "Consulta",
+      "digitalizador": "Digitalizador",
     };
 
     const roleBadges = {
       "admin": "admin",
-      "consolidador": "consolidador",
+      "soporte": "soporte",
       "coordinador": "coordinador",
       "reconocedor": "reconocedor",
       "lider_reconocimiento": "lider_reconocimiento",
-      "consulta": "consulta"
+      "consulta": "consulta",
+      "digitalizador": "digitalizador",
     };
 
     // Realistic deterministic simulated values
@@ -713,7 +715,7 @@
       let lider = 0;
       let coordinador = 0;
       let reconocedor = 0;
-      let consolidador = 0;
+      let soporte = 0;
 
       usuariosCache.forEach(u => {
         const rol = (u.rol || "").toLowerCase().trim();
@@ -721,7 +723,7 @@
         else if (rol === "lider_reconocimiento" || rol === "lider de reco." || rol === "lider") lider++;
         else if (rol === "coordinador") coordinador++;
         else if (rol === "reconocedor") reconocedor++;
-        else if (rol === "consolidador") consolidador++;
+        else if (rol === "soporte") soporte++;
       });
 
       document.getElementById("cntTotal").textContent = total;
@@ -729,7 +731,7 @@
       document.getElementById("cntLider").textContent = lider;
       document.getElementById("cntCoordinador").textContent = coordinador;
       document.getElementById("cntReconocedor").textContent = reconocedor;
-      document.getElementById("cntConsolidador").textContent = consolidador;
+      document.getElementById("cntConsolidador").textContent = soporte;
     }
 
     function renderUsuarios(list) {

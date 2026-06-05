@@ -173,11 +173,19 @@
             </label>
             <input id="inpNombreLote" class="form-control consultaInput w-100 mt-2" placeholder="Lote-001">
 
+            <label class="consultaLabel label-asignacion mt-4" for="inpCoordinador">
+              Selecciona coordinador
+            </label>
+
+            <select id="inpCoordinador" class="form-select consultaInput w-100 mt-2" style="padding-right: 45px !important;">
+              <option value="" disabled selected>Selecciona un coordinador...</option>
+            </select>
+
             <label class="consultaLabel label-asignacion mt-4" for="inpUsuarioDestino">
               Selecciona usuario de destino
             </label>
 
-            <select id="inpUsuarioDestino" class="form-select consultaInput w-100 mt-2" style="padding-right: 45px !important;">
+            <select id="inpUsuarioDestino" class="form-select consultaInput w-100 mt-2" style="padding-right: 45px !important;" disabled>
               <option value="" disabled selected>Selecciona un reconocedor...</option>
             </select>
 
@@ -405,14 +413,22 @@
 
   function abrirTarjetaConfirmacion() {
     const txt = document.getElementById("txtPredios");
+    const selectCoord = document.getElementById("inpCoordinador");
     const userDest = document.getElementById("inpUsuarioDestino");
     const msg = document.getElementById("asgHint");
 
     const numeros = parseNumeros(txt.value);
     const usernameDestino = (userDest.value || "").trim();
+    const coordinador_id = selectCoord ? parseInt(selectCoord.value) : null;
 
     if (!numeros.length) {
       msg.textContent = "Debes ingresar predios.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    if (!coordinador_id) {
+      msg.textContent = "Debes seleccionar un coordinador.";
       msg.classList.remove("d-none");
       return;
     }
@@ -605,6 +621,7 @@
 
   async function asignarPredios(options = {}) {
     const txt = document.getElementById("txtPredios");
+    const selectCoord = document.getElementById("inpCoordinador");
     const userDest = document.getElementById("inpUsuarioDestino");
     const tituloInput = document.getElementById("inpNombreLote");
     const msg = document.getElementById("asgHint");
@@ -612,9 +629,16 @@
 
     const numeros = parseNumeros(txt.value);
     const username_destino = (userDest.value || "").trim();
+    const coordinador_id = selectCoord ? parseInt(selectCoord.value) : null;
 
     if (!numeros.length) {
       msg.textContent = "Debes ingresar predios.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    if (!coordinador_id) {
+      msg.textContent = "Debes seleccionar un coordinador.";
       msg.classList.remove("d-none");
       return;
     }
@@ -635,6 +659,7 @@
         body: JSON.stringify({
           numeros,
           username_destino,
+          coordinador_id,
           titulo: tituloInput?.value || null,
           forzar_reasignacion: forceReassign
         })
@@ -735,21 +760,45 @@
         if (!r.ok) return;
 
         const users = await r.json();
-        const select = document.getElementById("inpUsuarioDestino");
-        if (!select) return;
+        const selectCoord = document.getElementById("inpCoordinador");
+        const selectDest = document.getElementById("inpUsuarioDestino");
+        if (!selectCoord || !selectDest) return;
 
-        select.innerHTML = '<option value="" disabled selected>Selecciona un reconocedor...</option>';
-
-        const reconocedores = users.filter(u => u.rol && u.rol.toLowerCase() === "reconocedor");
-
-        reconocedores.forEach(u => {
+        // Cargar Coordinadores
+        selectCoord.innerHTML = '<option value="" disabled selected>Selecciona un coordinador...</option>';
+        const coordinadores = users.filter(u => u.rol && u.rol.toLowerCase() === "coordinador");
+        coordinadores.forEach(u => {
           const opt = document.createElement("option");
-          opt.value = u.username;
+          opt.value = u.id_global;
           opt.textContent = u.first_name && u.last_name
             ? `${u.first_name} ${u.last_name} (${u.username})`
             : u.username;
-          select.appendChild(opt);
+          selectCoord.appendChild(opt);
         });
+
+        // Filtrar reconocedores dinámicamente al cambiar de coordinador
+        selectCoord.addEventListener("change", () => {
+          const selectedCoordId = selectCoord.value;
+          selectDest.innerHTML = '<option value="" disabled selected>Selecciona un reconocedor...</option>';
+          
+          const reconocedores = users.filter(u => 
+            u.rol && 
+            u.rol.toLowerCase() === "reconocedor" && 
+            String(u.supervisor || "").trim() === String(selectedCoordId)
+          );
+
+          reconocedores.forEach(u => {
+            const opt = document.createElement("option");
+            opt.value = u.username;
+            opt.textContent = u.first_name && u.last_name
+              ? `${u.first_name} ${u.last_name} (${u.username})`
+              : u.username;
+            selectDest.appendChild(opt);
+          });
+          
+          selectDest.disabled = false;
+        });
+
       } catch (e) {
         console.warn("No se pudieron cargar usuarios", e);
       }
