@@ -1,0 +1,1338 @@
+<div class="content-section container-fluid  pb-5">
+  <div class="d-flex align-items-center justify-content-center mb-0 ">
+    <div class="section-title ms-0  w-100">
+      <div class="title-header">
+        <small class="text-title-header">MÓDULO DE SOLICITUDES> SOLICITAR CARGAS DE TRABAJO</small>
+      </div>
+
+      <div class="title-body mt-2">
+        <h4 class="fw-bold">Solicitar nueva carga de trabajo</h4>
+        <p class="parrafo-title">
+          Consulta predios disponibles para asignar y realiza una solicitud al soporte para crear las asignaciones.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-body">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-12 col-xl-11 mt-5  ">
+        <div class="buscador-ai-wrap">
+          <div class="buscador-ai-heading">
+            <p style="font-size: 1.20rem;" class="text-section-search d-block mb-0">
+              Buscador de predios
+            </p>
+            <small class="fw-light" style="font-weight: 300 !important;">Realiza la búsqueda de los predios disponibles
+              para crear asignación</small>
+
+          </div>
+
+          <div class="buscador-ai-box">
+            <div class="content-text-search buscador-ai-input-area mb-2">
+              <textarea id="txtPredios" class="form-control consultaInput textarea-predios buscador-ai-textarea"
+                rows="5" placeholder="Ingresa los números prediales"></textarea>
+            </div>
+
+            <div class="argumentation buscador-ai-help">
+              <small class="agumentation-text d-block">
+                Escribe los NPN separados por coma, espacio o salto de linea. Ejemplo: 11001, 11002, 11003...
+              </small>
+            </div>
+
+            <div class="buscador-ai-actions  d-flex justify-content-end align-items-center gap-3 pt-3">
+              <div class="reconocedores-pill px-3" title="Reconocedores disponibles para este coordinador">
+                <span class="reconocedores-pill-icon"><i class="bi bi-person-fill"></i></span>
+                <span>Reco. Disponibles:</span>
+                <strong id="contadorReconocedoresDisponibles">0</strong>
+              </div>
+
+              <div class=" d-flex justify-content-center align-items-center gap-4 px-3 ">
+                <div class="consultaButtons d-flex justify-content-end">
+                  <button class="btn buscar" id="btnBuscar" type="button">
+                    <i class="bi bi-search me-2 icono-buscar"></i>
+                    <span class="texto-buscar">Buscar predios</span>
+                  </button>
+                </div>
+
+                <div class="consultaButtons d-flex justify-content-center align-items-center  ">
+                  <button class="btn limpiar" id="btnLimpiar" type="button">
+                    <!-- <i class="bi bi-x-square-fill me-2 icono-buscar"></i> -->
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="22"
+                      height="22"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+                      <path fill="rgb(0, 47, 85)"
+                        d="M576 128c0-35.3-28.7-64-64-64L205.3 64c-17 0-33.3 6.7-45.3 18.7L9.4 233.4c-6 6-9.4 14.1-9.4 22.6s3.4 16.6 9.4 22.6L160 429.3c12 12 28.3 18.7 45.3 18.7L512 448c35.3 0 64-28.7 64-64l0-256zM284.1 188.1c9.4-9.4 24.6-9.4 33.9 0l33.9 33.9 33.9-33.9c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-33.9 33.9 33.9 33.9c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-33.9-33.9-33.9 33.9c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l33.9-33.9-33.9-33.9c-9.4-9.4-9.4-24.6 0-33.9z" />
+                    </svg>
+                    <span class="texto-buscar">Limpiar</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-4 section-dual-cards justify-content-center align-items-stretch">
+      <div id="resultadosWrapper" class="col-12 col-xl-12">
+        <div id="cardEstadoInicial"
+          class="card card-panel card-estado-inicial d-flex justify-content-center align-items-center border-0">
+          <div class="card-body py-2 px-3 text-center w-100 d-flex justify-content-center align-items-center">
+            <p class="mensaje-estado-inicial mb-0 d-flex justify-content-center align-items-center flex-wrap">
+              <i class="bi bi-input-cursor-text icono-estado-inicial"></i>
+              <span class="texto-estado-inicial">
+                Ingresa los predios y click en buscar para verificar los predios disponibles para asignación.
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div id="cardSinResultados"
+          class="card card-panel card-estado-inicial card-sin-resultados d-none justify-content-center align-items-center border-0">
+          <div class="card-body py-2 px-3 w-100">
+            <div
+              class="mensaje-sin-resultados d-flex justify-content-center align-items-center flex-wrap flex-md-nowrap text-center gap-3">
+              <span class="icono-sin-resultados d-inline-flex justify-content-center align-items-center">
+                <i class="bi bi-exclamation-lg"></i>
+              </span>
+
+              <span class="texto-sin-resultados">
+                No se encontraron resultados para la búsqueda que realizaste
+              </span>
+            </div>
+          </div>
+        </div>
+
+
+        <div id="cardResultados" class="card card-panel border-0 h-100 d-none">
+          <div class="card-body p-3 p-md-4">
+            <div class="card-resultados-header">
+              <div>
+                <h5 class="fw-bold mb-2" style="color: #032F57;">
+                  Inventario de predios disponibles
+                </h5>
+                <p class="parrafo-result mb-0">
+                  Selecciona los predios que se encuentran
+                  disponibles y que deseas asignar
+                </p>
+              </div>
+
+              <div id="asgMsg" class="contador-resultados-badge d-none">
+                <i class="bi bi-crosshair"></i>
+                <small style="font-size: 0.95rem;" id="asgMsgText">0 Resultados</small>
+              </div>
+            </div>
+
+            <div class="card-contador mt-4">
+              <div class="row align-items-center g-3">
+                <div class="col-12 col-lg-auto">
+                  <p class="parrafo-contador-card mb-0 text-center text-lg-start">
+                    Predios encontrados
+                  </p>
+                </div>
+
+                <div class="col-12 col-lg">
+                  <div class="row g-2 justify-content-center justify-content-lg-end">
+                    <div class="col-auto">
+                      <div id="badgeExisten" class="badge-contador-estado badge-contador-existen d-none">
+                        <i class="bi bi-patch-check-fill"></i>
+                        <small id="badgeExistenText">0 Existen</small>
+                      </div>
+                    </div>
+
+                    <div class="col-auto">
+                      <div id="badgeNoExisten" class="badge-contador-estado badge-contador-noexisten d-none">
+                        <i class="bi bi-x-octagon-fill"></i>
+                        <small id="badgeNoExistenText">0 No existen</small>
+                      </div>
+                    </div>
+
+                    <div class="col-auto">
+                      <div id="badgeAsignados" class="badge-contador-estado d-none">
+                        <i class="bi bi-person-check-fill"></i>
+                        <small id="badgeAsignadosText">0 Asignados</small>
+                      </div>
+                    </div>
+
+                    <div class="col-auto">
+                      <div id="badgeDisponibles" class="badge-contador-estado badge-contador-disponibles d-none">
+                        <i class="bi bi-node-plus-fill"></i>
+                        <small id="badgeDisponiblesText">0 Disponibles</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <hr class="my-3 border-1 opacity-100 separador-resultados">
+            </div>
+
+            <div id="asgHint" class="hint hint-resultados mt-3 d-none"></div>
+
+            <div class="tabla-datatable-wrap mt-3">
+              <div class="table-responsive">
+                <table id="tblResultados" class="table table-resultados mb-0" style="display:none; width:100%;">
+                  <thead>
+                    <tr>
+                      <th class="text-center"
+                        style="width: auto; border-top-left-radius: 10px; border-bottom-left-radius: 10px;">
+                        <input type="checkbox" id="chkSelectAll" class="form-check-input select-all-checkbox" />
+                      </th>
+                      <th class="text-center">Número Predial Nacional</th>
+                      <th class="text-center">Estado</th>
+                      <th class="text-center">Asignado a</th>
+                      <th class="text-center"
+                        style="width: auto; border-top-right-radius: 10px; border-bottom-right-radius: 10px;">Asignado
+                        por</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyResultados"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Bottom Action Bar (visible only when rows are selected) -->
+            <div id="bottomActionBar" class="d-none justify-content-between align-items-center mt-3 pt-3 border-top">
+              <span id="selectedCountBadge" class="selected-count-badge">0 Seleccionados</span>
+              <button type="button" id="btnCrearSolicitud" class="btn btn-crear-solicitud">
+                <i class="bi bi-file-earmark-plus me-2"></i> Crear solicitud
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Side Panel for Request Creation -->
+      <div class="col-12 col-xl-4 d-none" id="panelSolicitud">
+        <div class="card card-panel card-panel-asignacion border-0 h-100 bg-white">
+          <div class="card-body h-100 d-flex flex-column ps-3 ps-md-4 pe-3 position-relative">
+
+            <button type="button" class="btn-close-panel" id="btnClosePanel">
+              <i class="bi bi-x-lg"></i>
+            </button>
+
+            <h5 class="panel-title fw-bold text-navy mt-2" style="font-size: 0.95rem;">Nueva solicitud de asignación
+            </h5>
+
+            <div class="predios-selected-badge-wrap mt-3 mb-2">
+              <span class="predios-selected-badge" id="panelSelectedBadge">
+                <i class="bi bi-link-45deg me-2"></i> <span id="panelSelectedCountText">1 predio seleccionado</span>
+              </span>
+            </div>
+
+            <hr class="my-3 border-1 opacity-100 separador-resultados">
+
+            <!-- Form section 1 -->
+            <div class="form-section mb-2">
+              <h6 class="form-section-title fw-bold mb-3">1. Información de la solicitud</h6>
+
+              <div class="mb-3">
+                <label for="inpNombreSolicitud" class="form-label label-solicitud">Nombre de la solicitud <span
+                    class="text-danger">*</span></label>
+                <input type="text" class="form-control input-solicitud" id="inpNombreSolicitud"
+                  placeholder="Ej: Asignación 1" required>
+              </div>
+
+              <div class="mb-3">
+                <label for="txtObservacionesSolicitud" class="form-label label-solicitud">Observaciones de la
+                  solicitud</label>
+                <textarea class="form-control textarea-solicitud" id="txtObservacionesSolicitud" rows="4"
+                  placeholder="Ej: Se solicita 2 asignaciones para los reconocedores 1 y 2"></textarea>
+              </div>
+            </div>
+
+            <hr class="my-3 border-1 opacity-100 separador-resultados">
+            <!-- Form section 2 -->
+            <div class="form-section mb-2">
+              <h6 class="form-section-title fw-bold mb-3">2. Desglose de solicitud</h6>
+              <div class="desglose-lista" id="panelDesgloseLista">
+                <!-- Se poblará dinámicamente con JavaScript -->
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-auto pt-3">
+              <button type="button" class="btn btn-enviar-solicitud w-100" id="btnEnviarSolicitud">
+                <i class="bi bi-send-fill me-2"></i> Enviar solicitud
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Modal for Reconocedor Selection -->
+      <div id="modalReconocedor" class="custom-modal-backdrop d-none">
+        <div class="custom-modal-content">
+          <div class="custom-modal-header d-flex justify-content-between align-items-center mb-3">
+            <h5 class="custom-modal-title fw-bold mb-0">Selecciona el reconocedor</h5>
+            <button type="button" class="btn-close-custom" id="btnCloseModal">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          <div class="list-section-header mb-3">
+            <span class="fw-semibold">Listado de reconocedores:</span>
+          </div>
+
+          <div class="reconocedores-list" id="modalReconocedoresList">
+            <!-- Will be populated dynamically via JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirmAsignacionWrapper" class="d-none w-100 mt-3 mb-4">
+      <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+          <div
+            class="confirm-asignacion-card d-flex flex-column flex-lg-row justify-content-between align-items-center gap-3 text-center text-lg-start">
+            <div
+              class="confirm-asignacion-info d-flex flex-column flex-md-row align-items-center justify-content-center justify-content-lg-start gap-4 w-100">
+              <div class="confirm-asignacion-item d-flex flex-column align-items-center align-items-lg-start">
+                <span class="confirm-label">Usuario a cargar</span>
+                <span id="confirmUsuarioText" class="confirm-value">-</span>
+              </div>
+
+              <div class="confirm-asignacion-item d-flex flex-column align-items-center align-items-lg-start">
+                <span class="confirm-label">Selección actual</span>
+                <span id="confirmSeleccionText" class="confirm-value">0 Predios Seleccionados</span>
+              </div>
+            </div>
+
+            <div
+              class="confirm-asignacion-actions d-flex flex-column flex-sm-row justify-content-center align-items-center gap-3 w-100 w-lg-auto">
+              <button type="button" class="btn btn-cancelar-confirm" id="btnCancelarConfirmacion">
+                Cancelar
+              </button>
+
+              <button type="button" class="btn btn-confirmar-asignacion" id="btnConfirmarAsignacion">
+                <i class="bi bi-send me-2"></i>
+                Confirmar Asignación
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  const injectedRp = "{{ rp if rp is defined else '' }}";
+  const rp = injectedRp || (window.location.pathname.startsWith("/api/") ? "/api" : "");
+
+  let dtResultados = null;
+  let ultimoResultadoBusqueda = null;
+  let asignacionEnProceso = false;
+  let seleccionadosActivos = new Set();
+  let reconocedoresCargados = [];
+  let asignacionesCreadas = [];
+  let agendadosActivos = new Set();
+
+  function parseNumeros(text) {
+    const tokens = (text || "")
+      .split(/[\s,;]+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+
+    const seen = new Set();
+    const out = [];
+
+    for (const t of tokens) {
+      if (!seen.has(t)) {
+        seen.add(t);
+        out.push(t);
+      }
+    }
+
+    return out;
+  }
+
+  function actualizarContadorReconocedoresDisponibles() {
+    const el = document.getElementById("contadorReconocedoresDisponibles");
+    if (el) el.textContent = String(reconocedoresCargados.length || 0);
+  }
+
+  function limpiarBusquedaPredios() {
+    const txt = document.getElementById("txtPredios");
+    const msg = document.getElementById("asgHint");
+    const badge = document.getElementById("asgMsg");
+    const tbl = document.getElementById("tblResultados");
+    const tbody = document.getElementById("tbodyResultados");
+    const cardEstadoInicial = document.getElementById("cardEstadoInicial");
+    const cardSinResultados = document.getElementById("cardSinResultados");
+    const cardResultados = document.getElementById("cardResultados");
+    const badgeAsignados = document.getElementById("badgeAsignados");
+    const badgeDisponibles = document.getElementById("badgeDisponibles");
+    const badgeExisten = document.getElementById("badgeExisten");
+    const badgeNoExisten = document.getElementById("badgeNoExisten");
+    const selectAllChk = document.getElementById("chkSelectAll");
+
+    if (txt) {
+      txt.value = "";
+      txt.focus();
+    }
+
+    ultimoResultadoBusqueda = null;
+    seleccionadosActivos.clear();
+    agendadosActivos.clear();
+    asignacionesCreadas = [];
+    cerrarTarjetaConfirmacion();
+    ocultarPanelSolicitud();
+    destruirDataTableResultados();
+    actualizarBottomActionBar();
+
+    if (tbody) tbody.innerHTML = "";
+    if (tbl) tbl.style.display = "none";
+    if (selectAllChk) selectAllChk.checked = false;
+
+    cardEstadoInicial?.classList.remove("d-none");
+    cardEstadoInicial?.classList.add("d-flex");
+    cardSinResultados?.classList.add("d-none");
+    cardSinResultados?.classList.remove("d-flex");
+    cardResultados?.classList.add("d-none");
+
+    msg?.classList.add("d-none");
+    badge?.classList.add("d-none");
+    badgeAsignados?.classList.add("d-none");
+    badgeDisponibles?.classList.add("d-none");
+    badgeExisten?.classList.add("d-none");
+    badgeNoExisten?.classList.add("d-none");
+  }
+
+  function destruirDataTableResultados() {
+    if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable("#tblResultados")) {
+      $("#tblResultados").DataTable().clear().destroy();
+    }
+    dtResultados = null;
+  }
+
+  function inicializarDataTableResultados() {
+    if (!(window.jQuery && $.fn.DataTable)) {
+      console.warn("DataTables no está cargado.");
+      return;
+    }
+
+    dtResultados = $("#tblResultados").DataTable({
+      destroy: true,
+      autoWidth: true,
+      responsive: false,
+      scrollX: true,
+      searching: true,
+      paging: true,
+      info: true,
+      ordering: true,
+      lengthChange: true,
+      pageLength: 5,
+      lengthMenu: [
+        [5, 10, 25, 50, -1],
+        [5, 10, 25, 50, "Todos"]
+      ],
+      order: [],
+      stripeClasses: [],
+      columns: [
+        { width: "7%" },
+        { width: "30%" },
+        { width: "16%" },
+        { width: "24%" },
+        { width: "23%" }
+      ],
+      columnDefs: [
+        { targets: "_all", className: "text-center align-middle", orderable: true }
+      ],
+      pagingType: "simple",
+      language: {
+        decimal: "",
+        emptyTable: "No hay datos disponibles en la tabla",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+        infoEmpty: "Mostrando 0 a 0 de 0 registros",
+        infoFiltered: "(filtrado de _MAX_ registros totales)",
+        infoPostFix: "",
+        thousands: ",",
+        lengthMenu: "Mostrar _MENU_ registros",
+        loadingRecords: "Cargando...",
+        processing: "Procesando...",
+        search: "Buscar:",
+        zeroRecords: "No se encontraron resultados",
+        paginate: {
+          first: "",
+          last: "",
+          next: '<i class="bi bi-chevron-right"></i>',
+          previous: '<i class="bi bi-chevron-left"></i>'
+        }
+      },
+      dom:
+        "<'datatable-top d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3'lf>" +
+        "rt" +
+        "<'datatable-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mt-3'ip>",
+      initComplete: function () {
+        setTimeout(() => {
+          this.api().columns.adjust();
+        }, 120);
+      },
+      drawCallback: function () {
+        const wrapper = document.querySelector("#tblResultados_wrapper");
+        if (wrapper) {
+          wrapper.querySelectorAll("input, select").forEach(el => {
+            el.classList.add("shadow-none");
+          });
+
+          const api = this.api();
+          const pageInfo = api.page.info();
+          let pageIndicator = wrapper.querySelector("#datatablePageIndicator");
+
+          if (!pageIndicator) {
+            pageIndicator = document.createElement("div");
+            pageIndicator.id = "datatablePageIndicator";
+            pageIndicator.className = "datatable-page-indicator mt-2 text-center text-muted";
+            wrapper.appendChild(pageIndicator);
+          }
+
+          pageIndicator.textContent = `Página ${pageInfo.page + 1} de ${pageInfo.pages}`;
+        }
+      }
+    });
+  }
+
+  function obtenerEstadoPredio(it) {
+    const estado = (it.estado || "").toString().trim().toLowerCase();
+
+    if (estado === "disponible") return "Disponible";
+    if (estado === "asignado") return "Asignado";
+
+    if (it.asignado_a || it.asignado_por) return "Asignado";
+
+    return "Disponible";
+  }
+
+  function renderEstadoBadge(it) {
+    const estadoTexto = obtenerEstadoPredio(it);
+    const esDisponible = estadoTexto.toLowerCase() === "disponible";
+
+    const badgeClass = esDisponible
+      ? "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-disponible"
+      : "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-asignado";
+
+    return `
+      <span class="${badgeClass}">
+        <span class="estado-badge-dot"></span>
+        <span>${estadoTexto}</span>
+      </span>
+    `;
+  }
+
+  function renderExisteBadge(it) {
+    const existe = !!it.existe;
+
+    const badgeClass = existe
+      ? "badge rounded-pill d-inline-flex align-items-center justify-content-center existe-badge existe-badge-si"
+      : "badge rounded-pill d-inline-flex align-items-center justify-content-center existe-badge existe-badge-no";
+
+    return `
+      <span class="${badgeClass}">
+        <span class="existe-badge-dot"></span>
+        <span>${existe ? "Sí" : "No"}</span>
+      </span>
+    `;
+  }
+
+  function cerrarTarjetaConfirmacion() {
+    const wrapper = document.getElementById("confirmAsignacionWrapper");
+    wrapper?.classList.add("d-none");
+  }
+
+  function abrirTarjetaConfirmacion() {
+    const txt = document.getElementById("txtPredios");
+    const userDest = document.getElementById("inpUsuarioDestino");
+    const msg = document.getElementById("asgHint");
+
+    const numeros = parseNumeros(txt.value);
+    const usernameDestino = (userDest.value || "").trim();
+
+    if (!numeros.length) {
+      msg.textContent = "Debes ingresar predios.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    if (!usernameDestino) {
+      msg.textContent = "Debes indicar el usuario destino.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    let totalSeleccionados = 0;
+
+    if (ultimoResultadoBusqueda && Array.isArray(ultimoResultadoBusqueda.items)) {
+      totalSeleccionados = ultimoResultadoBusqueda.items.filter(it => {
+        return obtenerEstadoPredio(it).toLowerCase() === "disponible";
+      }).length;
+    } else {
+      totalSeleccionados = numeros.length;
+    }
+
+    if (!totalSeleccionados) {
+      msg.textContent = "No hay predios disponibles para asignar.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    document.getElementById("confirmUsuarioText").textContent = usernameDestino;
+    document.getElementById("confirmSeleccionText").textContent =
+      `${totalSeleccionados} ${totalSeleccionados === 1 ? "Predio Seleccionado" : "Predios Seleccionados"}`;
+
+    const wrapper = document.getElementById("confirmAsignacionWrapper");
+    wrapper?.classList.remove("d-none");
+    wrapper?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  async function buscarPredios() {
+    const txt = document.getElementById("txtPredios");
+    const msg = document.getElementById("asgHint");
+    const badge = document.getElementById("asgMsg");
+    const badgeText = document.getElementById("asgMsgText");
+    const tbl = document.getElementById("tblResultados");
+    const tbody = document.getElementById("tbodyResultados");
+    const cardEstadoInicial = document.getElementById("cardEstadoInicial");
+    const cardSinResultados = document.getElementById("cardSinResultados");
+    const cardResultados = document.getElementById("cardResultados");
+    const badgeAsignados = document.getElementById("badgeAsignados");
+    const badgeAsignadosText = document.getElementById("badgeAsignadosText");
+    const badgeDisponibles = document.getElementById("badgeDisponibles");
+    const badgeDisponiblesText = document.getElementById("badgeDisponiblesText");
+    const badgeExisten = document.getElementById("badgeExisten");
+    const badgeExistenText = document.getElementById("badgeExistenText");
+    const badgeNoExisten = document.getElementById("badgeNoExisten");
+    const badgeNoExistenText = document.getElementById("badgeNoExistenText");
+
+    const numeros = parseNumeros(txt.value);
+
+    ultimoResultadoBusqueda = null;
+    cerrarTarjetaConfirmacion();
+    destruirDataTableResultados();
+    tbody.innerHTML = "";
+    tbl.style.display = "none";
+
+    if (!numeros.length) {
+      cardEstadoInicial.classList.remove("d-none");
+      cardEstadoInicial.classList.add("d-flex");
+
+      cardSinResultados.classList.add("d-none");
+      cardSinResultados.classList.remove("d-flex");
+
+      cardResultados.classList.add("d-none");
+
+      msg.textContent = "Debes ingresar al menos un número predial.";
+      msg.classList.remove("d-none");
+
+      badge.classList.add("d-none");
+      badgeAsignados.classList.add("d-none");
+      badgeDisponibles.classList.add("d-none");
+      badgeExisten.classList.add("d-none");
+      badgeNoExisten.classList.add("d-none");
+      return;
+    }
+
+    cardEstadoInicial.classList.add("d-none");
+    cardEstadoInicial.classList.remove("d-flex");
+
+    cardSinResultados.classList.add("d-none");
+    cardSinResultados.classList.remove("d-flex");
+
+    cardResultados.classList.remove("d-none");
+
+    msg.textContent = "Buscando en base de datos...";
+    msg.classList.remove("d-none");
+
+    badge.classList.add("d-none");
+    badgeAsignados.classList.add("d-none");
+    badgeDisponibles.classList.add("d-none");
+    badgeExisten.classList.add("d-none");
+    badgeNoExisten.classList.add("d-none");
+
+    try {
+      const r = await fetch(`${rp}/asignaciones/buscar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ numeros })
+      });
+
+      const data = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        msg.textContent = data.detail || "Error buscando predios.";
+        badge.classList.add("d-none");
+        badgeAsignados.classList.add("d-none");
+        badgeDisponibles.classList.add("d-none");
+        badgeExisten.classList.add("d-none");
+        badgeNoExisten.classList.add("d-none");
+        return;
+      }
+
+      ultimoResultadoBusqueda = data;
+
+      badgeText.textContent = `${data.total} Resultados`;
+      badge.classList.remove("d-none");
+
+      badgeExistenText.textContent = `${data.existen || 0} Existen`;
+      badgeNoExistenText.textContent = `${data.no_existen || 0} No existen`;
+      badgeAsignadosText.textContent = `${data.asignados || 0} Asignados`;
+      badgeDisponiblesText.textContent = `${data.disponibles || 0} Disponibles`;
+
+      badgeExisten.classList.remove("d-none");
+      badgeNoExisten.classList.remove("d-none");
+      badgeAsignados.classList.remove("d-none");
+      badgeDisponibles.classList.remove("d-none");
+
+      const items = data.items || [];
+      tbody.innerHTML = "";
+      seleccionadosActivos.clear();
+      agendadosActivos.clear();
+      asignacionesCreadas = [];
+      actualizarBottomActionBar();
+      ocultarPanelSolicitud();
+
+      const selectAllChk = document.getElementById("chkSelectAll");
+      if (selectAllChk) selectAllChk.checked = false;
+
+      items.forEach(it => {
+        const tr = document.createElement("tr");
+        const estado = obtenerEstadoPredio(it);
+        const esDisponible = estado.toLowerCase() === "disponible";
+        const isSuspended = it.suspendido || false;
+        const isAgendado = agendadosActivos.has(it.numero_predial_nacional);
+
+        let checkboxHtml = "";
+        let rowClass = "";
+        let estadoBadgeHtml = "";
+
+        if (isSuspended) {
+          rowClass = "row-suspendido";
+          checkboxHtml = `<input type="checkbox" class="form-check-input row-select-chk" disabled data-predio="${it.numero_predial_nacional || ""}">`;
+          estadoBadgeHtml = `
+            <span class="badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-suspendido">
+              <span class="estado-badge-dot"></span>
+              <span>Suspendido</span>
+            </span>
+          `;
+        } else if (isAgendado) {
+          rowClass = "row-agendado";
+          checkboxHtml = `<input type="checkbox" class="form-check-input row-select-chk" disabled data-predio="${it.numero_predial_nacional || ""}">`;
+          estadoBadgeHtml = `
+            <span class="badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-agendado">
+              <span class="estado-badge-dot"></span>
+              <span>Agendado</span>
+            </span>
+          `;
+        } else if (!esDisponible) {
+          checkboxHtml = `<input type="checkbox" class="form-check-input row-select-chk" disabled data-predio="${it.numero_predial_nacional || ""}">`;
+          estadoBadgeHtml = renderEstadoBadge(it);
+        } else {
+          const isChecked = seleccionadosActivos.has(it.numero_predial_nacional);
+          checkboxHtml = `<input type="checkbox" class="form-check-input row-select-chk" ${isChecked ? 'checked' : ''} data-predio="${it.numero_predial_nacional || ""}">`;
+          estadoBadgeHtml = renderEstadoBadge(it);
+          if (isChecked) rowClass = "row-seleccionado";
+        }
+
+        if (rowClass) {
+          tr.className = rowClass;
+        }
+
+        tr.innerHTML = `
+        <td class="text-center">${checkboxHtml}</td>
+        <td>${it.numero_predial_nacional || ""}</td>
+        <td>${estadoBadgeHtml}</td>
+        <td>${it.asignado_a || ""}</td>
+        <td>${it.asignado_por || ""}</td>
+      `;
+        tbody.appendChild(tr);
+      });
+
+      if (items.length) {
+        msg.textContent = "";
+        msg.classList.add("d-none");
+        tbl.style.display = "table";
+
+        cardResultados.classList.remove("d-none");
+        cardSinResultados.classList.add("d-none");
+        cardSinResultados.classList.remove("d-flex");
+
+        setTimeout(() => {
+          inicializarDataTableResultados();
+        }, 0);
+      } else {
+        msg.classList.add("d-none");
+        tbl.style.display = "none";
+
+        cardResultados.classList.add("d-none");
+        cardSinResultados.classList.remove("d-none");
+        cardSinResultados.classList.add("d-flex");
+
+        badge.classList.add("d-none");
+        badgeAsignados.classList.add("d-none");
+        badgeDisponibles.classList.add("d-none");
+        badgeExisten.classList.add("d-none");
+        badgeNoExisten.classList.add("d-none");
+      }
+    } catch (error) {
+      console.error(error);
+      msg.textContent = "Ocurrió un error inesperado buscando predios.";
+      msg.classList.remove("d-none");
+
+      cardSinResultados.classList.add("d-none");
+      cardSinResultados.classList.remove("d-flex");
+
+      badge.classList.add("d-none");
+      badgeAsignados.classList.add("d-none");
+      badgeDisponibles.classList.add("d-none");
+      badgeExisten.classList.add("d-none");
+      badgeNoExisten.classList.add("d-none");
+    }
+  }
+
+  async function asignarPredios(options = {}) {
+    const txt = document.getElementById("txtPredios");
+    const userDest = document.getElementById("inpUsuarioDestino");
+    const tituloInput = document.getElementById("inpNombreLote");
+    const msg = document.getElementById("asgHint");
+    const forceReassign = !!options.reasignar;
+
+    const numeros = parseNumeros(txt.value);
+    const username_destino = (userDest.value || "").trim();
+
+    if (!numeros.length) {
+      msg.textContent = "Debes ingresar predios.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    if (!username_destino) {
+      msg.textContent = "Debes indicar el usuario destino.";
+      msg.classList.remove("d-none");
+      return;
+    }
+
+    msg.textContent = "Asignando predios...";
+    msg.classList.remove("d-none");
+
+    try {
+      const r = await fetch(`${rp}/asignaciones/asignar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          numeros,
+          username_destino,
+          titulo: tituloInput?.value || null,
+          forzar_reasignacion: forceReassign
+        })
+      });
+
+      const data = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        const detail = typeof data.detail === "object" ? data.detail : { message: data.detail };
+
+        if (r.status === 409 && detail?.conflictos?.length) {
+          if (forceReassign) {
+            msg.textContent = detail?.message || "No se pudieron reasignar los predios.";
+            return;
+          }
+
+          const lista = detail.conflictos
+            .map(c => `${c.numero_predial_nacional || ""}${c.usuario_asignado ? ` · asignado a ${c.usuario_asignado}` : ""}`)
+            .join("\n");
+
+          const confirmar = window.confirm(
+            `${detail.message || "Algunos predios ya están asignados."}\n${lista}\n¿Deseas reasignarlos?`
+          );
+
+          if (confirmar) {
+            return asignarPredios({ reasignar: true });
+          }
+        }
+
+        msg.textContent = detail?.message || data.detail || "Error asignando.";
+        return;
+      }
+
+      const id = data && data.id ? data.id : null;
+      let extraMsg = "";
+
+      if (data?.predios_reasignados) {
+        console.info(`Predios reasignados: ${data.predios_reasignados}`);
+        extraMsg = ` · Reasignados: ${data.predios_reasignados}`;
+      }
+
+      if (Array.isArray(data?.basket_tids) && data.basket_tids.length) {
+        console.info("Baskets exportados:", data.basket_tids.join(", "));
+      }
+
+      msg.textContent = `${data?.message || "Asignación creada."}${extraMsg}`;
+
+      if (id) {
+        window.location.href = `${rp}/panel/asignaciones/ver?id=${id}#asig-open`;
+      } else {
+        window.location.href = `${rp}/panel/asignaciones/ver#asig-open`;
+      }
+    } catch (error) {
+      console.error(error);
+      msg.textContent = "Ocurrió un error inesperado al asignar.";
+      msg.classList.remove("d-none");
+    }
+  }
+
+  async function confirmarAsignacionFinal() {
+    if (asignacionEnProceso) return;
+
+    try {
+      asignacionEnProceso = true;
+
+      const btn = document.getElementById("btnConfirmarAsignacion");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="bi bi-hourglass-split me-2"></i>Confirmando...`;
+      }
+
+      await asignarPredios();
+    } finally {
+      asignacionEnProceso = false;
+
+      const btn = document.getElementById("btnConfirmarAsignacion");
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-send me-2"></i>Confirmar Asignación`;
+      }
+    }
+  }
+
+  function actualizarBottomActionBar() {
+    const bar = document.getElementById("bottomActionBar");
+    const countBadge = document.getElementById("selectedCountBadge");
+    const count = seleccionadosActivos.size;
+
+    if (count > 0) {
+      bar.classList.remove("d-none");
+      bar.classList.add("d-flex");
+      countBadge.textContent = `${count} ${count === 1 ? "Seleccionado" : "Seleccionados"}`;
+    } else {
+      bar.classList.add("d-none");
+      bar.classList.remove("d-flex");
+    }
+  }
+
+  function actualizarEstadoVisualFila(chk) {
+    const fila = chk?.closest("tr");
+    if (!fila) return;
+    fila.classList.toggle("row-seleccionado", chk.checked && !chk.disabled);
+  }
+
+  function ajustarLayoutPanelSolicitud(panelVisible) {
+    const resultadosWrapper = document.getElementById("resultadosWrapper");
+    const panelSolicitud = document.getElementById("panelSolicitud");
+
+    if (!resultadosWrapper || !panelSolicitud) return;
+
+    const ajustarTabla = () => {
+      if (dtResultados) {
+        dtResultados.columns.adjust();
+      }
+    };
+
+    if (panelVisible) {
+      panelSolicitud.classList.remove("d-none");
+      resultadosWrapper.classList.toggle("col-xl-8", panelVisible);
+      resultadosWrapper.classList.toggle("col-xl-12", !panelVisible);
+      panelSolicitud.classList.add("panel-solicitud-visible");
+      ajustarTabla();
+      setTimeout(ajustarTabla, 120);
+      return;
+    }
+
+    panelSolicitud.classList.remove("panel-solicitud-visible");
+
+    setTimeout(() => {
+      panelSolicitud.classList.add("d-none");
+      resultadosWrapper.classList.toggle("col-xl-8", false);
+      resultadosWrapper.classList.toggle("col-xl-12", true);
+      ajustarTabla();
+      setTimeout(ajustarTabla, 120);
+    }, 280);
+  }
+
+  function toggleSeleccionTodo(checked) {
+    const checkboxes = document.querySelectorAll(".row-select-chk:not(:disabled)");
+    checkboxes.forEach(chk => {
+      chk.checked = checked;
+      actualizarEstadoVisualFila(chk);
+      const predio = chk.dataset.predio;
+      if (checked) {
+        seleccionadosActivos.add(predio);
+      } else {
+        seleccionadosActivos.delete(predio);
+      }
+    });
+    actualizarBottomActionBar();
+  }
+
+  function mostrarModalReconocedores() {
+    const listContainer = document.getElementById("modalReconocedoresList");
+    if (!listContainer) return;
+
+    listContainer.innerHTML = "";
+
+    if (!reconocedoresCargados || !reconocedoresCargados.length) {
+      listContainer.innerHTML = '<div class="text-muted text-center py-4">No tienes reconocedores vinculados disponibles.</div>';
+      return;
+    }
+
+    reconocedoresCargados.forEach(rec => {
+      const initials = ((rec.first_name ? rec.first_name[0] : "") + (rec.last_name ? rec.last_name[0] : "") || rec.username.slice(0, 2)).toUpperCase();
+      const name = rec.first_name && rec.last_name ? `${rec.first_name} ${rec.last_name}` : rec.username;
+      const role = rec.rol || "Reconocedor";
+
+      const itemRow = document.createElement("div");
+      itemRow.className = "reconocedor-item-row";
+      itemRow.innerHTML = `
+        <div class="d-flex align-items-center gap-3">
+          <div class="avatar-circle">${initials}</div>
+          <div class="text-start">
+            <div class="fw-bold text-navy">${name}</div>
+            <small class="text-muted">${role}</small>
+          </div>
+        </div>
+        <button type="button" class="btn btn-seleccionar-rec" data-username="${rec.username}">Seleccionar</button>
+      `;
+
+      itemRow.querySelector("button").addEventListener("click", () => {
+        seleccionarReconocedor(rec);
+      });
+
+      listContainer.appendChild(itemRow);
+    });
+
+    document.getElementById("modalReconocedor").classList.remove("d-none");
+  }
+
+  function ocultarModalReconocedores() {
+    document.getElementById("modalReconocedor").classList.add("d-none");
+  }
+
+  function seleccionarReconocedor(rec) {
+    ocultarModalReconocedores();
+
+    const prediosParaAsignar = Array.from(seleccionadosActivos);
+
+    if (prediosParaAsignar.length === 0) {
+      alert("No hay predios seleccionados.");
+      return;
+    }
+
+    asignacionesCreadas.push({
+      reconocedor: rec,
+      predios: prediosParaAsignar
+    });
+
+    prediosParaAsignar.forEach(p => agendadosActivos.add(p));
+
+    seleccionadosActivos.clear();
+
+    renderizarTablaResultadosMock();
+
+    actualizarBottomActionBar();
+
+    actualizarPanelSolicitud();
+  }
+
+  function actualizarPanelSolicitud() {
+    const listContainer = document.getElementById("panelDesgloseLista");
+    if (!listContainer) return;
+
+    listContainer.innerHTML = "";
+
+    if (asignacionesCreadas.length === 0) {
+      ocultarPanelSolicitud();
+      return;
+    }
+
+    const totalPredios = agendadosActivos.size;
+    document.getElementById("panelSelectedCountText").textContent =
+      `${totalPredios} ${totalPredios === 1 ? "predio agendado" : "predios agendados"}`;
+
+    asignacionesCreadas.forEach((asg, idx) => {
+      const rec = asg.reconocedor;
+      const initials = ((rec.first_name ? rec.first_name[0] : "") + (rec.last_name ? rec.last_name[0] : "") || rec.username.slice(0, 2)).toUpperCase();
+      const name = rec.first_name && rec.last_name ? `${rec.first_name} ${rec.last_name}` : rec.username;
+      const role = rec.rol || "Reconocedor";
+      const prediosCount = asg.predios.length;
+
+      const card = document.createElement("div");
+      card.className = "reconocedor-desglose-card mb-2";
+      card.innerHTML = `
+        <div class="d-flex align-items-center gap-3">
+          <div class="avatar-initials">${initials}</div>
+          <div class="text-start">
+            <div class="fw-bold text-navy">${name}</div>
+            <small class="text-muted">${role}</small>
+          </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge text-white px-3 py-2 rounded-2 fw-bold" style="background-color: #6AA4D4;">${prediosCount} predios</span>
+          <button type="button" class="btn-remove-asignacion" title="Eliminar asignación">
+            <i class="bi bi-trash-fill text-danger"></i>
+          </button>
+        </div>
+      `;
+
+      card.querySelector(".btn-remove-asignacion").addEventListener("click", () => {
+        removerAsignacion(idx);
+      });
+
+      listContainer.appendChild(card);
+    });
+
+    ajustarLayoutPanelSolicitud(true);
+    document.getElementById("panelSolicitud").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function removerAsignacion(idx) {
+    const asg = asignacionesCreadas[idx];
+    if (!asg) return;
+
+    asg.predios.forEach(p => agendadosActivos.delete(p));
+
+    asignacionesCreadas.splice(idx, 1);
+
+    renderizarTablaResultadosMock();
+
+    actualizarPanelSolicitud();
+  }
+
+  function ocultarPanelSolicitud() {
+    ajustarLayoutPanelSolicitud(false);
+  }
+
+  function enviarSolicitud() {
+    const nombre = document.getElementById("inpNombreSolicitud").value.trim();
+    const observaciones = document.getElementById("txtObservacionesSolicitud").value.trim();
+
+    if (!nombre) {
+      alert("Por favor ingrese el nombre de la solicitud.");
+      return;
+    }
+
+    if (asignacionesCreadas.length === 0) {
+      alert("No hay ninguna asignación en el desglose.");
+      return;
+    }
+
+    let textContent = `SOLICITUD DE ASIGNACION (MULTI-RECONOCEDOR)\n`;
+    textContent += `====================================\n`;
+    textContent += `Nombre de la solicitud: ${nombre}\n`;
+    textContent += `Fecha: ${new Date().toLocaleString()}\n`;
+    textContent += `Observaciones: ${observaciones || 'Sin observaciones'}\n\n`;
+
+    textContent += `DESGLOSE DE ASIGNACIONES POR RECONOCEDOR:\n`;
+    textContent += `====================================\n\n`;
+
+    asignacionesCreadas.forEach((asg, idx) => {
+      const rec = asg.reconocedor;
+      textContent += `RECONOCEDOR ${idx + 1}: ${rec.first_name || ''} ${rec.last_name || ''} (${rec.username})\n`;
+      textContent += `Rol: ${rec.rol || 'Reconocedor'}\n`;
+      textContent += `Predios asignados (${asg.predios.length}):\n`;
+      asg.predios.forEach((p, pIdx) => {
+        textContent += `  - [${pIdx + 1}] NPN: ${p}\n`;
+      });
+      textContent += `------------------------------------\n\n`;
+    });
+
+    textContent += `====================================\n`;
+
+    const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `solicitud_asignacion_${nombre.replace(/\s+/g, "_")}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    if (ultimoResultadoBusqueda && Array.isArray(ultimoResultadoBusqueda.items)) {
+      ultimoResultadoBusqueda.items.forEach(it => {
+        if (agendadosActivos.has(it.numero_predial_nacional)) {
+          it.suspendido = true;
+        }
+      });
+    }
+
+    agendadosActivos.clear();
+    asignacionesCreadas = [];
+
+    renderizarTablaResultadosMock();
+
+    seleccionadosActivos.clear();
+    actualizarBottomActionBar();
+    ocultarPanelSolicitud();
+
+    document.getElementById("inpNombreSolicitud").value = "";
+    document.getElementById("txtObservacionesSolicitud").value = "";
+
+    alert("Solicitud enviada correctamente. Se ha generado y descargado el desglose completo para múltiples reconocedores.");
+  }
+
+  function renderizarTablaResultadosMock() {
+    const tbody = document.getElementById("tbodyResultados");
+    if (!tbody || !ultimoResultadoBusqueda) return;
+
+    destruirDataTableResultados();
+    tbody.innerHTML = "";
+
+    const items = ultimoResultadoBusqueda.items || [];
+    items.forEach(it => {
+      const tr = document.createElement("tr");
+      const estado = obtenerEstadoPredio(it);
+      const esDisponible = estado.toLowerCase() === "disponible";
+      const isSuspended = it.suspendido || false;
+      const isAgendado = agendadosActivos.has(it.numero_predial_nacional);
+
+      let checkboxHtml = "";
+      let rowClass = "";
+      let estadoBadgeHtml = "";
+
+      if (isSuspended) {
+        rowClass = "row-suspendido";
+        checkboxHtml = `<input type="checkbox" class="form-check-input row-select-chk" disabled data-predio="${it.numero_predial_nacional || ""}">`;
+        estadoBadgeHtml = `
+          <span class="badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-suspendido">
+            <span class="estado-badge-dot"></span>
+            <span>Suspendido</span>
+          </span>
+        `;
+      } else if (isAgendado) {
+        rowClass = "row-agendado";
+        checkboxHtml = `<input type="checkbox" class="form-check-input row-select-chk" disabled data-predio="${it.numero_predial_nacional || ""}">`;
+        estadoBadgeHtml = `
+          <span class="badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-agendado">
+            <span class="estado-badge-dot"></span>
+            <span>Agendado</span>
+          </span>
+        `;
+      } else if (!esDisponible) {
+        checkboxHtml = `<input type="checkbox" class="form-check-input row-select-chk" disabled data-predio="${it.numero_predial_nacional || ""}">`;
+        estadoBadgeHtml = renderEstadoBadge(it);
+      } else {
+        const isChecked = seleccionadosActivos.has(it.numero_predial_nacional);
+        checkboxHtml = `<input type="checkbox" class="form-check-input row-select-chk" ${isChecked ? 'checked' : ''} data-predio="${it.numero_predial_nacional || ""}">`;
+        estadoBadgeHtml = renderEstadoBadge(it);
+        if (isChecked) rowClass = "row-seleccionado";
+      }
+
+      if (rowClass) {
+        tr.className = rowClass;
+      }
+
+      tr.innerHTML = `
+      <td class="text-center">${checkboxHtml}</td>
+      <td>${it.numero_predial_nacional || ""}</td>
+      <td>${estadoBadgeHtml}</td>
+      <td>${it.asignado_a || ""}</td>
+      <td>${it.asignado_por || ""}</td>
+    `;
+      tbody.appendChild(tr);
+    });
+
+    inicializarDataTableResultados();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("btnBuscar")?.addEventListener("click", buscarPredios);
+    document.getElementById("btnLimpiar")?.addEventListener("click", limpiarBusquedaPredios);
+
+    document.getElementById("btnAsignar")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      abrirTarjetaConfirmacion();
+    });
+
+    document.getElementById("btnCancelarConfirmacion")?.addEventListener("click", cerrarTarjetaConfirmacion);
+    document.getElementById("btnConfirmarAsignacion")?.addEventListener("click", confirmarAsignacionFinal);
+
+    // New features event listeners
+    document.getElementById("chkSelectAll")?.addEventListener("change", function (e) {
+      toggleSeleccionTodo(e.target.checked);
+    });
+
+    document.getElementById("tbodyResultados")?.addEventListener("change", function (e) {
+      if (e.target.classList.contains("row-select-chk")) {
+        const predio = e.target.dataset.predio;
+        if (e.target.checked) {
+          seleccionadosActivos.add(predio);
+        } else {
+          seleccionadosActivos.delete(predio);
+          const selectAllChk = document.getElementById("chkSelectAll");
+          if (selectAllChk) selectAllChk.checked = false;
+        }
+        actualizarEstadoVisualFila(e.target);
+        actualizarBottomActionBar();
+      }
+    });
+
+    document.getElementById("btnCrearSolicitud")?.addEventListener("click", mostrarModalReconocedores);
+    document.getElementById("btnCloseModal")?.addEventListener("click", ocultarModalReconocedores);
+    document.getElementById("modalReconocedor")?.addEventListener("click", function (e) {
+      if (e.target === this) ocultarModalReconocedores();
+    });
+    document.getElementById("btnClosePanel")?.addEventListener("click", ocultarPanelSolicitud);
+    document.getElementById("btnEnviarSolicitud")?.addEventListener("click", enviarSolicitud);
+
+    (async function cargarUsuarios() {
+      try {
+        const r = await fetch(`${rp}/asignaciones/usuarios-disponibles?solo_mis_reconocedores=true`);
+        if (!r.ok) {
+          reconocedoresCargados = [];
+          actualizarContadorReconocedoresDisponibles();
+          return;
+        }
+
+        const users = await r.json();
+
+        reconocedoresCargados = users.filter(u => u.rol && u.rol.toLowerCase() === "reconocedor");
+        actualizarContadorReconocedoresDisponibles();
+
+        const select = document.getElementById("inpUsuarioDestino");
+        if (!select) return;
+
+        select.innerHTML = '<option value="" disabled selected>Selecciona un reconocedor...</option>';
+
+        const reconocedores = reconocedoresCargados;
+
+        if (!reconocedores.length) {
+          select.innerHTML = '<option value="" disabled selected>No tienes reconocedores vinculados disponibles</option>';
+          return;
+        }
+
+        reconocedores.forEach(u => {
+          const opt = document.createElement("option");
+          opt.value = u.username;
+          opt.textContent = u.first_name && u.last_name
+            ? `${u.first_name} ${u.last_name} (${u.username})`
+            : u.username;
+          select.appendChild(opt);
+        });
+      } catch (e) {
+        console.warn("No se pudieron cargar usuarios", e);
+        reconocedoresCargados = [];
+        actualizarContadorReconocedoresDisponibles();
+        const select = document.getElementById("inpUsuarioDestino");
+        if (select) {
+          select.innerHTML = '<option value="" disabled selected>No se pudieron cargar reconocedores</option>';
+        }
+      }
+    })();
+  });
+</script>

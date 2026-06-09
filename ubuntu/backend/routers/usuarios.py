@@ -48,6 +48,53 @@ def _require_admin(user: dict[str, Any]) -> None:
         )
 
 
+def _require_admin_or_coordinador(user: dict[str, Any]) -> str:
+    role = get_user_role(user)
+    if role not in {"admin", "coordinador"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Rol '{role}' sin permisos para esta accion",
+        )
+    return role
+
+
+def _current_user_id(user: dict[str, Any]) -> int:
+    try:
+        value = user.get("id_global")
+        if value is not None:
+            return int(value)
+    except (TypeError, ValueError):
+        pass
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="No fue posible identificar el usuario autenticado.",
+    )
+
+
+def _coordinator_scoped_body(user: dict[str, Any], body: "EquipoTrabajoUpsert") -> "EquipoTrabajoUpsert":
+    role = get_user_role(user)
+    if role != "coordinador":
+        return body
+
+    coordinator_id = _current_user_id(user)
+    if int(body.coordinador_id) != coordinator_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No puedes administrar equipos de otro coordinador.",
+        )
+    return body
+
+
+def _require_own_equipo_if_coordinador(user: dict[str, Any], equipo: dict[str, Any]) -> None:
+    if get_user_role(user) != "coordinador":
+        return
+    if int(equipo.get("coordinador_id") or 0) != _current_user_id(user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No puedes administrar equipos de otro coordinador.",
+        )
+
+
 def _normalized_role(value: str) -> str:
     role = (value or "").strip().lower()
     if role not in ALLOWED_ROLES:
@@ -413,7 +460,15 @@ def listar_usuarios(
     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_admin(current_user)
+    role = _require_admin_or_coordinador(current_user)
+    where_scope = ""
+    params: tuple[Any, ...] = ()
+    if role == "coordinador":
+        where_scope = """
+                WHERE LOWER(COALESCE(u.rol, '')) = 'reconocedor'
+                  AND NULLIF(TRIM(u.supervisor), '') = %s::text
+        """
+        params = (_current_user_id(current_user),)
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
@@ -437,8 +492,10 @@ def listar_usuarios(
                 FROM {_app_table(tenant, 'users')} u
                 LEFT JOIN {_app_table(tenant, 'users')} sup
                   ON sup.id_global::text = NULLIF(TRIM(u.supervisor), '')
+                {where_scope}
                 ORDER BY u.id_global
-                """
+                """,
+                params,
             )
             return cur.fetchall()
     except Exception as exc:
@@ -457,7 +514,12 @@ def listar_equipos_trabajo(
     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_admin(current_user)
+    role = _require_admin_or_coordinador(current_user)
+    where_scope = ""
+    params: tuple[Any, ...] = ()
+    if role == "coordinador":
+        where_scope = "WHERE et.coordinador_id = %s"
+        params = (_current_user_id(current_user),)
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
@@ -491,6 +553,7 @@ def listar_equipos_trabajo(
                   ON er.equipo_id = et.t_id
                 LEFT JOIN {_app_table(tenant, 'users')} rec
                   ON rec.id_global = er.reconocedor_id
+                {where_scope}
                 GROUP BY
                   et.t_id,
                   et.nombre,
@@ -500,7 +563,8 @@ def listar_equipos_trabajo(
                   z.nombre,
                   et.fecha_creacion
                 ORDER BY et.fecha_creacion DESC, et.nombre
-                """
+                """,
+                params,
             )
             return cur.fetchall()
     except Exception as exc:
@@ -519,7 +583,7 @@ def listar_zonas_intervencion(
     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_admin(current_user)
+    _require_admin_or_coordinador(current_user)
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
@@ -548,7 +612,15 @@ def listar_reconocedores_disponibles(
     exclude_equipo_id: int | None = None,
     coordinador_id: int | None = None,
 ):
-    _require_admin(current_user)
+    role = _require_admin_or_coordinador(current_user)
+    if role == "coordinador":
+        current_coordinator_id = _current_user_id(current_user)
+        if coordinador_id is not None and int(coordinador_id) != current_coordinator_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No puedes consultar reconocedores de otro coordinador.",
+            )
+        coordinador_id = current_coordinator_id
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
@@ -591,7 +663,8 @@ def crear_equipo_trabajo(
     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_admin(current_user)
+    _require_admin_or_coordinador(current_user)
+    body = _coordinator_scoped_body(current_user, body)
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             _validate_equipo_payload(cur, tenant, body, None)
@@ -631,12 +704,13 @@ def actualizar_equipo_trabajo(
     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_admin(current_user)
+    _require_admin_or_coordinador(current_user)
+    body = _coordinator_scoped_body(current_user, body)
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
                 f"""
-                SELECT t_id, nombre
+                SELECT t_id, nombre, coordinador_id
                 FROM {_app_table(tenant, 'equipos_trabajo')}
                 WHERE t_id = %s
                 FOR UPDATE
@@ -646,6 +720,7 @@ def actualizar_equipo_trabajo(
             equipo = cur.fetchone()
             if not equipo:
                 raise HTTPException(status_code=404, detail="Equipo de trabajo no encontrado")
+            _require_own_equipo_if_coordinador(current_user, equipo)
 
             _validate_equipo_payload(cur, tenant, body, id_global)
             cur.execute(
@@ -683,7 +758,7 @@ def eliminar_equipo_trabajo(
     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_admin(current_user)
+    _require_admin_or_coordinador(current_user)
     deleted_by = str(current_user.get("username") or "").strip() or None
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -699,6 +774,7 @@ def eliminar_equipo_trabajo(
             equipo = cur.fetchone()
             if not equipo:
                 raise HTTPException(status_code=404, detail="Equipo de trabajo no encontrado")
+            _require_own_equipo_if_coordinador(current_user, equipo)
 
             cur.execute(
                 f"""

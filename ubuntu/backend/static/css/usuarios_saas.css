@@ -131,6 +131,12 @@ body {
 .stat-card.role-consolidador {
   border-color: #ef4444;
 }
+.stat-card.role-consulta {
+  border-color: #ff00d4;
+}
+.stat-card.role-digitalizador {
+  border-color: #00c3ff;
+}
 
 /* Avatar colors in cards */
 .stat-avatar {
@@ -176,6 +182,15 @@ body {
 .role-consolidador .stat-avatar {
   background-color: #ef4444;
 }
+
+.role-consulta .stat-avatar {
+  background-color: #ff00d4;
+}
+
+.role-digitalizador .stat-avatar {
+  background-color: #00c3ff;
+}
+
 
 .stat-info {
   display: flex;
@@ -424,6 +439,24 @@ body {
 .drawer-profile-info .role-badge.consulta {
   border-left: 4px solid #ff00d4;
   border-right: 4px solid #ff00d4;
+}
+
+.role-badge.digitalizador {
+  border-left: 3px solid #00c3ff;
+}
+
+.drawer-profile-info .role-badge.digitalizador {
+  border-left: 4px solid #00c3ff;
+  border-right: 4px solid #00c3ff;
+}
+
+.role-badge.soporte {
+  border-left: 3px solid #ef4444;
+}
+
+.drawer-profile-info .role-badge.soporte {
+  border-left: 4px solid #ef4444;
+  border-right: 4px solid #ef4444;
 }
 
 /* Status Text style */
@@ -1162,9 +1195,10 @@ hr.drawer-divider {
 }
 
 .cuadrillas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 20px;
+  
 }
 
 .cuadrilla-card {
@@ -1177,6 +1211,7 @@ hr.drawer-divider {
   flex-direction: column;
   gap: 16px;
   transition: all 0.2s ease;
+  max-width: 430px !important;
 }
 
 .cuadrilla-card:hover {

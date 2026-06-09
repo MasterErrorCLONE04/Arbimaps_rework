@@ -133,6 +133,8 @@ def _render_panel(
     context: dict[str, object] = {
         "request": request,
         "user": user.get("username") or user.get("email") or "usuario",
+        "current_user_id": user.get("id_global"),
+        "current_username": user.get("username") or user.get("email") or "usuario",
         "rp": get_base_path(request),
         "view": view,
         "effective_role": role,
@@ -571,6 +573,12 @@ def panel_usuarios(request: Request):
             status_code=302
         )
 
+    if _effective_role(user) not in {"admin", "coordinador"}:
+        return RedirectResponse(
+            url=with_root_path(request, "/panel"),
+            status_code=302
+        )
+
     return _render_panel(request, user, view="usuarios")
 
 # -------------------------------------------------
@@ -671,3 +679,27 @@ def panel_panel_control(request: Request):
         )
 
     return _render_panel(request, user, view="panel_control")
+
+
+# -------------------------------------------------
+# SOLICITUDES DE ASIGNACION
+# -------------------------------------------------
+
+@router.get("/panel/solicitudes_asignaciones")
+def panel_solicitudes_asignaciones(request: Request):
+
+    user = get_user(request)
+
+    if not user:
+        return RedirectResponse(
+            url=with_root_path(request, "/login"),
+            status_code=302
+        )
+
+    if _effective_role(user) != "coordinador":
+        return RedirectResponse(
+            url=with_root_path(request, "/panel"),
+            status_code=302
+        )
+
+    return _render_panel(request, user, view="solicitudes_asignaciones")

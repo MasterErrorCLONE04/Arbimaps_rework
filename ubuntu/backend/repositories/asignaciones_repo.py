@@ -1066,13 +1066,31 @@ def update_asignacion_fields(*args, **kwargs) -> None:
             conn.commit()
 
 
-def list_usuarios_disponibles(conn, tenant=None) -> list[dict]:
+def list_usuarios_disponibles(
+    conn,
+    tenant=None,
+    *,
+    supervisor_id: int | None = None,
+    only_reconocedores: bool = False,
+) -> list[dict]:
     app_schema = "arbimaps_app"
     if tenant is not None:
         if hasattr(tenant, "schemas"):
             app_schema = tenant.schemas.app
         elif isinstance(tenant, str):
             app_schema = tenant
+
+    filters: list[str] = []
+    params: list[object] = []
+    if only_reconocedores:
+        filters.append("LOWER(COALESCE(u.rol, '')) = 'reconocedor'")
+    if supervisor_id is not None:
+        filters.append("NULLIF(TRIM(u.supervisor), '') = %s::text")
+        params.append(supervisor_id)
+
+    extra_where = ""
+    if filters:
+        extra_where = " AND " + " AND ".join(filters)
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
@@ -1095,8 +1113,10 @@ def list_usuarios_disponibles(conn, tenant=None) -> list[dict]:
             ) a ON a.usuario_asignado = u.username
             WHERE u.activo IS TRUE
               AND a.usuario_asignado IS NULL
+              {extra_where}
             ORDER BY u.first_name, u.last_name, u.username
-            """
+            """,
+            tuple(params),
         )
         return cur.fetchall()
 

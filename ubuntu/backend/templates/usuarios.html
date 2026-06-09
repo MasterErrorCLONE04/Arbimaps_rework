@@ -9,7 +9,8 @@
       <p>Agrega, elimina o modifica usuarios y equipos de trabajo (cuadrillas) de la plataforma.</p>
     </div>
     <div class="header-actions">
-      <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalUsuario" id="btnAddNewUser">
+      <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalUsuario" id="btnAddNewUser" {% if
+        effective_role !='admin' %}style="display: none;" {% endif %}>
         <i class="bi bi-plus-lg"></i> Agregar nuevo usuario
       </button>
       <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalCuadrilla" id="btnAddNewCuadrilla"
@@ -31,9 +32,10 @@
 
   <!-- SECCIÓN DE USUARIOS -->
   <div id="usuariosTabContent">
-    <div class="container-fluid pb-3 px-lg-5">
+    <div class="container-fluid pb-3 px-lg-2">
       <div class="row">
-        <div class="col-6 col-md  p-2">
+        {% if effective_role == 'admin' %}
+        <div class="col-6 col-md-2  p-2">
           <!-- Total -->
           <div class="stat-card total">
             <div class="stat-avatar">
@@ -45,7 +47,9 @@
             </div>
           </div>
         </div>
-        <div class="col-6 col-md p-2">
+        {% endif %}
+        {% if effective_role == 'admin' %}
+        <div class="col-6 col-md-2 p-2">
           <!-- Administrador -->
           <div class="stat-card role-admin">
             <div class="stat-avatar">
@@ -57,7 +61,9 @@
             </div>
           </div>
         </div>
-        <div class="col-6 col-md p-2">
+        {% endif %}
+        {% if effective_role == 'admin' %}
+        <div class="col-6 col-md-2 p-2">
           <!-- Lider de reco -->
           <div class="stat-card role-lider">
             <div class="stat-avatar">
@@ -69,7 +75,9 @@
             </div>
           </div>
         </div>
-        <div class="col-6 col-md p-2">
+        {% endif %}
+        {% if effective_role == 'admin' %}
+        <div class="col-6 col-md-2 p-2">
           <!-- Coordinador -->
           <div class="stat-card role-coordinador">
             <div class="stat-avatar">
@@ -81,7 +89,8 @@
             </div>
           </div>
         </div>
-        <div class="col-6 col-md p-2">
+        {% endif %}
+        <div class="col-6 col-md-2 p-2">
           <!-- Reconocedor -->
           <div class="stat-card role-reconocedor">
             <div class="stat-avatar">
@@ -93,7 +102,8 @@
             </div>
           </div>
         </div>
-        <div class="col-6 col-md p-2">
+        {% if effective_role == 'admin' %}
+        <div class="col-6 col-md-2 p-2">
           <!-- Soporte -->
           <div class="stat-card role-consolidador">
             <div class="stat-avatar">
@@ -105,6 +115,36 @@
             </div>
           </div>
         </div>
+        {% endif %}
+        {% if effective_role == 'admin' %}
+        <div class="col-6 col-md-2 p-2">
+          <!-- Consulta -->
+          <div class="stat-card role-consulta">
+            <div class="stat-avatar">
+              <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="stat-info">
+              <span class="label">Consulta</span>
+              <span class="value" id="cntConsulta">0</span>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% if effective_role == 'admin' %}
+        <div class="col-6 col-md-2 p-2">
+          <!-- digitalizador -->
+          <div class="stat-card role-digitalizador">
+            <div class="stat-avatar">
+              <i class="bi bi-person-circle"></i>
+            </div>
+            <div class="stat-info">
+              <span class="label">Digitalizador</span>
+              <span class="value" id="cntDigitalizador">0</span>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
       </div>
     </div>
 
@@ -516,6 +556,11 @@
     const inputSearch = document.getElementById("usrSearch");
 
     const btnAddNewUser = document.getElementById("btnAddNewUser");
+    const CURRENT_ROLE = "{{ effective_role|default('', true) }}";
+    const CURRENT_USER_ID = Number("{{ current_user_id|default('', true) }}");
+    const CURRENT_USERNAME = "{{ current_username|default(user, true) }}";
+    const IS_ADMIN = CURRENT_ROLE === "admin";
+    const IS_COORDINADOR = CURRENT_ROLE === "coordinador";
 
     // Drawer elements
     const userDrawer = document.getElementById("userDrawer");
@@ -534,6 +579,12 @@
     const btnDrawerEdit = document.getElementById("btnDrawerEdit");
     const btnDrawerToggle = document.getElementById("btnDrawerToggle");
     const btnDrawerDelete = document.getElementById("btnDrawerDelete");
+
+    if (!IS_ADMIN) {
+      btnDrawerEdit.style.display = "none";
+      btnDrawerToggle.style.display = "none";
+      btnDrawerDelete.style.display = "none";
+    }
 
     let usuariosCache = [];
     let editingId = null;
@@ -716,6 +767,8 @@
       let coordinador = 0;
       let reconocedor = 0;
       let soporte = 0;
+      let consulta = 0;
+      let digitalizador = 0;
 
       usuariosCache.forEach(u => {
         const rol = (u.rol || "").toLowerCase().trim();
@@ -724,14 +777,23 @@
         else if (rol === "coordinador") coordinador++;
         else if (rol === "reconocedor") reconocedor++;
         else if (rol === "soporte") soporte++;
+        else if (rol === "consulta") consulta++;
+        else if (rol === "digitalizador") digitalizador++;
       });
 
-      document.getElementById("cntTotal").textContent = total;
-      document.getElementById("cntAdmin").textContent = admin;
-      document.getElementById("cntLider").textContent = lider;
-      document.getElementById("cntCoordinador").textContent = coordinador;
-      document.getElementById("cntReconocedor").textContent = reconocedor;
-      document.getElementById("cntConsolidador").textContent = soporte;
+      const setCounter = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+      };
+
+      setCounter("cntTotal", total);
+      setCounter("cntAdmin", admin);
+      setCounter("cntLider", lider);
+      setCounter("cntCoordinador", coordinador);
+      setCounter("cntReconocedor", reconocedor);
+      setCounter("cntConsolidador", soporte);
+      setCounter("cntConsulta", consulta);
+      setCounter("cntDigitalizador", digitalizador);
     }
 
     function renderUsuarios(list) {
@@ -765,6 +827,14 @@
         const estadoHtml = u.activo
           ? '<span class="status-text">Activo</span>'
           : '<span class="status-text inactive">Inactivo</span>';
+        const adminActions = IS_ADMIN ? `
+              <button type="button" class="btn-action-circle edit btnUsrEdit" data-id="${u.id_global}" title="Editar">
+                <i class="bi bi-pen-fill"></i>
+              </button>
+              <button type="button" class="btn-action-circle delete btnUsrDelete" data-id="${u.id_global}" title="Eliminar">
+                <i class="fa-solid fa-trash" style="color: rgb(225, 27, 29);"></i>
+              </button>
+        ` : "";
 
         tr.innerHTML = `
           
@@ -775,12 +845,7 @@
           <td>${estadoHtml}</td>
           <td>
             <div class="actions-cell">
-              <button type="button" class="btn-action-circle edit btnUsrEdit" data-id="${u.id_global}" title="Editar">
-                <i class="bi bi-pen-fill"></i>
-              </button>
-              <button type="button" class="btn-action-circle delete btnUsrDelete" data-id="${u.id_global}" title="Eliminar">
-                <i class="fa-solid fa-trash" style="color: rgb(225, 27, 29);"></i>
-              </button>
+              ${adminActions}
               <button type="button" class="btn-action-circle view btnUsrView" data-id="${u.id_global}" title="Ver Detalles">
                 <i class="bi bi-eye-fill"></i>
               </button>
@@ -1264,7 +1329,7 @@
       tabCuadrillas.classList.remove("active");
       usuariosTabContent.style.display = "block";
       cuadrillasTabContent.style.display = "none";
-      btnAddNewUser.style.display = "inline-flex";
+      btnAddNewUser.style.display = IS_ADMIN ? "inline-flex" : "none";
       btnAddNewCuadrilla.style.display = "none";
     });
 
@@ -1290,9 +1355,16 @@
 
     // Populate selects dynamically using users loaded from database
     function populateCuadrillaFormSelects() {
-      const coordinadores = usuariosCache.filter(u => (u.rol || "").toLowerCase() === "coordinador" && u.activo);
-      cuaEncargado.innerHTML = '<option value="">Selecciona coordinador</option>' +
-        coordinadores.map(u => `<option value="${u.id_global}">${nombreUsuarioEquipo(u)}</option>`).join("");
+      if (IS_COORDINADOR) {
+        cuaEncargado.innerHTML = `<option value="${CURRENT_USER_ID}">${CURRENT_USERNAME}</option>`;
+        cuaEncargado.value = String(CURRENT_USER_ID);
+        cuaEncargado.disabled = true;
+      } else {
+        cuaEncargado.disabled = false;
+        const coordinadores = usuariosCache.filter(u => (u.rol || "").toLowerCase() === "coordinador" && u.activo);
+        cuaEncargado.innerHTML = '<option value="">Selecciona coordinador</option>' +
+          coordinadores.map(u => `<option value="${u.id_global}">${nombreUsuarioEquipo(u)}</option>`).join("");
+      }
 
       cuaZona.innerHTML = '<option value="">Selecciona zona</option>' +
         zonasIntervencionCache.map(z => `<option value="${z.t_id}">${z.nombre}</option>`).join("");
@@ -1302,6 +1374,7 @@
     }
 
     function getCoordinadorLabelById(id) {
+      if (IS_COORDINADOR && Number(id) === CURRENT_USER_ID) return CURRENT_USERNAME;
       const coordinador = usuariosCache.find(u => Number(u.id_global) === Number(id));
       return coordinador ? nombreUsuarioEquipo(coordinador) : `Coordinador ${id}`;
     }
@@ -1597,25 +1670,36 @@
         group.style.display = "flex";
         group.style.flexDirection = "column";
         group.style.gap = "12px";
+        group.style.justifyContent = "center";
+        group.style.alignItems = "center";
 
         const header = document.createElement("div");
         header.className = "cuadrilla-group-header";
+        header.style.width = "95%";
+        header.style.textAlign = "center";
         header.style.padding = "10px 14px";
         header.style.borderRadius = "12px";
-        header.style.background = "#eaf2f8";
-        header.style.color = "#002f55";
+        header.style.background = "#D1E3F2";
+        header.style.color = "#002F55";
         header.style.fontWeight = "700";
         header.textContent = `${grupo.label}`;
         // header.textContent = `${grupo.label} (${grupo.items.length})`;
 
         const wrap = document.createElement("div");
-        wrap.style.display = "grid";
-        wrap.style.gridTemplateColumns = "repeat(auto-fit, minmax(280px, 1fr))";
+        wrap.style.display = "flex";
+        wrap.style.flexDirection = "row";
+        wrap.style.flexWrap = "wrap";
         wrap.style.gap = "16px";
+        wrap.style.alignItems = "stretch";
+        wrap.style.justifyContent = "flex-start";
+        wrap.style.width = "100%";
+
 
         grupo.items.forEach(c => {
           const card = document.createElement("div");
           card.className = "cuadrilla-card";
+          card.style.flex = "0 0 420px";
+          card.style.maxWidth = "100%";
           card.innerHTML = `
           <div class="cuadrilla-card-header">
             <div class="cuadrilla-avatar">
@@ -1859,7 +1943,9 @@
       });
     });
 
-    cargarRoles();
+    if (IS_ADMIN) {
+      cargarRoles();
+    }
     cargarUsuarios();
   })();
 </script>

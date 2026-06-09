@@ -73,6 +73,16 @@ def _require_assignment_access(user: dict, *allowed_roles: str) -> None:
         )
 
 
+def _current_user_id(user: dict) -> Optional[int]:
+    try:
+        value = (user or {}).get("id_global")
+        if value is not None:
+            return int(value)
+    except (TypeError, ValueError):
+        return None
+    return None
+
+
 def _raise_http_from_export_error(exc: Exception) -> None:
     if isinstance(exc, export_service.ExportServiceError):
         raise HTTPException(status_code=exc.status_code, detail=exc.detail) from exc
@@ -533,10 +543,33 @@ def _procesar_workspace_asignacion(
 
 @router.get("/usuarios-disponibles", response_model=List[UsuarioAsignable])
 def listar_usuarios_disponibles(
+    solo_mis_reconocedores: bool = False,
     user: dict = Depends(get_current_user),
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
+    if solo_mis_reconocedores:
+        role = normalize_role(get_user_role(user))
+        if role != "coordinador":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Rol '{role}' sin permisos para esta accion",
+            )
+        _require_assignment_access(user, "coordinador")
+        supervisor_id = _current_user_id(user)
+        if supervisor_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No fue posible identificar el coordinador autenticado.",
+            )
+        rows = asignaciones_repo.list_usuarios_disponibles(
+            conn,
+            tenant,
+            supervisor_id=supervisor_id,
+            only_reconocedores=True,
+        )
+        return rows
+
     _require_assignment_access(user, "admin", "coordinador")
     rows = asignaciones_repo.list_usuarios_disponibles(conn, tenant)
     return rows
@@ -605,6 +638,23 @@ def asignar_predios(
     conn=Depends(get_tenant_db_connection),
 ):
     _require_assignment_access(user, "admin", "coordinador")
+    role = normalize_role(get_user_role(user))
+    coordinador_id = body.coordinador_id
+    if role == "coordinador":
+        current_coordinador_id = _current_user_id(user)
+        if current_coordinador_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No fue posible identificar el coordinador autenticado.",
+            )
+        if coordinador_id is None:
+            coordinador_id = current_coordinador_id
+        elif int(coordinador_id) != current_coordinador_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No puedes asignar trabajos a reconocedores de otro coordinador.",
+            )
+
     numeros = _normalize_predios(body.numeros or [])
     username_destino = (body.username_destino or "").strip()
     if not numeros:
@@ -668,7 +718,7 @@ def asignar_predios(
 
         usuario_destino_id = int(dest_row["id_global"])
 
-        if body.coordinador_id is None:
+        if coordinador_id is None:
             raise HTTPException(
                 status_code=400,
                 detail="Debe seleccionar un coordinador para la asignación."
@@ -682,7 +732,7 @@ def asignar_predios(
                 WHERE id_global = %s
                   AND activo IS TRUE
                 """,
-                (body.coordinador_id,),
+                (coordinador_id,),
             )
             coord_row = cur_coord.fetchone()
 
@@ -694,7 +744,7 @@ def asignar_predios(
 
         # Validación de seguridad: el reconocedor debe pertenecer al coordinador seleccionado
         dest_supervisor = (dest_row.get("supervisor") or "").strip()
-        if dest_supervisor != str(body.coordinador_id):
+        if dest_supervisor != str(coordinador_id):
             raise HTTPException(
                 status_code=400,
                 detail="El reconocedor seleccionado no pertenece al coordinador elegido."
@@ -916,7 +966,7 @@ def asignar_predios(
                     observaciones,
                     usuario_destino_id,
                     created_by_id,
-                    body.coordinador_id,
+                    coordinador_id,
                 ),
             )
             row = cur.fetchone()
@@ -956,12 +1006,12 @@ def asignar_predios(
             )
 
             # Notificación al coordinador asignado
-            if body.coordinador_id is not None:
+            if coordinador_id is not None:
                 asignaciones_repo.safe_crear_notificacion(
                     conn,
                     tenant=tenant,
                     id_asignacion=asignacion_id,
-                    id_usuario_destino=body.coordinador_id,
+                    id_usuario_destino=coordinador_id,
                     id_usuario_origen=created_by_id,
                     rol_origen="admin",
                     rol_destino="coordinador",

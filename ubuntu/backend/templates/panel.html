@@ -34,6 +34,8 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/informacion_predio.css" />
   {% endif %} {% if view == 'panel_control' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel_control.css" />
+  {% endif %} {% if view == 'solicitudes_asignaciones' %}
+  <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/S_asignaciones.css" />
   {% endif %} {% if view == 'asignaciones' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/cargas_trabajo.css" />
   <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/ver_asignaciones.css" />
@@ -136,13 +138,9 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               </div>
               {% endif %}
 
-              <a class="menuBtn sidebar-link {{ 'active' if view == 'validacion_xtf' else '' }}"
-                href="{{ rp }}/panel/validacion-xtf">
-                <i class="bi bi-check-circle"></i>
-                <span>Validación XTF</span>
-              </a>
 
-              {% if not limited_assignment_role %}
+
+              {% if effective_role in ['admin', 'coordinador'] %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}"
                 href="{{ rp }}/panel/usuarios">
                 <i class="bi bi-people"></i>
@@ -168,6 +166,12 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               </a>
               {% endif %}
 
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'validacion_xtf' else '' }}"
+                href="{{ rp }}/panel/validacion-xtf">
+                <i class="bi bi-check-circle"></i>
+                <span>Validación XTF</span>
+              </a>
+
               <div class="px-3">
                 <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
               </div>
@@ -179,6 +183,21 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <i class="bi bi-columns-gap"></i>
                 <span>Panel de control</span>
               </a>
+
+              {% if effective_role == 'coordinador' %}
+              <div class="px-3">
+                <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
+              </div>
+
+              <span class="titleHerr text-white">Solicitudes</span>
+
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'solicitudes_asignaciones' else '' }}"
+                href="{{ rp }}/panel/solicitudes_asignaciones">
+                <i class="bi bi-database-add"></i>
+                <span>S. Asignaciones</span>
+              </a>
+              {% endif %}
+
             </nav>
           </div>
         </div>
@@ -283,7 +302,8 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   elif asig_tab == 'editar_predio' %} {% include "editar_predio.html" %} {%
                   else %} {% include "asignaciones_cargas.html" %} {% endif %}
                   {% elif view == 'panel_control' %} {% include
-                  "panel_control.html" %} {% elif view == 'usuarios' %} {%
+                  "panel_control.html" %} {% elif view == 'solicitudes_asignaciones' %} {% include
+                  "solicitudes_asignaciones.html" %} {% elif view == 'usuarios' %} {%
                   include "usuarios.html" %} {% elif view == 'validacion_xtf'
                   %} {% set validacion_embed = True %} {% include
                   "validacion_xtf.html" %} {% set validacion_embed = False %}
@@ -402,7 +422,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
           <span>Validación XTF</span>
         </a>
 
-        {% if not limited_assignment_role %}
+        {% if effective_role in ['admin', 'coordinador'] %}
         <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}" href="{{ rp }}/panel/usuarios">
           <i class="bi bi-people"></i>
           <span>Usuarios</span>
@@ -424,6 +444,20 @@ effective_role in ['digitalizador', 'reconocedor'] %}
         <a class="menuBtn sidebar-link">
           <i class="bi bi-arrow-down-up"></i>
           <span>Reporte SINIC</span>
+        </a>
+        {% endif %}
+
+        {% if effective_role == 'coordinador' %}
+        <div class="px-3">
+          <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
+        </div>
+
+        <span class="titleHerr text-white">Solicitudes</span>
+
+        <a class="menuBtn sidebar-link {{ 'active' if view == 'solicitudes_asignaciones' else '' }}"
+          href="{{ rp }}/panel/solicitudes_asignaciones">
+          <i class="bi bi-database-add"></i>
+          <span>S. Asignaciones</span>
         </a>
         {% endif %}
       </nav>
