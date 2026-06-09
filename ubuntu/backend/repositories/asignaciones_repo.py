@@ -192,6 +192,13 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 """
             )
             cur.execute(
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion
+                ADD COLUMN IF NOT EXISTS usuario_reconocedor_id BIGINT,
+                ADD COLUMN IF NOT EXISTS usuario_reconocedor TEXT
+                """
+            )
+            cur.execute(
                 """
                 SELECT 1
                 FROM pg_constraint
@@ -1003,6 +1010,8 @@ def update_asignacion_fields(*args, **kwargs) -> None:
     enlace_control_calidad = kwargs.get("enlace_control_calidad")
     enlace_soporte = kwargs.get("enlace_soporte")
     enlace_digitalizacion = kwargs.get("enlace_digitalizacion")
+    usuario_reconocedor = kwargs.get("usuario_reconocedor")
+    usuario_reconocedor_id = kwargs.get("usuario_reconocedor_id")
 
     app_schema = "arbimaps_app"
     if tenant is not None:
@@ -1034,6 +1043,12 @@ def update_asignacion_fields(*args, **kwargs) -> None:
     if enlace_digitalizacion is not None:
         sets.append("enlace_digitalizacion=%s")
         params.append(enlace_digitalizacion)
+    if usuario_reconocedor is not None:
+        sets.append("usuario_reconocedor=%s")
+        params.append(usuario_reconocedor)
+    if usuario_reconocedor_id is not None:
+        sets.append("usuario_reconocedor_id=%s")
+        params.append(usuario_reconocedor_id)
     if not sets:
         return
     params.append(asignacion_id)

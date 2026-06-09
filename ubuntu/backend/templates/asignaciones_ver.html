@@ -124,6 +124,7 @@
 
 <script>
   const rp = "{{ rp }}";
+  const currentLoggedRole = "{{ effective_role }}";
   const asigModelName = {{ asig_model_name | tojson }};
   const asigSchemaWork = {{ asig_schema_work | tojson }};
   const asigSupportsPackageExport = {{ asig_supports_package_export | tojson }};
@@ -212,7 +213,8 @@
         ? "estado-chip estado-trabajo"
         : "estado-chip";
 
-    const closeBtn = isHistorical
+    const isReviewer = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
+    const closeBtn = isHistorical || !isReviewer
       ? `<span class="d-inline-block" style="width:24px;height:24px;"></span>`
       : `
         <button

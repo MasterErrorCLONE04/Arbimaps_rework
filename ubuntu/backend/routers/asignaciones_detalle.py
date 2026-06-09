@@ -56,6 +56,19 @@ def _ensure_assignment_owner_access(user: Optional[dict], asignacion: Optional[d
     if role not in {"digitalizador", "reconocedor"}:
         return
     owner = str((asignacion or {}).get("usuario_asignado") or "").strip().lower()
+    reconocedor = str((asignacion or {}).get("usuario_reconocedor") or "").strip().lower()
+    if username not in {owner, reconocedor}:
+        raise HTTPException(
+            status_code=403,
+            detail="La asignacion no le pertenece al usuario autenticado.",
+        )
+
+
+def _ensure_assignment_active_owner_access(user: Optional[dict], asignacion: Optional[dict]) -> None:
+    role, username = _assignment_user_scope(user)
+    if role not in {"digitalizador", "reconocedor"}:
+        return
+    owner = str((asignacion or {}).get("usuario_asignado") or "").strip().lower()
     if not owner or owner != username:
         raise HTTPException(
             status_code=403,
@@ -279,7 +292,7 @@ def _ensure_assignment_access(
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
             f"""
-            SELECT id, usuario_asignado, work_datasetname, estado
+            SELECT id, usuario_asignado, usuario_reconocedor, work_datasetname, estado
             FROM {asignacion_table}
             WHERE id = %s
             LIMIT 1
@@ -334,6 +347,8 @@ class AsignacionDetalleResponse(BaseModel):
     coordinador: Optional[str] = None
     usuario_asignado: Optional[str] = None
     usuario_asignado_username: Optional[str] = None
+    usuario_reconocedor: Optional[str] = None
+    usuario_reconocedor_username: Optional[str] = None
     enlace_control_calidad: Optional[str] = None
     enlace_soporte: Optional[str] = None
     enlace_digitalizacion: Optional[str] = None
@@ -901,7 +916,7 @@ def listar_validadores_xtf(
     tenant: TenantContext = Depends(get_current_tenant),
 ):
     del tenant
-    _require_assignment_access(user, "admin", "coordinador", "digitalizador")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "lider_reconocimiento")
     service = xtf_validation_service
     return {
         "pipeline": _validator_pipeline_labels(),
@@ -1071,7 +1086,7 @@ def listar_datasets_disponibles(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador")
+    _require_assignment_access(user, "admin", "coordinador", "lider_reconocimiento")
     try:
         dataset_rows, basket_rows, predio_count_rows = asignaciones_repo.fetch_datasets_baskets_predio_counts(
             conn,
@@ -1124,7 +1139,7 @@ def listar_eventos_asignacion(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento")
     _ensure_assignment_access(conn, tenant, asignacion_id, user)
     rows = asignaciones_repo.list_eventos_asignacion(conn, tenant, asignacion_id)
     return rows
@@ -1137,7 +1152,7 @@ def obtener_detalle_asignacion(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento")
     _ensure_assignment_access(conn, tenant, asignacion_id, user)
     asignacion_table = _app_table(tenant, "asignacion")
     asignacion_predio_table = _app_table(tenant, "asignacion_predio")
@@ -1154,6 +1169,7 @@ def obtener_detalle_asignacion(
                 a.creado_en,
                 a.creado_por,
                 a.usuario_asignado,
+                a.usuario_reconocedor,
                 a.enlace_control_calidad,
                 a.enlace_soporte,
                 a.enlace_digitalizacion,
@@ -1166,10 +1182,13 @@ def obtener_detalle_asignacion(
                 cu.first_name AS coord_first_name,
                 cu.last_name AS coord_last_name,
                 au.first_name AS asignado_first_name,
-                au.last_name AS asignado_last_name
+                au.last_name AS asignado_last_name,
+                ru.first_name AS rec_first_name,
+                ru.last_name AS rec_last_name
             FROM {asignacion_table} a
             LEFT JOIN {users_table} cu ON cu.username = a.creado_por
             LEFT JOIN {users_table} au ON au.username = a.usuario_asignado
+            LEFT JOIN {users_table} ru ON ru.username = a.usuario_reconocedor
             WHERE a.id = %s
             LIMIT 1
             """,
@@ -1288,6 +1307,12 @@ def obtener_detalle_asignacion(
             asignacion.get("usuario_asignado"),
         ),
         usuario_asignado_username=asignacion.get("usuario_asignado"),
+        usuario_reconocedor=_display_name(
+            asignacion.get("rec_first_name"),
+            asignacion.get("rec_last_name"),
+            asignacion.get("usuario_reconocedor"),
+        ),
+        usuario_reconocedor_username=asignacion.get("usuario_reconocedor"),
         enlace_control_calidad=asignacion.get("enlace_control_calidad"),
         enlace_soporte=asignacion.get("enlace_soporte"),
         enlace_digitalizacion=asignacion.get("enlace_digitalizacion"),
@@ -1310,7 +1335,7 @@ def obtener_scope_geojson_asignacion(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento")
     schema_work = _safe_ident(_read_schema_work(tenant), fallback="")
     schema_main = _safe_ident(_read_schema_main(tenant), fallback="")
     predio_numero_field = _read_predio_numero_field()
@@ -1614,7 +1639,7 @@ def obtener_detalle_predio_completo_asignacion(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento")
     schema_work = _safe_ident(_read_schema_work(tenant), fallback="")
     schema_main = _safe_ident(_read_schema_main(tenant), fallback="")
     asignacion_table = _app_table(tenant, "asignacion")
@@ -2413,7 +2438,7 @@ def _procesar_retorno_xtf(
 
     if not asignacion:
         raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
-    _ensure_assignment_owner_access(user, asignacion)
+    _ensure_assignment_active_owner_access(user, asignacion)
 
     work_dataset = (asignacion.get("work_datasetname") or "").strip()
     if not work_dataset:
@@ -3087,7 +3112,7 @@ def importar_retorno_xtf(
     conn=Depends(get_tenant_db_connection),
 ):
     del conn
-    _require_assignment_access(user, "admin", "coordinador")
+    _require_assignment_access(user, "admin")
     return _procesar_retorno_xtf(
         tenant,
         request.app.state.tenant_connection_manager,
@@ -3108,7 +3133,7 @@ def importar_retorno_xtf_workspace(
     conn=Depends(get_tenant_db_connection),
 ):
     del conn
-    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento")
     return _procesar_retorno_xtf(
         tenant,
         request.app.state.tenant_connection_manager,
@@ -3131,7 +3156,7 @@ def obtener_detalle_basico_predio(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento")
     
     schema_work = _safe_ident((tenant.schemas.work or "b_asignaciones_arb").strip(), fallback="b_asignaciones_arb")
     predio_table = _safe_ident("arb_predio", fallback="arb_predio")
@@ -3331,7 +3356,7 @@ def asignaciones_unidad_detalle(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento")
     if not schema:
         schema = _safe_ident(tenant.schemas.work, fallback="b_asignaciones_arb")
     else:

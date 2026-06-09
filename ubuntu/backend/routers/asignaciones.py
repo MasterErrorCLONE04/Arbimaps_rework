@@ -39,6 +39,7 @@ AsignacionEstado = Literal[
     "CONTROL_CALIDAD_2",
     "EN_APROBACION",
     "DEVUELTO_DIGITALIZACION",
+    "DEVUELTO_A_DIGITALIZACION",
     "EN_SINCRONIZACION",
     "SINCRONIZADO",
 ]
@@ -1231,7 +1232,7 @@ def listar_asignaciones(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento")
     rows = asignaciones_repo.list_asignaciones(conn, tenant)
 
     role, username = _user_role_scope(user)
@@ -1240,6 +1241,7 @@ def listar_asignaciones(
             row
             for row in rows
             if str(row.get("usuario_asignado") or "").strip().lower() == username
+            or str(row.get("usuario_reconocedor") or "").strip().lower() == username
         ]
 
     data: List[AsignacionListadoItem] = []

@@ -677,11 +677,13 @@ def assign_digitalizador(
         # 2. Update legacy assignment fields
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                f"SELECT titulo FROM {asignacion_table} WHERE id = %s",
+                f"SELECT titulo, usuario_asignado, usuario_asignado_id FROM {asignacion_table} WHERE id = %s",
                 (int(assignment_id),)
             )
             asig_row = cur.fetchone()
         asig_title = asig_row["titulo"] if asig_row else f"Trabajo #{assignment_id}"
+        prev_user = asig_row["usuario_asignado"] if asig_row else None
+        prev_user_id = asig_row["usuario_asignado_id"] if asig_row else None
 
         asignaciones_repo.update_asignacion_fields(
             conn,
@@ -690,11 +692,18 @@ def assign_digitalizador(
             estado="EN_DIGITALIZACION",
         )
         
-        # Also update the assigned user in the legacy asignacion table
+        # Also update the assigned user in the legacy asignacion table and preserve the recognizer
         with conn.cursor() as cur:
             cur.execute(
-                f"UPDATE {asignacion_table} SET usuario_asignado = %s, usuario_asignado_id = %s WHERE id = %s",
-                (dig_user["username"], int(payload.digitalizador_id), int(assignment_id))
+                f"""
+                UPDATE {asignacion_table} 
+                SET usuario_asignado = %s, 
+                    usuario_asignado_id = %s, 
+                    usuario_reconocedor = %s, 
+                    usuario_reconocedor_id = %s 
+                WHERE id = %s
+                """,
+                (dig_user["username"], int(payload.digitalizador_id), prev_user, prev_user_id, int(assignment_id))
             )
 
         # 3. Create notification for digitalizador
@@ -781,13 +790,23 @@ def continue_with_reconocedor(
             metadata={"target_user_id": str(reconocedor_id)}
         )
 
-        # 2. Update legacy assignment state
+        # 2. Update legacy assignment state and store recognizer
         asignaciones_repo.update_asignacion_fields(
             conn,
             tenant,
             int(assignment_id),
             estado="EN_DIGITALIZACION",
         )
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE {asignacion_table} 
+                SET usuario_reconocedor = %s, 
+                    usuario_reconocedor_id = %s 
+                WHERE id = %s
+                """,
+                (asig_row["usuario_asignado"], reconocedor_id, int(assignment_id))
+            )
 
         # 3. Create notification for reconocedor
         asig_title = asig_row["titulo"] or f"Trabajo #{assignment_id}"
@@ -941,10 +960,10 @@ def return_to_digitalization(
     command_service: AssignmentCommandService = Depends(get_command_service)
 ):
     role = normalize_role(get_user_role(user))
-    if role not in {"coordinador", "admin", "lider_reconocimiento"}:
+    if role not in {"coordinador", "admin"}:
         raise HTTPException(
             status_code=403,
-            detail="Solo coordinadores, lideres o admins pueden devolver a digitalización."
+            detail="Solo coordinadores o admins pueden devolver a digitalización."
         )
 
     asignacion_table = app_table(tenant, "asignacion")
@@ -1037,10 +1056,10 @@ def approve_digitalization(
     command_service: AssignmentCommandService = Depends(get_command_service)
 ):
     role = normalize_role(get_user_role(user))
-    if role not in {"coordinador", "admin", "lider_reconocimiento"}:
+    if role not in {"coordinador", "admin"}:
         raise HTTPException(
             status_code=403,
-            detail="Solo coordinadores, lideres o admins pueden aprobar la digitalización."
+            detail="Solo coordinadores o admins pueden aprobar la digitalización."
         )
 
     asignacion_table = app_table(tenant, "asignacion")
@@ -1083,7 +1102,109 @@ def approve_digitalization(
             estado="EN_APROBACION",
         )
 
-        # 3. Notify consolidadores (support users)
+        # 3. Notify lideres de reconocimiento
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    f"""
+                    SELECT u.id_global, u.username
+                    FROM {users_table} u
+                    JOIN {roles_table} r ON r.t_id = u.rol_id
+                    WHERE r.itf_code = 'lider_reconocimiento' AND u.activo = TRUE
+                    """
+                )
+                lider_users = cur.fetchall()
+
+            for lid in lider_users:
+                asignaciones_repo.safe_crear_notificacion(
+                    conn,
+                    tenant=tenant,
+                    id_asignacion=int(assignment_id),
+                    id_usuario_destino=int(lid["id_global"]),
+                    id_usuario_origen=int(user["id_global"]),
+                    rol_origen="coordinador",
+                    rol_destino="lider_reconocimiento",
+                    tipo="asignacion",
+                    titulo="Digitalización aprobada por coordinador",
+                    mensaje=f"El coordinador {user.get('username')} aprobó la digitalización de '{asig_title}' y requiere tu revisión.",
+                    url_destino=f"/panel/asignaciones/detalle?id={assignment_id}#asig-open",
+                    prioridad="alta",
+                    metadata={"assignment_id": int(assignment_id), "enlace_digitalizacion": enlace}
+                )
+        except Exception as support_err:
+            logger.error(f"Fallo al notificar lideres de reconocimiento para aprobación: {support_err}")
+
+        conn.commit()
+        return {
+            "assignment_id": result.transition.assignment.assignment_id,
+            "workflow_state": "EN_APROBACION",
+            "assigned_user_id": result.transition.assignment.assigned_user_id
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except WorkflowError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+
+
+@router.post("/{assignment_id}/lider-approve")
+def lider_approve_assignment(
+    assignment_id: str,
+    tenant: TenantContext = Depends(get_tenant_context_from_session),
+    user: dict = Depends(get_current_user_from_session),
+    conn = Depends(get_tenant_db_connection),
+    command_service: AssignmentCommandService = Depends(get_command_service)
+):
+    role = normalize_role(get_user_role(user))
+    if role not in {"lider_reconocimiento", "admin"}:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo usuarios con rol de lider de reconocimiento o admin pueden aprobar esta etapa."
+        )
+
+    asignacion_table = app_table(tenant, "asignacion")
+    users_table = app_table(tenant, "users")
+    roles_table = app_table(tenant, "roles")
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            f"SELECT enlace_digitalizacion, creado_por_id, titulo FROM {asignacion_table} WHERE id = %s",
+            (int(assignment_id),)
+        )
+        asig_row = cur.fetchone()
+
+    if not asig_row:
+        raise HTTPException(status_code=404, detail="Asignación no encontrada.")
+
+    enlace = asig_row["enlace_digitalizacion"] or ""
+    asig_title = asig_row["titulo"] or f"Trabajo #{assignment_id}"
+    creator_id = asig_row["creado_por_id"]
+
+    actor = ActorContext(
+        tenant_code=tenant.municipality_code,
+        user_id=str(user["id_global"]),
+        role=WorkflowRole.parse(user["role_code"])
+    )
+
+    try:
+        # 1. Run START_SYNC transition on state machine
+        result = command_service.execute_transition(
+            assignment_id=assignment_id,
+            actor=actor,
+            event=WorkflowEvent.START_SYNC
+        )
+
+        # 2. Update legacy fields to EN_SINCRONIZACION
+        asignaciones_repo.update_asignacion_fields(
+            conn,
+            tenant,
+            int(assignment_id),
+            estado="EN_SINCRONIZACION",
+        )
+
+        # 3. Notify support / consolidador
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
@@ -1105,11 +1226,11 @@ def approve_digitalization(
                     id_asignacion=int(assignment_id),
                     id_usuario_destino=int(sup["id_global"]),
                     id_usuario_origen=int(user["id_global"]),
-                    rol_origen="coordinador",
+                    rol_origen="lider_reconocimiento",
                     rol_destino="consolidador",
                     tipo="soporte",
-                    titulo="Digitalización aprobada",
-                    mensaje=f"El coordinador {user.get('username')} aprobó la digitalización de '{asig_title}'. Enlace: {enlace}",
+                    titulo="Digitalización aprobada por Líder",
+                    mensaje=f"El líder de reconocimiento {user.get('username')} aprobó la digitalización de '{asig_title}'. Enlace: {enlace}",
                     url_destino=f"/panel/asignaciones/detalle?id={assignment_id}#asig-open",
                     prioridad="alta",
                     metadata={"assignment_id": int(assignment_id), "enlace_digitalizacion": enlace}
@@ -1129,23 +1250,149 @@ def approve_digitalization(
                         id_asignacion=int(assignment_id),
                         id_usuario_destino=int(creator_id),
                         id_usuario_origen=int(user["id_global"]),
-                        rol_origen="coordinador",
+                        rol_origen="lider_reconocimiento",
                         rol_destino="soporte",
                         tipo="soporte",
-                        titulo="Digitalización aprobada",
-                        mensaje=f"El coordinador {user.get('username')} aprobó la digitalización de '{asig_title}'. Enlace: {enlace}",
+                        titulo="Digitalización aprobada por Líder",
+                        mensaje=f"El líder de reconocimiento {user.get('username')} aprobó la digitalización de '{asig_title}'. Enlace: {enlace}",
                         url_destino=f"/panel/asignaciones/detalle?id={assignment_id}#asig-open",
                         prioridad="alta",
                         metadata={"assignment_id": int(assignment_id), "enlace_digitalizacion": enlace}
                     )
         except Exception as support_err:
-            logger.error(f"Fallo al notificar consolidadores/soporte para aprobación: {support_err}")
+            logger.error(f"Fallo al notificar consolidadores/soporte para aprobacion de lider: {support_err}")
 
         conn.commit()
         return {
             "assignment_id": result.transition.assignment.assignment_id,
-            "workflow_state": "EN_APROBACION",
+            "workflow_state": "EN_SINCRONIZACION",
             "assigned_user_id": result.transition.assignment.assigned_user_id
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except WorkflowError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+
+
+@router.post("/{assignment_id}/lider-reject")
+def lider_reject_assignment(
+    assignment_id: str,
+    tenant: TenantContext = Depends(get_tenant_context_from_session),
+    user: dict = Depends(get_current_user_from_session),
+    conn = Depends(get_tenant_db_connection),
+    command_service: AssignmentCommandService = Depends(get_command_service)
+):
+    role = normalize_role(get_user_role(user))
+    if role not in {"lider_reconocimiento", "admin"}:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo usuarios con rol de lider de reconocimiento o admin pueden devolver la digitalización."
+        )
+
+    asignacion_table = app_table(tenant, "asignacion")
+    users_table = app_table(tenant, "users")
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            f"SELECT usuario_asignado_id, coordinador_asignado_id, creado_por_id, titulo FROM {asignacion_table} WHERE id = %s",
+            (int(assignment_id),)
+        )
+        asig_row = cur.fetchone()
+
+    if not asig_row:
+        raise HTTPException(status_code=404, detail="Asignación no encontrada.")
+
+    assigned_user_id = asig_row["usuario_asignado_id"]
+    coordinador_id = asig_row["coordinador_asignado_id"] or asig_row["creado_por_id"]
+    asig_title = asig_row["titulo"] or f"Trabajo #{assignment_id}"
+
+    actor = ActorContext(
+        tenant_code=tenant.municipality_code,
+        user_id=str(user["id_global"]),
+        role=WorkflowRole.parse(user["role_code"])
+    )
+
+    try:
+        # 1. Run RETURN_TO_FIELD transition on state machine
+        result = command_service.execute_transition(
+            assignment_id=assignment_id,
+            actor=actor,
+            event=WorkflowEvent.RETURN_TO_FIELD
+        )
+
+        # 2. Update legacy fields: state to 'DEVUELTO_DIGITALIZACION', clear evidence link
+        with conn.cursor() as cur:
+            cur.execute(
+                f"UPDATE {asignacion_table} SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL WHERE id = %s",
+                (int(assignment_id),)
+            )
+
+        # 3. Notify coordinator
+        if coordinador_id:
+            try:
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    cur.execute(
+                        f"SELECT rol FROM {users_table} WHERE id_global = %s",
+                        (int(coordinador_id),)
+                    )
+                    coord_user = cur.fetchone()
+                rol_dest = coord_user.get("rol") if coord_user else "coordinador"
+                
+                asignaciones_repo.safe_crear_notificacion(
+                    conn,
+                    tenant=tenant,
+                    id_asignacion=int(assignment_id),
+                    id_usuario_destino=int(coordinador_id),
+                    id_usuario_origen=int(user["id_global"]),
+                    rol_origen="lider_reconocimiento",
+                    rol_destino=rol_dest,
+                    tipo="asignacion",
+                    titulo="Digitalización devuelta por Líder",
+                    mensaje=f"El líder de reconocimiento {user.get('username')} ha devuelto el trabajo '{asig_title}' al coordinador.",
+                    url_destino=f"/panel/asignaciones/detalle?id={assignment_id}#asig-open",
+                    prioridad="alta",
+                    metadata={"assignment_id": int(assignment_id)}
+                )
+            except Exception as notif_err:
+                logger.error(f"Fallo al notificar al coordinador: {notif_err}")
+
+        # 4. Notify digitalizador/reconocedor
+        if assigned_user_id:
+            try:
+                with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                    cur.execute(
+                        f"SELECT rol FROM {users_table} WHERE id_global = %s",
+                        (int(assigned_user_id),)
+                    )
+                    dest_user = cur.fetchone()
+                rol_dest = dest_user.get("rol") if dest_user else "digitalizador"
+
+                asignaciones_repo.safe_crear_notificacion(
+                    conn,
+                    tenant=tenant,
+                    id_asignacion=int(assignment_id),
+                    id_usuario_destino=int(assigned_user_id),
+                    id_usuario_origen=int(user["id_global"]),
+                    rol_origen="lider_reconocimiento",
+                    rol_destino=rol_dest,
+                    tipo="asignacion",
+                    titulo="Digitalización devuelta por Líder",
+                    mensaje=f"El líder de reconocimiento {user.get('username')} ha devuelto el trabajo '{asig_title}' para corrección de digitalización.",
+                    url_destino=f"/panel/asignaciones/detalle?id={assignment_id}#asig-open",
+                    prioridad="alta",
+                    metadata={"assignment_id": int(assignment_id)}
+                )
+            except Exception as notif_err:
+                logger.error(f"Fallo al notificar al usuario asignado: {notif_err}")
+
+        conn.commit()
+        return {
+            "assignment_id": result.transition.assignment.assignment_id,
+            "workflow_state": "DEVUELTO_DIGITALIZACION",
+            "assigned_user_id": str(assigned_user_id) if assigned_user_id else None
         }
 
     except ValueError as e:

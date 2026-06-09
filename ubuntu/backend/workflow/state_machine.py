@@ -24,6 +24,8 @@ def _ensure_workspace_ready(context: TransitionContext) -> None:
 
 
 def _ensure_retorno_validated(context: TransitionContext) -> None:
+    if context.assignment.retorno_state == RetornoState.NONE:
+        return
     if context.assignment.retorno_state != RetornoState.VALIDATED:
         raise WorkflowPreconditionError(
             "La asignacion requiere retorno VALIDATED antes de iniciar sincronizacion."
@@ -49,6 +51,13 @@ def _ensure_sync_started(context: TransitionContext) -> None:
 
 def _resolve_same_state(context: TransitionContext) -> WorkflowState:
     return context.assignment.workflow_state
+
+
+def _resolve_reassign_state(context: TransitionContext) -> WorkflowState:
+    current_state = context.assignment.workflow_state
+    if current_state == WorkflowState.APROBACION:
+        return WorkflowState.EN_CAMPO
+    return current_state
 
 
 def _resolve_reopen_state(context: TransitionContext) -> WorkflowState:
@@ -204,7 +213,7 @@ transition_specs: dict[WorkflowEvent, TransitionSpec] = {
     ),
     WorkflowEvent.RETURN_TO_FIELD: TransitionSpec(
         event=WorkflowEvent.RETURN_TO_FIELD,
-        from_states=(WorkflowState.CONTROL_CALIDAD_1,),
+        from_states=(WorkflowState.CONTROL_CALIDAD_1, WorkflowState.APROBACION),
         allowed_roles=(
             WorkflowRole.ADMINISTRADOR,
             WorkflowRole.LIDER,
@@ -245,7 +254,7 @@ transition_specs: dict[WorkflowEvent, TransitionSpec] = {
     WorkflowEvent.START_SYNC: TransitionSpec(
         event=WorkflowEvent.START_SYNC,
         from_states=(WorkflowState.APROBACION,),
-        allowed_roles=(WorkflowRole.ADMINISTRADOR, WorkflowRole.COORDINADOR),
+        allowed_roles=(WorkflowRole.ADMINISTRADOR, WorkflowRole.COORDINADOR, WorkflowRole.LIDER),
         target_state=WorkflowState.SINCRONIZACION,
         preconditions=(_ensure_workspace_ready, _ensure_retorno_validated),
         audit_events=("assignment.sync.started",),
@@ -301,7 +310,7 @@ transition_specs: dict[WorkflowEvent, TransitionSpec] = {
             WorkflowRole.COORDINADOR,
             WorkflowRole.ASIGNADOR,
         ),
-        target_state_resolver=_resolve_same_state,
+        target_state_resolver=_resolve_reassign_state,
         preconditions=(_ensure_target_user_present,),
         audit_events=("assignment.reassigned",),
         outbox_events=("BUILD_WORKSPACE",),

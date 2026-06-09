@@ -62,6 +62,7 @@ class PostgresAssignmentRepository(AbstractAssignmentRepository):
                 "SINCRONIZADO": "SINCRONIZADO",
                 "EN_DIGITALIZACION": "EN_CAMPO",
                 "DEVUELTO_DIGITALIZACION": "DEVUELTO",
+                "DEVUELTO_A_DIGITALIZACION": "DEVUELTO",
                 "CONTROL_CALIDAD_2": "CONTROL_CALIDAD_1"
             }
             workflow_state = state_map.get(main_estado, "SIN_ASIGNAR")
@@ -91,6 +92,79 @@ class PostgresAssignmentRepository(AbstractAssignmentRepository):
             self.save(snapshot)
             return snapshot
         
+        # Self-healing alignment with legacy database
+        try:
+            asig_id_int = int(assignment_id)
+            self.cursor.execute(
+                f"SELECT estado, usuario_asignado_id FROM {self.app_schema}.asignacion WHERE id = %s",
+                (asig_id_int,)
+            )
+            main_row = self.cursor.fetchone()
+            if main_row:
+                main_estado = main_row[0]
+                legacy_assigned_user_id = str(main_row[1]) if main_row[1] is not None else None
+
+                state_map = {
+                    "EN_CAMPO": "EN_CAMPO",
+                    "CONTROL_CALIDAD_1": "CONTROL_CALIDAD_1",
+                    "DEVUELTO_CAMPO": "DEVUELTO",
+                    "EN_APROBACION": "APROBACION",
+                    "GENERACION_XTF_CAMPO": "APROBACION",
+                    "EN_SINCRONIZACION": "SINCRONIZACION",
+                    "SINCRONIZADO": "SINCRONIZADO",
+                    "EN_DIGITALIZACION": "EN_CAMPO",
+                    "DEVUELTO_DIGITALIZACION": "DEVUELTO",
+                    "DEVUELTO_A_DIGITALIZACION": "DEVUELTO",
+                    "CONTROL_CALIDAD_2": "CONTROL_CALIDAD_1"
+                }
+                mapped_wf_state = state_map.get(main_estado)
+
+                needs_update = False
+                updated_wf_state = row[2]
+                updated_user_id = row[6]
+                updated_role = row[7]
+
+                if mapped_wf_state and mapped_wf_state != row[2]:
+                    updated_wf_state = mapped_wf_state
+                    needs_update = True
+
+                if legacy_assigned_user_id and legacy_assigned_user_id != row[6]:
+                    updated_user_id = legacy_assigned_user_id
+                    updated_role = "reconocedor"
+                    needs_update = True
+
+                # Align workspace state with legacy estado status
+                if main_estado == "CREANDO_WORKSPACE":
+                    expected_workspace_state = "BUILDING"
+                elif main_estado == "ERROR_WORKSPACE":
+                    expected_workspace_state = "ERROR"
+                else:
+                    expected_workspace_state = "READY"
+
+                updated_ws_state = row[3]
+                if expected_workspace_state != row[3]:
+                    updated_ws_state = expected_workspace_state
+                    needs_update = True
+
+                if needs_update:
+                    aligned_snapshot = AssignmentSnapshot(
+                        assignment_id=row[0],
+                        tenant_code=row[1],
+                        workflow_state=WorkflowState(updated_wf_state),
+                        workspace_state=WorkspaceState(updated_ws_state),
+                        retorno_state=RetornoState(row[4]),
+                        sync_state=SyncState(row[5]),
+                        assigned_user_id=updated_user_id,
+                        assigned_role=WorkflowRole(updated_role) if updated_role else None,
+                        is_closed=row[8],
+                        version=row[9] + 1,
+                        metadata=row[10] if isinstance(row[10], dict) else (json.loads(row[10]) if row[10] else {})
+                    )
+                    self.save(aligned_snapshot)
+                    return aligned_snapshot
+        except Exception:
+            pass
+
         return AssignmentSnapshot(
             assignment_id=row[0],
             tenant_code=row[1],

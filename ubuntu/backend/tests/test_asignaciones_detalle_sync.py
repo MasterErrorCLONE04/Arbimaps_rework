@@ -247,6 +247,15 @@ def test_procesar_retorno_xtf_workspace_refreshes_predio_ids_with_conn_and_tenan
         "actualizar_predio_ids_desde_workspace",
         _actualizar,
     )
+    monkeypatch.setattr(
+        asignaciones_detalle.asignaciones_repo,
+        "get_asignacion_work_dataset",
+        lambda conn, tenant, asignacion_id: {
+            "id": asignacion_id,
+            "work_datasetname": "ws_asg_1",
+            "usuario_asignado": "digit1",
+        }
+    )
 
     tenant = _tenant()
     archivo = UploadFile(filename="retorno.xtf", file=BytesIO(b"<xtf/>"))
@@ -321,7 +330,7 @@ def test_procesar_retorno_xtf_publish_main_interpolates_assignment_table_sql(mon
     assert result["asignacion_id"] == 136
     assert "PUBLICACION_MAIN" in logged_events
     assert imported_datasets == ["ws_asg_1_ret_2"]
-    assert removed_datasets == ["ws_asg_1"]
+    assert removed_datasets == ["ws_asg_1", "ws_asg_1_ret_2"]
     sync_sql = "\n".join(
         sql
         for conn in manager.connections

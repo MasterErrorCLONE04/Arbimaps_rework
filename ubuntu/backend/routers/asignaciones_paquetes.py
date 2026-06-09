@@ -483,7 +483,7 @@ def crear_job_paquete_asignacion(
     conn=Depends(get_tenant_db_connection),
 ):
     _ensure_package_export_supported_http()
-    _require_assignment_access(user, "admin", "coordinador")
+    _require_assignment_access(user, "admin", "coordinador", "lider_reconocimiento")
     _ensure_assignment_access(conn, tenant, asignacion_id, user)
     created_by = user.get("username") if isinstance(user, dict) else None
 
@@ -553,7 +553,7 @@ def ver_job_paquete(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador")
+    _require_assignment_access(user, "admin", "coordinador", "lider_reconocimiento")
     job = asignaciones_repo.get_export_job(conn, tenant, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job no encontrado.")
@@ -572,7 +572,7 @@ def listar_jobs_paquete_asignacion(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador")
+    _require_assignment_access(user, "admin", "coordinador", "lider_reconocimiento")
     _ensure_assignment_access(conn, tenant, asignacion_id, user)
     if limit < 1:
         limit = 1
@@ -589,7 +589,7 @@ def descargar_job_paquete(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador")
+    _require_assignment_access(user, "admin", "coordinador", "lider_reconocimiento")
     job = asignaciones_repo.get_export_job(conn, tenant, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job no encontrado.")
@@ -631,7 +631,7 @@ def descargar_paquete_asignacion(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador")
+    _require_assignment_access(user, "admin", "coordinador", "lider_reconocimiento")
     created_by = user.get("username") if isinstance(user, dict) else None
     try:
         export_schema, export_dataset, asignacion = _resolve_export_context(
@@ -707,7 +707,7 @@ def descargar_paquete_asignacion_gdb(
     conn=Depends(get_tenant_db_connection),
 ):
     _ensure_package_export_supported_http()
-    _require_assignment_access(user, "admin", "coordinador")
+    _require_assignment_access(user, "admin", "coordinador", "lider_reconocimiento")
     asignacion = _get_asignacion_for_export(conn, tenant, asignacion_id, user)
 
     export_dataset = asignacion.get("datasetname_main") if ASIG_SKIP_WORKSPACE else asignacion.get("work_datasetname")
@@ -790,7 +790,7 @@ def descargar_paquete_asignacion_gpkg(
     conn=Depends(get_tenant_db_connection),
 ):
     _ensure_package_export_supported_http()
-    _require_assignment_access(user, "admin", "coordinador")
+    _require_assignment_access(user, "admin", "coordinador", "lider_reconocimiento")
     asignacion = _get_asignacion_for_export(conn, tenant, asignacion_id, user)
 
     export_schema = _read_schema_work(tenant)

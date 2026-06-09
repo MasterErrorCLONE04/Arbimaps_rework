@@ -44,7 +44,7 @@
         <!-- Botones de Acción -->
         <div class="d-flex gap-2 justify-content-lg-end flex-wrap w-100 justify-content-start">
           <button id="btnHeaderSyncXtf" type="button"
-            class="btn rounded-pill fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
             style="background-color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#02203d'" onmouseout="this.style.backgroundColor='#032F57'">
             <i class="fa-solid fa-code-branch"></i>
@@ -91,6 +91,20 @@
             onmouseover="this.style.backgroundColor='#ea580c'" onmouseout="this.style.backgroundColor='#f97316'">
             <i class="fa-solid fa-clipboard-check"></i>
             <span>Revisar Control de Calidad 2</span>
+          </button>
+          <button id="btnHeaderLiderReview" type="button"
+            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            style="background-color: #6366f1; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#4f46e5'" onmouseout="this.style.backgroundColor='#6366f1'">
+            <i class="fa-solid fa-clipboard-check"></i>
+            <span>Revisión de Líder</span>
+          </button>
+          <button id="btnHeaderViewDigitalizacionLink" type="button"
+            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            style="background-color: #6366f1; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#4f46e5'" onmouseout="this.style.backgroundColor='#6366f1'">
+            <i class="fa-solid fa-link"></i>
+            <span>Ver enlace de Digitalización</span>
           </button>
           <button id="btnHeaderHistorial" type="button"
             class="btn rounded-pill fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
@@ -1952,7 +1966,7 @@
             <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal" style="background-color: #e2e8f0; font-size: 0.85rem;">
               Cancelar
             </button>
-            <div class="d-flex gap-2">
+            <div id="viewSoporteCoordinatorActions" class="d-flex gap-2">
               <button id="btnViewSoporteDevolver" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0" style="background-color: #ef4444; font-size: 0.85rem;">
                 <i class="fa-solid fa-xmark me-1"></i>Devolver a Soporte
               </button>
@@ -1993,6 +2007,10 @@
           <p class="text-muted small mb-3">
             Ingresa el enlace del entregable o carpeta de digitalización para que el coordinador pueda revisar tu trabajo.
           </p>
+          <div id="qa2SoporteLinkContainer" class="mb-4 p-3 rounded-3 d-none" style="background-color: #fff; border: 1px solid #dee2e6;">
+            <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace de Soporte Anterior:</label>
+            <a id="qa2SoporteEvidenceLink" href="#" target="_blank" class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.90rem;"></a>
+          </div>
           <div class="mb-3">
             <label for="inpQA2Link" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Enlace del Entregable *</label>
             <div class="input-group">
@@ -2048,6 +2066,70 @@
               <i class="fa-solid fa-check me-1"></i>Aprobar Digitalización
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Líder Revisión Control de Calidad -->
+  <div class="modal fade" id="modalLiderReview" tabindex="-1" aria-labelledby="modalLiderReviewLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #6366f1; color: white;">
+          <h5 class="modal-title fw-bold" id="modalLiderReviewLabel">
+            <i class="fa-solid fa-clipboard-check me-2"></i>Revisión de Líder de Reconocimiento
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            Por favor, revisa el enlace de digitalización y selecciona si deseas devolver la asignación a digitalización o aprobarla para iniciar la sincronización.
+          </p>
+          <div class="mb-4 p-3 rounded-3" style="background-color: #fff; border: 1px solid #dee2e6;">
+            <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace de Evidencia:</label>
+            <a id="liderReviewEvidenceLink" href="#" target="_blank" class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal" style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <div class="d-flex gap-2">
+            <button id="btnLiderReject" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0" style="background-color: #ef4444; font-size: 0.85rem;">
+              <i class="fa-solid fa-xmark me-1"></i>Devolver a Digitalización
+            </button>
+            <button id="btnLiderApprove" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0" style="background-color: #22c55e; font-size: 0.85rem;">
+              <i class="fa-solid fa-check me-1"></i>Aprobar y Sincronizar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ver Enlace de Digitalización -->
+  <div class="modal fade" id="modalViewDigitalizacionLink" tabindex="-1" aria-labelledby="modalViewDigitalizacionLinkLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content" style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #6366f1; color: white;">
+          <h5 class="modal-title fw-bold" id="modalViewDigitalizacionLinkLabel">
+            <i class="fa-solid fa-link me-2"></i>Enlace de Digitalización
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            El líder de reconocimiento ha aprobado el siguiente enlace de digitalización:
+          </p>
+          <div class="mb-4 p-3 rounded-3" style="background-color: #fff; border: 1px solid #dee2e6;">
+            <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace del Entregable:</label>
+            <a id="viewDigitalizacionEvidenceLink" href="#" target="_blank" class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3 d-flex justify-content-end" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal" style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cerrar
+          </button>
         </div>
       </div>
     </div>
@@ -2463,13 +2545,22 @@
           }
         }
 
-        // 1.3 Mostrar/Ocultar botón de Ver Enlace de Soporte (para Coordinador/Admin/Lider)
+        // 1.3 Mostrar/Ocultar botón de Ver Enlace de Soporte (para Coordinador/Admin/Lider/Asignado)
         const btnViewSoporteLink = document.getElementById("btnHeaderViewSoporteLink");
         if (btnViewSoporteLink) {
           const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
+          const isAssignee = currentLoggedRole === "digitalizador" || currentLoggedRole === "reconocedor";
+          const isOwner = dataDet.usuario_asignado_username === currentLoggedUser;
+          
           const hasSoporteLink = !!dataDet.enlace_soporte;
+          const isAllowedState = dataDet.estado === "GENERACION_XTF_CAMPO" || 
+                                 dataDet.estado === "EN_DIGITALIZACION" || 
+                                 dataDet.estado === "DEVUELTO_DIGITALIZACION" || 
+                                 dataDet.estado === "DEVUELTO_A_DIGITALIZACION";
 
-          if (isReviewerRole && hasSoporteLink) {
+          const canView = hasSoporteLink && isAllowedState && (isReviewerRole || (isAssignee && isOwner));
+
+          if (canView) {
             btnViewSoporteLink.classList.remove("d-none");
             btnViewSoporteLink.classList.add("d-inline-flex");
           } else {
@@ -2483,7 +2574,9 @@
         if (btnSubmitQA2) {
           const isAssignee = currentLoggedRole === "digitalizador" || currentLoggedRole === "reconocedor";
           const isOwner = dataDet.usuario_asignado_username === currentLoggedUser;
-          const isEnDigitalizacion = dataDet.estado === "EN_DIGITALIZACION" || dataDet.estado === "DEVUELTO_DIGITALIZACION";
+          const isEnDigitalizacion = dataDet.estado === "EN_DIGITALIZACION" || 
+                                     dataDet.estado === "DEVUELTO_DIGITALIZACION" || 
+                                     dataDet.estado === "DEVUELTO_A_DIGITALIZACION";
 
           if (isAssignee && isOwner && isEnDigitalizacion) {
             btnSubmitQA2.classList.remove("d-none");
@@ -2494,10 +2587,10 @@
           }
         }
 
-        // 1.5 Mostrar/Ocultar botón de Revisar Control de Calidad 2 (para Coordinador/Admin/Lider)
+        // 1.5 Mostrar/Ocultar botón de Revisar Control de Calidad 2 (para Coordinador/Admin)
         const btnQCReview2 = document.getElementById("btnHeaderQCReview2");
         if (btnQCReview2) {
-          const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
+          const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin";
           const isUnderReview2 = dataDet.estado === "CONTROL_CALIDAD_2";
 
           if (isReviewerRole && isUnderReview2) {
@@ -2506,6 +2599,51 @@
           } else {
             btnQCReview2.classList.add("d-none");
             btnQCReview2.classList.remove("d-inline-flex");
+          }
+        }
+
+        // 1.6 Mostrar/Ocultar botón de Revisión de Líder (para Lider de Reconocimiento/Admin)
+        const btnLiderReview = document.getElementById("btnHeaderLiderReview");
+        if (btnLiderReview) {
+          const isLiderOrAdmin = currentLoggedRole === "lider_reconocimiento" || currentLoggedRole === "admin";
+          const isAprobacion = dataDet.estado === "EN_APROBACION";
+
+          if (isLiderOrAdmin && isAprobacion) {
+            btnLiderReview.classList.remove("d-none");
+            btnLiderReview.classList.add("d-inline-flex");
+          } else {
+            btnLiderReview.classList.add("d-none");
+            btnLiderReview.classList.remove("d-inline-flex");
+          }
+        }
+        // 1.7 Mostrar/Ocultar botón de Ver Enlace de Digitalización (para Soporte/Coordinador/Admin/Lider)
+        const btnViewDigitalizacionLink = document.getElementById("btnHeaderViewDigitalizacionLink");
+        if (btnViewDigitalizacionLink) {
+          const isAllowedRole = currentLoggedRole === "soporte" || currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
+          const hasDigitalizacionLink = !!dataDet.enlace_digitalizacion;
+          const isSyncState = dataDet.estado === "EN_SINCRONIZACION" || dataDet.estado === "SINCRONIZADO";
+
+          if (isAllowedRole && hasDigitalizacionLink && isSyncState) {
+            btnViewDigitalizacionLink.classList.remove("d-none");
+            btnViewDigitalizacionLink.classList.add("d-inline-flex");
+          } else {
+            btnViewDigitalizacionLink.classList.add("d-none");
+            btnViewDigitalizacionLink.classList.remove("d-inline-flex");
+          }
+        }
+
+        // 1.8 Mostrar/Ocultar botón de Sincronizar XTF (para Soporte/Admin)
+        const btnSyncXtf = document.getElementById("btnHeaderSyncXtf");
+        if (btnSyncXtf) {
+          const isAllowedSyncRole = currentLoggedRole === "soporte" || currentLoggedRole === "admin";
+          const isSyncState = dataDet.estado === "EN_SINCRONIZACION";
+
+          if (isAllowedSyncRole && isSyncState) {
+            btnSyncXtf.classList.remove("d-none");
+            btnSyncXtf.classList.add("d-inline-flex");
+          } else {
+            btnSyncXtf.classList.add("d-none");
+            btnSyncXtf.classList.remove("d-inline-flex");
           }
         }
 
@@ -3073,6 +3211,20 @@
       document.getElementById("viewSoporteDefaultFooter")?.classList.remove("d-none");
       document.getElementById("viewSoporteSelectorFooter")?.classList.add("d-none");
       document.getElementById("digitalizadorSelectError")?.classList.add("d-none");
+
+      // Show/Hide coordinator action buttons inside the footer
+      const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
+      const isGeneracionXtfState = currentAssignmentData?.estado === "GENERACION_XTF_CAMPO";
+      const coordActions = document.getElementById("viewSoporteCoordinatorActions");
+      if (coordActions) {
+        if (isReviewerRole && isGeneracionXtfState) {
+          coordActions.classList.remove("d-none");
+          coordActions.classList.add("d-flex");
+        } else {
+          coordActions.classList.add("d-none");
+          coordActions.classList.remove("d-flex");
+        }
+      }
       
       const selectEl = document.getElementById("selectDigitalizador");
       if (selectEl) {
@@ -3295,6 +3447,19 @@
       if (inpLink) inpLink.value = "";
       if (errEl) errEl.classList.add("d-none");
       
+      const supportLink = currentAssignmentData?.enlace_soporte || "";
+      const supportContainer = document.getElementById("qa2SoporteLinkContainer");
+      const supportLinkEl = document.getElementById("qa2SoporteEvidenceLink");
+      if (supportContainer && supportLinkEl) {
+        if (supportLink) {
+          supportLinkEl.href = supportLink;
+          supportLinkEl.textContent = supportLink;
+          supportContainer.classList.remove("d-none");
+        } else {
+          supportContainer.classList.add("d-none");
+        }
+      }
+
       const modalEl = document.getElementById("modalSubmitQA2");
       if (modalEl && window.bootstrap) {
         window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
@@ -3473,6 +3638,142 @@
         }
 
         alert("El trabajo de digitalización ha sido aprobado exitosamente.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } finally {
+        if (btnReject) btnReject.disabled = false;
+        if (btnApprove) btnApprove.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+      }
+    });
+
+    // Leader Review button click opens the review modal
+    document.getElementById("btnHeaderLiderReview")?.addEventListener("click", () => {
+      const modalEl = document.getElementById("modalLiderReview");
+      const qcLinkEl = document.getElementById("liderReviewEvidenceLink");
+      
+      const currentLink = currentAssignmentData?.enlace_digitalizacion || "";
+      if (qcLinkEl) {
+        qcLinkEl.href = currentLink;
+        qcLinkEl.textContent = currentLink || "Sin enlace de evidencia";
+      }
+
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    });
+
+    // View Digitalizacion Link button click opens the view modal
+    document.getElementById("btnHeaderViewDigitalizacionLink")?.addEventListener("click", () => {
+      const modalEl = document.getElementById("modalViewDigitalizacionLink");
+      const linkEl = document.getElementById("viewDigitalizacionEvidenceLink");
+      
+      const currentLink = currentAssignmentData?.enlace_digitalizacion || "";
+      if (linkEl) {
+        linkEl.href = currentLink;
+        linkEl.textContent = currentLink || "Sin enlace de digitalización";
+      }
+
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    });
+
+    // Confirm Return to Digitalization (Reject) button click inside leader modal
+    document.getElementById("btnLiderReject")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      if (!confirm("¿Estás seguro de que deseas devolver esta asignación para corrección de digitalización?")) {
+        return;
+      }
+
+      const btnReject = document.getElementById("btnLiderReject");
+      const btnApprove = document.getElementById("btnLiderApprove");
+      const btnCancel = document.querySelector("#modalLiderReview .btn-close, #modalLiderReview [data-bs-dismiss='modal']");
+      if (btnReject) btnReject.disabled = true;
+      if (btnApprove) btnApprove.disabled = true;
+      if (btnCancel) btnCancel.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/lider-reject`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          const rawText = await response.text();
+          let data = {};
+          try { data = JSON.parse(rawText); } catch (e) {}
+          throw new Error(data?.detail || rawText || "Error al devolver la asignación.");
+        }
+
+        const modalEl = document.getElementById("modalLiderReview");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("La asignación ha sido devuelta exitosamente a digitalización.");
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        if (btnReject) btnReject.disabled = false;
+        if (btnApprove) btnApprove.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+      }
+    });
+
+    // Confirm Approve Digitalization button click inside leader modal
+    document.getElementById("btnLiderApprove")?.addEventListener("click", async () => {
+      const idActual = Number(elId?.value || idFromUrl);
+      if (!idActual || idActual < 1) {
+        alert("Debes cargar primero una asignación.");
+        return;
+      }
+
+      if (!confirm("¿Estás seguro de que deseas aprobar este trabajo de digitalización y comenzar la sincronización?")) {
+        return;
+      }
+
+      const btnReject = document.getElementById("btnLiderReject");
+      const btnApprove = document.getElementById("btnLiderApprove");
+      const btnCancel = document.querySelector("#modalLiderReview .btn-close, #modalLiderReview [data-bs-dismiss='modal']");
+      if (btnReject) btnReject.disabled = true;
+      if (btnApprove) btnApprove.disabled = true;
+      if (btnCancel) btnCancel.disabled = true;
+
+      try {
+        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/lider-approve`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          const rawText = await response.text();
+          let data = {};
+          try { data = JSON.parse(rawText); } catch (e) {}
+          throw new Error(data?.detail || rawText || "Error al aprobar digitalización.");
+        }
+
+        const modalEl = document.getElementById("modalLiderReview");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        alert("El trabajo de digitalización ha sido aprobado exitosamente y pasará a sincronización.");
         invalidarCachesDetalleAsignacion();
         await cargarDetalle();
       } catch (err) {

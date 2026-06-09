@@ -419,7 +419,9 @@ def test_assign_digitalizador_success(mock_command_service, monkeypatch):
             "rol": "digitalizador"
         },
         {
-            "titulo": "Asignacion Test"
+            "titulo": "Asignacion Test",
+            "usuario_asignado": "reco1",
+            "usuario_asignado_id": 200
         }
     ]
 
@@ -442,10 +444,14 @@ def test_assign_digitalizador_success(mock_command_service, monkeypatch):
         )
         assert response.status_code == 200
         assert response.json()["assigned_user_id"] == "500"
-        mock_cur.execute.assert_any_call(
-            "UPDATE arbimaps_app.asignacion SET usuario_asignado = %s, usuario_asignado_id = %s WHERE id = %s",
-            ("digi1", 500, 123)
-        )
+        
+        # Find the update call in mock_cur.execute.call_args_list
+        update_calls = [
+            args for args, kwargs in mock_cur.execute.call_args_list
+            if args and "UPDATE" in args[0] and "usuario_reconocedor" in args[0]
+        ]
+        assert len(update_calls) == 1
+        assert update_calls[0][1] == ("digi1", 500, "reco1", 200, 123)
         assert len(notifications_sent) == 1
         assert notifications_sent[0]["id_usuario_destino"] == 500
         assert notifications_sent[0]["rol_destino"] == "digitalizador"
@@ -602,17 +608,12 @@ def test_approve_digitalization_success(mock_command_service, monkeypatch):
     mock_conn = MagicMock()
     mock_cur = MagicMock()
     mock_conn.cursor.return_value.__enter__.return_value = mock_cur
-    mock_cur.fetchone.side_effect = [
-        {
-            "enlace_digitalizacion": "https://example.com/digi-evidence",
-            "creado_por_id": 200,
-            "titulo": "Asignacion Test"
-        },
-        {
-            "rol": "soporte"
-        }
-    ]
-    mock_cur.fetchall.return_value = [] # no other consolidadores
+    mock_cur.fetchone.return_value = {
+        "enlace_digitalizacion": "https://example.com/digi-evidence",
+        "creado_por_id": 200,
+        "titulo": "Asignacion Test"
+    }
+    mock_cur.fetchall.return_value = [{"id_global": 300, "username": "lider1"}]
 
     app.dependency_overrides[get_tenant_db_connection] = lambda: mock_conn
     app.dependency_overrides[get_current_user_from_session] = lambda: {"id_global": "100", "username": "coord1", "role_code": "coordinador"}
@@ -630,11 +631,120 @@ def test_approve_digitalization_success(mock_command_service, monkeypatch):
         response = client.post("/api/workflow/asignaciones/123/approve-digitalization")
         assert response.status_code == 200
         assert len(notifications_sent) == 1
-        assert notifications_sent[0]["id_usuario_destino"] == 200
-        assert notifications_sent[0]["rol_destino"] == "soporte"
+        assert notifications_sent[0]["id_usuario_destino"] == 300
+        assert notifications_sent[0]["rol_destino"] == "lider_reconocimiento"
     finally:
         app.dependency_overrides[get_tenant_db_connection] = mock_get_tenant_db_connection
         app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
+
+
+def test_lider_approve_success(mock_command_service, monkeypatch):
+    result = MagicMock()
+    result.transition.assignment.assignment_id = "123"
+    result.transition.assignment.workflow_state = WorkflowState.SINCRONIZACION
+    result.transition.assignment.assigned_user_id = "500"
+    mock_command_service.execute_transition.return_value = result
+
+    mock_conn = MagicMock()
+    mock_cur = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cur
+    mock_cur.fetchone.return_value = {
+        "enlace_digitalizacion": "https://example.com/digi-evidence",
+        "creado_por_id": 200,
+        "titulo": "Asignacion Test"
+    }
+    mock_cur.fetchall.return_value = [{"id_global": 400, "username": "support1"}]
+
+    app.dependency_overrides[get_tenant_db_connection] = lambda: mock_conn
+    app.dependency_overrides[get_current_user_from_session] = lambda: {"id_global": "300", "username": "lider1", "role_code": "lider_reconocimiento"}
+
+    notifications_sent = []
+    def spy_safe_crear_notificacion(conn, tenant, id_asignacion, id_usuario_destino, id_usuario_origen, rol_origen, rol_destino, tipo, titulo, mensaje, url_destino, prioridad, metadata):
+        notifications_sent.append({"id_usuario_destino": id_usuario_destino, "rol_destino": rol_destino})
+
+    import routers.asignaciones_workflow as workflow_router
+    monkeypatch.setattr(workflow_router.asignaciones_repo, "safe_crear_notificacion", spy_safe_crear_notificacion)
+    monkeypatch.setattr(workflow_router.asignaciones_repo, "update_asignacion_fields", lambda *a, **k: None)
+
+    try:
+        client = TestClient(app)
+        response = client.post("/api/workflow/asignaciones/123/lider-approve")
+        assert response.status_code == 200
+        assert len(notifications_sent) == 1
+        assert notifications_sent[0]["id_usuario_destino"] == 400
+        assert notifications_sent[0]["rol_destino"] == "consolidador"
+    finally:
+        app.dependency_overrides[get_tenant_db_connection] = mock_get_tenant_db_connection
+        app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
+
+
+def test_lider_reject_success(mock_command_service, monkeypatch):
+    result = MagicMock()
+    result.transition.assignment.assignment_id = "123"
+    result.transition.assignment.workflow_state = WorkflowState.DEVUELTO
+    result.transition.assignment.assigned_user_id = "500"
+    mock_command_service.execute_transition.return_value = result
+
+    mock_conn = MagicMock()
+    mock_cur = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cur
+    mock_cur.fetchone.side_effect = [
+        {
+            "usuario_asignado_id": 500,
+            "coordinador_asignado_id": 600,
+            "creado_por_id": 600,
+            "titulo": "Asignacion Test"
+        },
+        {"rol": "coordinador"},
+        {"rol": "digitalizador"}
+    ]
+
+    app.dependency_overrides[get_tenant_db_connection] = lambda: mock_conn
+    app.dependency_overrides[get_current_user_from_session] = lambda: {"id_global": "300", "username": "lider1", "role_code": "lider_reconocimiento"}
+
+    notifications_sent = []
+    def spy_safe_crear_notificacion(conn, tenant, id_asignacion, id_usuario_destino, id_usuario_origen, rol_origen, rol_destino, tipo, titulo, mensaje, url_destino, prioridad, metadata):
+        notifications_sent.append({"id_usuario_destino": id_usuario_destino, "rol_destino": rol_destino})
+
+    import routers.asignaciones_workflow as workflow_router
+    monkeypatch.setattr(workflow_router.asignaciones_repo, "safe_crear_notificacion", spy_safe_crear_notificacion)
+
+    try:
+        client = TestClient(app)
+        response = client.post("/api/workflow/asignaciones/123/lider-reject")
+        assert response.status_code == 200
+        assert len(notifications_sent) == 2
+        assert notifications_sent[0]["id_usuario_destino"] == 600
+        assert notifications_sent[0]["rol_destino"] == "coordinador"
+        assert notifications_sent[1]["id_usuario_destino"] == 500
+        assert notifications_sent[1]["rol_destino"] == "digitalizador"
+    finally:
+        app.dependency_overrides[get_tenant_db_connection] = mock_get_tenant_db_connection
+        app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
+
+
+def test_return_to_digitalization_forbidden_for_lider():
+    app.dependency_overrides[get_current_user_from_session] = lambda: {"id_global": "300", "username": "lider1", "role_code": "lider_reconocimiento"}
+    try:
+        client = TestClient(app)
+        response = client.post("/api/workflow/asignaciones/123/return-to-digitalization")
+        assert response.status_code == 403
+        assert response.json()["detail"] == "Solo coordinadores o admins pueden devolver a digitalización."
+    finally:
+        app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
+
+
+def test_approve_digitalization_forbidden_for_lider():
+    app.dependency_overrides[get_current_user_from_session] = lambda: {"id_global": "300", "username": "lider1", "role_code": "lider_reconocimiento"}
+    try:
+        client = TestClient(app)
+        response = client.post("/api/workflow/asignaciones/123/approve-digitalization")
+        assert response.status_code == 403
+        assert response.json()["detail"] == "Solo coordinadores o admins pueden aprobar la digitalización."
+    finally:
+        app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
+
+
 
 
 
