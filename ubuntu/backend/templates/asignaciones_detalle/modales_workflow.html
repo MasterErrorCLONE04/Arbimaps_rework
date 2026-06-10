@@ -1,0 +1,380 @@
+<!-- Modal Enviar a Control de Calidad -->
+  <div class="modal fade" id="modalSubmitQA" tabindex="-1" aria-labelledby="modalSubmitQALabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #032F57; color: white;">
+          <h5 class="modal-title fw-bold" id="modalSubmitQALabel">
+            <i class="fa-solid fa-paper-plane me-2"></i>Enviar a Control de Calidad
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            Ingresa el enlace del entregable o carpeta de control de calidad para que el coordinador pueda revisar tu
+            trabajo.
+          </p>
+          <div class="mb-3">
+            <label for="inpQALink" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Enlace del
+              Entregable *</label>
+            <div class="input-group">
+              <span class="input-group-text"
+                style="background-color: #fff; border-right: none; border-radius: 10px 0 0 10px;">
+                <i class="fa-solid fa-link text-muted"></i>
+              </span>
+              <input type="url" class="form-control" id="inpQALink" placeholder="https://..." required
+                style="border-left: none; border-radius: 0 10px 10px 0; font-size: 0.9rem; padding: 10px 12px; box-shadow: none; border-color: #dee2e6;" />
+            </div>
+            <div id="qaLinkError" class="text-danger small mt-1 d-none">Por favor ingresa un enlace válido.</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
+            style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <button id="btnConfirmSubmitQA" type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-white border-0"
+            style="background-color: #22c55e; font-size: 0.85rem;">
+            Enviar trabajo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Coordinador Revisión Control de Calidad -->
+  <div class="modal fade" id="modalQCReview" tabindex="-1" aria-labelledby="modalQCReviewLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #032F57; color: white;">
+          <h5 class="modal-title fw-bold" id="modalQCReviewLabel">
+            <i class="fa-solid fa-clipboard-check me-2"></i>Revisión de Control de Calidad
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            El reconocedor ha enviado este enlace como evidencia de su trabajo. Por favor, revísalo y selecciona si
+            deseas devolver la asignación o aprobarla.
+          </p>
+          <div class="mb-4 p-3 rounded-3" style="background-color: #fff; border: 1px solid #dee2e6;">
+            <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace de Evidencia:</label>
+            <a id="qcReviewEvidenceLink" href="#" target="_blank"
+              class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
+            style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <div class="d-flex gap-2">
+            <button id="btnQCReject" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0"
+              style="background-color: #ef4444; font-size: 0.85rem;">
+              <i class="fa-solid fa-xmark me-1"></i>Devolver a Campo
+            </button>
+            <button id="btnQCApprove" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0"
+              style="background-color: #22c55e; font-size: 0.85rem;">
+              <i class="fa-solid fa-check me-1"></i>Aprobar Trabajo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Enviar Enlace de Soporte -->
+  <div class="modal fade" id="modalSubmitSoporteLink" tabindex="-1" aria-labelledby="modalSubmitSoporteLinkLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #8b5cf6; color: white;">
+          <h5 class="modal-title fw-bold" id="modalSubmitSoporteLinkLabel">
+            <i class="fa-solid fa-paper-plane me-2"></i>Enviar Enlace a Coordinador
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            Ingresa el enlace de resultados de soporte para enviárselo al coordinador.
+          </p>
+          <div class="mb-3">
+            <label for="inpSoporteLink" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Enlace de
+              Soporte *</label>
+            <div class="input-group">
+              <span class="input-group-text"
+                style="background-color: #fff; border-right: none; border-radius: 10px 0 0 10px;">
+                <i class="fa-solid fa-link text-muted"></i>
+              </span>
+              <input type="url" class="form-control" id="inpSoporteLink" placeholder="https://..." required
+                style="border-left: none; border-radius: 0 10px 10px 0; font-size: 0.9rem; padding: 10px 12px; box-shadow: none; border-color: #dee2e6;" />
+            </div>
+            <div id="soporteLinkError" class="text-danger small mt-1 d-none">Por favor ingresa un enlace válido.</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
+            style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <button id="btnConfirmSubmitSoporteLink" type="button"
+            class="btn rounded-3 px-4 py-2 fw-semibold text-white border-0"
+            style="background-color: #8b5cf6; font-size: 0.85rem;">
+            Enviar enlace
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ver Enlace de Soporte -->
+  <div class="modal fade" id="modalViewSoporteLink" tabindex="-1" aria-labelledby="modalViewSoporteLinkLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #06b6d4; color: white;">
+          <h5 class="modal-title fw-bold" id="modalViewSoporteLinkLabel">
+            <i class="fa-solid fa-link me-2"></i>Enlace de Soporte
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <div id="viewSoporteMainContent">
+            <p class="text-muted small mb-3">
+              El usuario de soporte ha enviado este enlace como resultado del trabajo:
+            </p>
+            <div class="mb-4 p-3 rounded-3" style="background-color: #fff; border: 1px solid #dee2e6;">
+              <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace del Entregable:</label>
+              <a id="viewSoporteEvidenceLink" href="#" target="_blank"
+                class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
+            </div>
+          </div>
+
+          <!-- Hidden Digitalizador selector section -->
+          <div id="selectDigitalizadorContainer" class="d-none mb-3">
+            <label for="selectDigitalizador" class="form-label fw-semibold text-dark"
+              style="font-size: 0.90rem;">Selecciona un Digitalizador *</label>
+            <select id="selectDigitalizador" class="form-select"
+              style="border-radius: 10px; font-size: 0.9rem; padding: 10px 12px; border-color: #dee2e6; box-shadow: none;">
+              <option value="" disabled selected>Selecciona un digitalizador...</option>
+            </select>
+            <div id="digitalizadorSelectError" class="text-danger small mt-1 d-none">Por favor selecciona un
+              digitalizador válido.</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
+          <!-- Default actions footer -->
+          <div id="viewSoporteDefaultFooter" class="d-flex flex-wrap gap-2 justify-content-between w-100">
+            <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
+              style="background-color: #e2e8f0; font-size: 0.85rem;">
+              Cancelar
+            </button>
+            <div id="viewSoporteCoordinatorActions" class="d-flex gap-2">
+              <button id="btnViewSoporteDevolver" type="button"
+                class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0"
+                style="background-color: #ef4444; font-size: 0.85rem;">
+                <i class="fa-solid fa-xmark me-1"></i>Devolver a Soporte
+              </button>
+              <button id="btnViewSoporteIntegrarDigit" type="button"
+                class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0"
+                style="background-color: #3b82f6; font-size: 0.85rem;">
+                <i class="fa-solid fa-user-plus me-1"></i>Integrar Digitalizador
+              </button>
+              <button id="btnViewSoporteContinuarRecon" type="button"
+                class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0"
+                style="background-color: #22c55e; font-size: 0.85rem;">
+                <i class="fa-solid fa-check me-1"></i>Continuar con Reconocedor
+              </button>
+            </div>
+          </div>
+
+          <!-- Selector actions footer -->
+          <div id="viewSoporteSelectorFooter" class="d-none justify-content-between w-100">
+            <button id="btnCancelIntegrarDigit" type="button"
+              class="btn rounded-3 px-4 py-2 fw-semibold text-dark border-0"
+              style="background-color: #e2e8f0; font-size: 0.85rem;">
+              Volver
+            </button>
+            <button id="btnConfirmIntegrarDigit" type="button"
+              class="btn rounded-3 px-4 py-2 fw-semibold text-white border-0"
+              style="background-color: #3b82f6; font-size: 0.85rem;">
+              Asignar y Continuar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Enviar a Control de Calidad 2 -->
+  <div class="modal fade" id="modalSubmitQA2" tabindex="-1" aria-labelledby="modalSubmitQA2Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #14b8a6; color: white;">
+          <h5 class="modal-title fw-bold" id="modalSubmitQA2Label">
+            <i class="fa-solid fa-paper-plane me-2"></i>Enviar a Control de Calidad 2
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            Ingresa el enlace del entregable o carpeta de digitalización para que el coordinador pueda revisar tu
+            trabajo.
+          </p>
+          <div id="qa2SoporteLinkContainer" class="mb-4 p-3 rounded-3 d-none"
+            style="background-color: #fff; border: 1px solid #dee2e6;">
+            <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace de Soporte
+              Anterior:</label>
+            <a id="qa2SoporteEvidenceLink" href="#" target="_blank"
+              class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.90rem;"></a>
+          </div>
+          <div class="mb-3">
+            <label for="inpQA2Link" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Enlace del
+              Entregable *</label>
+            <div class="input-group">
+              <span class="input-group-text"
+                style="background-color: #fff; border-right: none; border-radius: 10px 0 0 10px;">
+                <i class="fa-solid fa-link text-muted"></i>
+              </span>
+              <input type="url" class="form-control" id="inpQA2Link" placeholder="https://..." required
+                style="border-left: none; border-radius: 0 10px 10px 0; font-size: 0.9rem; padding: 10px 12px; box-shadow: none; border-color: #dee2e6;" />
+            </div>
+            <div id="qa2LinkError" class="text-danger small mt-1 d-none">Por favor ingresa un enlace válido.</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
+            style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <button id="btnConfirmSubmitQA2" type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-white border-0"
+            style="background-color: #14b8a6; font-size: 0.85rem;">
+            Enviar trabajo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Coordinador Revisión Control de Calidad 2 -->
+  <div class="modal fade" id="modalQCReview2" tabindex="-1" aria-labelledby="modalQCReview2Label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #f97316; color: white;">
+          <h5 class="modal-title fw-bold" id="modalQCReview2Label">
+            <i class="fa-solid fa-clipboard-check me-2"></i>Revisión de Control de Calidad 2
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            El digitalizador o reconocedor ha enviado este enlace como evidencia de su trabajo de digitalización. Por
+            favor, revísalo y selecciona si deseas devolver la asignación a digitalización o aprobarla.
+          </p>
+          <div class="mb-4 p-3 rounded-3" style="background-color: #fff; border: 1px solid #dee2e6;">
+            <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace de Evidencia:</label>
+            <a id="qcReview2EvidenceLink" href="#" target="_blank"
+              class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
+            style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <div class="d-flex gap-2">
+            <button id="btnQC2Reject" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0"
+              style="background-color: #ef4444; font-size: 0.85rem;">
+              <i class="fa-solid fa-xmark me-1"></i>Devolver a Digitalización
+            </button>
+            <button id="btnQC2Approve" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0"
+              style="background-color: #22c55e; font-size: 0.85rem;">
+              <i class="fa-solid fa-check me-1"></i>Aprobar Digitalización
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Líder Revisión Control de Calidad -->
+  <div class="modal fade" id="modalLiderReview" tabindex="-1" aria-labelledby="modalLiderReviewLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #6366f1; color: white;">
+          <h5 class="modal-title fw-bold" id="modalLiderReviewLabel">
+            <i class="fa-solid fa-clipboard-check me-2"></i>Revisión de Líder de Reconocimiento
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            Por favor, revisa el enlace de digitalización y selecciona si deseas devolver la asignación a digitalización
+            o aprobarla para iniciar la sincronización.
+          </p>
+          <div class="mb-4 p-3 rounded-3" style="background-color: #fff; border: 1px solid #dee2e6;">
+            <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace de Evidencia:</label>
+            <a id="liderReviewEvidenceLink" href="#" target="_blank"
+              class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
+            style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <div class="d-flex gap-2">
+            <button id="btnLiderReject" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0"
+              style="background-color: #ef4444; font-size: 0.85rem;">
+              <i class="fa-solid fa-xmark me-1"></i>Devolver a Digitalización
+            </button>
+            <button id="btnLiderApprove" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0"
+              style="background-color: #22c55e; font-size: 0.85rem;">
+              <i class="fa-solid fa-check me-1"></i>Aprobar y Sincronizar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Ver Enlace de Digitalización -->
+  <div class="modal fade" id="modalViewDigitalizacionLink" tabindex="-1"
+    aria-labelledby="modalViewDigitalizacionLinkLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #6366f1; color: white;">
+          <h5 class="modal-title fw-bold" id="modalViewDigitalizacionLinkLabel">
+            <i class="fa-solid fa-link me-2"></i>Enlace de Digitalización
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            El líder de reconocimiento ha aprobado el siguiente enlace de digitalización:
+          </p>
+          <div class="mb-4 p-3 rounded-3" style="background-color: #fff; border: 1px solid #dee2e6;">
+            <label class="d-block fw-bold text-dark mb-1" style="font-size: 0.85rem;">Enlace del Entregable:</label>
+            <a id="viewDigitalizacionEvidenceLink" href="#" target="_blank"
+              class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3 d-flex justify-content-end" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
+            style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  

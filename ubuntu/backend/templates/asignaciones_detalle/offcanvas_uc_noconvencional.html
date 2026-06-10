@@ -1,0 +1,158 @@
+<!-- OFFCANVAS U.C. NO CONVENCIONAL -->
+  <div class="offcanvas offcanvas-end m-3 rounded-4" tabindex="-1" id="offcanvasUcNoConvencional"
+    aria-labelledby="offcanvasUcNoConvencionalLabel" style="--bs-offcanvas-width: 850px;">
+
+    <div class="offcanvas-header border-0 p-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="icono-offcanvas-uc">
+          <i class="fa-solid fa-house-chimney"></i>
+        </div>
+        <div>
+          <div id="offcanvasUcNoConvencionalLabel" class="titulo-offcanvas-uc">
+            ID Unidad Construcción
+          </div>
+          <div class="subtitulo-offcanvas-uc p-1 text-center">
+            -
+          </div>
+        </div>
+      </div>
+
+      <button type="button"
+        class="d-inline-flex align-items-center gap-2 border-0 px-3 py-2 boton-jdk btn-volver-offcanvas-uc"
+        data-bs-dismiss="offcanvas" aria-label="Volver">
+        <i class="fa-solid fa-arrow-left-long"></i>
+        <span>Volver</span>
+      </button>
+    </div>
+
+    <div class="offcanvas-body p-4">
+      <div class="card border-0 rounded-4 card-offcanvas-uc">
+        <div class="card-body p-0 w-100">
+
+          <!-- TARJETA 1 -->
+          <div class="uc-accordion-card">
+            <button type="button"
+              class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
+              data-bs-toggle="collapse" data-bs-target="#contenidoUcNoConvencional" aria-expanded="false"
+              aria-controls="contenidoUcNoConvencional"
+              onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
+              <span class="uc-accordion-title">Característica de la unidad de construcción</span>
+              <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
+            </button>
+
+            <div class="collapse show" id="contenidoUcNoConvencional">
+              <div class="uc-accordion-body">
+                <div class="row g-4">
+
+                  <div class="col-12">
+                    <div class="uc-info-row">
+                      <div class="uc-info-label">Tipo de calificación</div>
+                      <div class="uc-info-value" id="noconvencionalTipoCalificacion">No Convencional</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="uc-info-row">
+                      <div class="uc-info-label">Tipo de unidad de construcción</div>
+                      <div class="uc-info-value" id="noconvencionalTipoUnidad">Anexo</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="uc-info-row">
+                      <div class="uc-info-label">Uso</div>
+                      <div class="uc-info-value" id="noconvencionalUso">Albercas - Bañaderas</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="uc-info-row">
+                      <div class="uc-info-label">Total de plantas</div>
+                      <div class="uc-info-value" id="noconvencionalTotalPlantas">1</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="uc-info-row">
+                      <div class="uc-info-label">Año de construcción</div>
+                      <div class="uc-info-value" id="noconvencionalAnioConstruccion">2015</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="uc-info-row">
+                      <div class="uc-info-label">Área de construida [m2]</div>
+                      <div class="uc-info-value" id="noconvencionalAreaConstruida">5</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="uc-info-row">
+                      <div class="uc-info-label">Área privada construida [m2]</div>
+                      <div class="uc-info-value" id="noconvencionalAreaPrivadaConstruida">2</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="uc-info-row">
+                      <div class="uc-info-label">Usos tradicionales culturales</div>
+                      <div class="uc-info-value" id="noconvencionalUsosTradicionales">Null</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="border rounded-4 overflow-hidden bg-white">
+                      <div class="px-3 py-3 border-bottom uc-info-label bg-light">
+                        Observaciones
+                      </div>
+                      <div class="px-3 py-4 text-start uc-info-value fw-normal" id="noconvencionalObservaciones">
+                        La alberca se encuentra en muy buenas condiciones tiene enchape laminado en Oro.
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TARJETA 2 -->
+          <div class="uc-accordion-card mt-2">
+            <button type="button"
+              class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
+              data-bs-toggle="collapse" data-bs-target="#contenidoUcNoConvencionalDos" aria-expanded="false"
+              aria-controls="contenidoUcNoConvencionalDos"
+              onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
+              <span class="uc-accordion-title">Calificación unidad de construcción</span>
+              <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
+            </button>
+
+            <div class="collapse show" id="contenidoUcNoConvencionalDos">
+              <div class="uc-accordion-body">
+                <div class="row g-4">
+
+                  <div class="col-12">
+                    <div class="uc-info-row">
+                      <div class="uc-info-label">Tipo de Anexo</div>
+                      <div class="uc-info-value" id="noconvencionalTipoAnexo">----</div>
+                    </div>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="uc-info-row">
+                      <div class="uc-info-label">conservación del anexo</div>
+                      <div class="uc-info-value" id="noconvencionalConservacionAnexo">----</div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  

@@ -1,0 +1,150 @@
+<!-- OFFCANVAS INFORMACION COMPLETA INTERESADO - EDICION -->
+  <div class="offcanvas offcanvas-end m-3 rounded-4" tabindex="-1" id="panelDerechoPredioEdit"
+    aria-labelledby="panelDerechoPredioEditLabel" style="--bs-offcanvas-width: 75vw;">
+    <div class="offcanvas-header-one-edit border-0 p-4">
+      <div class="d-flex align-items-center justify-content-between w-100 gap-3 flex-wrap">
+        <button type="button"
+          class="d-inline-flex align-items-center gap-2 border-0 px-3 py-2 text-white boton-jdk-edit"
+          data-bs-dismiss="offcanvas" aria-label="Cerrar panel lateral" style="background-color: #032F57;">
+          <i class="fa-solid fa-arrow-left-long"></i>
+          <span>Volver</span>
+        </button>
+        <div class="d-flex align-items-center gap-3 flex-grow-1 justify-content-end">
+          <div id="panelDerechoPredioEditLabel" class="title-part-predio-edit mb-0 text-center">
+            Información de derechos y fuente administrativa
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="offcanvas-body p-0">
+      <div class="open-modal-edit p-3 d-flex align-items-center gap-3">
+        <div class="icono-usuario-panel-edit ms-3">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <div class="text-white">
+          <div id="nombreInteresadoPanelEdit" class="text-white nombre-interesado-panel-edit">---</div>
+        </div>
+      </div>
+      <div class="container-fluid p-1 p-md-4">
+        <div class="row g-4 align-items-start">
+          <div class="content-hearder-ops-edit py-4 overflow-hidden">
+            <div class="container-fluid px-0">
+              <div class="row align-items-center text-center gx-0 mx-0">
+                <div class="col-12 col-md-6">
+                  <div class="fw-bold text-mdlo-edit">Información de Derechos</div>
+                </div>
+                <div class="d-none d-md-flex col-md-1 justify-content-center">
+                  <div class="vr opacity-100 h-100"></div>
+                </div>
+                <div class="col-12 col-md-5 mt-3 mt-md-0">
+                  <div class="fw-bold text-mdlo-edit">Información de fuente administrativa</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="card border-0 rounded-4 h-100">
+              <div class="card-body">
+                <div class="row g-4">
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="text-start tex-num-edit">Fecha inicio de tenencia</div>
+                      <div class="text-end" id="panel_fecha_inicio_tenencia_edit">----</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="text-start tex-num-edit">Tipo de derecho</div>
+                      <div class="text-end" id="panel_tipo_derecho_edit">----</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="text-start tex-num-edit">Posesión ancestral o tradicional</div>
+                      <div class="text-end" id="panel_posesion_ancestral_edit">----</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="border rounded-4 p-3 p-md-4">
+                      <div class="text-start tex-num-edit mb-4">Descripción</div>
+                      <div class="d-flex justify-content-center align-items-center text-center py-4">
+                        <div class="fw-bold text-num-edit" id="panel_descripcion_derecho_edit">----</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="card border-0 rounded-4 h-100">
+              <div class="card-body">
+                <div class="row g-4">
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="text-start tex-num-edit">Tipo de fuente administrativa</div>
+                      <div class="text-end" id="panel_tipo_fuente_admin_edit">----</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="text-start tex-num-edit">Número fuente</div>
+                      <div class="text-end" id="panel_numero_fuente_edit">----</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="text-start tex-num-edit">Ente emisor</div>
+                      <div class="text-end" id="panel_ente_emisor_edit">----</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="text-start tex-num-edit">Oficina de origen</div>
+                      <div class="text-end" id="panel_oficina_origen_edit">----</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="text-start tex-num-edit">Nombre (Escritura)</div>
+                      <div class="text-end" id="panel_nombre_escritura_edit">----</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="text-start tex-num-edit">Ciudad de origen</div>
+                      <div class="text-end" id="panel_ciudad_origen_edit">----</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="text-start tex-num-edit">Estado disponibilidad</div>
+                      <div class="text-end" id="panel_estado_disponibilidad_edit">----</div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="border rounded-4 p-3 p-md-4">
+                      <div class="text-start tex-num-edit mb-4">Descripción de fuente</div>
+                      <div class="d-flex justify-content-center align-items-center text-center py-4">
+                        <div class="fw-bold text-num-edit" id="panel_descripcion_fuente_edit">----</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <div class="border rounded-4 p-3 p-md-4">
+                      <div class="text-start tex-num-edit mb-4">Observación de la fuente administrativa</div>
+                      <div class="d-flex justify-content-center align-items-center text-center py-4">
+                        <div class="fw-bold text-num-edit" id="panel_observacion_fuente_edit">----</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  
