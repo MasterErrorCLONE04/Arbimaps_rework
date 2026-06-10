@@ -78,8 +78,8 @@
 }
 
 .buscador-ai-box {
-    background: #eef6fd;
-    border: 1px solid rgba(3, 47, 87, 0.08);
+    background: #D1E3F2;
+    border: 1px solid #002f5525;
     border-radius: 18px;
     box-shadow: 0 4px 10px rgba(3, 47, 87, 0.16);
     padding: 18px 22px 16px;
@@ -241,6 +241,7 @@ textarea.textarea-predios {
     font-size: 1rem;
     border: none !important;
     text-align: start;
+    box-shadow: 0 3px 8px rgba(3, 47, 87, 0.18);
 }
 
 .buscador-ai-box .buscar {
@@ -292,7 +293,7 @@ textarea.textarea-predios {
 .agumentation-text {
     font-size: 0.833rem;
     font-style: italic;
-    color: #002f55ae;
+    color: #002f55e0;
 }
 
 .section-dual-cards {
