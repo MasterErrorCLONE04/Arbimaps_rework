@@ -476,6 +476,7 @@ class XTFValidationService:
             rule_catalog = normalized_catalog
 
         issues_by_rule: dict[str, int] = {}
+        issue_metadata_by_rule: dict[str, dict[str, Any]] = {}
         for issue in issues:
             if not isinstance(issue, dict):
                 continue
@@ -488,6 +489,7 @@ class XTFValidationService:
             if not rule_id or rule_id == "No disponible":
                 continue
             issues_by_rule[rule_id] = issues_by_rule.get(rule_id, 0) + 1
+            issue_metadata_by_rule.setdefault(rule_id, issue)
 
         implemented_rule_ids = self._implemented_rule_ids_from_components()
         catalog_rule_ids = implemented_rule_ids or sorted(rule_catalog.keys(), key=self._rule_sort_key)
@@ -500,6 +502,25 @@ class XTFValidationService:
             if not rule_id:
                 continue
             rules_by_id[rule_id] = rule
+
+        has_issue_derived_rules = False
+        for rule_id, issue_count in issues_by_rule.items():
+            if rule_id in rules_by_id or rule_id in rule_catalog:
+                continue
+            issue = issue_metadata_by_rule.get(rule_id, {})
+            rules_by_id[rule_id] = {
+                "rule": rule_id,
+                "issue_count": issue_count,
+                "passed": False,
+                "component": issue.get("component") or issue.get("component_slug"),
+                "component_label": issue.get("component_label") or issue.get("component"),
+                "description": (
+                    issue.get("description")
+                    or issue.get("descripcion")
+                    or issue.get("message")
+                ),
+            }
+            has_issue_derived_rules = True
 
         # Si llegan reglas parciales (por ejemplo solo las incumplidas), se completa
         # la lista con el catálogo implementado para conservar agrupación y descripciones.
@@ -516,7 +537,12 @@ class XTFValidationService:
             rule_id not in rules_by_id for rule_id in catalog_rule_ids
         )
 
-        if rule_catalog and catalog_rule_ids and (not rules_by_id or missing_catalog_rules or not rules_have_metadata):
+        if rule_catalog and catalog_rule_ids and (
+            not rules_by_id
+            or missing_catalog_rules
+            or not rules_have_metadata
+            or has_issue_derived_rules
+        ):
             merged_rules: list[dict[str, Any]] = []
 
             for rule_id in catalog_rule_ids:
@@ -703,6 +729,8 @@ class XTFValidationService:
             and self._coerce_int(summary.get("total_rules"), default=-1) != computed_total_rules
         ):
             unimplemented_rules = unimplemented_default
+        if available_rules < computed_total_rules + unimplemented_rules:
+            available_rules = computed_total_rules + unimplemented_rules
 
         total_predios_value = self._coerce_int(summary.get("total_predios"), default=0)
         total_issues_value = self._coerce_int(

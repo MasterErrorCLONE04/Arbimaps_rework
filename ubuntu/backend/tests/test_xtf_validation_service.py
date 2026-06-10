@@ -86,6 +86,49 @@ def test_normalize_quality_marks_single_predio_with_unidentified_errors():
     assert normalized["summary"]["predios_sin_errores"] == 0
 
 
+def test_normalize_quality_keeps_uncatalogued_issue_as_failed_rule():
+    service = XTFValidationService()
+    service._implemented_rule_ids_from_components = lambda: ["1.1"]
+
+    quality = {
+        "issues": [
+            {
+                "rule": "internal_quality",
+                "display_id": "Validador interno",
+                "message": "No se pudo ejecutar una regla interna",
+                "component": "administrativo",
+                "component_label": "Administrativo",
+            }
+        ],
+        "rules": [
+            {
+                "rule": "1.1",
+                "issue_count": 0,
+                "passed": True,
+                "component": "administrativo",
+            }
+        ],
+        "rule_catalog": {
+            "1.1": {
+                "description": "Regla administrativa",
+                "component_label": "Administrativo",
+                "component_slug": "administrativo",
+            },
+        },
+        "summary": {
+            "total_issues": 1,
+        },
+    }
+
+    normalized = service._normalize_quality_result(quality)
+    synthetic_rule = next(rule for rule in normalized["rules"] if rule["rule"] == "internal_quality")
+
+    assert synthetic_rule["issue_count"] == 1
+    assert synthetic_rule["passed"] is False
+    assert synthetic_rule["component"] == "administrativo"
+    assert normalized["summary"]["failed_rules"] == 1
+
+
 def test_predio_summary_assigns_unidentified_issue_to_single_predio():
     predio_summary = _build_predio_summary(
         [

@@ -85,7 +85,8 @@ class ObligatoriasHelper:
     NUMERO_PREDIAL_FIELDS = (
         "numero_predial",
         "Numero_Predial",
-
+        "Numero_Predial_Nacional",
+        "numero_predial_nacional",
     )
 
     #capas
@@ -129,6 +130,10 @@ class ObligatoriasHelper:
         "caracteristicas_calificacion",
         "Características Calificación",
         "Caracteristicas Calificacion",
+        "D_Características_de_la_Unidad_de_Construcción",
+        "d_caracteristicas_de_la_unidad_de_construccion",
+        "D_Caracteristicas",
+        "d_caracteristicas",
     )
 
     TRAMITE = (
@@ -157,6 +162,27 @@ class ObligatoriasHelper:
         "ARB_PuntoReferencia",
         "arb_puntoreferencia",
         "Punto Referencia",
+    )
+
+    AREA_CONSTRUIDA_FIELDS = (
+        "area_construida",
+        "Area_Construida",
+        "area_construida_m2",
+        "Area_construida [m2]",
+    )
+
+    CUBIERTA_FIELDS = (
+        "cc_cubierta",
+        "CC_Cubierta",
+        "Cubierta",
+        "cubierta",
+    )
+
+    TOTAL_CALIFICACION_FIELDS = (
+        "cc_total_calificacion",
+        "CC_Total_Calificacion",
+        "total_calificacion",
+        "Total_Calificacion",
     )
 
 
@@ -1312,7 +1338,7 @@ def rule_11_31(dataset: DatasetReader) ->list[RuleIssue]:
     for table_name, caracteristicas_unidades in helper.iter_caracteristicas_unidades():
         area_construida = helper.get_field_value(
             caracteristicas_unidades,
-            ("area_construida",),
+            helper.AREA_CONSTRUIDA_FIELDS,
         )
 
         if area_construida in (None,""):
@@ -1417,7 +1443,7 @@ def rule_11_34(dataset: DatasetReader) ->list[RuleIssue]:
 
         calificacion_cubierta = helper.get_field_value(
             caracteristicas_unidades,
-            ("cc_cubierta",),
+            helper.CUBIERTA_FIELDS,
         )
 
         if calificacion_cubierta  in (None,""):
@@ -1694,7 +1720,7 @@ def rule_11_42(dataset: DatasetReader) ->list[RuleIssue]:
     for table_name, caracteristicas_unidades in helper.iter_caracteristicas_unidades():
         total_calificacion = helper.get_field_value(
             caracteristicas_unidades,
-            ("cc_total_calificacion", "total_calificacion"),
+            helper.TOTAL_CALIFICACION_FIELDS,
         )
 
         if total_calificacion in (None,""):

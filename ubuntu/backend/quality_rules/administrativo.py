@@ -1378,7 +1378,8 @@ def _rule_1_12(dataset: DatasetReader) -> list[RuleIssue]:
             helper.MATRICULA_FIELDS,
             require_value=False,
         )
-
+        if not matricula_match:
+            continue
         matricula_field, matricula_raw = matricula_match
         matricula_str = "" if matricula_raw in (None, "") else str(matricula_raw).strip()
 
@@ -1449,7 +1450,8 @@ def _rule_1_13(dataset: DatasetReader) -> list[RuleIssue]:
             helper.MATRICULA_FIELDS,
             require_value=False,
         )
-
+        if not matricula_match:
+            continue
         field_name, raw_value = matricula_match
         matricula_str = "" if raw_value in (None, "") else str(raw_value).strip()
 
