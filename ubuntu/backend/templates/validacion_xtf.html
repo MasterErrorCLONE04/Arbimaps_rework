@@ -1168,6 +1168,7 @@
         display: block;
     }
 
+
     .rules-table {
         width: 100%;
         border-collapse: collapse;
@@ -1620,154 +1621,8 @@
                             {% endfor %}
                         </div>
                     </section>
-
-                    <!--
-                    <h2 class="validation-section-title">Resultado de la validación</h2>
-                    <div class="result-detail-grid">
-                        <section class="component-card">
-                            <div class="component-card-head">
-                                <div>
-                                    <strong>Reglas incumplidas</strong>
-                                    <div>Total de reglas incumplidas</div>
-                                </div>
-                                <span class="component-total">{{ failed_rules }}</span>
-                            </div>
-
-                            {% if rules_by_component %}
-                                {% for component_name, component_rules in rules_by_component.items() %}
-                                    {% set component_counts = namespace(failed=0, issues=0) %}
-                                    {% for item in component_rules %}
-                                        {% if not item.passed %}
-                                            {% set component_counts.failed = component_counts.failed + 1 %}
-                                        {% endif %}
-                                        {% set component_counts.issues = component_counts.issues + (item.issue_count|int) %}
-                                    {% endfor %}
-                                    <button
-                                        class="component-tab {{ 'is-active' if loop.first else '' }} {{ 'good' if component_counts.failed == 0 else '' }}"
-                                        type="button"
-                                        data-component-target="component-panel-{{ loop.index }}"
-                                    >
-                                        <span class="count-pill">{{ component_counts.failed }}</span>
-                                        <span>
-                                            <span class="component-name">{{ component_name }}</span>
-                                            <span class="component-description">Reglas del componente {{ component_name|lower }}</span>
-                                        </span>
-                                        <i class="bi bi-chevron-right"></i>
-                                    </button>
-                                {% endfor %}
-                                {% if schema_errors %}
-                                <button
-                                    class="component-tab {{ 'is-active' if not rules_by_component else '' }}"
-                                    type="button"
-                                    data-component-target="component-panel-schema"
-                                >
-                                    <span class="count-pill">{{ schema_errors|length }}</span>
-                                    <span>
-                                        <span class="component-name">Estructural XTF</span>
-                                        <span class="component-description">Errores detectados por el validador del modelo</span>
-                                    </span>
-                                    <i class="bi bi-chevron-right"></i>
-                                </button>
-                                {% endif %}
-                            {% else %}
-                                {% if schema_errors %}
-                                <button
-                                    class="component-tab is-active"
-                                    type="button"
-                                    data-component-target="component-panel-schema"
-                                >
-                                    <span class="count-pill">{{ schema_errors|length }}</span>
-                                    <span>
-                                        <span class="component-name">Estructural XTF</span>
-                                        <span class="component-description">Errores detectados por el validador del modelo</span>
-                                    </span>
-                                    <i class="bi bi-chevron-right"></i>
-                                </button>
-                                {% else %}
-                                <div class="empty-state">No hay información de componentes para este resultado.</div>
-                                {% endif %}
-                            {% endif %}
-                        </section>
-
-                        <section class="rules-card">
-                            {% if rules_by_component %}
-                                {% for component_name, component_rules in rules_by_component.items() %}
-                                <div id="component-panel-{{ loop.index }}" class="rules-panel {{ 'is-active' if loop.first else '' }}">
-                                    <div class="rules-card-title">Desglose de hallazgos del componente {{ component_name|lower }}</div>
-                                    <table class="rules-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Descripción de la regla</th>
-                                                <th>Regla</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for item in component_rules if not item.passed %}
-                                                {% set catalog_item = rule_catalog.get(item.rule|string, {}) %}
-                                                <tr>
-                                                    <td>{{ item.description or catalog_item.get('description') or 'Sin descripción disponible.' }}</td>
-                                                    <td>Regla {{ item.rule }}</td>
-                                                </tr>
-                                            {% else %}
-                                                <tr>
-                                                    <td colspan="2">Este componente no tiene reglas incumplidas.</td>
-                                                </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                {% endfor %}
-                                {% if schema_errors %}
-                                <div id="component-panel-schema" class="rules-panel">
-                                    <div class="rules-card-title">Errores estructurales del archivo XTF</div>
-                                    <table class="rules-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Detalle</th>
-                                                <th>Objeto</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for item in schema_errors %}
-                                            <tr>
-                                                <td>{{ item.message or 'Sin detalle adicional' }}</td>
-                                                <td>{{ item.display_id or item.object_id or item.tid or item.object_class or 'Sin identificar' }}</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                {% endif %}
-                            {% else %}
-                                {% if schema_errors %}
-                                <div id="component-panel-schema" class="rules-panel is-active">
-                                    <div class="rules-card-title">Errores estructurales del archivo XTF</div>
-                                    <table class="rules-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Detalle</th>
-                                                <th>Objeto</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for item in schema_errors %}
-                                            <tr>
-                                                <td>{{ item.message or 'Sin detalle adicional' }}</td>
-                                                <td>{{ item.display_id or item.object_id or item.tid or item.object_class or 'Sin identificar' }}</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                {% else %}
-                                <div class="rules-card-title">Desglose de hallazgos</div>
-                                <div class="empty-state">No hay reglas disponibles para mostrar.</div>
-                                {% endif %}
-                            {% endif %}
-                        </section>
-                    </div>
                 </main>
-            </div>-->
+            </div>
         </section>
         {% endif %}
     </div>

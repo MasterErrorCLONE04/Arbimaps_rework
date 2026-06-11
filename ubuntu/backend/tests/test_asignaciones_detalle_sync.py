@@ -94,7 +94,7 @@ def _patch_common(monkeypatch):
     monkeypatch.setattr(
         asignaciones_detalle,
         "_validate_retorno_xtf_rules",
-        lambda tmp_path: {"status": "ok"},
+        lambda tmp_path, municipality_code=None: {"status": "ok", "municipality_code": municipality_code},
     )
     monkeypatch.setattr(
         asignaciones_detalle,
@@ -224,6 +224,65 @@ def test_procesar_retorno_xtf_passes_tenant_to_prune_workspace_predios(monkeypat
         "datasetname": "ws_asg_1_ret_2",
         "schema_work": "b_asignaciones_arb",
     }
+
+
+def test_procesar_retorno_xtf_passes_tenant_municipality_to_validation(monkeypatch):
+    _patch_common(monkeypatch)
+    captured = {}
+
+    def _validate(tmp_path, municipality_code=None):
+        captured["tmp_path"] = tmp_path
+        captured["municipality_code"] = municipality_code
+        return {"status": "success"}
+
+    monkeypatch.setattr(asignaciones_detalle, "_validate_retorno_xtf_rules", _validate)
+    monkeypatch.setattr(
+        asignaciones_detalle.workspace_service,
+        "prune_workspace_predios",
+        lambda conn, tenant, asignacion_id, datasetname, schema_work, **kwargs: 0,
+    )
+    monkeypatch.setattr(
+        asignaciones_detalle.workspace_service,
+        "sync_workspace_predios_to_main",
+        lambda conn, tenant, asignacion_id, datasetname, schema_main, schema_work: 1,
+    )
+
+    tenant = _tenant()
+    archivo = UploadFile(filename="retorno.xtf", file=BytesIO(b"<xtf/>"))
+
+    asignaciones_detalle._procesar_retorno_xtf(
+        tenant,
+        _FakeConnectionManager(),
+        136,
+        archivo,
+        {"username": "coord1", "role": "coordinador"},
+        publish_to_main=True,
+    )
+
+    assert captured["municipality_code"] == "sucre"
+
+
+def test_validation_helpers_support_new_service_error_shape():
+    result = {
+        "status": "invalid",
+        "message": "Se detectaron errores durante la validacion.",
+        "rule_errors": [
+            {
+                "rule": "4.9",
+                "message": "Avaluo faltante",
+                "object_id": "predio-1",
+            }
+        ],
+        "schema_errors": [],
+    }
+
+    assert asignaciones_detalle._xtf_validation_note(result) == (
+        "status=invalid, errores=1, detalle=Se detectaron errores durante la validacion."
+    )
+    assert asignaciones_detalle._xtf_validation_error_preview(result) == (
+        "1. [regla 4.9] Avaluo faltante (objeto predio-1)"
+    )
+    assert asignaciones_detalle._extract_rule_ids_from_validation(result) == ["4.9"]
 
 
 def test_procesar_retorno_xtf_workspace_refreshes_predio_ids_with_conn_and_tenant(monkeypatch):

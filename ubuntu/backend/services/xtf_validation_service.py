@@ -88,6 +88,36 @@ class XTFValidationService:
         self._write_job_result(job_id, result)
         return result
 
+    def validate_file_path(
+        self,
+        file_path: str | Path,
+        *,
+        municipality_code: str | None = None,
+        job_id: str | None = None,
+    ) -> dict[str, Any]:
+        candidate = Path(file_path).expanduser()
+        if not candidate.is_file():
+            raise FileNotFoundError(f"No se encontro el archivo XTF {candidate}.")
+        validation_job_id = str(job_id or f"path-{uuid4().hex[:8]}")
+        return self._validate_xtf(
+            validation_job_id,
+            candidate,
+            municipality_code=municipality_code,
+        )
+
+    def validate_xtf_path(
+        self,
+        file_path: str | Path,
+        *,
+        municipality_code: str | None = None,
+        job_id: str | None = None,
+    ) -> dict[str, Any]:
+        return self.validate_file_path(
+            file_path,
+            municipality_code=municipality_code,
+            job_id=job_id,
+        )
+
     def build_pdf_report(self, job_id: str, *, component: str | None = None) -> tuple[bytes, str]:
         result = self.load_job_result(job_id)
         result = self._filter_report_by_component(result, component)

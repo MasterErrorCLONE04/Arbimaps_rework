@@ -792,7 +792,7 @@ def _xtf_validation_note(result: Optional[dict]) -> str:
     if not result:
         return "status=not_run"
     status = str(result.get("status") or "unknown").strip().lower()
-    error_items = result.get("errors") if isinstance(result.get("errors"), list) else []
+    error_items = _xtf_validation_error_items(result)
     message = str(result.get("message") or "").strip()
     note = f"status={status}"
     if error_items:
@@ -803,10 +803,8 @@ def _xtf_validation_note(result: Optional[dict]) -> str:
 
 
 def _xtf_validation_error_preview(result: Optional[dict], *, limit: Optional[int] = None) -> str:
-    if not result:
-        return ""
-    errors = result.get("errors")
-    if not isinstance(errors, list):
+    errors = _xtf_validation_error_items(result)
+    if not errors:
         return ""
     preview: List[str] = []
     for item in errors:
@@ -825,6 +823,22 @@ def _xtf_validation_error_preview(result: Optional[dict], *, limit: Optional[int
         if limit is not None and len(preview) >= max(int(limit), 1):
             break
     return "\n".join(f"{idx + 1}. {msg}" for idx, msg in enumerate(preview))
+
+
+def _xtf_validation_error_items(result: Optional[dict]) -> list[dict]:
+    if not result:
+        return []
+
+    legacy_errors = result.get("errors")
+    if isinstance(legacy_errors, list):
+        return [item for item in legacy_errors if isinstance(item, dict)]
+
+    merged: list[dict] = []
+    for key in ("rule_errors", "schema_errors"):
+        value = result.get(key)
+        if isinstance(value, list):
+            merged.extend(item for item in value if isinstance(item, dict))
+    return merged
 
 
 def _history_error_message(
@@ -884,8 +898,8 @@ def _validator_pipeline_labels() -> list[str]:
 def _extract_rule_ids_from_validation(result: Optional[dict], *, limit: int = 6) -> list[str]:
     if not result:
         return []
-    errors = result.get("errors")
-    if not isinstance(errors, list):
+    errors = _xtf_validation_error_items(result)
+    if not errors:
         return []
 
     found: list[str] = []
@@ -930,18 +944,32 @@ def listar_validadores_xtf(
     }
 
 
-def _validate_retorno_xtf_rules(xtf_path: str) -> dict:
+def _validate_retorno_xtf_rules(
+    xtf_path: str,
+    *,
+    municipality_code: str | None = None,
+) -> dict:
     service = xtf_validation_service
 
     try:
         if hasattr(service, "validate_file_path") and callable(getattr(service, "validate_file_path")):
-            result = service.validate_file_path(xtf_path)
+            result = service.validate_file_path(
+                xtf_path,
+                municipality_code=municipality_code,
+            )
         elif hasattr(service, "validate_xtf_path") and callable(getattr(service, "validate_xtf_path")):
             # Compatibilidad con variantes antiguas del servicio.
-            result = service.validate_xtf_path(xtf_path)
+            result = service.validate_xtf_path(
+                xtf_path,
+                municipality_code=municipality_code,
+            )
         elif hasattr(service, "_validate_xtf") and callable(getattr(service, "_validate_xtf")):
             # Fallback para despliegues legacy: _validate_xtf(job_id, file_path)
-            result = service._validate_xtf(f"retorno-{uuid4().hex[:8]}", Path(xtf_path))
+            result = service._validate_xtf(
+                f"retorno-{uuid4().hex[:8]}",
+                Path(xtf_path),
+                municipality_code=municipality_code,
+            )
         else:
             raise export_service.ExportServiceError(
                 status_code=503,
@@ -2566,7 +2594,10 @@ def _procesar_retorno_xtf(
                 raise
 
         stage = "validate_xtf_rules"
-        xtf_validation_result = _validate_retorno_xtf_rules(tmp_path)
+        xtf_validation_result = _validate_retorno_xtf_rules(
+            tmp_path,
+            municipality_code=tenant.municipality_code,
+        )
 
         stage = "sync_pipeline"
         with connection_manager.connection(tenant) as conn:
