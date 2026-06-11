@@ -1455,7 +1455,7 @@ def _rule_1_13(dataset: DatasetReader) -> list[RuleIssue]:
         field_name, raw_value = matricula_match
         matricula_str = "" if raw_value in (None, "") else str(raw_value).strip()
 
-        if not matricula_str.isdigit():
+        if matricula_str and not matricula_str.isdigit():
             issues.append(
                 RuleIssue(
                     rule_id="1.13",
@@ -1472,6 +1472,7 @@ def _rule_1_13(dataset: DatasetReader) -> list[RuleIssue]:
             )
 
     return issues
+
 
 
 def _rule_1_14(dataset: DatasetReader) -> list[RuleIssue]:
