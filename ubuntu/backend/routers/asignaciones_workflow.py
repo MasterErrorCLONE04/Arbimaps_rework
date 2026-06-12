@@ -22,6 +22,12 @@ router = APIRouter(
 logger = logging.getLogger(__name__)
 
 
+from typing import Optional
+
+class WorkflowTransitionPayload(BaseModel):
+    comentario: Optional[str] = None
+
+
 class AssignPayload(BaseModel):
     target_user_id: str
 
@@ -154,6 +160,7 @@ def start_fieldwork(
 
 class SubmitQAPayload(BaseModel):
     enlace_control_calidad: str
+    comentario: Optional[str] = None
 
 
 @router.post("/{assignment_id}/submit-for-qa")
@@ -184,7 +191,7 @@ def submit_for_qa(
 
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                f"SELECT coordinador_asignado_id, creado_por_id, creado_por, titulo FROM {asignacion_table} WHERE id = %s",
+                f"SELECT coordinador_asignado_id, creado_por_id, creado_por, titulo, estado FROM {asignacion_table} WHERE id = %s",
                 (int(assignment_id),)
             )
             asig_row = cur.fetchone()
@@ -200,6 +207,19 @@ def submit_for_qa(
                 estado="CONTROL_CALIDAD_1",
                 enlace_control_calidad=payload.enlace_control_calidad
             )
+
+            if payload.comentario:
+                asignaciones_repo.insert_asignacion_comentario(
+                    conn,
+                    tenant,
+                    asignacion_id=int(assignment_id),
+                    usuario_id=int(user["id_global"]),
+                    usuario=user.get("username"),
+                    rol=user.get("role_code") or user.get("role") or "reconocedor",
+                    comentario=payload.comentario,
+                    estado_origen=asig_row["estado"],
+                    estado_destino="CONTROL_CALIDAD_1"
+                )
 
             if coordinador_id:
                 try:
@@ -251,6 +271,7 @@ def submit_for_qa(
 @router.post("/{assignment_id}/return-to-field")
 def return_to_field(
     assignment_id: str,
+    payload: Optional[WorkflowTransitionPayload] = None,
     tenant: TenantContext = Depends(get_tenant_context_from_session),
     user: dict = Depends(get_current_user_from_session),
     conn = Depends(get_tenant_db_connection),
@@ -274,7 +295,7 @@ def return_to_field(
 
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                f"SELECT usuario_asignado_id, usuario_asignado, titulo FROM {asignacion_table} WHERE id = %s",
+                f"SELECT usuario_asignado_id, usuario_asignado, titulo, estado FROM {asignacion_table} WHERE id = %s",
                 (int(assignment_id),)
             )
             asig_row = cur.fetchone()
@@ -291,6 +312,19 @@ def return_to_field(
                 estado="DEVUELTO_CAMPO",
                 enlace_control_calidad=""  # Clear evidence link so they can upload a new one
             )
+
+            if payload and payload.comentario:
+                asignaciones_repo.insert_asignacion_comentario(
+                    conn,
+                    tenant,
+                    asignacion_id=int(assignment_id),
+                    usuario_id=int(user["id_global"]),
+                    usuario=user.get("username"),
+                    rol=user.get("role_code") or user.get("role") or "coordinador",
+                    comentario=payload.comentario,
+                    estado_origen=asig_row["estado"],
+                    estado_destino="DEVUELTO_CAMPO"
+                )
 
             if reconocedor_id:
                 try:
@@ -341,6 +375,7 @@ def return_to_field(
 @router.post("/{assignment_id}/approve")
 def approve_assignment(
     assignment_id: str,
+    payload: Optional[WorkflowTransitionPayload] = None,
     tenant: TenantContext = Depends(get_tenant_context_from_session),
     user: dict = Depends(get_current_user_from_session),
     conn = Depends(get_tenant_db_connection),
@@ -364,7 +399,7 @@ def approve_assignment(
         roles_table = app_table(tenant, "roles")
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                f"SELECT enlace_control_calidad, titulo, creado_por_id FROM {asignacion_table} WHERE id = %s",
+                f"SELECT enlace_control_calidad, titulo, creado_por_id, estado FROM {asignacion_table} WHERE id = %s",
                 (int(assignment_id),)
             )
             asig_row = cur.fetchone()
@@ -381,6 +416,19 @@ def approve_assignment(
                 int(assignment_id),
                 estado="GENERACION_XTF_CAMPO"
             )
+
+            if payload and payload.comentario:
+                asignaciones_repo.insert_asignacion_comentario(
+                    conn,
+                    tenant,
+                    asignacion_id=int(assignment_id),
+                    usuario_id=int(user["id_global"]),
+                    usuario=user.get("username"),
+                    rol=user.get("role_code") or user.get("role") or "coordinador",
+                    comentario=payload.comentario,
+                    estado_origen=asig_row["estado"],
+                    estado_destino="GENERACION_XTF_CAMPO"
+                )
 
             try:
                 with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -463,6 +511,7 @@ def approve_assignment(
 
 class SubmitSoporteLinkPayload(BaseModel):
     enlace_soporte: str
+    comentario: Optional[str] = None
 
 
 @router.post("/{assignment_id}/submit-soporte-link")
@@ -517,6 +566,18 @@ def submit_soporte_link(
             f"UPDATE {asignacion_table} SET enlace_soporte = %s WHERE id = %s",
             (payload.enlace_soporte, int(assignment_id))
         )
+        if payload.comentario:
+            asignaciones_repo.insert_asignacion_comentario(
+                conn,
+                tenant,
+                asignacion_id=int(assignment_id),
+                usuario_id=int(user["id_global"]),
+                usuario=user.get("username"),
+                rol=role,
+                comentario=payload.comentario,
+                estado_origen=asig_row["estado"],
+                estado_destino=asig_row["estado"]
+            )
 
     if coordinador_id:
         try:
@@ -556,6 +617,7 @@ def submit_soporte_link(
 @router.post("/{assignment_id}/return-to-support")
 def return_to_support(
     assignment_id: str,
+    payload: Optional[WorkflowTransitionPayload] = None,
     tenant: TenantContext = Depends(get_tenant_context_from_session),
     user: dict = Depends(get_current_user_from_session),
     conn = Depends(get_tenant_db_connection),
@@ -586,6 +648,18 @@ def return_to_support(
             f"UPDATE {asignacion_table} SET enlace_soporte = NULL WHERE id = %s",
             (int(assignment_id),)
         )
+        if payload and payload.comentario:
+            asignaciones_repo.insert_asignacion_comentario(
+                conn,
+                tenant,
+                asignacion_id=int(assignment_id),
+                usuario_id=int(user["id_global"]),
+                usuario=user.get("username"),
+                rol=role,
+                comentario=payload.comentario,
+                estado_origen=asig_row["estado"],
+                estado_destino=asig_row["estado"]
+            )
 
     # Notify creator/support user
     creator_id = asig_row["creado_por_id"]
@@ -624,6 +698,7 @@ def return_to_support(
 
 class AssignDigitalizadorPayload(BaseModel):
     digitalizador_id: str
+    comentario: Optional[str] = None
 
 
 @router.post("/{assignment_id}/assign-digitalizador")
@@ -677,7 +752,7 @@ def assign_digitalizador(
         # 2. Update legacy assignment fields
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
-                f"SELECT titulo, usuario_asignado, usuario_asignado_id FROM {asignacion_table} WHERE id = %s",
+                f"SELECT titulo, usuario_asignado, usuario_asignado_id, estado FROM {asignacion_table} WHERE id = %s",
                 (int(assignment_id),)
             )
             asig_row = cur.fetchone()
@@ -705,6 +780,18 @@ def assign_digitalizador(
                 """,
                 (dig_user["username"], int(payload.digitalizador_id), prev_user, prev_user_id, int(assignment_id))
             )
+            if payload.comentario:
+                asignaciones_repo.insert_asignacion_comentario(
+                    conn,
+                    tenant,
+                    asignacion_id=int(assignment_id),
+                    usuario_id=int(user["id_global"]),
+                    usuario=user.get("username"),
+                    rol=role,
+                    comentario=payload.comentario,
+                    estado_origen=asig_row["estado"],
+                    estado_destino="EN_DIGITALIZACION"
+                )
 
         # 3. Create notification for digitalizador
         try:
@@ -744,6 +831,7 @@ def assign_digitalizador(
 @router.post("/{assignment_id}/continue-with-reconocedor")
 def continue_with_reconocedor(
     assignment_id: str,
+    payload: Optional[WorkflowTransitionPayload] = None,
     tenant: TenantContext = Depends(get_tenant_context_from_session),
     user: dict = Depends(get_current_user_from_session),
     conn = Depends(get_tenant_db_connection),
@@ -760,7 +848,7 @@ def continue_with_reconocedor(
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            f"SELECT usuario_asignado_id, usuario_asignado, titulo FROM {asignacion_table} WHERE id = %s",
+            f"SELECT usuario_asignado_id, usuario_asignado, titulo, estado FROM {asignacion_table} WHERE id = %s",
             (int(assignment_id),)
         )
         asig_row = cur.fetchone()
@@ -807,6 +895,18 @@ def continue_with_reconocedor(
                 """,
                 (asig_row["usuario_asignado"], reconocedor_id, int(assignment_id))
             )
+            if payload and payload.comentario:
+                asignaciones_repo.insert_asignacion_comentario(
+                    conn,
+                    tenant,
+                    asignacion_id=int(assignment_id),
+                    usuario_id=int(user["id_global"]),
+                    usuario=user.get("username"),
+                    rol=role,
+                    comentario=payload.comentario,
+                    estado_origen=asig_row["estado"],
+                    estado_destino="EN_DIGITALIZACION"
+                )
 
         # 3. Create notification for reconocedor
         asig_title = asig_row["titulo"] or f"Trabajo #{assignment_id}"
@@ -846,6 +946,7 @@ def continue_with_reconocedor(
 
 class SubmitQA2Payload(BaseModel):
     enlace_digitalizacion: str
+    comentario: Optional[str] = None
 
 
 @router.post("/{assignment_id}/submit-for-qa2")
@@ -869,7 +970,7 @@ def submit_for_qa2(
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            f"SELECT usuario_asignado_id, coordinador_asignado_id, creado_por_id, titulo FROM {asignacion_table} WHERE id = %s",
+            f"SELECT usuario_asignado_id, coordinador_asignado_id, creado_por_id, titulo, estado FROM {asignacion_table} WHERE id = %s",
             (int(assignment_id),)
         )
         asig_row = cur.fetchone()
@@ -904,6 +1005,19 @@ def submit_for_qa2(
             estado="CONTROL_CALIDAD_2",
             enlace_digitalizacion=payload.enlace_digitalizacion
         )
+
+        if payload.comentario:
+            asignaciones_repo.insert_asignacion_comentario(
+                conn,
+                tenant,
+                asignacion_id=int(assignment_id),
+                usuario_id=int(user["id_global"]),
+                usuario=user.get("username"),
+                rol=role,
+                comentario=payload.comentario,
+                estado_origen=asig_row["estado"],
+                estado_destino="CONTROL_CALIDAD_2"
+            )
 
         # 3. Create notification for coordinator
         coordinador_id = asig_row["coordinador_asignado_id"] or asig_row["creado_por_id"]
@@ -954,6 +1068,7 @@ def submit_for_qa2(
 @router.post("/{assignment_id}/return-to-digitalization")
 def return_to_digitalization(
     assignment_id: str,
+    payload: Optional[WorkflowTransitionPayload] = None,
     tenant: TenantContext = Depends(get_tenant_context_from_session),
     user: dict = Depends(get_current_user_from_session),
     conn = Depends(get_tenant_db_connection),
@@ -971,7 +1086,7 @@ def return_to_digitalization(
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            f"SELECT usuario_asignado_id, titulo FROM {asignacion_table} WHERE id = %s",
+            f"SELECT usuario_asignado_id, titulo, estado FROM {asignacion_table} WHERE id = %s",
             (int(assignment_id),)
         )
         asig_row = cur.fetchone()
@@ -1001,6 +1116,18 @@ def return_to_digitalization(
                 f"UPDATE {asignacion_table} SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL WHERE id = %s",
                 (int(assignment_id),)
             )
+            if payload and payload.comentario:
+                asignaciones_repo.insert_asignacion_comentario(
+                    conn,
+                    tenant,
+                    asignacion_id=int(assignment_id),
+                    usuario_id=int(user["id_global"]),
+                    usuario=user.get("username"),
+                    rol=role,
+                    comentario=payload.comentario,
+                    estado_origen=asig_row["estado"],
+                    estado_destino="DEVUELTO_DIGITALIZACION"
+                )
 
         # 3. Create notification for digitalizador/reconocedor
         asig_title = asig_row["titulo"] or f"Trabajo #{assignment_id}"
@@ -1050,6 +1177,7 @@ def return_to_digitalization(
 @router.post("/{assignment_id}/approve-digitalization")
 def approve_digitalization(
     assignment_id: str,
+    payload: Optional[WorkflowTransitionPayload] = None,
     tenant: TenantContext = Depends(get_tenant_context_from_session),
     user: dict = Depends(get_current_user_from_session),
     conn = Depends(get_tenant_db_connection),
@@ -1068,7 +1196,7 @@ def approve_digitalization(
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            f"SELECT enlace_digitalizacion, creado_por_id, titulo FROM {asignacion_table} WHERE id = %s",
+            f"SELECT enlace_digitalizacion, creado_por_id, titulo, estado FROM {asignacion_table} WHERE id = %s",
             (int(assignment_id),)
         )
         asig_row = cur.fetchone()
@@ -1101,6 +1229,19 @@ def approve_digitalization(
             int(assignment_id),
             estado="EN_APROBACION",
         )
+
+        if payload and payload.comentario:
+            asignaciones_repo.insert_asignacion_comentario(
+                conn,
+                tenant,
+                asignacion_id=int(assignment_id),
+                usuario_id=int(user["id_global"]),
+                usuario=user.get("username"),
+                rol=role,
+                comentario=payload.comentario,
+                estado_origen=asig_row["estado"],
+                estado_destino="EN_APROBACION"
+            )
 
         # 3. Notify lideres de reconocimiento
         try:
@@ -1152,6 +1293,7 @@ def approve_digitalization(
 @router.post("/{assignment_id}/lider-approve")
 def lider_approve_assignment(
     assignment_id: str,
+    payload: Optional[WorkflowTransitionPayload] = None,
     tenant: TenantContext = Depends(get_tenant_context_from_session),
     user: dict = Depends(get_current_user_from_session),
     conn = Depends(get_tenant_db_connection),
@@ -1170,7 +1312,7 @@ def lider_approve_assignment(
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            f"SELECT enlace_digitalizacion, creado_por_id, titulo FROM {asignacion_table} WHERE id = %s",
+            f"SELECT enlace_digitalizacion, creado_por_id, titulo, estado FROM {asignacion_table} WHERE id = %s",
             (int(assignment_id),)
         )
         asig_row = cur.fetchone()
@@ -1203,6 +1345,19 @@ def lider_approve_assignment(
             int(assignment_id),
             estado="EN_SINCRONIZACION",
         )
+
+        if payload and payload.comentario:
+            asignaciones_repo.insert_asignacion_comentario(
+                conn,
+                tenant,
+                asignacion_id=int(assignment_id),
+                usuario_id=int(user["id_global"]),
+                usuario=user.get("username"),
+                rol=role,
+                comentario=payload.comentario,
+                estado_origen=asig_row["estado"],
+                estado_destino="EN_SINCRONIZACION"
+            )
 
         # 3. Notify support / consolidador
         try:
@@ -1280,6 +1435,7 @@ def lider_approve_assignment(
 @router.post("/{assignment_id}/lider-reject")
 def lider_reject_assignment(
     assignment_id: str,
+    payload: Optional[WorkflowTransitionPayload] = None,
     tenant: TenantContext = Depends(get_tenant_context_from_session),
     user: dict = Depends(get_current_user_from_session),
     conn = Depends(get_tenant_db_connection),
@@ -1297,7 +1453,7 @@ def lider_reject_assignment(
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            f"SELECT usuario_asignado_id, coordinador_asignado_id, creado_por_id, titulo FROM {asignacion_table} WHERE id = %s",
+            f"SELECT usuario_asignado_id, coordinador_asignado_id, creado_por_id, titulo, estado FROM {asignacion_table} WHERE id = %s",
             (int(assignment_id),)
         )
         asig_row = cur.fetchone()
@@ -1329,6 +1485,18 @@ def lider_reject_assignment(
                 f"UPDATE {asignacion_table} SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL WHERE id = %s",
                 (int(assignment_id),)
             )
+            if payload and payload.comentario:
+                asignaciones_repo.insert_asignacion_comentario(
+                    conn,
+                    tenant,
+                    asignacion_id=int(assignment_id),
+                    usuario_id=int(user["id_global"]),
+                    usuario=user.get("username"),
+                    rol=role,
+                    comentario=payload.comentario,
+                    estado_origen=asig_row["estado"],
+                    estado_destino="DEVUELTO_DIGITALIZACION"
+                )
 
         # 3. Notify coordinator
         if coordinador_id:

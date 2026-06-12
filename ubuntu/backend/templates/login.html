@@ -1,24 +1,35 @@
 <!doctype html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login</title>
+  <title>Login | ARBIMaps</title>
   <link rel="icon" type="image/png" href="{{ rp }}/static/icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
 
   <style>
     :root {
-      --card-bg: rgba(255, 255, 255, 0.22);
-      --card-border: rgba(255, 255, 255, 0.25);
-      --text: #ffffff;
-      --muted: rgba(255,255,255,0.75);
-      --primary: #1f5fbf;
-      --primary-hover: #184c97;
+      --bg-color: #f8fafc;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #032f57;
+      --primary-hover: #0a416f;
+      --primary-light: rgba(3, 47, 87, 0.06);
+      --primary-focus: rgba(3, 47, 87, 0.15);
+      --border-color: #e2e8f0;
+      --card-bg: #ffffff;
+      --error-bg: #fef2f2;
+      --error-border: #fee2e2;
+      --error-text: #991b1b;
     }
 
     * {
       box-sizing: border-box;
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
@@ -28,125 +39,287 @@
       display: grid;
       place-items: center;
       padding: 24px;
-      color: var(--text);
+      color: var(--text-main);
+      position: relative;
+      overflow-x: hidden;
     }
 
-    .card {
-      width: 420px;
-      max-width: 95vw;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 10px;
-      padding: 28px 28px 24px;
-      box-shadow: 0 20px 45px rgba(0,0,0,0.35);
-    }
-
-    .logo {
-      width: 100px;
-      height: 100px;
-      border-radius: 20px;
-      background: rgba(255,255,255,0.15);
-      border: 2px solid rgba(255,255,255,0.35);
+    .login-card {
       display: grid;
-      place-items: center;
-      margin: 0 auto 14px;
+      grid-template-columns: 1.15fr 1fr;
+      width: 960px;
+      max-width: 100%;
+      background: transparent;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.15);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .brand-panel {
+      background: linear-gradient(135deg, rgba(18, 63, 104, 0.92) 0%, rgba(3, 47, 87, 0.96) 100%);
+      padding: 48px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      color: #ffffff;
+      position: relative;
       overflow: hidden;
     }
 
-    .logo img {
-      width: 100%;
-      height: 100%;
+    .brand-panel::after {
+      content: "";
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+      top: -100px;
+      right: -100px;
+      pointer-events: none;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 2;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
       object-fit: contain;
-      display: block;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
     }
 
-    h1 {
-      margin: 0;
-      text-align: center;
-      font-size: 22px;
+    .brand-name {
+      font-size: 20px;
       font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(to right, #ffffff, #dbeafe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    .subtitle {
-      margin: 6px 0 18px;
-      text-align: center;
-      color: var(--muted);
-      font-size: 13px;
+    .brand-content {
+      margin: 40px 0;
+      z-index: 2;
+      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+    }
+
+    .brand-title {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin: 0 0 16px;
+      letter-spacing: -0.8px;
+      color: #ffffff;
+    }
+
+    .brand-subtitle {
+      font-size: 15px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 400;
+      margin: 0;
+    }
+
+    .brand-graphic {
+      position: absolute;
+      bottom: 20px;
+      right: -20px;
+      width: 320px;
+      height: 320px;
+      opacity: 0.85;
+      pointer-events: none;
+      transform: rotate(-5deg);
+      z-index: 1;
+    }
+
+    .brand-footer {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.60);
+      z-index: 2;
+    }
+
+    .form-panel {
+      padding: 56px;
+      background: rgba(255, 255, 255, 0.92);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .mobile-logo-header {
+      display: none;
+      margin-bottom: 24px;
+      justify-content: center;
+    }
+
+    .mobile-logo {
+      height: 56px;
+      object-fit: contain;
+    }
+
+    .form-header {
+      margin-bottom: 32px;
+    }
+
+    .form-header h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0 0 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .form-header .subtitle {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      margin: 0;
     }
 
     .error {
-      background: rgba(255, 0, 0, 0.15);
-      border: 1px solid rgba(255, 0, 0, 0.25);
-      color: #ffd2d2;
-      padding: 10px 12px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      font-size: 13px;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+      font-size: 13.5px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: shake 0.4s ease-in-out;
     }
 
-    label {
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-4px);
+      }
+
+      75% {
+        transform: translateX(4px);
+      }
+    }
+
+    .input-field {
+      margin-bottom: 20px;
+    }
+
+    .input-field label {
       display: block;
-      margin: 12px 0 6px;
+      margin-bottom: 6px;
       font-size: 13px;
-      color: var(--muted);
+      font-weight: 600;
+      color: var(--text-main);
     }
 
-    select,
-    input[type="text"],
-    input[type="password"] {
+    .input-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .field-icon {
+      position: absolute;
+      left: 14px;
+      width: 18px;
+      height: 18px;
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: color 0.2s;
+      z-index: 5;
+    }
+
+    .input-container select,
+    .input-container input {
       width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.35);
-      background: rgba(0,0,0,0.15);
-      color: var(--text);
+      padding: 12px 16px 12px 42px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: #ffffff;
+      color: var(--text-main);
       outline: none;
+      font-size: 14px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    select {
+    .input-container select:hover,
+    .input-container input:hover {
+      border-color: #cbd5e1;
+    }
+
+    .input-container select:focus,
+    .input-container input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--primary-focus);
+    }
+
+    .input-container:focus-within .field-icon {
+      color: var(--primary);
+    }
+
+    .input-container select {
       appearance: none;
       -webkit-appearance: none;
       -moz-appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 14px center;
+      background-repeat: no-repeat;
+      background-size: 1.25rem;
+      cursor: pointer;
     }
 
     input::placeholder {
-      color: rgba(255,255,255,0.6);
+      color: var(--text-muted);
+      opacity: 0.7;
     }
 
-    .password-wrap {
-      position: relative;
-    }
-
-    .password-wrap input[type="password"],
-    .password-wrap input[type="text"] {
-      padding-right: 40px;
+    .password-wrap input {
+      padding-right: 44px;
     }
 
     .btn-eye-toggle {
       position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
+      right: 12px;
       border: none;
       background: transparent;
-      color: #5a5a5c;
+      color: var(--text-muted);
       cursor: pointer;
       padding: 0;
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
       outline: none;
+      border-radius: 6px;
+      transition: color 0.2s, background-color 0.2s;
+      z-index: 5;
+    }
+
+    .btn-eye-toggle:hover {
+      color: var(--text-main);
+      background-color: #f1f5f9;
     }
 
     .btn-eye-toggle svg {
       width: 18px;
       height: 18px;
       display: block;
-      fill: currentColor;
+      fill: none;
     }
 
     .btn-eye-toggle .eye-icon-closed {
@@ -165,125 +338,311 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 12px;
+      margin-top: 16px;
       gap: 12px;
-      font-size: 12px;
-      color: var(--muted);
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 13.5px;
+      color: var(--text-muted);
+      user-select: none;
+      font-weight: 500;
+    }
+
+    .checkbox-container input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      outline: none;
+      background-color: #ffffff;
+      cursor: pointer;
+      display: grid;
+      place-content: center;
+      transition: all 0.2s;
+      margin: 0;
+    }
+
+    .checkbox-container input[type="checkbox"]:hover {
+      border-color: #cbd5e1;
+    }
+
+    .checkbox-container input[type="checkbox"]:checked {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .checkbox-container input[type="checkbox"]::before {
+      content: "";
+      width: 9px;
+      height: 6px;
+      border-left: 2px solid white;
+      border-bottom: 2px solid white;
+      transform: rotate(-45deg) translate(0.5px, -1px);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .checkbox-container input[type="checkbox"]:checked::before {
+      opacity: 1;
     }
 
     .btn {
       width: 100%;
-      margin-top: 18px;
-      padding: 12px;
+      margin-top: 28px;
+      padding: 13px;
       border: none;
-      border-radius: 8px;
-      background: var(--primary);
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
       color: white;
-      font-weight: 700;
+      font-weight: 600;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 15px;
+      box-shadow: 0 4px 6px -1px rgba(31, 95, 191, 0.12), 0 2px 4px -1px rgba(31, 95, 191, 0.08);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .btn:hover {
-      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px -2px rgba(31, 95, 191, 0.2), 0 4px 8px -2px rgba(31, 95, 191, 0.15);
+      filter: brightness(1.05);
     }
 
-    .footer {
-      margin-top: 12px;
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .form-panel .footer {
+      margin-top: 36px;
       text-align: center;
-      font-size: 11px;
-      color: rgba(255,255,255,0.65);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-weight: 400;
+      border-top: 1px solid var(--border-color);
+      padding-top: 20px;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 992px) {
+      .login-card {
+        width: 100%;
+        max-width: 800px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .login-card {
+        grid-template-columns: 1fr;
+        max-width: 460px;
+        border-radius: 20px;
+      }
+
+      .brand-panel {
+        display: none;
+      }
+
+      .mobile-logo-header {
+        display: flex;
+      }
+
+      .form-panel {
+        padding: 48px 32px;
+      }
     }
   </style>
 </head>
 
 <body>
   {% set rp = rp if rp is defined else request.scope.get('root_path','') %}
-  <div class="card">
-    <div class="logo">
-      <img src="{{ rp }}/static/logo_login.png" alt="Logo" />
+
+  <div class="login-card">
+    <!-- Left Column: Branding -->
+    <div class="brand-panel">
+      <div class="brand-header">
+        <img src="{{ rp }}/static/icon.png" alt="Icon" class="brand-logo" />
+        <span class="brand-name">ARBIMaps</span>
+      </div>
+
+      <div class="brand-content">
+        <h2 class="brand-title">Gestión Catastral Inteligente y Eficiente</h2>
+        <p class="brand-subtitle">Acceda a herramientas avanzadas para la administración, consulta y edición
+          cartográfica de predios.</p>
+      </div>
+
+      <!-- Coordinate graphic SVG representation -->
+      <div class="brand-graphic">
+        <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="grid-fade" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.15)" />
+              <stop offset="100%" stop-color="rgba(255,255,255,0.01)" />
+            </linearGradient>
+            <linearGradient id="line-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.3)" />
+              <stop offset="50%" stop-color="rgba(255,255,255,0.8)" />
+              <stop offset="100%" stop-color="rgba(255,255,255,0.3)" />
+            </linearGradient>
+          </defs>
+
+          <!-- Grid lines -->
+          <g stroke="url(#grid-fade)" stroke-width="1">
+            <line x1="50" y1="0" x2="50" y2="400" />
+            <line x1="100" y1="0" x2="100" y2="400" />
+            <line x1="150" y1="0" x2="150" y2="400" />
+            <line x1="200" y1="0" x2="200" y2="400" />
+            <line x1="250" y1="0" x2="250" y2="400" />
+            <line x1="300" y1="0" x2="300" y2="400" />
+            <line x1="350" y1="0" x2="350" y2="400" />
+
+            <line x1="0" y1="50" x2="400" y2="50" />
+            <line x1="0" y1="100" x2="400" y2="100" />
+            <line x1="0" y1="150" x2="400" y2="150" />
+            <line x1="0" y1="200" x2="400" y2="200" />
+            <line x1="0" y1="250" x2="400" y2="250" />
+            <line x1="0" y1="300" x2="400" y2="300" />
+            <line x1="0" y1="350" x2="400" y2="350" />
+          </g>
+
+          <!-- Concentric circles -->
+          <circle cx="200" cy="200" r="120" stroke="rgba(255,255,255,0.06)" stroke-width="2" stroke-dasharray="5 5" />
+          <circle cx="200" cy="200" r="80" stroke="rgba(255,255,255,0.08)" stroke-width="1.5" />
+          <circle cx="200" cy="200" r="40" stroke="rgba(255,255,255,0.12)" stroke-width="1" />
+
+          <!-- Map Polygon -->
+          <polygon points="120,150 250,110 320,190 270,280 160,250" fill="rgba(255,255,255,0.02)"
+            stroke="url(#line-grad)" stroke-width="2" />
+
+          <!-- Dots -->
+          <circle cx="120" cy="150" r="4" fill="#ffffff" />
+          <circle cx="250" cy="110" r="4" fill="#ffffff" />
+          <circle cx="320" cy="190" r="4" fill="#ffffff" />
+          <circle cx="270" cy="280" r="4" fill="#ffffff" />
+          <circle cx="160" cy="250" r="4" fill="#ffffff" />
+        </svg>
+      </div>
+
+      <div class="brand-footer">
+        <span>Arbitrium SAS &copy; 2026</span>
+      </div>
     </div>
 
-    <h1>Bienvenido</h1>
-    <div class="subtitle">Ingrese a su cuenta</div>
-
-    {% if error %}
-      <div class="error">{{ error }}</div>
-    {% endif %}
-
-    <form method="post" action="{{ rp }}/login">
-      <label>Municipio</label>
-      <select name="municipality_code" required>
-        <option value="">Seleccione un municipio</option>
-        {% for municipality in municipalities or [] %}
-          <option
-            value="{{ municipality.code }}"
-            {% if municipality_code == municipality.code %}selected{% endif %}>
-            {{ municipality.name }}
-          </option>
-        {% endfor %}
-      </select>
-
-      <label>Usuario</label>
-      <input type="text" name="username" placeholder="Usuario" value="{{ username or '' }}" required>
-
-      <label>Contrase&ntilde;a</label>
-      <div class="password-wrap">
-        <input id="loginPassword" type="password" name="password" placeholder="Contrase&ntilde;a" required>
-        <button
-          type="button"
-          class="btn-eye-toggle"
-          aria-label="Mostrar u ocultar contrase&ntilde;a">
-          <!-- ojo abierto -->
-          <svg class="eye-icon-open" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M2 12C4.5 7.5 7.9 5 12 5s7.5 2.5 10 7c-2.5 4.5-5.9 7-10 7S4.5 16.5 2 12z"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <circle
-              cx="12"
-              cy="12"
-              r="3"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            />
-          </svg>
-          <!-- ojo cerrado -->
-          <svg class="eye-icon-closed" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M3 15c2.2-1 4.5-1.5 7-1.5s4.8.5 7 1.5"
-              stroke="currentColor"
-              stroke-width="2"
-              fill="none"
-              stroke-linecap="round"
-            />
-            <path
-              d="M6 18l1.5-2.5M12 19v-3M18 18l-1.5-2.5"
-              stroke="currentColor"
-              stroke-width="2"
-              fill="none"
-              stroke-linecap="round"
-            />
-          </svg>
-        </button>
+    <!-- Right Column: Login Form -->
+    <div class="form-panel">
+      <!-- Mobile Logo Header -->
+      <div class="mobile-logo-header">
+        <img src="{{ rp }}/static/logo_login.png" alt="Logo" class="mobile-logo" />
       </div>
 
-      <div class="row">
-        <label style="margin:0; display:flex; align-items:center; gap:8px;">
-          <input type="checkbox" name="remember">
-          Recordar informaci&oacute;n
-        </label>
+      <div class="form-header">
+        <h1>Bienvenido</h1>
+        <p class="subtitle">Ingrese a su cuenta para continuar</p>
       </div>
 
-      <button class="btn" type="submit">Ingresar</button>
-    </form>
+      {% if error %}
+      <div class="error">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"
+          style="flex-shrink:0;">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+          <path
+            d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z" />
+        </svg>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
 
-    <div class="footer">&copy; Copyright Arbitrium SAS &amp; ARBIMaps 2026</div>
+      <form method="post" action="{{ rp }}/login">
+        <!-- Municipality field with custom icon wrapper -->
+        <div class="input-field">
+          <label for="municipality">Municipio</label>
+          <div class="input-container">
+            <svg class="field-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <select id="municipality" name="municipality_code" required>
+              <option value="">Seleccione un municipio</option>
+              {% for municipality in municipalities or [] %}
+              <option value="{{ municipality.code }}" {% if municipality_code==municipality.code %}selected{% endif %}>
+                {{ municipality.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Username field with custom icon wrapper -->
+        <div class="input-field">
+          <label for="username">Usuario</label>
+          <div class="input-container">
+            <svg class="field-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <input id="username" type="text" name="username" placeholder="Ingrese su usuario"
+              value="{{ username or '' }}" required>
+          </div>
+        </div>
+
+        <!-- Password field with custom icon wrapper -->
+        <div class="input-field">
+          <label for="loginPassword">Contraseña</label>
+          <div class="input-container password-wrap">
+            <svg class="field-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input id="loginPassword" type="password" name="password" placeholder="Ingrese su contraseña" required>
+            <button type="button" class="btn-eye-toggle" aria-label="Mostrar u ocultar contraseña">
+              <!-- Open eye -->
+              <svg class="eye-icon-open" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <!-- Closed eye -->
+              <svg class="eye-icon-closed" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path
+                  d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                </path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="checkbox-container">
+            <input type="checkbox" name="remember">
+            Recordar información
+          </label>
+        </div>
+
+        <button class="btn" type="submit">Ingresar al sistema</button>
+      </form>
+
+      <div class="footer">&copy; Copyright Arbitrium SAS &amp; ARBIMaps 2026</div>
+    </div>
   </div>
 
   <script>
@@ -300,4 +659,5 @@
     })();
   </script>
 </body>
+
 </html>

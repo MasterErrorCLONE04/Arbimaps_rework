@@ -90,6 +90,28 @@ def mock_db_connection(monkeypatch):
 
     cur.fetchone = fetchone_mock
 
+    def fetchall_mock():
+        if not last_query:
+            return []
+        sql = last_query[-1]
+        if "asignacion_comentario" in sql:
+            return [
+                {
+                    "id": 1,
+                    "asignacion_id": 145,
+                    "usuario_id": 200,
+                    "usuario": "juan_ramon",
+                    "rol": "reconocedor",
+                    "comentario": "Este es un comentario de prueba",
+                    "estado_origen": "EN_CAMPO",
+                    "estado_destino": "CONTROL_CALIDAD_1",
+                    "creado_en": None
+                }
+            ]
+        return []
+
+    cur.fetchall = fetchall_mock
+
     monkeypatch.setattr(
         asignaciones_detalle.asignaciones_repo,
         "list_predios_asignacion",
@@ -127,3 +149,19 @@ def test_obtener_detalle_asignacion_includes_username(mock_db_connection):
     assert res_json["usuario_asignado_username"] == "juan_ramon"
     assert res_json["enlace_control_calidad"] == "https://example.com/evidence"
     assert res_json["usuario_asignado"] == "Juan Ramon (juan_ramon)"
+
+def test_obtener_detalle_asignacion_includes_comentarios(mock_db_connection):
+    client = TestClient(app)
+    response = client.get("/asignaciones/145/detalle")
+
+    assert response.status_code == 200
+    res_json = response.json()
+    assert "comentarios" in res_json
+    assert len(res_json["comentarios"]) == 1
+    comment = res_json["comentarios"][0]
+    assert comment["id"] == 1
+    assert comment["comentario"] == "Este es un comentario de prueba"
+    assert comment["rol"] == "reconocedor"
+    assert comment["estado_origen"] == "EN_CAMPO"
+    assert comment["estado_destino"] == "CONTROL_CALIDAD_1"
+

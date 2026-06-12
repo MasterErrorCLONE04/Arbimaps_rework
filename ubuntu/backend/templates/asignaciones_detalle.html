@@ -44,70 +44,79 @@
         <!-- Botones de Acción -->
         <div class="d-flex gap-2 justify-content-lg-end flex-wrap w-100 justify-content-start">
           <button id="btnHeaderSyncXtf" type="button"
-            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
             style="background-color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#02203d'" onmouseout="this.style.backgroundColor='#032F57'">
             <i class="fa-solid fa-code-branch"></i>
             <span>Sincronizar XTF</span>
           </button>
           <button id="btnHeaderSubmitQA" type="button"
-            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
             style="background-color: #22c55e; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#16a34a'" onmouseout="this.style.backgroundColor='#22c55e'">
             <i class="fa-solid fa-paper-plane"></i>
             <span>Enviar a Control de Calidad</span>
           </button>
           <button id="btnHeaderQCReview" type="button"
-            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
             style="background-color: #f59e0b; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#d97706'" onmouseout="this.style.backgroundColor='#f59e0b'">
             <i class="fa-solid fa-clipboard-check"></i>
             <span>Revisar Control de Calidad</span>
           </button>
           <button id="btnHeaderSubmitSoporteLink" type="button"
-            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
             style="background-color: #8b5cf6; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#7c3aed'" onmouseout="this.style.backgroundColor='#8b5cf6'">
             <i class="fa-solid fa-paper-plane"></i>
             <span>Enviar enlace a Coordinador</span>
           </button>
           <button id="btnHeaderViewSoporteLink" type="button"
-            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
             style="background-color: #06b6d4; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#0891b2'" onmouseout="this.style.backgroundColor='#06b6d4'">
             <i class="fa-solid fa-link"></i>
             <span>Ver enlace de Soporte</span>
           </button>
           <button id="btnHeaderSubmitQA2" type="button"
-            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
             style="background-color: #14b8a6; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#0d9488'" onmouseout="this.style.backgroundColor='#14b8a6'">
             <i class="fa-solid fa-paper-plane"></i>
             <span>Enviar a Control de Calidad 2</span>
           </button>
           <button id="btnHeaderQCReview2" type="button"
-            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
             style="background-color: #f97316; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#ea580c'" onmouseout="this.style.backgroundColor='#f97316'">
             <i class="fa-solid fa-clipboard-check"></i>
             <span>Revisar Control de Calidad 2</span>
           </button>
           <button id="btnHeaderLiderReview" type="button"
-            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
             style="background-color: #6366f1; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#4f46e5'" onmouseout="this.style.backgroundColor='#6366f1'">
             <i class="fa-solid fa-clipboard-check"></i>
             <span>Revisión de Líder</span>
           </button>
           <button id="btnHeaderViewDigitalizacionLink" type="button"
-            class="btn rounded-pill fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
             style="background-color: #6366f1; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#4f46e5'" onmouseout="this.style.backgroundColor='#6366f1'">
             <i class="fa-solid fa-link"></i>
             <span>Ver enlace de Digitalización</span>
           </button>
+          <button id="btnHeaderComentarios" type="button"
+            class="btn rounded-3 fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
+            data-bs-toggle="modal" data-bs-target="#modalComentarios"
+            style="background-color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;"
+            onmouseover="this.style.backgroundColor='#02203d'" onmouseout="this.style.backgroundColor='#032F57'">
+            <i class="fa-solid fa-comments"></i>
+            <span>Comentarios y recomendaciones</span>
+            <span id="badgeComentariosCount" class="badge rounded-pill bg-danger d-none" style="font-size: 0.72rem; padding: 0.25em 0.6em;">0</span>
+          </button>
           <button id="btnHeaderHistorial" type="button"
-            class="btn rounded-pill fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
+            class="btn rounded-3 fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
             data-bs-toggle="modal" data-bs-target="#modalHistorial"
             style="background-color: #5B9BD5; font-size: 0.85rem; transition: background-color 0.2s ease;"
             onmouseover="this.style.backgroundColor='#4a8ac4'" onmouseout="this.style.backgroundColor='#5B9BD5'">
@@ -334,6 +343,8 @@
                 </div>
               </div>
             </div>
+
+
 
           </div>
         </div>
@@ -1037,6 +1048,7 @@
 
   {% include 'modales/modal_sincronizar_xtf.html' %}
   {% include 'modales/modal_historial.html' %}
+  {% include 'modales/modal_comentarios.html' %}
 
   {% include "asignaciones_detalle/modales_workflow.html" %}
 

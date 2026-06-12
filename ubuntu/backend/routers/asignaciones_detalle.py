@@ -340,6 +340,18 @@ class AsignacionPredioDetalle(BaseModel):
     creado_en: Optional[datetime] = None
 
 
+class AsignacionComentario(BaseModel):
+    id: int
+    asignacion_id: int
+    usuario_id: Optional[int] = None
+    usuario: Optional[str] = None
+    rol: Optional[str] = None
+    comentario: str
+    estado_origen: Optional[str] = None
+    estado_destino: Optional[str] = None
+    creado_en: Optional[datetime] = None
+
+
 class AsignacionDetalleResponse(BaseModel):
     id: int | str
     estado: Optional[str] = None
@@ -361,6 +373,7 @@ class AsignacionDetalleResponse(BaseModel):
     total_eliminados: int = 0
     total_nuevos: int = 0
     predios: List[AsignacionPredioDetalle] = Field(default_factory=list)
+    comentarios: List[AsignacionComentario] = Field(default_factory=list)
 
 
 def _maybe_int(value) -> Optional[int]:
@@ -1187,6 +1200,7 @@ def obtener_detalle_asignacion(
     users_table = _app_table(tenant, "users")
     event_log_table = _app_table(tenant, "asignacion_event_log")
     retorno_table = _app_table(tenant, "asignacion_retorno")
+    comentario_table = _app_table(tenant, "asignacion_comentario")
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
@@ -1271,6 +1285,26 @@ def obtener_detalle_asignacion(
         )
         published_main = bool(cur.fetchone())
 
+        cur.execute(
+            f"""
+            SELECT
+                id,
+                asignacion_id,
+                usuario_id,
+                usuario,
+                rol,
+                comentario,
+                estado_origen,
+                estado_destino,
+                creado_en
+            FROM {comentario_table}
+            WHERE asignacion_id = %s
+            ORDER BY creado_en DESC
+            """,
+            (asignacion_id,),
+        )
+        comentarios_rows = cur.fetchall() or []
+
     total_activos = int(stats.get("total_activos") or 0)
     total_inactivos = int(stats.get("total_inactivos") or 0)
     total_nuevos_raw = int(stats.get("total_nuevos_raw") or 0)
@@ -1320,6 +1354,22 @@ def obtener_detalle_asignacion(
             )
         )
 
+    comentarios: List[AsignacionComentario] = []
+    for row in comentarios_rows:
+        comentarios.append(
+            AsignacionComentario(
+                id=row.get("id"),
+                asignacion_id=row.get("asignacion_id"),
+                usuario_id=row.get("usuario_id"),
+                usuario=row.get("usuario"),
+                rol=row.get("rol"),
+                comentario=row.get("comentario") or "",
+                estado_origen=row.get("estado_origen"),
+                estado_destino=row.get("estado_destino"),
+                creado_en=row.get("creado_en"),
+            )
+        )
+
     return AsignacionDetalleResponse(
         id=asignacion.get("id"),
         estado=estado_resuelto,
@@ -1353,6 +1403,7 @@ def obtener_detalle_asignacion(
         total_eliminados=total_eliminados,
         total_nuevos=total_nuevos,
         predios=predios,
+        comentarios=comentarios,
     )
 
 

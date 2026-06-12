@@ -65,7 +65,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               </div>
 
               <div class="card-info-title text-start">
-                <span class="title-arbi text-white fw-bold d-block mb-0">ARBIMaaps</span>
+                <span class="title-arbi text-white fw-bold d-block mb-0">ARBIMaps</span>
                 <span class="text-white d-block mb-0 fw-normal" style="font-size: 0.633rem; line-height: 1.1">
                   Aplicativo de Gestión Catastral
                 </span>
@@ -251,6 +251,12 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   <div id="notificationList" class="notification-list">
                     <div class="notification-empty px-3 py-4 text-muted">Cargando...</div>
                   </div>
+                  <div class="dropdown-divider m-0"></div>
+                  <div class="p-2 text-center">
+                    <a href="{{ rp }}/panel/notificaciones" class="btn btn-link btn-sm text-decoration-none py-1 w-100 fw-semibold" style="color: #032f57; font-size: 0.833rem;">
+                      Ver todas las notificaciones
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -308,7 +314,8 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   %} {% set validacion_embed = True %} {% include
                   "validacion_xtf.html" %} {% set validacion_embed = False %}
                   {% elif view == 'box_explorer' %} {% include
-                  "box_explorer.html" %} {% elif view == 'error' %}
+                  "box_explorer.html" %} {% elif view == 'notificaciones' %} {% include
+                  "notificaciones.html" %} {% elif view == 'error' %}
                   <div class="card p-3">
                     <h6 class="mb-2">
                       No se pudo cargar la vista solicitada.

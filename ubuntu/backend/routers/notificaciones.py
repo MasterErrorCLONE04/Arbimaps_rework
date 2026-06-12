@@ -20,6 +20,7 @@ def _get_user_id(user: dict) -> int:
 @router.get("/mis-notificaciones")
 def mis_notificaciones(
     limit: int = 50,
+    archivado: bool = False,
     user: dict = Depends(require_user),
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
@@ -34,11 +35,11 @@ def mis_notificaciones(
             SELECT *
             FROM {app_schema}.notificaciones
             WHERE id_usuario_destino = %s
-              AND archivado = FALSE
+              AND archivado = %s
             ORDER BY leido ASC, fecha_creacion DESC, id DESC
             LIMIT %s
             """,
-            (user_id, limit),
+            (user_id, archivado, limit),
         )
         return cur.fetchall()
 
@@ -152,3 +153,33 @@ def archivar_notificacion(
     if not row:
         raise HTTPException(status_code=404, detail="Notificacion no encontrada.")
     return row
+
+
+@router.post("/{notificacion_id}/desarchivar")
+def desarchivar_notificacion(
+    notificacion_id: int,
+    user: dict = Depends(require_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
+    user_id = _get_user_id(user)
+    app_schema = tenant.schemas.app if tenant else "arbimaps_app"
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            f"""
+            UPDATE {app_schema}.notificaciones
+            SET archivado = FALSE
+            WHERE id = %s
+              AND id_usuario_destino = %s
+            RETURNING *
+            """,
+            (notificacion_id, user_id),
+        )
+        row = cur.fetchone()
+    conn.commit()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Notificacion no encontrada.")
+    return row
+

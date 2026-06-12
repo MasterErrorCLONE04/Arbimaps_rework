@@ -1,0 +1,31 @@
+<!-- Modal Comentarios y Recomendaciones -->
+<div class="modal fade modal-right" id="modalComentarios" tabindex="-1" aria-labelledby="modalComentariosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content sync-modal-content" style="border-radius: 20px; overflow: hidden; border: none; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+      <!-- Modal Header -->
+      <div class="modal-header sync-modal-header border-0 p-4 align-items-start justify-content-between" style="background-color: #021f3c; color: white;">
+        <div class="d-flex flex-column gap-1">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-comments fs-5 text-white"></i>
+            <h5 class="sync-modal-title fw-bold mb-0 text-white" id="modalComentariosLabel" style="font-size: 1.25rem;">Comentarios y Recomendaciones</h5>
+          </div>
+          <small class="d-block text-white-50" style="font-size: 0.85rem;">Historial de comentarios y recomendaciones de respuesta registrados en el flujo de la asignación</small>
+        </div>
+        <button type="button" class="btn p-0 border-0 shadow-none d-flex align-items-center justify-content-center text-white" data-bs-dismiss="modal" aria-label="Cerrar" style="background: transparent; margin-top: -2px; opacity: 0.8; transition: opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">
+          <i class="bi bi-x-lg fs-4" style="font-weight: 700 !important;"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body sync-modal-body p-4" style="background-color: #f8fafc; min-height: 250px;">
+        <div id="comentariosList" class="d-flex flex-column gap-3">
+          <!-- Comentarios populated dynamically -->
+        </div>
+        <div id="noComentariosMsg" class="text-muted text-center py-5" style="font-size: 0.95rem;">
+          <i class="fa-regular fa-comment-dots fs-2 d-block mb-3 text-muted" style="opacity: 0.5;"></i>
+          No hay comentarios o recomendaciones registrados para esta asignación.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

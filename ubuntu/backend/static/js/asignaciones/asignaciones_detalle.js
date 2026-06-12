@@ -608,6 +608,148 @@ const params = new URLSearchParams(window.location.search);
 
         tablaHistorialDT.draw();
 
+        // Helpers to format role names and state names nicely
+        function formatRoleName(role) {
+          if (!role) return "";
+          const rolesMap = {
+            "admin": "Administrador",
+            "coordinador": "Coordinador",
+            "reconocedor": "Reconocedor",
+            "digitalizador": "Digitalizador",
+            "soporte": "Soporte",
+            "consolidador": "Consolidador",
+            "lider_reconocimiento": "Líder de Reconocimiento"
+          };
+          return rolesMap[role.toLowerCase()] || role;
+        }
+
+        function formatStateName(state) {
+          if (!state) return "";
+          return state
+            .replace(/_/g, " ")
+            .toLowerCase()
+            .split(" ")
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+        }
+
+        // Render comments
+        const comentarios = Array.isArray(dataDet.comentarios) ? dataDet.comentarios : [];
+        const badgeComentariosCount = document.getElementById("badgeComentariosCount");
+        const comentariosList = document.getElementById("comentariosList");
+        const noComentariosMsg = document.getElementById("noComentariosMsg");
+
+        if (badgeComentariosCount) {
+          if (comentarios.length > 0) {
+            badgeComentariosCount.textContent = comentarios.length;
+            badgeComentariosCount.classList.remove("d-none");
+          } else {
+            badgeComentariosCount.classList.add("d-none");
+            badgeComentariosCount.textContent = "0";
+          }
+        }
+
+        if (comentariosList) {
+          comentariosList.innerHTML = "";
+          if (comentarios.length > 0) {
+            if (noComentariosMsg) noComentariosMsg.style.display = "none";
+            comentarios.forEach(c => {
+              const dateStr = fmtDate(c.creado_en);
+              const userEsc = esc(c.usuario || "Usuario");
+              const roleFmt = formatRoleName(c.rol);
+              const commentEsc = esc(c.comentario || "").replace(/\n/g, "<br>");
+              
+              let transitionHtml = "";
+              if (c.estado_origen || c.estado_destino) {
+                const orig = formatStateName(c.estado_origen);
+                const dest = formatStateName(c.estado_destino);
+                if (orig && dest && orig !== dest) {
+                  transitionHtml = `
+                    <div class="mt-2 d-flex align-items-center gap-1 flex-wrap" style="font-size: 0.75rem;">
+                      <span class="badge text-secondary border border-secondary bg-transparent px-2 py-1">${orig}</span>
+                      <i class="fa-solid fa-arrow-right-long text-muted mx-1"></i>
+                      <span class="badge bg-secondary text-white px-2 py-1">${dest}</span>
+                    </div>
+                  `;
+                } else if (dest) {
+                  transitionHtml = `
+                    <div class="mt-2" style="font-size: 0.75rem;">
+                      <span class="badge bg-secondary text-white px-2 py-1">${dest}</span>
+                    </div>
+                  `;
+                }
+              }
+
+              // Determine icon and color based on role
+              let roleBadgeClass = "bg-light text-dark border";
+              let avatarBg = "rgba(100, 116, 139, 0.1)";
+              let avatarIcon = '<i class="fa-solid fa-user text-secondary"></i>';
+              
+              const lowerRole = (c.rol || "").toLowerCase();
+              if (lowerRole === "admin") {
+                roleBadgeClass = "bg-danger text-white";
+                avatarBg = "rgba(220, 53, 69, 0.1)";
+                avatarIcon = '<i class="fa-solid fa-user-shield text-danger"></i>';
+              } else if (lowerRole === "coordinador") {
+                roleBadgeClass = "bg-primary text-white";
+                avatarBg = "rgba(13, 110, 253, 0.1)";
+                avatarIcon = '<i class="fa-solid fa-user-tie text-primary"></i>';
+              } else if (lowerRole === "lider_reconocimiento") {
+                roleBadgeClass = "bg-warning text-dark";
+                avatarBg = "rgba(255, 193, 7, 0.15)";
+                avatarIcon = '<i class="fa-solid fa-user-check text-warning-emphasis"></i>';
+              } else if (lowerRole === "reconocedor") {
+                roleBadgeClass = "bg-info text-dark";
+                avatarBg = "rgba(13, 202, 240, 0.1)";
+                avatarIcon = '<i class="fa-solid fa-compass text-info-emphasis"></i>';
+              } else if (lowerRole === "digitalizador") {
+                roleBadgeClass = "bg-success text-white";
+                avatarBg = "rgba(25, 135, 84, 0.1)";
+                avatarIcon = '<i class="fa-solid fa-laptop-code text-success"></i>';
+              }
+
+              const commentItem = document.createElement("div");
+              commentItem.className = "card border-0 rounded-4 shadow-sm p-3 position-relative hover-lift";
+              commentItem.style.backgroundColor = "#ffffff";
+              commentItem.style.border = "1px solid #e2e8f0";
+              commentItem.style.transition = "transform 0.2s ease, box-shadow 0.2s ease";
+              
+              commentItem.innerHTML = `
+                <div class="d-flex align-items-start gap-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" 
+                       style="width: 40px; height: 40px; background-color: ${avatarBg}; font-size: 1.1rem;">
+                    ${avatarIcon}
+                  </div>
+                  <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-1">
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold text-dark" style="font-size: 0.95rem;">${userEsc}</span>
+                        <span class="badge ${roleBadgeClass}" style="font-size: 0.7rem; font-weight: 600;">${roleFmt}</span>
+                      </div>
+                      <span class="text-muted" style="font-size: 0.75rem;">${dateStr}</span>
+                    </div>
+                    <div class="text-secondary" style="font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word;">${commentEsc}</div>
+                    ${transitionHtml}
+                  </div>
+                </div>
+              `;
+              
+              commentItem.addEventListener("mouseenter", () => {
+                commentItem.style.transform = "translateY(-2px)";
+                commentItem.style.boxShadow = "0 8px 16px rgba(0,0,0,0.08)";
+              });
+              commentItem.addEventListener("mouseleave", () => {
+                commentItem.style.transform = "none";
+                commentItem.style.boxShadow = "0 2px 4px rgba(0,0,0,0.04)";
+              });
+
+              comentariosList.appendChild(commentItem);
+            });
+          } else {
+            if (noComentariosMsg) noComentariosMsg.style.display = "block";
+          }
+        }
+
         const breadcrumbName = document.getElementById("breadcrumbAssignmentName");
         if (breadcrumbName) {
           breadcrumbName.textContent = dataDet.titulo || "";
@@ -784,8 +926,10 @@ const params = new URLSearchParams(window.location.search);
     document.getElementById("btnHeaderSubmitQA")?.addEventListener("click", () => {
       const inpLink = document.getElementById("inpQALink");
       const errEl = document.getElementById("qaLinkError");
+      const commentEl = document.getElementById("txtQAComment");
       if (inpLink) inpLink.value = "";
       if (errEl) errEl.classList.add("d-none");
+      if (commentEl) commentEl.value = "";
 
       const modalEl = document.getElementById("modalSubmitQA");
       if (modalEl && window.bootstrap) {
@@ -804,6 +948,7 @@ const params = new URLSearchParams(window.location.search);
       const inpLink = document.getElementById("inpQALink");
       const errEl = document.getElementById("qaLinkError");
       const linkVal = inpLink?.value?.trim() || "";
+      const commentVal = document.getElementById("txtQAComment")?.value?.trim() || "";
 
       if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
         if (errEl) {
@@ -827,7 +972,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
-          body: JSON.stringify({ enlace_control_calidad: linkVal }),
+          body: JSON.stringify({ enlace_control_calidad: linkVal, comentario: commentVal || null }),
           credentials: "same-origin"
         });
 
@@ -865,6 +1010,8 @@ const params = new URLSearchParams(window.location.search);
     document.getElementById("btnHeaderQCReview")?.addEventListener("click", () => {
       const modalEl = document.getElementById("modalQCReview");
       const qcLinkEl = document.getElementById("qcReviewEvidenceLink");
+      const commentEl = document.getElementById("txtQCReviewComment");
+      if (commentEl) commentEl.value = "";
 
       const currentLink = currentAssignmentData?.enlace_control_calidad || "";
       if (qcLinkEl) {
@@ -889,6 +1036,7 @@ const params = new URLSearchParams(window.location.search);
         return;
       }
 
+      const commentVal = document.getElementById("txtQCReviewComment")?.value?.trim() || "";
       const btnReject = document.getElementById("btnQCReject");
       const btnApprove = document.getElementById("btnQCApprove");
       const btnCancel = document.querySelector("#modalQCReview .btn-close, #modalQCReview [data-bs-dismiss='modal']");
@@ -903,6 +1051,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
+          body: JSON.stringify({ comentario: commentVal || null }),
           credentials: "same-origin"
         });
 
@@ -949,6 +1098,7 @@ const params = new URLSearchParams(window.location.search);
         return;
       }
 
+      const commentVal = document.getElementById("txtQCReviewComment")?.value?.trim() || "";
       const btnReject = document.getElementById("btnQCReject");
       const btnApprove = document.getElementById("btnQCApprove");
       const btnCancel = document.querySelector("#modalQCReview .btn-close, #modalQCReview [data-bs-dismiss='modal']");
@@ -963,6 +1113,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
+          body: JSON.stringify({ comentario: commentVal || null }),
           credentials: "same-origin"
         });
 
@@ -1001,8 +1152,10 @@ const params = new URLSearchParams(window.location.search);
     document.getElementById("btnHeaderSubmitSoporteLink")?.addEventListener("click", () => {
       const inpLink = document.getElementById("inpSoporteLink");
       const errEl = document.getElementById("soporteLinkError");
+      const commentEl = document.getElementById("txtSoporteLinkComment");
       if (inpLink) inpLink.value = "";
       if (errEl) errEl.classList.add("d-none");
+      if (commentEl) commentEl.value = "";
 
       const modalEl = document.getElementById("modalSubmitSoporteLink");
       if (modalEl && window.bootstrap) {
@@ -1021,6 +1174,7 @@ const params = new URLSearchParams(window.location.search);
       const inpLink = document.getElementById("inpSoporteLink");
       const errEl = document.getElementById("soporteLinkError");
       const linkVal = inpLink?.value?.trim() || "";
+      const commentVal = document.getElementById("txtSoporteLinkComment")?.value?.trim() || "";
 
       if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
         if (errEl) {
@@ -1044,7 +1198,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
-          body: JSON.stringify({ enlace_soporte: linkVal }),
+          body: JSON.stringify({ enlace_soporte: linkVal, comentario: commentVal || null }),
           credentials: "same-origin"
         });
 
@@ -1082,6 +1236,8 @@ const params = new URLSearchParams(window.location.search);
     document.getElementById("btnHeaderViewSoporteLink")?.addEventListener("click", () => {
       const modalEl = document.getElementById("modalViewSoporteLink");
       const linkEl = document.getElementById("viewSoporteEvidenceLink");
+      const commentEl = document.getElementById("txtSoporteComment");
+      if (commentEl) commentEl.value = "";
 
       const currentLink = currentAssignmentData?.enlace_soporte || "";
       if (linkEl) {
@@ -1132,6 +1288,7 @@ const params = new URLSearchParams(window.location.search);
         return;
       }
 
+      const commentVal = document.getElementById("txtSoporteComment")?.value?.trim() || "";
       const btnDevolver = document.getElementById("btnViewSoporteDevolver");
       const btnIntegrar = document.getElementById("btnViewSoporteIntegrarDigit");
       const btnContinuar = document.getElementById("btnViewSoporteContinuarRecon");
@@ -1146,6 +1303,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
+          body: JSON.stringify({ comentario: commentVal || null }),
           credentials: "same-origin"
         });
 
@@ -1225,6 +1383,7 @@ const params = new URLSearchParams(window.location.search);
       const selectEl = document.getElementById("selectDigitalizador");
       const selectedId = selectEl?.value;
       const errEl = document.getElementById("digitalizadorSelectError");
+      const commentVal = document.getElementById("txtSoporteComment")?.value?.trim() || "";
 
       if (!selectedId) {
         if (errEl) errEl.classList.remove("d-none");
@@ -1244,7 +1403,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
-          body: JSON.stringify({ digitalizador_id: selectedId }),
+          body: JSON.stringify({ digitalizador_id: selectedId, comentario: commentVal || null }),
           credentials: "same-origin"
         });
 
@@ -1283,6 +1442,7 @@ const params = new URLSearchParams(window.location.search);
         return;
       }
 
+      const commentVal = document.getElementById("txtSoporteComment")?.value?.trim() || "";
       const btnDevolver = document.getElementById("btnViewSoporteDevolver");
       const btnIntegrar = document.getElementById("btnViewSoporteIntegrarDigit");
       const btnContinuar = document.getElementById("btnViewSoporteContinuarRecon");
@@ -1297,6 +1457,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
+          body: JSON.stringify({ comentario: commentVal || null }),
           credentials: "same-origin"
         });
 
@@ -1328,8 +1489,10 @@ const params = new URLSearchParams(window.location.search);
     document.getElementById("btnHeaderSubmitQA2")?.addEventListener("click", () => {
       const inpLink = document.getElementById("inpQA2Link");
       const errEl = document.getElementById("qa2LinkError");
+      const commentEl = document.getElementById("txtQA2Comment");
       if (inpLink) inpLink.value = "";
       if (errEl) errEl.classList.add("d-none");
+      if (commentEl) commentEl.value = "";
 
       const supportLink = currentAssignmentData?.enlace_soporte || "";
       const supportContainer = document.getElementById("qa2SoporteLinkContainer");
@@ -1361,6 +1524,7 @@ const params = new URLSearchParams(window.location.search);
       const inpLink = document.getElementById("inpQA2Link");
       const errEl = document.getElementById("qa2LinkError");
       const linkVal = inpLink?.value?.trim() || "";
+      const commentVal = document.getElementById("txtQA2Comment")?.value?.trim() || "";
 
       if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
         if (errEl) {
@@ -1384,7 +1548,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
-          body: JSON.stringify({ enlace_digitalizacion: linkVal }),
+          body: JSON.stringify({ enlace_digitalizacion: linkVal, comentario: commentVal || null }),
           credentials: "same-origin"
         });
 
@@ -1415,6 +1579,8 @@ const params = new URLSearchParams(window.location.search);
     document.getElementById("btnHeaderQCReview2")?.addEventListener("click", () => {
       const modalEl = document.getElementById("modalQCReview2");
       const qcLinkEl = document.getElementById("qcReview2EvidenceLink");
+      const commentEl = document.getElementById("txtQC2ReviewComment");
+      if (commentEl) commentEl.value = "";
 
       const currentLink = currentAssignmentData?.enlace_digitalizacion || "";
       if (qcLinkEl) {
@@ -1439,6 +1605,7 @@ const params = new URLSearchParams(window.location.search);
         return;
       }
 
+      const commentVal = document.getElementById("txtQC2ReviewComment")?.value?.trim() || "";
       const btnReject = document.getElementById("btnQC2Reject");
       const btnApprove = document.getElementById("btnQC2Approve");
       const btnCancel = document.querySelector("#modalQCReview2 .btn-close, #modalQCReview2 [data-bs-dismiss='modal']");
@@ -1453,6 +1620,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
+          body: JSON.stringify({ comentario: commentVal || null }),
           credentials: "same-origin"
         });
 
@@ -1492,6 +1660,7 @@ const params = new URLSearchParams(window.location.search);
         return;
       }
 
+      const commentVal = document.getElementById("txtQC2ReviewComment")?.value?.trim() || "";
       const btnReject = document.getElementById("btnQC2Reject");
       const btnApprove = document.getElementById("btnQC2Approve");
       const btnCancel = document.querySelector("#modalQCReview2 .btn-close, #modalQCReview2 [data-bs-dismiss='modal']");
@@ -1506,6 +1675,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
+          body: JSON.stringify({ comentario: commentVal || null }),
           credentials: "same-origin"
         });
 
@@ -1535,6 +1705,8 @@ const params = new URLSearchParams(window.location.search);
     document.getElementById("btnHeaderLiderReview")?.addEventListener("click", () => {
       const modalEl = document.getElementById("modalLiderReview");
       const qcLinkEl = document.getElementById("liderReviewEvidenceLink");
+      const commentEl = document.getElementById("txtLiderReviewComment");
+      if (commentEl) commentEl.value = "";
 
       const currentLink = currentAssignmentData?.enlace_digitalizacion || "";
       if (qcLinkEl) {
@@ -1575,6 +1747,7 @@ const params = new URLSearchParams(window.location.search);
         return;
       }
 
+      const commentVal = document.getElementById("txtLiderReviewComment")?.value?.trim() || "";
       const btnReject = document.getElementById("btnLiderReject");
       const btnApprove = document.getElementById("btnLiderApprove");
       const btnCancel = document.querySelector("#modalLiderReview .btn-close, #modalLiderReview [data-bs-dismiss='modal']");
@@ -1589,6 +1762,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
+          body: JSON.stringify({ comentario: commentVal || null }),
           credentials: "same-origin"
         });
 
@@ -1628,6 +1802,7 @@ const params = new URLSearchParams(window.location.search);
         return;
       }
 
+      const commentVal = document.getElementById("txtLiderReviewComment")?.value?.trim() || "";
       const btnReject = document.getElementById("btnLiderReject");
       const btnApprove = document.getElementById("btnLiderApprove");
       const btnCancel = document.querySelector("#modalLiderReview .btn-close, #modalLiderReview [data-bs-dismiss='modal']");
@@ -1642,6 +1817,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
+          body: JSON.stringify({ comentario: commentVal || null }),
           credentials: "same-origin"
         });
 

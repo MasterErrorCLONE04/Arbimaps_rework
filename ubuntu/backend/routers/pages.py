@@ -643,6 +643,23 @@ async def panel_validacion_xtf_upload(
     )
 
 # -------------------------------------------------
+# NOTIFICACIONES
+# -------------------------------------------------
+
+@router.get("/panel/notificaciones")
+def panel_notificaciones(request: Request):
+
+    user = get_user(request)
+
+    if not user:
+        return RedirectResponse(
+            url=with_root_path(request, "/login"),
+            status_code=302
+        )
+
+    return _render_panel(request, user, view="notificaciones")
+
+# -------------------------------------------------
 # DEBUG
 # -------------------------------------------------
 

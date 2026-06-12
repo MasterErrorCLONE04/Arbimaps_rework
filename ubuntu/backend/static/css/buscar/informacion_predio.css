@@ -455,18 +455,6 @@
     transition: transform 0.2s ease;
 }
 
-.btn-sm {
-    background-color: #032F57;
-    color: #FFFFFF;
-    border-radius: 20px;
-}
-
-.btn-sm:hover {
-    background-color: #053867;
-    color: #FFFFFF;
-    border-radius: 20px;
-}
-
 #tblConsCollapse thead th {
     color: #123A63;
     background-color: #F0F6FB;

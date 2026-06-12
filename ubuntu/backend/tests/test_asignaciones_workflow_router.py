@@ -745,6 +745,61 @@ def test_approve_digitalization_forbidden_for_lider():
         app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
 
 
+def test_return_to_field_with_comment_success(mock_command_service, monkeypatch):
+    result = MagicMock()
+    result.transition.assignment.assignment_id = "1"
+    result.transition.assignment.workflow_state = WorkflowState.DEVUELTO
+    result.transition.assignment.assigned_user_id = "rec-01"
+    result.transition.assignment.version = 3
+    mock_command_service.execute_transition.return_value = result
+
+    mock_conn = MagicMock()
+    mock_cur = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cur
+    
+    mock_cur.fetchone.side_effect = [
+        {"usuario_asignado_id": 12, "titulo": "Job", "estado": "CONTROL_CALIDAD_1"},
+        {"rol": "reconocedor"}
+    ]
+
+    app.dependency_overrides[get_tenant_db_connection] = lambda: mock_conn
+    app.dependency_overrides[get_current_user_from_session] = lambda: {"id_global": "123", "username": "admin1", "role_code": "administrador"}
+
+    inserted_comments = []
+    def spy_insert_comment(conn, tenant, asignacion_id, usuario_id, usuario, rol, comentario, estado_origen, estado_destino):
+        inserted_comments.append({
+            "asignacion_id": asignacion_id,
+            "usuario_id": usuario_id,
+            "usuario": usuario,
+            "rol": rol,
+            "comentario": comentario,
+            "estado_origen": estado_origen,
+            "estado_destino": estado_destino
+        })
+
+    import routers.asignaciones_workflow as workflow_router
+    monkeypatch.setattr(workflow_router.asignaciones_repo, "insert_asignacion_comentario", spy_insert_comment)
+    monkeypatch.setattr(workflow_router.asignaciones_repo, "update_asignacion_fields", lambda *a, **k: None)
+    monkeypatch.setattr(workflow_router.asignaciones_repo, "safe_crear_notificacion", lambda *a, **k: None)
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/api/workflow/asignaciones/1/return-to-field",
+            json={"comentario": "Este es el motivo del rechazo"}
+        )
+
+        assert response.status_code == 200
+        assert len(inserted_comments) == 1
+        assert inserted_comments[0]["comentario"] == "Este es el motivo del rechazo"
+        assert inserted_comments[0]["estado_origen"] == "CONTROL_CALIDAD_1"
+        assert inserted_comments[0]["estado_destino"] == "DEVUELTO_CAMPO"
+    finally:
+        app.dependency_overrides[get_tenant_db_connection] = mock_get_tenant_db_connection
+        app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
+
+
+
 
 
 

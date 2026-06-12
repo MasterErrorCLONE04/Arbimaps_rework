@@ -381,6 +381,27 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 ON {app_schema}.notificaciones (id_usuario_destino, archivado, leido)
                 """
             )
+            cur.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {app_schema}.asignacion_comentario (
+                    id SERIAL PRIMARY KEY,
+                    asignacion_id BIGINT REFERENCES {app_schema}.asignacion(id) ON DELETE CASCADE,
+                    usuario_id BIGINT REFERENCES {app_schema}.users(id_global) ON DELETE SET NULL,
+                    usuario TEXT,
+                    rol TEXT,
+                    comentario TEXT NOT NULL,
+                    estado_origen TEXT,
+                    estado_destino TEXT,
+                    creado_en TIMESTAMPTZ DEFAULT now()
+                )
+                """
+            )
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_asignacion_comentario_lookup
+                ON {app_schema}.asignacion_comentario (asignacion_id)
+                """
+            )
             if in_transaction:
                 cur.execute("RELEASE SAVEPOINT ensure_asig_tables_sp")
         except Exception as exc:
@@ -1798,3 +1819,42 @@ def list_predios_asignacion(conn, *args, **kwargs) -> list[dict]:
             (asignacion_id,),
         )
         return cur.fetchall()
+
+
+def insert_asignacion_comentario(
+    conn,
+    tenant,
+    asignacion_id: int,
+    usuario_id: Optional[int],
+    usuario: Optional[str],
+    rol: Optional[str],
+    comentario: str,
+    estado_origen: Optional[str],
+    estado_destino: Optional[str]
+) -> None:
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            INSERT INTO {app_schema}.asignacion_comentario (
+                asignacion_id, usuario_id, usuario, rol, comentario, estado_origen, estado_destino
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                asignacion_id,
+                usuario_id,
+                usuario,
+                rol,
+                comentario,
+                estado_origen,
+                estado_destino
+            ),
+        )
+
