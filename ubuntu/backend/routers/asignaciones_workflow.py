@@ -26,6 +26,7 @@ from typing import Optional
 
 class WorkflowTransitionPayload(BaseModel):
     comentario: Optional[str] = None
+    enlace: Optional[str] = None
 
 
 class AssignPayload(BaseModel):
@@ -205,7 +206,8 @@ def submit_for_qa(
                 tenant,
                 int(assignment_id),
                 estado="CONTROL_CALIDAD_1",
-                enlace_control_calidad=payload.enlace_control_calidad
+                enlace_control_calidad=payload.enlace_control_calidad,
+                enlace_devolucion=""
             )
 
             if payload.comentario:
@@ -310,7 +312,8 @@ def return_to_field(
                 tenant,
                 int(assignment_id),
                 estado="DEVUELTO_CAMPO",
-                enlace_control_calidad=""  # Clear evidence link so they can upload a new one
+                enlace_control_calidad="",  # Clear evidence link so they can upload a new one
+                enlace_devolucion=payload.enlace if payload else None
             )
 
             if payload and payload.comentario:
@@ -323,7 +326,8 @@ def return_to_field(
                     rol=user.get("role_code") or user.get("role") or "coordinador",
                     comentario=payload.comentario,
                     estado_origen=asig_row["estado"],
-                    estado_destino="DEVUELTO_CAMPO"
+                    estado_destino="DEVUELTO_CAMPO",
+                    enlace=payload.enlace if payload else None
                 )
 
             if reconocedor_id:
@@ -563,7 +567,7 @@ def submit_soporte_link(
 
     with conn.cursor() as cur:
         cur.execute(
-            f"UPDATE {asignacion_table} SET enlace_soporte = %s WHERE id = %s",
+            f"UPDATE {asignacion_table} SET enlace_soporte = %s, enlace_devolucion = NULL WHERE id = %s",
             (payload.enlace_soporte, int(assignment_id))
         )
         if payload.comentario:
@@ -645,8 +649,8 @@ def return_to_support(
     # Reset enlace_soporte in database
     with conn.cursor() as cur:
         cur.execute(
-            f"UPDATE {asignacion_table} SET enlace_soporte = NULL WHERE id = %s",
-            (int(assignment_id),)
+            f"UPDATE {asignacion_table} SET enlace_soporte = NULL, enlace_devolucion = %s WHERE id = %s",
+            (payload.enlace if payload else None, int(assignment_id))
         )
         if payload and payload.comentario:
             asignaciones_repo.insert_asignacion_comentario(
@@ -658,7 +662,8 @@ def return_to_support(
                 rol=role,
                 comentario=payload.comentario,
                 estado_origen=asig_row["estado"],
-                estado_destino=asig_row["estado"]
+                estado_destino=asig_row["estado"],
+                enlace=payload.enlace if payload else None
             )
 
     # Notify creator/support user
@@ -1003,7 +1008,8 @@ def submit_for_qa2(
             tenant,
             int(assignment_id),
             estado="CONTROL_CALIDAD_2",
-            enlace_digitalizacion=payload.enlace_digitalizacion
+            enlace_digitalizacion=payload.enlace_digitalizacion,
+            enlace_devolucion=""
         )
 
         if payload.comentario:
@@ -1113,8 +1119,8 @@ def return_to_digitalization(
         # 2. Update legacy fields
         with conn.cursor() as cur:
             cur.execute(
-                f"UPDATE {asignacion_table} SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL WHERE id = %s",
-                (int(assignment_id),)
+                f"UPDATE {asignacion_table} SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL, enlace_devolucion = %s WHERE id = %s",
+                (payload.enlace if payload else None, int(assignment_id))
             )
             if payload and payload.comentario:
                 asignaciones_repo.insert_asignacion_comentario(
@@ -1126,7 +1132,8 @@ def return_to_digitalization(
                     rol=role,
                     comentario=payload.comentario,
                     estado_origen=asig_row["estado"],
-                    estado_destino="DEVUELTO_DIGITALIZACION"
+                    estado_destino="DEVUELTO_DIGITALIZACION",
+                    enlace=payload.enlace if payload else None
                 )
 
         # 3. Create notification for digitalizador/reconocedor
@@ -1482,8 +1489,8 @@ def lider_reject_assignment(
         # 2. Update legacy fields: state to 'DEVUELTO_DIGITALIZACION', clear evidence link
         with conn.cursor() as cur:
             cur.execute(
-                f"UPDATE {asignacion_table} SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL WHERE id = %s",
-                (int(assignment_id),)
+                f"UPDATE {asignacion_table} SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL, enlace_devolucion = %s WHERE id = %s",
+                (payload.enlace if payload else None, int(assignment_id))
             )
             if payload and payload.comentario:
                 asignaciones_repo.insert_asignacion_comentario(
@@ -1495,7 +1502,8 @@ def lider_reject_assignment(
                     rol=role,
                     comentario=payload.comentario,
                     estado_origen=asig_row["estado"],
-                    estado_destino="DEVUELTO_DIGITALIZACION"
+                    estado_destino="DEVUELTO_DIGITALIZACION",
+                    enlace=payload.enlace if payload else None
                 )
 
         # 3. Notify coordinator

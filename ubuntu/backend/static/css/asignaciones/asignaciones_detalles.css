@@ -1610,7 +1610,7 @@ table.dataTable tbody td {
 
     /* ESTILOS MODAL DE SINCRONIZACIÓN */
     .sync-modal-content {
-        border-radius: 24px !important;
+        border-radius: 6px !important;
         background-color: #FFFFFF;
         overflow: hidden;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
@@ -1620,8 +1620,8 @@ table.dataTable tbody td {
     .sync-modal-header {
         background-color: #F0F6FB;
         border-bottom: 1px solid #E4EBF2;
-        border-top-left-radius: 24px;
-        border-top-right-radius: 24px;
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
     }
 
     .sync-modal-icon-circle {
@@ -1970,29 +1970,27 @@ table.dataTable tbody td {
         margin: 0 !important;
         width: 620px;
         max-width: 90%;
-        height: auto !important;
-        max-height: calc(100vh - 48px) !important;
+        height: calc(100vh - var(--panel-topbar-height, 60px) - var(--panel-footer-height, 40px) - 80px) !important;
         right: 24px;
-        top: 50% !important;
+        top: calc(var(--panel-topbar-height, 60px) + 40px) !important;
         bottom: auto !important;
     }
 
     .modal.modal-right .modal-content {
-        height: auto !important;
-        max-height: calc(100vh - 48px) !important;
-        border-radius: 24px !important; /* rounded on all sides as it floats */
+        height: 100% !important;
+        border-radius: 6px !important; /* rounded on all sides as it floats */
         border: none !important;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
     }
 
-    /* Override Bootstrap slide-down transitions to slide from right and center vertically */
+    /* Override Bootstrap slide-down transitions to slide from right and align with top/bottom gaps */
     .modal.modal-right.fade .modal-dialog {
-        transform: translate(calc(100% + 24px), -50%) !important;
+        transform: translateX(calc(100% + 24px)) !important;
         transition: transform 0.3s ease-out !important;
     }
 
     .modal.modal-right.show .modal-dialog {
-        transform: translate(0, -50%) !important;
+        transform: translateX(0) !important;
     }
 }
 
@@ -2219,4 +2217,65 @@ table.dataTable tbody td {
     width: 100% !important;
     margin: 0 !important;
     padding: 0 16px !important;
+}
+
+/* ==========================================================================
+   WORKFLOW MODALS CORNERS AND INNER ELEMENTS STYLING (6px Radius)
+   ========================================================================== */
+.modal-content {
+    border-radius: 6px !important;
+    --bs-modal-border-radius: 6px !important;
+    --bs-modal-inner-border-radius: 5px !important;
+}
+
+.modal-content .modal-header {
+    border-top-left-radius: 5px !important;
+    border-top-right-radius: 5px !important;
+}
+
+.modal-content .form-control,
+.modal-content textarea,
+.modal-content select,
+.modal-content .rounded-3,
+.modal-content .btn {
+    border-radius: 6px !important;
+}
+
+/* Override input groups to maintain left/right roundings */
+.modal-content .input-group > .input-group-text {
+    border-radius: 6px 0 0 6px !important;
+}
+
+.modal-content .input-group > .form-control {
+    border-radius: 0 6px 6px 0 !important;
+}
+
+/* Premium styling for attachment link buttons in comments */
+.btn-attachment-link {
+    background-color: rgba(59, 130, 246, 0.08) !important;
+    border: 1px solid rgba(59, 130, 246, 0.25) !important;
+    color: #3b82f6 !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    border-radius: 6px !important;
+    padding: 6px 14px !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.btn-attachment-link:hover {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: #FFFFFF !important;
+}
+
+/* Force 6px border-radius on all standard buttons across the details page */
+.btn:not(.rounded-circle),
+.btn-volver-asignacion,
+.header-action-capsule-dark,
+.header-action-capsule-blue {
+    border-radius: 6px !important;
 }

@@ -265,7 +265,7 @@ def test_submit_soporte_link_success(monkeypatch):
 
         # Check DB update
         mock_cur.execute.assert_any_call(
-            "UPDATE arbimaps_app.asignacion SET enlace_soporte = %s WHERE id = %s",
+            "UPDATE arbimaps_app.asignacion SET enlace_soporte = %s, enlace_devolucion = NULL WHERE id = %s",
             ("https://example.com/soporte-report", 123)
         )
 
@@ -389,8 +389,8 @@ def test_return_to_support_success(monkeypatch):
         response = client.post("/api/workflow/asignaciones/123/return-to-support")
         assert response.status_code == 200
         mock_cur.execute.assert_any_call(
-            "UPDATE arbimaps_app.asignacion SET enlace_soporte = NULL WHERE id = %s",
-            (123,)
+            "UPDATE arbimaps_app.asignacion SET enlace_soporte = NULL, enlace_devolucion = %s WHERE id = %s",
+            (None, 123)
         )
         assert len(notifications_sent) == 1
         assert notifications_sent[0]["id_usuario_destino"] == 200
@@ -587,8 +587,8 @@ def test_return_to_digitalization_success(mock_command_service, monkeypatch):
         response = client.post("/api/workflow/asignaciones/123/return-to-digitalization")
         assert response.status_code == 200
         mock_cur.execute.assert_any_call(
-            "UPDATE arbimaps_app.asignacion SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL WHERE id = %s",
-            (123,)
+            "UPDATE arbimaps_app.asignacion SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL, enlace_devolucion = %s WHERE id = %s",
+            (None, 123)
         )
         assert len(notifications_sent) == 1
         assert notifications_sent[0]["id_usuario_destino"] == 500
@@ -766,7 +766,7 @@ def test_return_to_field_with_comment_success(mock_command_service, monkeypatch)
     app.dependency_overrides[get_current_user_from_session] = lambda: {"id_global": "123", "username": "admin1", "role_code": "administrador"}
 
     inserted_comments = []
-    def spy_insert_comment(conn, tenant, asignacion_id, usuario_id, usuario, rol, comentario, estado_origen, estado_destino):
+    def spy_insert_comment(conn, tenant, asignacion_id, usuario_id, usuario, rol, comentario, estado_origen, estado_destino, enlace=None):
         inserted_comments.append({
             "asignacion_id": asignacion_id,
             "usuario_id": usuario_id,
@@ -774,7 +774,8 @@ def test_return_to_field_with_comment_success(mock_command_service, monkeypatch)
             "rol": rol,
             "comentario": comentario,
             "estado_origen": estado_origen,
-            "estado_destino": estado_destino
+            "estado_destino": estado_destino,
+            "enlace": enlace
         })
 
     import routers.asignaciones_workflow as workflow_router
@@ -804,4 +805,4 @@ def test_return_to_field_with_comment_success(mock_command_service, monkeypatch)
 
 
 
-
+

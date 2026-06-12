@@ -496,6 +496,18 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 ON {app_schema}.asignacion_comentario (asignacion_id)
                 """
             )
+            cur.execute(
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion
+                ADD COLUMN IF NOT EXISTS enlace_devolucion TEXT
+                """
+            )
+            cur.execute(
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion_comentario
+                ADD COLUMN IF NOT EXISTS enlace TEXT
+                """
+            )
             if in_transaction:
                 cur.execute("RELEASE SAVEPOINT ensure_asig_tables_sp")
         except Exception as exc:
@@ -1125,6 +1137,7 @@ def update_asignacion_fields(*args, **kwargs) -> None:
     enlace_control_calidad = kwargs.get("enlace_control_calidad")
     enlace_soporte = kwargs.get("enlace_soporte")
     enlace_digitalizacion = kwargs.get("enlace_digitalizacion")
+    enlace_devolucion = kwargs.get("enlace_devolucion")
     usuario_reconocedor = kwargs.get("usuario_reconocedor")
     usuario_reconocedor_id = kwargs.get("usuario_reconocedor_id")
 
@@ -1158,6 +1171,9 @@ def update_asignacion_fields(*args, **kwargs) -> None:
     if enlace_digitalizacion is not None:
         sets.append("enlace_digitalizacion=%s")
         params.append(enlace_digitalizacion)
+    if enlace_devolucion is not None:
+        sets.append("enlace_devolucion=%s")
+        params.append(enlace_devolucion)
     if usuario_reconocedor is not None:
         sets.append("usuario_reconocedor=%s")
         params.append(usuario_reconocedor)
@@ -1924,7 +1940,8 @@ def insert_asignacion_comentario(
     rol: Optional[str],
     comentario: str,
     estado_origen: Optional[str],
-    estado_destino: Optional[str]
+    estado_destino: Optional[str],
+    enlace: Optional[str] = None
 ) -> None:
     app_schema = "arbimaps_app"
     if tenant is not None:
@@ -1937,9 +1954,9 @@ def insert_asignacion_comentario(
         cur.execute(
             f"""
             INSERT INTO {app_schema}.asignacion_comentario (
-                asignacion_id, usuario_id, usuario, rol, comentario, estado_origen, estado_destino
+                asignacion_id, usuario_id, usuario, rol, comentario, estado_origen, estado_destino, enlace
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 asignacion_id,
@@ -1948,7 +1965,8 @@ def insert_asignacion_comentario(
                 rol,
                 comentario,
                 estado_origen,
-                estado_destino
+                estado_destino,
+                enlace
             ),
         )
 

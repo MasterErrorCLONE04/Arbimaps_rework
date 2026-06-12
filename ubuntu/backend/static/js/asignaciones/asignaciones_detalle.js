@@ -34,6 +34,22 @@ function showWarning(text) {
   showAlert('Atención', text, 'warning');
 }
 
+function showConfirm(title, text, confirmButtonText = 'Sí, continuar') {
+  return Swal.fire({
+    title: title,
+    text: text,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#22c55e',
+    cancelButtonColor: '#94a3b8',
+    confirmButtonText: confirmButtonText,
+    cancelButtonText: 'Cancelar',
+    customClass: {
+      popup: 'rounded-4'
+    }
+  });
+}
+
     $(document).ready(function () {
       $.fn.DataTable.ext.pager.numbers_length = 3;
 
@@ -544,6 +560,19 @@ const params = new URLSearchParams(window.location.search);
           }
         }
 
+        // 2.1 Mostrar/Ocultar enlace de devolución activo
+        const devLinkRow = document.getElementById("d_devolucion_link_row");
+        const devLink = document.getElementById("d_devolucion_link");
+        if (devLinkRow && devLink) {
+          if (dataDet.enlace_devolucion) {
+            devLink.href = dataDet.enlace_devolucion;
+            devLink.textContent = dataDet.enlace_devolucion;
+            devLinkRow.classList.remove("d-none");
+          } else {
+            devLinkRow.classList.add("d-none");
+          }
+        }
+
         const eventos = Array.isArray(dataEvt) ? dataEvt : [];
         let lastSyncDate = "-";
         const syncEvents = eventos.filter(e =>
@@ -708,6 +737,20 @@ const params = new URLSearchParams(window.location.search);
                 avatarIcon = '<i class="fa-solid fa-laptop-code text-success"></i>';
               }
 
+              let attachmentHtml = "";
+              if (c.enlace) {
+                const linkEsc = esc(c.enlace);
+                attachmentHtml = `
+                  <div class="mt-2">
+                    <a href="${linkEsc}" target="_blank" class="btn-attachment-link">
+                      <i class="fa-solid fa-link"></i>
+                      <span class="text-truncate" style="max-width: 250px;">${linkEsc}</span>
+                      <i class="fa-solid fa-arrow-up-right-from-square ms-1" style="font-size: 0.75rem;"></i>
+                    </a>
+                  </div>
+                `;
+              }
+
               const commentItem = document.createElement("div");
               commentItem.className = "card border-0 rounded-4 shadow-sm p-3 position-relative hover-lift";
               commentItem.style.backgroundColor = "#ffffff";
@@ -729,6 +772,7 @@ const params = new URLSearchParams(window.location.search);
                       <span class="text-muted" style="font-size: 0.75rem;">${dateStr}</span>
                     </div>
                     <div class="text-secondary" style="font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word;">${commentEsc}</div>
+                    ${attachmentHtml}
                     ${transitionHtml}
                   </div>
                 </div>
@@ -1024,128 +1068,198 @@ const params = new URLSearchParams(window.location.search);
       }
     });
 
-    // Confirm Return to Field (Reject) button click inside coordinator modal
-    document.getElementById("btnQCReject")?.addEventListener("click", async () => {
+    // Reusable Rejection modal helper variables and function
+    let devolucionTargetAction = "";
+    let devolucionParentModalId = "";
+
+    function openDevolucionModal(targetAction, parentModalId, confirmMessage) {
+      devolucionTargetAction = targetAction;
+      devolucionParentModalId = parentModalId;
+      
+      const parentModalEl = document.getElementById(parentModalId);
+      if (parentModalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(parentModalEl).hide();
+      }
+
+      // Reset the textarea and errors
+      const txtComment = document.getElementById("txtDevolucionComment");
+      if (txtComment) txtComment.value = "";
+      document.getElementById("devolucionCommentError")?.classList.add("d-none");
+      
+      const txtLink = document.getElementById("txtDevolucionLink");
+      if (txtLink) txtLink.value = "";
+      
+      // Update modal title
+      const labelEl = document.getElementById("modalConfirmarDevolucionLabel")?.querySelector("span");
+      if (labelEl) {
+        labelEl.textContent = confirmMessage || "Confirmar Devolución";
+      }
+
+      const modalEl = document.getElementById("modalConfirmarDevolucion");
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      }
+    }
+
+    // Reopen parent modal on cancel/dismiss
+    document.getElementById("modalConfirmarDevolucion")?.addEventListener("hidden.bs.modal", () => {
+      if (devolucionTargetAction && devolucionParentModalId) {
+        const parentModalEl = document.getElementById(devolucionParentModalId);
+        if (parentModalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(parentModalEl).show();
+        }
+      }
+      devolucionTargetAction = "";
+      devolucionParentModalId = "";
+    });
+
+    // Confirm Devolucion button click handler
+    document.getElementById("btnConfirmDevolucion")?.addEventListener("click", async () => {
       const idActual = Number(elId?.value || idFromUrl);
       if (!idActual || idActual < 1) {
         showWarning("Debes cargar primero una asignación.");
         return;
       }
 
-      if (!confirm("¿Estás seguro de que deseas devolver esta asignación al reconocedor?")) {
+      const commentVal = document.getElementById("txtDevolucionComment")?.value?.trim() || "";
+      if (!commentVal) {
+        document.getElementById("devolucionCommentError")?.classList.remove("d-none");
+        document.getElementById("txtDevolucionComment")?.focus();
+        return;
+      } else {
+        document.getElementById("devolucionCommentError")?.classList.add("d-none");
+      }
+
+      const linkVal = document.getElementById("txtDevolucionLink")?.value?.trim() || "";
+
+      const btnConfirm = document.getElementById("btnConfirmDevolucion");
+      if (btnConfirm) btnConfirm.disabled = true;
+
+      let url = "";
+      let successMsg = "";
+
+      if (devolucionTargetAction === "devolver-campo") {
+        url = `${rp}/api/workflow/asignaciones/${idActual}/return-to-field`;
+        successMsg = "La asignación ha sido devuelta exitosamente a campo.";
+      } else if (devolucionTargetAction === "devolver-soporte") {
+        url = `${rp}/api/workflow/asignaciones/${idActual}/return-to-support`;
+        successMsg = "La asignación ha sido devuelta exitosamente a soporte.";
+      } else if (devolucionTargetAction === "devolver-digitalizacion") {
+        url = `${rp}/api/workflow/asignaciones/${idActual}/return-to-digitalization`;
+        successMsg = "La asignación ha sido devuelta exitosamente a digitalización.";
+      } else if (devolucionTargetAction === "devolver-digitalizacion-lider") {
+        url = `${rp}/api/workflow/asignaciones/${idActual}/lider-reject`;
+        successMsg = "La asignación ha sido devuelta exitosamente a digitalización por el líder.";
+      } else {
+        showError("Acción de devolución no válida.");
+        if (btnConfirm) btnConfirm.disabled = false;
         return;
       }
 
-      const commentVal = document.getElementById("txtQCReviewComment")?.value?.trim() || "";
-      const btnReject = document.getElementById("btnQCReject");
-      const btnApprove = document.getElementById("btnQCApprove");
-      const btnCancel = document.querySelector("#modalQCReview .btn-close, #modalQCReview [data-bs-dismiss='modal']");
-      if (btnReject) btnReject.disabled = true;
-      if (btnApprove) btnApprove.disabled = true;
-      if (btnCancel) btnCancel.disabled = true;
-
       try {
-        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/return-to-field`, {
+        const response = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
-          body: JSON.stringify({ comentario: commentVal || null }),
+          body: JSON.stringify({ comentario: commentVal, enlace: linkVal }),
           credentials: "same-origin"
         });
 
-        const rawText = await response.text();
-        let data = {};
-        if (rawText) {
-          try {
-            data = JSON.parse(rawText);
-          } catch (e) {
-            data = {};
-          }
-        }
-
         if (!response.ok) {
-          throw new Error(data?.detail || rawText || "Error al devolver la asignación a campo.");
+          const rawText = await response.text();
+          let data = {};
+          try { data = JSON.parse(rawText); } catch (e) { }
+          throw new Error(data?.detail || rawText || "Error al realizar la devolución.");
         }
 
-        const modalEl = document.getElementById("modalQCReview");
+        devolucionTargetAction = "";
+        devolucionParentModalId = "";
+
+        const modalEl = document.getElementById("modalConfirmarDevolucion");
         if (modalEl && window.bootstrap) {
           window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
         }
 
-        showSuccess("La asignación ha sido devuelta exitosamente a campo.");
+        showSuccess(successMsg);
         invalidarCachesDetalleAsignacion();
         await cargarDetalle();
       } catch (err) {
         showError(err.message);
       } finally {
-        if (btnReject) btnReject.disabled = false;
-        if (btnApprove) btnApprove.disabled = false;
-        if (btnCancel) btnCancel.disabled = false;
+        if (btnConfirm) btnConfirm.disabled = false;
       }
     });
 
+    // Confirm Return to Field (Reject) button click inside coordinator modal
+    document.getElementById("btnQCReject")?.addEventListener("click", () => {
+      openDevolucionModal("devolver-campo", "modalQCReview", "Devolver a Campo");
+    });
+
     // Confirm Approve button click inside coordinator modal
-    document.getElementById("btnQCApprove")?.addEventListener("click", async () => {
+    document.getElementById("btnQCApprove")?.addEventListener("click", () => {
       const idActual = Number(elId?.value || idFromUrl);
       if (!idActual || idActual < 1) {
         showWarning("Debes cargar primero una asignación.");
         return;
       }
 
-      if (!confirm("¿Estás seguro de que deseas aprobar este trabajo y enviarlo a generación XTF?")) {
-        return;
-      }
+      showConfirm(
+        "¿Confirmar Aprobación?",
+        "¿Estás seguro de que deseas aprobar este trabajo y enviarlo a generación XTF?",
+        "Sí, aprobar"
+      ).then(async (result) => {
+        if (!result.isConfirmed) return;
 
-      const commentVal = document.getElementById("txtQCReviewComment")?.value?.trim() || "";
-      const btnReject = document.getElementById("btnQCReject");
-      const btnApprove = document.getElementById("btnQCApprove");
-      const btnCancel = document.querySelector("#modalQCReview .btn-close, #modalQCReview [data-bs-dismiss='modal']");
-      if (btnReject) btnReject.disabled = true;
-      if (btnApprove) btnApprove.disabled = true;
-      if (btnCancel) btnCancel.disabled = true;
+        const btnReject = document.getElementById("btnQCReject");
+        const btnApprove = document.getElementById("btnQCApprove");
+        const btnCancel = document.querySelector("#modalQCReview .btn-close, #modalQCReview [data-bs-dismiss='modal']");
+        if (btnReject) btnReject.disabled = true;
+        if (btnApprove) btnApprove.disabled = true;
+        if (btnCancel) btnCancel.disabled = true;
 
-      try {
-        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/approve`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ comentario: commentVal || null }),
-          credentials: "same-origin"
-        });
+        try {
+          const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/approve`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({ comentario: null }),
+            credentials: "same-origin"
+          });
 
-        const rawText = await response.text();
-        let data = {};
-        if (rawText) {
-          try {
-            data = JSON.parse(rawText);
-          } catch (e) {
-            data = {};
+          const rawText = await response.text();
+          let data = {};
+          if (rawText) {
+            try {
+              data = JSON.parse(rawText);
+            } catch (e) {
+              data = {};
+            }
           }
-        }
 
-        if (!response.ok) {
-          throw new Error(data?.detail || rawText || "Error al aprobar la asignación.");
-        }
+          if (!response.ok) {
+            throw new Error(data?.detail || rawText || "Error al aprobar la asignación.");
+          }
 
-        const modalEl = document.getElementById("modalQCReview");
-        if (modalEl && window.bootstrap) {
-          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-        }
+          const modalEl = document.getElementById("modalQCReview");
+          if (modalEl && window.bootstrap) {
+            window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+          }
 
-        showSuccess("El trabajo ha sido aprobado exitosamente y enviado a generación XTF.");
-        invalidarCachesDetalleAsignacion();
-        await cargarDetalle();
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        if (btnReject) btnReject.disabled = false;
-        if (btnApprove) btnApprove.disabled = false;
-        if (btnCancel) btnCancel.disabled = false;
-      }
+          showSuccess("El trabajo ha sido aprobado exitosamente y enviado a generación XTF.");
+          invalidarCachesDetalleAsignacion();
+          await cargarDetalle();
+        } catch (err) {
+          showError(err.message);
+        } finally {
+          if (btnReject) btnReject.disabled = false;
+          if (btnApprove) btnApprove.disabled = false;
+          if (btnCancel) btnCancel.disabled = false;
+        }
+      });
     });
 
     // Submit Soporte Link button click opens the submit modal
@@ -1277,58 +1391,8 @@ const params = new URLSearchParams(window.location.search);
     });
 
     // Devolver a Soporte action inside View Soporte modal
-    document.getElementById("btnViewSoporteDevolver")?.addEventListener("click", async () => {
-      const idActual = Number(elId?.value || idFromUrl);
-      if (!idActual || idActual < 1) {
-        showWarning("Debes cargar primero una asignación.");
-        return;
-      }
-
-      if (!confirm("¿Estás seguro de que deseas devolver esta asignación al soporte para que corrija?")) {
-        return;
-      }
-
-      const commentVal = document.getElementById("txtSoporteComment")?.value?.trim() || "";
-      const btnDevolver = document.getElementById("btnViewSoporteDevolver");
-      const btnIntegrar = document.getElementById("btnViewSoporteIntegrarDigit");
-      const btnContinuar = document.getElementById("btnViewSoporteContinuarRecon");
-      if (btnDevolver) btnDevolver.disabled = true;
-      if (btnIntegrar) btnIntegrar.disabled = true;
-      if (btnContinuar) btnContinuar.disabled = true;
-
-      try {
-        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/return-to-support`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ comentario: commentVal || null }),
-          credentials: "same-origin"
-        });
-
-        if (!response.ok) {
-          const rawText = await response.text();
-          let data = {};
-          try { data = JSON.parse(rawText); } catch (e) { }
-          throw new Error(data?.detail || rawText || "Error al devolver al soporte.");
-        }
-
-        const modalEl = document.getElementById("modalViewSoporteLink");
-        if (modalEl && window.bootstrap) {
-          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-        }
-
-        showSuccess("El trabajo ha sido devuelto al soporte exitosamente.");
-        invalidarCachesDetalleAsignacion();
-        await cargarDetalle();
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        if (btnDevolver) btnDevolver.disabled = false;
-        if (btnIntegrar) btnIntegrar.disabled = false;
-        if (btnContinuar) btnContinuar.disabled = false;
-      }
+    document.getElementById("btnViewSoporteDevolver")?.addEventListener("click", () => {
+      openDevolucionModal("devolver-soporte", "modalViewSoporteLink", "Devolver a Soporte");
     });
 
     // Integrar Digitalizador triggers subview inside View Soporte modal
@@ -1383,7 +1447,6 @@ const params = new URLSearchParams(window.location.search);
       const selectEl = document.getElementById("selectDigitalizador");
       const selectedId = selectEl?.value;
       const errEl = document.getElementById("digitalizadorSelectError");
-      const commentVal = document.getElementById("txtSoporteComment")?.value?.trim() || "";
 
       if (!selectedId) {
         if (errEl) errEl.classList.remove("d-none");
@@ -1403,7 +1466,7 @@ const params = new URLSearchParams(window.location.search);
             "Content-Type": "application/json",
             "Accept": "application/json"
           },
-          body: JSON.stringify({ digitalizador_id: selectedId, comentario: commentVal || null }),
+          body: JSON.stringify({ digitalizador_id: selectedId, comentario: null }),
           credentials: "same-origin"
         });
 
@@ -1431,58 +1494,61 @@ const params = new URLSearchParams(window.location.search);
     });
 
     // Continuar con Reconocedor action inside View Soporte modal
-    document.getElementById("btnViewSoporteContinuarRecon")?.addEventListener("click", async () => {
+    document.getElementById("btnViewSoporteContinuarRecon")?.addEventListener("click", () => {
       const idActual = Number(elId?.value || idFromUrl);
       if (!idActual || idActual < 1) {
         showWarning("Debes cargar primero una asignación.");
         return;
       }
 
-      if (!confirm("¿Estás seguro de que deseas continuar con el mismo reconocedor para digitalización?")) {
-        return;
-      }
+      showConfirm(
+        "¿Continuar con Reconocedor?",
+        "¿Estás seguro de que deseas continuar con el mismo reconocedor para digitalización?",
+        "Sí, continuar"
+      ).then(async (result) => {
+        if (!result.isConfirmed) return;
 
-      const commentVal = document.getElementById("txtSoporteComment")?.value?.trim() || "";
-      const btnDevolver = document.getElementById("btnViewSoporteDevolver");
-      const btnIntegrar = document.getElementById("btnViewSoporteIntegrarDigit");
-      const btnContinuar = document.getElementById("btnViewSoporteContinuarRecon");
-      if (btnDevolver) btnDevolver.disabled = true;
-      if (btnIntegrar) btnIntegrar.disabled = true;
-      if (btnContinuar) btnContinuar.disabled = true;
+        const btnDevolver = document.getElementById("btnViewSoporteDevolver");
+        const btnIntegrar = document.getElementById("btnViewSoporteIntegrarDigit");
+        const btnContinuar = document.getElementById("btnViewSoporteContinuarRecon");
+        if (btnDevolver) btnDevolver.disabled = true;
+        if (btnIntegrar) btnIntegrar.disabled = true;
+        if (btnContinuar) btnContinuar.disabled = true;
 
-      try {
-        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/continue-with-reconocedor`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ comentario: commentVal || null }),
-          credentials: "same-origin"
-        });
+        try {
+          const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/continue-with-reconocedor`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({ comentario: null }),
+            credentials: "same-origin"
+          });
 
-        if (!response.ok) {
-          const rawText = await response.text();
-          let data = {};
-          try { data = JSON.parse(rawText); } catch (e) { }
-          throw new Error(data?.detail || rawText || "Error al continuar con reconocedor.");
+          if (!response.ok) {
+            const rawText = await response.text();
+            let data = {};
+            try { data = JSON.parse(rawText); } catch (e) { }
+            throw new Error(data?.detail || rawText || "Error al continuar con reconocedor.");
+          }
+
+          const modalEl = document.getElementById("modalViewSoporteLink");
+          if (modalEl && window.bootstrap) {
+            window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+          }
+
+          showSuccess("Se ha continuado el trabajo con el reconocedor exitosamente.");
+          invalidarCachesDetalleAsignacion();
+          await cargarDetalle();
+        } catch (err) {
+          showError(err.message);
+        } finally {
+          if (btnDevolver) btnDevolver.disabled = false;
+          if (btnIntegrar) btnIntegrar.disabled = false;
+          if (btnContinuar) btnContinuar.disabled = false;
         }
-
-        const modalEl = document.getElementById("modalViewSoporteLink");
-        if (modalEl && window.bootstrap) {
-          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-        }
-
-        showSuccess("Se ha continuado el trabajo con el reconocedor exitosamente.");
-        invalidarCachesDetalleAsignacion();
-        await cargarDetalle();
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        if (btnDevolver) btnDevolver.disabled = false;
-        if (btnIntegrar) btnIntegrar.disabled = false;
-        if (btnContinuar) btnContinuar.disabled = false;
-      }
+      });
     });
 
     // Submit QA2 button click opens the submit QA2 modal
@@ -1594,111 +1660,66 @@ const params = new URLSearchParams(window.location.search);
     });
 
     // Confirm Return to Digitalization (Reject) button click inside coordinator modal
-    document.getElementById("btnQC2Reject")?.addEventListener("click", async () => {
-      const idActual = Number(elId?.value || idFromUrl);
-      if (!idActual || idActual < 1) {
-        showWarning("Debes cargar primero una asignación.");
-        return;
-      }
-
-      if (!confirm("¿Estás seguro de que deseas devolver esta asignación para corrección de digitalización?")) {
-        return;
-      }
-
-      const commentVal = document.getElementById("txtQC2ReviewComment")?.value?.trim() || "";
-      const btnReject = document.getElementById("btnQC2Reject");
-      const btnApprove = document.getElementById("btnQC2Approve");
-      const btnCancel = document.querySelector("#modalQCReview2 .btn-close, #modalQCReview2 [data-bs-dismiss='modal']");
-      if (btnReject) btnReject.disabled = true;
-      if (btnApprove) btnApprove.disabled = true;
-      if (btnCancel) btnCancel.disabled = true;
-
-      try {
-        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/return-to-digitalization`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ comentario: commentVal || null }),
-          credentials: "same-origin"
-        });
-
-        if (!response.ok) {
-          const rawText = await response.text();
-          let data = {};
-          try { data = JSON.parse(rawText); } catch (e) { }
-          throw new Error(data?.detail || rawText || "Error al devolver la asignación.");
-        }
-
-        const modalEl = document.getElementById("modalQCReview2");
-        if (modalEl && window.bootstrap) {
-          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-        }
-
-        showSuccess("La asignación ha sido devuelta exitosamente a digitalización.");
-        invalidarCachesDetalleAsignacion();
-        await cargarDetalle();
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        if (btnReject) btnReject.disabled = false;
-        if (btnApprove) btnApprove.disabled = false;
-        if (btnCancel) btnCancel.disabled = false;
-      }
+    document.getElementById("btnQC2Reject")?.addEventListener("click", () => {
+      openDevolucionModal("devolver-digitalizacion", "modalQCReview2", "Devolver a Digitalización");
     });
 
     // Confirm Approve Digitalization button click inside coordinator modal
-    document.getElementById("btnQC2Approve")?.addEventListener("click", async () => {
+    document.getElementById("btnQC2Approve")?.addEventListener("click", () => {
       const idActual = Number(elId?.value || idFromUrl);
       if (!idActual || idActual < 1) {
         showWarning("Debes cargar primero una asignación.");
         return;
       }
 
-      if (!confirm("¿Estás seguro de que deseas aprobar este trabajo de digitalización?")) {
-        return;
-      }
+      showConfirm(
+        "¿Confirmar Aprobación?",
+        "¿Estás seguro de que deseas aprobar este trabajo de digitalización?",
+        "Sí, aprobar"
+      ).then(async (result) => {
+        if (!result.isConfirmed) return;
 
-      const commentVal = document.getElementById("txtQC2ReviewComment")?.value?.trim() || "";
-      const btnReject = document.getElementById("btnQC2Reject");
-      const btnApprove = document.getElementById("btnQC2Approve");
-      const btnCancel = document.querySelector("#modalQCReview2 .btn-close, #modalQCReview2 [data-bs-dismiss='modal']");
-      if (btnReject) btnReject.disabled = true;
-      if (btnApprove) btnApprove.disabled = true;
-      if (btnCancel) btnCancel.disabled = true;
+        const btnReject = document.getElementById("btnQC2Reject");
+        const btnApprove = document.getElementById("btnQC2Approve");
+        const btnCancel = document.querySelector("#modalQCReview2 .btn-close, #modalQCReview2 [data-bs-dismiss='modal']");
+        if (btnReject) btnReject.disabled = true;
+        if (btnApprove) btnApprove.disabled = true;
+        if (btnCancel) btnCancel.disabled = true;
 
-      try {
-        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/approve-digitalization`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ comentario: commentVal || null }),
-          credentials: "same-origin"
-        });
+        try {
+          const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/approve-digitalization`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({ comentario: null }),
+            credentials: "same-origin"
+          });
 
-        if (!response.ok) {
-          const rawText = await response.text();
-          let data = {};
-          try { data = JSON.parse(rawText); } catch (e) { }
-          throw new Error(data?.detail || rawText || "Error al aprobar digitalización.");
+          if (!response.ok) {
+            const rawText = await response.text();
+            let data = {};
+            try { data = JSON.parse(rawText); } catch (e) { }
+            throw new Error(data?.detail || rawText || "Error al aprobar digitalización.");
+          }
+
+          const modalEl = document.getElementById("modalQCReview2");
+          if (modalEl && window.bootstrap) {
+            window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+          }
+
+          showSuccess("El trabajo de digitalización ha sido aprobado exitosamente.");
+          invalidarCachesDetalleAsignacion();
+          await cargarDetalle();
+        } catch (err) {
+          showError(err.message);
+        } finally {
+          if (btnReject) btnReject.disabled = false;
+          if (btnApprove) btnApprove.disabled = false;
+          if (btnCancel) btnCancel.disabled = false;
         }
-
-        const modalEl = document.getElementById("modalQCReview2");
-        if (modalEl && window.bootstrap) {
-          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-        }
-
-        showSuccess("El trabajo de digitalización ha sido aprobado exitosamente.");
-        invalidarCachesDetalleAsignacion();
-        await cargarDetalle();
-      } finally {
-        if (btnReject) btnReject.disabled = false;
-        if (btnApprove) btnApprove.disabled = false;
-        if (btnCancel) btnCancel.disabled = false;
-      }
+      });
     });
 
     // Leader Review button click opens the review modal
@@ -1736,113 +1757,66 @@ const params = new URLSearchParams(window.location.search);
     });
 
     // Confirm Return to Digitalization (Reject) button click inside leader modal
-    document.getElementById("btnLiderReject")?.addEventListener("click", async () => {
-      const idActual = Number(elId?.value || idFromUrl);
-      if (!idActual || idActual < 1) {
-        showWarning("Debes cargar primero una asignación.");
-        return;
-      }
-
-      if (!confirm("¿Estás seguro de que deseas devolver esta asignación para corrección de digitalización?")) {
-        return;
-      }
-
-      const commentVal = document.getElementById("txtLiderReviewComment")?.value?.trim() || "";
-      const btnReject = document.getElementById("btnLiderReject");
-      const btnApprove = document.getElementById("btnLiderApprove");
-      const btnCancel = document.querySelector("#modalLiderReview .btn-close, #modalLiderReview [data-bs-dismiss='modal']");
-      if (btnReject) btnReject.disabled = true;
-      if (btnApprove) btnApprove.disabled = true;
-      if (btnCancel) btnCancel.disabled = true;
-
-      try {
-        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/lider-reject`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ comentario: commentVal || null }),
-          credentials: "same-origin"
-        });
-
-        if (!response.ok) {
-          const rawText = await response.text();
-          let data = {};
-          try { data = JSON.parse(rawText); } catch (e) { }
-          throw new Error(data?.detail || rawText || "Error al devolver la asignación.");
-        }
-
-        const modalEl = document.getElementById("modalLiderReview");
-        if (modalEl && window.bootstrap) {
-          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-        }
-
-        showSuccess("La asignación ha sido devuelta exitosamente a digitalización.");
-        invalidarCachesDetalleAsignacion();
-        await cargarDetalle();
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        if (btnReject) btnReject.disabled = false;
-        if (btnApprove) btnApprove.disabled = false;
-        if (btnCancel) btnCancel.disabled = false;
-      }
+    document.getElementById("btnLiderReject")?.addEventListener("click", () => {
+      openDevolucionModal("devolver-digitalizacion-lider", "modalLiderReview", "Devolver a Digitalización");
     });
 
     // Confirm Approve Digitalization button click inside leader modal
-    document.getElementById("btnLiderApprove")?.addEventListener("click", async () => {
+    document.getElementById("btnLiderApprove")?.addEventListener("click", () => {
       const idActual = Number(elId?.value || idFromUrl);
       if (!idActual || idActual < 1) {
         showWarning("Debes cargar primero una asignación.");
         return;
       }
 
-      if (!confirm("¿Estás seguro de que deseas aprobar este trabajo de digitalización y comenzar la sincronización?")) {
-        return;
-      }
+      showConfirm(
+        "¿Confirmar Aprobación?",
+        "¿Estás seguro de que deseas aprobar este trabajo de digitalización y comenzar la sincronización?",
+        "Sí, aprobar y sincronizar"
+      ).then(async (result) => {
+        if (!result.isConfirmed) return;
 
-      const commentVal = document.getElementById("txtLiderReviewComment")?.value?.trim() || "";
-      const btnReject = document.getElementById("btnLiderReject");
-      const btnApprove = document.getElementById("btnLiderApprove");
-      const btnCancel = document.querySelector("#modalLiderReview .btn-close, #modalLiderReview [data-bs-dismiss='modal']");
-      if (btnReject) btnReject.disabled = true;
-      if (btnApprove) btnApprove.disabled = true;
-      if (btnCancel) btnCancel.disabled = true;
+        const btnReject = document.getElementById("btnLiderReject");
+        const btnApprove = document.getElementById("btnLiderApprove");
+        const btnCancel = document.querySelector("#modalLiderReview .btn-close, #modalLiderReview [data-bs-dismiss='modal']");
+        if (btnReject) btnReject.disabled = true;
+        if (btnApprove) btnApprove.disabled = true;
+        if (btnCancel) btnCancel.disabled = true;
 
-      try {
-        const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/lider-approve`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          },
-          body: JSON.stringify({ comentario: commentVal || null }),
-          credentials: "same-origin"
-        });
+        try {
+          const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/lider-approve`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({ comentario: null }),
+            credentials: "same-origin"
+          });
 
-        if (!response.ok) {
-          const rawText = await response.text();
-          let data = {};
-          try { data = JSON.parse(rawText); } catch (e) { }
-          throw new Error(data?.detail || rawText || "Error al aprobar digitalización.");
+          if (!response.ok) {
+            const rawText = await response.text();
+            let data = {};
+            try { data = JSON.parse(rawText); } catch (e) { }
+            throw new Error(data?.detail || rawText || "Error al aprobar digitalización.");
+          }
+
+          const modalEl = document.getElementById("modalLiderReview");
+          if (modalEl && window.bootstrap) {
+            window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+          }
+
+          showSuccess("El trabajo de digitalización ha sido aprobado exitosamente y pasará a sincronización.");
+          invalidarCachesDetalleAsignacion();
+          await cargarDetalle();
+        } catch (err) {
+          showError(err.message);
+        } finally {
+          if (btnReject) btnReject.disabled = false;
+          if (btnApprove) btnApprove.disabled = false;
+          if (btnCancel) btnCancel.disabled = false;
         }
-
-        const modalEl = document.getElementById("modalLiderReview");
-        if (modalEl && window.bootstrap) {
-          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-        }
-
-        showSuccess("El trabajo de digitalización ha sido aprobado exitosamente y pasará a sincronización.");
-        invalidarCachesDetalleAsignacion();
-        await cargarDetalle();
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        if (btnReject) btnReject.disabled = false;
-        if (btnApprove) btnApprove.disabled = false;
-        if (btnCancel) btnCancel.disabled = false;
-      }
+      });
     });
 
     btnImportarRetorno?.addEventListener("click", importarRetorno);

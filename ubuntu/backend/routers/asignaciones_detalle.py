@@ -350,6 +350,7 @@ class AsignacionComentario(BaseModel):
     estado_origen: Optional[str] = None
     estado_destino: Optional[str] = None
     creado_en: Optional[datetime] = None
+    enlace: Optional[str] = None
 
 
 class AsignacionDetalleResponse(BaseModel):
@@ -364,6 +365,7 @@ class AsignacionDetalleResponse(BaseModel):
     enlace_control_calidad: Optional[str] = None
     enlace_soporte: Optional[str] = None
     enlace_digitalizacion: Optional[str] = None
+    enlace_devolucion: Optional[str] = None
     titulo: Optional[str] = None
     observaciones: Optional[str] = None
     datasetname_main: Optional[str] = None
@@ -1215,6 +1217,7 @@ def obtener_detalle_asignacion(
                 a.enlace_control_calidad,
                 a.enlace_soporte,
                 a.enlace_digitalizacion,
+                a.enlace_devolucion,
                 a.titulo,
                 a.observaciones,
                 a.datasetname_main,
@@ -1296,7 +1299,8 @@ def obtener_detalle_asignacion(
                 comentario,
                 estado_origen,
                 estado_destino,
-                creado_en
+                creado_en,
+                enlace
             FROM {comentario_table}
             WHERE asignacion_id = %s
             ORDER BY creado_en DESC
@@ -1367,6 +1371,7 @@ def obtener_detalle_asignacion(
                 estado_origen=row.get("estado_origen"),
                 estado_destino=row.get("estado_destino"),
                 creado_en=row.get("creado_en"),
+                enlace=row.get("enlace"),
             )
         )
 
@@ -1394,6 +1399,7 @@ def obtener_detalle_asignacion(
         enlace_control_calidad=asignacion.get("enlace_control_calidad"),
         enlace_soporte=asignacion.get("enlace_soporte"),
         enlace_digitalizacion=asignacion.get("enlace_digitalizacion"),
+        enlace_devolucion=asignacion.get("enlace_devolucion"),
         titulo=asignacion.get("titulo"),
         observaciones=asignacion.get("observaciones"),
         datasetname_main=asignacion.get("datasetname_main"),

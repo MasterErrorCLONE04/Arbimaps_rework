@@ -1,8 +1,28 @@
+<style>
+  /* Fix Bootstrap inner/outer border radius mismatch to prevent white corners */
+  .modal-content {
+    border-radius: 6px !important;
+    --bs-modal-border-radius: 6px !important;
+    --bs-modal-inner-border-radius: 5px !important;
+    overflow: hidden !important;
+  }
+  
+  .modal-header {
+    border-top-left-radius: 5px !important;
+    border-top-right-radius: 5px !important;
+  }
+  
+  .modal-footer {
+    border-bottom-left-radius: 5px !important;
+    border-bottom-right-radius: 5px !important;
+  }
+</style>
+
 <!-- Modal Enviar a Control de Calidad -->
   <div class="modal fade" id="modalSubmitQA" tabindex="-1" aria-labelledby="modalSubmitQALabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content"
-        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        style="border-radius: 6px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
         <div class="modal-header" style="background-color: #032F57; color: white;">
           <h5 class="modal-title fw-bold" id="modalSubmitQALabel">
             <i class="fa-solid fa-paper-plane me-2"></i>Enviar a Control de Calidad
@@ -50,7 +70,7 @@
   <div class="modal fade" id="modalQCReview" tabindex="-1" aria-labelledby="modalQCReviewLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content"
-        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        style="border-radius: 6px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
         <div class="modal-header" style="background-color: #032F57; color: white;">
           <h5 class="modal-title fw-bold" id="modalQCReviewLabel">
             <i class="fa-solid fa-clipboard-check me-2"></i>Revisión de Control de Calidad
@@ -67,10 +87,7 @@
             <a id="qcReviewEvidenceLink" href="#" target="_blank"
               class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
           </div>
-          <div class="mb-3">
-            <label for="txtQCReviewComment" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Comentario o Recomendación de Respuesta</label>
-            <textarea class="form-control" id="txtQCReviewComment" rows="3" placeholder="Escribe un comentario o recomendación..." style="border-radius: 10px; font-size: 0.9rem; resize: none; border-color: #dee2e6; box-shadow: none;"></textarea>
-          </div>
+
         </div>
         <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
           <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
@@ -97,7 +114,7 @@
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content"
-        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        style="border-radius: 6px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
         <div class="modal-header" style="background-color: #8b5cf6; color: white;">
           <h5 class="modal-title fw-bold" id="modalSubmitSoporteLinkLabel">
             <i class="fa-solid fa-paper-plane me-2"></i>Enviar Enlace a Coordinador
@@ -146,7 +163,7 @@
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content"
-        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        style="border-radius: 6px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
         <div class="modal-header" style="background-color: #06b6d4; color: white;">
           <h5 class="modal-title fw-bold" id="modalViewSoporteLinkLabel">
             <i class="fa-solid fa-link me-2"></i>Enlace de Soporte
@@ -163,10 +180,7 @@
               <a id="viewSoporteEvidenceLink" href="#" target="_blank"
                 class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
             </div>
-            <div class="mb-3" id="soporteCommentContainer">
-              <label for="txtSoporteComment" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Comentario o Recomendación de Respuesta</label>
-              <textarea class="form-control" id="txtSoporteComment" rows="3" placeholder="Escribe un comentario o recomendación..." style="border-radius: 10px; font-size: 0.9rem; resize: none; border-color: #dee2e6; box-shadow: none;"></textarea>
-            </div>
+
           </div>
 
           <!-- Hidden Digitalizador selector section -->
@@ -229,7 +243,7 @@
   <div class="modal fade" id="modalSubmitQA2" tabindex="-1" aria-labelledby="modalSubmitQA2Label" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content"
-        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        style="border-radius: 6px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
         <div class="modal-header" style="background-color: #14b8a6; color: white;">
           <h5 class="modal-title fw-bold" id="modalSubmitQA2Label">
             <i class="fa-solid fa-paper-plane me-2"></i>Enviar a Control de Calidad 2
@@ -284,7 +298,7 @@
   <div class="modal fade" id="modalQCReview2" tabindex="-1" aria-labelledby="modalQCReview2Label" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content"
-        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        style="border-radius: 6px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
         <div class="modal-header" style="background-color: #f97316; color: white;">
           <h5 class="modal-title fw-bold" id="modalQCReview2Label">
             <i class="fa-solid fa-clipboard-check me-2"></i>Revisión de Control de Calidad 2
@@ -301,10 +315,7 @@
             <a id="qcReview2EvidenceLink" href="#" target="_blank"
               class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
           </div>
-          <div class="mb-3">
-            <label for="txtQC2ReviewComment" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Comentario o Recomendación de Respuesta</label>
-            <textarea class="form-control" id="txtQC2ReviewComment" rows="3" placeholder="Escribe un comentario o recomendación..." style="border-radius: 10px; font-size: 0.9rem; resize: none; border-color: #dee2e6; box-shadow: none;"></textarea>
-          </div>
+
         </div>
         <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
           <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
@@ -331,7 +342,7 @@
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content"
-        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        style="border-radius: 6px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
         <div class="modal-header" style="background-color: #6366f1; color: white;">
           <h5 class="modal-title fw-bold" id="modalLiderReviewLabel">
             <i class="fa-solid fa-clipboard-check me-2"></i>Revisión de Líder de Reconocimiento
@@ -348,10 +359,7 @@
             <a id="liderReviewEvidenceLink" href="#" target="_blank"
               class="text-info fw-bold text-break text-decoration-underline" style="font-size: 0.95rem;"></a>
           </div>
-          <div class="mb-3">
-            <label for="txtLiderReviewComment" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Comentario o Recomendación de Respuesta</label>
-            <textarea class="form-control" id="txtLiderReviewComment" rows="3" placeholder="Escribe un comentario o recomendación..." style="border-radius: 10px; font-size: 0.9rem; resize: none; border-color: #dee2e6; box-shadow: none;"></textarea>
-          </div>
+
         </div>
         <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
           <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
@@ -378,7 +386,7 @@
     aria-labelledby="modalViewDigitalizacionLinkLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content"
-        style="border-radius: 16px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        style="border-radius: 6px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
         <div class="modal-header" style="background-color: #6366f1; color: white;">
           <h5 class="modal-title fw-bold" id="modalViewDigitalizacionLinkLabel">
             <i class="fa-solid fa-link me-2"></i>Enlace de Digitalización
@@ -399,6 +407,45 @@
           <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
             style="background-color: #e2e8f0; font-size: 0.85rem;">
             Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Reutilizable para Comentarios de Devolución -->
+  <div class="modal fade" id="modalConfirmarDevolucion" tabindex="-1" aria-labelledby="modalConfirmarDevolucionLabel" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 6px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title fw-bold" id="modalConfirmarDevolucionLabel">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i><span>Motivo de Devolución</span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3" id="devolucionModalInstructions">
+            Por favor, escribe el comentario o recomendación de respuesta para justificar la devolución de la asignación.
+          </p>
+          <div class="mb-3">
+            <label for="txtDevolucionComment" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Comentario o Recomendación de Respuesta *</label>
+            <textarea class="form-control" id="txtDevolucionComment" rows="4" placeholder="Escribe el motivo de la devolución..." style="border-radius: 10px; font-size: 0.9rem; resize: none; border-color: #dee2e6; box-shadow: none;" required></textarea>
+            <div id="devolucionCommentError" class="text-danger small mt-1 d-none">El comentario es obligatorio para realizar la devolución.</div>
+          </div>
+          <div class="mb-3">
+            <label for="txtDevolucionLink" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Enlace / Link de Evidencia (Opcional)</label>
+            <input type="url" class="form-control" id="txtDevolucionLink" placeholder="https://ejemplo.com/archivo" style="border-radius: 10px; font-size: 0.9rem; border-color: #dee2e6; box-shadow: none;">
+            <div class="form-text text-muted small" style="font-size: 0.75rem;">
+              Inserta el enlace al archivo o carpeta de soporte (Box, Google Drive, OneDrive) para guiar la corrección.
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3 d-flex justify-content-between" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal" style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <button id="btnConfirmDevolucion" type="button" class="btn rounded-3 px-3 py-2 fw-semibold text-white border-0" style="background-color: #ef4444; font-size: 0.85rem;">
+            <i class="fa-solid fa-paper-plane me-1"></i>Confirmar Devolución
           </button>
         </div>
       </div>
