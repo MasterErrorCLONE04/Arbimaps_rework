@@ -202,7 +202,7 @@
       </div>
 
       <div id="panelConfiguracionAsignacion" class="col-12 col-xl-4 d-none">
-        <div class="card card-panel card-panel-asignacion border-0 h-100">
+        <div class="card card-panel card-panel-asignacion border-0">
 
           <!-- <div class="reconocedores-pill mt-3" title="Reconocedores disponibles para el coordinador seleccionado">
             <span class="reconocedores-pill-icon"><i class="bi bi-person-fill"></i></span>
@@ -210,10 +210,12 @@
             <strong id="contadorReconocedoresDisponibles">0</strong>
           </div> -->
 
-          <div class="card-body h-100 d-flex flex-column ps-3 ps-md-4 pe-3">
-            <div class="for-title mt-2 mt-md-3 d-flex align-items-center gap-2 pb-3" style=" box-shadow: 0 1px 0 0 #002f5524;">
+          <div class="card-body d-flex flex-column ps-3 ps-md-4 pe-3">
+            <div class="for-title mt-2 mt-md-3 d-flex align-items-center gap-2 pb-3"
+              style=" box-shadow: 0 1px 0 0 #002f5524;">
               <i class="bi bi-sliders me-2 fs-5"></i>
-              <small class="for-panel-title border-bottom" style="font-size: 1.2rem;">Configuración de Asignación </small>
+              <small class="for-panel-title border-bottom" style="font-size: 1.2rem;">Configuración de Asignación
+              </small>
             </div>
 
 
@@ -241,7 +243,13 @@
               <option value="" disabled selected>Selecciona un reconocedor...</option>
             </select>
 
-            <div class="for-noti mt-4">
+            <label class="consultaLabel label-asignacion mt-4 fw-bold" for="inpFechaFinal">
+              Fecha de entrega propuesta
+            </label>
+
+            <input type="date" id="inpFechaFinal" class="form-control consultaInput w-100 mt-2">
+
+            <div id="asignacionNoti" class="for-noti">
               <div class="for-noti-parrafo d-flex align-items-start gap-2">
                 <i class="bi bi-exclamation-diamond-fill mt-1"></i>
                 <p class="hint hint-asignacion mb-0">
@@ -251,7 +259,7 @@
               </div>
             </div>
 
-            <div class="consultaButtons consultaButtons-asignacion mt-4 d-flex justify-content-end mt-auto ">
+            <div class="consultaButtons consultaButtons-asignacion mt-4 d-flex justify-content-end">
               <button class="btn crear-asignacion " id="btnAsignar" type="button">
                 <i class="bi bi-journals me-2"></i>
                 Crear asignación
@@ -401,6 +409,17 @@
 
   function togglePanelConfiguracionAsignacion(mostrar) {
     document.getElementById("panelConfiguracionAsignacion")?.classList.toggle("d-none", !mostrar);
+    if (!mostrar) {
+      toggleNotificacionAsignacion(false);
+      return;
+    }
+
+    const userDest = document.getElementById("inpUsuarioDestino");
+    toggleNotificacionAsignacion(!!(userDest?.value || "").trim());
+  }
+
+  function toggleNotificacionAsignacion(mostrar) {
+    document.getElementById("asignacionNoti")?.classList.toggle("is-visible", !!mostrar);
   }
 
   function limpiarBusquedaPredios() {
@@ -598,10 +617,12 @@
     const selectCoord = document.getElementById("inpCoordinador");
     const userDest = document.getElementById("inpUsuarioDestino");
     const tituloInput = document.getElementById("inpNombreLote");
+    const fechaFinalInput = document.getElementById("inpFechaFinal");
     const msg = document.getElementById("asgHint");
 
     const numeros = ultimoResultadoBusqueda ? obtenerNumerosSeleccionados() : parseNumeros(txt.value);
     const tituloAsignacion = (tituloInput?.value || "").trim();
+    const fechaFinAsignada = (fechaFinalInput?.value || "").trim();
     const usernameDestino = (userDest.value || "").trim();
     const coordinador_id = selectCoord ? parseInt(selectCoord.value) : null;
 
@@ -617,6 +638,12 @@
 
     if (!tituloAsignacion) {
       mostrarAlertaAsignacion("Debes indicar un nombre para la asignación.");
+      msg?.classList.add("d-none");
+      return;
+    }
+
+    if (!fechaFinAsignada) {
+      mostrarAlertaAsignacion("Debes indicar una fecha de entrega.");
       msg?.classList.add("d-none");
       return;
     }
@@ -836,11 +863,13 @@
     const selectCoord = document.getElementById("inpCoordinador");
     const userDest = document.getElementById("inpUsuarioDestino");
     const tituloInput = document.getElementById("inpNombreLote");
+    const fechaFinalInput = document.getElementById("inpFechaFinal");
     const msg = document.getElementById("asgHint");
     const forceReassign = !!options.reasignar;
 
     const numeros = ultimoResultadoBusqueda ? obtenerNumerosSeleccionados() : parseNumeros(txt.value);
     const tituloAsignacion = (tituloInput?.value || "").trim();
+    const fechaFinAsignada = (fechaFinalInput?.value || "").trim();
     const username_destino = (userDest.value || "").trim();
     const coordinador_id = selectCoord ? parseInt(selectCoord.value) : null;
 
@@ -856,6 +885,12 @@
 
     if (!tituloAsignacion) {
       mostrarAlertaAsignacion("Debes indicar un nombre para la asignación.");
+      msg?.classList.add("d-none");
+      return;
+    }
+
+    if (!fechaFinAsignada) {
+      mostrarAlertaAsignacion("Debes indicar una fecha de entrega.");
       msg?.classList.add("d-none");
       return;
     }
@@ -884,6 +919,7 @@
           username_destino,
           coordinador_id,
           titulo: tituloAsignacion,
+          fecha_fin_asignada: fechaFinAsignada,
           forzar_reasignacion: forceReassign
         })
       });
@@ -1020,6 +1056,10 @@
         const selectDest = document.getElementById("inpUsuarioDestino");
         if (!selectCoord || !selectDest) return;
 
+        selectDest.addEventListener("change", () => {
+          toggleNotificacionAsignacion(!!(selectDest.value || "").trim());
+        });
+
         // Cargar Coordinadores
         selectCoord.innerHTML = '<option value="" disabled selected>Selecciona un coordinador...</option>';
         const coordinadores = users.filter(u => u.rol && u.rol.toLowerCase() === "coordinador");
@@ -1037,6 +1077,8 @@
         selectCoord.addEventListener("change", () => {
           const selectedCoordId = selectCoord.value;
           selectDest.innerHTML = '<option value="" disabled selected>Selecciona un reconocedor...</option>';
+          selectDest.disabled = true;
+          toggleNotificacionAsignacion(false);
 
           const reconocedores = users.filter(u =>
             u.rol &&
@@ -1057,6 +1099,7 @@
           });
 
           selectDest.disabled = false;
+          toggleNotificacionAsignacion(false);
         });
 
       } catch (e) {

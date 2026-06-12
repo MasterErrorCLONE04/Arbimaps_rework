@@ -65,7 +65,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               </div>
 
               <div class="card-info-title text-start">
-                <span class="title-arbi text-white fw-bold d-block mb-0">ARBIMaps</span>
+                <span class="title-arbi text-white fw-bold d-block mb-0">ARBIMapps</span>
                 <span class="text-white d-block mb-0 fw-normal" style="font-size: 0.633rem; line-height: 1.1">
                   Aplicativo de Gestión Catastral
                 </span>
@@ -90,6 +90,14 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <i class="bi bi-search"></i>
                 <span>Consultar predio</span>
               </a>
+
+              {% if effective_role in ['admin', 'coordinador'] %}
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}"
+                href="{{ rp }}/panel/usuarios">
+                <i class="bi bi-people"></i>
+                <span>Usuarios y Cuadrillas</span>
+              </a>
+              {% endif %}
 
               {% if can_access_asignaciones %}
               <div class="accordion" style="border-radius: 12px;" id="asignacionesAccordionDesktop">
@@ -116,7 +124,8 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                       {% if not limited_assignment_role %}
                       <a class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
                         href="{{ rp }}/panel/asignaciones/cargas#asig-open">
-                        <img src="{{ rp }}/static/img/PNG/cargaicon.png" alt="logo cargas" class="logo-submenu" />
+                        <!-- <img src="{{ rp }}/static/img/PNG/cargaicon.png" alt="logo cargas" class="logo-submenu" /> -->
+                        <i class="bi bi-backpack3"></i>
                         <span>Cargas de trabajo</span>
                       </a>
                       {% endif %}
@@ -140,13 +149,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
 
 
 
-              {% if effective_role in ['admin', 'coordinador'] %}
-              <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}"
-                href="{{ rp }}/panel/usuarios">
-                <i class="bi bi-people"></i>
-                <span>Usuarios y Cuadrillas</span>
-              </a>
-              {% endif %} {% if not limited_assignment_role %}
+              {% if not limited_assignment_role %}
               <a class="menuBtn sidebar-link">
                 <i class="bi bi-slash-circle"></i>
                 <span>Restricción de predios</span>

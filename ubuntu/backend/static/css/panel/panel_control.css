@@ -16,6 +16,18 @@ h5 {
     font-weight: 700;
 }
 
+.text-title-header {
+    font-size: 0.833rem;
+    color: #032F57;
+    font-weight: 400;
+}
+
+.parrafo-title {
+    font-size: 0.833rem;
+    color: #4f667a;
+    line-height: 1.5;
+}
+
 .title-principal {
     color: #032f57;
     font-size: 2.074rem;
@@ -36,9 +48,11 @@ h5 {
 
 .card-dashboard {
     border-radius: 15px;
-    border: none !important;
+    border: 1px solid #002f5535;
+    /* border: none !important; */
     -webkit-box-shadow: 0px -1px 8px -4px rgba(0, 0, 0, 0.45);
     box-shadow: 0px -1px 8px -4px rgba(0, 0, 0, 0.45);
+    background-color: rgb(251, 254, 255);
 }
 
 .card-header {
@@ -779,7 +793,7 @@ h5 {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    border: none;
+    border: 1px solid #002f5542;
     background: var(--azulsecundario-100);
     color: var(--azulprincipal-500);
     display: inline-flex;
@@ -789,13 +803,18 @@ h5 {
     transition: all 0.18s;
     font-size: 0.9rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all;
 }
+
 
 .coord-action-btn:hover {
     background: #6aa4d4;
     color: #fff;
     border-color: #6aa4d4;
+    transform: scale(1.08) !important;
 }
+
+
 
 /* Botones de paginación coordinadores */
 .coord-pag-btn {
@@ -905,20 +924,21 @@ h5 {
     margin-bottom: 10px;
     border: 1px solid #eef5fb;
     transition: transform 0.2s;
+    border: 1px solid #002f5525;
 }
 
 .rec-avatar {
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    background: #fff;
-    border: 2px solid #eef5fb;
+    background: #002f55;
+    border: 2px solid #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
     font-weight: 800;
-    color: #335977;
+    color: #ffffff;
     flex-shrink: 0;
 }
 
@@ -942,6 +962,7 @@ h5 {
     font-size: 0.75rem;
     font-weight: 600;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 105px;
 }
 
 /* Gráfico y Leyenda */
@@ -967,6 +988,15 @@ h5 {
     font-size: 0.85rem;
 }
 
+.btn-cerrar-modal i {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.btn-cerrar-modal:hover i {
+    transform: rotate(90deg);
+}
+
 .btn-cerrar-modal {
     background-color: #003456;
     color: #fff;
@@ -980,6 +1010,7 @@ h5 {
 .btn-cerrar-modal:hover {
     background-color: #00253d;
     transform: scale(1.02);
+    color: #fff;
 }
 
 /* ============================================
@@ -1012,7 +1043,7 @@ h5 {
     vertical-align: middle;
     text-align: center;
     color: #335977;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
 }
 
 /* Coordinator Pill */
@@ -1026,7 +1057,7 @@ h5 {
     border-left: 3px solid #f07b22;
     font-weight: 600;
     font-size: 0.75rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 /* Reconocedor Component */
@@ -1068,38 +1099,86 @@ h5 {
     color: #8a9fb1;
 }
 
+.header_tabla_det_asigna {
+    background-color: #f0f6fb;
+}
+
 /* Status Pills */
 .badge-status {
     padding: 6px 16px;
     border-radius: 8px;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.65rem !important;
     display: inline-block;
     min-width: 120px;
     border: 1px solid transparent;
 }
 
-.status-campo { background: #eef5fb; color: #6aa4d4; border: 1px solid #6aa4d4; }
-.status-calidad { background: #fffdf5; color: #f4c344; border: 1px solid #f4c344; }
-.status-devuelta { background: #fff5f5; color: #d92c2c; border: 1px solid #d92c2c; }
-.status-aprobacion { background: #fffaf5; color: #f07b22; border: 1px solid #f07b22; }
-.status-sincronizacion { background: #eef5fb; color: #003456; border: 1px solid #003456; }
-.status-sincronizado { background: #f5fff8; color: #00a82d; border: 1px solid #00a82d; }
+.status-campo {
+    background: #eef5fb;
+    color: #6aa4d4;
+    border: 1px solid #6aa4d4;
+}
+
+.status-calidad {
+    background: #fffdf5;
+    color: #f4c344;
+    border: 1px solid #f4c344;
+}
+
+.status-devuelta {
+    background: #fff5f5;
+    color: #d92c2c;
+    border: 1px solid #d92c2c;
+}
+
+.status-aprobacion {
+    background: #fffaf5;
+    color: #f07b22;
+    border: 1px solid #f07b22;
+}
+
+.status-sincronizacion {
+    background: #eef5fb;
+    color: #003456;
+    border: 1px solid #003456;
+}
+
+.status-sincronizado {
+    background: #f5fff8;
+    color: #00a82d;
+    border: 1px solid #00a82d;
+}
 
 /* Time Pills */
 .badge-time {
     padding: 6px 12px;
     border-radius: 8px;
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     display: inline-block;
     min-width: 80px;
 }
 
-.time-blue { background: #eef5fb; color: #6aa4d4; }
-.time-red { background: #fff5f5; color: #d92c2c; }
-.time-pink { background: #fff5f8; color: #f06292; }
-.time-green { background: #f5fff8; color: #00a82d; }
+.time-blue {
+    background: #eef5fb;
+    color: #6aa4d4;
+}
+
+.time-red {
+    background: #fff5f5;
+    color: #d92c2c;
+}
+
+.time-pink {
+    background: #fff5f8;
+    color: #f06292;
+}
+
+.time-green {
+    background: #f5fff8;
+    color: #00a82d;
+}
 
 /* Filter Bar */
 .assignment-filters {
@@ -1112,7 +1191,7 @@ h5 {
     flex-wrap: wrap;
 }
 
-.btn-limpiar:hover{
+.btn-limpiar:hover {
     background-color: var(--azulsecundario-500);
     color: var(--azulprincipal-500);
 }
@@ -1130,7 +1209,7 @@ h5 {
 }
 
 .filter-select {
-    border: 1px solid #d1e3f2;
+    border: 1px solid #002f559a;
     border-radius: 8px;
     /* padding: 10px 12px; */
     font-size: 0.85rem;

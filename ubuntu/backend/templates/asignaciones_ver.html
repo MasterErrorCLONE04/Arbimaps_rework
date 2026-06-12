@@ -1,14 +1,16 @@
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
+
 <div class="content-modulo-ver container-fluid px-1 px-md-2 px-xl-2">
-  <div class="section-title-head ms-0 ms-md-3 ms-xl-4">
+  <!-- <div class="section-title-head ms-0 ms-md-3 ms-xl-4">
     <div class="indication">
       <small class="indication-text">
-        MÓDULO DE ASIGNACIONES > PANEL GENERAL 
+        MÓDULO DE ASIGNACIONES > PANEL GENERAL
       </small>
     </div>
 
     <div class="section-title-principal">
       <div class="content-title-principal mt-2">
-        <small class="title-principal" >
+        <small class="title-principal">
           Panel general de Asignaciones
         </small>
       </div>
@@ -18,6 +20,19 @@
           Consulta, revisa y exporta las asignaciones creadas.
         </small>
       </div>
+    </div>
+  </div> -->
+
+  <div class="section-title ms-0">
+    <div class="title-header">
+      <small class="text-title-header">MÓDULO DE ASIGNACIONES > CREAR CARGA DE TRABAJO</small>
+    </div>
+
+    <div class="title-body mt-2">
+      <h3 class="fw-bold">Panel general de las asignaciones</h3>
+      <p class="parrafo-title">
+        Consulta, revisa y exporta asignaciones creadas
+      </p>
     </div>
   </div>
 
@@ -73,13 +88,14 @@
             </div>
 
             <div class="table-responsive">
-              <table class="table align-middle mb-0 asigTable">
+              <table id="tblVerAsignaciones" class="table align-middle mb-0 asigTable">
                 <thead>
                   <tr>
                     <th class="text-center">Detalle</th>
                     <th class="text-center">ID</th>
                     <th class="text-center">Estado</th>
                     <th class="text-center">Fecha de creación</th>
+                    <th class="text-center">Fecha de entrega</th>
                     <th class="text-center">Coordinador</th>
                     <th class="text-center">Nombre de asignación / Encargado</th>
                     <th class="text-center">Asignados</th>
@@ -92,7 +108,7 @@
 
                 <tbody id="tbodyVerAsignaciones">
                   <tr>
-                    <td colspan="11" class="text-center py-5 text-secondary">
+                    <td colspan="12" class="text-center py-5 text-secondary">
                       Cargando asignaciones...
                     </td>
                   </tr>
@@ -122,6 +138,9 @@
   </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 <script>
   const rp = "{{ rp }}";
   const currentLoggedRole = "{{ effective_role }}";
@@ -147,9 +166,7 @@
   });
 
   let cacheAsignaciones = [];
-  let filteredAsignaciones = [];
-  let currentPage = 1;
-  let rowsPerPage = Number(rowsPerPageSelect?.value || 4);
+  let dtAsignaciones = null;
 
   function esc(value) {
     if (value === null || value === undefined) return "";
@@ -174,6 +191,14 @@
     return texto;
   }
 
+  function renderFechaEntrega(value) {
+    if (!value) return "—";
+    const raw = String(value);
+    const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+    return renderFecha(value);
+  }
+
   function normalizarTexto(value) {
     return String(value ?? "")
       .normalize("NFD")
@@ -190,14 +215,63 @@
       item.usuario_asignado,
       item.titulo,
       renderFecha(item.fecha_creacion),
+      renderFechaEntrega(item.fecha_fin_asignada),
       item.total_asignados,
       item.total_eliminados,
       item.total_nuevos
     ].join(" "));
   }
 
+  function destruirDataTableAsignaciones() {
+    if (window.jQuery && $.fn.DataTable && $.fn.DataTable.isDataTable("#tblVerAsignaciones")) {
+      $("#tblVerAsignaciones").DataTable().clear().destroy();
+    }
+    dtAsignaciones = null;
+  }
+
+  function sincronizarInfoDataTable() {
+    if (!dtAsignaciones) return;
+    const info = dtAsignaciones.page.info();
+    const totalFiltrado = dtAsignaciones.rows({ filter: "applied" }).count();
+
+    resultsInfo.textContent = totalFiltrado
+      ? `Mostrando ${info.start + 1} a ${info.end} de ${info.recordsDisplay} resultados`
+      : "Mostrando 0 de 0 resultados";
+
+    renderPagination(info.recordsDisplay);
+  }
+
+  function inicializarDataTableAsignaciones() {
+    dtAsignaciones = $("#tblVerAsignaciones").DataTable({
+      destroy: true,
+      autoWidth: false,
+      responsive: false,
+      scrollX: true,
+      searching: true,
+      paging: true,
+      info: true,
+      ordering: true,
+      lengthChange: false,
+      pageLength: Number(rowsPerPageSelect?.value || 4),
+      order: [[1, "desc"]],
+      stripeClasses: [],
+      dom: "rt",
+      language: {
+        emptyTable: "No hay asignaciones creadas todavÃ­a.",
+        zeroRecords: "No se encontraron resultados para la bÃºsqueda realizada.",
+        processing: "Procesando..."
+      },
+      columnDefs: [
+        { targets: [0, 10, 11], orderable: false, searchable: false },
+        { targets: "_all", className: "align-middle" }
+      ],
+      drawCallback: sincronizarInfoDataTable
+    });
+  }
+
   function buildRow(item) {
     const fecha = renderFecha(item.fecha_creacion);
+    const fechaEntrega = renderFechaEntrega(item.fecha_fin_asignada);
     const asignados = item.total_asignados ?? "0";
     const eliminados = item.total_eliminados ?? "0";
     const nuevos = item.total_nuevos ?? "0";
@@ -276,6 +350,10 @@
           ${esc(fecha)}
         </td>
 
+        <td class="text-center asig-fecha-cell">
+          ${esc(fechaEntrega)}
+        </td>
+
         <td class="text-center asig-person-cell">
           <div>${esc(coordinador)}</div>
         </td>
@@ -321,15 +399,17 @@
   }
 
   function renderPagination(totalRows) {
-    const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+    const info = dtAsignaciones?.page.info();
+    const totalPages = info?.pages || Math.ceil(totalRows / Number(rowsPerPageSelect?.value || 4)) || 1;
+    const currentDtPage = (info?.page ?? 0) + 1;
     pagination.innerHTML = "";
 
     if (totalRows <= 0) return;
 
-    const visiblePages = getVisiblePages(totalPages, currentPage);
+    const visiblePages = getVisiblePages(totalPages, currentDtPage);
 
     pagination.innerHTML += `
-      <li class="page-item ${currentPage === 1 ? "disabled" : ""}">
+      <li class="page-item ${currentDtPage === 1 ? "disabled" : ""}">
         <button class="page-link" data-page="prev" type="button" aria-label="Anterior">
           <i class="bi bi-chevron-left"></i>
         </button>
@@ -347,14 +427,14 @@
       }
 
       pagination.innerHTML += `
-        <li class="page-item ${page === currentPage ? "active" : ""}">
+        <li class="page-item ${page === currentDtPage ? "active" : ""}">
           <button class="page-link" data-page="${page}" type="button">${page}</button>
         </li>
       `;
     });
 
     pagination.innerHTML += `
-      <li class="page-item ${currentPage === totalPages ? "disabled" : ""}">
+      <li class="page-item ${currentDtPage === totalPages ? "disabled" : ""}">
         <button class="page-link" data-page="next" type="button" aria-label="Siguiente">
           <i class="bi bi-chevron-right"></i>
         </button>
@@ -362,25 +442,8 @@
     `;
   }
 
-  function applyFilters() {
-    const term = normalizarTexto(searchInput?.value || "");
-
-    if (!term) {
-      filteredAsignaciones = [...cacheAsignaciones];
-    } else {
-      filteredAsignaciones = cacheAsignaciones.filter(item =>
-        getSearchableText(item).includes(term)
-      );
-    }
-
-    const totalPages = Math.ceil(filteredAsignaciones.length / rowsPerPage) || 1;
-
-    if (currentPage > totalPages) currentPage = totalPages;
-    if (currentPage < 1) currentPage = 1;
-  }
-
   function renderTable() {
-    applyFilters();
+    destruirDataTableAsignaciones();
 
     if (!cacheAsignaciones.length) {
       tbodyAsignaciones.innerHTML = "";
@@ -391,10 +454,21 @@
       return;
     }
 
+    emptyMsg.classList.add("d-none");
+    btnExportar.disabled = false;
+    tbodyAsignaciones.innerHTML = cacheAsignaciones.map(buildRow).join("");
+    inicializarDataTableAsignaciones();
+    if (searchInput?.value) {
+      dtAsignaciones.search(searchInput.value).draw();
+    } else {
+      sincronizarInfoDataTable();
+    }
+    return;
+
     if (!filteredAsignaciones.length) {
       tbodyAsignaciones.innerHTML = `
         <tr>
-          <td colspan="11" class="text-center py-5 text-secondary">
+          <td colspan="12" class="text-center py-5 text-secondary">
             No se encontraron resultados para la búsqueda realizada.
           </td>
         </tr>
@@ -425,7 +499,7 @@
 
     tbodyAsignaciones.innerHTML = `
       <tr>
-        <td colspan="11" class="text-center py-5 text-secondary">
+        <td colspan="12" class="text-center py-5 text-secondary">
           Cargando asignaciones...
         </td>
       </tr>
@@ -440,8 +514,6 @@
       }
 
       cacheAsignaciones = Array.isArray(data) ? data : [];
-      filteredAsignaciones = [...cacheAsignaciones];
-      currentPage = 1;
       renderTable();
 
     } catch (err) {
@@ -459,6 +531,7 @@
 
     const headers = [
       "Fecha de creación",
+      "Fecha de entrega",
       "Coordinador",
       "Nombre de asignación",
       "Encargado",
@@ -471,6 +544,7 @@
 
     const rows = cacheAsignaciones.map(item => [
       renderFecha(item.fecha_creacion),
+      renderFechaEntrega(item.fecha_fin_asignada),
       item.coordinador || "",
       item.titulo || "",
       item.usuario_asignado || "",
@@ -572,31 +646,27 @@
 
   pagination?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-page]");
-    if (!btn || btn.closest(".disabled")) return;
+    if (!btn || btn.closest(".disabled") || !dtAsignaciones) return;
 
-    const totalPages = Math.ceil(filteredAsignaciones.length / rowsPerPage) || 1;
     const page = btn.getAttribute("data-page");
 
-    if (page === "prev" && currentPage > 1) {
-      currentPage--;
-    } else if (page === "next" && currentPage < totalPages) {
-      currentPage++;
+    if (page === "prev") {
+      dtAsignaciones.page("previous").draw("page");
+    } else if (page === "next") {
+      dtAsignaciones.page("next").draw("page");
     } else if (!isNaN(Number(page))) {
-      currentPage = Number(page);
+      dtAsignaciones.page(Number(page) - 1).draw("page");
     }
-
-    renderTable();
   });
 
   rowsPerPageSelect?.addEventListener("change", () => {
-    rowsPerPage = Number(rowsPerPageSelect.value || 4);
-    currentPage = 1;
-    renderTable();
+    if (!dtAsignaciones) return;
+    dtAsignaciones.page.len(Number(rowsPerPageSelect.value || 4)).page(0).draw();
   });
 
   searchInput?.addEventListener("input", () => {
-    currentPage = 1;
-    renderTable();
+    if (!dtAsignaciones) return;
+    dtAsignaciones.search(searchInput.value || "").page(0).draw();
   });
 
   document.addEventListener("DOMContentLoaded", () => {

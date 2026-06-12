@@ -122,6 +122,7 @@ class AsignarBody(BaseModel):
     numeros: List[str]
     username_destino: str
     titulo: Optional[str] = None
+    fecha_fin_asignada: date
     observaciones: Optional[str] = None
     forzar_reasignacion: bool = False
     coordinador_id: Optional[int] = None
@@ -131,8 +132,11 @@ class AsignacionListadoItem(BaseModel):
     id: int | str
     estado: AsignacionEstado
     fecha_creacion: Optional[str] = None
+    fecha_fin_asignada: Optional[str] = None
     coordinador: Optional[str] = None
+    coordinador_username: Optional[str] = None
     usuario_asignado: Optional[str] = None
+    usuario_asignado_username: Optional[str] = None
     titulo: Optional[str] = None
     datasetname_main: Optional[str] = None
     basket_id: Optional[int] = None
@@ -254,6 +258,11 @@ def _format_display_name(first_name: Optional[str], last_name: Optional[str], us
     full_name = " ".join(part for part in (first_name, last_name) if part).strip()
     if full_name and username:
         return f"{full_name} ({username})"
+    return full_name or username
+
+
+def _format_name_only(first_name: Optional[str], last_name: Optional[str], username: Optional[str]) -> Optional[str]:
+    full_name = " ".join(part for part in (first_name, last_name) if part).strip()
     return full_name or username
 
 
@@ -673,6 +682,7 @@ def asignar_predios(
             created_by_id = None
 
     titulo = (body.titulo or "").strip()
+    fecha_fin_asignada = body.fecha_fin_asignada
     observaciones = (body.observaciones or "").strip() or None
 
     asignacion_id: Optional[int] = None
@@ -950,11 +960,12 @@ def asignar_predios(
                        datasetname_main,
                        estado,
                        titulo,
+                       fecha_fin_asignada,
                        observaciones,
                        usuario_asignado_id,
                        creado_por_id,
                        coordinador_asignado_id)
-                    VALUES (%s, %s, %s, %s, 'CREANDO_WORKSPACE', %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, 'CREANDO_WORKSPACE', %s, %s, %s, %s, %s, %s)
                     RETURNING id
                     """,
                 (
@@ -963,6 +974,7 @@ def asignar_predios(
                     predio_basket_id,
                     datasetname_main,
                     titulo_final,
+                    fecha_fin_asignada,
                     observaciones,
                     usuario_destino_id,
                     created_by_id,
@@ -1304,12 +1316,13 @@ def listar_asignaciones(
             asig_id = str(raw_id)
 
         fecha = row.get("creado_en") or row.get("created_at")
+        fecha_fin_asignada = row.get("fecha_fin_asignada")
         coordinador_display = _format_display_name(
             row.get("coord_first_name"),
             row.get("coord_last_name"),
             row.get("creado_por"),
         )
-        usuario_display = _format_display_name(
+        usuario_display = _format_name_only(
             row.get("asignado_first_name"),
             row.get("asignado_last_name"),
             row.get("usuario_asignado"),
@@ -1320,8 +1333,15 @@ def listar_asignaciones(
                 id=asig_id,
                 estado=row.get("estado_resuelto") or row.get("estado", "CREANDO_WORKSPACE"),
                 fecha_creacion=(fecha.isoformat() if isinstance(fecha, datetime) else str(fecha)) if fecha else None,
+                fecha_fin_asignada=(
+                    fecha_fin_asignada.isoformat()
+                    if isinstance(fecha_fin_asignada, (date, datetime))
+                    else str(fecha_fin_asignada)
+                ) if fecha_fin_asignada else None,
                 coordinador=coordinador_display,
+                coordinador_username=row.get("creado_por"),
                 usuario_asignado=usuario_display,
+                usuario_asignado_username=row.get("usuario_asignado"),
                 titulo=row.get("titulo"),
                 datasetname_main=row.get("datasetname_main"),
                 basket_id=row.get("basket_id"),

@@ -590,6 +590,7 @@
     let editingId = null;
     let searchText = "";
     let activeDrawerUserId = null;
+    const initialUsuarioQuery = new URLSearchParams(window.location.search).get("usuario") || "";
 
     // Pagination variables
     let currentPage = 1;
@@ -967,7 +968,24 @@
           return;
         }
 
+        if (initialUsuarioQuery && !searchText) {
+          searchText = initialUsuarioQuery;
+          if (inputSearch) inputSearch.value = initialUsuarioQuery;
+          currentPage = 1;
+        }
+
         aplicarBusqueda();
+
+        if (initialUsuarioQuery) {
+          const normalizedQuery = initialUsuarioQuery.toLowerCase();
+          const usuario = usuariosCache.find(u =>
+            String(u.username || "").toLowerCase() === normalizedQuery
+            || String(u.id_global || "") === initialUsuarioQuery
+          );
+          if (usuario) {
+            abrirDrawer(usuario.id_global);
+          }
+        }
       } catch (err) {
         console.error(err);
         listMsg.textContent = err.message || "Error cargando usuarios.";

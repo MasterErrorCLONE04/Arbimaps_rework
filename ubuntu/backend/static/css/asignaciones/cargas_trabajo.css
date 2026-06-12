@@ -349,8 +349,9 @@ textarea.textarea-predios {
 
 .card-panel-asignacion {
     background-color: #D1E3F2 !important;
-    min-height: 626px;
-    max-height: 650px;
+    min-height: 0;
+    height: auto;
+    transition: min-height 0.25s ease, padding 0.25s ease;
 }
 
 .for-panel-title {
@@ -371,10 +372,31 @@ textarea.textarea-predios {
     color: #032F57;
 }
 
-.for-noti {
+.for-noti,
+#asignacionNoti {
     background-color: #F0F6FB;
     border-radius: 20px;
+    max-height: 0;
+    margin-top: 0 !important;
+    padding: 0 15px;
+    opacity: 0;
+    overflow: hidden;
+    transform: translateY(-6px);
+    transition:
+        max-height 0.28s ease,
+        opacity 0.22s ease,
+        transform 0.28s ease,
+        margin-top 0.28s ease,
+        padding 0.28s ease;
+}
+
+.for-noti.is-visible,
+#asignacionNoti.is-visible {
+    max-height: 180px;
+    margin-top: 1.5rem !important;
     padding: 15px;
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .hint-asignacion {

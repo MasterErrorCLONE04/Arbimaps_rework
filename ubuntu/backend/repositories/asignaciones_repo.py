@@ -12,6 +12,7 @@ from core.db import db_conn
 
 
 _ASIG_TABLES_ENSURED = False
+_ASIG_GEOSERVER_STATUS_VIEW_ENSURED: set[str] = set()
 _ASIG_EVENT_LOG_HAS_USUARIO_ID: Optional[bool] = None
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,93 @@ def _qualify(schema: str, table: str) -> str:
     if not schema:
         return table
     return f"{schema}.{table}"
+
+
+def _safe_ident(value: str, *, fallback: str = "") -> str:
+    text = (value or "").strip().strip('"')
+    if text.replace("_", "").isalnum() and text[:1].isalpha():
+        return text
+    return fallback
+
+
+def _qident(value: str) -> str:
+    clean = _safe_ident(value)
+    if not clean:
+        raise ValueError(f"Identificador SQL invalido: {value!r}")
+    return f'"{clean}"'
+
+
+def _tenant_schema_names(tenant=None) -> tuple[str, str]:
+    app_schema = "arbimaps_app"
+    main_schema = "a_base_principal"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+            main_schema = tenant.schemas.main
+        elif isinstance(tenant, str):
+            app_schema = tenant
+    return _safe_ident(app_schema, fallback="arbimaps_app"), _safe_ident(main_schema, fallback="a_base_principal")
+
+
+def ensure_geoserver_assignment_status_view(conn, tenant=None, *, force: bool = False) -> None:
+    global _ASIG_GEOSERVER_STATUS_VIEW_ENSURED
+
+    app_schema, main_schema = _tenant_schema_names(tenant)
+    cache_key = f"{app_schema}.{main_schema}"
+    if cache_key in _ASIG_GEOSERVER_STATUS_VIEW_ENSURED and not force:
+        return
+
+    app_q = _qident(app_schema)
+    main_q = _qident(main_schema)
+    view_q = f"{app_q}.\"vw_predios_estado_asignacion\""
+
+    with conn.cursor() as cur:
+        cur.execute("SET LOCAL lock_timeout = '10s'")
+        cur.execute("SET LOCAL statement_timeout = '60s'")
+        cur.execute(
+            f"""
+            CREATE OR REPLACE VIEW {view_q} AS
+            SELECT
+                t.t_id AS terreno_t_id,
+                p.t_id AS predio_t_id,
+                COALESCE(NULLIF(p.id_operacion::text, ''), p.numero_predial::text) AS id_operacion,
+                p.numero_predial::text AS numero_predial_nacional,
+                COALESCE(act.estado::text, 'SIN_ASIGNAR') AS estado_asignacion,
+                act.asignacion_id,
+                act.usuario_asignado,
+                act.coordinador_username,
+                act.fecha_inicio,
+                act.fecha_fin_asignada,
+                CASE
+                    WHEN act.fecha_fin_asignada IS NULL THEN NULL
+                    ELSE GREATEST(
+                        0,
+                        CEIL(EXTRACT(EPOCH FROM ((act.fecha_fin_asignada::date + INTERVAL '1 day') - now())) / 86400.0)::int
+                    )
+                END AS dias_restantes,
+                t.geometria
+            FROM {main_q}."arb_terreno" t
+            LEFT JOIN {main_q}."arb_predio" p ON p.t_id = t.predio
+            LEFT JOIN LATERAL (
+                SELECT
+                    a.id AS asignacion_id,
+                    a.estado,
+                    a.usuario_asignado,
+                    a.creado_por AS coordinador_username,
+                    a.creado_en AS fecha_inicio,
+                    a.fecha_fin_asignada
+                FROM {app_q}."asignacion_predio" ap
+                JOIN {app_q}."asignacion" a ON a.id = ap.asignacion_id
+                WHERE ap.activo IS DISTINCT FROM FALSE
+                  AND a.estado::text NOT IN ('CERRADA', 'SINCRONIZADO')
+                  AND NULLIF(BTRIM(ap.numero_predial_nacional::text), '') = NULLIF(BTRIM(p.numero_predial::text), '')
+                ORDER BY a.creado_en DESC NULLS LAST, a.id DESC
+                LIMIT 1
+            ) act ON TRUE
+            """
+        )
+
+    _ASIG_GEOSERVER_STATUS_VIEW_ENSURED.add(cache_key)
 
 
 def _resolve_predio_source(
@@ -189,6 +277,12 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 f"""
                 ALTER TABLE IF EXISTS {app_schema}.asignacion
                 ADD COLUMN IF NOT EXISTS enlace_digitalizacion TEXT
+                """
+            )
+            cur.execute(
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion
+                ADD COLUMN IF NOT EXISTS fecha_fin_asignada DATE
                 """
             )
             cur.execute(

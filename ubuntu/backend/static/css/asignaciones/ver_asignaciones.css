@@ -5,6 +5,18 @@
     font-size: 1rem;
 }
 
+.text-title-header {
+    font-size: 0.833rem;
+    color: #032F57;
+    font-weight: 400;
+}
+
+.parrafo-title {
+    font-size: 0.833rem;
+    color: #4f667a;
+    line-height: 1.5;
+}
+
 .title-principal {
     color: #032F57;
     font-size: 2rem;
@@ -103,7 +115,7 @@
     --bs-table-striped-bg: transparent;
     --bs-table-hover-bg: transparent;
     color: #032F57;
-    min-width: 1180px;
+    min-width: 1280px;
     margin-bottom: 0;
 }
 
