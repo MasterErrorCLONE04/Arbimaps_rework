@@ -1,3 +1,27 @@
+:root {
+    --bg: #ffffff;
+    --card: #ffffff;
+    --secondary: #6AA4D4;
+    --text: #052e56;
+    --text-dark: #002855;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --primary: #002855;
+    --primary-light: #eff6ff;
+    --accent: #2563eb;
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
+    --success: #22c55e;
+    --success-light: #f0fdf4;
+    --warning: #f59e0b;
+    --warning-light: #fefbeb;
+    --orange: #f97316;
+    --orange-light: #fff7ed;
+    --shadow: 0 6px 20px rgba(0, 40, 85, 0.05);
+    --shadow-lg: 0 20px 40px rgba(0, 40, 85, 0.1);
+    --radius: 15px;
+}
+
 /* estilos principales */
 .indication-text {
     color: #032F57;
@@ -48,8 +72,8 @@
 }
 
 .btnExcel {
-    background-color: #032F57;
-    color: #FFFFFF;
+    background-color: #032F57 !important;
+    color: #FFFFFF !important;
     border: none;
     border-radius: 12px;
     width: 182px;
@@ -57,16 +81,30 @@
     font-size: 0.833rem;
     font-weight: 700;
     box-shadow: none;
+    transition: all ease-in-out;
 }
 
-.btnExcel:hover,
+.btnExcel i{
+    transition: ease-in-out;
+    display: inline-block;
+}
+
+.btnExcel:hover{
+    transform: scale(1.02);
+}
+
+.btnExcel:hover i {
+    transform: scale(1.1);
+}
+
+/* .btnExcel:hover,
 .btnExcel:focus,
 .btnExcel:active {
     background-color: #032F57 !important;
     color: #FFFFFF !important;
     border: none !important;
     box-shadow: none !important;
-}
+} */
 
 .btnExcel:disabled {
     opacity: .65;
@@ -107,6 +145,13 @@
 
 .asigRowsSelect {
     max-width: 100px;
+}
+
+.asigStatusSelect {
+    min-width: 210px;
+    border: 1px solid #002f559a;
+    background-color: #f8fbfe;
+    color: #335977;
 }
 
 /* tabla */
@@ -196,10 +241,10 @@
     align-items: center;
     justify-content: center;
     min-width: 70px;
-    padding: 0.4rem 0.85rem;
-    border-radius: 999px;
-    font-size: 0.58rem;
-    font-weight: 800;
+    padding: 0.4rem 0.95rem;
+    border-radius: 8px !important;
+    font-size: 0.6rem !important;
+    font-weight: 600;
     letter-spacing: 0.02em;
     text-transform: uppercase;
     line-height: 1;
@@ -242,7 +287,7 @@
 }
 
 .btn-export-dark {
-    background-color: #032F57 !important;
+    background-color: #6aa4d4 !important;
 }
 
 .btn-export-mid {
@@ -380,5 +425,477 @@
 
     .asigRowsSelect {
         max-width: 100%;
+    }
+}
+
+/* SaaS table polish aligned with usuarios view */
+.content-modulo-ver {
+    --asig-primary: #002f55;
+    --asig-border: #e2e8f0;
+    --asig-muted: #64748b;
+    --asig-row-hover: #f1f8ff;
+    --asig-accent: #6aa4d4;
+}
+
+.asigVerShell {
+    background: #ffffff;
+    border: 1px solid var(--asig-border);
+    border-radius: 15px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06) !important;
+}
+
+.asigVerPanel {
+    padding: 0 !important;
+    background: #ffffff;
+}
+
+.asigVerToolbar {
+    background: var(--asig-primary);
+    color: #ffffff;
+    padding: 18px 24px;
+}
+
+.asigVerToolbar .asig-title {
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.asigVerToolbar .asig-parraf {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 12px;
+}
+
+.asigVerActions .btnExcel {
+    width: auto;
+    min-height: 38px;
+    border-radius: 8px;
+    /* background: #ffffff; */
+    /* color: var(--asig-primary); */
+    font-size: 13px;
+    box-shadow: none;
+}
+
+/* .asigVerActions .btnExcel:hover,
+.asigVerActions .btnExcel:focus,
+.asigVerActions .btnExcel:active {
+    background: #ffffff !important;
+    color: var(--asig-primary) !important;
+} */
+
+.asigVerActions .btnExcel:disabled {
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--asig-primary);
+}
+
+.asig-divider {
+    display: none;
+}
+
+.asigTableControls {
+    padding: 16px 24px;
+    margin: 0 !important;
+    border-bottom: 1px solid var(--asig-border);
+    background: #ffffff;
+}
+
+.asigControlLabel {
+    color: var(--asig-primary);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.asigControlInput {
+    height: 38px;
+    border-color: var(--asig-border);
+    border-radius: 8px;
+    color: var(--asig-primary);
+    font-size: 13px;
+}
+
+.asigControlInput:focus {
+    border-color: var(--asig-accent);
+    box-shadow: 0 0 0 3px rgba(106, 164, 212, 0.15);
+}
+
+.asigStatusSelect {
+    min-width: 210px;
+    border: none;
+    background-color: #ffffff;
+    color: #335977;
+}
+
+.asigTableWrap,
+.dataTables_scrollBody {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 47, 85, 0.55) #ffffff;
+}
+
+.asigTableWrap::-webkit-scrollbar,
+.dataTables_scrollBody::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+}
+
+.asigTableWrap::-webkit-scrollbar-thumb,
+.dataTables_scrollBody::-webkit-scrollbar-thumb {
+    background: rgba(0, 47, 85, 0.55);
+    border-radius: 999px;
+}
+
+.asigTable {
+    min-width: 1320px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.asigTable thead th {
+    background: #ffffff;
+    border-bottom: 2px solid var(--asig-border) !important;
+    color: var(--asig-primary);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 14px 16px;
+}
+
+.asigTable tbody td {
+    background: #ffffff;
+    border-bottom: 1px solid var(--asig-border);
+    color: var(--asig-primary);
+    font-size: 13px;
+    padding: 14px 16px;
+}
+
+.asigTable tbody tr {
+    height: auto;
+}
+
+.asigTable tbody tr.asig-clickable-row {
+    cursor: pointer;
+}
+
+.asigTable tbody tr:hover td {
+    background: var(--asig-row-hover);
+    cursor: pointer;
+}
+
+.asig-assignment-cell {
+    min-width: 260px;
+    text-align: left !important;
+}
+
+.asig-assignment-main {
+    display: flex;
+    align-items: center;
+    padding-left: 15px;
+    justify-content: flex-start;
+}
+
+.asig-assignment-text {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.asig-assignment-text .asig-lote-title,
+.asig-assignment-text .asig-user-sub {
+    text-align: left;
+}
+
+.asig-id-cell span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 24px;
+    padding: 0 8px;
+    border-radius: 999px;
+    /* background: #ffffff; */
+    color: var(--asig-primary);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.asig-lote-title {
+    color: var(--asig-primary);
+    font-size: 13px;
+    letter-spacing: 0;
+}
+
+.asig-user-sub,
+.asig-fecha-cell,
+.asig-person-cell {
+    color: var(--asig-muted);
+    font-size: 12px;
+}
+
+.count-pill {
+    min-width: 53px;
+    height: 30px;
+    border-radius: 9px;
+    background: #ebf4fb;
+    color: var(--asig-primary);
+    /* box-shadow: 0 4px 4px rgba(15, 23, 42, 0.125) !important; */
+    font-size: 12px;
+}
+
+.estado-chip {
+    min-width: 0;
+    max-width: 160px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0;
+    text-transform: none;
+    white-space: normal;
+}
+
+.estado-chip.estado-en-campo {
+    border-left: 3px solid #6aa4d4;
+    background-color: #6aa4d42f;
+    color: #6aa4d4;
+}
+
+.estado-chip.estado-control-calidad-1,
+.estado-chip.estado-control-calidad-2 {
+    border-left: 3px solid #F4C344;
+    background-color: #f4c2441c;
+    color: #ebb732;
+}
+
+.estado-chip.estado-generacion-xtf-campo {
+    border-left: 3px solid #68BBBB;
+    background-color: #6aa4d42f;
+    color: #68BBBB;
+}
+
+.estado-chip.estado-devuelto-campo {
+    border-left: 3px solid #d92c2c;
+    background-color: #d92c2c24;
+    color: #d92c2c;
+}
+
+.estado-chip.estado-en-digitalizacion {
+    border-left: 3px solid #9370db;
+    background-color: #9470db22;
+    color: #9370db;
+}
+
+.estado-chip.estado-en-aprobacion {
+    border-left: 3px solid #f07b22;
+    background-color: #f07b2224;
+    color: #f07b22;
+}
+
+.estado-chip.estado-devuelto-a-digitalizacion {
+    border-left: 3px solid #b22222;
+    background-color: #f07b2224;
+    color: #b22222;
+}
+
+.estado-chip.estado-en-sincronizacion {
+    border-left: 3px solid #003456;
+    background-color: #0034561a;
+    color: #003456;
+}
+
+.estado-chip.estado-sincronizado {
+    border-left: 3px solid #00a82d;
+    background-color: #00a82d2b;
+    color: #00a82d;
+}
+
+
+/* .estado-en-campo,
+.estado-generacion-xtf-campo,
+.estado-en-digitalizacion {
+    background: #eaf4fb;
+    color: #075985;
+} */
+
+/* .estado-control-calidad-1,
+.estado-control-calidad-2,
+.estado-en-aprobacion {
+    background: #fff7e0;
+    color: #9a6400;
+} */
+
+.estado-devuelto-campo,
+.estado-devuelto-a-campo,
+.estado-devuelto-digitalizacion,
+.estado-devuelto-a-digitalizacion,
+.estado-error-workspace {
+    background: #fdecec;
+    color: #b42318;
+}
+
+.estado-en-sincronizacion {
+    background: #eceff4;
+    color: var(--asig-primary);
+}
+
+.estado-sincronizado {
+    background: #e8f7ee;
+    color: #137333;
+}
+
+.estado-cerrada {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.btn-action-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    padding: 0;
+    outline: none;
+}
+
+.btn-action-circle.asig-action-view {
+    /* border-color: #2563eb; */
+    background-color: #002f55;
+    color: var(--bg);
+    box-shadow: 0 4px 4px rgba(15, 23, 42, 0.125) !important;
+}
+
+.btn-action-circle.asig-action-view:hover {
+    background-color: #dbeafe;
+    transform: translateY(-1px);
+    color: #002855;
+    outline: 1px solid #002f5542;
+}
+
+/* .btn-action-circle:hover,
+.btn-action-circle:focus {
+    background: #eef6fc;
+    color: var(--asig-primary);
+    border-color: #cfe3f3;
+} */
+
+.asig-action-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.asig-action-delete {
+    color: #ffffff;
+    background-color: #cd2023;
+    box-shadow: 0 4px 4px rgba(15, 23, 42, 0.125) !important;
+}
+
+.asig-action-delete:hover,
+.asig-action-delete:focus {
+    background: #fdecec;
+    color: #cd2023;
+    border-color: #fac5c5;
+}
+
+.btn-export-mini {
+    min-width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    box-shadow: 0 4px 4px rgba(15, 23, 42, 0.125) !important;
+}
+
+.btn-export-mini.is-loading {
+    cursor: wait;
+    opacity: 1;
+    pointer-events: none;
+}
+
+.asig-export-loader {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #ffffff;
+    display: inline-block;
+    animation: asig-export-spin 0.75s linear infinite;
+}
+
+@keyframes asig-export-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.asigTableFooter {
+    padding: 16px 24px 20px;
+    margin-top: 0 !important;
+    border-top: 1px solid var(--asig-border);
+    background: #ffffff;
+}
+
+.asigResultsInfo {
+    color: var(--asig-muted);
+    font-size: 13px;
+}
+
+.asigPagination .page-link {
+    min-width: 32px;
+    height: 32px;
+    border-radius: 8px !important;
+    background: #ffffff;
+    color: var(--asig-primary);
+    border: 1px solid var(--asig-border);
+    font-size: 13px;
+}
+
+.asigPagination .page-item.active .page-link {
+    background: var(--asig-primary);
+    color: #ffffff;
+    border-color: var(--asig-primary);
+}
+
+.asigPagination .page-item.disabled .page-link {
+    background: #f8fafc;
+    color: #94a3b8;
+    border-color: var(--asig-border);
+}
+
+.asigPagination .page-link:hover,
+.asigPagination .page-link:focus {
+    background: #eef6fc;
+    color: var(--asig-primary);
+    border-color: #cfe3f3;
+}
+
+.asigPagination .asig-page-dots {
+    background: #ffffff;
+    color: var(--asig-muted);
+}
+
+@media (max-width: 767.98px) {
+
+    .asigVerActions,
+    .asigVerActions .btnExcel {
+        width: 100%;
+    }
+
+    .asigTableControls {
+        padding: 14px 16px;
+    }
+
+    .asigStatusSelect {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .asigTableFooter {
+        padding: 14px 16px 18px;
     }
 }
