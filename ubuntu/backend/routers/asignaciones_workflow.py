@@ -107,6 +107,14 @@ def assign_assignment(
                         "assignment_id": int(assignment_id),
                     }
                 )
+                asignaciones_repo.safe_log_event(
+                    conn,
+                    tenant,
+                    int(assignment_id),
+                    "ESTADO_CAMBIADO",
+                    f"Trabajo asignado al reconocedor: {target_user['username']}. Estado: {result.transition.assignment.workflow_state.value}.",
+                    user.get("username")
+                )
                 conn.commit()
         except Exception as notif_err:
             logger.error(f"Fallo no crítico al generar notificación de workflow: {notif_err}")
@@ -131,6 +139,7 @@ def start_fieldwork(
     assignment_id: str,
     tenant: TenantContext = Depends(get_tenant_context_from_session),
     user: dict = Depends(get_current_user_from_session),
+    conn = Depends(get_tenant_db_connection),
     command_service: AssignmentCommandService = Depends(get_command_service)
 ):
     actor = ActorContext(
@@ -145,6 +154,21 @@ def start_fieldwork(
             actor=actor,
             event=WorkflowEvent.START_FIELDWORK
         )
+        asignaciones_repo.update_asignacion_fields(
+            conn,
+            tenant,
+            int(assignment_id),
+            estado="EN_CAMPO"
+        )
+        asignaciones_repo.safe_log_event(
+            conn,
+            tenant,
+            int(assignment_id),
+            "ESTADO_CAMBIADO",
+            "Inicio de trabajo de campo. Estado: EN_CAMPO.",
+            user.get("username")
+        )
+        conn.commit()
         return {
             "assignment_id": result.transition.assignment.assignment_id,
             "workflow_state": result.transition.assignment.workflow_state.value,
@@ -254,6 +278,14 @@ def submit_for_qa(
                 except Exception as notif_err:
                     logger.error(f"Fallo al generar notificacion de workflow: {notif_err}")
 
+            asignaciones_repo.safe_log_event(
+                conn,
+                tenant,
+                int(assignment_id),
+                "ESTADO_CAMBIADO",
+                f"Enviado a Control de Calidad. Estado: CONTROL_CALIDAD_1. Enlace: {payload.enlace_control_calidad}",
+                user.get("username")
+            )
         conn.commit()
 
         return {
@@ -360,6 +392,14 @@ def return_to_field(
                 except Exception as notif_err:
                     logger.error(f"Fallo al generar notificacion de workflow para reconocedor: {notif_err}")
 
+            asignaciones_repo.safe_log_event(
+                conn,
+                tenant,
+                int(assignment_id),
+                "ESTADO_CAMBIADO",
+                f"Trabajo devuelto a campo. Estado: DEVUELTO_CAMPO.",
+                user.get("username")
+            )
         conn.commit()
 
         return {
@@ -497,6 +537,14 @@ def approve_assignment(
             except Exception as support_err:
                 logger.error(f"Fallo al notificar a los consolidadores/soporte: {support_err}")
 
+            asignaciones_repo.safe_log_event(
+                conn,
+                tenant,
+                int(assignment_id),
+                "ESTADO_CAMBIADO",
+                f"Trabajo aprobado. Estado: GENERACION_XTF_CAMPO.",
+                user.get("username")
+            )
         conn.commit()
 
         return {
@@ -614,6 +662,14 @@ def submit_soporte_link(
         except Exception as notif_err:
             logger.error(f"Fallo al notificar al coordinador: {notif_err}")
 
+    asignaciones_repo.safe_log_event(
+        conn,
+        tenant,
+        int(assignment_id),
+        "ESTADO_CAMBIADO",
+        f"Enlace de soporte enviado: {payload.enlace_soporte}.",
+        user.get("username")
+    )
     conn.commit()
     return {"status": "ok", "enlace_soporte": payload.enlace_soporte}
 
@@ -697,6 +753,14 @@ def return_to_support(
         except Exception as notif_err:
             logger.error(f"Fallo al notificar al creador/soporte: {notif_err}")
 
+    asignaciones_repo.safe_log_event(
+        conn,
+        tenant,
+        int(assignment_id),
+        "ESTADO_CAMBIADO",
+        "Trabajo devuelto a soporte.",
+        user.get("username")
+    )
     conn.commit()
     return {"status": "ok"}
 
@@ -818,6 +882,14 @@ def assign_digitalizador(
         except Exception as notif_err:
             logger.error(f"Fallo al notificar al digitalizador: {notif_err}")
 
+        asignaciones_repo.safe_log_event(
+            conn,
+            tenant,
+            int(assignment_id),
+            "ESTADO_CAMBIADO",
+            f"Trabajo asignado al digitalizador {dig_user['username']}. Estado: EN_DIGITALIZACION.",
+            user.get("username")
+        )
         conn.commit()
         return {
             "assignment_id": result.transition.assignment.assignment_id,
@@ -934,6 +1006,14 @@ def continue_with_reconocedor(
         except Exception as notif_err:
             logger.error(f"Fallo al notificar al reconocedor: {notif_err}")
 
+        asignaciones_repo.safe_log_event(
+            conn,
+            tenant,
+            int(assignment_id),
+            "ESTADO_CAMBIADO",
+            "Trabajo asignado para continuar con el reconocedor. Estado: EN_DIGITALIZACION.",
+            user.get("username")
+        )
         conn.commit()
         return {
             "assignment_id": result.transition.assignment.assignment_id,
@@ -1056,6 +1136,14 @@ def submit_for_qa2(
             except Exception as notif_err:
                 logger.error(f"Fallo al notificar al coordinador: {notif_err}")
 
+            asignaciones_repo.safe_log_event(
+                conn,
+                tenant,
+                int(assignment_id),
+                "ESTADO_CAMBIADO",
+                f"Trabajo enviado a Control de Calidad 2. Estado: CONTROL_CALIDAD_2. Enlace: {payload.enlace_digitalizacion}",
+                user.get("username")
+            )
         conn.commit()
         return {
             "assignment_id": result.transition.assignment.assignment_id,
@@ -1166,6 +1254,14 @@ def return_to_digitalization(
             except Exception as notif_err:
                 logger.error(f"Fallo al notificar al usuario asignado: {notif_err}")
 
+            asignaciones_repo.safe_log_event(
+                conn,
+                tenant,
+                int(assignment_id),
+                "ESTADO_CAMBIADO",
+                "Trabajo devuelto a digitalización. Estado: DEVUELTO_DIGITALIZACION.",
+                user.get("username")
+            )
         conn.commit()
         return {
             "assignment_id": result.transition.assignment.assignment_id,
@@ -1282,6 +1378,14 @@ def approve_digitalization(
         except Exception as support_err:
             logger.error(f"Fallo al notificar lideres de reconocimiento para aprobación: {support_err}")
 
+        asignaciones_repo.safe_log_event(
+            conn,
+            tenant,
+            int(assignment_id),
+            "ESTADO_CAMBIADO",
+            "Digitalización aprobada por coordinador. Estado: EN_APROBACION.",
+            user.get("username")
+        )
         conn.commit()
         return {
             "assignment_id": result.transition.assignment.assignment_id,
@@ -1424,6 +1528,14 @@ def lider_approve_assignment(
         except Exception as support_err:
             logger.error(f"Fallo al notificar consolidadores/soporte para aprobacion de lider: {support_err}")
 
+        asignaciones_repo.safe_log_event(
+            conn,
+            tenant,
+            int(assignment_id),
+            "ESTADO_CAMBIADO",
+            "Trabajo aprobado por líder de reconocimiento. Estado: EN_SINCRONIZACION.",
+            user.get("username")
+        )
         conn.commit()
         return {
             "assignment_id": result.transition.assignment.assignment_id,
@@ -1564,6 +1676,14 @@ def lider_reject_assignment(
             except Exception as notif_err:
                 logger.error(f"Fallo al notificar al usuario asignado: {notif_err}")
 
+            asignaciones_repo.safe_log_event(
+                conn,
+                tenant,
+                int(assignment_id),
+                "ESTADO_CAMBIADO",
+                "Trabajo devuelto a digitalización por líder de reconocimiento. Estado: DEVUELTO_DIGITALIZACION.",
+                user.get("username")
+            )
         conn.commit()
         return {
             "assignment_id": result.transition.assignment.assignment_id,

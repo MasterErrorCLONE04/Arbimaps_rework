@@ -181,7 +181,7 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                     temp_conn.autocommit = True
                     with temp_conn.cursor() as temp_cur:
                         # 1. Asegurar asignacion_evento
-                        for val in ["WORKSPACE_READY", "WORKSPACE_READY_WARN", "PAQUETE_JOB_CREADO", "PAQUETE_JOB_DONE", "PAQUETE_JOB_ERROR", "ERROR"]:
+                        for val in ["WORKSPACE_READY", "WORKSPACE_READY_WARN", "PAQUETE_JOB_CREADO", "PAQUETE_JOB_DONE", "PAQUETE_JOB_ERROR", "ERROR", "ESTADO_CAMBIADO", "REASIGNADA", "CERRADA", "ASIGNADA"]:
                             temp_cur.execute(
                                 """
                                 SELECT 1 FROM pg_enum 
