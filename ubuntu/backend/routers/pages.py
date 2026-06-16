@@ -454,10 +454,17 @@ def panel_asignaciones(request: Request):
             status_code=302
         )
 
-    return RedirectResponse(
-        url=with_root_path(request, "/panel/asignaciones/cargas"),
-        status_code=307
-    )
+    role = _effective_role(user)
+    if role in {"admin", "soporte"}:
+        return RedirectResponse(
+            url=with_root_path(request, "/panel/asignaciones/cargas"),
+            status_code=307
+        )
+    else:
+        return RedirectResponse(
+            url=with_root_path(request, "/panel/asignaciones/ver"),
+            status_code=307
+        )
 
 
 @router.get("/panel/asignaciones/cargas")
@@ -472,6 +479,13 @@ def panel_asignaciones_cargas(request: Request):
         )
 
     if not _can_access_asignaciones(user):
+        return RedirectResponse(
+            url=with_root_path(request, "/panel"),
+            status_code=302
+        )
+
+    role = _effective_role(user)
+    if role not in {"admin", "soporte"}:
         return RedirectResponse(
             url=with_root_path(request, "/panel"),
             status_code=302

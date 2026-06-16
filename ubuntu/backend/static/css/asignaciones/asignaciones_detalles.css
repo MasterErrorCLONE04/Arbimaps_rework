@@ -927,7 +927,7 @@ table.dataTable tbody td {
 }
 
 .asig-table-history .table-responsive {
-    max-height: 360px;
+    max-height: 60vh !important;
 }
 
 .asigDetailTable thead th {
@@ -1304,9 +1304,11 @@ table.dataTable tbody td {
         width: 100% !important;
     }
 
-    .asig-table-light .table-responsive,
-    .asig-table-history .table-responsive {
+    .asig-table-light .table-responsive {
         max-height: 300px;
+    }
+    .asig-table-history .table-responsive {
+        max-height: 60vh !important;
     }
 }
 
@@ -1476,9 +1478,11 @@ table.dataTable tbody td {
             width: 100% !important;
         }
 
-        .asig-table-light .table-responsive,
-        .asig-table-history .table-responsive {
+        .asig-table-light .table-responsive {
             max-height: 300px;
+        }
+        .asig-table-history .table-responsive {
+            max-height: 60vh !important;
         }
     }
 }
@@ -2278,4 +2282,29 @@ table.dataTable tbody td {
 .header-action-capsule-dark,
 .header-action-capsule-blue {
     border-radius: 6px !important;
+}
+
+/* ==========================================================================
+   CONSOLIDATED LINKS MODAL STYLING
+   ========================================================================== */
+.link-item-card {
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.link-item-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    border-color: #cbd5e1 !important;
+    transform: translateY(-1px);
+}
+
+.link-item-card a:not(.btn) {
+    text-decoration: none !important;
+    color: #64748b !important;
+}
+
+.link-item-card a:not(.btn):hover {
+    color: #032F57 !important;
+    text-decoration: underline !important;
 }

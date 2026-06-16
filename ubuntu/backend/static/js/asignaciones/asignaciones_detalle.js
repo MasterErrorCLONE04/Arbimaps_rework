@@ -50,6 +50,26 @@ function showConfirm(title, text, confirmButtonText = 'Sí, continuar') {
   });
 }
 
+window.copyToClipboard = function(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'Copiado al portapapeles',
+      showConfirmButton: false,
+      timer: 2000
+    });
+  }).catch(err => {
+    showAlert('Error', 'No se pudo copiar el enlace.', 'error');
+  });
+};
+
+window.triggerSoporteLinkWorkflowModal = function() {
+  $('#modalEnlacesAsignacion').modal('hide');
+  $('#modalViewSoporteLink').modal('show');
+};
+
     $(document).ready(function () {
       $.fn.DataTable.ext.pager.numbers_length = 3;
 
@@ -445,7 +465,8 @@ const params = new URLSearchParams(window.location.search);
           }
         }
 
-        // 1.3 Mostrar/Ocultar botón de Ver Enlace de Soporte (para Coordinador/Admin/Lider/Asignado)
+        // 1.3 Mostrar/Ocultar botón de Ver Enlace de Soporte (para Coordinador/Admin/Lider/Asignado) - Keep hidden, calculate permission for consolidated modal
+        let canViewSoporte = false;
         const btnViewSoporteLink = document.getElementById("btnHeaderViewSoporteLink");
         if (btnViewSoporteLink) {
           const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
@@ -458,15 +479,10 @@ const params = new URLSearchParams(window.location.search);
             dataDet.estado === "DEVUELTO_DIGITALIZACION" ||
             dataDet.estado === "DEVUELTO_A_DIGITALIZACION";
 
-          const canView = hasSoporteLink && isAllowedState && (isReviewerRole || (isAssignee && isOwner));
+          canViewSoporte = hasSoporteLink && isAllowedState && (isReviewerRole || (isAssignee && isOwner));
 
-          if (canView) {
-            btnViewSoporteLink.classList.remove("d-none");
-            btnViewSoporteLink.classList.add("d-inline-flex");
-          } else {
-            btnViewSoporteLink.classList.add("d-none");
-            btnViewSoporteLink.classList.remove("d-inline-flex");
-          }
+          btnViewSoporteLink.classList.add("d-none");
+          btnViewSoporteLink.classList.remove("d-inline-flex");
         }
 
         // 1.4 Mostrar/Ocultar botón de Enviar a Control de Calidad 2 (para digitalizador/reconocedor dueño)
@@ -516,20 +532,18 @@ const params = new URLSearchParams(window.location.search);
             btnLiderReview.classList.remove("d-inline-flex");
           }
         }
-        // 1.7 Mostrar/Ocultar botón de Ver Enlace de Digitalización (para Soporte/Coordinador/Admin/Lider)
+        // 1.7 Mostrar/Ocultar botón de Ver Enlace de Digitalización (para Soporte/Coordinador/Admin/Lider) - Keep hidden, check if allowed
+        let canViewDigitalizacion = false;
         const btnViewDigitalizacionLink = document.getElementById("btnHeaderViewDigitalizacionLink");
         if (btnViewDigitalizacionLink) {
           const isAllowedRole = currentLoggedRole === "soporte" || currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
           const hasDigitalizacionLink = !!dataDet.enlace_digitalizacion;
           const isSyncState = dataDet.estado === "EN_SINCRONIZACION" || dataDet.estado === "SINCRONIZADO";
 
-          if (isAllowedRole && hasDigitalizacionLink && isSyncState) {
-            btnViewDigitalizacionLink.classList.remove("d-none");
-            btnViewDigitalizacionLink.classList.add("d-inline-flex");
-          } else {
-            btnViewDigitalizacionLink.classList.add("d-none");
-            btnViewDigitalizacionLink.classList.remove("d-inline-flex");
-          }
+          canViewDigitalizacion = isAllowedRole && hasDigitalizacionLink && isSyncState;
+
+          btnViewDigitalizacionLink.classList.add("d-none");
+          btnViewDigitalizacionLink.classList.remove("d-inline-flex");
         }
 
         // 1.8 Mostrar/Ocultar botón de Sincronizar XTF (para Soporte/Admin)
@@ -547,30 +561,16 @@ const params = new URLSearchParams(window.location.search);
           }
         }
 
-        // 2. Mostrar/Ocultar enlace de control de calidad
+        // 2. Mostrar/Ocultar enlace de control de calidad - Kept hidden, references removed from card details.
         const qaLinkRow = document.getElementById("d_qa_link_row");
-        const qaLink = document.getElementById("d_qa_link");
-        if (qaLinkRow && qaLink) {
-          if (dataDet.enlace_control_calidad) {
-            qaLink.href = dataDet.enlace_control_calidad;
-            qaLink.textContent = dataDet.enlace_control_calidad;
-            qaLinkRow.classList.remove("d-none");
-          } else {
-            qaLinkRow.classList.add("d-none");
-          }
+        if (qaLinkRow) {
+          qaLinkRow.classList.add("d-none");
         }
 
-        // 2.1 Mostrar/Ocultar enlace de devolución activo
+        // 2.1 Mostrar/Ocultar enlace de devolución activo - Kept hidden
         const devLinkRow = document.getElementById("d_devolucion_link_row");
-        const devLink = document.getElementById("d_devolucion_link");
-        if (devLinkRow && devLink) {
-          if (dataDet.enlace_devolucion) {
-            devLink.href = dataDet.enlace_devolucion;
-            devLink.textContent = dataDet.enlace_devolucion;
-            devLinkRow.classList.remove("d-none");
-          } else {
-            devLinkRow.classList.add("d-none");
-          }
+        if (devLinkRow) {
+          devLinkRow.classList.add("d-none");
         }
 
         const eventos = Array.isArray(dataEvt) ? dataEvt : [];
@@ -660,6 +660,168 @@ const params = new URLSearchParams(window.location.search);
             .split(" ")
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(" ");
+        }
+
+        function findLinkDetails(linkUrl) {
+          if (!linkUrl) return null;
+          const normUrl = String(linkUrl).trim().toLowerCase();
+
+          // 1. Search in comments enlace field
+          for (const c of comentarios) {
+            if (c && c.enlace && String(c.enlace).trim().toLowerCase() === normUrl) {
+              return {
+                usuario: c.usuario,
+                rol: c.rol,
+                fecha: c.creado_en,
+                orig: c.estado_origen,
+                dest: c.estado_destino
+              };
+            }
+          }
+
+          // 2. Search in comments text (comentario)
+          for (const c of comentarios) {
+            if (c && c.comentario && String(c.comentario).toLowerCase().includes(normUrl)) {
+              return {
+                usuario: c.usuario,
+                rol: c.rol,
+                fecha: c.creado_en,
+                orig: c.estado_origen,
+                dest: c.estado_destino
+              };
+            }
+          }
+
+          // 3. Search in events history (mensaje)
+          const eventos = Array.isArray(dataEvt) ? dataEvt : [];
+          for (let i = eventos.length - 1; i >= 0; i--) {
+            const e = eventos[i];
+            if (e && e.mensaje && String(e.mensaje).toLowerCase().includes(normUrl)) {
+              let orig = null;
+              let dest = null;
+              const msg = e.mensaje;
+              
+              if (msg.includes("CONTROL_CALIDAD_1")) {
+                orig = "EN_CAMPO";
+                dest = "CONTROL_CALIDAD_1";
+              } else if (msg.includes("CONTROL_CALIDAD_2")) {
+                orig = "EN_DIGITALIZACION";
+                dest = "CONTROL_CALIDAD_2";
+              } else if (msg.includes("GENERACION_XTF_CAMPO")) {
+                orig = "CONTROL_CALIDAD_1";
+                dest = "GENERACION_XTF_CAMPO";
+              } else if (msg.includes("devuelto a campo") || msg.includes("DEVUELTO_CAMPO")) {
+                orig = "CONTROL_CALIDAD_1";
+                dest = "DEVUELTO_CAMPO";
+              } else if (msg.includes("devuelto a soporte")) {
+                orig = "GENERACION_XTF_CAMPO";
+                dest = "GENERACION_XTF_CAMPO";
+              }
+
+              return {
+                usuario: e.usuario,
+                rol: "",
+                fecha: e.creado_en,
+                orig: orig,
+                dest: dest
+              };
+            }
+          }
+
+          // Fallback if not found and it is the Quality Control link (since it's set on creation)
+          if (dataDet && dataDet.enlace_control_calidad && String(dataDet.enlace_control_calidad).trim().toLowerCase() === normUrl) {
+            const coordStr = dataDet.coordinador || "";
+            const match = coordStr.match(/\(([^)]+)\)/);
+            const username = match ? match[1] : coordStr;
+            return {
+              usuario: username || "coordinador",
+              rol: "coordinador",
+              fecha: dataDet.fecha_creacion,
+              orig: null,
+              dest: null
+            };
+          }
+
+          return null;
+        }
+
+        function buildLinkItemHtml(title, linkUrl, iconClass, iconBg, iconColor, customDet = null, isComment = false) {
+          const det = customDet || findLinkDetails(linkUrl);
+          let metaHtml = "";
+          let transHtml = "";
+          let trailingPipe = "";
+
+          if (det) {
+            const dateStr = fmtDate(det.fecha);
+            const userEsc = esc(det.usuario || "Usuario");
+            const roleFmt = det.rol ? ` (${formatRoleName(det.rol)})` : "";
+            
+            if (det.orig || det.dest) {
+              const origStr = formatStateName(det.orig || "");
+              const destStr = formatStateName(det.dest || "");
+              if (origStr && destStr && origStr !== destStr) {
+                trailingPipe = " |";
+                transHtml = `
+                  <div class="d-flex align-items-center gap-1 ms-auto" style="font-size: 0.8rem;">
+                    <span style="color: #64748b; font-weight: normal; margin-right: 2px;">Transición:</span>
+                    <span class="border rounded-pill px-2 py-0.5 fw-bold" style="background-color: #ffffff; border-color: #cbd5e1; color: #475569; font-size: 0.78rem;">${origStr}</span>
+                    <span class="mx-1" style="color: #64748b; font-size: 0.8rem;">&rarr;</span>
+                    <span class="text-white rounded-pill px-2 py-0.5 fw-bold" style="background-color: #64748b; border-color: #64748b; font-size: 0.78rem;">${destStr}</span>
+                  </div>
+                `;
+              } else if (destStr) {
+                trailingPipe = " |";
+                transHtml = `
+                  <div class="d-flex align-items-center gap-1 ms-auto" style="font-size: 0.8rem;">
+                    <span style="color: #64748b; font-weight: normal; margin-right: 2px;">Estado:</span>
+                    <span class="text-white rounded-pill px-2 py-0.5 fw-bold" style="background-color: #64748b; border-color: #64748b; font-size: 0.78rem;">${destStr}</span>
+                  </div>
+                `;
+              }
+            }
+
+            metaHtml = `
+              <div class="text-muted mt-1" style="font-size: 0.78rem; line-height: 1.4;">
+                ${isComment ? "" : `<span>Enviado por: <strong>${userEsc}${roleFmt}</strong></span> | `}
+                <span>Fecha: <strong>${dateStr}</strong></span>${trailingPipe}
+              </div>
+            `;
+          } else {
+            metaHtml = `
+              <div class="text-muted mt-1" style="font-size: 0.78rem; line-height: 1.4;">
+                <span>Enviado por: <strong>-</strong></span> | 
+                <span>Fecha: <strong>-</strong></span>
+              </div>
+            `;
+          }
+
+          return `
+            <div class="link-item-card p-3 rounded-3 d-flex gap-3 border mb-3" style="background-color: #ffffff; border-color: #cbd5e1; transition: box-shadow 0.2s ease; width: 100%;">
+              <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px; background-color: ${iconBg}; align-self: center;">
+                <i class="${iconClass}" style="color: ${iconColor}; font-size: 1.15rem;"></i>
+              </div>
+              <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                  <span class="fw-bold text-dark" style="font-size: 0.95rem; color: #021f3c !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%;" title="${esc(title)}">${title}</span>
+                  ${transHtml}
+                </div>
+                <div>
+                  <a href="${esc(linkUrl)}" target="_blank" class="text-secondary text-truncate d-inline-block" style="max-width: 450px; font-size: 0.85rem; color: #64748b !important;">${esc(linkUrl)}</a>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%;">
+                  ${metaHtml}
+                  <div class="d-flex gap-2 align-items-center">
+                    <button class="btn btn-sm btn-light border p-2 d-flex align-items-center justify-content-center rounded-2" onclick="copyToClipboard('${esc(linkUrl)}')" title="Copiar enlace" style="width: 36px; height: 36px; border-color: #cbd5e1 !important; color: #021f3c;">
+                      <i class="fa-regular fa-copy" style="font-size: 1.05rem;"></i>
+                    </button>
+                    <a href="${esc(linkUrl)}" target="_blank" class="btn btn-sm text-white p-2 d-flex align-items-center justify-content-center rounded-2" style="background-color: #021f3c; border-color: #021f3c; width: 36px; height: 36px;" title="Abrir enlace">
+                      <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 0.95rem; color: #ffffff;"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
         }
 
         // Render comments
@@ -791,6 +953,107 @@ const params = new URLSearchParams(window.location.search);
             });
           } else {
             if (noComentariosMsg) noComentariosMsg.style.display = "block";
+          }
+        }
+
+        // Build consolidated links modal contents dynamically
+        const workflowContainer = document.getElementById("modalWorkflowLinksContainer");
+        if (workflowContainer) {
+          workflowContainer.innerHTML = "";
+          let hasWorkflowLinks = false;
+
+          // 1. QA Link
+          if (dataDet.enlace_control_calidad) {
+            hasWorkflowLinks = true;
+            const qaCardHtml = buildLinkItemHtml("Control de Calidad (Campo)", dataDet.enlace_control_calidad, "fa-solid fa-clipboard-check", "rgba(34, 197, 94, 0.1)", "#22c55e");
+            workflowContainer.insertAdjacentHTML("beforeend", qaCardHtml);
+          }
+
+          // 2. Devolution Link
+          if (dataDet.enlace_devolucion) {
+            hasWorkflowLinks = true;
+            const devCardHtml = buildLinkItemHtml("Evidencia de Devolución", dataDet.enlace_devolucion, "fa-solid fa-triangle-exclamation", "rgba(239, 68, 68, 0.1)", "#ef4444");
+            workflowContainer.insertAdjacentHTML("beforeend", devCardHtml);
+          }
+
+          // 3. Support Link
+          if (dataDet.enlace_soporte) {
+            hasWorkflowLinks = true;
+            const sopCardHtml = buildLinkItemHtml("Enlace de Soporte", dataDet.enlace_soporte, "fa-solid fa-link", "rgba(6, 182, 212, 0.1)", "#06b6d4");
+            workflowContainer.insertAdjacentHTML("beforeend", sopCardHtml);
+          }
+
+          // 4. Digitalization Link
+          if (dataDet.enlace_digitalizacion) {
+            hasWorkflowLinks = true;
+            const digCardHtml = buildLinkItemHtml("Enlace de Digitalización", dataDet.enlace_digitalizacion, "fa-solid fa-link", "rgba(99, 102, 241, 0.1)", "#6366f1");
+            workflowContainer.insertAdjacentHTML("beforeend", digCardHtml);
+          }
+
+          if (!hasWorkflowLinks) {
+            workflowContainer.innerHTML = `<p class="text-muted small mb-0 text-center py-3">No hay enlaces de flujo de trabajo disponibles.</p>`;
+          }
+        }
+
+        // Build comment links inside modal
+        const commentsContainer = document.getElementById("modalCommentLinksContainer");
+        const commentsSection = document.getElementById("modalCommentLinksSection");
+        let hasCommentLinks = false;
+        if (commentsContainer && commentsSection) {
+          commentsContainer.innerHTML = "";
+          if (comentarios.length > 0) {
+            comentarios.forEach(c => {
+              if (c && c.enlace) {
+                hasCommentLinks = true;
+                const userEsc = esc(c.usuario || "Usuario");
+                const roleFmt = formatRoleName(c.rol);
+                const commentLink = c.enlace;
+
+                const customDet = {
+                  usuario: c.usuario,
+                  rol: c.rol,
+                  fecha: c.creado_en,
+                  orig: c.estado_origen,
+                  dest: c.estado_destino
+                };
+                
+                const commentCardHtml = buildLinkItemHtml(
+                  `Adjunto de ${userEsc} (${roleFmt})`, 
+                  commentLink, 
+                  "fa-solid fa-comments", 
+                  "rgba(100, 116, 139, 0.1)", 
+                  "#64748b", 
+                  customDet, 
+                  true
+                );
+                
+                commentsContainer.insertAdjacentHTML("beforeend", commentCardHtml);
+              }
+            });
+          }
+
+          if (hasCommentLinks) {
+            commentsSection.style.display = "block";
+          } else {
+            commentsSection.style.display = "none";
+          }
+        }
+
+        // Toggle unified Ver Enlaces button visibility
+        const hasAnyLink = !!dataDet.enlace_control_calidad || 
+                           !!dataDet.enlace_devolucion || 
+                           !!dataDet.enlace_soporte || 
+                           !!dataDet.enlace_digitalizacion || 
+                           hasCommentLinks;
+
+        const btnVerEnlaces = document.getElementById("btnHeaderVerEnlaces");
+        if (btnVerEnlaces) {
+          if (hasAnyLink) {
+            btnVerEnlaces.classList.remove("d-none");
+            btnVerEnlaces.classList.add("d-inline-flex");
+          } else {
+            btnVerEnlaces.classList.add("d-none");
+            btnVerEnlaces.classList.remove("d-inline-flex");
           }
         }
 

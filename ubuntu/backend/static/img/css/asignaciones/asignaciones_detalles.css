@@ -893,7 +893,7 @@ table.dataTable tbody td {
 }
 
 .asig-table-history .table-responsive {
-    max-height: 360px;
+    max-height: 60vh !important;
 }
 
 .asigDetailTable thead th {
@@ -1295,9 +1295,11 @@ table.dataTable tbody td {
         width: 100% !important;
     }
 
-    .asig-table-light .table-responsive,
-    .asig-table-history .table-responsive {
+    .asig-table-light .table-responsive {
         max-height: 300px;
+    }
+    .asig-table-history .table-responsive {
+        max-height: 60vh !important;
     }
 }
 

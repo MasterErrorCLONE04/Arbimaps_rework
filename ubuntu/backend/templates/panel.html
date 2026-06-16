@@ -39,7 +39,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   {% endif %} {% if view == 'asignaciones' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/cargas_trabajo.css" />
   <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/ver_asignaciones.css" />
-  <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/asignaciones_detalles.css?v=6" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/asignaciones/asignaciones_detalles.css?v=8" />
   {% if asig_tab == 'edicion' or asig_tab == 'editar_predio' or asig_tab == 'detalle' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/edicion_asignacion/edicion_asignacion.css" />
   {% if asig_tab == 'editar_predio' %}
@@ -121,7 +121,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                     class="accordion-collapse collapse {% if view == 'asignaciones' %}show{% endif %}"
                     data-bs-parent="#asignacionesAccordionDesktop">
                     <div class="accordion-body p-2">
-                      {% if not limited_assignment_role %}
+                      {% if effective_role in ['admin', 'soporte'] %}
                       <a class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
                         href="{{ rp }}/panel/asignaciones/cargas#asig-open">
                         <!-- <img src="{{ rp }}/static/img/PNG/cargaicon.png" alt="logo cargas" class="logo-submenu" /> -->
@@ -136,11 +136,6 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                         <span>Ver asignaciones</span>
                       </a>
 
-                      <a class="popupItem {% if asig_tab == 'detalle' %}active{% endif %}"
-                        href="{{ rp }}/panel/asignaciones/detalle#asig-open">
-                        <i class="bi bi-binoculars"></i>
-                        <span>Detalles Asignación</span>
-                      </a>
                     </div>
                   </div>
                 </div>
@@ -401,7 +396,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               class="accordion-collapse collapse {% if view == 'asignaciones' %}show{% endif %}"
               data-bs-parent="#asignacionesAccordionMobile">
               <div class="accordion-body p-2">
-                {% if not limited_assignment_role %}
+                {% if effective_role in ['admin', 'soporte'] %}
                 <a class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
                   href="{{ rp }}/panel/asignaciones/cargas#asig-open">
                   <img src="{{ rp }}/static/img/PNG/cargaicon.png" alt="logo cargas" class="logo-submenu" />
@@ -415,11 +410,6 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   <span>Ver asignaciones</span>
                 </a>
 
-                <a class="popupItem {% if asig_tab == 'detalle' %}active{% endif %}"
-                  href="{{ rp }}/panel/asignaciones/detalle#asig-open">
-                  <i class="bi bi-binoculars"></i>
-                  <span>Detalles Asignación</span>
-                </a>
               </div>
             </div>
           </div>
