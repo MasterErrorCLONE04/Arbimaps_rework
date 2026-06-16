@@ -113,29 +113,51 @@ body {
 }
 
 .stat-card.role-admin {
-  border-color: var(--primary);
+  background-color: #D7DAE1;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 9, 19, 0.142) !important;
 }
 
 .stat-card.role-lider {
-  border-color: #6AB43E;
+  /* border-color: #69b43e5a; */
+  background-color: #E6F4DD;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 9, 19, 0.142) !important;
 }
 
 .stat-card.role-coordinador {
-  border-color: #f97316;
+  /* border-color: #f97316; */
+  background-color: #FCE9DB;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 9, 19, 0.142) !important;
 }
 
 .stat-card.role-reconocedor {
-  border-color: #f59e0b;
+  /* border-color: #f59e0b; */
+  background-color: #F9F1DA;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 9, 19, 0.142) !important;
 }
 
 .stat-card.role-consolidador {
-  border-color: #ef4444;
+  /* border-color: #ef4444; */
+  background-color: #FED8D8;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 9, 19, 0.142) !important;
 }
+
 .stat-card.role-consulta {
-  border-color: #ff00d4;
+  /* border-color: #ff00d4; */
+  background-color: #FDE9FE;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 9, 19, 0.142) !important;
 }
+
 .stat-card.role-digitalizador {
-  border-color: #00c3ff;
+  /* border-color: #00c3ff; */
+  background-color: #E1F5FC;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 9, 19, 0.142) !important;
 }
 
 /* Avatar colors in cards */
@@ -363,6 +385,15 @@ body {
   background-color: #f8fafc;
 }
 
+.custom-table tbody tr.is-selected td {
+  background-color: #e8f3fb;
+  box-shadow: inset 3px 0 0 var(--azulprincipal-500);
+}
+
+.custom-table tbody tr.is-selected:hover td {
+  background-color: #dcecf8;
+}
+
 .custom-table tbody tr.is-editing td {
   background-color: #eff6ff;
 }
@@ -583,7 +614,7 @@ body {
 
 /* User Drawer Details styles */
 .user-drawer {
-  width: 440px;
+  width: 500px;
   height: 673px !important;
   max-width: 90vw;
   background-color: #ffffff;
@@ -744,6 +775,17 @@ hr.drawer-divider {
   scrollbar-color: #002f55 #ffffff !important;
 }
 
+.user-drawer.no-actions .drawer-body {
+  min-height: 0;
+}
+
+.user-drawer.no-actions .drawer-info-block {
+  flex: 1 1 auto;
+  max-height: none;
+  min-height: 0;
+  padding-bottom: 16px;
+}
+
 /* 3. Estilo para navegadores WebKit (Chrome, Safari, Edge) */
 .drawer-info-block::-webkit-scrollbar {
   width: 4px;
@@ -801,6 +843,38 @@ hr.drawer-divider {
 .drawer-field .value {
   font-size: 13px;
   color: var(--muted);
+}
+
+.contract-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 24px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.contract-status-success {
+  background: #e8f7ee;
+  color: #137333;
+  border: 1px solid #bfe8cc;
+}
+
+.contract-status-danger {
+  background: #fdecec;
+  color: #b42318;
+  border: 1px solid #fac5c5;
+}
+
+.contract-status-neutral {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #dbe3ec;
 }
 
 .btn-copy {
@@ -1198,7 +1272,7 @@ hr.drawer-divider {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  
+
 }
 
 .cuadrilla-card {
@@ -1392,6 +1466,16 @@ hr.drawer-divider {
   background: none;
   padding: 0;
   width: 100%;
+}
+
+.workload-empty {
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  background: #f8fafc;
 }
 
 .workload-header {

@@ -1,10 +1,11 @@
 import json
 import logging
 import re
+from datetime import date
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from psycopg2 import IntegrityError
 from psycopg2.extras import Json, RealDictCursor
 
@@ -186,9 +187,17 @@ class UsuarioCreate(BaseModel):
     last_name: str = Field(min_length=1)
     rol: str
     email: str | None = None
+    fecha_inicio: date | None = None
+    fecha_fin: date | None = None
     supervisor_id: int | None = None
     activo: bool = True
     password: str | None = None
+
+    @model_validator(mode="after")
+    def _validate_contract_dates(self) -> "UsuarioCreate":
+        if self.fecha_inicio and self.fecha_fin and self.fecha_fin < self.fecha_inicio:
+            raise ValueError("La fecha de finalizacion no puede ser anterior al inicio del contrato.")
+        return self
 
 
 class UsuarioUpdate(BaseModel):
@@ -196,9 +205,17 @@ class UsuarioUpdate(BaseModel):
     last_name: str = Field(min_length=1)
     rol: str
     email: str | None = None
+    fecha_inicio: date | None = None
+    fecha_fin: date | None = None
     supervisor_id: int | None = None
     activo: bool = True
     password: str | None = None
+
+    @model_validator(mode="after")
+    def _validate_contract_dates(self) -> "UsuarioUpdate":
+        if self.fecha_inicio and self.fecha_fin and self.fecha_fin < self.fecha_inicio:
+            raise ValueError("La fecha de finalizacion no puede ser anterior al inicio del contrato.")
+        return self
 
 
 class EquipoTrabajoUpsert(BaseModel):
@@ -417,10 +434,11 @@ def crear_usuario(
                 f"""
                 INSERT INTO {_app_table(tenant, 'users')}
                   (username, email, first_name, last_name,
-                   rol, rol_id, supervisor, activo, password_hash)
+                   rol, rol_id, supervisor, activo, password_hash, fecha_inicio, fecha_fin)
                 VALUES
-                  (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id_global, username, email, first_name, last_name, rol, activo, creado_en, supervisor
+                  (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id_global, username, email, first_name, last_name, rol, activo,
+                          creado_en, supervisor, fecha_inicio, fecha_fin
                 """,
                 (
                     username,
@@ -432,6 +450,8 @@ def crear_usuario(
                     supervisor_id,
                     bool(body.activo),
                     pwd_hash,
+                    body.fecha_inicio,
+                    body.fecha_fin,
                 ),
             )
             row = cur.fetchone()
@@ -482,6 +502,8 @@ def listar_usuarios(
                   u.rol,
                   u.activo,
                   u.creado_en,
+                  u.fecha_inicio,
+                  u.fecha_fin,
                   sup.id_global AS supervisor_id,
                   u.supervisor AS supervisor_raw,
                   COALESCE(
@@ -654,6 +676,114 @@ def listar_reconocedores_disponibles(
             tenant.schemas.app,
         )
         raise HTTPException(status_code=500, detail=f"Error consultando reconocedores disponibles: {exc}") from exc
+
+
+@router.get("/{id_global}/asignaciones")
+def listar_asignaciones_usuario(
+    id_global: int,
+    current_user: Annotated[dict[str, Any], Depends(get_current_user)],
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+    conn=Depends(get_tenant_db_connection),
+):
+    role = _require_admin_or_coordinador(current_user)
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                f"""
+                SELECT id_global, username, first_name, last_name, rol, supervisor
+                FROM {_app_table(tenant, 'users')}
+                WHERE id_global = %s
+                """,
+                (id_global,),
+            )
+            usuario = cur.fetchone()
+            if not usuario:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+            if (
+                role == "coordinador"
+                and _normalized_role(usuario.get("rol") or "") == "reconocedor"
+                and str(usuario.get("supervisor") or "").strip() != str(_current_user_id(current_user))
+            ):
+                raise HTTPException(status_code=403, detail="No puedes consultar asignaciones de otro equipo.")
+
+            user_role = _normalized_role(usuario.get("rol") or "")
+            if user_role not in {"reconocedor", "digitalizador"}:
+                return {
+                    "mostrar_cargas": False,
+                    "pendientes": [],
+                    "entregadas": [],
+                }
+
+            cur.execute(
+                f"""
+                SELECT
+                  a.id,
+                  a.titulo,
+                  a.estado::text AS estado,
+                  a.fecha_fin_asignada,
+                  a.creado_en,
+                  COALESCE(
+                    NULLIF(TRIM(CONCAT_WS(' ', coord.first_name, coord.last_name)), ''),
+                    coord.username,
+                    a.creado_por
+                  ) AS coordinador,
+                  COALESCE(ap_s.total_predios, 0)::int AS total_predios
+                FROM {_app_table(tenant, 'asignacion')} a
+                LEFT JOIN {_app_table(tenant, 'users')} coord
+                  ON coord.id_global = a.coordinador_asignado_id
+                  OR coord.username = a.creado_por
+                LEFT JOIN LATERAL (
+                  SELECT COUNT(*) FILTER (WHERE ap.activo IS DISTINCT FROM FALSE) AS total_predios
+                  FROM {_app_table(tenant, 'asignacion_predio')} ap
+                  WHERE ap.asignacion_id = a.id
+                ) ap_s ON TRUE
+                WHERE a.usuario_asignado = %s
+                ORDER BY a.fecha_fin_asignada NULLS LAST, a.creado_en DESC
+                """,
+                (usuario["username"],),
+            )
+            rows = cur.fetchall()
+    except HTTPException:
+        _rollback_safely(conn)
+        raise
+    except Exception as exc:
+        _rollback_safely(conn)
+        logger.exception(
+            "Error consultando asignaciones usuario municipality=%s schema=%s id_global=%s",
+            tenant.municipality_code,
+            tenant.schemas.app,
+            id_global,
+        )
+        raise HTTPException(status_code=500, detail=f"Error consultando asignaciones del usuario: {exc}") from exc
+
+    def _serialize(row: dict[str, Any]) -> dict[str, Any]:
+        fecha_fin = row.get("fecha_fin_asignada")
+        creado_en = row.get("creado_en")
+        return {
+            "id": row.get("id"),
+            "titulo": row.get("titulo") or f"Asignacion {row.get('id')}",
+            "estado": row.get("estado"),
+            "fecha_fin_asignada": fecha_fin.isoformat() if hasattr(fecha_fin, "isoformat") else fecha_fin,
+            "fecha_creacion": creado_en.isoformat() if hasattr(creado_en, "isoformat") else creado_en,
+            "coordinador": row.get("coordinador") or "Sin coordinador",
+            "total_predios": int(row.get("total_predios") or 0),
+        }
+
+    pendientes: list[dict[str, Any]] = []
+    entregadas: list[dict[str, Any]] = []
+    for row in rows:
+        item = _serialize(row)
+        if str(row.get("estado") or "").upper() == "SINCRONIZADO":
+            entregadas.append(item)
+        else:
+            pendientes.append(item)
+
+    return {
+        "mostrar_cargas": True,
+        "pendientes": pendientes,
+        "entregadas": entregadas,
+    }
 
 
 @router.post("/equipos-trabajo", status_code=status.HTTP_201_CREATED)
@@ -883,10 +1013,12 @@ def actualizar_usuario(
                   rol_id = %s,
                   supervisor = %s,
                   password_hash = COALESCE(%s, password_hash),
+                  fecha_inicio = %s,
+                  fecha_fin = %s,
                   activo = %s
                 WHERE id_global = %s
                 RETURNING id_global, username, email, first_name, last_name,
-                          rol, activo, creado_en, supervisor
+                          rol, activo, creado_en, supervisor, fecha_inicio, fecha_fin
                 """,
                 (
                     email,
@@ -896,6 +1028,8 @@ def actualizar_usuario(
                     role_id,
                     supervisor_id,
                     pwd_hash,
+                    body.fecha_inicio,
+                    body.fecha_fin,
                     bool(body.activo),
                     id_global,
                 ),

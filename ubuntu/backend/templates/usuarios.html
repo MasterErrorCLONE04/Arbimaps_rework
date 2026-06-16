@@ -37,7 +37,7 @@
         {% if effective_role == 'admin' %}
         <div class="col-6 col-md-2  p-2">
           <!-- Total -->
-          <div class="stat-card total">
+          <div class="stat-card total ">
             <div class="stat-avatar">
               <i class="bi bi-person-circle"></i>
             </div>
@@ -151,7 +151,7 @@
     <!-- Contenedor Principal (Tabla y Drawer) -->
     <div class="usuarios-table-container ">
       <!-- Tabla -->
-      <div class="table-card">
+      <div class="table-card ">
         <div class="table-header-bar">
           <h2>Usuarios</h2>
           <p>Listado de todos los usuarios de la plataforma</p>
@@ -186,7 +186,7 @@
         </div>
 
         <!-- Paginador Footer -->
-        <div class="table-footer">
+        <div class="table-footer ">
           <span class="table-info-text" id="usrListMsg">Cargando usuarios...</span>
           <div class="pagination-controls" id="paginationControls">
             <!-- Botones de paginado -->
@@ -236,18 +236,27 @@
               </button>
             </div>
 
-            <div class="container-fluid pb-4 border-bottom">
-              <div class=" row pt-1 ">
-                <div class="col-12 px-0 drawer-section-title pb-2">Información contractual</div>
-                <div class="col-12 ps-0 col-md-6">
-                  <div class="drawer-field-content">
-                    <span class="label">Inicio de contrato</span>
+            <div class="container-fluid p-2 align-items-center  ">
+              <div class=" row  p-3 align-items-center"
+                style="background-color: #F3F8FC; border-radius: 20px; border: 2px solid #E0EDF7;">
+                <div
+                  class="col-12 reconocedores-header d-flex align-items-center justify-content-between  p-2 mb-3 px-3">
+                  <div class="px-0 drawer-section-title text-center ">Información contractual</div>
+                  <div class=" px-0 text-center">
+                    <span class="contract-status-badge contract-status-neutral" id="drawerContractBadge">Sin fecha
+                      fin</span>
+                  </div>
+                </div>
+
+                <div class="col-12 ps-0 col-md-6 text-center ">
+                  <div class="drawer-field-content ">
+                    <span class="label fw-bold">Inicio de contrato</span>
                     <span class="value" id="drawerStartDate">26/05/2026</span>
                   </div>
                 </div>
-                <div class="col-12 pe-0 col-md-6">
-                  <div class="drawer-field-content">
-                    <span class="label">Fecha de finalización</span>
+                <div class="col-12 pe-0 col-md-6 text-center ">
+                  <div class="drawer-field-content ">
+                    <span class="label fw-bold">Fecha de finalización</span>
                     <span class="value" id="drawerEndDate">26/05/2027</span>
                   </div>
                 </div>
@@ -255,20 +264,21 @@
             </div>
 
 
-            <div class="workload-dropdowns pt-2">
-              <div class="drawer-section-title">Cargas de trabajo</div>
+            <div class="workload-dropdowns pt-3 border-top" id="drawerWorkloadSection">
+              <div class="drawer-section-title ">Cargas de trabajo</div>
+              <div class="workload-empty d-none" id="drawerWorkloadEmpty"></div>
 
               <!-- Asignaciones Pendientes -->
               <div class="workload-accordion " id="accordionPending">
                 <button class="workload-header " type="button">
                   <span class="workload-header-title">Asignaciones pendiente</span>
                   <div class="workload-header-right">
-                    <span class="workload-badge pending">1</span>
+                    <span class="workload-badge pending" id="drawerPendingCount">0</span>
                     <i class="bi bi-chevron-down workload-icon"></i>
                   </div>
                 </button>
                 <div class="workload-content">
-                  <div class="workload-content-inner">
+                  <div class="workload-content-inner" id="drawerPendingAssignments">
                     <div class="workload-card">
                       <div class="workload-card-left">
                         <h5 class="workload-card-title">Lote 27</h5>
@@ -294,13 +304,13 @@
                 <button class="workload-header" type="button">
                   <span class="workload-header-title">Asignaciones entregadas</span>
                   <div class="workload-header-right">
-                    <span class="workload-badge completed">2</span>
+                    <span class="workload-badge completed" id="drawerCompletedCount">0</span>
                     <i class="bi bi-chevron-down workload-icon"></i>
                   </div>
                 </button>
                 <div class="workload-content">
 
-                  <div class="workload-content-inner">
+                  <div class="workload-content-inner" id="drawerCompletedAssignments">
                     <div class="workload-card">
                       <div class="workload-card-left">
                         <h5 class="workload-card-title">Lote 47</h5>
@@ -341,16 +351,18 @@
             </div>
           </div>
 
-          <div class="drawer-actions mt-auto  px-4 py-3">
+          <div class="drawer-actions mt-auto px-4 py-3" id="drawerActions">
             <button type="button" class="btn-drawer-action edit" id="btnDrawerEdit">
               <i class="bi bi-pencil-fill"></i> Editar
-              <button type="button" class="btn-drawer-action toggle-status" id="btnDrawerToggle">
-                <i class="bi bi-person-x-fill"></i> Desactivar
-              </button>
-              <button type="button" class="btn-drawer-action delete" id="btnDrawerDelete">
-                <i class="bi bi-trash-fill"></i> Eliminar
-              </button>
+            </button>
+            <button type="button" class="btn-drawer-action toggle-status" id="btnDrawerToggle">
+              <i class="bi bi-person-x-fill"></i> Desactivar
+            </button>
+            <button type="button" class="btn-drawer-action delete" id="btnDrawerDelete">
+              <i class="bi bi-trash-fill"></i> Eliminar
+            </button>
           </div>
+
         </div>
       </div>
     </div>
@@ -505,6 +517,24 @@
               <label class="form-label" style="font-size: 0.8rem;" for="usrLastName">Apellido *</label>
               <input type="text" id="usrLastName" class="form-input" required placeholder="Ej: Calderón">
             </div>
+
+            <div class="reconocedores-container full-width">
+              <div class="reconocedores-header">Información contractual</div>
+              <div class="reconocedores-list flex-row" style="display: flex !important;">
+                <div class="form-group w-50">
+                  <label class="form-label" style="font-size: 0.8rem;" for="usrFechaInicio">Inicio de contrato</label>
+                  <input type="date" id="usrFechaInicio" class="form-input">
+                </div>
+                <div class="form-group w-50">
+                  <label class="form-label" style="font-size: 0.8rem;" for="usrFechaFin">Finalizaci&oacute;n de
+                    contrato</label>
+                  <input type="date" id="usrFechaFin" class="form-input">
+                </div>
+              </div>
+            </div>
+
+
+
             <div class="form-group full-width">
               <label class="form-label" style="font-size: 0.8rem;" for="usrRol">Rol *</label>
               <select id="usrRol" class="form-input" required>
@@ -548,6 +578,8 @@
     const inputLastName = document.getElementById("usrLastName");
     const selectRol = document.getElementById("usrRol");
     const inputEmail = document.getElementById("usrEmail");
+    const inputFechaInicio = document.getElementById("usrFechaInicio");
+    const inputFechaFin = document.getElementById("usrFechaFin");
     const inputPassword = document.getElementById("usrPassword");
     const selectSupervisor = document.getElementById("usrSupervisor");
     const supervisorWrap = document.getElementById("usrSupervisorWrap");
@@ -573,17 +605,26 @@
     const drawerEmail = document.getElementById("drawerEmail");
     const drawerStartDate = document.getElementById("drawerStartDate");
     const drawerEndDate = document.getElementById("drawerEndDate");
+    const drawerContractBadge = document.getElementById("drawerContractBadge");
+    const drawerWorkloadSection = document.getElementById("drawerWorkloadSection");
+    const drawerWorkloadEmpty = document.getElementById("drawerWorkloadEmpty");
+    const accordionPending = document.getElementById("accordionPending");
+    const accordionCompleted = document.getElementById("accordionCompleted");
+    const drawerPendingCount = document.getElementById("drawerPendingCount");
+    const drawerCompletedCount = document.getElementById("drawerCompletedCount");
+    const drawerPendingAssignments = document.getElementById("drawerPendingAssignments");
+    const drawerCompletedAssignments = document.getElementById("drawerCompletedAssignments");
     const btnCopyPhone = document.getElementById("btnCopyPhone");
     const btnCopyEmail = document.getElementById("btnCopyEmail");
 
+    const drawerActions = document.getElementById("drawerActions");
     const btnDrawerEdit = document.getElementById("btnDrawerEdit");
     const btnDrawerToggle = document.getElementById("btnDrawerToggle");
     const btnDrawerDelete = document.getElementById("btnDrawerDelete");
 
     if (!IS_ADMIN) {
-      btnDrawerEdit.style.display = "none";
-      btnDrawerToggle.style.display = "none";
-      btnDrawerDelete.style.display = "none";
+      if (drawerActions) drawerActions.style.display = "none";
+      if (userDrawer) userDrawer.classList.add("no-actions");
     }
 
     let usuariosCache = [];
@@ -627,6 +668,156 @@
       const fechaFin = `${diaInicio}/${mesInicio}/${añoInicio + 1}`;
 
       return { telefono, fechaInicio, fechaFin };
+    }
+
+    function formatFechaContrato(value) {
+      if (!value) return "Sin fecha";
+      const raw = String(value).trim();
+      const datePart = raw.split("T")[0];
+      const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (match) {
+        const [, year, month, day] = match;
+        return `${day}/${month}/${year}`;
+      }
+      return raw;
+    }
+
+    function toDateInputValue(value) {
+      if (!value) return "";
+      const raw = String(value).trim();
+      const datePart = raw.split("T")[0];
+      return /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? datePart : "";
+    }
+
+    function parseContractEndOfDay(value) {
+      if (!value) return null;
+      const raw = String(value).trim();
+      const datePart = raw.split("T")[0];
+      const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (match) {
+        const [, year, month, day] = match;
+        return new Date(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999);
+      }
+      const parsed = new Date(raw);
+      if (isNaN(parsed.getTime())) return null;
+      parsed.setHours(23, 59, 59, 999);
+      return parsed;
+    }
+
+    function getContractStatus(fechaFin) {
+      const endDate = parseContractEndOfDay(fechaFin);
+      if (!endDate) {
+        return { label: "Sin fecha fin", className: "contract-status-neutral" };
+      }
+
+      const now = new Date();
+      if (now > endDate) {
+        return { label: "Vencido", className: "contract-status-danger" };
+      }
+
+      const sameLocalDay =
+        endDate.getFullYear() === now.getFullYear() &&
+        endDate.getMonth() === now.getMonth() &&
+        endDate.getDate() === now.getDate();
+
+      if (sameLocalDay) {
+        return { label: "Vence hoy", className: "contract-status-danger" };
+      }
+
+      const dayMs = 1000 * 60 * 60 * 24;
+      const daysRemaining = Math.ceil((endDate - now) / dayMs);
+      const label = daysRemaining === 1 ? "1 dia restante" : `${daysRemaining} dias restantes`;
+      return {
+        label,
+        className: daysRemaining <= 3 ? "contract-status-danger" : "contract-status-success",
+      };
+    }
+
+    function renderWorkloadEmpty(container, text) {
+      if (!container) return;
+      container.innerHTML = `<div class="workload-empty">${text}</div>`;
+    }
+
+    function renderWorkloadCards(container, items, tagClass) {
+      if (!container) return;
+      if (!items.length) {
+        renderWorkloadEmpty(container, "Sin asignaciones");
+        return;
+      }
+
+      container.innerHTML = items.map(item => {
+        const fecha = item.fecha_fin_asignada ? formatFechaContrato(item.fecha_fin_asignada) : "Sin fecha de entrega";
+        const totalPredios = Number(item.total_predios || 0);
+        const prediosLabel = totalPredios === 1 ? "1 predio" : `${totalPredios} predios`;
+        return `
+          <div class="workload-card">
+            <div class="workload-card-left">
+              <h5 class="workload-card-title">${item.titulo || "Asignaci\u00f3n sin t\u00edtulo"}</h5>
+              <span class="workload-card-date">Fecha de entrega: ${fecha}</span>
+              <div class="workload-card-assigned">
+                <span class="workload-card-assigned-icon"><i class="bi bi-person-circle"></i></span>
+                <div class="workload-card-assigned-info">
+                  <span class="workload-card-assigned-label">Encargado</span>
+                  <span class="workload-card-assigned-name">${item.coordinador || "Sin coordinador"}</span>
+                </div>
+              </div>
+            </div>
+            <div class="workload-card-right">
+              <span class="workload-tag ${tagClass}">${prediosLabel}</span>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    async function cargarCargasTrabajoUsuario(u) {
+      const role = (u.rol || "").toLowerCase();
+      const canHaveWorkload = role === "reconocedor" || role === "digitalizador";
+      if (!drawerWorkloadSection) return;
+
+      if (!canHaveWorkload) {
+        drawerWorkloadSection.style.display = "none";
+        return;
+      }
+
+      drawerWorkloadSection.style.display = "flex";
+      if (drawerWorkloadEmpty) drawerWorkloadEmpty.classList.add("d-none");
+      if (accordionPending) accordionPending.style.display = "";
+      if (accordionCompleted) accordionCompleted.style.display = "";
+      if (drawerPendingCount) drawerPendingCount.textContent = "0";
+      if (drawerCompletedCount) drawerCompletedCount.textContent = "0";
+      renderWorkloadEmpty(drawerPendingAssignments, "Cargando asignaciones...");
+      renderWorkloadEmpty(drawerCompletedAssignments, "Cargando asignaciones...");
+
+      try {
+        const r = await fetch(`${rp}/usuarios/${u.id_global}/asignaciones`, { credentials: "include" });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.detail || "No se pudieron cargar las asignaciones.");
+
+        if (!data.mostrar_cargas) {
+          drawerWorkloadSection.style.display = "none";
+          return;
+        }
+
+        const pendientes = Array.isArray(data.pendientes) ? data.pendientes : [];
+        const entregadas = Array.isArray(data.entregadas) ? data.entregadas : [];
+        if (drawerPendingCount) drawerPendingCount.textContent = pendientes.length;
+        if (drawerCompletedCount) drawerCompletedCount.textContent = entregadas.length;
+        if (!pendientes.length && !entregadas.length) {
+          if (accordionPending) accordionPending.style.display = "none";
+          if (accordionCompleted) accordionCompleted.style.display = "none";
+          if (drawerWorkloadEmpty) {
+            drawerWorkloadEmpty.textContent = "Este usuario no tiene cargas de trabajo asignadas.";
+            drawerWorkloadEmpty.classList.remove("d-none");
+          }
+          return;
+        }
+        renderWorkloadCards(drawerPendingAssignments, pendientes, "pending");
+        renderWorkloadCards(drawerCompletedAssignments, entregadas, "completed");
+      } catch (err) {
+        console.error("Error cargando cargas de trabajo:", err);
+        renderWorkloadEmpty(drawerPendingAssignments, err.message || "Error cargando asignaciones.");
+        renderWorkloadEmpty(drawerCompletedAssignments, "Sin datos");
+      }
     }
 
     function getCoordinadoresActivos() {
@@ -756,6 +947,8 @@
       inputUsername.disabled = false;
       submitBtn.textContent = "Guardar usuario";
       inputPassword.value = "";
+      inputFechaInicio.value = "";
+      inputFechaFin.value = "";
       selectSupervisor.value = "";
       syncSupervisorField();
       msg.style.display = "none";
@@ -818,6 +1011,9 @@
         const tr = document.createElement("tr");
         if (editingId === u.id_global) {
           tr.classList.add("is-editing");
+        }
+        if (Number(activeDrawerUserId) === Number(u.id_global)) {
+          tr.classList.add("is-selected");
         }
 
         const rolKey = (u.rol || "").toLowerCase();
@@ -1036,8 +1232,11 @@
       const sim = obtenerDetallesSimulados(u);
       drawerPhone.textContent = sim.telefono;
       drawerEmail.textContent = u.email || "Sin email registrado";
-      drawerStartDate.textContent = sim.fechaInicio;
-      drawerEndDate.textContent = sim.fechaFin;
+      drawerStartDate.textContent = formatFechaContrato(u.fecha_inicio);
+      drawerEndDate.textContent = formatFechaContrato(u.fecha_fin);
+      const contractStatus = getContractStatus(u.fecha_fin);
+      drawerContractBadge.textContent = contractStatus.label;
+      drawerContractBadge.className = `contract-status-badge ${contractStatus.className}`;
 
       // Handle active state
       if (u.activo) {
@@ -1047,11 +1246,14 @@
       }
 
       userDrawer.classList.add("open");
+      aplicarBusqueda();
+      cargarCargasTrabajoUsuario(u);
     }
 
     function cerrarDrawer() {
       userDrawer.classList.remove("open");
       activeDrawerUserId = null;
+      aplicarBusqueda();
     }
 
     // Copy to clipboard with micro-interaction checkmark
@@ -1113,6 +1315,8 @@
         last_name: u.last_name || "",
         rol: u.rol || "",
         email: u.email || null,
+        fecha_inicio: u.fecha_inicio || null,
+        fecha_fin: u.fecha_fin || null,
         activo: nuevoActivo,
         password: null,
       };
@@ -1170,6 +1374,8 @@
       inputLastName.value = u.last_name || "";
       selectRol.value = u.rol || "";
       inputEmail.value = u.email || "";
+      inputFechaInicio.value = toDateInputValue(u.fecha_inicio);
+      inputFechaFin.value = toDateInputValue(u.fecha_fin);
       inputPassword.value = "";
       syncSupervisorField(supervisorSeleccionado, supervisorEtiqueta);
       selectSupervisor.value = supervisorSeleccionado ? String(supervisorSeleccionado) : "";
@@ -1251,12 +1457,21 @@
         last_name: inputLastName.value.trim(),
         rol: selectRol.value,
         email: inputEmail.value.trim() || null,
+        fecha_inicio: inputFechaInicio.value || null,
+        fecha_fin: inputFechaFin.value || null,
         supervisor_id: selectRol.value === "reconocedor" && selectSupervisor.value ? parseInt(selectSupervisor.value, 10) : null,
         password: inputPassword.value || null,
       };
 
       if (!payload.username || !payload.first_name || !payload.last_name || !payload.rol) {
         showMsg("Completa los campos obligatorios.", "error");
+        submitBtn.disabled = false;
+        submitBtn.textContent = isEdit ? "Actualizar usuario" : "Guardar usuario";
+        return;
+      }
+
+      if (payload.fecha_inicio && payload.fecha_fin && payload.fecha_fin < payload.fecha_inicio) {
+        showMsg("La fecha de finalizaci\u00f3n no puede ser anterior al inicio del contrato.", "error");
         submitBtn.disabled = false;
         submitBtn.textContent = isEdit ? "Actualizar usuario" : "Guardar usuario";
         return;
