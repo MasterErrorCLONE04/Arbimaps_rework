@@ -42,7 +42,7 @@ def _rollback_safely(conn) -> None:
 
 def _require_admin(user: dict[str, Any]) -> None:
     role = get_user_role(user)
-    if role != "admin":
+    if role not in {"admin", "soporte"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Rol '{role}' sin permisos para esta accion",
@@ -51,7 +51,7 @@ def _require_admin(user: dict[str, Any]) -> None:
 
 def _require_admin_or_coordinador(user: dict[str, Any]) -> str:
     role = get_user_role(user)
-    if role not in {"admin", "coordinador"}:
+    if role not in {"admin", "coordinador", "soporte"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Rol '{role}' sin permisos para esta accion",

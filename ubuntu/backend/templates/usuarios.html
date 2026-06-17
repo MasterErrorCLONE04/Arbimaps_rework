@@ -10,7 +10,7 @@
     </div>
     <div class="header-actions">
       <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalUsuario" id="btnAddNewUser" {% if
-        effective_role !='admin' %}style="display: none;" {% endif %}>
+        effective_role not in ['admin', 'soporte'] %}style="display: none;" {% endif %}>
         <i class="bi bi-plus-lg"></i> Agregar nuevo usuario
       </button>
       <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalCuadrilla" id="btnAddNewCuadrilla"
@@ -34,7 +34,7 @@
   <div id="usuariosTabContent">
     <div class="container-fluid pb-3 px-lg-2">
       <div class="row">
-        {% if effective_role == 'admin' %}
+        {% if effective_role in ['admin', 'soporte'] %}
         <div class="col-6 col-md-2  p-2">
           <!-- Total -->
           <div class="stat-card total ">
@@ -48,7 +48,7 @@
           </div>
         </div>
         {% endif %}
-        {% if effective_role == 'admin' %}
+        {% if effective_role in ['admin', 'soporte'] %}
         <div class="col-6 col-md-2 p-2">
           <!-- Administrador -->
           <div class="stat-card role-admin">
@@ -62,7 +62,7 @@
           </div>
         </div>
         {% endif %}
-        {% if effective_role == 'admin' %}
+        {% if effective_role in ['admin', 'soporte'] %}
         <div class="col-6 col-md-2 p-2">
           <!-- Lider de reco -->
           <div class="stat-card role-lider">
@@ -76,7 +76,7 @@
           </div>
         </div>
         {% endif %}
-        {% if effective_role == 'admin' %}
+        {% if effective_role in ['admin', 'soporte'] %}
         <div class="col-6 col-md-2 p-2">
           <!-- Coordinador -->
           <div class="stat-card role-coordinador">
@@ -102,7 +102,7 @@
             </div>
           </div>
         </div>
-        {% if effective_role == 'admin' %}
+        {% if effective_role in ['admin', 'soporte'] %}
         <div class="col-6 col-md-2 p-2">
           <!-- Soporte -->
           <div class="stat-card role-consolidador">
@@ -116,7 +116,7 @@
           </div>
         </div>
         {% endif %}
-        {% if effective_role == 'admin' %}
+        {% if effective_role in ['admin', 'soporte'] %}
         <div class="col-6 col-md-2 p-2">
           <!-- Consulta -->
           <div class="stat-card role-consulta">
@@ -130,7 +130,7 @@
           </div>
         </div>
         {% endif %}
-        {% if effective_role == 'admin' %}
+        {% if effective_role in ['admin', 'soporte'] %}
         <div class="col-6 col-md-2 p-2">
           <!-- digitalizador -->
           <div class="stat-card role-digitalizador">
@@ -591,7 +591,7 @@
     const CURRENT_ROLE = "{{ effective_role|default('', true) }}";
     const CURRENT_USER_ID = Number("{{ current_user_id|default('', true) }}");
     const CURRENT_USERNAME = "{{ current_username|default(user, true) }}";
-    const IS_ADMIN = CURRENT_ROLE === "admin";
+    const IS_ADMIN = CURRENT_ROLE === "admin" || CURRENT_ROLE === "soporte";
     const IS_COORDINADOR = CURRENT_ROLE === "coordinador";
 
     // Drawer elements

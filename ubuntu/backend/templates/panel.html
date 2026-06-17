@@ -91,7 +91,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <span>Consultar predio</span>
               </a>
 
-              {% if effective_role in ['admin', 'coordinador'] %}
+              {% if effective_role in ['admin', 'coordinador', 'soporte'] %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}"
                 href="{{ rp }}/panel/usuarios">
                 <i class="bi bi-people"></i>
@@ -422,7 +422,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
           <span>Validación XTF</span>
         </a>
 
-        {% if effective_role in ['admin', 'coordinador'] %}
+        {% if effective_role in ['admin', 'coordinador', 'soporte'] %}
         <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}" href="{{ rp }}/panel/usuarios">
           <i class="bi bi-people"></i>
           <span>Usuarios</span>
