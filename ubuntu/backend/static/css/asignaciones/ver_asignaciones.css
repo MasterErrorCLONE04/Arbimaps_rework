@@ -497,12 +497,24 @@
     margin: 0 !important;
     border-bottom: 1px solid var(--asig-border);
     background: #ffffff;
+    row-gap: 14px;
+}
+
+.asigFilterActions {
+    column-gap: 18px !important;
+}
+
+.asigControlGroup,
+.asigSearchGroup,
+.asigStatusGroup {
+    min-height: 38px;
 }
 
 .asigControlLabel {
     color: var(--asig-primary);
     font-size: 13px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .asigControlInput {
@@ -520,9 +532,40 @@
 
 .asigStatusSelect {
     min-width: 210px;
-    border: none;
+    border:1px solid var(--asig-border);
     background-color: #ffffff;
     color: #335977;
+}
+
+.asigSearchGroup .asigControlInput {
+    min-width: 280px;
+}
+
+.asigStatusGroup .bi {
+    color: var(--asig-primary);
+    font-size: 15px;
+}
+
+.asigClearFiltersBtn {
+    height: 38px;
+    border-radius: 8px;
+    background-color: var(--asig-primary);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.asigClearFiltersBtn:hover,
+.asigClearFiltersBtn:focus {
+    background-color: #0a416f;
+    color: #ffffff;
+    box-shadow: none;
 }
 
 .asigTableWrap,
@@ -649,6 +692,37 @@
     letter-spacing: 0;
     text-transform: none;
     white-space: normal;
+}
+
+.estado-chip.estado-creando-workspace,
+.estado-chip.creando-workspace {
+    border-left: 3px solid #278bdd;
+    border-right: 3px solid #278bdd;
+    background-color: #6aa4d42f;
+    color: #6aa4d4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    max-width: none;
+    white-space: nowrap;
+}
+
+.estado-loader {
+    width: 12px;
+    height: 12px;
+    flex: 0 0 12px;
+    border-radius: 50%;
+    border: 2px solid rgba(106, 164, 212, 0.28);
+    border-top-color: #278bdd;
+    display: inline-block;
+    animation: estado-loader-spin 0.75s linear infinite;
+}
+
+@keyframes estado-loader-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .estado-chip.estado-en-campo {
@@ -888,6 +962,17 @@
 
     .asigTableControls {
         padding: 14px 16px;
+    }
+
+    .asigControlGroup,
+    .asigSearchGroup,
+    .asigStatusGroup,
+    .asigClearFiltersBtn {
+        width: 100%;
+    }
+
+    .asigSearchGroup .asigControlInput {
+        min-width: 0;
     }
 
     .asigStatusSelect {
