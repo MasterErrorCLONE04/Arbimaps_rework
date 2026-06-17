@@ -389,8 +389,8 @@
       ? `<span class="estado-loader" aria-hidden="true"></span><span>${esc(estadoLabel)}</span>`
       : esc(estadoLabel);
 
-    const isReviewer = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
-    const closeBtn = isHistorical || !isReviewer
+    const canDelete = currentLoggedRole === "admin" || currentLoggedRole === "soporte";
+    const closeBtn = isHistorical || !canDelete
       ? `<span class="d-inline-block" style="width:24px;height:24px;"></span>`
       : `
         <button

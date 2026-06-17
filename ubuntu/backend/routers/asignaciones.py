@@ -1209,7 +1209,8 @@ def cerrar_asignacion(
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_assignment_access(user, "admin", "coordinador")
+    conn.autocommit = False
+    _require_assignment_access(user, "admin", "soporte")
     check_admin_soporte_isolation(conn, tenant, user, asignacion_id)
     usuario_log = user.get("username") if isinstance(user, dict) else None
     cierre_estado = "CERRADA"
@@ -1222,7 +1223,6 @@ def cerrar_asignacion(
     }
     workspace_warning: Optional[str] = None
     predios_liberados = 0
-    conn.autocommit = False
     try:
         _ensure_asignacion_tables(conn, tenant)
         asignacion_table = app_table(tenant, "asignacion")
