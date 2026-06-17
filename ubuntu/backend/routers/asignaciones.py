@@ -742,6 +742,35 @@ def asignar_predios(
 
         usuario_destino_id = int(dest_row["id_global"])
 
+        # Verificar limite de asignaciones activas (maximo 2) para el reconocedor
+        event_log_table = app_table(tenant, "asignacion_event_log")
+        with conn.cursor() as cur_active:
+            cur_active.execute(
+                f"""
+                SELECT COUNT(*)
+                FROM {asignacion_table} a
+                WHERE a.usuario_asignado = %s
+                  AND a.estado::text NOT IN ('CERRADA', 'SINCRONIZADO')
+                  AND NOT EXISTS (
+                      SELECT 1 
+                      FROM {event_log_table} el
+                      WHERE el.asignacion_id = a.id
+                        AND (
+                            el.evento::text = 'PUBLICACION_MAIN'
+                            OR el.mensaje LIKE '[PUBLICACION_MAIN]%%'
+                        )
+                  )
+                """,
+                (username_destino,),
+            )
+            active_count = cur_active.fetchone()[0]
+
+        if active_count >= 2:
+            raise HTTPException(
+                status_code=400,
+                detail=f"El reconocedor '{username_destino}' ya tiene {active_count} asignaciones activas. No se le pueden asignar más de 2 cargas de trabajo simultáneas hasta que termine o cierre una de las existentes.",
+            )
+
         if coordinador_id is None:
             raise HTTPException(
                 status_code=400,

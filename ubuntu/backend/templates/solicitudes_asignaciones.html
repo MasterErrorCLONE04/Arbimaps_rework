@@ -1,3 +1,97 @@
+<style>
+  /* DataTables custom pagination alignment and styles matching ver_asignaciones.css */
+  .content-modulo-ver .dataTables_wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+  }
+  
+  .content-modulo-ver .dataTables_wrapper .dataTables_paginate {
+      padding-top: 0 !important;
+      margin-top: 0 !important;
+      float: none !important;
+      display: flex;
+      justify-content: flex-end;
+  }
+
+  .content-modulo-ver .dataTables_wrapper .dataTables_paginate .pagination {
+      margin: 0 !important;
+      justify-content: flex-start;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+  }
+
+  .content-modulo-ver .dataTables_wrapper .dataTables_paginate .page-item {
+      margin: 0 !important;
+  }
+
+  .content-modulo-ver .dataTables_wrapper .dataTables_paginate .page-link {
+      min-width: 30px;
+      height: 30px;
+      padding: 0 8px !important;
+      border-radius: 6px !important;
+      border: 1px solid rgba(3, 47, 87, 0.16) !important;
+      background-color: #FFFFFF !important;
+      color: #032F57 !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem !important;
+      font-weight: 700 !important;
+      box-shadow: none !important;
+      transition: all 0.2s ease;
+  }
+
+  .content-modulo-ver .dataTables_wrapper .dataTables_paginate .page-item.active .page-link {
+      background-color: #032F57 !important;
+      color: #FFFFFF !important;
+      border-color: #032F57 !important;
+  }
+
+  .content-modulo-ver .dataTables_wrapper .dataTables_paginate .page-item.disabled .page-link {
+      opacity: .45 !important;
+      background-color: #FFFFFF !important;
+      color: #6C87A0 !important;
+      border-color: rgba(3, 47, 87, 0.08) !important;
+  }
+
+  .content-modulo-ver .dataTables_wrapper .dataTables_paginate .page-link:hover {
+      background-color: #f0f6fb !important;
+      color: #032F57 !important;
+      border-color: #8EB7DC !important;
+  }
+
+  /* Info text layout */
+  .content-modulo-ver .dataTables_wrapper .dataTables_info {
+      float: none !important;
+      padding-top: 0 !important;
+      color: #6C87A0 !important;
+      font-size: 0.85rem !important;
+      font-weight: 500 !important;
+      line-height: 30px;
+  }
+
+  /* Make sure the footer container behaves like a flexbox row */
+  .content-modulo-ver .dataTables_wrapper .row:last-child {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin: 0 !important;
+      padding-top: 1rem;
+      border-top: 1px solid #e2e8f0;
+  }
+
+  /* Adjust cols in that row */
+  .content-modulo-ver .dataTables_wrapper .row:last-child > div {
+      width: auto !important;
+      max-width: none !important;
+      flex: 0 0 auto !important;
+      padding: 0 !important;
+  }
+</style>
 <div class="content-section container-fluid  pb-5">
   <div class="d-flex align-items-center justify-content-center mb-0 ">
     <div class="section-title ms-0  w-100">
@@ -342,29 +436,31 @@
     </div> <!-- End Tab 1 -->
 
     <div class="tab-pane fade" id="mis-solicitudes-pane" role="tabpanel" aria-labelledby="mis-solicitudes-tab">
-      <div class="section-body">
-        <div class="card card-panel border-0 p-3 p-md-4 mt-3">
-          <div class="card-resultados-header mb-4">
-            <div>
-              <h5 class="fw-bold mb-2 text-navy">Historial de Solicitudes</h5>
-              <p class="parrafo-result mb-0">Listado de las solicitudes de asignación que has enviado al soporte.</p>
+      <div class="section-body content-modulo-ver mt-3 mb-5">
+        <div class="asigVerShell shadow-sm">
+          <div class="asigVerPanel" id="asigVerPanelCoord">
+            <div class="asigVerToolbar d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" style="border-top-left-radius: 14px; border-top-right-radius: 14px;">
+              <div class="asig-section-title">
+                <div class="asig-title mb-1">Historial de Solicitudes</div>
+                <div class="asig-parraf">Listado de las solicitudes de asignación que has enviado al soporte.</div>
+              </div>
             </div>
-          </div>
-          <div class="table-responsive">
-            <table class="table table-resultados w-100" id="tblHistorialSolicitudesCoord" style="width: 100%;">
-              <thead>
-                <tr>
-                  <th class="text-center" style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">ID</th>
-                  <th class="text-center">Nombre de la solicitud</th>
-                  <th class="text-center">Observaciones</th>
-                  <th class="text-center">Lotes</th>
-                  <th class="text-center">Estado</th>
-                  <th class="text-center">Creado en</th>
-                  <th class="text-center" style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;">Acción</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyHistorialSolicitudesCoord"></tbody>
-            </table>
+            <div class="table-responsive asigTableWrap" style="padding: 24px;">
+              <table class="table align-middle mb-0 asigTable w-100" id="tblHistorialSolicitudesCoord" style="width: 100%;">
+                <thead>
+                  <tr>
+                    <th class="text-center">ID</th>
+                    <th class="text-center">Nombre de la solicitud</th>
+                    <th class="text-center">Observaciones</th>
+                    <th class="text-center">Lotes</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Creado en</th>
+                    <th class="text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyHistorialSolicitudesCoord"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -373,30 +469,32 @@
   {% endif %}
 
   {% if effective_role in ['soporte', 'admin'] %}
-  <div class="section-body">
-    <div class="card card-panel border-0 p-3 p-md-4 mt-4">
-      <div class="card-resultados-header mb-4">
-        <div>
-          <h5 class="fw-bold mb-2 text-navy">Solicitudes de Carga de Trabajo</h5>
-          <p class="parrafo-result mb-0">Listado global de solicitudes enviadas por los coordinadores.</p>
+  <div class="section-body content-modulo-ver mt-4 mb-5">
+    <div class="asigVerShell shadow-sm">
+      <div class="asigVerPanel" id="asigVerPanelSoporte">
+        <div class="asigVerToolbar d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3" style="border-top-left-radius: 14px; border-top-right-radius: 14px;">
+          <div class="asig-section-title">
+            <div class="asig-title mb-1">Solicitudes de Carga de Trabajo</div>
+            <div class="asig-parraf">Listado global de solicitudes enviadas por los coordinadores.</div>
+          </div>
         </div>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-resultados w-100" id="tblHistorialSolicitudesSoporte" style="width: 100%;">
-          <thead>
-            <tr>
-              <th class="text-center" style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">ID</th>
-              <th class="text-center">Coordinador</th>
-              <th class="text-center">Nombre de la solicitud</th>
-              <th class="text-center">Observaciones</th>
-              <th class="text-center">Lotes</th>
-              <th class="text-center">Estado</th>
-              <th class="text-center">Creado en</th>
-              <th class="text-center" style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;">Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyHistorialSolicitudesSoporte"></tbody>
-        </table>
+        <div class="table-responsive asigTableWrap" style="padding: 24px;">
+          <table class="table align-middle mb-0 asigTable w-100" id="tblHistorialSolicitudesSoporte" style="width: 100%;">
+            <thead>
+              <tr>
+                <th class="text-center">ID</th>
+                <th class="text-center">Coordinador</th>
+                <th class="text-center">Nombre de la solicitud</th>
+                <th class="text-center">Observaciones</th>
+                <th class="text-center">Lotes</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center">Creado en</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyHistorialSolicitudesSoporte"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -444,6 +542,7 @@
     </div>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
@@ -981,6 +1080,16 @@
           }
         }
 
+        if (window.Swal) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Asignación no permitida',
+            text: detail?.message || data.detail || "Error asignando.",
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#032F57'
+          });
+        }
+
         msg.textContent = detail?.message || data.detail || "Error asignando.";
         return;
       }
@@ -1347,39 +1456,47 @@
         let estadoBadge = "";
         const est = (sol.estado || "").toLowerCase();
         if (est === "pendiente") {
-          estadoBadge = `<span class="badge-estado-pendiente">Pendiente</span>`;
+          estadoBadge = `<span class="estado-chip estado-en-aprobacion">Pendiente</span>`;
         } else if (est === "procesada") {
-          estadoBadge = `<span class="badge-estado-procesada">Procesada</span>`;
+          estadoBadge = `<span class="estado-chip estado-sincronizado">Procesada</span>`;
         } else {
-          estadoBadge = `<span class="badge-estado-rechazada">${sol.estado}</span>`;
+          estadoBadge = `<span class="estado-chip estado-devuelto-campo">${sol.estado}</span>`;
         }
 
-        let actionHtml = `<button class="btn btn-detalle" onclick="verDetalleSolicitud(${sol.id})"><i class="bi bi-eye"></i> Detalle</button>`;
+        let actionHtml = `
+          <div class="asig-action-group">
+            <button type="button" class="btn-action-circle asig-action-view" onclick="verDetalleSolicitud(${sol.id})" title="Ver detalle">
+              <i class="bi bi-eye-fill"></i>
+            </button>`;
         if (!isCoordinator && est === "pendiente") {
-          actionHtml += ` <a href="${rp}/panel/asignaciones/cargas?solicitud_id=${sol.id}" class="btn btn-procesar ms-1"><i class="bi bi-gear-fill"></i> Procesar</a>`;
+          actionHtml += `
+            <a href="${rp}/panel/asignaciones/cargas?solicitud_id=${sol.id}" class="btn-action-circle ms-1" style="background-color: #28A745; color: white;" title="Procesar">
+              <i class="bi bi-gear-fill"></i>
+            </a>`;
         }
+        actionHtml += `</div>`;
 
-        const dateStr = sol.creado_en ? new Date(sol.creado_en).toLocaleString() : "";
+        const dateStr = sol.creado_en ? new Date(sol.creado_en).toLocaleDateString() : "";
         
         if (isCoordinator) {
           tr.innerHTML = `
-            <td class="text-center">${sol.id}</td>
-            <td>${sol.nombre}</td>
-            <td>${sol.observaciones || ""}</td>
-            <td class="text-center">${sol.cant_lotes || 0}</td>
+            <td class="text-center asig-id-cell"><span>${sol.id}</span></td>
+            <td><div class="asig-lote-title">${sol.nombre}</div></td>
+            <td><div class="asig-user-sub">${sol.observaciones || "—"}</div></td>
+            <td class="text-center"><span class="count-pill">${sol.cant_lotes || 0}</span></td>
             <td class="text-center">${estadoBadge}</td>
-            <td class="text-center">${dateStr}</td>
+            <td class="text-center asig-fecha-cell">${dateStr}</td>
             <td class="text-center">${actionHtml}</td>
           `;
         } else {
           tr.innerHTML = `
-            <td class="text-center">${sol.id}</td>
-            <td>${sol.creado_por}</td>
-            <td>${sol.nombre}</td>
-            <td>${sol.observaciones || ""}</td>
-            <td class="text-center">${sol.cant_lotes || 0}</td>
+            <td class="text-center asig-id-cell"><span>${sol.id}</span></td>
+            <td><div class="fw-bold text-navy" style="font-size: 13px;">${sol.creado_por}</div></td>
+            <td><div class="asig-lote-title">${sol.nombre}</div></td>
+            <td><div class="asig-user-sub">${sol.observaciones || "—"}</div></td>
+            <td class="text-center"><span class="count-pill">${sol.cant_lotes || 0}</span></td>
             <td class="text-center">${estadoBadge}</td>
-            <td class="text-center">${dateStr}</td>
+            <td class="text-center asig-fecha-cell">${dateStr}</td>
             <td class="text-center">${actionHtml}</td>
           `;
         }

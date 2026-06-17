@@ -1250,6 +1250,7 @@ def list_usuarios_disponibles(
     supervisor_id: int | None = None,
     only_reconocedores: bool = False,
 ) -> list[dict]:
+    ensure_asignacion_tables(conn, tenant)
     app_schema = "arbimaps_app"
     if tenant is not None:
         if hasattr(tenant, "schemas"):
@@ -1281,15 +1282,25 @@ def list_usuarios_disponibles(
                 u.supervisor
             FROM {app_schema}.users u
             LEFT JOIN (
-                SELECT DISTINCT a.usuario_asignado
+                SELECT a.usuario_asignado, COUNT(*) as active_count
                 FROM {app_schema}.asignacion a
-                JOIN {app_schema}.asignacion_predio ap
-                  ON ap.asignacion_id = a.id
-                 AND ap.activo IS DISTINCT FROM FALSE
-                WHERE a.estado IS DISTINCT FROM 'CERRADA'
-            ) a ON a.usuario_asignado = u.username
+                WHERE a.estado::text NOT IN ('CERRADA', 'SINCRONIZADO')
+                  AND NOT EXISTS (
+                      SELECT 1 
+                      FROM {app_schema}.asignacion_event_log el
+                      WHERE el.asignacion_id = a.id
+                        AND (
+                            el.evento::text = 'PUBLICACION_MAIN'
+                            OR el.mensaje LIKE '[PUBLICACION_MAIN]%%'
+                        )
+                  )
+                GROUP BY a.usuario_asignado
+            ) ac ON ac.usuario_asignado = u.username
             WHERE u.activo IS TRUE
-              AND a.usuario_asignado IS NULL
+              AND (
+                  LOWER(COALESCE(u.rol, '')) != 'reconocedor'
+                  OR COALESCE(ac.active_count, 0) < 2
+              )
               {extra_where}
             ORDER BY u.first_name, u.last_name, u.username
             """,

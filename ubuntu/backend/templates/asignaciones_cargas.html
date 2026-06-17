@@ -1307,6 +1307,14 @@
           }
         }
 
+        Swal.fire({
+          icon: 'warning',
+          title: 'Asignación no permitida',
+          text: detail?.message || data.detail || "Error asignando.",
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#032F57'
+        });
+
         msg.textContent = detail?.message || data.detail || "Error asignando.";
         return;
       }
