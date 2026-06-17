@@ -727,7 +727,7 @@ def panel_solicitudes_asignaciones(request: Request):
             status_code=302
         )
 
-    if _effective_role(user) != "coordinador":
+    if _effective_role(user) not in {"coordinador", "soporte", "admin"}:
         return RedirectResponse(
             url=with_root_path(request, "/panel"),
             status_code=302

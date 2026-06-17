@@ -530,9 +530,12 @@ body.panel-body::-webkit-scrollbar {
 }
 
 .user-dropdown {
-    min-width: 220px;
-    border-radius: 12px;
-    padding: 6px 0;
+    min-width: 220px !important;
+    border-radius: 16px !important;
+    padding: 6px 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    box-shadow: 0 10px 30px rgba(3, 47, 87, 0.15) !important;
 }
 
 .user-dropdown .dropdown-item {
@@ -591,10 +594,12 @@ body.panel-body::-webkit-scrollbar {
 }
 
 .notification-menu {
-    width: min(380px, 88vw);
-    padding: 0;
-    border-radius: 14px;
-    overflow: hidden;
+    width: min(380px, 88vw) !important;
+    padding: 0 !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    border: none !important;
+    box-shadow: 0 10px 30px rgba(3, 47, 87, 0.15) !important;
 }
 
 .notification-list {

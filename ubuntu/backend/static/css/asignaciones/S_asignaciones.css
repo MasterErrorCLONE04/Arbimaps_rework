@@ -1671,3 +1671,102 @@ textarea.textarea-predios {
         font-size: 0.68rem;
     }
 }
+
+/* --- NUEVOS ESTILOS PARA SOLICITUDES Y TABS --- */
+.tab-custom {
+    color: #5E7890 !important;
+    background-color: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 12px 12px 0 0 !important;
+    font-weight: 600;
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.tab-custom:hover {
+    color: #032F57 !important;
+    background-color: #F0F6FB !important;
+}
+
+.tab-custom.active {
+    color: #fff !important;
+    background-color: #032F57 !important;
+    border-color: #032F57 !important;
+}
+
+.badge-estado-pendiente {
+    background-color: #FFF3CD !important;
+    color: #856404 !important;
+    border: 1px solid #FFEBAA !important;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-estado-procesada {
+    background-color: #D4EDDA !important;
+    color: #155724 !important;
+    border: 1px solid #C3E6CB !important;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-estado-rechazada {
+    background-color: #F8D7DA !important;
+    color: #721C24 !important;
+    border: 1px solid #F5C6CB !important;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.btn-detalle {
+    background-color: #E6F0FA !important;
+    color: #032F57 !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.btn-detalle:hover {
+    background-color: #D1E3F2 !important;
+}
+
+.btn-procesar {
+    background-color: #28A745 !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.btn-procesar:hover {
+    background-color: #218838 !important;
+}
+
+.btn-outline-solicitudes {
+    background-color: transparent !important;
+    color: #032F57 !important;
+    border: 1.5px solid #032F57 !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-solicitudes:hover {
+    background-color: #032F57 !important;
+    color: #ffffff !important;
+    border-color: #032F57 !important;
+}
+

@@ -11,7 +11,7 @@ from core.asignaciones import AssignmentModelContext, get_assignment_model_conte
 from core.db import db_conn
 
 
-_ASIG_TABLES_ENSURED = False
+_ASIG_TABLES_ENSURED: set[str] = set()
 _ASIG_GEOSERVER_STATUS_VIEW_ENSURED: set[str] = set()
 _ASIG_EVENT_LOG_HAS_USUARIO_ID: Optional[bool] = None
 logger = logging.getLogger(__name__)
@@ -146,14 +146,6 @@ def list_baskets_for_dataset(conn, schema_main: str, dataset_id: Optional[int]) 
 
 def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
     global _ASIG_TABLES_ENSURED
-    # Evita DDL repetitivo en cada request (fuente de locks/caidas SSL).
-    if _ASIG_TABLES_ENSURED:
-        return
-
-    runtime_ddl = os.getenv("ASIG_RUNTIME_DDL", "0").strip().lower() in {"1", "true", "yes"}
-    if not force and not runtime_ddl:
-        # En runtime solo asumimos que ya existe el esquema (migrado en startup).
-        return
 
     app_schema = "arbimaps_app"
     if tenant is not None:
@@ -161,6 +153,31 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
             app_schema = tenant.schemas.app
         elif isinstance(tenant, str):
             app_schema = tenant
+
+    dbname = None
+    if conn and not conn.closed:
+        try:
+            dsn = conn.get_dsn_parameters()
+            if dsn:
+                dbname = dsn.get("dbname")
+        except Exception:
+            pass
+    if not dbname:
+        if tenant and hasattr(tenant, "db") and tenant.db:
+            dbname = tenant.db.db_name
+
+    cache_key = f"{dbname or 'default'}.{app_schema}"
+    if isinstance(_ASIG_TABLES_ENSURED, set):
+        if cache_key in _ASIG_TABLES_ENSURED and not force:
+            return
+    else:
+        if _ASIG_TABLES_ENSURED and not force:
+            return
+
+    runtime_ddl = os.getenv("ASIG_RUNTIME_DDL", "0").strip().lower() in {"1", "true", "yes"}
+    if not force and not runtime_ddl:
+        # En runtime solo asumimos que ya existe el esquema (migrado en startup).
+        return
 
     with conn.cursor() as cur:
         # Nunca esperar indefinidamente por locks de DDL.
@@ -508,6 +525,32 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 ADD COLUMN IF NOT EXISTS enlace TEXT
                 """
             )
+            cur.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {app_schema}.solicitud_asignacion (
+                    id SERIAL PRIMARY KEY,
+                    nombre TEXT NOT NULL,
+                    coordinador_id BIGINT REFERENCES {app_schema}.users(id_global) ON DELETE SET NULL,
+                    creado_por TEXT,
+                    estado TEXT NOT NULL DEFAULT 'PENDIENTE',
+                    observaciones TEXT,
+                    datos_desglose JSONB NOT NULL,
+                    creado_en TIMESTAMPTZ DEFAULT now()
+                )
+                """
+            )
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_solicitud_asignacion_coordinador
+                ON {app_schema}.solicitud_asignacion (coordinador_id)
+                """
+            )
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_solicitud_asignacion_estado
+                ON {app_schema}.solicitud_asignacion (estado)
+                """
+            )
             if in_transaction:
                 cur.execute("RELEASE SAVEPOINT ensure_asig_tables_sp")
         except Exception as exc:
@@ -517,7 +560,10 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 except Exception as rollback_exc:
                     logger.warning("Failed to rollback to savepoint: %s", rollback_exc)
             logger.warning("ensure_asignacion_tables: DDL omitido/fallido por contencion de locks: %s", exc)
-    _ASIG_TABLES_ENSURED = True
+    if isinstance(_ASIG_TABLES_ENSURED, set):
+        _ASIG_TABLES_ENSURED.add(cache_key)
+    else:
+        _ASIG_TABLES_ENSURED = True
 
 
 def fail_stale_workspace_assignments(

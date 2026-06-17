@@ -2,6 +2,7 @@ import os
 import re
 import tempfile
 import logging
+import json
 from datetime import date, datetime
 from typing import Optional, Literal, List
 from uuid import UUID
@@ -118,6 +119,17 @@ class BuscarPrediosResponse(BaseModel):
     items: List[BuscarPrediosResponseItem]
 
 
+class SolicitudDesgloseItem(BaseModel):
+    username_reconocedor: str
+    predios: List[str]
+
+
+class SolicitudCrearBody(BaseModel):
+    nombre: str
+    observaciones: Optional[str] = None
+    datos_desglose: List[SolicitudDesgloseItem]
+
+
 class AsignarBody(BaseModel):
     numeros: List[str]
     username_destino: str
@@ -126,6 +138,8 @@ class AsignarBody(BaseModel):
     observaciones: Optional[str] = None
     forzar_reasignacion: bool = False
     coordinador_id: Optional[int] = None
+    solicitud_id: Optional[int] = None
+    solicitud_desglose_idx: Optional[int] = None
 
 
 class AsignacionListadoItem(BaseModel):
@@ -1061,6 +1075,53 @@ def asignar_predios(
                 created_by,
             )
 
+            if body.solicitud_id is not None and body.solicitud_desglose_idx is not None:
+                sol_id = body.solicitud_id
+                idx = body.solicitud_desglose_idx
+                app_schema = tenant.schemas.app
+                
+                cur.execute(
+                    f"SELECT datos_desglose, coordinador_id FROM {app_schema}.solicitud_asignacion WHERE id = %s FOR UPDATE",
+                    (sol_id,)
+                )
+                sol_row = cur.fetchone()
+                if sol_row:
+                    desglose = sol_row["datos_desglose"]
+                    coordinador_id_sol = sol_row["coordinador_id"]
+                    
+                    if 0 <= idx < len(desglose):
+                        desglose[idx]["completado"] = True
+                        desglose[idx]["asignacion_id"] = asignacion_id
+                        
+                        all_completed = all(item.get("completado", False) for item in desglose)
+                        nuevo_estado = "PROCESADA" if all_completed else "PENDIENTE"
+                        
+                        cur.execute(
+                            f"""
+                            UPDATE {app_schema}.solicitud_asignacion
+                            SET datos_desglose = %s::jsonb,
+                                estado = %s
+                            WHERE id = %s
+                            """,
+                            (json.dumps(desglose), nuevo_estado, sol_id)
+                        )
+                        
+                        if coordinador_id_sol:
+                            asignaciones_repo.safe_crear_notificacion(
+                                conn,
+                                tenant=tenant,
+                                id_asignacion=asignacion_id,
+                                id_usuario_destino=coordinador_id_sol,
+                                id_usuario_origen=created_by_id,
+                                rol_origen="soporte",
+                                rol_destino="coordinador",
+                                tipo="solicitud",
+                                titulo="Solicitud de asignación procesada" if all_completed else "Lote de solicitud procesado",
+                                mensaje=f"Se completó la asignación para {username_destino} asociada a tu solicitud.",
+                                url_destino="/panel/solicitudes_asignaciones",
+                                prioridad="normal"
+                            )
+
         conn.commit()
     except HTTPException:
         conn.rollback()
@@ -1366,3 +1427,146 @@ def listar_asignaciones(
 
 
 
+
+
+
+@router.post("/solicitudes")
+def crear_solicitud(
+    body: SolicitudCrearBody,
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
+    _ensure_asignacion_tables(conn, tenant)
+    role = normalize_role(get_user_role(user))
+    if role not in ("coordinador", "admin"):
+        raise HTTPException(status_code=403, detail="No tienes permisos para crear solicitudes.")
+
+    coordinador_id = user.get("id_global")
+    creado_por = user.get("username")
+    app_schema = tenant.schemas.app
+
+    desglose_list = []
+    for item in body.datos_desglose:
+        desglose_list.append({
+            "username_reconocedor": item.username_reconocedor,
+            "predios": item.predios,
+            "completado": False,
+            "asignacion_id": None
+        })
+
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            INSERT INTO {app_schema}.solicitud_asignacion (
+                nombre, coordinador_id, creado_por, estado, observaciones, datos_desglose
+            ) VALUES (%s, %s, %s, 'PENDIENTE', %s, %s::jsonb)
+            RETURNING id
+            """,
+            (body.nombre, coordinador_id, creado_por, body.observaciones, json.dumps(desglose_list))
+        )
+        solicitud_id = cur.fetchone()[0]
+
+        # Enviar notificación a los soporte/admin
+        cur.execute(
+            f"""
+            SELECT id_global, username FROM {app_schema}.users
+            WHERE rol IN ('soporte', 'admin') AND activo IS TRUE
+            """
+        )
+        admin_soporte_users = cur.fetchall()
+
+        total_predios = sum(len(item.predios) for item in body.datos_desglose)
+        for target in admin_soporte_users:
+            asignaciones_repo.safe_crear_notificacion(
+                conn,
+                tenant=tenant,
+                id_usuario_destino=target[0],
+                id_usuario_origen=coordinador_id,
+                rol_origen="coordinador",
+                rol_destino="soporte",
+                tipo="solicitud",
+                titulo="Nueva solicitud de carga",
+                mensaje=f"El coordinador {creado_por} solicita asignar {total_predios} predios.",
+                url_destino=f"/panel/asignaciones/cargas?solicitud_id={solicitud_id}",
+                prioridad="normal"
+            )
+        conn.commit()
+
+    return {"id": solicitud_id, "message": "Solicitud creada exitosamente"}
+
+
+@router.get("/solicitudes")
+def listar_solicitudes(
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
+    _ensure_asignacion_tables(conn, tenant)
+    app_schema = tenant.schemas.app
+    role = normalize_role(get_user_role(user))
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        if role == "coordinador":
+            user_id = user.get("id_global")
+            cur.execute(
+                f"""
+                SELECT s.id, s.nombre, s.creado_por, s.estado, s.observaciones, s.creado_en,
+                       (SELECT COUNT(*) FROM jsonb_array_elements(s.datos_desglose)) as cant_lotes
+                FROM {app_schema}.solicitud_asignacion s
+                WHERE s.coordinador_id = %s
+                ORDER BY s.creado_en DESC
+                """,
+                (user_id,)
+            )
+        elif role in ("soporte", "admin"):
+            cur.execute(
+                f"""
+                SELECT s.id, s.nombre, s.creado_por, s.estado, s.observaciones, s.creado_en,
+                       (SELECT COUNT(*) FROM jsonb_array_elements(s.datos_desglose)) as cant_lotes
+                FROM {app_schema}.solicitud_asignacion s
+                ORDER BY s.creado_en DESC
+                """
+            )
+        else:
+            raise HTTPException(status_code=403, detail="No tienes permisos para ver solicitudes.")
+
+        rows = cur.fetchall()
+
+    for r in rows:
+        if r.get("creado_en"):
+            r["creado_en"] = r["creado_en"].isoformat()
+    return rows
+
+
+@router.get("/solicitudes/{id}")
+def obtener_solicitud(
+    id: int,
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
+    _ensure_asignacion_tables(conn, tenant)
+    app_schema = tenant.schemas.app
+    role = normalize_role(get_user_role(user))
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            f"""
+            SELECT id, nombre, coordinador_id, creado_por, estado, observaciones, datos_desglose, creado_en
+            FROM {app_schema}.solicitud_asignacion
+            WHERE id = %s
+            """,
+            (id,)
+        )
+        row = cur.fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+
+    if role == "coordinador" and row["coordinador_id"] != user.get("id_global"):
+        raise HTTPException(status_code=403, detail="No tienes acceso a esta solicitud")
+
+    if row.get("creado_en"):
+        row["creado_en"] = row["creado_en"].isoformat()
+    return row

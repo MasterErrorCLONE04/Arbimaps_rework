@@ -2,8 +2,27 @@
   <div class="d-flex align-items-center justify-content-center mb-0 ">
     <div class="section-title ms-0  w-100">
       <div class="title-header">
-        <small class="text-title-header">MÓDULO DE SOLICITUDES> SOLICITAR CARGAS DE TRABAJO</small>
+        <small class="text-title-header">MÓDULO DE SOLICITUDES > SOLICITAR CARGAS DE TRABAJO</small>
       </div>
+    </div>
+  </div>
+
+  {% if effective_role == 'coordinador' %}
+  <ul class="nav nav-tabs border-bottom-0 mb-4 justify-content-start gap-2 mt-4" id="solicitudesTabs" role="tablist" style="padding-left: 20px;">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link tab-custom active" id="nueva-solicitud-tab" data-bs-toggle="tab" data-bs-target="#nueva-solicitud-pane" type="button" role="tab" aria-controls="nueva-solicitud-pane" aria-selected="true">
+        <i class="bi bi-file-earmark-plus-fill me-2"></i>Nueva Solicitud
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link tab-custom" id="mis-solicitudes-tab" data-bs-toggle="tab" data-bs-target="#mis-solicitudes-pane" type="button" role="tab" aria-controls="mis-solicitudes-pane" aria-selected="false">
+        <i class="bi bi-list-task me-2"></i>Mis Solicitudes
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content" id="solicitudesTabsContent">
+    <div class="tab-pane fade show active" id="nueva-solicitud-pane" role="tabpanel" aria-labelledby="nueva-solicitud-tab">
 
       <!-- <div class="title-body mt-2 border-bottom pb-2">
         <h4 class="fw-bold">Solicitar nueva carga de trabajo</h4>
@@ -11,8 +30,7 @@
           Consulta predios disponibles para asignar y realiza una solicitud al soporte para crear las asignaciones.
         </p>
       </div> -->
-    </div>
-  </div>
+
 
   <div class="section-body">
     <div class="row justify-content-center">
@@ -321,6 +339,110 @@
 
   </div>
 </div>
+    </div> <!-- End Tab 1 -->
+
+    <div class="tab-pane fade" id="mis-solicitudes-pane" role="tabpanel" aria-labelledby="mis-solicitudes-tab">
+      <div class="section-body">
+        <div class="card card-panel border-0 p-3 p-md-4 mt-3">
+          <div class="card-resultados-header mb-4">
+            <div>
+              <h5 class="fw-bold mb-2 text-navy">Historial de Solicitudes</h5>
+              <p class="parrafo-result mb-0">Listado de las solicitudes de asignación que has enviado al soporte.</p>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-resultados w-100" id="tblHistorialSolicitudesCoord" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th class="text-center" style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">ID</th>
+                  <th class="text-center">Nombre de la solicitud</th>
+                  <th class="text-center">Observaciones</th>
+                  <th class="text-center">Lotes</th>
+                  <th class="text-center">Estado</th>
+                  <th class="text-center">Creado en</th>
+                  <th class="text-center" style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;">Acción</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyHistorialSolicitudesCoord"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div> <!-- End tab-content -->
+  {% endif %}
+
+  {% if effective_role in ['soporte', 'admin'] %}
+  <div class="section-body">
+    <div class="card card-panel border-0 p-3 p-md-4 mt-4">
+      <div class="card-resultados-header mb-4">
+        <div>
+          <h5 class="fw-bold mb-2 text-navy">Solicitudes de Carga de Trabajo</h5>
+          <p class="parrafo-result mb-0">Listado global de solicitudes enviadas por los coordinadores.</p>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-resultados w-100" id="tblHistorialSolicitudesSoporte" style="width: 100%;">
+          <thead>
+            <tr>
+              <th class="text-center" style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">ID</th>
+              <th class="text-center">Coordinador</th>
+              <th class="text-center">Nombre de la solicitud</th>
+              <th class="text-center">Observaciones</th>
+              <th class="text-center">Lotes</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Creado en</th>
+              <th class="text-center" style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyHistorialSolicitudesSoporte"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Detail Modal -->
+  <div id="modalDetalleSolicitud" class="custom-modal-backdrop d-none">
+    <div class="custom-modal-content" style="max-width: 650px;">
+      <div class="custom-modal-header d-flex justify-content-between align-items-center mb-3">
+        <h5 class="custom-modal-title fw-bold mb-0 text-navy" id="modalDetalleTitulo">Detalle de Solicitud</h5>
+        <button type="button" class="btn-close-custom" id="btnCloseDetalleModal">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="modal-body text-start">
+        <div class="mb-2">
+          <strong>Nombre de la solicitud:</strong> <span id="lblDetalleNombre"></span>
+        </div>
+        <div class="mb-2">
+          <strong>Creado por:</strong> <span id="lblDetalleCoordinador"></span> en <span id="lblDetalleFecha"></span>
+        </div>
+        <div class="mb-2">
+          <strong>Estado:</strong> <span id="lblDetalleEstado"></span>
+        </div>
+        <div class="mb-3">
+          <strong>Observaciones:</strong>
+          <p id="lblDetalleObservaciones" class="bg-light p-2 rounded text-muted mt-1" style="font-size: 0.9rem; min-height: 40px;"></p>
+        </div>
+        <div class="mb-2">
+          <strong>Desglose de Lotes:</strong>
+        </div>
+        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+          <table class="table table-bordered table-sm align-middle" style="font-size: 0.85rem;">
+            <thead class="table-light text-center">
+              <tr>
+                <th>Reconocedor</th>
+                <th>Cantidad de Predios</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyDetalleDesglose"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
@@ -1119,7 +1241,7 @@
     ajustarLayoutPanelSolicitud(false);
   }
 
-  function enviarSolicitud() {
+  async function enviarSolicitud() {
     const nombre = document.getElementById("inpNombreSolicitud").value.trim();
     const observaciones = document.getElementById("txtObservacionesSolicitud").value.trim();
 
@@ -1133,57 +1255,205 @@
       return;
     }
 
-    let textContent = `SOLICITUD DE ASIGNACION (MULTI-RECONOCEDOR)\n`;
-    textContent += `====================================\n`;
-    textContent += `Nombre de la solicitud: ${nombre}\n`;
-    textContent += `Fecha: ${new Date().toLocaleString()}\n`;
-    textContent += `Observaciones: ${observaciones || 'Sin observaciones'}\n\n`;
+    const payload = {
+      nombre: nombre,
+      observaciones: observaciones || null,
+      datos_desglose: asignacionesCreadas.map(asg => ({
+        username_reconocedor: asg.reconocedor.username,
+        predios: asg.predios
+      }))
+    };
 
-    textContent += `DESGLOSE DE ASIGNACIONES POR RECONOCEDOR:\n`;
-    textContent += `====================================\n\n`;
+    const btn = document.getElementById("btnEnviarSolicitud");
+    const origHtml = btn.innerHTML;
+    try {
+      btn.disabled = true;
+      btn.innerHTML = `<i class="bi bi-hourglass-split me-2"></i>Enviando...`;
 
-    asignacionesCreadas.forEach((asg, idx) => {
-      const rec = asg.reconocedor;
-      textContent += `RECONOCEDOR ${idx + 1}: ${rec.first_name || ''} ${rec.last_name || ''} (${rec.username})\n`;
-      textContent += `Rol: ${rec.rol || 'Reconocedor'}\n`;
-      textContent += `Predios asignados (${asg.predios.length}):\n`;
-      asg.predios.forEach((p, pIdx) => {
-        textContent += `  - [${pIdx + 1}] NPN: ${p}\n`;
+      const r = await fetch(`${rp}/asignaciones/solicitudes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
-      textContent += `------------------------------------\n\n`;
-    });
 
-    textContent += `====================================\n`;
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        alert(data.detail || "Error al enviar la solicitud.");
+        return;
+      }
 
-    const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `solicitud_asignacion_${nombre.replace(/\s+/g, "_")}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      alert("Solicitud creada exitosamente y guardada en base de datos. Se notificó al Soporte.");
 
-    if (ultimoResultadoBusqueda && Array.isArray(ultimoResultadoBusqueda.items)) {
-      ultimoResultadoBusqueda.items.forEach(it => {
-        if (agendadosActivos.has(it.numero_predial_nacional)) {
-          it.suspendido = true;
+      // Limpiar y resetear
+      agendadosActivos.clear();
+      asignacionesCreadas = [];
+      renderizarTablaResultadosMock();
+      seleccionadosActivos.clear();
+      actualizarBottomActionBar();
+      ocultarPanelSolicitud();
+
+      document.getElementById("inpNombreSolicitud").value = "";
+      document.getElementById("txtObservacionesSolicitud").value = "";
+
+      // Cambiar de pestaña y cargar historial
+      const misSolTab = document.getElementById("mis-solicitudes-tab");
+      if (misSolTab) {
+        misSolTab.click();
+      } else {
+        cargarHistorialSolicitudes();
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Ocurrió un error inesperado al enviar la solicitud.");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origHtml;
+    }
+  }
+
+  // --- HISTORIAL DE SOLICITUDES Y DETALLES ---
+  let dtHistorial = null;
+  const isCoordinator = "{{ effective_role }}" === "coordinador";
+
+  async function cargarHistorialSolicitudes() {
+    const tableId = isCoordinator ? "#tblHistorialSolicitudesCoord" : "#tblHistorialSolicitudesSoporte";
+    const tbodyId = isCoordinator ? "tbodyHistorialSolicitudesCoord" : "tbodyHistorialSolicitudesSoporte";
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+
+    if (dtHistorial) {
+      $(tableId).DataTable().clear().destroy();
+      dtHistorial = null;
+    }
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center">Cargando solicitudes...</td></tr>';
+
+    try {
+      const r = await fetch(`${rp}/asignaciones/solicitudes`);
+      if (!r.ok) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error al cargar solicitudes</td></tr>';
+        return;
+      }
+      const data = await r.json();
+      tbody.innerHTML = "";
+
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No se encontraron solicitudes</td></tr>`;
+        return;
+      }
+
+      data.forEach(sol => {
+        const tr = document.createElement("tr");
+        
+        let estadoBadge = "";
+        const est = (sol.estado || "").toLowerCase();
+        if (est === "pendiente") {
+          estadoBadge = `<span class="badge-estado-pendiente">Pendiente</span>`;
+        } else if (est === "procesada") {
+          estadoBadge = `<span class="badge-estado-procesada">Procesada</span>`;
+        } else {
+          estadoBadge = `<span class="badge-estado-rechazada">${sol.estado}</span>`;
+        }
+
+        let actionHtml = `<button class="btn btn-detalle" onclick="verDetalleSolicitud(${sol.id})"><i class="bi bi-eye"></i> Detalle</button>`;
+        if (!isCoordinator && est === "pendiente") {
+          actionHtml += ` <a href="${rp}/panel/asignaciones/cargas?solicitud_id=${sol.id}" class="btn btn-procesar ms-1"><i class="bi bi-gear-fill"></i> Procesar</a>`;
+        }
+
+        const dateStr = sol.creado_en ? new Date(sol.creado_en).toLocaleString() : "";
+        
+        if (isCoordinator) {
+          tr.innerHTML = `
+            <td class="text-center">${sol.id}</td>
+            <td>${sol.nombre}</td>
+            <td>${sol.observaciones || ""}</td>
+            <td class="text-center">${sol.cant_lotes || 0}</td>
+            <td class="text-center">${estadoBadge}</td>
+            <td class="text-center">${dateStr}</td>
+            <td class="text-center">${actionHtml}</td>
+          `;
+        } else {
+          tr.innerHTML = `
+            <td class="text-center">${sol.id}</td>
+            <td>${sol.creado_por}</td>
+            <td>${sol.nombre}</td>
+            <td>${sol.observaciones || ""}</td>
+            <td class="text-center">${sol.cant_lotes || 0}</td>
+            <td class="text-center">${estadoBadge}</td>
+            <td class="text-center">${dateStr}</td>
+            <td class="text-center">${actionHtml}</td>
+          `;
+        }
+        tbody.appendChild(tr);
+      });
+
+      dtHistorial = $(tableId).DataTable({
+        destroy: true,
+        pageLength: 10,
+        order: [[0, "desc"]],
+        language: {
+          url: "https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json"
         }
       });
+    } catch (e) {
+      console.error(e);
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error inesperado cargando solicitudes</td></tr>';
     }
+  }
 
-    agendadosActivos.clear();
-    asignacionesCreadas = [];
+  async function verDetalleSolicitud(id) {
+    try {
+      const r = await fetch(`${rp}/asignaciones/solicitudes/${id}`);
+      if (!r.ok) {
+        alert("No se pudo obtener el detalle de la solicitud.");
+        return;
+      }
+      const sol = await r.json();
 
-    renderizarTablaResultadosMock();
+      document.getElementById("lblDetalleNombre").textContent = sol.nombre;
+      document.getElementById("lblDetalleCoordinador").textContent = sol.creado_por;
+      document.getElementById("lblDetalleFecha").textContent = sol.creado_en ? new Date(sol.creado_en).toLocaleString() : "";
+      document.getElementById("lblDetalleObservaciones").textContent = sol.observaciones || "Sin observaciones";
+      
+      let estadoBadge = "";
+      const est = (sol.estado || "").toLowerCase();
+      if (est === "pendiente") {
+        estadoBadge = `<span class="badge-estado-pendiente">Pendiente</span>`;
+      } else if (est === "procesada") {
+        estadoBadge = `<span class="badge-estado-procesada">Procesada</span>`;
+      } else {
+        estadoBadge = `<span class="badge-estado-rechazada">${sol.estado}</span>`;
+      }
+      document.getElementById("lblDetalleEstado").innerHTML = estadoBadge;
 
-    seleccionadosActivos.clear();
-    actualizarBottomActionBar();
-    ocultarPanelSolicitud();
+      const tbodyDesglose = document.getElementById("tbodyDetalleDesglose");
+      tbodyDesglose.innerHTML = "";
 
-    document.getElementById("inpNombreSolicitud").value = "";
-    document.getElementById("txtObservacionesSolicitud").value = "";
+      const desglose = sol.datos_desglose || [];
+      desglose.forEach(item => {
+        const tr = document.createElement("tr");
+        let itemEstado = "";
+        if (item.completado) {
+          itemEstado = `<span class="text-success"><i class="bi bi-check-circle-fill"></i> Asignado (ID: ${item.asignacion_id})</span>`;
+        } else {
+          itemEstado = `<span class="text-warning"><i class="bi bi-clock-history"></i> Pendiente</span>`;
+        }
+        tr.innerHTML = `
+          <td>${item.username_reconocedor}</td>
+          <td class="text-center">${item.predios ? item.predios.length : 0} predios</td>
+          <td>${itemEstado}</td>
+        `;
+        tbodyDesglose.appendChild(tr);
+      });
 
-    alert("Solicitud enviada correctamente. Se ha generado y descargado el desglose completo para múltiples reconocedores.");
+      document.getElementById("modalDetalleSolicitud").classList.remove("d-none");
+    } catch (e) {
+      console.error(e);
+      alert("Error al cargar detalles de la solicitud.");
+    }
+  }
+
+  function ocultarModalDetalle() {
+    document.getElementById("modalDetalleSolicitud").classList.add("d-none");
   }
 
   function renderizarTablaResultadosMock() {
@@ -1289,6 +1559,25 @@
     });
     document.getElementById("btnClosePanel")?.addEventListener("click", ocultarPanelSolicitud);
     document.getElementById("btnEnviarSolicitud")?.addEventListener("click", enviarSolicitud);
+
+    // Tab Listeners & Modal listeners
+    document.getElementById("btnCloseDetalleModal")?.addEventListener("click", ocultarModalDetalle);
+    document.getElementById("modalDetalleSolicitud")?.addEventListener("click", function (e) {
+      if (e.target === this) ocultarModalDetalle();
+    });
+
+    if (isCoordinator) {
+      document.getElementById("mis-solicitudes-tab")?.addEventListener("shown.bs.tab", () => {
+        cargarHistorialSolicitudes();
+      });
+      document.getElementById("nueva-solicitud-tab")?.addEventListener("shown.bs.tab", () => {
+        setTimeout(() => {
+          if (dtResultados) dtResultados.columns.adjust();
+        }, 120);
+      });
+    } else {
+      cargarHistorialSolicitudes();
+    }
 
     (async function cargarUsuarios() {
       try {

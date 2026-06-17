@@ -1,18 +1,198 @@
+<style>
+  .btn-outline-solicitudes {
+      background: linear-gradient(135deg, #032F57 0%, #084c8a 100%) !important;
+      color: #ffffff !important;
+      border: none !important;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      box-shadow: 0 4px 12px rgba(3, 47, 87, 0.15) !important;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+  }
+
+  .btn-outline-solicitudes:hover {
+      background: linear-gradient(135deg, #084c8a 0%, #0b67bb 100%) !important;
+      color: #ffffff !important;
+      transform: translateY(-2px) scale(1.02) !important;
+      box-shadow: 0 6px 16px rgba(3, 47, 87, 0.25) !important;
+  }
+
+  .btn-outline-solicitudes:active {
+      transform: translateY(0) scale(0.98) !important;
+  }
+
+  #badgeSolicitudesCount {
+      background-color: #ff3b30 !important;
+      color: #ffffff !important;
+      font-size: 0.72rem !important;
+      font-weight: 700 !important;
+      padding: 3px 8px !important;
+      border: 1.5px solid #ffffff !important;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+      animation: pulseBadge 2s infinite !important;
+  }
+
+  @keyframes pulseBadge {
+      0% {
+          transform: scale(1);
+      }
+      50% {
+          transform: scale(1.1);
+      }
+      100% {
+          transform: scale(1);
+      }
+  }
+
+  /* Modal personalizado */
+  .custom-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(3, 47, 87, 0.45) !important;
+      backdrop-filter: blur(4px) !important;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2500 !important; /* Extremely high z-index to overlay everything */
+  }
+
+  @keyframes modalFadeIn {
+      from {
+          opacity: 0;
+          transform: scale(0.95) translateY(-20px);
+      }
+      to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+      }
+  }
+
+  .custom-modal-content {
+      background: #ffffff !important;
+      border-radius: 20px !important;
+      padding: 28px !important;
+      box-shadow: 0 15px 35px rgba(3, 47, 87, 0.25) !important;
+      position: relative;
+      animation: modalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      border: 1px solid rgba(3, 47, 87, 0.1) !important;
+  }
+
+  .btn-close-custom {
+      background: none !important;
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      color: #032F57 !important;
+      font-size: 1.1rem !important;
+      cursor: pointer !important;
+      width: 36px !important;
+      height: 36px !important;
+      border-radius: 50% !important;
+      background-color: #F0F6FB !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      padding: 0 !important;
+  }
+
+  .btn-close-custom:hover {
+      background-color: #E2EEF8 !important;
+      color: #dc3545 !important;
+      transform: rotate(90deg) scale(1.05) !important;
+  }
+
+  /* Table styling within modal */
+  #tblListarSolicitudesAsistenteTable {
+      border-collapse: separate !important;
+      border-spacing: 0 8px !important;
+      width: 100% !important;
+  }
+
+  #tblListarSolicitudesAsistenteTable thead th {
+      background-color: #E2EEF8 !important;
+      color: #032F57 !important;
+      font-weight: 600 !important;
+      padding: 12px 16px !important;
+      border: none !important;
+  }
+
+  #tblListarSolicitudesAsistenteTable tbody tr {
+      background-color: #F8FBFE !important;
+      transition: all 0.2s ease !important;
+  }
+
+  #tblListarSolicitudesAsistenteTable tbody tr:hover {
+      background-color: #EEF5FC !important;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(3, 47, 87, 0.05) !important;
+  }
+
+  #tblListarSolicitudesAsistenteTable tbody td {
+      padding: 14px 16px !important;
+      border: none !important;
+      vertical-align: middle !important;
+  }
+  
+  /* Badges inside table */
+  .badge-estado-pendiente {
+      background-color: #FFF3CD !important;
+      color: #856404 !important;
+      padding: 5px 12px !important;
+      border-radius: 20px !important;
+      font-weight: 600 !important;
+      font-size: 0.78rem !important;
+      display: inline-block;
+  }
+  
+  .badge-estado-procesada {
+      background-color: #D4EDDA !important;
+      color: #155724 !important;
+      padding: 5px 12px !important;
+      border-radius: 20px !important;
+      font-weight: 600 !important;
+      font-size: 0.78rem !important;
+      display: inline-block;
+  }
+
+  .badge-estado-rechazada {
+      background-color: #F8D7DA !important;
+      color: #721C24 !important;
+      padding: 5px 12px !important;
+      border-radius: 20px !important;
+      font-weight: 600 !important;
+      font-size: 0.78rem !important;
+      display: inline-block;
+  }
+</style>
+
 <div class="content-section container-fluid px-2 px-md-3 pb-5">
-  <div class="section-title ms-0">
+  <div class="section-title ms-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div class="title-header">
       <small class="text-title-header">MÓDULO DE ASIGNACIONES > CREAR CARGA DE TRABAJO</small>
     </div>
-
-    <!-- <div class="title-body mt-2">
-      <h4 class="fw-bold">Nueva Asignación</h4>
-      <p class="parrafo-title">
-        Realize una búsqueda de los predios que desea asignar,
-        verifique su estado. Distribuya la carga de trabajo
-        a los usuarios responsables.
-      </p>
-    </div> -->
+    <div>
+      <button class="btn btn-sm rounded-pill px-3 fw-semibold btn-outline-solicitudes" id="btnListarSolicitudesAsistente" type="button">
+        <i class="bi bi-list-task me-1"></i> Ver Solicitudes Pendientes
+        <span class="badge bg-danger ms-2 rounded-pill d-none" id="badgeSolicitudesCount">0</span>
+      </button>
+    </div>
   </div>
+
+  <!-- <div class="title-body mt-2">
+    <h4 class="fw-bold">Nueva Asignación</h4>
+    <p class="parrafo-title">
+      Realize una búsqueda de los predios que desea asignar,
+      verifique su estado. Distribuya la carga de trabajo
+      a los usuarios responsables.
+    </p>
+  </div> -->
 
   <div class="section-body">
     <div class="row justify-content-center">
@@ -202,6 +382,27 @@
       </div>
 
       <div id="panelConfiguracionAsignacion" class="col-12 col-xl-4 d-none">
+        
+        <!-- Card de Asistente de Solicitud -->
+        <div id="cardAsistenteSolicitud" class="card card-panel border-0 mb-3 bg-white d-none" style="box-shadow: 0 4px 12px rgba(3, 47, 87, 0.1) !important;">
+          <div class="card-body p-3">
+             <div class="d-flex align-items-center gap-2 pb-2 mb-2 border-bottom">
+               <i class="bi bi-magic text-primary fs-5"></i>
+               <h6 class="fw-bold mb-0 text-navy">Asistente de Solicitud</h6>
+             </div>
+             <div class="mb-2" style="font-size: 0.85rem; text-align: left;">
+               <strong>Solicitud:</strong> <span id="asistenteNombre">-</span><br/>
+               <strong>Coordinador:</strong> <span id="asistenteCoordinador">-</span><br/>
+               <strong>Observaciones:</strong> <span id="asistenteObservaciones" class="text-muted"></span>
+             </div>
+             <hr class="my-2"/>
+             <span class="fw-semibold text-navy d-block mb-2" style="font-size: 0.85rem; text-align: left;">Lotes a procesar:</span>
+             <div id="asistenteDesgloseLista" class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;">
+               <!-- Lotes del desglose populated dynamically -->
+             </div>
+          </div>
+        </div>
+
         <div class="card card-panel card-panel-asignacion border-0">
 
           <!-- <div class="reconocedores-pill mt-3" title="Reconocedores disponibles para el coordinador seleccionado">
@@ -327,6 +528,40 @@
   </div>
 </div>
 
+  <!-- Modal Listar Solicitudes -->
+  <div id="modalListarSolicitudes" class="custom-modal-backdrop d-none">
+    <div class="custom-modal-content" style="max-width: 800px; width: 90%;">
+      <div class="custom-modal-header d-flex justify-content-between align-items-center mb-3">
+        <h5 class="custom-modal-title fw-bold mb-0 text-navy">Solicitudes de Cargas de Trabajo</h5>
+        <button type="button" class="btn-close-custom" id="btnCloseListarSolicitudesModal">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="modal-body text-start">
+        <p class="text-muted small mb-3">Selecciona una solicitud para procesarla y asignar los lotes correspondientes.</p>
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+          <table class="table table-resultados w-100" id="tblListarSolicitudesAsistenteTable" style="font-size: 0.88rem; width: 100%;">
+            <thead>
+              <tr>
+                <th class="text-center" style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">ID</th>
+                <th>Coordinador</th>
+                <th>Nombre</th>
+                <th class="text-center">Lotes</th>
+                <th class="text-center">Estado</th>
+                <th class="text-center" style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyListarSolicitudesAsistente">
+              <tr>
+                <td colspan="6" class="text-center py-3">Cargando solicitudes...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
@@ -340,6 +575,128 @@
   let ultimoResultadoBusqueda = null;
   let asignacionEnProceso = false;
   let seleccionadosActivos = new Set();
+
+  // --- VARIABLES ASISTENTE DE SOLICITUD ---
+  const urlParams = new URLSearchParams(window.location.search);
+  const solicitudId = urlParams.get('solicitud_id');
+  let activeSolicitud = null;
+  let activeDesgloseIdx = null;
+
+  async function refreshAsistente() {
+    if (!solicitudId) return;
+    try {
+      const r = await fetch(`${rp}/asignaciones/solicitudes/${solicitudId}`);
+      if (!r.ok) {
+        console.warn("No se pudo recargar la solicitud para el asistente");
+        return;
+      }
+      activeSolicitud = await r.json();
+
+      document.getElementById("asistenteNombre").textContent = activeSolicitud.nombre;
+      document.getElementById("asistenteCoordinador").textContent = activeSolicitud.creado_por;
+      document.getElementById("asistenteObservaciones").textContent = activeSolicitud.observaciones || "Sin observaciones";
+      
+      document.getElementById("cardAsistenteSolicitud").classList.remove("d-none");
+      
+      renderAsistenteDesglose();
+      
+      // Auto-load first pending batch
+      const primerPendienteIdx = activeSolicitud.datos_desglose.findIndex(item => !item.completado);
+      if (primerPendienteIdx !== -1) {
+        cargarLoteAsistente(primerPendienteIdx);
+      } else {
+        Swal.fire({
+          icon: 'success',
+          title: 'Solicitud Completada',
+          text: 'Todos los lotes de esta solicitud ya han sido procesados y creados.',
+          confirmButtonText: 'Ver Asignaciones',
+          confirmButtonColor: '#032F57'
+        }).then(() => {
+          window.location.href = `${rp}/panel/asignaciones/ver#asig-open`;
+        });
+      }
+    } catch (e) {
+      console.error("Error al refrescar asistente", e);
+    }
+  }
+
+  function renderAsistenteDesglose() {
+    const container = document.getElementById("asistenteDesgloseLista");
+    if (!container || !activeSolicitud) return;
+    container.innerHTML = "";
+
+    activeSolicitud.datos_desglose.forEach((item, idx) => {
+      const div = document.createElement("div");
+      div.className = "d-flex align-items-center justify-content-between p-2 rounded border " + (item.completado ? "bg-light text-muted" : "bg-white");
+      div.style.fontSize = "0.82rem";
+
+      let statusIcon = "";
+      let actionBtn = "";
+      if (item.completado) {
+        statusIcon = `<span class="text-success" title="Completado (Asignación ID: ${item.asignacion_id})"><i class="bi bi-check-circle-fill"></i></span>`;
+        actionBtn = `<span class="badge bg-secondary">Listo</span>`;
+      } else {
+        statusIcon = `<span class="text-warning" title="Pendiente"><i class="bi bi-clock-history"></i></span>`;
+        const isActive = activeDesgloseIdx === idx;
+        actionBtn = `<button class="btn btn-xs ${isActive ? 'btn-primary' : 'btn-outline-primary'}" style="font-size:0.75rem; padding: 2px 6px;" onclick="cargarLoteAsistente(${idx})">${isActive ? 'Cargado' : 'Cargar'}</button>`;
+      }
+
+      div.innerHTML = `
+        <div class="d-flex align-items-center gap-2" style="text-align: left;">
+          ${statusIcon}
+          <div>
+            <strong>${item.username_reconocedor}</strong>
+            <div class="text-muted" style="font-size:0.75rem;">${item.predios ? item.predios.length : 0} predios</div>
+          </div>
+        </div>
+        <div>${actionBtn}</div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  window.cargarLoteAsistente = function(idx) {
+    if (!activeSolicitud) return;
+    const item = activeSolicitud.datos_desglose[idx];
+    if (!item || item.completado) return;
+
+    activeDesgloseIdx = idx;
+    renderAsistenteDesglose();
+
+    // Populate form fields
+    document.getElementById("txtPredios").value = item.predios.join(", ");
+    document.getElementById("inpNombreLote").value = `${activeSolicitud.nombre} - ${item.username_reconocedor}`;
+    
+    // Select the coordinator
+    const selectCoord = document.getElementById("inpCoordinador");
+    if (selectCoord) {
+      selectCoord.value = activeSolicitud.coordinador_id;
+      const event = new Event('change');
+      selectCoord.dispatchEvent(event);
+      
+      // Wait for users to load then select user destination
+      setTimeout(() => {
+        const selectDest = document.getElementById("inpUsuarioDestino");
+        if (selectDest) {
+          selectDest.value = item.username_reconocedor;
+          const eventDest = new Event('change');
+          selectDest.dispatchEvent(eventDest);
+        }
+      }, 300);
+    }
+
+    // Trigger property search automatically
+    setTimeout(() => {
+      buscarPredios();
+    }, 100);
+  };
+
+  // Auto initialize when DOM is loaded
+  document.addEventListener("DOMContentLoaded", () => {
+    if (solicitudId) {
+      refreshAsistente();
+    }
+  });
 
   function parseNumeros(text) {
     const tokens = (text || "")
@@ -920,7 +1277,9 @@
           coordinador_id,
           titulo: tituloAsignacion,
           fecha_fin_asignada: fechaFinAsignada,
-          forzar_reasignacion: forceReassign
+          forzar_reasignacion: forceReassign,
+          solicitud_id: (solicitudId ? parseInt(solicitudId) : null),
+          solicitud_desglose_idx: (activeDesgloseIdx !== null ? activeDesgloseIdx : null)
         })
       });
 
@@ -966,10 +1325,26 @@
 
       msg.textContent = `${data?.message || "Asignación creada."}${extraMsg}`;
 
-      if (id) {
-        window.location.href = `${rp}/panel/asignaciones/ver?id=${id}#asig-open`;
+      if (solicitudId) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Asignación Creada',
+          text: `Se creó la asignación (ID: ${id}) para el lote de la solicitud.`,
+          confirmButtonText: 'Continuar',
+          confirmButtonColor: '#032F57'
+        }).then(async () => {
+          limpiarBusquedaPredios();
+          await refreshAsistente();
+          if (typeof actualizarBotonSolicitudes === "function") {
+            await actualizarBotonSolicitudes();
+          }
+        });
       } else {
-        window.location.href = `${rp}/panel/asignaciones/ver#asig-open`;
+        if (id) {
+          window.location.href = `${rp}/panel/asignaciones/ver?id=${id}#asig-open`;
+        } else {
+          window.location.href = `${rp}/panel/asignaciones/ver#asig-open`;
+        }
       }
     } catch (error) {
       console.error(error);
@@ -1107,5 +1482,125 @@
         actualizarContadoresUsuariosDisponibles(0, 0);
       }
     })();
+
+    // --- LISTAR SOLICITUDES MODAL ---
+    const modalListar = document.getElementById("modalListarSolicitudes");
+    const btnVerListar = document.getElementById("btnListarSolicitudesAsistente");
+    const btnCloseListar = document.getElementById("btnCloseListarSolicitudesModal");
+
+    if (modalListar) {
+      // Mover el modal directamente al body para evitar que herede transformaciones de posicionamiento de contenedores intermedios
+      document.body.appendChild(modalListar);
+    }
+
+    if (btnVerListar && modalListar) {
+      btnVerListar.addEventListener("click", async () => {
+        modalListar.classList.remove("d-none");
+        await cargarSolicitudesEnModal();
+      });
+    }
+
+    if (btnCloseListar && modalListar) {
+      btnCloseListar.addEventListener("click", () => {
+        modalListar.classList.add("d-none");
+        actualizarBotonSolicitudes();
+      });
+    }
+
+    if (modalListar) {
+      modalListar.addEventListener("click", (e) => {
+        if (e.target === modalListar) {
+          modalListar.classList.add("d-none");
+          actualizarBotonSolicitudes();
+        }
+      });
+    }
+
+    async function actualizarBotonSolicitudes() {
+      const badge = document.getElementById("badgeSolicitudesCount");
+      if (!badge) return;
+      try {
+        const r = await fetch(`${rp}/asignaciones/solicitudes`);
+        if (!r.ok) return;
+        const data = await r.json();
+        const pendingCount = data.filter(s => (s.estado || "").toLowerCase() === "pendiente").length;
+        if (pendingCount > 0) {
+          badge.textContent = pendingCount;
+          badge.classList.remove("d-none");
+        } else {
+          badge.classList.add("d-none");
+        }
+      } catch (e) {
+        console.warn("Error al actualizar conteo de solicitudes:", e);
+      }
+    }
+
+    // Ejecutar al cargar la vista
+    actualizarBotonSolicitudes();
+
+    async function cargarSolicitudesEnModal() {
+      const tbody = document.getElementById("tbodyListarSolicitudesAsistente");
+      if (!tbody) return;
+
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3">Cargando solicitudes...</td></tr>';
+
+      try {
+        const r = await fetch(`${rp}/asignaciones/solicitudes`);
+        if (!r.ok) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Error al cargar solicitudes</td></tr>';
+          return;
+        }
+        const data = await r.json();
+        tbody.innerHTML = "";
+
+        // Ordenar: Pendientes primero, luego por ID descendente
+        data.sort((a, b) => {
+          const aPend = (a.estado || "").toLowerCase() === "pendiente";
+          const bPend = (b.estado || "").toLowerCase() === "pendiente";
+          if (aPend && !bPend) return -1;
+          if (!aPend && bPend) return 1;
+          return b.id - a.id;
+        });
+
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No hay solicitudes registradas</td></tr>';
+          return;
+        }
+
+        data.forEach(sol => {
+          const tr = document.createElement("tr");
+          
+          let estadoBadge = "";
+          const est = (sol.estado || "").toLowerCase();
+          if (est === "pendiente") {
+            estadoBadge = `<span class="badge-estado-pendiente">Pendiente</span>`;
+          } else if (est === "procesada") {
+            estadoBadge = `<span class="badge-estado-procesada">Procesada</span>`;
+          } else {
+            estadoBadge = `<span class="badge-estado-rechazada">${sol.estado}</span>`;
+          }
+
+          let actionHtml = "";
+          if (est === "pendiente") {
+            actionHtml = `<a href="${rp}/panel/asignaciones/cargas?solicitud_id=${sol.id}" class="btn btn-sm btn-success py-1 px-3 fw-semibold" style="font-size: 0.8rem; border-radius: 8px;"><i class="bi bi-gear-fill me-1"></i> Procesar</a>`;
+          } else {
+            actionHtml = `<span class="text-muted small">Sin acciones</span>`;
+          }
+
+          tr.innerHTML = `
+            <td class="text-center fw-bold">${sol.id}</td>
+            <td>${sol.creado_por || "-"}</td>
+            <td>${sol.nombre || "-"}</td>
+            <td class="text-center">${sol.cant_lotes || 0}</td>
+            <td class="text-center">${estadoBadge}</td>
+            <td class="text-center">${actionHtml}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Error inesperado al cargar solicitudes</td></tr>';
+      }
+    }
   });
 </script>
