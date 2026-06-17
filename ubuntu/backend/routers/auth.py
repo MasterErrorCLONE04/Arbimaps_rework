@@ -104,3 +104,46 @@ def require_assignment_roles(*allowed_roles: str):
         return user
 
     return _dependency
+
+
+def check_admin_soporte_isolation(conn, tenant, user: dict, assignment_id: int) -> None:
+    role = normalize_role(get_user_role(user))
+    if role not in {"admin", "soporte"}:
+        return
+
+    # Derive app_schema
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas") and tenant.schemas and hasattr(tenant.schemas, "app"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT cu.rol
+            FROM {app_schema}.asignacion a
+            LEFT JOIN {app_schema}.users cu ON cu.username = a.creado_por
+            WHERE a.id = %s
+            """,
+            (assignment_id,)
+        )
+        row = cur.fetchone()
+        if not row:
+            return
+
+        creator_role = normalize_role(row[0] or "")
+        if not creator_role:
+            return
+
+        if role == "admin" and creator_role == "soporte":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Acceso denegado: este trabajo fue creado por un usuario de Soporte y no puede ser accedido por un Administrador."
+            )
+        if role == "soporte" and creator_role == "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Acceso denegado: este trabajo fue creado por un Administrador y no puede ser accedido por un usuario de Soporte."
+            )

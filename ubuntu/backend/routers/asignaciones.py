@@ -18,7 +18,7 @@ from pydantic import BaseModel
 from psycopg2.extras import RealDictCursor
 
 from repositories import asignaciones_repo
-from routers.auth import get_current_tenant, get_current_user, get_user_role, normalize_role
+from routers.auth import get_current_tenant, get_current_user, get_user_role, normalize_role, check_admin_soporte_isolation
 from services import asignaciones_export as export_service
 from services import asignaciones_workspace as workspace_service
 from services import asignaciones_workspace_schema as workspace_schema_service
@@ -1149,6 +1149,7 @@ def cerrar_asignacion(
     conn=Depends(get_tenant_db_connection),
 ):
     _require_assignment_access(user, "admin", "coordinador")
+    check_admin_soporte_isolation(conn, tenant, user, asignacion_id)
     usuario_log = user.get("username") if isinstance(user, dict) else None
     cierre_estado = "CERRADA"
     work_datasetname_to_cleanup: Optional[str] = None
@@ -1305,6 +1306,13 @@ def listar_asignaciones(
             if str(row.get("usuario_asignado") or "").strip().lower() == username
             or str(row.get("usuario_reconocedor") or "").strip().lower() == username
         ]
+
+    # Admin / Soporte isolation
+    user_role = normalize_role(get_user_role(user))
+    if user_role == "admin":
+        rows = [row for row in rows if normalize_role(row.get("creado_por_rol") or "") != "soporte"]
+    elif user_role == "soporte":
+        rows = [row for row in rows if normalize_role(row.get("creado_por_rol") or "") != "admin"]
 
     data: List[AsignacionListadoItem] = []
     for row in rows:

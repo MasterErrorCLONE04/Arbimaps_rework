@@ -43,95 +43,95 @@
 
         <!-- Botones de Acción -->
         <div class="d-flex gap-2 justify-content-lg-end flex-wrap w-100 justify-content-start">
-          <button id="btnHeaderSyncXtf" type="button"
-            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
-            style="background-color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#02203d'" onmouseout="this.style.backgroundColor='#032F57'">
-            <i class="fa-solid fa-code-branch"></i>
-            <span>Sincronizar XTF</span>
-          </button>
-          <button id="btnHeaderSubmitQA" type="button"
-            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
-            style="background-color: #22c55e; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#16a34a'" onmouseout="this.style.backgroundColor='#22c55e'">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span>Enviar a Control de Calidad</span>
-          </button>
-          <button id="btnHeaderQCReview" type="button"
-            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
-            style="background-color: #f59e0b; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#d97706'" onmouseout="this.style.backgroundColor='#f59e0b'">
-            <i class="fa-solid fa-clipboard-check"></i>
-            <span>Revisar Control de Calidad</span>
-          </button>
-          <button id="btnHeaderSubmitSoporteLink" type="button"
-            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
-            style="background-color: #8b5cf6; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#7c3aed'" onmouseout="this.style.backgroundColor='#8b5cf6'">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span>Enviar enlace a Coordinador</span>
-          </button>
-          <button id="btnHeaderViewSoporteLink" type="button"
-            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
-            style="background-color: #06b6d4; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#0891b2'" onmouseout="this.style.backgroundColor='#06b6d4'">
-            <i class="fa-solid fa-link"></i>
-            <span>Ver enlace de Soporte</span>
-          </button>
-          <button id="btnHeaderSubmitQA2" type="button"
-            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
-            style="background-color: #14b8a6; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#0d9488'" onmouseout="this.style.backgroundColor='#14b8a6'">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span>Enviar a Control de Calidad 2</span>
-          </button>
-          <button id="btnHeaderQCReview2" type="button"
-            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
-            style="background-color: #f97316; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#ea580c'" onmouseout="this.style.backgroundColor='#f97316'">
-            <i class="fa-solid fa-clipboard-check"></i>
-            <span>Revisar Control de Calidad 2</span>
-          </button>
-          <button id="btnHeaderLiderReview" type="button"
-            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
-            style="background-color: #6366f1; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#4f46e5'" onmouseout="this.style.backgroundColor='#6366f1'">
-            <i class="fa-solid fa-clipboard-check"></i>
-            <span>Revisión de Líder</span>
-          </button>
-          <button id="btnHeaderViewDigitalizacionLink" type="button"
-            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
-            style="background-color: #6366f1; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#4f46e5'" onmouseout="this.style.backgroundColor='#6366f1'">
-            <i class="fa-solid fa-link"></i>
-            <span>Ver enlace de Digitalización</span>
-          </button>
-          <button id="btnHeaderVerEnlaces" type="button"
-            class="btn rounded-3 fw-bold text-white d-none align-items-center gap-2 border-0 px-4 py-2"
-            data-bs-toggle="modal" data-bs-target="#modalEnlacesAsignacion"
-            style="background-color: #0d9488; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#0f766e'" onmouseout="this.style.backgroundColor='#0d9488'">
-            <i class="fa-solid fa-link"></i>
-            <span>Ver Enlaces</span>
-          </button>
-          <button id="btnHeaderComentarios" type="button"
-            class="btn rounded-3 fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
-            data-bs-toggle="modal" data-bs-target="#modalComentarios"
-            style="background-color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#02203d'" onmouseout="this.style.backgroundColor='#032F57'">
-            <i class="fa-solid fa-comments"></i>
-            <span>Comentarios y recomendaciones</span>
-            <span id="badgeComentariosCount" class="badge rounded-pill bg-danger d-none"
-              style="font-size: 0.72rem; padding: 0.25em 0.6em;">0</span>
-          </button>
-          <button id="btnHeaderHistorial" type="button"
-            class="btn rounded-3 fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
-            data-bs-toggle="modal" data-bs-target="#modalHistorial"
-            style="background-color: #5B9BD5; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#4a8ac4'" onmouseout="this.style.backgroundColor='#5B9BD5'">
-            <i class="fa-solid fa-clock-rotate-left"></i>
-            <span>Historial de la asignación</span>
-          </button>
+          <div class="dropdown" id="dropdownAccionesWrapper">
+            <button class="btn rounded-3 fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2 dropdown-toggle" type="button" id="dropdownAcciones" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;" onmouseover="this.style.backgroundColor='#02203d'" onmouseout="this.style.backgroundColor='#032F57'">
+              <span>Acciones</span>
+              <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.75rem;"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dropdownAcciones" style="border-radius: 6px; border: 1px solid #E4EBF2; min-width: 280px; padding: 6px 0; background-color: #FFFFFF;">
+              <!-- Workflow Actions -->
+              <li>
+                <button id="btnHeaderSyncXtf" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #032F57; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-code-branch fs-6" style="color: #032F57; width: 20px; text-align: center;"></i>
+                  <span>Sincronizar XTF</span>
+                </button>
+              </li>
+              <li>
+                <button id="btnHeaderSubmitQA" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #16a34a; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-paper-plane fs-6" style="color: #16a34a; width: 20px; text-align: center;"></i>
+                  <span>Enviar a Control de Calidad</span>
+                </button>
+              </li>
+              <li>
+                <button id="btnHeaderQCReview" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #d97706; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-clipboard-check fs-6" style="color: #d97706; width: 20px; text-align: center;"></i>
+                  <span>Revisar Control de Calidad</span>
+                </button>
+              </li>
+              <li>
+                <button id="btnHeaderSubmitSoporteLink" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #7c3aed; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-paper-plane fs-6" style="color: #7c3aed; width: 20px; text-align: center;"></i>
+                  <span>Enviar enlace a Coordinador</span>
+                </button>
+              </li>
+              <li>
+                <button id="btnHeaderViewSoporteLink" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #0891b2; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-link fs-6" style="color: #0891b2; width: 20px; text-align: center;"></i>
+                  <span>Ver enlace de Soporte</span>
+                </button>
+              </li>
+              <li>
+                <button id="btnHeaderSubmitQA2" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #0d9488; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-paper-plane fs-6" style="color: #0d9488; width: 20px; text-align: center;"></i>
+                  <span>Enviar a Control de Calidad 2</span>
+                </button>
+              </li>
+              <li>
+                <button id="btnHeaderQCReview2" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #ea580c; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-clipboard-check fs-6" style="color: #ea580c; width: 20px; text-align: center;"></i>
+                  <span>Revisar Control de Calidad 2</span>
+                </button>
+              </li>
+              <li>
+                <button id="btnHeaderLiderReview" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #4f46e5; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-clipboard-check fs-6" style="color: #4f46e5; width: 20px; text-align: center;"></i>
+                  <span>Revisión de Líder</span>
+                </button>
+              </li>
+              <li>
+                <button id="btnHeaderViewDigitalizacionLink" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #4f46e5; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-link fs-6" style="color: #4f46e5; width: 20px; text-align: center;"></i>
+                  <span>Ver enlace de Digitalización</span>
+                </button>
+              </li>
+              
+              <!-- Divider to separate workflow from permanent links -->
+              <li class="dropdown-divider-workflow" style="border-top: 1px solid #E4EBF2; margin: 6px 0; display: none;"></li>
+              
+              <!-- Permanent actions -->
+              <li>
+                <button id="btnHeaderVerEnlaces" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalEnlacesAsignacion" style="font-size: 0.85rem; color: #16a34a; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-link fs-6" style="color: #16a34a; width: 20px; text-align: center;"></i>
+                  <span>Ver Enlaces</span>
+                </button>
+              </li>
+              <li>
+                <button id="btnHeaderComentarios" type="button" class="dropdown-item d-inline-flex align-items-center justify-content-between px-3 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalComentarios" style="font-size: 0.85rem; color: #032F57; background: transparent; border: none; width: 100%;">
+                  <div class="d-flex align-items-center gap-3">
+                    <i class="fa-solid fa-comments fs-6" style="color: #032F57; width: 20px; text-align: center;"></i>
+                    <span>Comentarios y recomendaciones</span>
+                  </div>
+                  <span id="badgeComentariosCount" class="badge rounded-pill bg-danger d-none ms-2" style="font-size: 0.72rem; padding: 0.25em 0.6em;">0</span>
+                </button>
+              </li>
+              <li>
+                <button id="btnHeaderHistorial" type="button" class="dropdown-item d-inline-flex align-items-center gap-3 px-3 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalHistorial" style="font-size: 0.85rem; color: #5b9bd5; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-clock-rotate-left fs-6" style="color: #5b9bd5; width: 20px; text-align: center;"></i>
+                  <span>Historial de la asignación</span>
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

@@ -23,7 +23,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request,
 from fastapi.responses import FileResponse
 
 from repositories import asignaciones_repo
-from routers.auth import get_current_tenant, get_current_user, get_user_role, normalize_role
+from routers.auth import get_current_tenant, get_current_user, get_user_role, normalize_role, check_admin_soporte_isolation
 from services import asignaciones_export as export_service
 from services import asignaciones_workspace as workspace_service
 from tenants import TenantContext, get_connection_manager, get_tenant_db_connection
@@ -133,6 +133,7 @@ def _ensure_assignment_access(
     if not asignacion:
         raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
     _ensure_assignment_owner_access(user, asignacion)
+    check_admin_soporte_isolation(conn, tenant, user, asignacion_id)
     return asignacion
 
 

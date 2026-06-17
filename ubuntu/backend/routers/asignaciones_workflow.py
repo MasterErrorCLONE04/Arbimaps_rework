@@ -5,7 +5,7 @@ import logging
 from psycopg2.extras import RealDictCursor
 from tenants import app_table, get_tenant_db_connection
 from repositories import asignaciones_repo
-from routers.auth import get_current_user_from_session, get_user_role, normalize_role
+from routers.auth import get_current_user_from_session, get_user_role, normalize_role, check_admin_soporte_isolation
 from tenants.context import TenantContext
 from tenants.dependencies import get_tenant_context_from_session
 from workflow.command_service import AssignmentCommandService
@@ -15,9 +15,22 @@ from workflow.models import ActorContext
 from workflow.postgres_uow import PostgresUnitOfWork
 from workflow.service import AssignmentWorkflowService
 
+def verify_assignment_isolation(
+    assignment_id: str,
+    conn = Depends(get_tenant_db_connection),
+    tenant: TenantContext = Depends(get_tenant_context_from_session),
+    user: dict = Depends(get_current_user_from_session),
+):
+    try:
+        asig_id = int(assignment_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID de asignacion invalido")
+    check_admin_soporte_isolation(conn, tenant, user, asig_id)
+
 router = APIRouter(
     prefix="/api/workflow/asignaciones",
-    tags=["Workflow Asignaciones"]
+    tags=["Workflow Asignaciones"],
+    dependencies=[Depends(verify_assignment_isolation)]
 )
 logger = logging.getLogger(__name__)
 

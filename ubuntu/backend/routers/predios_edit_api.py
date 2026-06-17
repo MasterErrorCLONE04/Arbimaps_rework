@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from core.asignaciones import ASIG_MODEL_CONTEXT
 from repositories import asignaciones_repo
-from routers.auth import get_user, get_user_role, normalize_role
+from routers.auth import get_user, get_user_role, normalize_role, check_admin_soporte_isolation
 from routers.db import db_conn
 
 router = APIRouter(prefix="/predios", tags=["Edicion Predios"])
@@ -119,6 +119,7 @@ async def guardar_edicion_predio(
     )
 
     with db_conn() as conn:
+        check_admin_soporte_isolation(conn, None, user, payload.asignacion_id)
         with conn.cursor() as cur:
             if rol == "digitalizador":
                 cur.execute(

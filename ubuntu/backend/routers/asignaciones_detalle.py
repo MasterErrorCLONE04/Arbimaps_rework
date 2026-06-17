@@ -27,7 +27,7 @@ from psycopg2 import errorcodes
 from psycopg2.extras import RealDictCursor
 
 from repositories import asignaciones_repo
-from routers.auth import get_current_tenant, get_current_user, get_user_role, normalize_role
+from routers.auth import get_current_tenant, get_current_user, get_user_role, normalize_role, check_admin_soporte_isolation
 from services import asignaciones_export as export_service
 from services import asignaciones_workspace as workspace_service
 from services.xtf_validation_service import XTFValidationService
@@ -303,6 +303,7 @@ def _ensure_assignment_access(
     if not asignacion:
         raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
     _ensure_assignment_owner_access(user, asignacion)
+    check_admin_soporte_isolation(conn, tenant, user, asignacion_id)
     return asignacion
 
 
@@ -3245,6 +3246,7 @@ def obtener_detalle_basico_predio(
     conn=Depends(get_tenant_db_connection),
 ):
     _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento")
+    check_admin_soporte_isolation(conn, tenant, user, id)
     
     schema_work = _safe_ident((tenant.schemas.work or "b_asignaciones_arb").strip(), fallback="b_asignaciones_arb")
     predio_table = _safe_ident("arb_predio", fallback="arb_predio")

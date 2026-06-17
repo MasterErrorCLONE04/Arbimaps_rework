@@ -561,6 +561,24 @@ const params = new URLSearchParams(window.location.search);
           }
         }
 
+        // Manage visibility of the divider in the dropdown menu
+        const workflowButtons = [
+          "btnHeaderSyncXtf", "btnHeaderSubmitQA", "btnHeaderQCReview",
+          "btnHeaderSubmitSoporteLink", "btnHeaderViewSoporteLink", "btnHeaderSubmitQA2",
+          "btnHeaderQCReview2", "btnHeaderLiderReview", "btnHeaderViewDigitalizacionLink"
+        ];
+        let anyWorkflowVisible = false;
+        workflowButtons.forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn && !btn.classList.contains("d-none")) {
+            anyWorkflowVisible = true;
+          }
+        });
+        const dropdownDivider = document.querySelector(".dropdown-divider-workflow");
+        if (dropdownDivider) {
+          dropdownDivider.style.display = anyWorkflowVisible ? "block" : "none";
+        }
+
         // 2. Mostrar/Ocultar enlace de control de calidad - Kept hidden, references removed from card details.
         const qaLinkRow = document.getElementById("d_qa_link_row");
         if (qaLinkRow) {

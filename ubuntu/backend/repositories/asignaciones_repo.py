@@ -1744,6 +1744,7 @@ def list_asignaciones(conn, tenant=None) -> list[dict]:
                 COALESCE(coo.first_name, cu.first_name) AS coord_first_name,
                 COALESCE(coo.last_name, cu.last_name) AS coord_last_name,
                 COALESCE(coo.username, a.creado_por) AS creado_por,
+                cu.rol AS creado_por_rol,
                 au.first_name AS asignado_first_name,
                 au.last_name AS asignado_last_name,
                 CASE
@@ -1834,6 +1835,7 @@ def get_asignacion_detalle(conn, *args, **kwargs) -> Optional[dict]:
                 COALESCE(coo.first_name, cu.first_name) AS coord_first_name,
                 COALESCE(coo.last_name, cu.last_name) AS coord_last_name,
                 COALESCE(coo.username, a.creado_por) AS creado_por,
+                cu.rol AS creado_por_rol,
                 au.first_name AS asignado_first_name,
                 au.last_name AS asignado_last_name,
                 CASE

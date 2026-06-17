@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends
 from psycopg2.extras import RealDictCursor
 
-from routers.auth import get_current_tenant, require_user
+from routers.auth import get_current_tenant, require_user, get_user_role, normalize_role
 from tenants import TenantContext, get_tenant_db_connection
 from repositories.asignaciones_repo import ensure_geoserver_assignment_status_view
 
@@ -49,13 +49,28 @@ def _display_name(
     return full or username or "Sin nombre"
 
 
+def _get_excluded_usernames(conn, app_schema: str, user: dict) -> list[str]:
+    role = normalize_role(get_user_role(user))
+    excluded = []
+    if role in {"admin", "soporte"}:
+        other_role = "soporte" if role == "admin" else "admin"
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(f"SELECT username, rol FROM {app_schema}.users")
+            for row in cur.fetchall():
+                u_name = row.get("username")
+                u_rol = row.get("rol")
+                if u_name and normalize_role(u_rol) == other_role:
+                    excluded.append(u_name)
+    return excluded
+
+
 # ---------------------------------------------------------------------------
 # GET /panel-control/resumen-estados
 # ---------------------------------------------------------------------------
 
 @router.get("/resumen-estados")
 def resumen_estados(
-    _user: str = Depends(require_user),
+    user: dict = Depends(require_user),
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
@@ -71,20 +86,25 @@ def resumen_estados(
     app_schema = tenant.schemas.app
     main_schema = tenant.schemas.main
 
+    excluded_usernames = _get_excluded_usernames(conn, app_schema, user)
+
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute("SET LOCAL lock_timeout = '2s'")
         cur.execute("SET LOCAL statement_timeout = '20s'")
-        cur.execute(
-            f"""
+
+        query_resumen = f"""
             SELECT
                 estado::text        AS estado,
                 COUNT(*)::int       AS total
-            FROM {app_schema}.asignacion
+            FROM {app_schema}.asignacion a
             WHERE estado::text NOT IN ('CERRADA', 'CREANDO_WORKSPACE', 'ERROR_WORKSPACE')
-            GROUP BY estado::text
-            ORDER BY estado::text
-            """
-        )
+        """
+        params_resumen = []
+        if excluded_usernames:
+            query_resumen += " AND a.creado_por NOT IN %s"
+            params_resumen.append(tuple(excluded_usernames))
+        query_resumen += " GROUP BY estado::text ORDER BY estado::text"
+        cur.execute(query_resumen, params_resumen)
         rows = cur.fetchall()
 
         cur.execute(
@@ -95,44 +115,50 @@ def resumen_estados(
         )
         total_predios_row = cur.fetchone() or {}
 
-        cur.execute(
-            f"""
-            SELECT MIN(creado_en) AS fecha_inicio
-            FROM {app_schema}.asignacion
-            """
-        )
+        query_inicio = f"SELECT MIN(creado_en) AS fecha_inicio FROM {app_schema}.asignacion a"
+        params_inicio = []
+        if excluded_usernames:
+            query_inicio += " WHERE a.creado_por NOT IN %s"
+            params_inicio.append(tuple(excluded_usernames))
+        cur.execute(query_inicio, params_inicio)
         fecha_inicio_row = cur.fetchone() or {}
 
-        cur.execute(
-            f"""
-            SELECT MAX(actualizado_en) AS ultima_actualizacion
-            FROM {app_schema}.asignacion
-            """
-        )
+        query_act = f"SELECT MAX(actualizado_en) AS ultima_actualizacion FROM {app_schema}.asignacion a"
+        params_act = []
+        if excluded_usernames:
+            query_act += " WHERE a.creado_por NOT IN %s"
+            params_act.append(tuple(excluded_usernames))
+        cur.execute(query_act, params_act)
         ultima_actualizacion_row = cur.fetchone() or {}
 
-        cur.execute(
-            f"""
+        query_pred_asig = f"""
             SELECT COUNT(DISTINCT ap.numero_predial_nacional)::int AS total
             FROM {app_schema}.asignacion_predio ap
             JOIN {app_schema}.asignacion a
               ON a.id = ap.asignacion_id
             WHERE ap.activo IS DISTINCT FROM FALSE
               AND a.estado::text NOT IN ('CERRADA', 'SINCRONIZADO')
-            """
-        )
+        """
+        params_pred_asig = []
+        if excluded_usernames:
+            query_pred_asig += " AND a.creado_por NOT IN %s"
+            params_pred_asig.append(tuple(excluded_usernames))
+        cur.execute(query_pred_asig, params_pred_asig)
         predios_asignados_row = cur.fetchone() or {}
 
-        cur.execute(
-            f"""
+        query_pred_sinc = f"""
             SELECT COUNT(DISTINCT ap.numero_predial_nacional)::int AS total
             FROM {app_schema}.asignacion_predio ap
             JOIN {app_schema}.asignacion a
               ON a.id = ap.asignacion_id
             WHERE ap.activo IS DISTINCT FROM FALSE
               AND a.estado::text = 'SINCRONIZADO'
-            """
-        )
+        """
+        params_pred_sinc = []
+        if excluded_usernames:
+            query_pred_sinc += " AND a.creado_por NOT IN %s"
+            params_pred_sinc.append(tuple(excluded_usernames))
+        cur.execute(query_pred_sinc, params_pred_sinc)
         predios_sincronizados_row = cur.fetchone() or {}
 
     estados: dict[str, int] = {}
@@ -168,7 +194,7 @@ def resumen_estados(
 
 @router.get("/coordinadores")
 def coordinadores(
-    _user: str = Depends(require_user),
+    user: dict = Depends(require_user),
     tenant: TenantContext = Depends(get_current_tenant),
     conn=Depends(get_tenant_db_connection),
 ):
@@ -177,14 +203,14 @@ def coordinadores(
     distribución por estado (para barras) y lista de reconocedores (para modal).
     """
     app_schema = tenant.schemas.app
+    excluded_usernames = _get_excluded_usernames(conn, app_schema, user)
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute("SET LOCAL lock_timeout = '2s'")
         cur.execute("SET LOCAL statement_timeout = '30s'")
 
         # --- Distribución: asignaciones y predios por coordinador + estado ---
-        cur.execute(
-            f"""
+        query_dist = f"""
             SELECT
                 u.id_global                                      AS coord_id,
                 u.username                                       AS coord_username,
@@ -204,15 +230,20 @@ def coordinadores(
             ) ap_s ON TRUE
             WHERE a.estado::text NOT IN ('CERRADA', 'CREANDO_WORKSPACE', 'ERROR_WORKSPACE')
               AND a.coordinador_asignado_id IS NOT NULL
+        """
+        params_dist = []
+        if excluded_usernames:
+            query_dist += " AND a.creado_por NOT IN %s"
+            params_dist.append(tuple(excluded_usernames))
+        query_dist += """
             GROUP BY u.id_global, u.username, u.first_name, u.last_name, a.estado::text
             ORDER BY u.last_name NULLS LAST, u.first_name NULLS LAST, u.username
-            """
-        )
+        """
+        cur.execute(query_dist, params_dist)
         dist_rows = cur.fetchall()
 
         # --- Reconocedores activos por coordinador ---
-        cur.execute(
-            f"""
+        query_recs = f"""
             SELECT DISTINCT
                 a.coordinador_asignado_id   AS coord_id,
                 ru.username                 AS rec_username,
@@ -224,9 +255,13 @@ def coordinadores(
             WHERE a.estado::text NOT IN ('CERRADA', 'CREANDO_WORKSPACE', 'ERROR_WORKSPACE')
               AND a.coordinador_asignado_id IS NOT NULL
               AND a.usuario_asignado IS NOT NULL
-            ORDER BY a.coordinador_asignado_id, ru.last_name NULLS LAST, ru.first_name NULLS LAST
-            """
-        )
+        """
+        params_recs = []
+        if excluded_usernames:
+            query_recs += " AND a.creado_por NOT IN %s"
+            params_recs.append(tuple(excluded_usernames))
+        query_recs += " ORDER BY a.coordinador_asignado_id, ru.last_name NULLS LAST, ru.first_name NULLS LAST"
+        cur.execute(query_recs, params_recs)
         recs_rows = cur.fetchall()
 
     # --- Construir diccionario de coordinadores ---
