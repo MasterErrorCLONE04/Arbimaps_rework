@@ -465,7 +465,7 @@ const params = new URLSearchParams(window.location.search);
           }
         }
 
-        // 1.3 Mostrar/Ocultar botón de Ver Enlace de Soporte (para Coordinador/Admin/Lider/Asignado) - Keep hidden, calculate permission for consolidated modal
+        // 1.3 Mostrar/Ocultar botón de Ver Enlace de Soporte (para Coordinador/Admin/Lider/Asignado)
         let canViewSoporte = false;
         const btnViewSoporteLink = document.getElementById("btnHeaderViewSoporteLink");
         if (btnViewSoporteLink) {
@@ -481,8 +481,13 @@ const params = new URLSearchParams(window.location.search);
 
           canViewSoporte = hasSoporteLink && isAllowedState && (isReviewerRole || (isAssignee && isOwner));
 
-          btnViewSoporteLink.classList.add("d-none");
-          btnViewSoporteLink.classList.remove("d-inline-flex");
+          if (canViewSoporte) {
+            btnViewSoporteLink.classList.remove("d-none");
+            btnViewSoporteLink.classList.add("d-inline-flex");
+          } else {
+            btnViewSoporteLink.classList.add("d-none");
+            btnViewSoporteLink.classList.remove("d-inline-flex");
+          }
         }
 
         // 1.4 Mostrar/Ocultar botón de Enviar a Control de Calidad 2 (para digitalizador/reconocedor dueño)
@@ -532,7 +537,7 @@ const params = new URLSearchParams(window.location.search);
             btnLiderReview.classList.remove("d-inline-flex");
           }
         }
-        // 1.7 Mostrar/Ocultar botón de Ver Enlace de Digitalización (para Soporte/Coordinador/Admin/Lider) - Keep hidden, check if allowed
+        // 1.7 Mostrar/Ocultar botón de Ver Enlace de Digitalización (para Soporte/Coordinador/Admin/Lider)
         let canViewDigitalizacion = false;
         const btnViewDigitalizacionLink = document.getElementById("btnHeaderViewDigitalizacionLink");
         if (btnViewDigitalizacionLink) {
@@ -542,8 +547,13 @@ const params = new URLSearchParams(window.location.search);
 
           canViewDigitalizacion = isAllowedRole && hasDigitalizacionLink && isSyncState;
 
-          btnViewDigitalizacionLink.classList.add("d-none");
-          btnViewDigitalizacionLink.classList.remove("d-inline-flex");
+          if (canViewDigitalizacion) {
+            btnViewDigitalizacionLink.classList.remove("d-none");
+            btnViewDigitalizacionLink.classList.add("d-inline-flex");
+          } else {
+            btnViewDigitalizacionLink.classList.add("d-none");
+            btnViewDigitalizacionLink.classList.remove("d-inline-flex");
+          }
         }
 
         // 1.8 Mostrar/Ocultar botón de Sincronizar XTF (para Soporte/Admin)

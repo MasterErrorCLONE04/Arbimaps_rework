@@ -12,6 +12,7 @@ from psycopg2.extras import Json, RealDictCursor
 from routers.auth import get_current_tenant, get_current_user, get_user_role
 from routers.security import hash_password
 from tenants import TenantContext, get_tenant_db_connection
+import repositories.asignaciones_repo as asignaciones_repo
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 logger = logging.getLogger(__name__)
@@ -51,7 +52,7 @@ def _require_admin(user: dict[str, Any]) -> None:
 
 def _require_admin_or_coordinador(user: dict[str, Any]) -> str:
     role = get_user_role(user)
-    if role not in {"admin", "coordinador", "soporte"}:
+    if role not in {"admin", "coordinador", "soporte", "lider_reconocimiento"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Rol '{role}' sin permisos para esta accion",
@@ -74,26 +75,23 @@ def _current_user_id(user: dict[str, Any]) -> int:
 
 def _coordinator_scoped_body(user: dict[str, Any], body: "EquipoTrabajoUpsert") -> "EquipoTrabajoUpsert":
     role = get_user_role(user)
-    if role != "coordinador":
-        return body
-
-    coordinator_id = _current_user_id(user)
-    if int(body.coordinador_id) != coordinator_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No puedes administrar equipos de otro coordinador.",
-        )
+    if role == "coordinador":
+        coordinator_id = _current_user_id(user)
+        if int(body.coordinador_id) != coordinator_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No puedes administrar equipos de otro coordinador.",
+            )
     return body
 
 
 def _require_own_equipo_if_coordinador(user: dict[str, Any], equipo: dict[str, Any]) -> None:
-    if get_user_role(user) != "coordinador":
-        return
-    if int(equipo.get("coordinador_id") or 0) != _current_user_id(user):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No puedes administrar equipos de otro coordinador.",
-        )
+    if get_user_role(user) == "coordinador":
+        if int(equipo.get("coordinador_id") or 0) != _current_user_id(user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No puedes administrar equipos de otro coordinador.",
+            )
 
 
 def _normalized_role(value: str) -> str:
@@ -483,7 +481,12 @@ def listar_usuarios(
     role = _require_admin_or_coordinador(current_user)
     where_scope = ""
     params: tuple[Any, ...] = ()
-    if role == "coordinador":
+    if role == "lider_reconocimiento":
+        where_scope = """
+                WHERE LOWER(COALESCE(u.rol, '')) IN ('reconocedor', 'digitalizador', 'coordinador')
+        """
+        params = ()
+    elif role == "coordinador":
         where_scope = """
                 WHERE LOWER(COALESCE(u.rol, '')) = 'reconocedor'
                   AND NULLIF(TRIM(u.supervisor), '') = %s::text
@@ -1038,7 +1041,7 @@ def actualizar_usuario(
             if not row:
                 raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-            if previous_role == "coordinador" and role != "coordinador":
+            if previous_role in {"coordinador", "lider_reconocimiento"} and role not in {"coordinador", "lider_reconocimiento"}:
                 _clear_reconocedores_supervisor(cur, tenant, id_global)
         conn.commit()
         return row
@@ -1095,3 +1098,378 @@ def eliminar_usuario(
             id_global,
         )
         raise HTTPException(status_code=500, detail=f"Error eliminando usuario: {exc}") from exc
+
+
+# Solicitud de creación de usuario schemas y endpoints
+class SolicitudCreacionUsuarioCreate(BaseModel):
+    username: str = Field(min_length=3)
+    first_name: str = Field(min_length=1)
+    last_name: str = Field(min_length=1)
+    rol: str
+    email: str | None = None
+    fecha_inicio: date | None = None
+    fecha_fin: date | None = None
+    supervisor_id: int | None = None
+
+    @model_validator(mode="after")
+    def _validate_role_and_dates(self) -> "SolicitudCreacionUsuarioCreate":
+        role = (self.rol or "").strip().lower()
+        if role not in {"coordinador", "reconocedor", "digitalizador"}:
+            raise ValueError("El rol solicitado debe ser coordinador, reconocedor o digitalizador.")
+        if self.fecha_inicio and self.fecha_fin and self.fecha_fin < self.fecha_inicio:
+            raise ValueError("La fecha de finalización no puede ser anterior al inicio del contrato.")
+        return self
+
+
+class SolicitudCreacionUsuarioAprobar(BaseModel):
+    password: str = Field(min_length=4)
+
+
+class SolicitudCreacionUsuarioRechazar(BaseModel):
+    comentarios_soporte: str = Field(min_length=1)
+
+
+@router.post("/solicitudes", status_code=status.HTTP_201_CREATED)
+def crear_solicitud_creacion_usuario(
+    body: SolicitudCreacionUsuarioCreate,
+    current_user: Annotated[dict[str, Any], Depends(get_current_user)],
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+    conn=Depends(get_tenant_db_connection),
+):
+    # Validar rol
+    _require_admin_or_coordinador(current_user)
+    # Asegurar DDL
+    asignaciones_repo.ensure_asignacion_tables(conn, tenant)
+    
+    username = body.username.strip()
+    role = body.rol.strip().lower()
+    email = _normalized_email(body.email)
+    
+    creator_id = _current_user_id(current_user)
+    creator_username = current_user.get("username", "Líder")
+    
+    # Si rol es reconocedor, supervisor es obligatorio y debe validarse
+    supervisor_id = body.supervisor_id
+    if role == "reconocedor":
+        if supervisor_id is None:
+            raise HTTPException(status_code=400, detail="El supervisor es obligatorio para el rol de reconocedor.")
+        supervisor_id = _validate_supervisor_id(conn, tenant, supervisor_id)
+    else:
+        supervisor_id = None  # No aplica supervisor para otros roles en la solicitud
+        
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Validar que username no exista en users
+            cur.execute(
+                f"SELECT 1 FROM {_app_table(tenant, 'users')} WHERE username = %s",
+                (username,),
+            )
+            if cur.fetchone():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Ya existe un usuario con ese username en la BD.",
+                )
+            
+            # Validar que username no tenga solicitud PENDIENTE
+            cur.execute(
+                f"SELECT 1 FROM {_app_table(tenant, 'solicitud_creacion_usuario')} WHERE username = %s AND estado = 'PENDIENTE'",
+                (username,),
+            )
+            if cur.fetchone():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Ya existe una solicitud pendiente de creación para este username.",
+                )
+
+            # Insertar solicitud
+            cur.execute(
+                f"""
+                INSERT INTO {_app_table(tenant, 'solicitud_creacion_usuario')}
+                  (username, email, first_name, last_name, rol, fecha_inicio, fecha_fin, supervisor_id, creado_por_id, estado)
+                VALUES
+                  (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'PENDIENTE')
+                RETURNING id, username, email, first_name, last_name, rol, fecha_inicio, fecha_fin, supervisor_id, creado_por_id, estado, creado_en
+                """,
+                (
+                    username,
+                    email,
+                    body.first_name.strip(),
+                    body.last_name.strip(),
+                    role,
+                    body.fecha_inicio,
+                    body.fecha_fin,
+                    supervisor_id,
+                    creator_id,
+                ),
+            )
+            solicitud = cur.fetchone()
+            solicitud_id = solicitud["id"]
+
+            # Notificar a todos los usuarios con rol 'soporte' o 'admin' activos
+            cur.execute(
+                f"""
+                SELECT id_global FROM {_app_table(tenant, 'users')}
+                WHERE activo = TRUE AND LOWER(rol) IN ('soporte', 'admin')
+                """
+            )
+            soporte_users = cur.fetchall()
+            
+            for s_user in soporte_users:
+                # Insertar en tabla notificaciones
+                cur.execute(
+                    f"""
+                    INSERT INTO {_app_table(tenant, 'notificaciones')}
+                      (id_usuario_destino, id_usuario_origen, rol_origen, rol_destino, tipo, titulo, mensaje, url_destino, prioridad)
+                    VALUES
+                      (%s, %s, %s, %s, 'usuario_creacion_solicitud', %s, %s, '/panel/usuarios', 'alta')
+                    """,
+                    (
+                        s_user["id_global"],
+                        creator_id,
+                        get_user_role(current_user),
+                        "soporte",
+                        "Nueva solicitud de creación de usuario",
+                        f"El líder {creator_username} solicita crear al usuario {username} ({role.upper()}).",
+                    ),
+                )
+        conn.commit()
+        return solicitud
+    except HTTPException:
+        _rollback_safely(conn)
+        raise
+    except Exception as exc:
+        _rollback_safely(conn)
+        logger.exception("Error creando solicitud de usuario")
+        raise HTTPException(status_code=500, detail=f"Error en base de datos: {exc}")
+
+
+@router.get("/solicitudes")
+def listar_solicitudes_creacion_usuario(
+    current_user: Annotated[dict[str, Any], Depends(get_current_user)],
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+    conn=Depends(get_tenant_db_connection),
+):
+    role = _require_admin_or_coordinador(current_user)
+    asignaciones_repo.ensure_asignacion_tables(conn, tenant)
+    
+    where_clause = ""
+    params = ()
+    
+    # Líderes y coordinadores ven solo sus solicitudes creadas
+    if role in {"coordinador", "lider_reconocimiento"}:
+        where_clause = "WHERE scu.creado_por_id = %s"
+        params = (_current_user_id(current_user),)
+        
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                f"""
+                SELECT 
+                  scu.id,
+                  scu.username,
+                  scu.email,
+                  scu.first_name,
+                  scu.last_name,
+                  scu.rol,
+                  scu.fecha_inicio,
+                  scu.fecha_fin,
+                  scu.supervisor_id,
+                  scu.creado_por_id,
+                  scu.estado,
+                  scu.creado_en,
+                  scu.comentarios_soporte,
+                  COALESCE(
+                    NULLIF(TRIM(CONCAT_WS(' ', sup.first_name, sup.last_name)), ''),
+                    sup.username,
+                    scu.supervisor_id::text
+                  ) AS supervisor_name,
+                  COALESCE(
+                    NULLIF(TRIM(CONCAT_WS(' ', creador.first_name, creador.last_name)), ''),
+                    creador.username,
+                    scu.creado_por_id::text
+                  ) AS creador_name
+                FROM {_app_table(tenant, 'solicitud_creacion_usuario')} scu
+                LEFT JOIN {_app_table(tenant, 'users')} sup ON sup.id_global = scu.supervisor_id
+                LEFT JOIN {_app_table(tenant, 'users')} creador ON creador.id_global = scu.creado_por_id
+                {where_clause}
+                ORDER BY scu.creado_en DESC, scu.id DESC
+                """,
+                params,
+            )
+            return cur.fetchall()
+    except Exception as exc:
+        _rollback_safely(conn)
+        logger.exception("Error listando solicitudes de creación")
+        raise HTTPException(status_code=500, detail=f"Error consultando BD: {exc}")
+
+
+@router.post("/solicitudes/{id}/aprobar")
+def aprobar_solicitud_creacion_usuario(
+    id: int,
+    body: SolicitudCreacionUsuarioAprobar,
+    current_user: Annotated[dict[str, Any], Depends(get_current_user)],
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+    conn=Depends(get_tenant_db_connection),
+):
+    # Solo admin y soporte pueden aprobar
+    _require_admin(current_user)
+    asignaciones_repo.ensure_asignacion_tables(conn, tenant)
+    
+    pwd_hash = hash_password(body.password)
+    support_id = _current_user_id(current_user)
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                f"""
+                SELECT * FROM {_app_table(tenant, 'solicitud_creacion_usuario')}
+                WHERE id = %s FOR UPDATE
+                """,
+                (id,),
+            )
+            solicitud = cur.fetchone()
+            if not solicitud:
+                raise HTTPException(status_code=404, detail="Solicitud no encontrada.")
+            if solicitud["estado"] != "PENDIENTE":
+                raise HTTPException(status_code=400, detail="Esta solicitud ya no está pendiente.")
+                
+            username = solicitud["username"]
+            role = solicitud["rol"]
+            
+            # Verificar username en users
+            cur.execute(
+                f"SELECT 1 FROM {_app_table(tenant, 'users')} WHERE username = %s",
+                (username,),
+            )
+            if cur.fetchone():
+                raise HTTPException(status_code=400, detail=f"El username '{username}' ya está registrado.")
+
+            # Obtener ID del rol
+            role_id = _get_role_id(conn, tenant, role)
+            
+            # Crear usuario real en tabla users
+            cur.execute(
+                f"""
+                INSERT INTO {_app_table(tenant, 'users')}
+                  (username, email, first_name, last_name, rol, rol_id, supervisor, activo, password_hash, fecha_inicio, fecha_fin)
+                VALUES
+                  (%s, %s, %s, %s, %s, %s, %s, TRUE, %s, %s, %s)
+                RETURNING id_global
+                """,
+                (
+                    username,
+                    solicitud["email"],
+                    solicitud["first_name"],
+                    solicitud["last_name"],
+                    role,
+                    role_id,
+                    solicitud["supervisor_id"],
+                    pwd_hash,
+                    solicitud["fecha_inicio"],
+                    solicitud["fecha_fin"],
+                ),
+            )
+            new_user = cur.fetchone()
+            
+            # Actualizar estado de solicitud
+            cur.execute(
+                f"""
+                UPDATE {_app_table(tenant, 'solicitud_creacion_usuario')}
+                SET estado = 'APROBADA'
+                WHERE id = %s
+                """,
+                (id,),
+            )
+            
+            # Notificar al creador de la solicitud
+            if solicitud["creado_por_id"]:
+                cur.execute(
+                    f"""
+                    INSERT INTO {_app_table(tenant, 'notificaciones')}
+                      (id_usuario_destino, id_usuario_origen, rol_origen, rol_destino, tipo, titulo, mensaje, prioridad)
+                    VALUES
+                      (%s, %s, 'soporte', 'lider_reconocimiento', 'solicitud_creacion_aprobada', %s, %s, 'normal')
+                    """,
+                    (
+                        solicitud["creado_por_id"],
+                        support_id,
+                        "Solicitud de usuario aprobada",
+                        f"Tu solicitud para crear al usuario {username} ({role.upper()}) ha sido aprobada.",
+                    ),
+                )
+        conn.commit()
+        return {"status": "ok", "detail": f"Usuario {username} creado y aprobado."}
+    except HTTPException:
+        _rollback_safely(conn)
+        raise
+    except Exception as exc:
+        _rollback_safely(conn)
+        logger.exception("Error al aprobar solicitud")
+        raise HTTPException(status_code=500, detail=f"Error en base de datos: {exc}")
+
+
+@router.post("/solicitudes/{id}/rechazar")
+def rechazar_solicitud_creacion_usuario(
+    id: int,
+    body: SolicitudCreacionUsuarioRechazar,
+    current_user: Annotated[dict[str, Any], Depends(get_current_user)],
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+    conn=Depends(get_tenant_db_connection),
+):
+    _require_admin(current_user)
+    asignaciones_repo.ensure_asignacion_tables(conn, tenant)
+    
+    support_id = _current_user_id(current_user)
+    comentarios = body.comentarios_soporte.strip()
+    
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                f"""
+                SELECT * FROM {_app_table(tenant, 'solicitud_creacion_usuario')}
+                WHERE id = %s FOR UPDATE
+                """,
+                (id,),
+            )
+            solicitud = cur.fetchone()
+            if not solicitud:
+                raise HTTPException(status_code=404, detail="Solicitud no encontrada.")
+            if solicitud["estado"] != "PENDIENTE":
+                raise HTTPException(status_code=400, detail="Esta solicitud ya no está pendiente.")
+                
+            # Actualizar estado de solicitud
+            cur.execute(
+                f"""
+                UPDATE {_app_table(tenant, 'solicitud_creacion_usuario')}
+                SET estado = 'RECHAZADA',
+                    comentarios_soporte = %s
+                WHERE id = %s
+                """,
+                (comentarios, id),
+            )
+            
+            # Notificar al creador de la solicitud
+            if solicitud["creado_por_id"]:
+                cur.execute(
+                    f"""
+                    INSERT INTO {_app_table(tenant, 'notificaciones')}
+                      (id_usuario_destino, id_usuario_origen, rol_origen, rol_destino, tipo, titulo, mensaje, prioridad)
+                    VALUES
+                      (%s, %s, 'soporte', 'lider_reconocimiento', 'solicitud_creacion_rechazada', %s, %s, 'alta')
+                    """,
+                    (
+                        solicitud["creado_por_id"],
+                        support_id,
+                        "Solicitud de usuario rechazada",
+                        f"Tu solicitud para crear al usuario {solicitud['username']} fue rechazada. Motivo: {comentarios}",
+                    ),
+                )
+        conn.commit()
+        return {"status": "ok", "detail": f"Solicitud {id} rechazada."}
+    except HTTPException:
+        _rollback_safely(conn)
+        raise
+    except Exception as exc:
+        _rollback_safely(conn)
+        logger.exception("Error al rechazar solicitud")
+        raise HTTPException(status_code=500, detail=f"Error en base de datos: {exc}")

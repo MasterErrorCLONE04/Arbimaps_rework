@@ -1,5 +1,39 @@
 <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_saas.css?v=16" />
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+  .status-badge.pendiente {
+    background-color: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+  }
+  .status-badge.aprobada {
+    background-color: #d1fae5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+  }
+  .status-badge.rechazada {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+  .solicitudes-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+</style>
 
 <div class="container-fluid usuarios-saas">
   <!-- Header -->
@@ -10,8 +44,8 @@
     </div>
     <div class="header-actions">
       <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalUsuario" id="btnAddNewUser" {% if
-        effective_role not in ['admin', 'soporte'] %}style="display: none;" {% endif %}>
-        <i class="bi bi-plus-lg"></i> Agregar nuevo usuario
+        effective_role not in ['admin', 'soporte', 'lider_reconocimiento'] %}style="display: none;" {% endif %}>
+        <i class="bi bi-plus-lg"></i> <span id="btnAddNewUserText">Agregar nuevo usuario</span>
       </button>
       <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalCuadrilla" id="btnAddNewCuadrilla"
         style="display: none; background-color: #5ba4cf; border-color: #5ba4cf; box-shadow: 0 4px 12px rgba(91, 164, 207, 0.2);">
@@ -28,13 +62,18 @@
     <button class="tab-btn" id="tabCuadrillas">
       <i class="bi bi-people fs-5"></i> Cuadrillas <span class="tab-badge" id="tabBadgeCuadrillas">0</span>
     </button>
+    {% if effective_role in ['admin', 'soporte', 'coordinador', 'lider_reconocimiento'] %}
+    <button class="tab-btn" id="tabSolicitudes">
+      <i class="bi bi-file-earmark-person fs-5"></i> Solicitudes <span class="tab-badge" id="tabBadgeSolicitudes">0</span>
+    </button>
+    {% endif %}
   </div>
 
   <!-- SECCIÓN DE USUARIOS -->
   <div id="usuariosTabContent">
     <div class="container-fluid pb-3 px-lg-2">
       <div class="row">
-        {% if effective_role in ['admin', 'soporte'] %}
+        {% if effective_role in ['admin', 'soporte', 'lider_reconocimiento'] %}
         <div class="col-6 col-md-2  p-2">
           <!-- Total -->
           <div class="stat-card total ">
@@ -76,7 +115,7 @@
           </div>
         </div>
         {% endif %}
-        {% if effective_role in ['admin', 'soporte'] %}
+        {% if effective_role in ['admin', 'soporte', 'lider_reconocimiento'] %}
         <div class="col-6 col-md-2 p-2">
           <!-- Coordinador -->
           <div class="stat-card role-coordinador">
@@ -130,7 +169,7 @@
           </div>
         </div>
         {% endif %}
-        {% if effective_role in ['admin', 'soporte'] %}
+        {% if effective_role in ['admin', 'soporte', 'lider_reconocimiento'] %}
         <div class="col-6 col-md-2 p-2">
           <!-- digitalizador -->
           <div class="stat-card role-digitalizador">
@@ -173,7 +212,7 @@
                 <th>Email</th>
                 <!-- <th>Nombre</th> -->
                 <!-- <th>Apellido</th> -->
-                <th>Supervisor Encargado</th>
+                <th>Coordinador encargado</th>
                 <th>Rol</th>
                 <th>Estado</th>
                 <th style="width: 130px;">Acciones</th>
@@ -377,6 +416,56 @@
       <!-- Cargado vía JS -->
     </div>
   </div>
+
+  <!-- SECCIÓN DE SOLICITUDES -->
+  <div id="solicitudesTabContent" class="solicitudes-section" style="display: none; width: 100%;">
+    <!-- Contenedor Principal (Tabla) -->
+    <div class="usuarios-table-container">
+      <!-- Tabla -->
+      <div class="table-card" style="width: 100%;">
+        <div class="table-header-bar">
+          <h2>Solicitudes de creación de usuarios</h2>
+          <p>Listado de solicitudes de nuevos usuarios en la plataforma</p>
+        </div>
+
+        <div class="table-toolbar">
+          <div class="search-box">
+            <label for="solSearch">Buscar</label>
+            <input type="text" id="solSearch" placeholder="Buscar solicitud...">
+          </div>
+        </div>
+
+        <div class="custom-table-wrap">
+          <table class="custom-table" id="tblSolicitudes" style="display:none; width: 100%;">
+            <thead>
+              <tr>
+                <th>Nombre Completo</th>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Rol solicitado</th>
+                <th>Coordinador</th>
+                <th>Solicitante</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th style="width: 150px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodySolicitudes">
+              <!-- Cargado vía JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginador Footer -->
+        <div class="table-footer">
+          <span class="table-info-text" id="solListMsg">Cargando solicitudes...</span>
+          <div class="pagination-controls" id="solPaginationControls">
+            <!-- Botones de paginado -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal para Crear/Editar Cuadrilla -->
@@ -542,9 +631,9 @@
               </select>
             </div>
             <div class="form-group full-width d-none" id="usrSupervisorWrap">
-              <label class="form-label" style="font-size: 0.8rem;" for="usrSupervisor">Supervisor encargado</label>
+              <label class="form-label" style="font-size: 0.8rem;" for="usrSupervisor">Coordinador encargado</label>
               <select id="usrSupervisor" class="form-input">
-                <option value="">Sin supervisor</option>
+                <option value="">Sin coordinador</option>
               </select>
             </div>
             <div class="form-group full-width">
@@ -830,12 +919,12 @@
       const coordinadores = getCoordinadoresActivos();
       const current = selectedValue ? String(selectedValue) : (selectSupervisor.value || "");
       selectSupervisor.innerHTML =
-        '<option value="">Sin supervisor</option>' +
+        '<option value="">Sin coordinador</option>' +
         coordinadores.map(u => `<option value="${u.id_global}">${nombreUsuarioEquipo(u)}</option>`).join("");
       if (current && !coordinadores.some(u => String(u.id_global) === String(current))) {
         const fallbackOption = document.createElement("option");
         fallbackOption.value = String(current);
-        fallbackOption.textContent = selectedLabel || `Supervisor ${current}`;
+        fallbackOption.textContent = selectedLabel || `Coordinador ${current}`;
         selectSupervisor.appendChild(fallbackOption);
       }
       if (current) {
@@ -853,6 +942,7 @@
       if (!visible) {
         selectSupervisor.value = "";
       } else {
+        selectSupervisor.disabled = false;
         renderSupervisorOptions(selectedValue, selectedLabel);
       }
     }
@@ -945,7 +1035,11 @@
       editingId = null;
       form.reset();
       inputUsername.disabled = false;
-      submitBtn.textContent = "Guardar usuario";
+      if (CURRENT_ROLE === "lider_reconocimiento") {
+        submitBtn.textContent = "Solicitar creación";
+      } else {
+        submitBtn.textContent = "Guardar usuario";
+      }
       inputPassword.value = "";
       inputFechaInicio.value = "";
       inputFechaFin.value = "";
@@ -1445,11 +1539,13 @@
       }
     }
 
-    async function guardarUsuario(evt) {
+        async function guardarUsuario(evt) {
       evt.preventDefault();
       const isEdit = editingId !== null;
+      const isRequest = CURRENT_ROLE === "lider_reconocimiento";
+
       submitBtn.disabled = true;
-      submitBtn.textContent = isEdit ? "Actualizando..." : "Guardando...";
+      submitBtn.textContent = isEdit ? "Actualizando..." : (isRequest ? "Enviando solicitud..." : "Guardando...");
 
       const payload = {
         username: inputUsername.value.trim(),
@@ -1460,24 +1556,27 @@
         fecha_inicio: inputFechaInicio.value || null,
         fecha_fin: inputFechaFin.value || null,
         supervisor_id: selectRol.value === "reconocedor" && selectSupervisor.value ? parseInt(selectSupervisor.value, 10) : null,
-        password: inputPassword.value || null,
       };
+
+      if (!isRequest) {
+        payload.password = inputPassword.value || null;
+      }
 
       if (!payload.username || !payload.first_name || !payload.last_name || !payload.rol) {
         showMsg("Completa los campos obligatorios.", "error");
         submitBtn.disabled = false;
-        submitBtn.textContent = isEdit ? "Actualizar usuario" : "Guardar usuario";
+        submitBtn.textContent = isEdit ? "Actualizar usuario" : (isRequest ? "Solicitar creación" : "Guardar usuario");
         return;
       }
 
       if (payload.fecha_inicio && payload.fecha_fin && payload.fecha_fin < payload.fecha_inicio) {
         showMsg("La fecha de finalizaci\u00f3n no puede ser anterior al inicio del contrato.", "error");
         submitBtn.disabled = false;
-        submitBtn.textContent = isEdit ? "Actualizar usuario" : "Guardar usuario";
+        submitBtn.textContent = isEdit ? "Actualizar usuario" : (isRequest ? "Solicitar creación" : "Guardar usuario");
         return;
       }
 
-      if (!isEdit && !payload.password) {
+      if (!isRequest && !isEdit && !payload.password) {
         showMsg("Debe especificar una contraseña inicial para el nuevo usuario.", "error");
         submitBtn.disabled = false;
         submitBtn.textContent = "Guardar usuario";
@@ -1485,8 +1584,10 @@
       }
 
       try {
-        const url = isEdit ? `${rp}/usuarios/${editingId}` : `${rp}/usuarios/`;
-        const method = isEdit ? "PUT" : "POST";
+        const url = isRequest 
+          ? `${rp}/usuarios/solicitudes`
+          : (isEdit ? `${rp}/usuarios/${editingId}` : `${rp}/usuarios/`);
+        const method = isRequest ? "POST" : (isEdit ? "PUT" : "POST");
 
         const r = await fetch(url, {
           method,
@@ -1507,7 +1608,7 @@
         if (!r.ok) {
           throw new Error(
             data.detail ||
-            (isEdit ? "No se pudo actualizar el usuario." : "No se pudo crear el usuario.")
+            (isRequest ? "No se pudo enviar la solicitud." : (isEdit ? "No se pudo actualizar el usuario." : "No se pudo crear el usuario."))
           );
         }
 
@@ -1520,13 +1621,24 @@
           modalInstance.hide();
         }
 
-        cargarUsuarios();
+        if (isRequest) {
+          Swal.fire({
+            title: "Solicitud Enviada",
+            text: "La solicitud de creación de usuario ha sido enviada al área de Soporte.",
+            icon: "success",
+            timer: 2500,
+            showConfirmButton: false
+          });
+          await cargarSolicitudes();
+        } else {
+          cargarUsuarios();
+        }
       } catch (err) {
         console.error(err);
-        showMsg(err.message || (isEdit ? "Error actualizando usuario." : "Error creando usuario."), "error");
+        showMsg(err.message || (isRequest ? "Error enviando solicitud." : (isEdit ? "Error actualizando usuario." : "Error creando usuario.")), "error");
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = isEdit ? "Actualizar usuario" : "Guardar usuario";
+        submitBtn.textContent = isEdit ? "Actualizar usuario" : (isRequest ? "Solicitar creación" : "Guardar usuario");
       }
     }
     // Tabs Navigation
@@ -1557,24 +1669,46 @@
     let selectedReconocedores = [];
 
     // Tabs switcher events
+    const tabSolicitudes = document.getElementById("tabSolicitudes");
+    const solicitudesTabContent = document.getElementById("solicitudesTabContent");
+
     tabUsuarios.addEventListener("click", () => {
       tabUsuarios.classList.add("active");
       tabCuadrillas.classList.remove("active");
+      if (tabSolicitudes) tabSolicitudes.classList.remove("active");
       usuariosTabContent.style.display = "block";
       cuadrillasTabContent.style.display = "none";
-      btnAddNewUser.style.display = IS_ADMIN ? "inline-flex" : "none";
+      if (solicitudesTabContent) solicitudesTabContent.style.display = "none";
+      btnAddNewUser.style.display = (IS_ADMIN || CURRENT_ROLE === "lider_reconocimiento") ? "inline-flex" : "none";
+      btnAddNewUserText.textContent = CURRENT_ROLE === "lider_reconocimiento" ? "Solicitar creación de usuario" : "Agregar nuevo usuario";
       btnAddNewCuadrilla.style.display = "none";
     });
 
     tabCuadrillas.addEventListener("click", async () => {
       tabUsuarios.classList.remove("active");
       tabCuadrillas.classList.add("active");
+      if (tabSolicitudes) tabSolicitudes.classList.remove("active");
       usuariosTabContent.style.display = "none";
       cuadrillasTabContent.style.display = "flex";
+      if (solicitudesTabContent) solicitudesTabContent.style.display = "none";
       btnAddNewUser.style.display = "none";
       btnAddNewCuadrilla.style.display = "inline-flex";
       await cargarCuadrillas();
     });
+
+    if (tabSolicitudes) {
+      tabSolicitudes.addEventListener("click", async () => {
+        tabUsuarios.classList.remove("active");
+        tabCuadrillas.classList.remove("active");
+        tabSolicitudes.classList.add("active");
+        usuariosTabContent.style.display = "none";
+        cuadrillasTabContent.style.display = "none";
+        if (solicitudesTabContent) solicitudesTabContent.style.display = "block";
+        btnAddNewUser.style.display = "none";
+        btnAddNewCuadrilla.style.display = "none";
+        await cargarSolicitudes();
+      });
+    }
 
     function nombreUsuarioEquipo(u) {
       const fullName = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
@@ -2110,7 +2244,11 @@
 
     btnAddNewUser.addEventListener("click", () => {
       resetForm();
-      document.getElementById("modalUsuarioLabel").textContent = "Crear nuevo usuario";
+      if (CURRENT_ROLE === "lider_reconocimiento") {
+        document.getElementById("modalUsuarioLabel").textContent = "Solicitar creación de usuario";
+      } else {
+        document.getElementById("modalUsuarioLabel").textContent = "Crear nuevo usuario";
+      }
     });
 
     btnAddNewCuadrilla.addEventListener("click", async () => {
@@ -2176,9 +2314,359 @@
       });
     });
 
+    // SOLICITUDES DE CREACION DE USUARIO
+    let solicitudesCache = [];
+    let solSearchText = "";
+    let solCurrentPage = 1;
+    const solRowsPerPage = 6;
+
+    async function cargarSolicitudes() {
+      const listMsg = document.getElementById("solListMsg");
+      const tbl = document.getElementById("tblSolicitudes");
+      const tbody = document.getElementById("tbodySolicitudes");
+      if (!listMsg || !tbl || !tbody) return;
+
+      listMsg.textContent = "Cargando solicitudes...";
+      tbl.style.display = "none";
+      tbody.innerHTML = "";
+
+      try {
+        const r = await fetch(`${rp}/usuarios/solicitudes`, { credentials: "include" });
+        const contentType = r.headers.get("content-type") || "";
+
+        if (!contentType.includes("application/json")) {
+          const text = await r.text();
+          throw new Error(`Respuesta no JSON (${r.status}): ${text.slice(0, 120)}`);
+        }
+
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.detail || "No se pudo cargar solicitudes.");
+
+        solicitudesCache = data || [];
+
+        // Actualizar el badge dinámico de solicitudes pendientes
+        const pendingCount = solicitudesCache.filter(s => (s.estado || "").toUpperCase() === "PENDIENTE").length;
+        const badge = document.getElementById("tabBadgeSolicitudes");
+        if (badge) {
+          badge.textContent = pendingCount;
+        }
+
+        aplicarBusquedaSolicitudes();
+      } catch (err) {
+        console.error(err);
+        listMsg.textContent = err.message || "Error cargando solicitudes.";
+      }
+    }
+
+    function aplicarBusquedaSolicitudes() {
+      const q = (solSearchText || "").toLowerCase();
+      const base = solicitudesCache || [];
+
+      if (!q) {
+        renderSolicitudes(base);
+        return;
+      }
+
+      const filtrados = base.filter(s => {
+        const texto = [
+          s.username,
+          s.email,
+          s.first_name,
+          s.last_name,
+          s.rol,
+          s.estado,
+          s.creador_name,
+          s.supervisor_name,
+          String(s.id)
+        ].join(" ").toLowerCase();
+        return texto.includes(q);
+      });
+
+      renderSolicitudes(filtrados);
+    }
+
+    function renderSolicitudes(list) {
+      const tbody = document.getElementById("tbodySolicitudes");
+      const tbl = document.getElementById("tblSolicitudes");
+      const listMsg = document.getElementById("solListMsg");
+      if (!tbody || !tbl || !listMsg) return;
+
+      tbody.innerHTML = "";
+
+      if (!list.length) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = '<td colspan="9" style="padding:18px;color:#64748b;text-align:center;">Sin resultados.</td>';
+        tbody.appendChild(tr);
+        tbl.style.display = "table";
+        renderSolPagination(0);
+        listMsg.textContent = "Sin resultados.";
+        return;
+      }
+
+      // Paginate list
+      const startIndex = (solCurrentPage - 1) * solRowsPerPage;
+      const endIndex = startIndex + solRowsPerPage;
+      const paginatedList = list.slice(startIndex, endIndex);
+
+      listMsg.textContent = `Mostrando ${paginatedList.length} de ${list.length} resultados`;
+
+      paginatedList.forEach(s => {
+        const tr = document.createElement("tr");
+
+        const rolKey = (s.rol || "").toLowerCase();
+        const badgeClass = roleBadges[rolKey] || "reconocedor";
+        const labelText = roleLabels[rolKey] || s.rol || "";
+        const rolHtml = `<span class="role-badge ${badgeClass}">${labelText}</span>`;
+
+        let estadoClass = "pendiente";
+        let estadoLabel = "Pendiente";
+        if (s.estado === "APROBADA") {
+          estadoClass = "aprobada";
+          estadoLabel = "Aprobada";
+        } else if (s.estado === "RECHAZADA") {
+          estadoClass = "rechazada";
+          estadoLabel = "Rechazada";
+        }
+        const estadoHtml = `<span class="status-badge ${estadoClass}">${estadoLabel}</span>`;
+
+        // Acciones
+        let accionesHtml = '<div class="actions-cell">';
+        if (IS_ADMIN && s.estado === "PENDIENTE") {
+          accionesHtml += `
+            <button type="button" class="btn-action-circle edit btnApproveSol" data-id="${s.id}" title="Aprobar Solicitud">
+              <i class="bi bi-check-lg"></i>
+            </button>
+            <button type="button" class="btn-action-circle delete btnRejectSol" data-id="${s.id}" title="Rechazar Solicitud">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          `;
+        }
+        if (s.estado === "RECHAZADA" && s.comentarios_soporte) {
+          accionesHtml += `
+            <button type="button" class="btn-action-circle view btnVerMotivo" data-id="${s.id}" title="Ver motivo de rechazo">
+              <i class="bi bi-chat-left-text-fill"></i>
+            </button>
+          `;
+        }
+        if (accionesHtml === '<div class="actions-cell">') {
+          accionesHtml += '<span class="text-muted">---</span>';
+        }
+        accionesHtml += '</div>';
+
+        const fullName = `${s.first_name ?? ""} ${s.last_name ?? ""}`.trim();
+        const supervisorLabel = s.supervisor_name || "Sin supervisor";
+        const creadorLabel = s.creador_name || "Líder";
+
+        tr.innerHTML = `
+          <td>${fullName}</td>
+          <td><strong>${s.username}</strong></td>
+          <td>${s.email ?? "---"}</td>
+          <td>${rolHtml}</td>
+          <td>${supervisorLabel}</td>
+          <td>${creadorLabel}</td>
+          <td>${formatFechaContrato(s.creado_en)}</td>
+          <td>${estadoHtml}</td>
+          <td>${accionesHtml}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      attachSolRowEvents();
+      tbl.style.display = "table";
+      renderSolPagination(list.length);
+    }
+
+    function renderSolPagination(totalItems) {
+      const totalPages = Math.ceil(totalItems / solRowsPerPage) || 1;
+      const container = document.getElementById("solPaginationControls");
+      if (!container) return;
+      container.innerHTML = "";
+
+      // Backwards button
+      const prevBtn = document.createElement("button");
+      prevBtn.type = "button";
+      prevBtn.className = `page-btn ${solCurrentPage === 1 ? 'disabled' : ''}`;
+      prevBtn.innerHTML = `<i class="bi bi-chevron-left"></i>`;
+      prevBtn.addEventListener("click", () => {
+        if (solCurrentPage > 1) {
+          solCurrentPage--;
+          aplicarBusquedaSolicitudes();
+        }
+      });
+      container.appendChild(prevBtn);
+
+      // Pages
+      for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement("button");
+        pageBtn.type = "button";
+        pageBtn.className = `page-btn ${solCurrentPage === i ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.addEventListener("click", () => {
+          solCurrentPage = i;
+          aplicarBusquedaSolicitudes();
+        });
+        container.appendChild(pageBtn);
+      }
+
+      // Forwards button
+      const nextBtn = document.createElement("button");
+      nextBtn.type = "button";
+      nextBtn.className = `page-btn ${solCurrentPage === totalPages ? 'disabled' : ''}`;
+      nextBtn.innerHTML = `<i class="bi bi-chevron-right"></i>`;
+      nextBtn.addEventListener("click", () => {
+        if (solCurrentPage < totalPages) {
+          solCurrentPage++;
+          aplicarBusquedaSolicitudes();
+        }
+      });
+      container.appendChild(nextBtn);
+    }
+
+    function attachSolRowEvents() {
+      const tbody = document.getElementById("tbodySolicitudes");
+      if (!tbody) return;
+
+      tbody.querySelectorAll(".btnApproveSol").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = parseInt(btn.getAttribute("data-id"), 10);
+          const s = solicitudesCache.find(item => item.id === id);
+          if (s) aprobarSolicitud(s);
+        });
+      });
+
+      tbody.querySelectorAll(".btnRejectSol").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = parseInt(btn.getAttribute("data-id"), 10);
+          const s = solicitudesCache.find(item => item.id === id);
+          if (s) rechazarSolicitud(s);
+        });
+      });
+
+      tbody.querySelectorAll(".btnVerMotivo").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = parseInt(btn.getAttribute("data-id"), 10);
+          const s = solicitudesCache.find(item => item.id === id);
+          if (s) {
+            Swal.fire({
+              title: "Motivo de Rechazo",
+              text: s.comentarios_soporte,
+              icon: "info",
+              confirmButtonText: "Entendido",
+              confirmButtonColor: "#2563eb"
+            });
+          }
+        });
+      });
+    }
+
+    function aprobarSolicitud(s) {
+      Swal.fire({
+        title: 'Aprobar creación de usuario',
+        text: `Ingresa la contraseña inicial para el nuevo usuario "${s.username}":`,
+        input: 'password',
+        inputPlaceholder: 'Contraseña (mínimo 4 caracteres)',
+        inputAttributes: {
+          autocapitalize: 'off',
+          autocorrect: 'off'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Aprobar y Crear',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        inputValidator: (value) => {
+          if (!value || value.length < 4) {
+            return 'La contraseña debe tener al menos 4 caracteres';
+          }
+        }
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const password = result.value;
+          try {
+            const response = await fetch(`${rp}/usuarios/solicitudes/${s.id}/aprobar`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ password })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || 'Error al aprobar solicitud');
+            
+            Swal.fire('¡Aprobado!', `El usuario "${s.username}" ha sido registrado con éxito.`, 'success');
+            await cargarSolicitudes();
+            await cargarUsuarios();
+          } catch (error) {
+            Swal.fire('Error', error.message, 'error');
+          }
+        }
+      });
+    }
+
+    function rechazarSolicitud(s) {
+      Swal.fire({
+        title: 'Rechazar solicitud',
+        text: `Especifica el motivo de rechazo para la solicitud del usuario "${s.username}":`,
+        input: 'textarea',
+        inputPlaceholder: 'Escribe los comentarios aquí...',
+        showCancelButton: true,
+        confirmButtonText: 'Rechazar solicitud',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        inputValidator: (value) => {
+          if (!value || value.trim().length === 0) {
+            return 'Debes ingresar un motivo de rechazo';
+          }
+        }
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const comentarios_soporte = result.value;
+          try {
+            const response = await fetch(`${rp}/usuarios/solicitudes/${s.id}/rechazar`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ comentarios_soporte })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || 'Error al rechazar solicitud');
+            
+            Swal.fire('Rechazada', 'La solicitud ha sido rechazada.', 'success');
+            await cargarSolicitudes();
+          } catch (error) {
+            Swal.fire('Error', error.message, 'error');
+          }
+        }
+      });
+    }
+
+    const solSearch = document.getElementById("solSearch");
+    if (solSearch) {
+      solSearch.addEventListener("input", () => {
+        solSearchText = solSearch.value || "";
+        solCurrentPage = 1;
+        aplicarBusquedaSolicitudes();
+      });
+    }
+
     if (IS_ADMIN) {
       cargarRoles();
     }
+    if (CURRENT_ROLE === "lider_reconocimiento") {
+      const pwdGroup = inputPassword.closest(".form-group");
+      if (pwdGroup) pwdGroup.style.display = "none";
+      inputPassword.required = false;
+
+      selectRol.innerHTML = `
+        <option value="">Selecciona...</option>
+        <option value="coordinador">Coordinador</option>
+        <option value="reconocedor">Reconocedor</option>
+        <option value="digitalizador">Digitalizador</option>
+      `;
+    }
     cargarUsuarios();
+    if (CURRENT_ROLE === "admin" || CURRENT_ROLE === "soporte" || CURRENT_ROLE === "coordinador" || CURRENT_ROLE === "lider_reconocimiento") {
+      cargarSolicitudes();
+    }
   })();
 </script>

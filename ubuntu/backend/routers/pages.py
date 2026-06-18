@@ -587,7 +587,7 @@ def panel_usuarios(request: Request):
             status_code=302
         )
 
-    if _effective_role(user) not in {"admin", "coordinador", "soporte"}:
+    if _effective_role(user) not in {"admin", "coordinador", "soporte", "lider_reconocimiento"}:
         return RedirectResponse(
             url=with_root_path(request, "/panel"),
             status_code=302

@@ -174,7 +174,7 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
         if _ASIG_TABLES_ENSURED and not force:
             return
 
-    runtime_ddl = os.getenv("ASIG_RUNTIME_DDL", "0").strip().lower() in {"1", "true", "yes"}
+    runtime_ddl = True
     if not force and not runtime_ddl:
         # En runtime solo asumimos que ya existe el esquema (migrado en startup).
         return
@@ -549,6 +549,37 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 f"""
                 CREATE INDEX IF NOT EXISTS idx_solicitud_asignacion_estado
                 ON {app_schema}.solicitud_asignacion (estado)
+                """
+            )
+            cur.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {app_schema}.solicitud_creacion_usuario (
+                    id SERIAL PRIMARY KEY,
+                    username TEXT NOT NULL,
+                    email TEXT,
+                    first_name TEXT NOT NULL,
+                    last_name TEXT NOT NULL,
+                    rol TEXT NOT NULL,
+                    fecha_inicio DATE,
+                    fecha_fin DATE,
+                    supervisor_id BIGINT REFERENCES {app_schema}.users(id_global) ON DELETE SET NULL,
+                    creado_por_id BIGINT REFERENCES {app_schema}.users(id_global) ON DELETE SET NULL,
+                    estado TEXT NOT NULL DEFAULT 'PENDIENTE',
+                    creado_en TIMESTAMPTZ DEFAULT now(),
+                    comentarios_soporte TEXT
+                )
+                """
+            )
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_solicitud_creacion_usuario_creado_por
+                ON {app_schema}.solicitud_creacion_usuario (creado_por_id)
+                """
+            )
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_solicitud_creacion_usuario_estado
+                ON {app_schema}.solicitud_creacion_usuario (estado)
                 """
             )
             if in_transaction:
