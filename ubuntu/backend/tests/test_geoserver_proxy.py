@@ -37,6 +37,12 @@ def test_default_visor_geoserver_layers_uses_workspace_when_layers_missing():
     assert _default_visor_geoserver_layers(tenant) == "SUCRE:Base_Principal"
 
 
+def test_default_visor_geoserver_layers_prefers_configured_layers():
+    tenant = _tenant(geoserver_layers="SARAVENA:SARAVENA")
+
+    assert _default_visor_geoserver_layers(tenant) == "SARAVENA:SARAVENA"
+
+
 def test_resolve_wms_base_url_prefers_tenant_wms_url(monkeypatch):
     tenant = _tenant(wms_base_url="https://desarrollo.arbimaps.com/geoserver/SUCRE/wms")
     monkeypatch.setattr("routers.proxy.get_current_tenant_from_session", lambda request: tenant)

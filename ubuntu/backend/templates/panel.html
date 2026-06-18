@@ -27,7 +27,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   {% if view == 'usuarios' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_saas.css?v=16" />
   {% endif %} {% if view == 'visor' %}
-  <link rel="stylesheet" href="{{ rp }}/static/css/visor/visor.css?v=1" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/visor/visor.css?v=7" />
 
   {% endif %} {% if view == 'buscar' or view == 'buscar_predio' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/buscar.css" />
@@ -83,7 +83,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               {% if not limited_assignment_role %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'visor' else '' }}" href="{{ rp }}/panel">
                 <i class="bi bi-house-fill"></i>
-                <span>Inicio</span>
+                <span>Visor geográfico</span>
               </a>
               {% endif %}
 
@@ -366,7 +366,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
         {% if not limited_assignment_role %}
         <a class="menuBtn sidebar-link {{ 'active' if view == 'visor' else '' }}" href="{{ rp }}/panel">
           <i class="bi bi-house-fill"></i>
-          <span>Inicio</span>
+          <span>Visor geográfico</span>
         </a>
         {% endif %}
 

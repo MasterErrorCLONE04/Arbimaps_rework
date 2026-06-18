@@ -39,8 +39,12 @@
         "app": "arbimaps_app",
         "main": "a_base_principal",
         "work": "b_asignaciones_arb",
-        "history": "c_base_historico"
-      }
+        "history": "c_cartografia_catastral"
+      },
+      "wms_base_url": "https://desarrollo.arbimaps.com/geoserver/SARAVENA/wms",
+      "geoserver_base_url": "https://desarrollo.arbimaps.com/geoserver",
+      "geoserver_workspace": "SARAVENA",
+      "geoserver_layers": "arb_terreno,arb_terrenohistorico,arb_construccion,arb_unidadconstruccion"
     },
     {
       "code": "almaguer",

@@ -22,8 +22,33 @@ def resumen_proyecto(
     - distribucion por tipo de planta (unidad de construccion)
     """
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        # 1) Distribucion por condicion del predio
         predio_table = main_table(tenant, "arb_predio")
+        terreno_table = main_table(tenant, "arb_terreno")
+        construccion_table = main_table(tenant, "arb_construccion")
+        unidad_construccion_table = main_table(tenant, "arb_unidadconstruccion")
+
+        sql_total_terrenos = f"""
+        SELECT COUNT(*)::bigint AS total
+        FROM {terreno_table};
+        """
+        cur.execute(sql_total_terrenos)
+        total_terrenos = int((cur.fetchone() or {}).get("total") or 0)
+
+        sql_total_construcciones = f"""
+        SELECT COUNT(*)::bigint AS total
+        FROM {construccion_table};
+        """
+        cur.execute(sql_total_construcciones)
+        total_construcciones = int((cur.fetchone() or {}).get("total") or 0)
+
+        sql_total_unidades = f"""
+        SELECT COUNT(*)::bigint AS total
+        FROM {unidad_construccion_table};
+        """
+        cur.execute(sql_total_unidades)
+        total_unidades_construccion = int((cur.fetchone() or {}).get("total") or 0)
+
+        # 1) Distribucion por condicion del predio
         condicion_predio_table = main_table(tenant, "arb_condicionprediotipo")
         sql_condicion = f"""
         SELECT
@@ -69,7 +94,6 @@ def resumen_proyecto(
         dest_rows = cur.fetchall()
 
         # 4) Distribucion por tipo de planta (arb_unidadconstruccion)
-        unidad_construccion_table = main_table(tenant, "arb_unidadconstruccion")
         construccion_planta_tipo_table = main_table(tenant, "arb_construccionplantatipo")
         sql_tipo_planta = f"""
         SELECT
@@ -88,6 +112,9 @@ def resumen_proyecto(
 
     return {
         "total_predios": total_predios,
+        "total_terrenos": total_terrenos,
+        "total_construcciones": total_construcciones,
+        "total_unidades_construccion": total_unidades_construccion,
         "condicion": condicion_rows,
         "tipo": tipo_rows,
         "destinacion_economica": dest_rows,

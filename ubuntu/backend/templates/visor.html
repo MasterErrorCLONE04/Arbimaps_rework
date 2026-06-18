@@ -1,207 +1,153 @@
-﻿﻿<div class="container-fluid page-wrapper">
-  <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-2 mt-0 mb-4 pt-0 px-5">
-    <div class="content-title text-start mb-2" style="width: auto">
-      <h3 class="title-main mb-0">Resumen del proyecto</h3>
-      <small class="subtitle-main mb-0">Visor del proyecto y resumen de gestion</small>
-    </div>
+﻿﻿﻿﻿<div class="container-fluid page-wrapper page-wrapper-visor">
+  {% set municipality_label = current_municipality_name|default(current_municipality, true)|default('Municipio actual', true) %}
 
-    <div class="border-none d-flex flex-row gap-3 p-3 carta-total-predio"
-      style="border-radius: 20px; border-left: 4px solid #6aa4d4">
-      <div class="p-0 d-flex justify-content-center align-items-center" style="
-          background-color: #002f55;
-          width: 60px;
-          height: 60px;
-          border-radius: 500px;
-        ">
-        <!-- <i class="bi bi-map-fill fs-5" style="color: #ffffff;"></i> -->
+  <div class="visor-kpi-strip">
+    <div class="visor-kpi-card visor-kpi-card-primary carta-total-predio">
+      <div class="visor-kpi-icon visor-kpi-icon-solid">
         <svg xmlns="http://www.w3.org/2000/svg" class="icono-map" viewBox="0 0 640 512">
-          <!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
           <path fill="rgb(255, 255, 255)"
             d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
         </svg>
       </div>
-      <div>
-        <h1 class="mb-0" id="totalPrediosH1" style="font-weight: 900; font-size: 1.8rem;" >---</h1>
-        <p class="mb-0">Total de predios</p>
+      <div class="visor-kpi-body">
+        <div class="visor-kpi-meta">Cobertura catastral</div>
+        <div class="visor-kpi-value" id="totalPrediosH1">---</div>
+        <div class="visor-kpi-label">Total predios</div>
+      </div>
+    </div>
+
+    <div class="visor-kpi-card">
+      <div class="visor-kpi-icon">
+        <i class="bi bi-bounding-box-circles"></i>
+      </div>
+      <div class="visor-kpi-body">
+        <div class="visor-kpi-meta">Geometría base</div>
+        <div class="visor-kpi-value" id="visorTerrenosCount">---</div>
+        <div class="visor-kpi-label">Terrenos</div>
+      </div>
+    </div>
+
+    <div class="visor-kpi-card">
+      <div class="visor-kpi-icon">
+        <i class="bi bi-building"></i>
+      </div>
+      <div class="visor-kpi-body">
+        <div class="visor-kpi-meta">Inventario físico</div>
+        <div class="visor-kpi-value" id="visorConstruccionesCount">---</div>
+        <div class="visor-kpi-label">Construcciones</div>
+      </div>
+    </div>
+
+    <div class="visor-kpi-card">
+      <div class="visor-kpi-icon">
+        <i class="bi bi-grid-3x3-gap"></i>
+      </div>
+      <div class="visor-kpi-body">
+        <div class="visor-kpi-meta">Detalle constructivo</div>
+        <div class="visor-kpi-value" id="visorUnidadesCount">---</div>
+        <div class="visor-kpi-label">Unidades</div>
       </div>
     </div>
   </div>
-  <!-- <div class="row g-3 mb-4">
-    <div class="col-12 col-sm-6 col-lg">
-      <div
-        class="contenido-card kpi-card primary-card h-100 p-3 d-flex flex-column"
-      >
-        <div class="d-flex justify-content-end mb-3">
-          <div
-            class="d-inline-flex justify-content-center align-items-center bg-white border rounded-3 p-1"
-          >
-            <i class="iconEdificioBlue bi bi-building"></i>
-          </div>
+
+  <div class="visor-map-stage panel-card rounded-3 visor-card">
+    <div class="map-panel-body vm-map-shell">
+      <div class="visor-map-search">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-0">
+            <i class="bi bi-search"></i>
+          </span>
+          <input id="vmPredioSearchInput" type="text" class="form-control border-0 shadow-none"
+            placeholder="Buscar predio (número predial)" />
+          <button id="vmPredioSearchBtn" class="btn visor-search-btn" type="button">Buscar</button>
         </div>
-        <div id="kpiPublicos" class="kpi_number text-center fw-bold">0</div>
-        <div class="kpi-label mt-2 text-uppercase fw-bold text-center">
-          Predios publicos
-        </div>
+        <small id="vmPredioSearchStatus" class="visor-map-search-status"></small>
       </div>
-    </div>
 
-    <div class="col-12 col-sm-6 col-lg">
-      <div
-        class="contenido-card kpi-card kpi-accent-red h-100 p-3 d-flex flex-column"
-      >
-        <div class="d-flex justify-content-end mb-3">
-          <div
-            class="d-inline-flex justify-content-center align-items-center border rounded-3 p-1"
-            style="background-color: #eaeff5"
-          >
-            <i class="iconBlue bi bi-map"></i>
-          </div>
-        </div>
-        <div id="kpiPrivados" class="kpi-number text-center fw-bold">0</div>
-        <div class="kpi-label mt-2 text-uppercase fw-bold text-center">
-          Predios privados
-        </div>
+      <div class="visor-map-topbar">
+        <button id="vmOpenLayerPanel" class="vm-toolbar-btn" type="button">
+          <i class="bi bi-layers me-1"></i>
+          Capas
+        </button>
+        <button id="vmOpenBasemapPanel" class="vm-toolbar-btn vm-toolbar-btn-light" type="button">
+          <i class="bi bi-map me-1"></i>
+          Mapabase
+        </button>
       </div>
-    </div>
 
-    <div class="col-12 col-sm-6 col-lg">
-      <div
-        class="contenido-card kpi-card kpi-accent-yellow h-100 p-3 d-flex flex-column"
-      >
-        <div class="d-flex justify-content-end mb-3">
-          <div
-            class="d-inline-flex justify-content-center align-items-center border rounded-3 p-1"
-            style="background-color: #eaeff5"
-          >
-            <i class="iconBlue bi bi-crosshair"></i>
+      <div class="visor-floating-card visor-info-card" aria-live="polite">
+        <div class="visor-floating-head">
+          <strong>Información del predio</strong>
+        </div>
+        <div id="vmSelectionEmpty" class="visor-info-empty">
+          Seleccione un predio en el mapa para visualizar la información.
+        </div>
+        <div id="vmSelectionContent" class="visor-info-content d-none">
+          <div class="visor-info-number-block">
+            <div class="visor-info-number-label">Predio</div>
+            <div class="visor-info-number" id="vmSidebarNumeroPredial">Sin dato</div>
           </div>
-        </div>
-        <div id="kpiNoPH" class="kpi-number text-center fw-bold">0</div>
-        <div class="kpi-label mt-2 text-uppercase fw-bold text-center">
-          No propiedad horizontal
-        </div>
-      </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-lg">
-      <div
-        class="contenido-card kpi-card kpi-accent-yellow h-100 p-3 d-flex flex-column"
-      >
-        <div class="d-flex justify-content-end mb-3">
-          <div
-            class="d-inline-flex justify-content-center align-items-center border rounded-3 p-1"
-            style="background-color: #eaeff5"
-          >
-            <i class="iconBlue bi bi-geo-alt"></i>
-          </div>
-        </div>
-        <div id="kpiBaldios" class="kpi-number text-center fw-bold">0</div>
-        <div class="kpi-label mt-2 text-uppercase fw-bold text-center">
-          Baldios
-        </div>
-      </div>
-    </div>
-
-    <div class="col-12 col-sm-6 col-lg">
-      <div
-        class="contenido-card kpi-card kpi-accent-primary h-100 p-3 d-flex flex-column"
-      >
-        <div class="d-flex justify-content-end mb-3">
-          <div
-            class="d-inline-flex justify-content-center align-items-center border rounded-3 p-1"
-            style="background-color: #eaeff5"
-          >
-            <i class="iconBlue bi bi-diagram-3"></i>
-          </div>
-        </div>
-        <div id="kpiInformales" class="kpi-number text-center fw-bold">0</div>
-        <div class="kpi-label mt-2 text-uppercase fw-bold text-center">
-          Informales
-        </div>
-      </div>
-    </div>
-  </div> -->
-
-  <div class="row g-3 mb-4 align-items-stretch">
-    <div class="col-12 col-xl-4">
-      <div class="panel-card">
-        <div class="px-2 pt-1 pb-2">
-          <div class="stats-tabs-block mb-3">
-            <div class="stats-pill-nav mb-3 mt-2">
-              <button type="button" class="stats-pill-btn active" id="pillCondicion">
-                <i class="bi bi-house-gear-fill"></i>
-                <span>Condicion de predio</span>
-              </button>
-
-              <button type="button" class="stats-pill-btn" id="pillTipo">
-                <i class="bi bi-house-fill"></i>
-                <span>Tipo de predio</span>
-              </button>
+          <div class="visor-info-grid">
+            <div class="visor-info-row">
+              <div class="visor-info-icon"><i class="bi bi-geo-alt"></i></div>
+              <div class="visor-info-copy">
+                <span class="visor-info-field-label">Dirección</span>
+                <strong id="vmSidebarDireccion">Sin dato</strong>
+              </div>
             </div>
-
-            <div class="stats-group-label small fw-semibold text-uppercase text-secondary mb-2 text-center">
-              Tipo de grafica
+            <div class="visor-info-row">
+              <div class="visor-info-icon"><i class="bi bi-bounding-box-circles"></i></div>
+              <div class="visor-info-copy">
+                <span class="visor-info-field-label">Área de terreno</span>
+                <strong id="vmSidebarArea">Sin dato</strong>
+              </div>
             </div>
-
-            <div class="d-flex justify-content-center mb-3">
-              <div class="d-inline-flex align-items-center gap-1 p-1 rounded-pill border bg-light">
-                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 text-white shadow-sm" id="pillDona"
-                  style="background-color: #032f57; border-color: #032f57">
-                  <i class="bi bi-circle me-1"></i>
-                  <span>Anillos</span>
-                </button>
-
-                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 btn-light" id="pillArea"
-                  style="border-color: #dbe3ec">
-                  <i class="bi bi-bullseye me-1"></i>
-                  <span>Area</span>
-                </button>
+            <div class="visor-info-row">
+              <div class="visor-info-icon"><i class="bi bi-house-door"></i></div>
+              <div class="visor-info-copy">
+                <span class="visor-info-field-label">Condición</span>
+                <strong id="vmSidebarCondicion">Sin dato</strong>
+              </div>
+            </div>
+            <div class="visor-info-row">
+              <div class="visor-info-icon"><i class="bi bi-diagram-3"></i></div>
+              <div class="visor-info-copy">
+                <span class="visor-info-field-label">Tipo</span>
+                <strong id="vmSidebarTipo">Sin dato</strong>
+              </div>
+            </div>
+            <div class="visor-info-row">
+              <div class="visor-info-icon"><i class="bi bi-layers"></i></div>
+              <div class="visor-info-copy">
+                <span class="visor-info-field-label">Destino económico</span>
+                <strong id="vmSidebarDestino">Sin dato</strong>
+              </div>
+            </div>
+            <div class="visor-info-row">
+              <div class="visor-info-icon"><i class="bi bi-building"></i></div>
+              <div class="visor-info-copy">
+                <span class="visor-info-field-label">Estado construcción</span>
+                <strong id="vmSidebarEstadoConstruccion">Sin dato</strong>
+              </div>
+            </div>
+            <div class="visor-info-row">
+              <div class="visor-info-icon"><i class="bi bi-pin-map"></i></div>
+              <div class="visor-info-copy">
+                <span class="visor-info-field-label">Barrio o Vereda</span>
+                <strong id="vmSidebarBarrio">Sin dato</strong>
+              </div>
+            </div>
+            <div class="visor-info-row">
+              <div class="visor-info-icon"><i class="bi bi-calendar-event"></i></div>
+              <div class="visor-info-copy">
+                <span class="visor-info-field-label">Fecha actualización</span>
+                <strong id="vmSidebarFecha">Sin dato</strong>
               </div>
             </div>
           </div>
-
-          <div class="compact-chart-panels">
-            <div class="compact-chart-panel active" id="panelDonut">
-              <div class="summary-chart-wrap">
-                <canvas id="chartResumenCompacto"></canvas>
-              </div>
-            </div>
-
-            <div class="compact-chart-panel" id="panelArea">
-              <div class="summary-chart-wrap">
-                <canvas id="chartResumenArea"></canvas>
-              </div>
-            </div>
-          </div>
-
-          <div id="summaryLegend" class="summary-legend"></div>
+          <button id="vmSidebarDetailsBtn" class="btn visor-detail-btn" type="button" disabled>Ver detalles</button>
         </div>
       </div>
-    </div>
-
-    <div class="col-12 col-xl-8">
-      <div class="panel-card rounded-3 visor-card">
-        <div
-          class="card-header-pro d-flex flex-column flex-md-row justify-content-between align-items-center align-items-md-start gap-2">
-          <div class="text-center text-md-start w-100">
-            <h4 class="card-title-pro mb-0">Visor geografico</h4>
-            <p class="card-subtitle-pro mb-0 small">
-              Visualizacion espacial del proyecto
-            </p>
-          </div>
-
-          <div class="vm-toolbar d-inline-flex align-items-center gap-2 mx-auto mx-md-0">
-            <button id="vmOpenLayerPanel" class="vm-toolbar-btn" type="button">
-              <i class="bi bi-layers me-1"></i>
-              Capas
-            </button>
-            <button id="vmOpenBasemapPanel" class="vm-toolbar-btn vm-toolbar-btn-light" type="button">
-              <i class="bi bi-map me-1"></i>
-              Mapabase
-            </button>
-          </div>
-        </div>
-        <div class="map-panel-body vm-map-shell">
           <div id="vmLayerPanel" class="vm-layer-panel hidden">
             <div class="vm-layer-panel-head">
               <strong>Capas</strong>
@@ -290,7 +236,7 @@
             </div>
           </div>
 
-          <div id="map" style="height: 50px"></div>
+          <div id="map"></div>
           <div id="vmSnapMarker" class="vm-snap-marker hidden" aria-hidden="true"></div>
           <div class="vm-north-indicator" aria-label="Norte">
             <div class="vm-north-arrow"></div>
@@ -315,12 +261,35 @@
             <button id="vmMeasureAreaBtn" class="vm-zoom-btn" type="button" title="Medir área">
               <i class="bi bi-bounding-box"></i>
             </button>
+            <button id="vmStackLegendBtn" class="vm-zoom-btn" type="button" title="Leyenda">
+              <i class="bi bi-card-list"></i>
+            </button>
+            <button id="vmStackSearchBtn" class="vm-zoom-btn" type="button" title="Buscar predio">
+              <i class="bi bi-search"></i>
+            </button>
+            <button id="vmStackPrintBtn" class="vm-zoom-btn" type="button" title="Imprimir mapa">
+              <i class="bi bi-printer"></i>
+            </button>
           </div>
         </div>
       </div>
     </div>
 
     <style>
+      .visor-map-stage,
+      .vm-map-shell,
+      .map-panel-body {
+        min-height: 650px;
+        height: calc(100vh - 190px);
+      }
+
+      #map {
+        width: 100%;
+        height: 100%;
+        min-height: 650px;
+        display: block;
+      }
+
       .vm-map-shell {
         position: relative;
       }
@@ -348,11 +317,11 @@
       .vm-layer-panel {
         position: absolute;
         top: 12px;
-        right: 12px;
+        right: 320px;
         left: auto;
         z-index: 31;
         width: 220px;
-        max-width: calc(100% - 24px);
+        max-width: calc(100% - 340px);
         background: rgba(255, 255, 255, 0.96);
         border: 1px solid rgba(15, 23, 42, 0.14);
         border-radius: 16px;
@@ -515,9 +484,10 @@
       }
 
       .vm-zoom-stack {
-        position: absolute;
-        left: 12px;
-        top: 10px;
+        position: absolute !important;
+        left: 12px !important;
+        top: 135px !important;
+        bottom: auto !important;
         z-index: 34;
         display: flex;
         flex-direction: column;
@@ -808,9 +778,10 @@
       }
 
       .vm-north-indicator {
-        position: absolute;
-        left: 12px;
-        top: 198px;
+        position: absolute !important;
+        left: 12px !important;
+        top: 100px !important;
+        bottom: auto !important;
         z-index: 22;
         width: 42px;
         padding: 8px 6px 6px;
@@ -860,6 +831,7 @@
           top: 10px;
           right: 10px;
           left: auto;
+          max-width: calc(100% - 20px);
         }
 
         .vm-layer-panel-basemap {
@@ -867,8 +839,9 @@
         }
 
         .vm-zoom-stack {
-          right: 10px;
-          bottom: 70px;
+          left: 10px !important;
+          top: 165px !important;
+          bottom: auto !important;
         }
 
         .vm-legend-card {
@@ -896,123 +869,14 @@
         }
 
         .vm-north-indicator {
-          left: 10px;
-          top: 192px;
+          left: 10px !important;
+          top: 100px !important;
+          bottom: auto !important;
         }
 
       }
     </style>
 
-    <div class="col-12">
-      <div class="row g-3">
-        <div class="col-12 col-xl-8">
-          <div class="card-soft h-100">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-              <div class="text-center w-100">
-                <h3 class="mb-1">Tabla de destinacion economica</h3>
-                <p class="sub mb-0">
-                  Detalle paginado por destinacion economica.
-                </p>
-              </div>
-            </div>
-
-            <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Destinacion economica</th>
-                    <th class="text-end">Total predios</th>
-                    <th class="text-end">Porcentaje</th>
-                  </tr>
-                </thead>
-                <tbody id="tablaDestinacionBody">
-                  <tr>
-                    <td colspan="4" class="text-center text-muted py-4">
-                      Cargando datos...
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
-              <small class="text-muted" id="tablaDestinacionInfo">Mostrando 0 a 0 de 0 registros</small>
-
-              <nav aria-label="Paginacion destinacion economica">
-                <ul class="pagination pagination-sm mb-0" id="tablaDestinacionPagination"></ul>
-              </nav>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-xl-4">
-          <div class="card-soft h-100 text-center">
-            <h3>Tipo de planta</h3>
-            <p class="sub">Distribucion porcentual por tipo de planta.</p>
-
-            <div class="chart-box-full" style="height: 340px">
-              <canvas id="chartTipoPlantaLateral"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- <div class="dashboard-section">
-    <div class="row g-3">
-      <div class="col-12">
-        <div class="card-soft">
-          <h3>Resumen del proyecto</h3>
-          <div id="resumenDatos" class="hint"></div>
-        </div>
-      </div>
-
-      <div class="col-12 col-lg-6">
-        <div class="card-soft">
-          <h3>Condicion de predio</h3>
-          <p class="sub">Distribucion porcentual por condicion.</p>
-          <div class="chart-box-sm">
-            <canvas
-              id="chartCondicion"
-              style="width: 100%; height: 100%"
-            ></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-12 col-lg-6">
-        <div class="card-soft">
-          <h3>Tipo de predio</h3>
-          <p class="sub">Distribucion porcentual por tipo.</p>
-          <div class="chart-box-sm">
-            <canvas id="chartTipo" style="width: 100%; height: 100%"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-12">
-        <div class="card-soft">
-          <h3>Destinacion economica</h3>
-          <p class="sub">Distribucion por numero de predios.</p>
-          <div class="chart-box-full">
-            <canvas id="chartDestinacion"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-12">
-        <div class="card-soft">
-          <h3>Tipo de planta</h3>
-          <p class="sub">Distribucion porcentual por tipo de planta.</p>
-          <div class="chart-box-full">
-            <canvas id="chartTipoPlanta"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div> -->
 </div>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -1021,22 +885,10 @@
   rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/proj4@2.9.0/dist/proj4.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/ol@9.2.4/dist/ol.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
 <script>
   const rp = "{{ rp }}";
 
-  Chart.defaults.font.family = "'Poppins', sans-serif";
-  Chart.defaults.color = "#163c62";
-
   let mapInstance = null;
-  let resumenCompactoChart = null;
-  let resumenAreaChart = null;
-  let chartCondicionInstance = null;
-  let chartTipoInstance = null;
-  let chartDestinacionInstance = null;
-  let chartTipoPlantaInstance = null;
-  let chartTipoPlantaLateralInstance = null;
   let wmsLayerEntries = [];
   let basemapEntries = {};
   let activeBasemap = "osm";
@@ -1054,22 +906,7 @@
   let snapInteraction = null;
   let snapLoadAbortController = null;
   let snapExtentKey = "";
-
-  let dashboardState = {
-    condicion: [],
-    tipo: [],
-    total: 0,
-    activeMode: "condicion",
-    activeChartTab: "donut",
-    visibility: {
-      condicion: [],
-      tipo: [],
-    },
-  };
-
-  let tablaDestinacionData = [];
-  let tablaDestinacionPage = 1;
-  const tablaDestinacionPageSize = 5;
+  let selectedTerrainDetail = null;
 
   const WMS_URL = `${rp}/proxy/wms`;
   const parsedLayers = String(
@@ -1088,24 +925,6 @@
     3346020.2810714217,
   ];
   let extent9377 = [...DEFAULT_EXTENT_9377];
-
-  const COLORS = [
-    "#2a8af7",
-    "#5aa8ff",
-    "#66c36d",
-    "#f7b733",
-    "#f45b69",
-    "#8e44ad",
-    "#16a085",
-    "#d35400",
-    "#7f8c8d",
-    "#e63946",
-    "#3a86ff",
-    "#8338ec",
-    "#ff006e",
-    "#fb5607",
-    "#2a9d8f",
-  ];
 
   proj4.defs(
     "EPSG:9377",
@@ -1197,9 +1016,16 @@
     if (!xmlDoc || !layerName) return null;
     const target = String(layerName).trim();
     const layerNodes = getLayerNodes(xmlDoc);
+    const exactMatch = layerNodes.find(
+      (node) => getDirectChildText(node, "Name") === target,
+    );
+    if (exactMatch) return exactMatch;
+
+    // Algunos workspaces publican el grupo raiz sin prefijo `workspace:`.
+    const simpleTarget = target.includes(":") ? target.split(":").pop() : target;
     return (
       layerNodes.find(
-        (node) => getDirectChildText(node, "Name") === target,
+        (node) => getDirectChildText(node, "Name") === simpleTarget,
       ) || null
     );
   }
@@ -1388,73 +1214,81 @@
     return expanded;
   }
 
-  async function resolveLayerConfigsFromWms() {
-    const fallback = expandConfiguredLayers(GEOSERVER_LAYERS);
+  function getPublishedLayerNames(xmlDoc) {
+    if (!xmlDoc) return new Set();
+    return new Set(
+      Array.from(xmlDoc.getElementsByTagName("Name"))
+        .map((node) => String(node.textContent || "").trim())
+        .filter(Boolean)
+        .map((name) => name.toLowerCase()),
+    );
+  }
 
+  function defaultBasePrincipalLayers(namespace, qualified = true) {
+    const suffixes = [
+      "arb_terreno",
+      "arb_terrenohistorico",
+      "arb_construccion",
+      "arb_unidadconstruccion",
+      "arb_direccion",
+    ];
+    return suffixes.map((suffix) => (
+      qualified && namespace ? `${namespace}:${suffix}` : suffix
+    ));
+  }
+
+  async function resolveBackgroundWmsLayers() {
     const xmlDoc = await getWmsCapabilitiesDoc();
-    if (!xmlDoc) return fallback;
-    const availableNames = listAvailableLayerNames(xmlDoc);
-
+    const availableNames = getPublishedLayerNames(xmlDoc);
     const resolved = [];
     const seen = new Set();
 
-    const addLayer = (layer) => {
-      const key = String(layer?.name || "").toLowerCase();
-      if (!key || seen.has(key)) return;
+    const add = (name) => {
+      const clean = String(name || "").trim();
+      if (!clean) return;
+      const key = clean.toLowerCase();
+      if (seen.has(key)) return;
       seen.add(key);
-      resolved.push(layer);
+      resolved.push(clean);
     };
 
     GEOSERVER_LAYERS.forEach((configuredName) => {
-      const namespace = configuredName.includes(":")
-        ? configuredName.split(":")[0]
-        : "";
-      const layerPart = configuredName.includes(":")
-        ? configuredName.split(":")[1]
-        : configuredName;
+      const clean = String(configuredName || "").trim();
+      if (!clean) return;
+      const [namespace, layerPart = ""] = clean.split(":");
 
-      // Forzamos el desglose de Base_Principal en subcapas operativas
-      if (String(layerPart || "").toLowerCase() === "base_principal") {
-        resolvePublishedBasePrincipalLayers(availableNames, namespace).forEach(addLayer);
+      if (String(layerPart || "").toLowerCase() !== "base_principal") {
+        add(clean);
         return;
       }
 
-      const node = findLayerNodeByName(xmlDoc, configuredName);
-      if (!node) {
-        addLayer({
-          name: configuredName,
-          title: layerTitleFromName(configuredName),
-        });
+      const qualifiedDefaults = defaultBasePrincipalLayers(namespace, true);
+      const existingQualified = qualifiedDefaults.filter((name) =>
+        availableNames.has(name.toLowerCase()),
+      );
+      if (existingQualified.length) {
+        existingQualified.forEach(add);
         return;
       }
 
-      const namespaceLayers = resolveNamespaceGroupLayers(xmlDoc, namespace);
-      const leaves = collectLeafLayers(node);
-
-      if (namespaceLayers.length > leaves.length) {
-        namespaceLayers.forEach(addLayer);
+      if (availableNames.has(String(namespace).toLowerCase())) {
+        add(namespace);
         return;
       }
 
-      if (leaves.length) {
-        leaves.forEach(addLayer);
+      const unqualifiedDefaults = defaultBasePrincipalLayers(namespace, false);
+      const existingUnqualified = unqualifiedDefaults.filter((name) =>
+        availableNames.has(name.toLowerCase()),
+      );
+      if (existingUnqualified.length) {
+        existingUnqualified.forEach(add);
         return;
       }
 
-      if (namespaceLayers.length) {
-        namespaceLayers.forEach(addLayer);
-        return;
-      }
-
-      addLayer({
-        name: configuredName,
-        title:
-          getDirectChildText(node, "Title") ||
-          layerTitleFromName(configuredName),
-      });
+      qualifiedDefaults.forEach(add);
     });
 
-    return resolved.length ? resolved : fallback;
+    return resolved.length ? resolved : GEOSERVER_LAYERS;
   }
 
   function renderLayerControls() {
@@ -1973,6 +1807,148 @@
     selectedTerrainLayer.getSource()?.clear();
   }
 
+  function formatVisorDetailValue(value) {
+    const normalized = String(value ?? "").trim();
+    return normalized || "Sin dato";
+  }
+
+  function formatVisorArea(geometry) {
+    if (!geometry) return "Sin dato";
+    try {
+      const feature = new ol.format.GeoJSON().readFeature(
+        { type: "Feature", geometry, properties: {} },
+        {
+          dataProjection: "EPSG:9377",
+          featureProjection: "EPSG:9377",
+        },
+      );
+      const area = feature.getGeometry()?.getArea?.();
+      if (!Number.isFinite(area)) return "Sin dato";
+      return `${new Intl.NumberFormat("es-CO", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(area)} m²`;
+    } catch (_error) {
+      return "Sin dato";
+    }
+  }
+
+  function setVisorInfoField(id, value) {
+    const node = document.getElementById(id);
+    if (!node) return;
+    node.textContent = formatVisorDetailValue(value);
+  }
+
+  function normalizePredioDetailForViewer(payload) {
+    const predio = payload?.predio || {};
+    const direcciones = Array.isArray(payload?.direcciones) ? payload.direcciones : [];
+    const primeraDireccion = direcciones[0] || {};
+
+    return {
+      terreno_id: predio?.terreno_id,
+      terreno_geom: predio?.terreno_geom,
+      predio_id: predio?.t_id,
+      id_operacion: predio?.id_operacion,
+      numero_predial_nacional: predio?.numero_predial_nacional || predio?.numero_predial,
+      condicion_predio: predio?.condicion_predio,
+      condicion_predio_nombre: predio?.condicion_predio_nombre,
+      tipo: predio?.tipo_nombre || predio?.tipo,
+      destinacion_economica: predio?.destinacion_economica_nombre || predio?.destinacion_economica,
+      estado_construccion: predio?.estado_construccion_nombre || null,
+      direccion: primeraDireccion?.direccion || primeraDireccion?.texto || primeraDireccion?.nomenclatura || null,
+      barrio_vereda: primeraDireccion?.barrio || primeraDireccion?.vereda || primeraDireccion?.sector || null,
+      fecha_actualizacion: predio?.fecha_actualizacion || predio?.updated_at || predio?.fecha_visita || null,
+    };
+  }
+
+  function fitViewerDetail(detail, duration = 500) {
+    if (!mapInstance || !detail?.terreno_geom) return false;
+    try {
+      const feature = new ol.format.GeoJSON().readFeature(
+        {
+          type: "Feature",
+          geometry: detail.terreno_geom,
+          properties: {},
+        },
+        {
+          dataProjection: "EPSG:9377",
+          featureProjection: "EPSG:9377",
+        },
+      );
+      const extent = feature.getGeometry()?.getExtent?.();
+      if (!Array.isArray(extent) || extent.length !== 4) return false;
+      mapInstance.getView().fit(extent, {
+        padding: [60, 360, 60, 60],
+        duration,
+        maxZoom: 20,
+      });
+      return true;
+    } catch (err) {
+      console.warn("[visor] No se pudo ajustar el predio buscado en el mapa:", err);
+      return false;
+    }
+  }
+
+  function clearFloatingPredioInfo() {
+    selectedTerrainDetail = null;
+    document.getElementById("vmSelectionEmpty")?.classList.remove("d-none");
+    document.getElementById("vmSelectionContent")?.classList.add("d-none");
+    const detailsBtn = document.getElementById("vmSidebarDetailsBtn");
+    if (detailsBtn) {
+      detailsBtn.setAttribute("disabled", "disabled");
+      detailsBtn.removeAttribute("data-predio-id");
+    }
+  }
+
+  function updateFloatingPredioInfo(detail) {
+    if (!detail) {
+      clearFloatingPredioInfo();
+      return;
+    }
+
+    selectedTerrainDetail = detail;
+    document.getElementById("vmSelectionEmpty")?.classList.add("d-none");
+    document.getElementById("vmSelectionContent")?.classList.remove("d-none");
+
+    setVisorInfoField(
+      "vmSidebarNumeroPredial",
+      detail?.numero_predial_nacional || detail?.id_operacion,
+    );
+    setVisorInfoField("vmSidebarArea", formatVisorArea(detail?.terreno_geom));
+    setVisorInfoField(
+      "vmSidebarCondicion",
+      detail?.condicion_predio_nombre || detail?.condicion_predio,
+    );
+    setVisorInfoField("vmSidebarTipo", detail?.tipo);
+    setVisorInfoField("vmSidebarDestino", detail?.destinacion_economica);
+    setVisorInfoField("vmSidebarEstadoConstruccion", detail?.estado_construccion);
+    setVisorInfoField("vmSidebarDireccion", detail?.direccion);
+    setVisorInfoField("vmSidebarBarrio", detail?.barrio_vereda);
+    setVisorInfoField("vmSidebarFecha", detail?.fecha_actualizacion);
+
+    const detailsBtn = document.getElementById("vmSidebarDetailsBtn");
+    if (!detailsBtn) return;
+
+    const predioId = detail?.predio_id;
+    if (predioId) {
+      detailsBtn.removeAttribute("disabled");
+      detailsBtn.setAttribute("data-predio-id", String(predioId));
+    } else {
+      detailsBtn.setAttribute("disabled", "disabled");
+      detailsBtn.removeAttribute("data-predio-id");
+    }
+  }
+
+  function toggleLegendCard(forceVisible) {
+    const card = document.querySelector(".vm-legend-card");
+    if (!card) return;
+    const nextVisible =
+      typeof forceVisible === "boolean"
+        ? forceVisible
+        : card.classList.contains("is-collapsed");
+    card.classList.toggle("is-collapsed", !nextVisible);
+  }
+
   function highlightSelectedTerrain(detail) {
     if (!selectedTerrainLayer) return;
     const source = selectedTerrainLayer.getSource();
@@ -2025,6 +2001,112 @@
     });
   }
 
+  async function runPredioSearchFromViewer() {
+    const input = document.getElementById("vmPredioSearchInput");
+    const status = document.getElementById("vmPredioSearchStatus");
+    const numeroPredial = String(input?.value || "").trim();
+
+    if (!status) return;
+
+    if (!numeroPredial) {
+      status.textContent = "Escribe un número predial para consultar.";
+      return;
+    }
+
+    status.textContent = "Buscando...";
+
+    try {
+      const qs = new URLSearchParams({ numero_predial: numeroPredial });
+      const response = await fetch(`${rp}/predio/buscar?${qs.toString()}`);
+      if (!response.ok) {
+        status.textContent = "No fue posible completar la búsqueda.";
+        return;
+      }
+
+      const featureCollection = await response.json();
+      const features = Array.isArray(featureCollection?.features)
+        ? featureCollection.features
+        : [];
+
+      if (!features.length) {
+        status.textContent = "No se encontraron predios con ese número.";
+        hideInfoPopup();
+        clearSelectedTerrainHighlight();
+        clearFloatingPredioInfo();
+        return;
+      }
+
+      const props = features[0]?.properties || {};
+      const predioId = props.t_id ?? props.predio_id;
+
+      if (!predioId) {
+        status.textContent = "La búsqueda no devolvió un predio utilizable.";
+        return;
+      }
+
+      const detailResp = await fetch(
+        `${rp}/predio/detalle?predio_id=${encodeURIComponent(predioId)}`,
+      );
+      if (!detailResp.ok) {
+        status.textContent = "Se encontró el predio, pero no fue posible cargar el detalle.";
+        return;
+      }
+
+      const payload = await detailResp.json();
+      const viewerDetail = normalizePredioDetailForViewer(payload);
+
+      if (!viewerDetail?.terreno_geom) {
+        status.textContent = "Se encontró el predio, pero no tiene geometría disponible.";
+        return;
+      }
+
+      highlightSelectedTerrain(viewerDetail);
+      updateFloatingPredioInfo(viewerDetail);
+      fitViewerDetail(viewerDetail);
+      hideInfoPopup();
+
+      status.textContent = features.length > 1
+        ? `Se encontraron ${features.length} resultados. Se muestra el primero.`
+        : "";
+    } catch (_error) {
+      status.textContent = "No fue posible completar la búsqueda.";
+    }
+  }
+
+  function bindViewerShellControls() {
+    document.getElementById("vmSidebarDetailsBtn")?.addEventListener("click", () => {
+      const predioId = document
+        .getElementById("vmSidebarDetailsBtn")
+        ?.getAttribute("data-predio-id");
+      if (!predioId) return;
+      window.location.href = `${rp}/panel/buscar/predio/${encodeURIComponent(predioId)}`;
+    });
+
+    document.getElementById("vmPredioSearchBtn")?.addEventListener("click", () => {
+      runPredioSearchFromViewer();
+    });
+
+    document
+      .getElementById("vmPredioSearchInput")
+      ?.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        runPredioSearchFromViewer();
+      });
+
+    document.getElementById("vmStackLegendBtn")?.addEventListener("click", () => {
+      toggleLegendCard();
+    });
+
+    document.getElementById("vmStackSearchBtn")?.addEventListener("click", () => {
+      document.getElementById("vmPredioSearchInput")?.focus();
+    });
+
+    document.getElementById("vmStackPrintBtn")?.addEventListener("click", () => {
+      window.print();
+    });
+  }
+
   async function handleTerrainInfoClick(evt) {
     if (!mapInstance) return;
     if (measureMode) return;
@@ -2033,6 +2115,7 @@
     if (!terrainEntry || !terrainEntry.layer.getVisible()) {
       hideInfoPopup();
       clearSelectedTerrainHighlight();
+      clearFloatingPredioInfo();
       return;
     }
 
@@ -2041,6 +2124,7 @@
       if (!Number.isFinite(Number(x)) || !Number.isFinite(Number(y))) {
         hideInfoPopup();
         clearSelectedTerrainHighlight();
+        clearFloatingPredioInfo();
         return;
       }
       const tolerance = Math.max(
@@ -2053,8 +2137,20 @@
       );
       if (detailResp.ok) {
         const detail = await detailResp.json();
-        highlightSelectedTerrain(detail);
-        showInfoPopup(detail, evt.pixel);
+        let viewerDetail = detail;
+
+        if (detail?.terreno_id) {
+          const detailByIdResp = await fetch(
+            `${rp}/visor/terreno/detalle?terreno_id=${encodeURIComponent(detail.terreno_id)}`,
+          );
+          if (detailByIdResp.ok) {
+            viewerDetail = await detailByIdResp.json();
+          }
+        }
+
+        highlightSelectedTerrain(viewerDetail);
+        showInfoPopup(viewerDetail, evt.pixel);
+        updateFloatingPredioInfo(viewerDetail);
         return;
       }
 
@@ -2074,6 +2170,7 @@
         console.warn("[visor] Seleccion de terreno sin resultado:", detailResp.status);
         hideInfoPopup();
         clearSelectedTerrainHighlight();
+        clearFloatingPredioInfo();
         return;
       }
 
@@ -2082,6 +2179,7 @@
         console.warn("[visor] Seleccion de terreno sin resultado:", detailResp.status);
         hideInfoPopup();
         clearSelectedTerrainHighlight();
+        clearFloatingPredioInfo();
         return;
       }
 
@@ -2090,6 +2188,7 @@
       if (!terrenoId) {
         hideInfoPopup();
         clearSelectedTerrainHighlight();
+        clearFloatingPredioInfo();
         return;
       }
 
@@ -2099,16 +2198,19 @@
       if (!detailByIdResp.ok) {
         hideInfoPopup();
         clearSelectedTerrainHighlight();
+        clearFloatingPredioInfo();
         return;
       }
 
       const detailById = await detailByIdResp.json();
       highlightSelectedTerrain(detailById);
       showInfoPopup(detailById, evt.pixel);
+      updateFloatingPredioInfo(detailById);
     } catch (err) {
       console.warn("[visor] No se pudo cargar el detalle del terreno:", err);
       hideInfoPopup();
       clearSelectedTerrainHighlight();
+      clearFloatingPredioInfo();
     }
   }
 
@@ -2176,25 +2278,33 @@
   async function initMap() {
     if (mapInstance) return;
 
-    const layerConfigs = await resolveLayerConfigsFromWms();
+    const resolvedLayersObj = expandConfiguredLayers(GEOSERVER_LAYERS);
+    const resolvedLayers = resolvedLayersObj.map(l => l.name);
 
-    wmsLayerEntries = layerConfigs.map((cfg) => {
+    wmsLayerEntries = resolvedLayers.map((layerName) => {
       const source = new ol.source.TileWMS({
         url: WMS_URL,
-        params: { LAYERS: cfg.name, TILED: true, VERSION: "1.1.0" },
+        params: {
+          LAYERS: layerName,
+          TILED: true,
+          VERSION: "1.1.0",
+          FORMAT: "image/png",
+          TRANSPARENT: true,
+          SRS: "EPSG:9377",
+        },
         serverType: "geoserver",
         crossOrigin: "anonymous",
       });
 
       source.on("tileloaderror", () => {
         console.warn(
-          `[visor] Error cargando capa WMS (${cfg.name}). Verifica VISOR_GEOSERVER_LAYERS y WMS_BASE_URL.`,
+          `[visor] Error cargando capa WMS (${layerName}). Verifica VISOR_GEOSERVER_LAYERS y WMS_BASE_URL.`,
         );
       });
 
       return {
-        name: cfg.name,
-        title: cfg.title || layerTitleFromName(cfg.name),
+        name: layerName,
+        title: layerTitleFromName(layerName),
         layer: new ol.layer.Tile({ source, visible: true }),
       };
     });
@@ -2306,838 +2416,54 @@
         loadSnapGuideFeatures();
       }
     });
+
     setTimeout(() => {
       mapInstance.updateSize();
       mapInstance.renderSync();
     }, 50);
   }
 
-  function paintStatsPills() {
-    const pillCondicion = document.getElementById("pillCondicion");
-    const pillTipo = document.getElementById("pillTipo");
-    const pillDona = document.getElementById("pillDona");
-    const pillArea = document.getElementById("pillArea");
-
-    pillCondicion?.classList.toggle(
-      "active",
-      dashboardState.activeMode === "condicion",
-    );
-    pillTipo?.classList.toggle("active", dashboardState.activeMode === "tipo");
-
-    const donutActive = dashboardState.activeChartTab === "donut";
-    const areaActive = dashboardState.activeChartTab === "area";
-
-    if (pillDona) {
-      pillDona.className = donutActive
-        ? "btn btn-sm rounded-pill px-3 py-1 text-white shadow-sm"
-        : "btn btn-sm rounded-pill px-3 py-1 btn-light";
-      pillDona.style.backgroundColor = donutActive ? "#032F57" : "";
-      pillDona.style.borderColor = donutActive ? "#032F57" : "#dbe3ec";
-    }
-
-    if (pillArea) {
-      pillArea.className = areaActive
-        ? "btn btn-sm rounded-pill px-3 py-1 text-white shadow-sm"
-        : "btn btn-sm rounded-pill px-3 py-1 btn-light";
-      pillArea.style.backgroundColor = areaActive ? "#032F57" : "";
-      pillArea.style.borderColor = areaActive ? "#032F57" : "#dbe3ec";
-    }
+  function setVisorKpiValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const numeric = Number(value);
+    el.textContent = Number.isFinite(numeric)
+      ? numeric.toLocaleString("es-CO")
+      : "---";
   }
 
-  function renderCompactChart(mode = "condicion") {
-    const canvas = document.getElementById("chartResumenCompacto");
-    if (!canvas) return;
-
-    if (resumenCompactoChart) {
-      resumenCompactoChart.destroy();
-    }
-
-    const isCondicion = mode === "condicion";
-    const items = isCondicion ? dashboardState.condicion : dashboardState.tipo;
-    const keyField = isCondicion ? "condicion_predio" : "tipo_predio";
-
-    if (
-      !dashboardState.visibility[mode] ||
-      !dashboardState.visibility[mode].length
-    ) {
-      dashboardState.visibility[mode] = items.map(() => true);
-    }
-
-    const visibility = dashboardState.visibility[mode];
-    const labels = items.map((i) => i[keyField] || "Sin dato");
-    const originalValues = items.map((i) => Number(i.total || 0));
-    const chartValues = originalValues.map((value, idx) =>
-      visibility[idx] === false ? 0 : value,
-    );
-    const bgColors = originalValues.map(
-      (_, idx) => COLORS[idx % COLORS.length],
-    );
-
-    const totalCategoriasTop = document.getElementById("totalCategoriasTop");
-    if (totalCategoriasTop) {
-      totalCategoriasTop.textContent = items.length;
-    }
-
-    resumenCompactoChart = new Chart(canvas.getContext("2d"), {
-      type: "doughnut",
-      data: {
-        labels,
-        datasets: [
-          {
-            data: chartValues,
-            backgroundColor: bgColors,
-            borderColor: "#ffffff",
-            borderWidth: 3,
-            hoverOffset: 8,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        cutout: "62%",
-        animation: {
-          duration: 700,
-          easing: "easeOutQuart",
-        },
-        plugins: {
-          legend: {
-            display: false,
-          },
-          tooltip: {
-            backgroundColor: "#163c62",
-            titleColor: "#fff",
-            bodyColor: "#fff",
-            padding: 12,
-            callbacks: {
-              label: function (context) {
-                const value = Number(context.raw || 0);
-                const visibleTotal = chartValues.reduce(
-                  (acc, cur) => acc + cur,
-                  0,
-                );
-                const pct = visibleTotal
-                  ? ((value / visibleTotal) * 100).toFixed(1)
-                  : 0;
-                return ` ${context.label}: ${value} (${pct}%)`;
-              },
-            },
-          },
-        },
-      },
-    });
-  }
-
-  function renderCompactArea(mode = "condicion") {
-    const canvas = document.getElementById("chartResumenArea");
-    if (!canvas) return;
-
-    if (resumenAreaChart) {
-      resumenAreaChart.destroy();
-    }
-
-    const isCondicion = mode === "condicion";
-    const items = isCondicion ? dashboardState.condicion : dashboardState.tipo;
-    const keyField = isCondicion ? "condicion_predio" : "tipo_predio";
-    const visibility = dashboardState.visibility[mode] || [];
-
-    const visibleItems = items
-      .map((item, index) => ({
-        label: item[keyField] || "Sin dato",
-        value: Number(item.total || 0),
-        color: COLORS[index % COLORS.length],
-        visible: visibility[index] !== false,
-      }))
-      .filter((item) => item.visible);
-
-    const totalCategoriasTop = document.getElementById("totalCategoriasTop");
-    if (totalCategoriasTop) {
-      totalCategoriasTop.textContent = items.length;
-    }
-
-    if (!visibleItems.length) {
-      resumenAreaChart = new Chart(canvas.getContext("2d"), {
-        type: "polarArea",
-        data: {
-          labels: ["Sin datos visibles"],
-          datasets: [
-            {
-              data: [1],
-              backgroundColor: ["rgba(219, 230, 241, 0.8)"],
-              borderColor: ["#dbe6f1"],
-              borderWidth: 1,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { enabled: false },
-          },
-          scales: {
-            r: {
-              ticks: { display: false },
-              grid: { color: "rgba(18, 58, 99, 0.08)" },
-              pointLabels: { display: false },
-            },
-          },
-        },
-      });
-      return;
-    }
-
-    resumenAreaChart = new Chart(canvas.getContext("2d"), {
-      type: "polarArea",
-      data: {
-        labels: visibleItems.map((i) => i.label),
-        datasets: [
-          {
-            data: visibleItems.map((i) => i.value),
-            backgroundColor: visibleItems.map((i) => `${i.color}CC`),
-            borderColor: visibleItems.map((i) => i.color),
-            borderWidth: 2,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: {
-          duration: 700,
-          easing: "easeOutQuart",
-        },
-        plugins: {
-          legend: {
-            display: false,
-          },
-          tooltip: {
-            backgroundColor: "#163c62",
-            titleColor: "#fff",
-            bodyColor: "#fff",
-            padding: 12,
-            callbacks: {
-              label: function (context) {
-                const value = Number(context.raw || 0);
-                const total = visibleItems.reduce(
-                  (acc, cur) => acc + cur.value,
-                  0,
-                );
-                const pct = total ? ((value / total) * 100).toFixed(1) : 0;
-                return ` ${context.label}: ${value} (${pct}%)`;
-              },
-            },
-          },
-        },
-        scales: {
-          r: {
-            beginAtZero: true,
-            ticks: {
-              backdropColor: "transparent",
-              color: "#6b7f93",
-              precision: 0,
-            },
-            grid: {
-              color: "rgba(18, 58, 99, 0.08)",
-            },
-            angleLines: {
-              color: "rgba(18, 58, 99, 0.08)",
-            },
-            pointLabels: {
-              display: false,
-            },
-          },
-        },
-      },
-    });
-  }
-
-  function renderCompactLegend(mode = "condicion") {
-    const legend = document.getElementById("summaryLegend");
-    if (!legend) return;
-
-    const isCondicion = mode === "condicion";
-    const items = isCondicion ? dashboardState.condicion : dashboardState.tipo;
-    const keyField = isCondicion ? "condicion_predio" : "tipo_predio";
-    const visibility = dashboardState.visibility[mode] || [];
-
-    if (!items.length) {
-      legend.innerHTML = `<div class="text-muted small">Sin datos disponibles.</div>`;
-      return;
-    }
-
-    legend.innerHTML = `
-        <div class="summary-legend-meta mb-2">
-          Haz clic sobre una categoria para mostrarla u ocultarla en la grafica.
-        </div>
-        ${items
-        .map((item, index) => {
-          const name = item[keyField] || "Sin dato";
-          const value = Number(item.total || 0);
-          const color = COLORS[index % COLORS.length];
-          const isVisible = visibility[index] !== false;
-
-          return `
-              <div class="summary-legend-item ${!isVisible ? "is-hidden" : ""}" data-mode="${mode}" data-index="${index}">
-                <div class="d-flex align-items-center justify-content-between gap-2">
-                  <div class="summary-legend-left">
-                    <span class="summary-dot" style="background:${color}"></span>
-                    <span class="summary-legend-name">${name}</span>
-                  </div>
-                  <span class="summary-legend-value">${value}</span>
-                </div>
-              </div>
-            `;
-        })
-        .join("")}
-      `;
-
-    legend.querySelectorAll(".summary-legend-item").forEach((el) => {
-      el.addEventListener("click", () => {
-        const itemMode = el.dataset.mode;
-        const index = Number(el.dataset.index);
-
-        if (!dashboardState.visibility[itemMode]) {
-          dashboardState.visibility[itemMode] = [];
-        }
-
-        const current = dashboardState.visibility[itemMode][index];
-        dashboardState.visibility[itemMode][index] =
-          current === false ? true : false;
-
-        renderActiveCompactChart();
-      });
-    });
-  }
-
-  function renderTablaDestinacion(itemsDest, total) {
-    const tbody = document.getElementById("tablaDestinacionBody");
-    if (!tbody) return;
-
-    if (!itemsDest || !itemsDest.length) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="4" class="text-center text-muted py-4">
-            Sin datos disponibles.
-          </td>
-        </tr>
-      `;
-      return;
-    }
-
-    tbody.innerHTML = itemsDest
-      .map((item, index) => {
-        const nombre = item.destinacion_economica || "Sin dato";
-        const cantidad = Number(item.total || 0);
-        const porcentaje = total
-          ? ((cantidad / total) * 100).toFixed(2)
-          : "0.00";
-
-        return `
-          <tr>
-            <td>${index + 1}</td>
-            <td>${nombre}</td>
-            <td class="text-end fw-semibold">${cantidad}</td>
-            <td class="text-end">${porcentaje}%</td>
-          </tr>
-        `;
-      })
-      .join("");
-  }
-
-  function renderActiveCompactChart() {
-    const mode = dashboardState.activeMode || "condicion";
-    const tab = dashboardState.activeChartTab || "donut";
-
-    const panelDonut = document.getElementById("panelDonut");
-    const panelArea = document.getElementById("panelArea");
-
-    panelDonut?.classList.toggle("active", tab === "donut");
-    panelArea?.classList.toggle("active", tab === "area");
-
-    paintStatsPills();
-
-    if (tab === "donut") {
-      renderCompactChart(mode);
-    } else {
-      renderCompactArea(mode);
-    }
-
-    renderCompactLegend(mode);
-  }
-
-  function bindStatsPillNav() {
-    document.getElementById("pillCondicion")?.addEventListener("click", () => {
-      dashboardState.activeMode = "condicion";
-      renderActiveCompactChart();
-    });
-
-    document.getElementById("pillTipo")?.addEventListener("click", () => {
-      dashboardState.activeMode = "tipo";
-      renderActiveCompactChart();
-    });
-
-    document.getElementById("pillDona")?.addEventListener("click", () => {
-      dashboardState.activeChartTab = "donut";
-      renderActiveCompactChart();
-    });
-
-    document.getElementById("pillArea")?.addEventListener("click", () => {
-      dashboardState.activeChartTab = "area";
-      renderActiveCompactChart();
-    });
-  }
-
-  function getTotalByLabel(items, field, label) {
-    const found = (items || []).find(
-      (i) => normalizeText(i[field]) === normalizeText(label),
-    );
-    return Number(found?.total || 0);
-  }
-
-
-  function normalizeText(value) {
-    return String(value || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .trim();
-  }
-
-  function sumTotalsByKeyword(items, field, keyword) {
-    const needle = normalizeText(keyword);
-    return (items || []).reduce((acc, item) => {
-      const label = normalizeText(item?.[field]);
-      if (!label.includes(needle)) return acc;
-      return acc + Number(item?.total || 0);
-    }, 0);
-  }
-  function updateKpis(itemsCond, itemsTipo, total) {
-    const publicos = sumTotalsByKeyword(itemsCond, "condicion_predio", "public");
-    const privados = sumTotalsByKeyword(itemsCond, "condicion_predio", "privad");
-    const baldios = getTotalByLabel(itemsTipo, "tipo_predio", "Baldio");
-    const noPH = getTotalByLabel(
-      itemsTipo,
-      "tipo_predio",
-      "No propiedad horizontal",
-    );
-
-    const publicosEl = document.getElementById("kpiPublicos");
-    const privadosEl = document.getElementById("kpiPrivados");
-    const baldiosEl = document.getElementById("kpiBaldios");
-    const noPHEl = document.getElementById("kpiNoPH");
-    const informalesEl = document.getElementById("kpiInformales");
-    const totalPrediosTop = document.getElementById("totalPrediosTop");
-
-    if (publicosEl) publicosEl.textContent = publicos;
-    if (privadosEl) privadosEl.textContent = privados;
-    if (baldiosEl) baldiosEl.textContent = baldios;
-    if (noPHEl) noPHEl.textContent = noPH;
-    if (totalPrediosTop) totalPrediosTop.textContent = total;
-
-    const sumaConocida = publicos + privados;
-    const informales = total > sumaConocida ? total - sumaConocida : 0;
-
-    if (informalesEl) informalesEl.textContent = informales;
-  }
-
-  function renderTablaDestinacion(itemsDest, total) {
-    tablaDestinacionData = Array.isArray(itemsDest) ? itemsDest : [];
-    tablaDestinacionPage = 1;
-    pintarTablaDestinacion(total);
-    pintarPaginacionDestinacion(total);
-  }
-
-  function pintarTablaDestinacion(total) {
-    const tbody = document.getElementById("tablaDestinacionBody");
-    const info = document.getElementById("tablaDestinacionInfo");
-
-    if (!tbody) return;
-
-    if (!tablaDestinacionData.length) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="4" class="text-center text-muted py-4">
-            Sin datos disponibles.
-          </td>
-        </tr>
-      `;
-      if (info) {
-        info.textContent = "Mostrando 0 a 0 de 0 registros";
-      }
-      return;
-    }
-
-    const start = (tablaDestinacionPage - 1) * tablaDestinacionPageSize;
-    const end = start + tablaDestinacionPageSize;
-    const pageItems = tablaDestinacionData.slice(start, end);
-
-    tbody.innerHTML = pageItems
-      .map((item, index) => {
-        const nombre = item.destinacion_economica || "Sin dato";
-        const cantidad = Number(item.total || 0);
-        const porcentaje = total
-          ? ((cantidad / total) * 100).toFixed(2)
-          : "0.00";
-
-        return `
-          <tr>
-            <td>${start + index + 1}</td>
-            <td>${nombre}</td>
-            <td class="text-end fw-semibold">${cantidad}</td>
-            <td class="text-end">${porcentaje}%</td>
-          </tr>
-        `;
-      })
-      .join("");
-
-    if (info) {
-      info.textContent = `Mostrando ${start + 1} a ${Math.min(end, tablaDestinacionData.length)} de ${tablaDestinacionData.length} registros`;
-    }
-  }
-
-  function pintarPaginacionDestinacion(total) {
-    const pagination = document.getElementById("tablaDestinacionPagination");
-    if (!pagination) return;
-
-    const totalPages = Math.ceil(
-      tablaDestinacionData.length / tablaDestinacionPageSize,
-    );
-
-    if (!tablaDestinacionData.length || totalPages <= 1) {
-      pagination.innerHTML = "";
-      return;
-    }
-
-    let html = `
-      <li class="page-item ${tablaDestinacionPage === 1 ? "disabled" : ""}">
-        <button class="page-link" data-page="prev">Anterior</button>
-      </li>
-    `;
-
-    for (let i = 1; i <= totalPages; i++) {
-      html += `
-        <li class="page-item ${i === tablaDestinacionPage ? "active" : ""}">
-          <button class="page-link" data-page="${i}">${i}</button>
-        </li>
-      `;
-    }
-
-    html += `
-      <li class="page-item ${tablaDestinacionPage === totalPages ? "disabled" : ""}">
-        <button class="page-link" data-page="next">Siguiente</button>
-      </li>
-    `;
-
-    pagination.innerHTML = html;
-
-    pagination.querySelectorAll(".page-link").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const action = btn.dataset.page;
-        const totalPages = Math.ceil(
-          tablaDestinacionData.length / tablaDestinacionPageSize,
-        );
-
-        if (action === "prev" && tablaDestinacionPage > 1) {
-          tablaDestinacionPage--;
-        } else if (action === "next" && tablaDestinacionPage < totalPages) {
-          tablaDestinacionPage++;
-        } else if (!isNaN(Number(action))) {
-          tablaDestinacionPage = Number(action);
-        }
-
-        pintarTablaDestinacion(total);
-        pintarPaginacionDestinacion(total);
-      });
-    });
-  }
-
-  async function loadDashboard() {
-    const resumenEl = document.getElementById("resumenDatos");
-    const canvasCond = document.getElementById("chartCondicion");
-    const canvasTipo = document.getElementById("chartTipo");
-    const canvasDest = document.getElementById("chartDestinacion");
-    const canvasTipoPlanta = document.getElementById("chartTipoPlanta");
-    const canvasTipoPlantaLateral = document.getElementById(
-      "chartTipoPlantaLateral",
-    );
-
-    if (resumenEl) {
-      resumenEl.textContent = "Cargando resumen...";
-    }
-
+  async function cargarVisorKpis() {
     try {
       const r = await fetch(`${rp}/resumenp/proyecto`);
       if (!r.ok) {
-        if (resumenEl) {
-          resumenEl.textContent = "No se pudo cargar el resumen (API).";
-        }
-        return;
+        throw new Error(`HTTP ${r.status}`);
       }
-
       const data = await r.json();
-
-      const itemsCond = data.condicion || [];
-      const itemsTipo = data.tipo || [];
-      const itemsDest = data.destinacion_economica || [];
-      const itemsTipoPlanta = data.tipo_planta || [];
-      const total = Number(data.total_predios || 0);
-
-      dashboardState = {
-        condicion: itemsCond,
-        tipo: itemsTipo,
-        total: total,
-        activeMode: "condicion",
-        activeChartTab: "donut",
-        visibility: {
-          condicion: itemsCond.map(() => true),
-          tipo: itemsTipo.map(() => true),
-        },
-      };
-
-      renderActiveCompactChart();
-
-      if (resumenEl) {
-        resumenEl.innerHTML = `
-          <div><b>Total predios:</b> ${total}</div>
-          <div style="margin-top:6px;">
-            El panel superior muestra una vista compacta e interactiva de los mismos datos de
-            <b>condicion de predio</b> y <b>tipo de predio</b>.
-          </div>
-        `;
-      }
-
-      if (canvasCond && itemsCond.length) {
-        if (chartCondicionInstance) chartCondicionInstance.destroy();
-
-        const labelsCond = itemsCond.map((i) => i.condicion_predio);
-        const valuesCond = itemsCond.map((i) => Number(i.total || 0));
-        const bgColorsCond = valuesCond.map(
-          (_, idx) => COLORS[idx % COLORS.length],
-        );
-
-        chartCondicionInstance = new Chart(canvasCond.getContext("2d"), {
-          type: "pie",
-          data: {
-            labels: labelsCond,
-            datasets: [
-              {
-                data: valuesCond,
-                backgroundColor: bgColorsCond,
-              },
-            ],
-          },
-          options: {
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: "bottom",
-              },
-            },
-          },
-        });
-      }
-
-      if (canvasTipo && itemsTipo.length) {
-        if (chartTipoInstance) chartTipoInstance.destroy();
-
-        const labelsTipo = itemsTipo.map((i) => i.tipo_predio);
-        const valuesTipo = itemsTipo.map((i) => Number(i.total || 0));
-        const bgColorsTipo = valuesTipo.map(
-          (_, idx) => COLORS[(idx + 3) % COLORS.length],
-        );
-
-        chartTipoInstance = new Chart(canvasTipo.getContext("2d"), {
-          type: "pie",
-          data: {
-            labels: labelsTipo,
-            datasets: [
-              {
-                data: valuesTipo,
-                backgroundColor: bgColorsTipo,
-              },
-            ],
-          },
-          options: {
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: "bottom",
-              },
-            },
-          },
-        });
-      }
-
-      if (canvasDest && itemsDest.length) {
-        if (chartDestinacionInstance) chartDestinacionInstance.destroy();
-
-        const labelsDest = itemsDest.map((i) => i.destinacion_economica);
-        const valuesDest = itemsDest.map((i) => Number(i.total || 0));
-        const bgColorsDest = valuesDest.map(
-          (_, idx) => COLORS[(idx + 5) % COLORS.length],
-        );
-
-        chartDestinacionInstance = new Chart(canvasDest.getContext("2d"), {
-          type: "bar",
-          data: {
-            labels: labelsDest,
-            datasets: [
-              {
-                data: valuesDest,
-                backgroundColor: bgColorsDest,
-                borderRadius: 8,
-                borderSkipped: false,
-              },
-            ],
-          },
-          options: {
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            indexAxis: "y",
-            scales: {
-              x: {
-                beginAtZero: true,
-                ticks: { precision: 0 },
-                title: { display: true, text: "Numero de predios" },
-              },
-              y: { ticks: { autoSkip: false } },
-            },
-          },
-        });
-      }
-
-      const labelsPlanta = itemsTipoPlanta.map(
-        (i) => i.tipo_planta || "Sin dato",
-      );
-      const valuesPlanta = itemsTipoPlanta.map((i) => Number(i.total || 0));
-      const bgColorsPlanta = valuesPlanta.map(
-        (_, idx) => COLORS[(idx + 2) % COLORS.length],
-      );
-
-      if (canvasTipoPlantaLateral && itemsTipoPlanta.length) {
-        if (chartTipoPlantaLateralInstance) {
-          chartTipoPlantaLateralInstance.destroy();
-        }
-
-        chartTipoPlantaLateralInstance = new Chart(
-          canvasTipoPlantaLateral.getContext("2d"),
-          {
-            type: "doughnut",
-            data: {
-              labels: labelsPlanta,
-              datasets: [
-                {
-                  data: valuesPlanta,
-                  backgroundColor: bgColorsPlanta,
-                  borderColor: "#ffffff",
-                  borderWidth: 3,
-                  hoverOffset: 8,
-                },
-              ],
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: "62%",
-              animation: {
-                duration: 700,
-                easing: "easeOutQuart",
-              },
-              plugins: {
-                legend: {
-                  position: "bottom",
-                  labels: {
-                    usePointStyle: true,
-                    pointStyle: "circle",
-                    padding: 16,
-                    color: "#163c62",
-                    font: {
-                      size: 12,
-                      weight: "600",
-                    },
-                  },
-                },
-                tooltip: {
-                  backgroundColor: "#163c62",
-                  titleColor: "#fff",
-                  bodyColor: "#fff",
-                  padding: 12,
-                  callbacks: {
-                    label: function (context) {
-                      const value = Number(context.raw || 0);
-                      const total = valuesPlanta.reduce(
-                        (acc, cur) => acc + cur,
-                        0,
-                      );
-                      const pct = total
-                        ? ((value / total) * 100).toFixed(1)
-                        : 0;
-                      return ` ${context.label}: ${value} (${pct}%)`;
-                    },
-                  },
-                },
-              },
-            },
-          },
-        );
-      }
-
-      if (canvasTipoPlanta && itemsTipoPlanta.length) {
-        if (chartTipoPlantaInstance) chartTipoPlantaInstance.destroy();
-
-        chartTipoPlantaInstance = new Chart(canvasTipoPlanta.getContext("2d"), {
-          type: "pie",
-          data: {
-            labels: labelsPlanta,
-            datasets: [
-              {
-                data: valuesPlanta,
-                backgroundColor: bgColorsPlanta,
-              },
-            ],
-          },
-          options: {
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: "bottom",
-              },
-            },
-          },
-        });
-      }
-
-      updateKpis(itemsCond, itemsTipo, total);
-      renderTablaDestinacion(itemsDest, total);
-    } catch (_e) {
-      if (resumenEl) {
-        resumenEl.textContent = "Error cargando resumen (network).";
-      }
-    }
-  }
-
-  async function cargarTotalEnH1() {
-    try {
-      const r = await fetch(`${rp}/visor/total-predios`);
-      const data = await r.json();
-      const h1 = document.getElementById('totalPrediosH1');
-      if (h1) {
-        h1.textContent = data.total.toLocaleString();
-      }
-      console.log("Total de predios obtenido: " + data.total);
+      setVisorKpiValue("totalPrediosH1", data.total_predios);
+      setVisorKpiValue("visorTerrenosCount", data.total_terrenos);
+      setVisorKpiValue("visorConstruccionesCount", data.total_construcciones);
+      setVisorKpiValue("visorUnidadesCount", data.total_unidades_construccion);
+      console.log("[visor] KPIs cargados:", {
+        total_predios: data.total_predios,
+        total_terrenos: data.total_terrenos,
+        total_construcciones: data.total_construcciones,
+        total_unidades_construccion: data.total_unidades_construccion,
+      });
     } catch (e) {
-      console.error("Error cargando el total:", e);
+      console.error("[visor] Error cargando KPIs:", e);
     }
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
     console.info("[visor] WMS_URL:", WMS_URL, "LAYERS:", GEOSERVER_LAYERS);
+    clearFloatingPredioInfo();
+    bindViewerShellControls();
     await initMap();
     await loadProjectExtent();
-    bindStatsPillNav();
-    loadDashboard();
-    await cargarTotalEnH1();
+    setTimeout(() => {
+      mapInstance?.updateSize?.();
+      mapInstance?.renderSync?.();
+    }, 120);
+    await cargarVisorKpis();
   });
 </script>
