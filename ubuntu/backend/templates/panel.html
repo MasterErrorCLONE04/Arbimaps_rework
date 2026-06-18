@@ -87,7 +87,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               </a>
               {% endif %}
 
-              <a class="menuBtn sidebar-link {{ 'active' if view == 'buscar' else '' }}" href="{{ rp }}/panel/buscar">
+              <a class="menuBtn sidebar-link {{ 'active' if view in ['buscar', 'buscar_predio'] else '' }}" href="{{ rp }}/panel/buscar">
                 <i class="bi bi-search"></i>
                 <span>Consultar predio</span>
               </a>
@@ -370,7 +370,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
         </a>
         {% endif %}
 
-        <a class="menuBtn sidebar-link {{ 'active' if view == 'buscar' else '' }}" href="{{ rp }}/panel/buscar">
+        <a class="menuBtn sidebar-link {{ 'active' if view in ['buscar', 'buscar_predio'] else '' }}" href="{{ rp }}/panel/buscar">
           <i class="bi bi-search"></i>
           <span>Consultar predio</span>
         </a>

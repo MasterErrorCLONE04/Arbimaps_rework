@@ -1,14 +1,28 @@
 <div class="module-information-predio">
-  <div class="container-header">
+  <!-- <div class="container-header">
     <div class="section-information-one">
       <small class="text-indication d-block ms-2">CONSULTAR PREDIO > DETALLE DEL PREDIO</small>
       <small class="text-principal d-block fw-bold">Información predio</small>
     </div>
+  </div> -->
+
+  <div class="section-title px-2">
+    <div class="title-header">
+      <small class="text-title-header">MÓDULO DE CONSULTA PREDIO > DETALLE DEL PREDIO</small>
+    </div>
+
+    <div class="title-body mt-2">
+      <h3 class="fw-bold">Detalle de búsqueda de predio.</h3>
+      <p class="parrafo-title">
+        Consulta la información detallada del predio de tu consulta.
+      </p>
+    </div>
   </div>
 
+
   <div class="container-content">
-    <div class="container-fluid p-0 m-0 mt-4">
-      <div class="row g-3 align-items-stretch">
+    <div class="container-fluid p-0 m-0 my-4">
+      <div class="row g-3 align-items-stretch mt-4 px-2">
 
         <!-- Columna izquierda -->
         <div class="col-12 col-xl-8">
@@ -16,25 +30,30 @@
 
             <!-- Tarjeta superior izquierda -->
             <div class="col-12">
-              <div class="card border rounded-4 shadow-sm h-100 tarjeta-predio">
+              <div class="card rounded-4 shadow-sm h-100 tarjeta-predio" >
                 <div class="card-body d-flex flex-column gap-3">
 
                   <!-- encabezado -->
-                  <div class="row g-3 align-items-start">
-                    <div class="col-12 col-md">
+                  <div class="row g-3 align-items-start py-3">
+                    <div class="col-12 col-md mt-0  h-100 align-items-center d-flex">
                       <div class="d-flex align-items-center gap-2">
                         <div class="section-icons mb-0">
-                          <div class="icons-bg">
-                            <i class="fa-solid fa-map-location-dot"></i>
+                          <div class="icons-bg  d-flex justify-content-center align-items-center" >
+                            <!-- <i class=" fa-solid fa-map-location-dot"></i> -->
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 640 512"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+                              <path fill="#FFFFFF"
+                                d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
+                            </svg>
                           </div>
                         </div>
                         <div class="section-title-card mb-0 fw-bold">Resumen predio</div>
                       </div>
                     </div>
 
-                    <div class="col-12 col-md-auto">
-                      <div class="mostrar-id-predio text-white text-center">
-                        <small class="text-white d-block text-id-predio">ID Operación:</small>
+                    <div class="col-12 col-md-auto mt-0">
+                      <div class="mostrar-id-predio text-white  text-center">
+                        <small class="text-white d-block text-id-predio fw-light">ID Operación:</small>
                         <div id="resumenPredioId" class="num-id-predio">
                           {{ predio_id if predio_id is defined else "" }}
                         </div>
@@ -48,7 +67,7 @@
                     <!-- NPN -->
                     <div class="col-12 col-lg-4">
                       <div class="h-100 pe-lg-3 border-lg-end">
-                        <small class="d-block fw-semibold text-label-npn">Numero predial:</small>
+                        <small class="d-block fw-bold text-label-npn">Numero predial:</small>
                         <div id="resumenPredioNpn" class="result-npn">
                           {{ npn if npn is defined else "" }}
                         </div>
@@ -107,7 +126,7 @@
             <!-- Tarjeta inferior 1 -->
             <div class="col-12">
               <div class="card border rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
-                <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 mt-2">
+                <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100">
                   <div class="d-flex align-items-center gap-3">
                     <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
                       <i class="fa-solid fa-house-chimney icono-predio"></i>
@@ -129,7 +148,7 @@
             <!-- Tarjeta inferior 2 -->
             <div class="col-12">
               <div class="card border rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
-                <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 mt-2">
+                <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100">
                   <div class="d-flex align-items-center gap-3">
                     <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
                       <i class="fa-solid fa-scale-unbalanced"></i>
@@ -160,7 +179,7 @@
                 <span class="lh-1 mt-2"><i class="bi bi-crosshair"></i></span>
                 <div class="lh-sm">
                   <div class="fw-bold mb-0 text-visor">Visor predio</div>
-                  <small class="text-muted d-block text-visualizacion">Visualización espacial del predio</small>
+                  <small class="text-white-muted d-block text-visualizacion">Visualización espacial del predio</small>
                 </div>
               </div>
             </div>
@@ -187,9 +206,9 @@
 
             <!-- Tarjeta: Información de construcciones -->
             <div class="col-12 col-md-6 d-flex">
-              <div class="card border rounded-4 shadow-sm w-100 d-flex flex-column tarjeta-inferior-base">
-                <div class="card-body d-flex flex-column">
-                  <div class="d-flex justify-content-between align-items-center mt-1">
+              <div class="card border rounded-4 shadow-sm w-100 d-flex flex-column tarjeta-inferior-base ">
+                <div class="card-body d-flex flex-column" >
+                  <div class="d-flex justify-content-between align-items-center mt-1  h-100">
                     <div class="d-flex align-items-start gap-2 flex-grow-1">
                       <div
                         class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 table-icon-circle">
@@ -240,7 +259,7 @@
               <div class="card border rounded-4 shadow-sm w-100 d-flex flex-column tarjeta-inferior-base"
                 id="cardUnidadConstruccion">
                 <div class="card-body d-flex flex-column">
-                  <div class="encabezado-unidad-construccion">
+                  <div class="encabezado-unidad-construccion  h-100">
                     <div class="titulo-unidad-construccion">
                       <div
                         class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 table-icon-circle">
@@ -1513,6 +1532,7 @@
   let addressesLayer;
   let selectedUnitLayer;
   let unidadesData = [];
+  let construccionActiva = null;
   const unidadDetalleCache = new Map();
   let unidadDetalleActual = null;
   let interesadosModalData = [];
@@ -2244,11 +2264,13 @@
 
   function renderUnidadConstruccionCard(detailData) {
     const tbody = document.getElementById("tbodyUnidadConstruccionCard");
+    const detalleUnidadConstruccionCard = document.getElementById("detalleUnidadConstruccionCard");
     if (!tbody) return;
 
-    const unidad = detailData?.unidad || null;
-    const unidadesReales = Array.isArray(detailData?.unidades)
-      ? detailData.unidades
+    const payload = Array.isArray(detailData) ? { unidades: detailData } : (detailData || {});
+    const unidad = payload?.unidad || null;
+    const unidadesReales = Array.isArray(payload?.unidades)
+      ? payload.unidades
       : (unidad ? [unidad] : []);
 
     const unidades = [...unidadesReales];
@@ -2271,13 +2293,13 @@
       const plantaUbicacion = item?.planta_ubicacion ?? "---";
       const altura = item?.altura ?? "---";
 
-      const etiqueta = resolverEtiquetaUnidad(item, detailData);
+      const etiqueta = resolverEtiquetaUnidad(item, payload);
 
       const identificador =
         item?.identificador ??
         item?.caracteristica_identificador ??
         item?.car_identificador ??
-        detailData?.caracteristicas?.identificador ??
+        payload?.caracteristicas?.identificador ??
         "----";
 
       const tipoPlanta = item?.tipo_planta_nombre ?? "---";
@@ -2368,13 +2390,28 @@
     }).join("");
 
     tbody.querySelectorAll(".btn-caracteristicas-uc").forEach((btn) => {
-      btn.addEventListener("click", (event) => {
+      btn.addEventListener("click", async (event) => {
         event.stopPropagation();
-        abrirModalSegunTipoUc({
-          identificador: btn.dataset.identificador,
-          tipo: btn.dataset.tipo || null,
-          unidadId: btn.dataset.unidadId || null
-        });
+        const unidadId = btn.dataset.unidadId || null;
+        if (!unidadId) return;
+
+        btn.disabled = true;
+        btn.style.cursor = "wait";
+
+        try {
+          if (!unidadDetalleCache.has(String(unidadId))) {
+            await loadUnidadExtra(unidadId);
+          }
+
+          abrirModalSegunTipoUc({
+            identificador: btn.dataset.identificador,
+            tipo: btn.dataset.tipo || null,
+            unidadId
+          });
+        } finally {
+          btn.disabled = false;
+          btn.style.cursor = "";
+        }
       });
     });
 
@@ -2464,6 +2501,9 @@
     });
 
     actualizarBadgeUcDesdeTabla();
+    if (detalleUnidadConstruccionCard && !detalleUnidadConstruccionCard.classList.contains("show")) {
+      bootstrap.Collapse.getOrCreateInstance(detalleUnidadConstruccionCard, { toggle: false }).show();
+    }
   }
 
   function valorDominio(v) {
@@ -2585,7 +2625,6 @@
       unidadDetalleCache.set(String(data?.unidad?.t_id ?? unitId), data);
 
       updateUnitDetailSections(data);
-      renderUnidadConstruccionCard(data);
       animarActualizacionUnidad();
 
       const detalleUnidadCard = document.getElementById("detalleUnidadConstruccionCard");
@@ -2922,6 +2961,7 @@
     const contenedorBadgesUc = document.getElementById("contenedorBadgesUc");
 
     if (!c) {
+      construccionActiva = null;
       if (cardUnidadConstruccion) {
         cardUnidadConstruccion.classList.remove("has-selection");
       }
@@ -2941,9 +2981,16 @@
       if (mensajeSinSeleccionUc) {
         mensajeSinSeleccionUc.classList.remove("d-none");
       }
-      renderUnidadConstruccionCard({ unidades: [] });
+      const tbodyUnidadConstruccionCard = document.getElementById("tbodyUnidadConstruccionCard");
+      if (tbodyUnidadConstruccionCard) tbodyUnidadConstruccionCard.innerHTML = "";
+      if (detalleUnidadCard) {
+        bootstrap.Collapse.getOrCreateInstance(detalleUnidadCard, { toggle: false }).hide();
+      }
+      actualizarBadgeUcDesdeTabla();
       return;
     }
+
+    construccionActiva = c;
 
     if (cardUnidadConstruccion) {
       cardUnidadConstruccion.classList.add("has-selection");
@@ -2962,8 +3009,7 @@
       mensajeSinSeleccionUc.classList.add("d-none");
     }
 
-    // Render its units
-    renderUnidadConstruccionCard({ unidades: c.unidades || [] });
+    renderUnidadConstruccionCard(c.unidades || []);
   }
 
   async function loadPredioDetalle() {
@@ -3610,4 +3656,3 @@
     instance.show();
   }
 </script>
-

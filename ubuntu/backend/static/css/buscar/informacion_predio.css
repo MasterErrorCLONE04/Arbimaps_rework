@@ -18,6 +18,19 @@
     align-items: stretch;
 }
 
+.text-title-header {
+    font-size: 0.833rem;
+    color: #032F57;
+    font-weight: 400;
+}
+
+.parrafo-title {
+    font-size: 0.833rem !important;
+    color: #4f667a !important;
+    line-height: 1.5 !important;
+}
+
+
 @media (max-width: 1100px) {
     .vp-main-container {
         grid-template-columns: 1fr;
@@ -282,38 +295,44 @@
 }
 
 .tarjeta-predio {
-    background-color: #FFFF !important;
-    border-color: rgba(108, 117, 125, 0.18) !important;
+    background-color: #ffffff !important;
+    border-color: none;
+
+    color: white;
+    box-shadow: 0 4px 4px rgba(15, 23, 42, 0.205) !important;
 }
 
 .icons-bg {
-    background-color: #BAD5EB;
+    background-color: #002f55;
     border-radius: 50%;
-    color: #123A63;
-    width: 40px;
-    height: 40px;
+    color: #ffffff;
+    width: 50px;
+    height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 10px;
 }
 
 .section-title-card {
     font-size: 1.44rem;
-    color: #123A63;
+    color: #002f55;
 }
 
 .mostrar-id-predio {
-    background-color: #032F57;
+    background-color: #002f55;
     border-radius: 14px;
     min-width: 200px;
     padding: 10px 18px;
     line-height: 1.1;
+    color: #002f55;
 }
 
 .text-id-predio {
     font-size: 0.833rem;
     font-weight: 500;
     margin-bottom: 4px;
+    color: #002f55
 }
 
 .num-id-predio {
@@ -322,14 +341,14 @@
 }
 
 .text-label-npn {
-    color: #123A63;
+    color: #002f55;
     font-size: 1rem;
     margin-bottom: 4px;
 }
 
 .result-npn {
-    font-size: 0.733rem;
-    color: #123A63;
+    font-size: 0.803rem;
+    color: #002f55;
     word-break: break-word;
 }
 
@@ -373,7 +392,7 @@
 .resumen-item-value {
     color: #123A63;
     font-size: 0.833rem;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .seccion-inferior-content {
@@ -399,22 +418,25 @@
 }
 
 .card-header {
-    background-color: #F0F6FB !important;
+    background-color: #002f55 !important;
+    border: none;
+    color: white;
 }
 
 .tarjeta-visor-predio {
     background-color: #F0F6FB !important;
-    border: 1px solid #c5ccd3 !important;
+    border: 1px solid #002f5571 !important;
     border-radius: 18px;
-    box-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.06),
-        0 6px 14px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.43);
 }
 
 .resumen-interesado {
-    background-color: #F0F6FB;
+    background-color: #ffffff;
     border-radius: 10px;
     min-height: 64px;
+    border-left: 3px solid #002f55;
+    box-shadow: 2px 2px 2px rgba(15, 23, 42, 0.252) !important;
+
 }
 
 .tarjeta-resumen-predio {
@@ -896,7 +918,7 @@
 }
 
 .tarjeta-inferior-base {
-    min-height: 110px;
+    min-height: 90px;
 }
 
 .tarjeta-inferior-base .card-body {
