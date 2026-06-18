@@ -91,6 +91,23 @@
       flex: 0 0 auto !important;
       padding: 0 !important;
   }
+
+  /* Force table wrappers to have no bottom margin or padding, keeping the table and footer flush */
+  .content-modulo-ver .table-responsive,
+  .content-modulo-ver .asigTableWrap,
+  .content-modulo-ver .dataTables_wrapper,
+  .content-modulo-ver .dataTables_wrapper .row,
+  .content-modulo-ver .dataTables_wrapper .col-sm-12,
+  .content-modulo-ver table,
+  .content-modulo-ver table.dataTable,
+  .content-modulo-ver .asigTable {
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+  }
+
+  .content-modulo-ver .asigTableFooter {
+      margin-top: 0 !important;
+  }
 </style>
 <div class="content-section container-fluid  pb-5">
   <div class="d-flex align-items-center justify-content-center mb-0 ">
@@ -445,7 +462,48 @@
                 <div class="asig-parraf">Listado de las solicitudes de asignación que has enviado al soporte.</div>
               </div>
             </div>
-            <div class="table-responsive asigTableWrap" style="padding: 24px;">
+            
+            <div class="row g-3 align-items-center mb-4 asigTableControls">
+              <div class="col-12 col-md-auto d-flex justify-content-start align-items-center gap-2 mt-0 asigControlGroup">
+                <label for="asigRowsPerPageCoord" class="form-label asigControlLabel mb-0">
+                  Mostrar registros
+                </label>
+                <select id="asigRowsPerPageCoord" class="form-select asigControlInput asigRowsSelect shadow-none">
+                  <option value="4">4</option>
+                  <option value="8">8</option>
+                  <option value="10" selected>10</option>
+                  <option value="15">15</option>
+                  <option value="20">20</option>
+                </select>
+              </div>
+
+              <div class="col-12 col-lg d-flex flex-column flex-md-row justify-content-lg-end align-items-stretch align-items-md-center gap-3 mt-0 asigFilterActions">
+                <div class="d-flex align-items-center gap-2 mt-0 asigSearchGroup">
+                  <label for="asigSearchInputCoord" class="form-label asigControlLabel mb-0">
+                    Buscar
+                  </label>
+                  <input type="text" id="asigSearchInputCoord" class="form-control asigControlInput shadow-none" style="min-width: 280px;"
+                    placeholder="Buscar por solicitud, observaciones..." />
+                </div>
+
+                <div class="d-flex align-items-center gap-2 asigStatusGroup">
+                  <i class="bi bi-funnel-fill"></i>
+                  <select id="asigStatusFilterCoord"
+                    class="form-select filter-select asigControlInput asigStatusSelect shadow-none">
+                    <option value="">Filtrar por estado</option>
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Procesada">Procesada</option>
+                  </select>
+                </div>
+
+                <button id="btnClearAsigFiltersCoord" type="button" class="btn asigClearFiltersBtn">
+                  <i class="bi bi-x-lg"></i>
+                  Limpiar
+                </button>
+              </div>
+            </div>
+
+            <div class="table-responsive asigTableWrap">
               <table class="table align-middle mb-0 asigTable w-100" id="tblHistorialSolicitudesCoord" style="width: 100%;">
                 <thead>
                   <tr>
@@ -460,6 +518,18 @@
                 </thead>
                 <tbody id="tbodyHistorialSolicitudesCoord"></tbody>
               </table>
+            </div>
+
+            <div class="asigTableFooter d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+              <div class="asigResultsInfo w-50" id="asigResultsInfoCoord">
+                Mostrando 0 de 0 resultados
+              </div>
+
+              <nav aria-label="Paginación solicitudes" class="w-100 w-lg-auto">
+                <ul class="pagination asigPagination mb-0 justify-content-start justify-content-lg-end flex-wrap"
+                  id="asigPaginationCoord">
+                </ul>
+              </nav>
             </div>
           </div>
         </div>
@@ -478,7 +548,48 @@
             <div class="asig-parraf">Listado global de solicitudes enviadas por los coordinadores.</div>
           </div>
         </div>
-        <div class="table-responsive asigTableWrap" style="padding: 24px;">
+        
+        <div class="row g-3 align-items-center mb-4 asigTableControls">
+          <div class="col-12 col-md-auto d-flex justify-content-start align-items-center gap-2 mt-0 asigControlGroup">
+            <label for="asigRowsPerPageSoporte" class="form-label asigControlLabel mb-0">
+              Mostrar registros
+            </label>
+            <select id="asigRowsPerPageSoporte" class="form-select asigControlInput asigRowsSelect shadow-none">
+              <option value="4">4</option>
+              <option value="8">8</option>
+              <option value="10" selected>10</option>
+              <option value="15">15</option>
+              <option value="20">20</option>
+            </select>
+          </div>
+
+          <div class="col-12 col-lg d-flex flex-column flex-md-row justify-content-lg-end align-items-stretch align-items-md-center gap-3 mt-0 asigFilterActions">
+            <div class="d-flex align-items-center gap-2 mt-0 asigSearchGroup">
+              <label for="asigSearchInputSoporte" class="form-label asigControlLabel mb-0">
+                Buscar
+              </label>
+              <input type="text" id="asigSearchInputSoporte" class="form-control asigControlInput shadow-none" style="min-width: 280px;"
+                placeholder="Buscar por solicitud, coordinador, observaciones..." />
+            </div>
+
+            <div class="d-flex align-items-center gap-2 asigStatusGroup">
+              <i class="bi bi-funnel-fill"></i>
+              <select id="asigStatusFilterSoporte"
+                class="form-select filter-select asigControlInput asigStatusSelect shadow-none">
+                <option value="">Filtrar por estado</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="Procesada">Procesada</option>
+              </select>
+            </div>
+
+            <button id="btnClearAsigFiltersSoporte" type="button" class="btn asigClearFiltersBtn">
+              <i class="bi bi-x-lg"></i>
+              Limpiar
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive asigTableWrap">
           <table class="table align-middle mb-0 asigTable w-100" id="tblHistorialSolicitudesSoporte" style="width: 100%;">
             <thead>
               <tr>
@@ -494,6 +605,18 @@
             </thead>
             <tbody id="tbodyHistorialSolicitudesSoporte"></tbody>
           </table>
+        </div>
+
+        <div class="asigTableFooter d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+          <div class="asigResultsInfo w-50" id="asigResultsInfoSoporte">
+            Mostrando 0 de 0 resultados
+          </div>
+
+          <nav aria-label="Paginación solicitudes" class="w-100 w-lg-auto">
+            <ul class="pagination asigPagination mb-0 justify-content-start justify-content-lg-end flex-wrap"
+              id="asigPaginationSoporte">
+            </ul>
+          </nav>
         </div>
       </div>
     </div>
@@ -1424,6 +1547,88 @@
   let dtHistorial = null;
   const isCoordinator = "{{ effective_role }}" === "coordinador";
 
+  function getVisiblePages(totalPages, currentPage) {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    if (currentPage === 1) {
+      return [1, 2, "dots-right", totalPages];
+    }
+
+    if (currentPage === totalPages) {
+      return [1, "dots-left", totalPages - 1, totalPages];
+    }
+
+    return [1, "dots-left", currentPage, "dots-right", totalPages];
+  }
+
+  function renderPagination(totalRows, containerId, selectId) {
+    const info = dtHistorial?.page.info();
+    const rowsPerPage = Number(document.getElementById(selectId)?.value || 10);
+    const totalPages = info?.pages || Math.ceil(totalRows / rowsPerPage) || 1;
+    const currentDtPage = (info?.page ?? 0) + 1;
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (totalRows <= 0) return;
+
+    const visiblePages = getVisiblePages(totalPages, currentDtPage);
+
+    container.innerHTML += `
+      <li class="page-item ${currentDtPage === 1 ? "disabled" : ""}">
+        <button class="page-link" data-page="prev" type="button" aria-label="Anterior">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+      </li>
+    `;
+
+    visiblePages.forEach((page) => {
+      if (page === "dots-left" || page === "dots-right") {
+        container.innerHTML += `
+          <li class="page-item disabled">
+            <span class="page-link asig-page-dots">...</span>
+          </li>
+        `;
+        return;
+      }
+
+      container.innerHTML += `
+        <li class="page-item ${page === currentDtPage ? "active" : ""}">
+          <button class="page-link" data-page="${page}" type="button">${page}</button>
+        </li>
+      `;
+    });
+
+    container.innerHTML += `
+      <li class="page-item ${currentDtPage === totalPages ? "disabled" : ""}">
+        <button class="page-link" data-page="next" type="button" aria-label="Siguiente">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </li>
+    `;
+  }
+
+  function sincronizarInfoDataTable() {
+    if (!dtHistorial) return;
+    const info = dtHistorial.page.info();
+    const totalFiltrado = dtHistorial.rows({ filter: "applied" }).count();
+
+    const infoId = isCoordinator ? "asigResultsInfoCoord" : "asigResultsInfoSoporte";
+    const pagId = isCoordinator ? "asigPaginationCoord" : "asigPaginationSoporte";
+    const selectId = isCoordinator ? "asigRowsPerPageCoord" : "asigRowsPerPageSoporte";
+
+    const resultsInfo = document.getElementById(infoId);
+    if (resultsInfo) {
+      resultsInfo.textContent = totalFiltrado
+        ? `Mostrando ${info.start + 1} a ${info.end} de ${info.recordsDisplay} resultados`
+        : "Mostrando 0 de 0 resultados";
+    }
+
+    renderPagination(info.recordsDisplay, pagId, selectId);
+  }
+
   async function cargarHistorialSolicitudes() {
     const tableId = isCoordinator ? "#tblHistorialSolicitudesCoord" : "#tblHistorialSolicitudesSoporte";
     const tbodyId = isCoordinator ? "tbodyHistorialSolicitudesCoord" : "tbodyHistorialSolicitudesSoporte";
@@ -1503,14 +1708,35 @@
         tbody.appendChild(tr);
       });
 
+      const currentRowsPerPage = isCoordinator
+        ? Number(document.getElementById("asigRowsPerPageCoord")?.value || 10)
+        : Number(document.getElementById("asigRowsPerPageSoporte")?.value || 10);
+
       dtHistorial = $(tableId).DataTable({
         destroy: true,
-        pageLength: 10,
+        pageLength: currentRowsPerPage,
         order: [[0, "desc"]],
+        dom: "rt",
         language: {
           url: "https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json"
-        }
+        },
+        drawCallback: sincronizarInfoDataTable
       });
+
+      // Apply initial filters if any are set
+      if (isCoordinator) {
+        const query = document.getElementById("asigSearchInputCoord")?.value || "";
+        const status = document.getElementById("asigStatusFilterCoord")?.value || "";
+        if (query) dtHistorial.search(query);
+        if (status) dtHistorial.column(4).search(status);
+        if (query || status) dtHistorial.draw();
+      } else {
+        const query = document.getElementById("asigSearchInputSoporte")?.value || "";
+        const status = document.getElementById("asigStatusFilterSoporte")?.value || "";
+        if (query) dtHistorial.search(query);
+        if (status) dtHistorial.column(5).search(status);
+        if (query || status) dtHistorial.draw();
+      }
     } catch (e) {
       console.error(e);
       tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error inesperado cargando solicitudes</td></tr>';
@@ -1683,6 +1909,92 @@
       if (e.target === this) ocultarModalDetalle();
     });
 
+    // Custom filter event listeners for Coordinator
+    document.getElementById("asigRowsPerPageCoord")?.addEventListener("change", function (e) {
+      if (dtHistorial) {
+        dtHistorial.page.len(Number(e.target.value)).draw();
+      }
+    });
+
+    document.getElementById("asigSearchInputCoord")?.addEventListener("input", function (e) {
+      if (dtHistorial) {
+        dtHistorial.search(e.target.value).draw();
+      }
+    });
+
+    document.getElementById("asigStatusFilterCoord")?.addEventListener("change", function (e) {
+      if (dtHistorial) {
+        dtHistorial.column(4).search(e.target.value).draw();
+      }
+    });
+
+    document.getElementById("btnClearAsigFiltersCoord")?.addEventListener("click", function () {
+      const selectRows = document.getElementById("asigRowsPerPageCoord");
+      if (selectRows) selectRows.value = "10";
+      const searchInput = document.getElementById("asigSearchInputCoord");
+      if (searchInput) searchInput.value = "";
+      const filterStatus = document.getElementById("asigStatusFilterCoord");
+      if (filterStatus) filterStatus.value = "";
+      if (dtHistorial) {
+        dtHistorial.page.len(10);
+        dtHistorial.search("");
+        dtHistorial.column(4).search("");
+        dtHistorial.draw();
+      }
+    });
+
+    // Custom filter event listeners for Support/Admin
+    document.getElementById("asigRowsPerPageSoporte")?.addEventListener("change", function (e) {
+      if (dtHistorial) {
+        dtHistorial.page.len(Number(e.target.value)).draw();
+      }
+    });
+
+    document.getElementById("asigSearchInputSoporte")?.addEventListener("input", function (e) {
+      if (dtHistorial) {
+        dtHistorial.search(e.target.value).draw();
+      }
+    });
+
+    document.getElementById("asigStatusFilterSoporte")?.addEventListener("change", function (e) {
+      if (dtHistorial) {
+        dtHistorial.column(5).search(e.target.value).draw();
+      }
+    });
+
+    document.getElementById("btnClearAsigFiltersSoporte")?.addEventListener("click", function () {
+      const selectRows = document.getElementById("asigRowsPerPageSoporte");
+      if (selectRows) selectRows.value = "10";
+      const searchInput = document.getElementById("asigSearchInputSoporte");
+      if (searchInput) searchInput.value = "";
+      const filterStatus = document.getElementById("asigStatusFilterSoporte");
+      if (filterStatus) filterStatus.value = "";
+      if (dtHistorial) {
+        dtHistorial.page.len(10);
+        dtHistorial.search("");
+        dtHistorial.column(5).search("");
+        dtHistorial.draw();
+      }
+    });
+
+    const handlePaginationClick = (e) => {
+      const btn = e.target.closest("[data-page]");
+      if (!btn || btn.closest(".disabled") || !dtHistorial) return;
+
+      const page = btn.getAttribute("data-page");
+
+      if (page === "prev") {
+        dtHistorial.page("previous").draw("page");
+      } else if (page === "next") {
+        dtHistorial.page("next").draw("page");
+      } else if (!isNaN(Number(page))) {
+        dtHistorial.page(Number(page) - 1).draw("page");
+      }
+    };
+
+    document.getElementById("asigPaginationCoord")?.addEventListener("click", handlePaginationClick);
+    document.getElementById("asigPaginationSoporte")?.addEventListener("click", handlePaginationClick);
+
     if (isCoordinator) {
       document.getElementById("mis-solicitudes-tab")?.addEventListener("shown.bs.tab", () => {
         cargarHistorialSolicitudes();
@@ -1696,49 +2008,51 @@
       cargarHistorialSolicitudes();
     }
 
-    (async function cargarUsuarios() {
-      try {
-        const r = await fetch(`${rp}/asignaciones/usuarios-disponibles?solo_mis_reconocedores=true`);
-        if (!r.ok) {
+    if (isCoordinator) {
+      (async function cargarUsuarios() {
+        try {
+          const r = await fetch(`${rp}/asignaciones/usuarios-disponibles?solo_mis_reconocedores=true`);
+          if (!r.ok) {
+            reconocedoresCargados = [];
+            actualizarContadorReconocedoresDisponibles();
+            return;
+          }
+
+          const users = await r.json();
+
+          reconocedoresCargados = users.filter(u => u.rol && u.rol.toLowerCase() === "reconocedor");
+          actualizarContadorReconocedoresDisponibles();
+
+          const select = document.getElementById("inpUsuarioDestino");
+          if (!select) return;
+
+          select.innerHTML = '<option value="" disabled selected>Selecciona un reconocedor...</option>';
+
+          const reconocedores = reconocedoresCargados;
+
+          if (!reconocedores.length) {
+            select.innerHTML = '<option value="" disabled selected>No tienes reconocedores vinculados disponibles</option>';
+            return;
+          }
+
+          reconocedores.forEach(u => {
+            const opt = document.createElement("option");
+            opt.value = u.username;
+            opt.textContent = u.first_name && u.last_name
+              ? `${u.first_name} ${u.last_name} (${u.username})`
+              : u.username;
+            select.appendChild(opt);
+          });
+        } catch (e) {
+          console.warn("No se pudieron cargar usuarios", e);
           reconocedoresCargados = [];
           actualizarContadorReconocedoresDisponibles();
-          return;
+          const select = document.getElementById("inpUsuarioDestino");
+          if (select) {
+            select.innerHTML = '<option value="" disabled selected>No se pudieron cargar reconocedores</option>';
+          }
         }
-
-        const users = await r.json();
-
-        reconocedoresCargados = users.filter(u => u.rol && u.rol.toLowerCase() === "reconocedor");
-        actualizarContadorReconocedoresDisponibles();
-
-        const select = document.getElementById("inpUsuarioDestino");
-        if (!select) return;
-
-        select.innerHTML = '<option value="" disabled selected>Selecciona un reconocedor...</option>';
-
-        const reconocedores = reconocedoresCargados;
-
-        if (!reconocedores.length) {
-          select.innerHTML = '<option value="" disabled selected>No tienes reconocedores vinculados disponibles</option>';
-          return;
-        }
-
-        reconocedores.forEach(u => {
-          const opt = document.createElement("option");
-          opt.value = u.username;
-          opt.textContent = u.first_name && u.last_name
-            ? `${u.first_name} ${u.last_name} (${u.username})`
-            : u.username;
-          select.appendChild(opt);
-        });
-      } catch (e) {
-        console.warn("No se pudieron cargar usuarios", e);
-        reconocedoresCargados = [];
-        actualizarContadorReconocedoresDisponibles();
-        const select = document.getElementById("inpUsuarioDestino");
-        if (select) {
-          select.innerHTML = '<option value="" disabled selected>No se pudieron cargar reconocedores</option>';
-        }
-      }
-    })();
+      })();
+    }
   });
 </script>
