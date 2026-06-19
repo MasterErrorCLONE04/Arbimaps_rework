@@ -33,6 +33,250 @@
     flex-direction: column;
     gap: 20px;
   }
+
+  /* ==========================================
+     CUSTOM PREMIUM USER TABLE STYLES
+     ========================================== */
+  .table-card {
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    overflow: hidden !important;
+  }
+  
+  .table-card .table-header-custom {
+    background-color: #002f55 !important;
+    color: #ffffff !important;
+    padding: 24px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-bottom: none !important;
+    flex-wrap: wrap !important;
+    gap: 16px !important;
+  }
+  
+  .table-card .table-header-custom h2 {
+    color: #ffffff !important;
+    font-size: 1.35rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+  }
+  
+  .table-card .table-header-custom p {
+    color: rgba(255, 255, 255, 0.75) !important;
+    font-size: 0.875rem !important;
+    margin: 4px 0 0 0 !important;
+  }
+  
+  .search-box-custom {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 280px !important;
+    max-width: 100% !important;
+  }
+  
+  .search-box-custom .search-icon-custom {
+    position: absolute !important;
+    left: 14px !important;
+    color: #94a3b8 !important;
+    font-size: 1.05rem !important;
+    pointer-events: none !important;
+    z-index: 5 !important;
+  }
+  
+  .search-box-custom input {
+    width: 100% !important;
+    padding: 10px 16px 10px 42px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+    background-color: #ffffff !important;
+    color: #334155 !important;
+    font-size: 0.9rem !important;
+    outline: none !important;
+    transition: all 0.2s ease !important;
+  }
+  
+  .search-box-custom input::placeholder {
+    color: #94a3b8 !important;
+  }
+  
+  .search-box-custom input:focus {
+    border-color: #ffffff !important;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25) !important;
+  }
+  
+  .btn-add-user-custom {
+    background-color: #ffffff !important;
+    color: #002f55 !important;
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 10px 20px !important;
+    font-size: 0.88rem !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+  }
+  
+  .btn-add-user-custom:hover {
+    background-color: #f1f5f9 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  }
+  
+  .custom-table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    background-color: #ffffff !important;
+  }
+  
+  .custom-table th {
+    padding: 16px 20px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+  }
+  
+  .custom-table th:last-child {
+    text-align: center !important;
+  }
+  
+  .custom-table td {
+    padding: 16px 20px !important;
+    font-size: 0.88rem !important;
+    color: #1e293b !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    background-color: #ffffff !important;
+    vertical-align: middle !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+  }
+  
+  .custom-table td:last-child {
+    text-align: center !important;
+  }
+  
+  .table-user-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 50% !important;
+    color: #ffffff !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 700 !important;
+    font-size: 0.88rem !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .table-user-info-wrap {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+  
+  .table-username-text {
+    font-weight: 700 !important;
+    color: #002f55 !important;
+    font-size: 0.9rem !important;
+    display: block !important;
+  }
+  
+  .table-fullname-text {
+    color: #64748b !important;
+    font-size: 0.78rem !important;
+    display: block !important;
+    font-weight: 400 !important;
+  }
+  
+  .role-badge {
+    color: #002f55 !important;
+  }
+  
+  .status-text {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+  }
+  
+  .status-text::before {
+    content: "" !important;
+    width: 8px !important;
+    height: 8px !important;
+    background-color: #22c55e !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+  }
+  
+  .status-text.inactive {
+    color: #64748b !important;
+  }
+  
+  .status-text.inactive::before {
+    background-color: #cbd5e1 !important;
+  }
+  
+  .actions-cell {
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .pagination-controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+  
+  .pagination-controls .page-btn {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    background-color: #ffffff !important;
+    color: #475569 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    padding: 0 !important;
+  }
+  
+  .pagination-controls .page-btn:hover:not(.disabled) {
+    background-color: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+  
+  .pagination-controls .page-btn.active {
+    background-color: #002f55 !important;
+    color: #ffffff !important;
+    border-color: #002f55 !important;
+  }
+  
+  .pagination-controls .page-btn.disabled {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+    background-color: #f8fafc !important;
+  }
 </style>
 
 <div class="container-fluid usuarios-saas">
@@ -43,10 +287,6 @@
       <p>Agrega, elimina o modifica usuarios y equipos de trabajo (cuadrillas) de la plataforma.</p>
     </div>
     <div class="header-actions">
-      <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalUsuario" id="btnAddNewUser" {% if
-        effective_role not in ['admin', 'soporte', 'lider_reconocimiento'] %}style="display: none;" {% endif %}>
-        <i class="bi bi-plus-lg"></i> <span id="btnAddNewUserText">Agregar nuevo usuario</span>
-      </button>
       <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#modalCuadrilla" id="btnAddNewCuadrilla"
         style="display: none; background-color: #5ba4cf; border-color: #5ba4cf; box-shadow: 0 4px 12px rgba(91, 164, 207, 0.2);">
         <i class="bi bi-people-fill"></i> Crear nueva cuadrilla
@@ -191,15 +431,21 @@
     <div class="usuarios-table-container ">
       <!-- Tabla -->
       <div class="table-card ">
-        <div class="table-header-bar">
-          <h2>Usuarios</h2>
-          <p>Listado de todos los usuarios de la plataforma</p>
-        </div>
-
-        <div class="table-toolbar">
-          <div class="search-box">
-            <label for="usrSearch">Buscar</label>
-            <input type="text" id="usrSearch" placeholder="Buscar usuario...">
+        <div class="table-header-custom">
+          <div>
+            <h2 id="totalUsersTitle">Gestión de Usuarios</h2>
+            <p id="totalUsersSubtitle">Cargando usuarios registrados...</p>
+          </div>
+          
+          <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="search-box-custom">
+              <i class="bi bi-search search-icon-custom"></i>
+              <input type="text" id="usrSearch" placeholder="Buscar usuario...">
+            </div>
+            
+            <button class="btn-add-user-custom" data-bs-toggle="modal" data-bs-target="#modalUsuario" id="btnAddNewUser" {% if effective_role not in ['admin', 'soporte', 'lider_reconocimiento'] %}style="display: none;" {% endif %}>
+              <i class="bi bi-plus-lg"></i> <span id="btnAddNewUserText">Agregar nuevo usuario</span>
+            </button>
           </div>
         </div>
 
@@ -207,15 +453,12 @@
           <table class="custom-table" id="tblUsuarios" style="display:none;">
             <thead>
               <tr>
-                <!-- <th style="width: 60px;">Id</th> -->
-                <th>Nombre del usuario</th>
+                <th>Usuario</th>
                 <th>Email</th>
-                <!-- <th>Nombre</th> -->
-                <!-- <th>Apellido</th> -->
                 <th>Coordinador encargado</th>
                 <th>Rol</th>
                 <th>Estado</th>
-                <th style="width: 130px;">Acciones</th>
+                <th style="width: 80px; text-align: center;">Acciones</th>
               </tr>
             </thead>
             <tbody id="tbodyUsuarios">
@@ -1082,6 +1325,11 @@
       setCounter("cntConsolidador", soporte);
       setCounter("cntConsulta", consulta);
       setCounter("cntDigitalizador", digitalizador);
+
+      const subtitleEl = document.getElementById("totalUsersSubtitle");
+      if (subtitleEl) {
+        subtitleEl.textContent = `${total} ${total === 1 ? "usuario registrado" : "usuarios registrados"}`;
+      }
     }
 
     function renderUsuarios(list) {
@@ -1089,7 +1337,7 @@
 
       if (!list.length) {
         const tr = document.createElement("tr");
-        tr.innerHTML = '<td colspan="9" style="padding:18px;color:#64748b;text-align:center;">Sin resultados.</td>';
+        tr.innerHTML = '<td colspan="6" style="padding:18px;color:#64748b;text-align:center;">Sin resultados.</td>';
         tbody.appendChild(tr);
         tbl.style.display = "table";
         renderPagination(0);
@@ -1110,6 +1358,26 @@
           tr.classList.add("is-selected");
         }
 
+        // Avatar initials and color
+        const initials = (((u.first_name || "")[0] || "") + ((u.last_name || "")[0] || "")).toUpperCase() || (u.username || "??").substring(0, 2).toUpperCase();
+        const colors = ["#021f3c", "#0f766e", "#b45309", "#6b21a8", "#0369a1", "#be185d", "#047857", "#1d4ed8", "#4338ca", "#6d28d9", "#db2777"];
+        const colorIdx = (u.id_global || 0) % colors.length;
+        const avatarColor = colors[colorIdx];
+
+        const fullName = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || "---";
+
+        const userColHtml = `
+          <div class="table-user-info-wrap">
+            <div class="table-user-avatar" style="background-color: ${avatarColor};">
+              ${initials}
+            </div>
+            <div>
+              <span class="table-username-text">${u.username ?? ""}</span>
+              <span class="table-fullname-text">${fullName}</span>
+            </div>
+          </div>
+        `;
+
         const rolKey = (u.rol || "").toLowerCase();
         const badgeClass = roleBadges[rolKey] || "reconocedor";
         const labelText = roleLabels[rolKey] || u.rol || "";
@@ -1118,30 +1386,41 @@
         const estadoHtml = u.activo
           ? '<span class="status-text">Activo</span>'
           : '<span class="status-text inactive">Inactivo</span>';
-        const adminActions = IS_ADMIN ? `
-              <button type="button" class="btn-action-circle edit btnUsrEdit" data-id="${u.id_global}" title="Editar">
-                <i class="bi bi-pen-fill"></i>
-              </button>
-              <button type="button" class="btn-action-circle delete btnUsrDelete" data-id="${u.id_global}" title="Eliminar">
-                <i class="fa-solid fa-trash" style="color: rgb(225, 27, 29);"></i>
-              </button>
-        ` : "";
+
+        const actionsHtml = `
+          <div class="dropdown">
+            <button class="btn btn-link text-secondary p-0 border-0" type="button" id="dropdownMenuButton-${u.id_global}" data-bs-toggle="dropdown" aria-expanded="false" style="border: 1px solid #cbd5e1 !important; border-radius: 8px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; background-color: #ffffff; text-decoration: none;">
+              <i class="bi bi-three-dots-vertical" style="color: #475569; font-size: 1.1rem;"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dropdownMenuButton-${u.id_global}" style="border-radius: 8px; border: 1px solid #E4EBF2; min-width: 140px; padding: 6px 0; z-index: 1050;">
+              <li>
+                <button class="dropdown-item d-flex align-items-center gap-2 btnUsrView" data-id="${u.id_global}" style="font-size: 0.85rem; color: #334155; padding: 6px 16px; background: none; border: none; width: 100%; text-align: left;">
+                  <i class="bi bi-eye-fill" style="color: #64748b;"></i> Ver Detalles
+                </button>
+              </li>
+              ${IS_ADMIN ? `
+              <li>
+                <button class="dropdown-item d-flex align-items-center gap-2 btnUsrEdit" data-id="${u.id_global}" style="font-size: 0.85rem; color: #334155; padding: 6px 16px; background: none; border: none; width: 100%; text-align: left;">
+                  <i class="bi bi-pen-fill" style="color: #3b82f6;"></i> Editar
+                </button>
+              </li>
+              <li>
+                <button class="dropdown-item d-flex align-items-center gap-2 btnUsrDelete" data-id="${u.id_global}" style="font-size: 0.85rem; color: #dc2626; padding: 6px 16px; background: none; border: none; width: 100%; text-align: left;">
+                  <i class="fa-solid fa-trash" style="color: #ef4444;"></i> Eliminar
+                </button>
+              </li>
+              ` : ""}
+            </ul>
+          </div>
+        `;
 
         tr.innerHTML = `
-          
-          <td><strong>${u.username ?? ""}</strong></td>
+          <td>${userColHtml}</td>
           <td>${u.email ?? ""}</td>
-          <td>${u.supervisor_encargado ?? u.supervisor_raw ?? "---"}</td>
+          <td>${u.supervisor_encargado ?? u.supervisor_raw ?? "—"}</td>
           <td>${rolHtml}</td>
           <td>${estadoHtml}</td>
-          <td>
-            <div class="actions-cell">
-              ${adminActions}
-              <button type="button" class="btn-action-circle view btnUsrView" data-id="${u.id_global}" title="Ver Detalles">
-                <i class="bi bi-eye-fill"></i>
-              </button>
-            </div>
-          </td>
+          <td>${actionsHtml}</td>
         `;
         tbody.appendChild(tr);
       });
