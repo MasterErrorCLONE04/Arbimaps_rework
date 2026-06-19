@@ -14,6 +14,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+
     rel="stylesheet" />
 
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
@@ -26,9 +27,8 @@ effective_role in ['digitalizador', 'reconocedor'] %}
 
   {% if view == 'usuarios' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_saas.css?v=16" />
-  {% endif %} {% if view == 'visor' %}
+  {% endif %} {% if view == 'visor' or view == 'restriccion_predios' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/visor/visor.css?v=7" />
-
   {% endif %} {% if view == 'buscar' or view == 'buscar_predio' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/buscar.css" />
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/informacion_predio.css" />
@@ -143,10 +143,9 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               </div>
               {% endif %}
 
-
-
               {% if not limited_assignment_role %}
-              <a class="menuBtn sidebar-link">
+              <a class="menuBtn sidebar-link {{ 'active' if view == 'restriccion_predios' else '' }}"
+                href="{{ rp }}/panel/restriccion-predios">
                 <i class="bi bi-slash-circle"></i>
                 <span>Restricción de predios</span>
               </a>
@@ -292,7 +291,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
           <div class="page-shell d-flex flex-column">
             <main class="main flex-grow-1">
               <div class="content-shell h-100 overflow-auto px-0 px-md-1 px-xl-2 pt-1 pb-0">
-                <div class="page-header {% if view == 'visor' or view == 'usuarios' %}d-none{% endif %}">
+                <div class="page-header {% if view == 'visor' or view == 'usuarios' or view == 'restriccion_predios' %}d-none{% endif %}">
                   <div>
                   </div>
                 </div>
@@ -313,7 +312,8 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   %} {% set validacion_embed = True %} {% include
                   "validacion_xtf.html" %} {% set validacion_embed = False %}
                   {% elif view == 'box_explorer' %} {% include
-                  "box_explorer.html" %} {% elif view == 'notificaciones' %} {% include
+                  "box_explorer.html" %} {% elif view == 'restriccion_predios' %} {% include
+                  "restriccion_predios.html" %} {% elif view == 'notificaciones' %} {% include
                   "notificaciones.html" %} {% elif view == 'error' %}
                   <div class="card p-3">
                     <h6 class="mb-2">
@@ -343,7 +343,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
     </div>
   </div>
 
-  <!-- SIDEBAR M�"VIL -->
+  <!-- SIDEBAR M"VIL -->
   <div class="offcanvas offcanvas-start d-lg-none mobile-offcanvas-sidebar" tabindex="-1" id="mobileSidebar"
     aria-labelledby="mobileSidebarLabel">
     <div class="offcanvas-header border-bottom border-light border-opacity-25">
@@ -371,73 +371,6 @@ effective_role in ['digitalizador', 'reconocedor'] %}
         {% endif %}
 
         <a class="menuBtn sidebar-link {{ 'active' if view in ['buscar', 'buscar_predio'] else '' }}" href="{{ rp }}/panel/buscar">
-          <i class="bi bi-search"></i>
-          <span>Consultar predio</span>
-        </a>
-
-        {% if can_access_asignaciones %}
-        <div class="accordion" id="asignacionesAccordionMobile">
-          <div class="accordion-item bg-transparent border-0 p-0">
-            <h2 class="accordion-header">
-              <button
-                class="accordion-button collapsed menuBtn sidebar-toggle-custom {{ 'active' if view == 'asignaciones' else '' }}"
-                type="button" data-bs-toggle="collapse" data-bs-target="#collapseAsignacionesMobile"
-                aria-expanded="{{ 'true' if view == 'asignaciones' else 'false' }}"
-                aria-controls="collapseAsignacionesMobile">
-                <span class="sidebar-group-main">
-                  <span class="sidebar-group-left">
-                    <i class="bi bi-journal-check"></i>
-                    <span>Asignaciones</span>
-                  </span>
-                </span>
-              </button>
-            </h2>
-
-            <div id="collapseAsignacionesMobile"
-              class="accordion-collapse collapse {% if view == 'asignaciones' %}show{% endif %}"
-              data-bs-parent="#asignacionesAccordionMobile">
-              <div class="accordion-body p-2">
-                {% if effective_role in ['admin', 'soporte'] %}
-                <a class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
-                  href="{{ rp }}/panel/asignaciones/cargas#asig-open">
-                  <img src="{{ rp }}/static/img/PNG/cargaicon.png" alt="logo cargas" class="logo-submenu" />
-                  <span>Cargas de trabajo</span>
-                </a>
-                {% endif %}
-
-                <a class="popupItem {% if asig_tab == 'ver' %}active{% endif %}"
-                  href="{{ rp }}/panel/asignaciones/ver#asig-open">
-                  <i class="bi bi-person-workspace"></i>
-                  <span>Ver asignaciones</span>
-                </a>
-
-              </div>
-            </div>
-          </div>
-        </div>
-        {% endif %}
-
-        <a class="menuBtn sidebar-link {{ 'active' if view == 'validacion_xtf' else '' }}"
-          href="{{ rp }}/panel/validacion-xtf">
-          <i class="bi bi-check-circle"></i>
-          <span>Validación XTF</span>
-        </a>
-
-        {% if effective_role in ['admin', 'coordinador', 'soporte', 'lider_reconocimiento'] %}
-        <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}" href="{{ rp }}/panel/usuarios">
-          <i class="bi bi-people"></i>
-          <span>Usuarios</span>
-        </a>
-        {% endif %} {% if not limited_assignment_role %}
-        <a class="menuBtn sidebar-link">
-          <i class="bi bi-slash-circle"></i>
-          <span>Restricción de predios</span>
-        </a>
-        {% endif %}
-
-        <a class="menuBtn sidebar-link {{ 'active' if view == 'box_explorer' else '' }}"
-          href="{{ rp }}/panel/soportes/explorar">
-          <i class="bi bi-folder"></i>
           <span>Documentos</span>
         </a>
 

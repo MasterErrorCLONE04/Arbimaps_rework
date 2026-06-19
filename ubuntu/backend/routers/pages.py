@@ -734,3 +734,25 @@ def panel_solicitudes_asignaciones(request: Request):
         )
 
     return _render_panel(request, user, view="solicitudes_asignaciones")
+
+
+# -------------------------------------------------
+# RESTRICCION DE PREDIOS
+# -------------------------------------------------
+
+@router.get("/panel/restriccion-predios")
+def panel_restriccion_predios(request: Request):
+    user = get_user(request)
+    if not user:
+        return RedirectResponse(
+            url=with_root_path(request, "/login"),
+            status_code=302
+        )
+
+    if _effective_role(user) not in {"admin", "coordinador", "soporte", "lider_reconocimiento"}:
+        return RedirectResponse(
+            url=with_root_path(request, "/panel"),
+            status_code=302
+        )
+
+    return _render_panel(request, user, view="restriccion_predios")

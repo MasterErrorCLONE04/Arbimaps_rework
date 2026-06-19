@@ -926,6 +926,7 @@
 
     if (estado === "disponible") return "Disponible";
     if (estado === "asignado") return "Asignado";
+    if (estado === "restringido" || estado === "bloqueado") return "Bloqueado";
 
     if (it.asignado_a || it.asignado_por) return "Asignado";
 
@@ -934,11 +935,16 @@
 
   function renderEstadoBadge(it) {
     const estadoTexto = obtenerEstadoPredio(it);
-    const esDisponible = estadoTexto.toLowerCase() === "disponible";
+    const lower = estadoTexto.toLowerCase();
 
-    const badgeClass = esDisponible
-      ? "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-disponible"
-      : "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-asignado";
+    let badgeClass = "";
+    if (lower === "disponible") {
+      badgeClass = "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-disponible";
+    } else if (lower === "bloqueado" || lower === "restringido") {
+      badgeClass = "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-bloqueado";
+    } else {
+      badgeClass = "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-asignado";
+    }
 
     return `
       <span class="${badgeClass}">

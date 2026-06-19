@@ -582,6 +582,24 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 ON {app_schema}.solicitud_creacion_usuario (estado)
                 """
             )
+            cur.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {app_schema}.restriccion_predio (
+                    id SERIAL PRIMARY KEY,
+                    predio_t_id BIGINT NOT NULL,
+                    numero_predial_nacional TEXT NOT NULL UNIQUE,
+                    motivo TEXT,
+                    creado_por TEXT,
+                    creado_en TIMESTAMPTZ DEFAULT now()
+                )
+                """
+            )
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS idx_restriccion_predio_nacional
+                ON {app_schema}.restriccion_predio (numero_predial_nacional)
+                """
+            )
             if in_transaction:
                 cur.execute("RELEASE SAVEPOINT ensure_asig_tables_sp")
         except Exception as exc:

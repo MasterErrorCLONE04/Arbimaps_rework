@@ -612,6 +612,17 @@ def buscar_predios(
 
     try:
         rows = asignaciones_repo.buscar_predios_estado(conn, tenant, numeros)
+        # Consultar restricciones
+        with conn.cursor() as cur_rest:
+            cur_rest.execute(
+                f"""
+                SELECT numero_predial_nacional 
+                FROM {app_table(tenant, 'restriccion_predio')}
+                WHERE numero_predial_nacional = ANY(%s)
+                """,
+                (numeros,)
+            )
+            restringidos_set = {row[0] for row in cur_rest.fetchall()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error consultando base de datos: {e}")
 
@@ -624,7 +635,14 @@ def buscar_predios(
         assigned_info = lookup.get(n) or {}
         asignado_a = assigned_info.get('asignado_a') if existe else None
         asignado_por = assigned_info.get('asignado_por') if existe else None
-        estado = 'ASIGNADO' if asignado_a else None
+        
+        if asignado_a:
+            estado = 'ASIGNADO'
+        elif n in restringidos_set:
+            estado = 'RESTRINGIDO'
+        else:
+            estado = None
+
         items.append(
             BuscarPrediosResponseItem(
                 numero_predial_nacional=n,
@@ -638,7 +656,8 @@ def buscar_predios(
     total = len(numeros)
     existen = sum(1 for it in items if it['existe'])
     asignados = sum(1 for it in items if it['estado'] == 'ASIGNADO')
-    disponibles = existen - asignados
+    restringidos_count = sum(1 for it in items if it['estado'] == 'RESTRINGIDO')
+    disponibles = existen - asignados - restringidos_count
     no_existen = total - existen
 
     return {
@@ -815,6 +834,23 @@ def asignar_predios(
             raise HTTPException(
                 status_code=400,
                 detail=f"Los siguientes predios no existen en {tenant.schemas.main}: {', '.join(faltantes)}",
+            )
+
+        # Verificar si hay predios restringidos
+        with conn.cursor() as cur_rest:
+            cur_rest.execute(
+                f"""
+                SELECT numero_predial_nacional 
+                FROM {app_table(tenant, 'restriccion_predio')}
+                WHERE numero_predial_nacional = ANY(%s)
+                """,
+                (numeros,)
+            )
+            restringidos = [row[0] for row in cur_rest.fetchall()]
+        if restringidos:
+            raise HTTPException(
+                status_code=400,
+                detail=f"No se puede crear la asignación. Los siguientes predios están restringidos y no pueden ser asignados: {', '.join(restringidos)}"
             )
 
         conflictos = _fetch_predios_asignados(conn, tenant, numeros)
