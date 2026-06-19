@@ -18,8 +18,10 @@
         "work": "b_asignaciones_arb",
         "history": "c_base_historico"
       },
-      "wms_base_url": "",
-      "geoserver_layers": ""
+      "wms_base_url": "https://desarrollo.arbimaps.com/geoserver/SUCRE/wms",
+      "geoserver_base_url": "https://desarrollo.arbimaps.com/geoserver",
+      "geoserver_workspace": "SUCRE",
+      "geoserver_layers": "SUCRE:Base_Principal,SUCRE:SUCRE_CARTOGRAFIA"
     },
     {
       "code": "saravena",
@@ -42,7 +44,7 @@
       "wms_base_url": "https://desarrollo.arbimaps.com/geoserver/SARAVENA/wms",
       "geoserver_base_url": "https://desarrollo.arbimaps.com/geoserver",
       "geoserver_workspace": "SARAVENA",
-      "geoserver_layers": "arb_terreno,arb_terrenohistorico,arb_construccion,arb_unidadconstruccion"
+      "geoserver_layers": "arb_terreno,arb_terrenohistorico,arb_construccion,arb_unidadconstruccion,SARAVENA:SARAVENA_CARTOGRAFIA"
     },
     {
       "code": "almaguer",
@@ -61,7 +63,11 @@
         "main": "a_base_principal",
         "work": "b_asignaciones_arb",
         "history": "c_base_historico"
-      }
+      },
+      "wms_base_url": "https://desarrollo.arbimaps.com/geoserver/ALMAGUER/wms",
+      "geoserver_base_url": "https://desarrollo.arbimaps.com/geoserver",
+      "geoserver_workspace": "ALMAGUER",
+      "geoserver_layers": "ALMAGUER:Base_Principal,ALMAGUER:ALMAGUER_CARTOGRAFIA"
     },
     {
       "code": "neiva",

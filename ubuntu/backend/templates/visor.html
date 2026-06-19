@@ -1,54 +1,5 @@
-﻿﻿﻿﻿<div class="container-fluid page-wrapper page-wrapper-visor">
+﻿﻿﻿<div class="container-fluid page-wrapper page-wrapper-visor">
   {% set municipality_label = current_municipality_name|default(current_municipality, true)|default('Municipio actual', true) %}
-
-  <div class="visor-kpi-strip">
-    <div class="visor-kpi-card visor-kpi-card-primary carta-total-predio">
-      <div class="visor-kpi-icon visor-kpi-icon-solid">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icono-map" viewBox="0 0 640 512">
-          <path fill="rgb(255, 255, 255)"
-            d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
-        </svg>
-      </div>
-      <div class="visor-kpi-body">
-        <div class="visor-kpi-meta">Cobertura catastral</div>
-        <div class="visor-kpi-value" id="totalPrediosH1">---</div>
-        <div class="visor-kpi-label">Total predios</div>
-      </div>
-    </div>
-
-    <div class="visor-kpi-card">
-      <div class="visor-kpi-icon">
-        <i class="bi bi-bounding-box-circles"></i>
-      </div>
-      <div class="visor-kpi-body">
-        <div class="visor-kpi-meta">Geometría base</div>
-        <div class="visor-kpi-value" id="visorTerrenosCount">---</div>
-        <div class="visor-kpi-label">Terrenos</div>
-      </div>
-    </div>
-
-    <div class="visor-kpi-card">
-      <div class="visor-kpi-icon">
-        <i class="bi bi-building"></i>
-      </div>
-      <div class="visor-kpi-body">
-        <div class="visor-kpi-meta">Inventario físico</div>
-        <div class="visor-kpi-value" id="visorConstruccionesCount">---</div>
-        <div class="visor-kpi-label">Construcciones</div>
-      </div>
-    </div>
-
-    <div class="visor-kpi-card">
-      <div class="visor-kpi-icon">
-        <i class="bi bi-grid-3x3-gap"></i>
-      </div>
-      <div class="visor-kpi-body">
-        <div class="visor-kpi-meta">Detalle constructivo</div>
-        <div class="visor-kpi-value" id="visorUnidadesCount">---</div>
-        <div class="visor-kpi-label">Unidades</div>
-      </div>
-    </div>
-  </div>
 
   <div class="visor-map-stage panel-card rounded-3 visor-card">
     <div class="map-panel-body vm-map-shell">
@@ -145,7 +96,7 @@
               </div>
             </div>
           </div>
-          <button id="vmSidebarDetailsBtn" class="btn visor-detail-btn" type="button" disabled>Ver detalles</button>
+          <button id="vmSidebarDetailsBtn" class="btn visor-detail-btn" type="button" disabled>Ver ficha predial</button>
         </div>
       </div>
           <div id="vmLayerPanel" class="vm-layer-panel hidden">
@@ -160,15 +111,6 @@
               <div class="vm-layer-block">
                 <div class="vm-layer-block-title">Capas visibles</div>
                 <div id="vmLayerList" class="vm-layer-list"></div>
-              </div>
-
-              <div class="vm-layer-actions">
-                <button id="vmZoomProject" class="vm-btn vm-btn-primary" type="button">
-                  Ver zona
-                </button>
-                <button id="vmHideLayers" class="vm-btn" type="button">
-                  Apagar capas
-                </button>
               </div>
             </div>
           </div>
@@ -193,28 +135,20 @@
             </div>
           </div>
 
-          <div class="vm-legend-card" aria-label="Convenciones del mapa">
-            <div class="vm-legend-title">Convenciones</div>
-            <div class="vm-legend-list">
-              <div class="vm-legend-item">
-                <span class="vm-legend-swatch vm-legend-swatch-terreno"></span>
-                <span>Terreno</span>
-              </div>
-              <div class="vm-legend-item">
-                <span class="vm-legend-swatch vm-legend-swatch-historico"></span>
-                <span>Terreno histórico</span>
-              </div>
-              <div class="vm-legend-item">
-                <span class="vm-legend-swatch vm-legend-swatch-construccion"></span>
-                <span>Construcciones</span>
-              </div>
-              <div class="vm-legend-item">
-                <span class="vm-legend-swatch vm-legend-swatch-unidad"></span>
-                <span>Unidades de construcción</span>
-              </div>
-              <div class="vm-legend-item">
-                <span class="vm-legend-swatch vm-legend-swatch-direccion"></span>
-                <span>Direcciones</span>
+          <div class="vm-legend-card is-collapsed" aria-live="polite">
+            <div class="vm-layer-panel-head">
+              <strong>Convenciones</strong>
+              <button id="vmCloseLegendCard" class="vm-panel-close" type="button" title="Ocultar convenciones">
+                x
+              </button>
+            </div>
+            <div class="vm-layer-panel-body">
+              <div class="vm-legend-list">
+                <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-terreno"></span><span>Terreno</span></div>
+                <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-historico"></span><span>Terreno historico</span></div>
+                <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-construccion"></span><span>Construcciones</span></div>
+                <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-unidad"></span><span>Unidades de construccion</span></div>
+                <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-direccion"></span><span>Direcciones</span></div>
               </div>
             </div>
           </div>
@@ -226,18 +160,24 @@
             <div class="vm-info-popup-title">Predio seleccionado</div>
             <div class="vm-info-popup-grid">
               <div class="vm-info-popup-row">
-                <span class="vm-info-popup-label">ID operación</span>
-                <span id="vmInfoOperacion" class="vm-info-popup-value">Sin dato</span>
+                <span class="vm-info-popup-label">Numero predial</span>
+                <span id="vmInfoNumeroPredial" class="vm-info-popup-value">Sin dato</span>
               </div>
               <div class="vm-info-popup-row">
-                <span class="vm-info-popup-label">Número predial</span>
-                <span id="vmInfoNumeroPredial" class="vm-info-popup-value">Sin dato</span>
+                <span class="vm-info-popup-label">Area</span>
+                <span id="vmInfoArea" class="vm-info-popup-value">Sin dato</span>
               </div>
             </div>
           </div>
 
           <div id="map"></div>
           <div id="vmSnapMarker" class="vm-snap-marker hidden" aria-hidden="true"></div>
+          <div class="vm-map-statusbar" aria-live="polite">
+            <span class="vm-map-status-item">X <strong id="vmCoordX">--</strong></span>
+            <span class="vm-map-status-item">Y <strong id="vmCoordY">--</strong></span>
+            <span class="vm-map-status-item">EPSG <strong>9377</strong></span>
+            <span class="vm-map-status-item">Escala <strong id="vmScaleText">--</strong></span>
+          </div>
           <div class="vm-north-indicator" aria-label="Norte">
             <div class="vm-north-arrow"></div>
             <div class="vm-north-label">N</div>
@@ -255,17 +195,28 @@
             <button id="vmZoomOutBtn" class="vm-zoom-btn" type="button" title="Alejar">
               -
             </button>
+            <button id="vmZoomProjectStackBtn" class="vm-zoom-btn" type="button" title="Extension completa">
+              <i class="bi bi-arrows-fullscreen"></i>
+            </button>
+            <span class="vm-zoom-separator" aria-hidden="true"></span>
+            <button id="vmSelectModeBtn" class="vm-zoom-btn is-active" type="button" title="Seleccionar">
+              <i class="bi bi-cursor"></i>
+            </button>
             <button id="vmMeasureBtn" class="vm-zoom-btn" type="button" title="Medir distancia">
               <i class="bi bi-rulers"></i>
             </button>
-            <button id="vmMeasureAreaBtn" class="vm-zoom-btn" type="button" title="Medir área">
+            <button id="vmMeasureAreaBtn" class="vm-zoom-btn" type="button" title="Medir Area">
               <i class="bi bi-bounding-box"></i>
             </button>
-            <button id="vmStackLegendBtn" class="vm-zoom-btn" type="button" title="Leyenda">
+            <span class="vm-zoom-separator" aria-hidden="true"></span>
+            <button id="vmStackLayerPanelBtn" class="vm-zoom-btn" type="button" title="Capas">
+              <i class="bi bi-layers"></i>
+            </button>
+            <button id="vmStackLegendBtn" class="vm-zoom-btn" type="button" title="Convenciones">
               <i class="bi bi-card-list"></i>
             </button>
-            <button id="vmStackSearchBtn" class="vm-zoom-btn" type="button" title="Buscar predio">
-              <i class="bi bi-search"></i>
+            <button id="vmStackBasemapPanelBtn" class="vm-zoom-btn" type="button" title="Mapabase">
+              <i class="bi bi-map"></i>
             </button>
             <button id="vmStackPrintBtn" class="vm-zoom-btn" type="button" title="Imprimir mapa">
               <i class="bi bi-printer"></i>
@@ -273,20 +224,76 @@
           </div>
         </div>
       </div>
+
+      <div class="visor-kpi-strip visor-kpi-strip-bottom">
+        <div class="visor-kpi-card visor-kpi-card-primary carta-total-predio">
+          <div class="visor-kpi-icon visor-kpi-icon-solid">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icono-map" viewBox="0 0 640 512">
+              <path fill="rgb(255, 255, 255)"
+                d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
+            </svg>
+          </div>
+          <div class="visor-kpi-body">
+            <div class="visor-kpi-meta">Cobertura catastral</div>
+            <div class="visor-kpi-value" id="totalPrediosH1">---</div>
+            <div class="visor-kpi-label">Total predios</div>
+          </div>
+        </div>
+
+        <div class="visor-kpi-card">
+          <div class="visor-kpi-icon">
+            <i class="bi bi-bounding-box-circles"></i>
+          </div>
+          <div class="visor-kpi-body">
+            <div class="visor-kpi-meta">Geometría base</div>
+            <div class="visor-kpi-value" id="visorTerrenosCount">---</div>
+            <div class="visor-kpi-label">Terrenos</div>
+          </div>
+        </div>
+
+        <div class="visor-kpi-card">
+          <div class="visor-kpi-icon">
+            <i class="bi bi-building"></i>
+          </div>
+          <div class="visor-kpi-body">
+            <div class="visor-kpi-meta">Inventario físico</div>
+            <div class="visor-kpi-value" id="visorConstruccionesCount">---</div>
+            <div class="visor-kpi-label">Construcciones</div>
+          </div>
+        </div>
+
+        <div class="visor-kpi-card">
+          <div class="visor-kpi-icon">
+            <i class="bi bi-grid-3x3-gap"></i>
+          </div>
+          <div class="visor-kpi-body">
+            <div class="visor-kpi-meta">Detalle constructivo</div>
+            <div class="visor-kpi-value" id="visorUnidadesCount">---</div>
+            <div class="visor-kpi-label">Unidades</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <style>
-      .visor-map-stage,
+      .visor-map-stage {
+        min-height: 500px;
+        height: calc(100vh - 196px);
+        display: flex;
+        flex-direction: column;
+      }
+
       .vm-map-shell,
       .map-panel-body {
-        min-height: 650px;
-        height: calc(100vh - 190px);
+        min-height: 0;
+        height: 100%;
+        flex: 1 1 auto;
       }
 
       #map {
         width: 100%;
         height: 100%;
-        min-height: 650px;
+        min-height: 100%;
         display: block;
       }
 
@@ -314,19 +321,97 @@
         border: 1px solid rgba(15, 23, 42, 0.16);
       }
 
+
+      .visor-map-topbar {
+        display: none;
+      }
+
+      .vm-zoom-separator {
+        width: 24px;
+        height: 1px;
+        margin: 1px auto;
+        background: rgba(15, 23, 42, 0.18);
+        display: block;
+      }
+
+      .vm-map-statusbar {
+        position: absolute;
+        left: 64px;
+        right: 16px;
+        bottom: 14px;
+        z-index: 24;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding: 8px 12px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+        backdrop-filter: blur(8px);
+      }
+
+      .vm-map-status-item {
+        font-size: 11px;
+        font-weight: 700;
+        color: #5b6b7c;
+      }
+
+      .vm-map-status-item strong {
+        color: #163c62;
+      }
+
+      .vm-legend-panel-block {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(15, 23, 42, 0.08);
+      }
+
+      .vm-legend-list-panel {
+        gap: 8px;
+      }
+
+      .vm-info-popup {
+        min-width: 220px;
+        max-width: 250px;
+        padding: 10px 12px;
+      }
+
+      .vm-info-popup-grid {
+        gap: 6px;
+      }
+
+      .vm-info-popup-link {
+        width: 100%;
+        margin-top: 10px;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        background: #ffffff;
+        color: #163c62;
+        border-radius: 999px;
+        padding: 7px 10px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .vm-info-popup-link[disabled] {
+        opacity: 0.65;
+      }
+
       .vm-layer-panel {
         position: absolute;
-        top: 12px;
-        right: 320px;
-        left: auto;
+        top: 16px;
+        left: 78px;
+        right: auto;
         z-index: 31;
-        width: 220px;
-        max-width: calc(100% - 340px);
+        width: 290px;
+        max-width: min(320px, calc(100% - 110px));
         background: rgba(255, 255, 255, 0.96);
         border: 1px solid rgba(15, 23, 42, 0.14);
         border-radius: 16px;
         box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
         overflow: hidden;
+        max-height: min(82vh, 760px);
         transition:
           transform 0.2s ease,
           opacity 0.2s ease;
@@ -366,7 +451,11 @@
       }
 
       .vm-layer-panel-body {
-        padding: 10px;
+        padding: 10px 10px 18px;
+        max-height: calc(min(82vh, 760px) - 58px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
       }
 
       .vm-layer-block+.vm-layer-block {
@@ -397,6 +486,57 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+      }
+
+      .vm-layer-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .vm-layer-group-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        border-radius: 12px;
+        background: #f8fafc;
+        padding: 8px 10px;
+        color: #163c62;
+        cursor: pointer;
+      }
+
+      .vm-layer-group-title {
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.2;
+      }
+
+      .vm-layer-group-meta {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: #64748b;
+      }
+
+      .vm-layer-group-icon {
+        font-size: 12px;
+        font-weight: 900;
+        color: #2563eb;
+      }
+
+      .vm-layer-group-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-left: 8px;
+      }
+
+      .vm-layer-group-body.hidden {
+        display: none;
       }
 
       .vm-layer-empty {
@@ -436,6 +576,8 @@
         display: flex;
         flex-direction: column;
         gap: 2px;
+        min-width: 0;
+        flex: 1 1 auto;
       }
 
       .vm-layer-toggle {
@@ -485,13 +627,18 @@
 
       .vm-zoom-stack {
         position: absolute !important;
-        left: 12px !important;
-        top: 135px !important;
+        left: 16px !important;
+        top: 110px !important;
         bottom: auto !important;
         z-index: 34;
         display: flex;
         flex-direction: column;
         gap: 8px;
+        padding: 10px 8px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.96);
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
       }
 
       .vm-zoom-btn {
@@ -614,7 +761,7 @@
       }
 
       .vm-info-popup-title {
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         padding-right: 18px;
         font-size: 13px;
         font-weight: 800;
@@ -664,7 +811,7 @@
         position: absolute;
         right: 16px;
         left: auto;
-        bottom: 16px;
+        bottom: 62px;
         background: rgba(255, 255, 255, 0.96);
         border: 1px solid rgba(15, 23, 42, 0.12);
         border-radius: 10px;
@@ -726,7 +873,7 @@
       .vm-measure-panel {
         position: absolute;
         right: 16px;
-        bottom: 118px;
+        bottom: 92px;
         z-index: 23;
         width: 220px;
         padding: 12px 14px;
@@ -779,8 +926,8 @@
 
       .vm-north-indicator {
         position: absolute !important;
-        left: 12px !important;
-        top: 100px !important;
+        left: 16px !important;
+        top: 52px !important;
         bottom: auto !important;
         z-index: 22;
         width: 42px;
@@ -829,9 +976,10 @@
       @media (max-width: 991.98px) {
         .vm-layer-panel {
           top: 10px;
+          left: 10px;
           right: 10px;
-          left: auto;
-          max-width: calc(100% - 20px);
+          max-width: none;
+          width: auto;
         }
 
         .vm-layer-panel-basemap {
@@ -840,7 +988,7 @@
 
         .vm-zoom-stack {
           left: 10px !important;
-          top: 165px !important;
+          top: 92px !important;
           bottom: auto !important;
         }
 
@@ -854,6 +1002,13 @@
         .vm-info-popup {
           min-width: 220px;
           max-width: calc(100% - 20px);
+        }
+
+        .vm-map-statusbar {
+          left: 10px;
+          right: 10px;
+          bottom: 10px;
+          gap: 10px;
         }
 
         .vm-map-shell .vm-scale-line,
@@ -907,6 +1062,10 @@
   let snapLoadAbortController = null;
   let snapExtentKey = "";
   let selectedTerrainDetail = null;
+  const layerGroupState = {
+    catastro: true,
+    cartografia: true,
+  };
 
   const WMS_URL = `${rp}/proxy/wms`;
   const parsedLayers = String(
@@ -961,13 +1120,37 @@
 
   function layerTitleFromName(layerName) {
     const raw = String(layerName || "").split(":").pop() || String(layerName || "");
-    const knownLabels = {
-      arb_terreno: "Terreno",
-      arb_terrenohistorico: "Terreno historico",
-      arb_construccion: "Construccion",
-      arb_unidadconstruccion: "Unidad construccion",
-      arb_direccion: "Direccion",
-    };
+      const knownLabels = {
+        arb_terreno: "Terreno",
+        arb_terrenohistorico: "Terreno historico",
+        arb_construccion: "Construccion",
+        arb_unidadconstruccion: "Unidad construccion",
+        arb_direccion: "Direccion",
+        sucre_cartografia: "Cartografia catastral",
+        saravena_cartografia: "Cartografia catastral",
+        almaguer_cartografia: "Cartografia catastral",
+        cc_barrio: "(CC) Barrio",
+        cc_centropoblado: "(CC) Centro poblado",
+        cc_corregimiento: "(CC) Corregimiento",
+        cc_limitemunicipio: "(CC) Limite municipio",
+        cc_localidadcomuna: "(CC) Localidad comuna",
+        cc_manzana: "(CC) Manzana",
+        cc_nomenclaturavial: "(CC) Nomenclatura vial",
+        cc_nomenclaturavial_tipo_via: "(CC) Tipo via",
+        cc_perimetrourbano: "(CC) Perimetro urbano",
+        cc_sectorrural: "(CC) Sector rural",
+        cc_sectorurbano: "(CC) Sector urbano",
+        cc_vereda: "(CC) Vereda",
+        manzana: "(CC) Manzana",
+        "nomenclatura vial": "(CC) Nomenclatura vial",
+        perimetro_urbano: "(CC) Perimetro urbano",
+        "perimetro urbano": "(CC) Perimetro urbano",
+        sector_rural: "(CC) Sector rural",
+        "sector rural": "(CC) Sector rural",
+        sector_urbano: "(CC) Sector urbano",
+        "sector urbano": "(CC) Sector urbano",
+        vereda: "(CC) Vereda",
+      };
     if (knownLabels[raw]) return knownLabels[raw];
     return raw
       .replace(/_/g, " ")
@@ -1155,6 +1338,71 @@
     }));
   }
 
+  function defaultCartografiaLayerDefs() {
+    return [
+      { suffixes: ["cc_manzana", "MANZANA"], title: "(CC) Manzana" },
+      { suffixes: ["cc_nomenclaturavial", "NOMENCLATURA VIAL"], title: "(CC) Nomenclatura vial" },
+      { suffixes: ["cc_perimetrourbano", "PERIMETRO URBANO"], title: "(CC) Perimetro urbano" },
+      { suffixes: ["cc_sectorrural", "SECTOR RURAL"], title: "(CC) Sector rural" },
+      { suffixes: ["cc_sectorurbano", "SECTOR_URBANO"], title: "(CC) Sector urbano" },
+      { suffixes: ["cc_vereda", "VEREDA"], title: "(CC) Vereda" },
+    ];
+  }
+
+  function defaultCartografiaSubLayers(namespace, { qualified = true } = {}) {
+    const entries = [];
+    defaultCartografiaLayerDefs().forEach((d) => {
+      (d.suffixes || []).forEach((suffix) => {
+        entries.push({
+          name: qualified && namespace ? `${namespace}:${suffix}` : suffix,
+          title: d.title,
+        });
+      });
+    });
+    return entries;
+  }
+
+  function normalizeLayerLookupName(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[_\s]+/g, " ");
+  }
+
+  function cartografiaLayerMatchers() {
+    return [
+      { matches: ["cc manzana", "manzana"], title: "(CC) Manzana" },
+      { matches: ["cc nomenclaturavial", "nomenclatura vial"], title: "(CC) Nomenclatura vial" },
+      { matches: ["cc perimetrourbano", "perimetro urbano"], title: "(CC) Perimetro urbano" },
+      { matches: ["cc sectorrural", "sector rural"], title: "(CC) Sector rural" },
+      { matches: ["cc sectorurbano", "sector urbano"], title: "(CC) Sector urbano" },
+      { matches: ["cc vereda", "vereda"], title: "(CC) Vereda" },
+    ];
+  }
+
+  function resolvePublishedCartografiaLayers(availableNames, namespace) {
+    const rows = [];
+    const availableList = Array.from(availableNames || []);
+    const prefix = namespace ? `${String(namespace).toLowerCase()}:` : "";
+
+    cartografiaLayerMatchers().forEach((matcher) => {
+      const found = availableList.find((name) => {
+        if (prefix && !name.startsWith(prefix)) return false;
+        const suffix = prefix ? name.slice(prefix.length) : name;
+        const normalized = normalizeLayerLookupName(suffix);
+        return matcher.matches.includes(normalized);
+      });
+      if (found) {
+        rows.push({
+          name: found,
+          title: matcher.title,
+        });
+      }
+    });
+
+    return rows;
+  }
+
   function resolvePublishedBasePrincipalLayers(availableNames, namespace) {
     const qualifiedDefaults = defaultBasePrincipalSubLayers(namespace, {
       qualified: true,
@@ -1212,6 +1460,112 @@
     });
 
     return expanded;
+  }
+
+  async function resolveConfiguredLayerEntries(configuredLayers) {
+    const fallback = expandConfiguredLayers(configuredLayers);
+    const xmlDoc = await getWmsCapabilitiesDoc();
+    if (!xmlDoc) return fallback;
+
+    const availableNames = getPublishedLayerNames(xmlDoc);
+    const resolved = [];
+    const seen = new Set();
+
+    const add = (layer) => {
+      const name = String(layer?.name || "").trim();
+      if (!name) return;
+      const key = name.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      resolved.push({
+        name,
+        title: String(layer?.title || "").trim() || layerTitleFromName(name),
+      });
+    };
+
+    for (const configuredName of configuredLayers || []) {
+      const clean = String(configuredName || "").trim();
+      if (!clean) continue;
+
+      const [namespace, layerPart = ""] = clean.includes(":")
+        ? clean.split(":", 2)
+        : ["", clean];
+      const normalizedPart = String(layerPart || "").trim().toLowerCase();
+
+      if (normalizedPart === "base_principal") {
+        const qualifiedDefaults = defaultBasePrincipalSubLayers(namespace, {
+          qualified: true,
+        });
+        const existingQualifiedDefaults = qualifiedDefaults.filter((layer) =>
+          availableNames.has(String(layer.name).toLowerCase()),
+        );
+        if (existingQualifiedDefaults.length) {
+          existingQualifiedDefaults.forEach(add);
+          continue;
+        }
+
+        const groupNode = findLayerNodeByName(xmlDoc, clean);
+        if (groupNode) {
+          const leaves = collectLeafLayers(groupNode);
+          if (leaves.length) {
+            leaves.forEach(add);
+            continue;
+          }
+        }
+
+        defaultBasePrincipalSubLayers(namespace).forEach(add);
+        continue;
+      }
+
+      if (normalizedPart.endsWith("_cartografia")) {
+        const publishedMatches = resolvePublishedCartografiaLayers(availableNames, namespace);
+        if (publishedMatches.length) {
+          publishedMatches.forEach(add);
+          continue;
+        }
+
+        const qualifiedDefaults = defaultCartografiaSubLayers(namespace, {
+          qualified: true,
+        });
+        const existingQualifiedDefaults = qualifiedDefaults.filter((layer) =>
+          availableNames.has(String(layer.name).toLowerCase()),
+        );
+        if (existingQualifiedDefaults.length) {
+          existingQualifiedDefaults.forEach(add);
+          continue;
+        }
+
+        const unqualifiedDefaults = defaultCartografiaSubLayers(namespace, {
+          qualified: false,
+        });
+        const existingUnqualifiedDefaults = unqualifiedDefaults.filter((layer) =>
+          availableNames.has(String(layer.name).toLowerCase()),
+        );
+        if (existingUnqualifiedDefaults.length) {
+          existingUnqualifiedDefaults.forEach(add);
+          continue;
+        }
+
+        const groupNode = findLayerNodeByName(xmlDoc, clean);
+        if (groupNode) {
+          const leaves = collectLeafLayers(groupNode);
+          if (leaves.length) {
+            leaves.forEach(add);
+            continue;
+          }
+        }
+
+        qualifiedDefaults.forEach(add);
+        continue;
+      }
+
+      add({
+        name: clean,
+        title: layerTitleFromName(clean),
+      });
+    }
+
+    return resolved.length ? resolved : fallback;
   }
 
   function getPublishedLayerNames(xmlDoc) {
@@ -1301,7 +1655,7 @@
       return;
     }
 
-    wmsLayerEntries.forEach((entry, idx) => {
+    const createLayerRow = (entry) => {
       const row = document.createElement("div");
       row.className = "vm-layer-item";
       const isOn = Boolean(entry.layer.getVisible());
@@ -1342,7 +1696,11 @@
       labelWrap.appendChild(label);
       row.appendChild(labelWrap);
       row.appendChild(sw);
-      box.appendChild(row);
+      return row;
+    };
+
+    wmsLayerEntries.forEach((entry) => {
+      box.appendChild(createLayerRow(entry));
     });
 
     const hideBtn = document.getElementById("vmHideLayers");
@@ -1365,6 +1723,8 @@
     const hideBtn = document.getElementById("vmHideLayers");
     const zoomBtn = document.getElementById("vmZoomProject");
     const basemapSelect = document.getElementById("vmBasemapSelect");
+    const stackLayerBtn = document.getElementById("vmStackLayerPanelBtn");
+    const stackBasemapBtn = document.getElementById("vmStackBasemapPanelBtn");
 
     const setExpanded = (layersOpen, basemapOpen) => {
       openLayerBtn?.setAttribute("aria-expanded", layersOpen ? "true" : "false");
@@ -1397,6 +1757,18 @@
     });
 
     openBasemapBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      togglePanel(basemapPanel);
+    });
+
+    stackLayerBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      togglePanel(layerPanel);
+    });
+
+    stackBasemapBtn?.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
       togglePanel(basemapPanel);
@@ -1457,6 +1829,8 @@
 
     const zoomInBtn = document.getElementById("vmZoomInBtn");
     const zoomOutBtn = document.getElementById("vmZoomOutBtn");
+    const zoomProjectBtn = document.getElementById("vmZoomProjectStackBtn");
+    const selectModeBtn = document.getElementById("vmSelectModeBtn");
 
     zoomInBtn?.addEventListener("click", () => {
       if (!mapInstance) return;
@@ -1470,6 +1844,15 @@
       const view = mapInstance.getView();
       const current = Number(view.getZoom() || 0);
       view.animate({ zoom: current - 1, duration: 180 });
+    });
+
+    zoomProjectBtn?.addEventListener("click", () => {
+      document.getElementById("vmZoomProject")?.click();
+    });
+
+    selectModeBtn?.addEventListener("click", () => {
+      disableMeasureTool();
+      selectModeBtn.classList.add("is-active");
     });
   }
 
@@ -1521,11 +1904,13 @@
     const valueNode = document.getElementById("vmMeasureValue");
     const distanceButton = document.getElementById("vmMeasureBtn");
     const areaButton = document.getElementById("vmMeasureAreaBtn");
+    const selectButton = document.getElementById("vmSelectModeBtn");
     if (panel) panel.classList.toggle("hidden", !visible);
     if (statusNode) statusNode.textContent = status;
     if (valueNode) valueNode.textContent = value;
     if (distanceButton) distanceButton.classList.toggle("is-active", measureMode === "distance");
     if (areaButton) areaButton.classList.toggle("is-active", measureMode === "area");
+    if (selectButton) selectButton.classList.toggle("is-active", !measureMode);
   }
 
   function hideSnapMarker() {
@@ -1976,13 +2361,13 @@
 
   function showInfoPopup(detail, pixel) {
     const popup = document.getElementById("vmInfoPopup");
-    const idOperacion = document.getElementById("vmInfoOperacion");
     const numeroPredial = document.getElementById("vmInfoNumeroPredial");
+    const areaNode = document.getElementById("vmInfoArea");
     const mapTarget = document.getElementById("map");
-    if (!popup || !idOperacion || !numeroPredial || !mapTarget || !Array.isArray(pixel)) return;
+    if (!popup || !numeroPredial || !areaNode || !mapTarget || !Array.isArray(pixel)) return;
 
-    idOperacion.textContent = detail?.id_operacion || "Sin dato";
-    numeroPredial.textContent = detail?.numero_predial_nacional || "Sin dato";
+    numeroPredial.textContent = detail?.numero_predial_nacional || detail?.id_operacion || "Sin dato";
+    areaNode.textContent = formatVisorArea(detail?.terreno_geom);
 
     const x = Math.min(Math.max(Number(pixel[0] || 0) + 14, 12), Math.max(mapTarget.clientWidth - 252, 12));
     const y = Math.min(Math.max(Number(pixel[1] || 0) - 16, 12), Math.max(mapTarget.clientHeight - 120, 12));
@@ -2094,12 +2479,19 @@
         runPredioSearchFromViewer();
       });
 
-    document.getElementById("vmStackLegendBtn")?.addEventListener("click", () => {
+    document.getElementById("vmStackLegendBtn")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
       toggleLegendCard();
     });
 
-    document.getElementById("vmStackSearchBtn")?.addEventListener("click", () => {
-      document.getElementById("vmPredioSearchInput")?.focus();
+    document.getElementById("vmCloseLegendCard")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      toggleLegendCard(false);
+    });
+
+    document.querySelector(".vm-legend-card")?.addEventListener("click", (event) => {
+      event.stopPropagation();
     });
 
     document.getElementById("vmStackPrintBtn")?.addEventListener("click", () => {
@@ -2275,13 +2667,46 @@
     }
   }
 
+
+  function bindViewerMapStatusBar() {
+    if (!mapInstance) return;
+    const coordX = document.getElementById("vmCoordX");
+    const coordY = document.getElementById("vmCoordY");
+    const scaleText = document.getElementById("vmScaleText");
+    const updateScale = () => {
+      const scaleNode = document.querySelector(".vm-scale-line-inner");
+      if (scaleText && scaleNode) {
+        scaleText.textContent = String(scaleNode.textContent || "--").trim() || "--";
+      }
+    };
+    mapInstance.on("pointermove", (evt) => {
+      if (!Array.isArray(evt.coordinate)) return;
+      if (coordX) coordX.textContent = Number(evt.coordinate[0]).toFixed(2);
+      if (coordY) coordY.textContent = Number(evt.coordinate[1]).toFixed(2);
+      updateScale();
+    });
+    mapInstance.on("moveend", updateScale);
+    setTimeout(updateScale, 80);
+  }
+
   async function initMap() {
     if (mapInstance) return;
 
-    const resolvedLayersObj = expandConfiguredLayers(GEOSERVER_LAYERS);
-    const resolvedLayers = resolvedLayersObj.map(l => l.name);
+    const resolvedLayersObj = await resolveConfiguredLayerEntries(GEOSERVER_LAYERS);
+    const resolvedLayers = resolvedLayersObj
+      .slice()
+      .sort((a, b) => {
+        const aName = String(a?.name || "").split(":").pop().toLowerCase();
+        const bName = String(b?.name || "").split(":").pop().toLowerCase();
+        const aIsCartografia = aName.startsWith("cc_");
+        const bIsCartografia = bName.startsWith("cc_");
+        if (aIsCartografia === bIsCartografia) return 0;
+        return aIsCartografia ? 1 : -1;
+      })
+      .map((l) => l.name);
 
     wmsLayerEntries = resolvedLayers.map((layerName) => {
+      const layerMeta = resolvedLayersObj.find((entry) => entry.name === layerName);
       const source = new ol.source.TileWMS({
         url: WMS_URL,
         params: {
@@ -2304,7 +2729,7 @@
 
       return {
         name: layerName,
-        title: layerTitleFromName(layerName),
+        title: layerMeta?.title || layerTitleFromName(layerName),
         layer: new ol.layer.Tile({ source, visible: true }),
       };
     });
@@ -2459,6 +2884,7 @@
     clearFloatingPredioInfo();
     bindViewerShellControls();
     await initMap();
+    bindViewerMapStatusBar();
     await loadProjectExtent();
     setTimeout(() => {
       mapInstance?.updateSize?.();
