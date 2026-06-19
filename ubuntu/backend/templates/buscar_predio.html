@@ -30,15 +30,15 @@
 
             <!-- Tarjeta superior izquierda -->
             <div class="col-12">
-              <div class="card rounded-4 shadow-sm h-100 tarjeta-predio" >
+              <div class="card  p-2  h-100 tarjeta-predio shadow">
                 <div class="card-body d-flex flex-column gap-3">
 
                   <!-- encabezado -->
-                  <div class="row g-3 align-items-start py-3">
+                  <div class="row g-3 align-items-start border-0 pt-3 pb-2 ">
                     <div class="col-12 col-md mt-0  h-100 align-items-center d-flex">
                       <div class="d-flex align-items-center gap-2">
                         <div class="section-icons mb-0">
-                          <div class="icons-bg  d-flex justify-content-center align-items-center" >
+                          <div class="icons-bg  d-flex justify-content-center align-items-center me-1">
                             <!-- <i class=" fa-solid fa-map-location-dot"></i> -->
                             <svg xmlns="http://www.w3.org/2000/svg"
                               viewBox="0 0 640 512"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
@@ -47,13 +47,32 @@
                             </svg>
                           </div>
                         </div>
-                        <div class="section-title-card mb-0 fw-bold">Resumen predio</div>
+                        <!-- <div class="section-title-card mb-0 fw-bold">Resumen predio</div> -->
+                        <!-- NPN -->
+                        <div class="h-100 pe-lg-3 border-lg-end">
+                          <p class="d-block fw-bold text-label-npn text-white mb-0">Numero predial:</p>
+                          <div id="resumenPredioNpn" class="result-npn text-white">
+                            {{ npn if npn is defined else "" }}
+                          </div>
+
+                          <div class="d-flex align-items-center justify-content-start gap-3">
+                            <div class="d-flex align-items-center gap-1">
+                              <i class="bi bi-signpost"></i>
+                              <small class="fw-bold"> Dirección: </small>
+                            </div>
+                            <div id="resumenPredioDireccion" class="result-npn text-white">
+                              -
+                            </div>
+                          </div>
+
+                        </div>
                       </div>
                     </div>
 
                     <div class="col-12 col-md-auto mt-0">
-                      <div class="mostrar-id-predio text-white  text-center">
-                        <small class="text-white d-block text-id-predio fw-light">ID Operación:</small>
+                      <div
+                        class="mostrar-id-predio d-flex align-items-center justify-content-between text-white  text-center">
+                        <small class="text-white d-block text-id-predio fw-light mt-0 me-2">ID Operación:</small>
                         <div id="resumenPredioId" class="num-id-predio">
                           {{ predio_id if predio_id is defined else "" }}
                         </div>
@@ -64,25 +83,16 @@
                   <!-- contenido NPN + resumen -->
                   <div class="row g-3 align-items-center">
 
-                    <!-- NPN -->
-                    <div class="col-12 col-lg-4">
-                      <div class="h-100 pe-lg-3 border-lg-end">
-                        <small class="d-block fw-bold text-label-npn">Numero predial:</small>
-                        <div id="resumenPredioNpn" class="result-npn">
-                          {{ npn if npn is defined else "" }}
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- métricas -->
-                    <div class="col-12 col-lg-8">
+                    <!-- mÃ©tricas -->
+                    <div class="col-12 col-lg-12">
                       <div class="row g-2">
 
-                        <div class="col-12 col-sm-6 col-xl-4">
-                          <div class="d-flex align-items-center gap-2 resumen-interesado p-2 h-100">
+                        <div class="col-12 col-sm-6 col-xl-4 px-2">
+                          <div class="d-flex align-items-center  gap-2 resumen-interesado interesado  p-3  h-100">
                             <div
                               class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle">
-                              <i class="fa-solid fa-users-line"></i>
+                              <!-- <i class="fa-solid fa-users-line"></i> -->
+                              <i class="bi bi-people-fill fs-5"></i>
                             </div>
                             <div class="d-flex flex-column lh-sm">
                               <small class="resumen-item-label">Interesados</small>
@@ -91,11 +101,13 @@
                           </div>
                         </div>
 
-                        <div class="col-12 col-sm-6 col-xl-4">
-                          <div class="d-flex align-items-center gap-2 resumen-interesado p-2 h-100">
+                        <div class="col-12 col-sm-6 col-xl-4 px-2">
+                          <div
+                            class="d-flex align-items-center gap-2 resumen-interesado construcciones flex-shrink-0 p-3  h-100">
                             <div
-                              class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle">
-                              <i class="fa-solid fa-building-circle-check"></i>
+                              class="rounded-circle d-flex align-items-center justify-content-center resumen-icon-circle">
+                              <!-- <i class="fa-solid fa-building-circle-check fs-5"></i> -->
+                              <i class="bi bi-houses-fill fs-5"></i>
                             </div>
                             <div class="d-flex flex-column lh-sm">
                               <small class="resumen-item-label">Construcciones</small>
@@ -104,11 +116,13 @@
                           </div>
                         </div>
 
-                        <div class="col-12 col-sm-6 col-xl-4">
-                          <div class="d-flex align-items-center gap-2 resumen-interesado p-2 h-100">
+                        <div class="col-12 col-sm-6 col-xl-4 px-2">
+                          <div
+                            class="d-flex align-items-center gap-2 resumen-interesado u_construccion flex-shrink-0 p-3  h-100">
                             <div
-                              class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle">
-                              <i class="fa-solid fa-house-chimney"></i>
+                              class="rounded-circle d-flex align-items-center justify-content-center  resumen-icon-circle">
+                              <!-- <i class="fa-solid fa-house-chimney fs-5"></i> -->
+                              <i class="bi bi-house-fill fs-5"></i>
                             </div>
                             <div class="d-flex flex-column lh-sm">
                               <small class="resumen-item-label">U. Construcción</small>
@@ -123,16 +137,22 @@
               </div>
             </div>
 
-            <!-- Tarjeta inferior 1 -->
-            <div class="col-12">
-              <div class="card border rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
+            <!-- Tarjeta inferior 1 (Información del predio) -->
+            <div class="col-6">
+              <div class="card  rounded-4 shadow  h-100 tarjeta-predio tarjeta-placeholder-superior">
                 <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100">
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
-                      <i class="fa-solid fa-house-chimney icono-predio"></i>
+                  <div class="d-flex align-items-center gap-2">
+
+                    <div class="section-icons mb-0">
+                      <div class="icons-bg-menu  d-flex justify-content-center align-items-center me-1"
+                        style="background-color: #6aa4d4;;">
+                        <!-- <i class=" fa-solid fa-map-location-dot"></i> -->
+                        <i class="fa-solid fa-location-dot fs-5"></i>
+
+                      </div>
                     </div>
                     <div class="title-part-predio mb-0">
-                      Información tabla predio
+                      Información predio
                     </div>
                   </div>
                   <button type="button"
@@ -145,16 +165,48 @@
               </div>
             </div>
 
-            <!-- Tarjeta inferior 2 -->
-            <div class="col-12">
-              <div class="card border rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
+            <!-- Tarjeta inferior 1.2 (Información de marcas, novedades y trámites) -->
+
+            <div class="col-6">
+              <div class="card  rounded-4 shadow  h-100 tarjeta-predio tarjeta-placeholder-superior">
                 <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100">
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
-                      <i class="fa-solid fa-scale-unbalanced"></i>
+                  <div class="d-flex align-items-center gap-2">
+
+                    <div class="section-icons mb-0">
+                      <div class="icons-bg-menu  d-flex justify-content-center align-items-center me-1"
+                        style="background-color: #6aa4d4;;">
+                        <i class="bi bi-flag-fill fs-5"></i>
+                      </div>
                     </div>
                     <div class="title-part-predio mb-0">
-                      Información Jurídica
+                      Marcas, novedades y trámites
+                    </div>
+                  </div>
+                  <button type="button"
+                    class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+                    data-bs-toggle="modal" data-bs-target="#modalInformacionMarcas"
+                    aria-label="Ver información tabla predio">
+                    <i class="fa-regular fa-eye eye-icon-predio"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tarjeta inferior 2 -->
+            <div class="col-12">
+              <div class="card rounded-4 shadow  h-100 tarjeta-predio tarjeta-placeholder-superior">
+                <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100">
+                  <div class="d-flex align-items-center gap-2">
+
+                    <div class="section-icons mb-0">
+                      <div class="icons-bg-menu  d-flex justify-content-center align-items-center me-1"
+                        style="background-color: #6aa4d4;;">
+                        <i class="fa-solid fa-scale-unbalanced fs-5"></i>
+                      </div>
+                    </div>
+
+                    <div class="title-part-predio mb-0">
+                      Derechos, interesados y fuente adiminstrativa
                     </div>
                   </div>
 
@@ -174,7 +226,7 @@
         <!-- Columna derecha -->
         <div class="col-12 col-xl-4">
           <div class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio h-100 d-flex flex-column">
-            <div class="card-header border-0 p-0 rounded-top-4">
+            <div class="card-header  p-0 rounded-top-4 py-2">
               <div class="d-flex align-items-start gap-2 px-3 py-2">
                 <span class="lh-1 mt-2"><i class="bi bi-crosshair"></i></span>
                 <div class="lh-sm">
@@ -206,22 +258,28 @@
 
             <!-- Tarjeta: Información de construcciones -->
             <div class="col-12 col-md-6 d-flex">
-              <div class="card border rounded-4 shadow-sm w-100 d-flex flex-column tarjeta-inferior-base ">
-                <div class="card-body d-flex flex-column" >
-                  <div class="d-flex justify-content-between align-items-center mt-1  h-100">
+              <div class="card  border-0 shadow rounded-4  w-100 d-flex flex-column tarjeta-inferior-base h-100 ">
+                <div class="card-body d-flex flex-column h-100">
+                  <div class="d-flex justify-content-between align-items-center mt-1  ">
                     <div class="d-flex align-items-start gap-2 flex-grow-1">
-                      <div
+                      <!-- <div
                         class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 table-icon-circle">
                         <i class="fa-solid fa-building-circle-check"></i>
+                      </div> -->
+                      <div class="section-icons mb-0">
+                        <div class="icons-bg-menu  d-flex justify-content-center align-items-center me-1 "
+                          style="background-color: #6aa4d4;">
+                          <i class="bi bi-houses-fill fs-5"></i>
+                        </div>
                       </div>
-                      <div class="d-flex flex-column lh-sm">
+                      <div class="d-flex flex-column justify-content-center  h-100 ">
                         <div class="fw-bold table-item-label">Información de construcciones</div>
                         <div class="table-item-text">
                           Clic en ver detalle para consultar las unidades de construcción asociadas
                         </div>
                       </div>
                     </div>
-                    <button class="btn btn-sm border-0 shadow-none ms-2" type="button" data-bs-toggle="collapse"
+                    <button class="btn btn-sm  shadow-none ms-2" type="button" data-bs-toggle="collapse"
                       data-bs-target="#detalleConstrucciones" aria-expanded="false"
                       aria-controls="detalleConstrucciones"
                       onclick="this.querySelector('i').classList.toggle('rotate-180')">
@@ -231,15 +289,15 @@
 
                   <div class="collapse mt-2" id="detalleConstrucciones">
                     <div class="tabla-construcciones-wrap mt-3 flex-grow-1">
-                      <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+                      <div class="table-responsive" style="max-height: 305px; overflow-y: auto;">
                         <table class="table tabla-construcciones mb-0" id="tblConsCollapse" style="display:none;">
                           <thead>
                             <tr>
-                              <th class="text-center">Ver</th>
+                              <th class="text-center" style="border-bottom-left-radius:13px;">Ver</th>
                               <th class="text-center">Identificador</th>
                               <th class="text-center">Tipo de construcción</th>
                               <th class="text-center">Predio</th>
-                              <th class="text-center">U.C asociada</th>
+                              <th class="text-center" style="border-bottom-right-radius:13px;">U.C asociada</th>
                             </tr>
                           </thead>
                           <tbody id="tbodyConsCollapse"></tbody>
@@ -256,22 +314,29 @@
 
             <!-- Tarjeta: Unidad de construcción -->
             <div class="col-12 col-md-6 d-flex">
-              <div class="card border rounded-4 shadow-sm w-100 d-flex flex-column tarjeta-inferior-base"
+              <div class="card border-0  shadow rounded-4 w-100 d-flex flex-column tarjeta-inferior-base"
                 id="cardUnidadConstruccion">
                 <div class="card-body d-flex flex-column">
-                  <div class="encabezado-unidad-construccion  h-100">
-                    <div class="titulo-unidad-construccion">
-                      <div
+                  <div class="encabezado-unidad-construccion  h-100 ">
+                    <div class="titulo-unidad-construccion ">
+                      <!-- <div
                         class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 table-icon-circle">
                         <i class="fa-solid fa-house-chimney"></i>
+                      </div> -->
+
+                      <div class="section-icons mb-0">
+                        <div class="icons-bg-menu  d-flex justify-content-center align-items-center me-1"
+                          style="background-color: #6aa4d4;">
+                          <i class="bi bi-house-fill fs-5"></i>
+                        </div>
                       </div>
                       <div>
                         <div class="fw-bold table-item-label mb-0">Unidad de construcción</div>
                       </div>
                     </div>
 
-                    <div id="mensajeSinSeleccionUc" class="mensaje-sin-seleccion-uc-wrap">
-                      <div class="alert alert-information border-0 rounded-4 shadow-sm mensaje-seleccion-uc"
+                    <div id="mensajeSinSeleccionUc" class="mensaje-sin-seleccion-uc-wrap ">
+                      <div class="alert alert-information border-0 rounded-4 shadow-sm mensaje-seleccion-uc "
                         role="alert"
                         title="Selecciona una construcción para ver las unidades de construcción asociadas.">
                         Selecciona una construcción para mostrar información
@@ -289,8 +354,8 @@
                     </div>
                   </div>
 
-                  <div class="collapse mt-3" id="detalleUnidadConstruccionCard">
-                    <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+                  <div class="collapse mt-3 " id="detalleUnidadConstruccionCard">
+                    <div class="table-responsive" style="max-height: 305px; overflow-y: auto;">
                       <table class="table table-hover mb-0 tabla-unidad-construccion align-middle"
                         id="tblUnidadConstruccionCard">
                         <thead class="table-light">
@@ -328,7 +393,7 @@
         style="background-color: #fff;">
         <div class="d-flex align-items-center gap-3">
           <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
-            <i class="fa-solid fa-house-chimney icono-predio"></i>
+            <i class="fa-solid fa-location-dot icono-predio"></i>
           </div>
           <div class="title-part-predio mb-0">
             Información tabla predio
@@ -472,7 +537,9 @@
             <!-- tarjeta derecha -->
             <div class="col-12 col-xl-auto">
               <div class="card border-0 rounded-4 shadow-none h-100 tarjeta-modal-visita">
-                <div class="card-body p-0 m-0 d-flex flex-column align-items-start">
+                <div class="card-body p-0 m-0 d-flex flex-column align-items-start ">
+
+                  <!-- acordión de restulado de visita prediall -->
                   <div class="part-juy p-3 d-flex align-items-center gap-2 w-100" data-bs-toggle="collapse"
                     data-bs-target="#contenidoVisita" aria-expanded="false" aria-controls="contenidoVisita"
                     onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-visita').classList.toggle('rotate-180')"
@@ -574,6 +641,9 @@
                       </div>
                     </div>
                   </div>
+
+                  <!-- acordión de restulado de jurídica del predio -->
+
                   <div class="part-juy p-3 d-flex align-items-center gap-2 w-100 mt-3" data-bs-toggle="collapse"
                     data-bs-target="#contenidoJuridico" aria-expanded="false" aria-controls="contenidoJuridico"
                     onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-juridico').classList.toggle('rotate-180')"
@@ -650,6 +720,339 @@
                       </div>
                     </div>
                   </div>
+
+                  <!-- acordión de restulado de información PH -->
+
+                  <div class="part-juy p-3 d-flex align-items-center gap-2 w-100 mt-3" data-bs-toggle="collapse"
+                    data-bs-target="#contenidoPH" aria-expanded="false" aria-controls="contenidoJuridico"
+                    onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-juridico').classList.toggle('rotate-180')"
+                    style="cursor: pointer;">
+                    <!-- <i class="fa-solid fa-scale-balanced text-white fs-5"></i>
+                    <i class="fa-regular fa-font-awesome" style="color: #ffffff;"></i> -->
+                    <i class="bi bi-building-exclamation text-white"></i>
+                    <div class="tit-iops fw-semibold">Información de PH</div>
+                    <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-juridico"></i>
+                  </div>
+
+                  <div class="collapse w-100" id="contenidoPH">
+                    <div class="contenido-visita p-1">
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Nombre</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Beneficio de comunidades indígenas</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Predio Matriz</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Control de calidad</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Comodato</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Cabida y Linderos</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Observación jurídica</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">¿Validó control de calidad?</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- modal información Marcas -->
+<div class="modal fade" id="modalInformacionMarcas" tabindex="-1" aria-labelledby="modalInformacionMarcasLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-marcas-dialog">
+    <div class="modal-content rounded-4 border-0 shadow modal-predio-content">
+
+      <div class="modal-header border-0 d-flex justify-content-between align-items-center"
+        style="background-color: #fff;">
+        <div class="d-flex align-items-center gap-3">
+          <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
+            <!-- <i class="fa-solid fa-house-chimney icono-predio"></i> -->
+            <i class="bi bi-flag-fill icono-predio"></i>
+          </div>
+          <div class="title-part-predio mb-0">
+            Desglose de marcas
+          </div>
+        </div>
+
+        <button type="button"
+          class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+          data-bs-dismiss="modal" aria-label="Cerrar información tabla predio">
+          <i class="fa-regular fa-eye-slash eye-icon-predio"></i>
+        </button>
+      </div>
+
+      <div class="modal-body modal-predio-body">
+        <div class="container-fluid p-0">
+          <div class="row g-3 g-xl-0 align-items-stretch modal-predio-row justify-content-center">
+
+            <!-- tarjeta izquierda -->
+            <div class="col-12 col-xl-auto">
+              <div class="card border-0 rounded-4 shadow-none h-100 tarjeta-modal-visita">
+                <div class="card-body p-0 m-0 d-flex flex-column align-items-start ">
+
+                  <!-- acordión de marcas prediales -->
+                  <div class="part-juy p-3 d-flex align-items-center gap-2 w-100" data-bs-toggle="collapse"
+                    data-bs-target="#contenidoMarcasPrediales" aria-expanded="false"
+                    aria-controls="contenidoMarcasPrediales"
+                    onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-visita').classList.toggle('rotate-180')"
+                    style="cursor: pointer;">
+                    <i class="bi bi-geo text-white "></i>
+                    <div class="tit-iops fw-semibold">Marcas prediales</div>
+                    <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-visita"></i>
+                  </div>
+
+                  <div class="collapse w-100" id="contenidoMarcasPrediales">
+                    <div class="contenido-visita p-1">
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-7">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Tipo de marca</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Fecha de creación</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-7">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Fecha de finalización</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">¿Fue resuelta?</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-12">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num ">Observación</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- acordión novedad del folio de matrícula-->
+                  <div class="part-juy p-3 d-flex align-items-center gap-2 w-100 mt-3" data-bs-toggle="collapse"
+                    data-bs-target="#contenidoNovedadFMI" aria-expanded="false" aria-controls="contenidoNovedadFMI"
+                    onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-juridico').classList.toggle('rotate-180')"
+                    style="cursor: pointer;">
+                    <i class="bi bi-file-earmark-plus text-white "></i>
+                    <div class="tit-iops fw-semibold">Novedad FMI</div>
+                    <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-juridico"></i>
+                  </div>
+
+                  <div class="collapse border-0 w-100" id="contenidoNovedadFMI">
+                    <div class="contenido-visita p-1">
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Tipo de novedad</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Código ORIP</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-start ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Número FMI</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+            <!-- separador -->
+            <div class="col-12 col-xl-auto d-none d-xl-flex justify-content-center px-3">
+              <div class="vr h-100 modal-predio-divider"></div>
+            </div>
+
+            <!-- tarjeta derecha -->
+            <div class="col-12 col-xl-auto">
+              <div class="card border-0 rounded-4 shadow-none h-100 tarjeta-modal-visita">
+                <div class="card-body p-0 m-0 d-flex flex-column align-items-start w-100">
+
+                  <!-- acordión de novedad número predial-->
+                  <div class="part-juy p-3 d-flex align-items-center gap-2 w-100" data-bs-toggle="collapse"
+                    data-bs-target="#contenidoNovedadNumeroPredial" aria-expanded="false"
+                    aria-controls="contenidoNovedadNumeroPredial"
+                    onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-visita').classList.toggle('rotate-180')"
+                    style="cursor: pointer;">
+                    <i class="bi bi-tag text-white "></i>
+                    <!-- <i class="fa-solid fa-door-open text-white fs-5"></i> -->
+                    <div class="tit-iops fw-semibold">Novedad número predial</div>
+                    <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-visita"></i>
+                  </div>
+
+                  <div class="collapse w-100" id="contenidoNovedadNumeroPredial">
+                    <div class="contenido-visita p-1">
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-7">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Tipo de novedad</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-5">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Número predial</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <!-- acordión trámites  -->
+
+                  <div class="part-juy p-3 d-flex align-items-center gap-2 w-100 mt-3" data-bs-toggle="collapse"
+                    data-bs-target="#contenidoTramites" aria-expanded="false" aria-controls="contenidoTramites"
+                    onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-juridico').classList.toggle('rotate-180')"
+                    style="cursor: pointer;">
+                    <i class="bi bi-journal-medical text-white "></i>
+                    <!-- <i class="fa-solid fa-scale-balanced text-white fs-5"></i> -->
+                    <div class="tit-iops fw-semibold">Trámites</div>
+                    <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-juridico"></i>
+                  </div>
+
+                  <div class="collapse w-100" id="contenidoTramites">
+                    <div class="contenido-visita p-1">
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Entidad</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Trámite</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Fecha de radicación</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Número de radicación</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-start ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">¿Fue resuelta?</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 ">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Observación</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -661,7 +1064,7 @@
 </div>
 
 
-<!-- modal información adicional -->
+<!-- modal información derechos-->
 <div class="modal fade" id="modalInformacionAdicional" tabindex="-1" aria-labelledby="modalInformacionAdicionalLabel"
   aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-ancho-medio">
@@ -670,10 +1073,10 @@
         style="background-color: #fff;">
         <div class="d-flex align-items-center gap-3">
           <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
-            <i class="fa-solid fa-circle-info icono-predio"></i>
+            <i class="fa-solid fa-scale-unbalanced icono-predio"></i>
           </div>
           <div class="title-part-predio mb-0">
-            Información adicional
+            Información derechos, fuentes e interesados
           </div>
         </div>
         <button type="button"
@@ -968,7 +1371,7 @@
 
                 <div class="col-12">
                   <div class="uc-info-row">
-                    <div class="uc-info-label">Áño de construcción</div>
+                    <div class="uc-info-label">ÁÃ±o de construcción</div>
                     <div class="uc-info-value" id="convencionalAnioConstruccion">----</div>
                   </div>
                 </div>
@@ -1082,26 +1485,26 @@
                 </div>
 
                 <!-- SECCI?N: BA?OS -->
-                <div class="uc-section-title">Información de baños</div>
+                <div class="uc-section-title">Información de baÃ±os</div>
 
                 <div class="uc-two-col-grid">
                   <div class="uc-pair">
-                    <div class="uc-info-label">Tamaño de baño</div>
+                    <div class="uc-info-label">TamaÃ±o de baÃ±o</div>
                     <div class="uc-info-value" id="convencionalTamanioBanio">----</div>
                   </div>
 
                   <div class="uc-pair">
-                    <div class="uc-info-label">Enchape de baño</div>
+                    <div class="uc-info-label">Enchape de baÃ±o</div>
                     <div class="uc-info-value" id="convencionalEnchapeBanio">----</div>
                   </div>
 
                   <div class="uc-pair">
-                    <div class="uc-info-label">Mobiliario de baño</div>
+                    <div class="uc-info-label">Mobiliario de baÃ±o</div>
                     <div class="uc-info-value" id="convencionalMobiliarioBanio">----</div>
                   </div>
 
                   <div class="uc-pair">
-                    <div class="uc-info-label">Conservación de baño</div>
+                    <div class="uc-info-label">Conservación de baÃ±o</div>
                     <div class="uc-info-value" id="convencionalConservacionBanio">----</div>
                   </div>
                 </div>
@@ -1111,7 +1514,7 @@
 
                 <div class="uc-two-col-grid">
                   <div class="uc-pair">
-                    <div class="uc-info-label">Tamaño de cocina</div>
+                    <div class="uc-info-label">TamaÃ±o de cocina</div>
                     <div class="uc-info-value" id="convencionalTamanioCocina">----</div>
                   </div>
 
@@ -1159,7 +1562,7 @@
 
                   <div class="col-12 col-md-4">
                     <div class="uc-mini-card">
-                      <div class="uc-mini-card-label">Total baños</div>
+                      <div class="uc-mini-card-label">Total baÃ±os</div>
                       <div class="uc-mini-card-value">1</div>
                     </div>
                   </div>
@@ -1267,7 +1670,7 @@
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Uso</div>
-                    <div class="uc-info-value">Albercas - Bañaderas</div>
+                    <div class="uc-info-value">Albercas - BaÃ±aderas</div>
                   </div>
                 </div>
 
@@ -1280,7 +1683,7 @@
 
                 <div class="col-12">
                   <div class="uc-info-row">
-                    <div class="uc-info-label">Año de construcción</div>
+                    <div class="uc-info-label">AÃ±o de construcción</div>
                     <div class="uc-info-value">2015</div>
                   </div>
                 </div>
@@ -1361,7 +1764,7 @@
   </div>
 </div>
 
-<!-- OFFCANVAS U.C. POR TIPOLOGÍA -->
+<!-- OFFCANVAS U.C. POR TIPOLOGÃA -->
 <div class="offcanvas offcanvas-end m-3 rounded-4" tabindex="-1" id="offcanvasUcTipologia"
   aria-labelledby="offcanvasUcTipologiaLabel" style="--bs-offcanvas-width: 850px;">
 
@@ -1424,7 +1827,7 @@
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Uso</div>
-                    <div class="uc-info-value">Albercas - Bañaderas</div>
+                    <div class="uc-info-value">Albercas - BaÃ±aderas</div>
                   </div>
                 </div>
 
@@ -1437,7 +1840,7 @@
 
                 <div class="col-12">
                   <div class="uc-info-row">
-                    <div class="uc-info-label">Año de construcción</div>
+                    <div class="uc-info-label">AÃ±o de construcción</div>
                     <div class="uc-info-value">2015</div>
                   </div>
                 </div>
@@ -1922,7 +2325,7 @@
 
                     <div class="col-12">
                       <div class="d-flex justify-content-between align-items-center w-100">
-                        <div class="text-start text-lojh mb-0">Grupo étnico</div>
+                        <div class="text-start text-lojh mb-0">Grupo Ã©tnico</div>
                         <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
                       </div>
                     </div>
@@ -1983,7 +2386,7 @@
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
-                        <div class="text-start text-lojh mb-0">Teléfono</div>
+                        <div class="text-start text-lojh mb-0">TelÃ©fono</div>
                         <div class="text-end mb-0">${item.tipo_documento_nombre || "---"}</div>
                       </div>
                     </div>
@@ -2157,7 +2560,7 @@
       ["Tipo unidad construcción", "tipo_unidad_construccion_nombre"],
       ["Total plantas", "total_plantas"],
       ["Uso", "uso_nombre"],
-      ["Año construcción", "anio_construccion"],
+      ["AÃ±o construcción", "anio_construccion"],
       ["Área construida", "area_construida"],
       ["Área privada construida", "area_privada_construida"],
       ["Observaciones", "observaciones"],
@@ -2175,11 +2578,11 @@
       ["Cubrimiento muros", "cubrimiento_muros_nombre"],
       ["Piso", "piso_nombre"],
       ["Conservación acabados", "conservacion_acabados_nombre"],
-      ["Tamaño baño", "tamanio_banio_nombre"],
-      ["Enchape baño", "enchape_banio_nombre"],
-      ["Mobiliario baño", "mobiliario_banio_nombre"],
-      ["Conservación baño", "conservacion_banio_nombre"],
-      ["Tamaño cocina", "tamanio_cocina_nombre"],
+      ["TamaÃ±o baÃ±o", "tamanio_banio_nombre"],
+      ["Enchape baÃ±o", "enchape_banio_nombre"],
+      ["Mobiliario baÃ±o", "mobiliario_banio_nombre"],
+      ["Conservación baÃ±o", "conservacion_banio_nombre"],
+      ["TamaÃ±o cocina", "tamanio_cocina_nombre"],
       ["Enchape cocina", "enchape_cocina_nombre"],
       ["Mobiliario cocina", "mobiliario_cocina_nombre"],
       ["Conservación cocina", "conservacion_cocina_nombre"],
@@ -2839,6 +3242,238 @@
     if (value === null || value === undefined || String(value).trim() === "") return "----";
     return String(value);
   }
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function renderMarcasPrediales(marcas = []) {
+    const contenedor = document.querySelector("#contenidoMarcasPrediales .contenido-visita");
+    if (!contenedor) return;
+
+    const registros = Array.isArray(marcas) ? marcas : [];
+
+    if (!registros.length) {
+      contenedor.innerHTML = `
+        <div class="text-center text-muted py-3">
+          Sin información de marcas prediales
+        </div>
+      `;
+      return;
+    }
+
+    contenedor.innerHTML = registros.map((marca, index) => {
+      const separador = index > 0 ? '<div class="border-top my-3"></div>' : '';
+      return `
+        ${separador}
+        <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
+          <div class="col-12 col-md-7">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Tipo de marca</div>
+              <div class="text-start">${escapeHtml(_fmtText(marca?.marca_tipo_nombre ?? marca?.marca_tipo))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-5">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Fecha de creación</div>
+              <div class="text-start">${escapeHtml(_fmtDate(marca?.fecha_creacion))}</div>
+            </div>
+          </div>
+        </div>
+        <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-2">
+          <div class="col-12 col-md-7">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Fecha de finalización</div>
+              <div class="text-start">${escapeHtml(_fmtDate(marca?.fecha_finalizacion))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-5">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">¿Fue resuelta?</div>
+              <div class="text-start">${escapeHtml(_fmtBool(marca?.resuelta))}</div>
+            </div>
+          </div>
+        </div>
+        <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-2">
+          <div class="col-12">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Observación</div>
+              <div class="text-start">${escapeHtml(_fmtText(marca?.observacion))}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderNovedadesNumeroPredial(novedades = []) {
+    const contenedor = document.querySelector("#contenidoNovedadNumeroPredial .contenido-visita");
+    if (!contenedor) return;
+
+    const registros = Array.isArray(novedades) ? novedades : [];
+
+    if (!registros.length) {
+      contenedor.innerHTML = `
+        <div class="text-center text-muted py-3">
+          Sin información de novedad número predial
+        </div>
+      `;
+      return;
+    }
+
+    contenedor.innerHTML = registros.map((novedad, index) => {
+      const separador = index > 0 ? '<div class="border-top my-3"></div>' : '';
+      return `
+        ${separador}
+        <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Tipo de novedad</div>
+              <div class="text-start">${escapeHtml(_fmtText(novedad?.tipo_novedad_nombre ?? novedad?.tipo_novedad))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Número predial</div>
+              <div class="text-start">${escapeHtml(_fmtText(novedad?.numero_predial))}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+  function renderTramites(tramites = []) {
+    const contenedor = document.querySelector("#contenidoTramites .contenido-visita");
+    if (!contenedor) return;
+
+    const registros = Array.isArray(tramites) ? tramites : [];
+
+    if (!registros.length) {
+      contenedor.innerHTML = `
+        <div class="text-center text-muted py-3">
+          Sin informaci&oacute;n de tr&aacute;mites
+        </div>
+      `;
+      return;
+    }
+
+    contenedor.innerHTML = registros.map((tramite, index) => {
+      const separador = index > 0 ? '<div class="border-top my-3"></div>' : '';
+      return `
+        ${separador}
+        <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Entidad</div>
+              <div class="text-start">${escapeHtml(_fmtText(tramite?.entidad_nombre ?? tramite?.entidad))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Tr&aacute;mite</div>
+              <div class="text-start">${escapeHtml(_fmtText(tramite?.tramite_nombre ?? tramite?.tramite))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">&iquest;Fue resuelta?</div>
+              <div class="text-start">${escapeHtml(_fmtBool(tramite?.resuelta))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Fecha de radicaci&oacute;n</div>
+              <div class="text-start">${escapeHtml(_fmtDate(tramite?.fecha_radicacion))}</div>
+            </div>
+          </div>
+        </div>
+        <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-2">
+          <div class="col-12">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Observaci&oacute;n</div>
+              <div class="text-start">${escapeHtml(_fmtText(tramite?.observacion))}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+  function renderNovedadesFMI(novedades = []) {
+    const contenedor = document.querySelector("#contenidoNovedadFMI .contenido-visita");
+    if (!contenedor) return;
+
+    const registros = Array.isArray(novedades) ? novedades : [];
+
+    if (!registros.length) {
+      contenedor.innerHTML = `
+        <div class="text-center text-muted py-3">
+          Sin información de novedad FMI
+        </div>
+      `;
+      return;
+    }
+
+    contenedor.innerHTML = registros.map((novedad, index) => {
+      const separador = index > 0 ? '<div class="border-top my-3"></div>' : '';
+      return `
+        ${separador}
+        <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Tipo de novedad</div>
+              <div class="text-start">${escapeHtml(_fmtText(novedad?.tipo_novedad_fmi_nombre ?? novedad?.tipo_novedad_fmi))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Código ORIP</div>
+              <div class="text-start">${escapeHtml(_fmtText(novedad?.codigo_orip))}</div>
+            </div>
+          </div>
+        </div>
+        <div class="row g-2 tarjet-row-pot-visita justify-content-start mx-0 mt-2">
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100">
+              <div class="fw-bold text-start tex-num">Número FMI</div>
+              <div class="text-start">${escapeHtml(_fmtText(novedad?.numero_fmi))}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+  function formatearResumenDireccion(direccion) {
+    if (!direccion) return "-";
+
+    const tipoDireccion = String(direccion?.tipo_direccion ?? "").trim();
+
+    if (tipoDireccion === "248") {
+      const partes = [
+        direccion?.clase_via_principal_nombre ?? direccion?.clase_via_principal,
+        direccion?.valor_via_principal,
+        direccion?.letra_via_principal,
+        direccion?.valor_via_generadora,
+        direccion?.letra_via_generadora,
+        direccion?.complemento,
+      ]
+        .map((valor) => String(valor ?? "").trim())
+        .filter(Boolean);
+
+      return partes.length ? partes.join(" ") : "-";
+    }
+
+    if (tipoDireccion === "247") {
+      const nombrePredio = String(direccion?.nombre_predio ?? "").trim();
+      return nombrePredio || "-";
+    }
+
+    const nombrePredio = String(direccion?.nombre_predio ?? "").trim();
+    return nombrePredio || "-";
+  }
 
   function _setModalFieldByLabel(root, label, value) {
     if (!root) return;
@@ -3029,20 +3664,34 @@
       const fuentes = data?.fuente_administrativa || [];
       const interesadosRaw = data?.interesados || [];
       const direcciones = data?.direcciones || [];
+      const marcas = data?.marcas || [];
+      const novedadesFMI = data?.novedad_fmi || [];
+      const novedadesNumeroPredial = data?.estructura_novedad_np || [];
+      const tramites = data?.tramites || [];
       unidadesData = unidades || [];
 
       updateDerechosCards(derechos);
       populatePredioModalInfo(predio, data);
+      renderMarcasPrediales(marcas);
+      renderNovedadesFMI(novedadesFMI);
+      renderNovedadesNumeroPredial(novedadesNumeroPredial);
+      renderTramites(tramites);
 
       const gridPredio = document.getElementById("gridPredio");
       const resumenPredioId = document.getElementById("resumenPredioId");
+      const resumenPredioDireccion = document.getElementById("resumenPredioDireccion");
       const resumenPredioInteresados = document.getElementById("resumenPredioInteresados");
       const resumenPredioNpn = document.getElementById("resumenPredioNpn");
       const resumenPredioConstrucciones = document.getElementById("resumenPredioConstrucciones");
       const resumenPredioUnidadConstruccion = document.getElementById("resumenPredioUnidadConstruccion");
 
       if (resumenPredioId) {
-        resumenPredioId.textContent = predio?.t_id ?? predioId ?? "";
+        resumenPredioId.textContent = predio?.id_operacion ?? "";
+      }
+
+      if (resumenPredioDireccion) {
+        const direccionPredio = direcciones[0] || null;
+        resumenPredioDireccion.textContent = formatearResumenDireccion(direccionPredio);
       }
 
       if (resumenPredioInteresados) {
@@ -3087,7 +3736,7 @@
           [
             "Departamento",
             predio.departamento === 52 || predio.departamento === "52"
-              ? "52 - Nariño"
+              ? "52 - NariÃ±o"
               : predio.departamento,
           ],
           [
@@ -3143,8 +3792,8 @@
       ]);
 
       const datosAdicionales = data?.datos_adicionales || [];
-      const novedadNP = data?.estructura_novedad_np || [];
-      const novedadesFMI = data?.novedad_fmi || [];
+      const novedadNP = novedadesNumeroPredial;
+
 
       renderRecords("contNovedadNP", novedadNP, "Novedad", [
         ["Número predial", "numero_predial"],
@@ -3152,9 +3801,9 @@
       ]);
 
       renderRecords("contNovedadFMI", novedadesFMI, "Novedad FMI", [
-        ["Código ORI", "codigo_ori"],
+        ["Código ORIP", "codigo_orip"],
         ["Número FMI", "numero_fmi"],
-        ["Tipo novedad FMI", "tipo_novedadfmi_nombre"],
+        ["Tipo novedad FMI", "tipo_novedad_fmi_nombre"],
       ]);
 
       renderRecords("contDatosAdicionales", datosAdicionales, "Datos", [
@@ -3208,10 +3857,10 @@
                 <i class="fa-solid fa-chevron-down text-dark"></i>
               </button>
             </td>
-            <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${identificador}</td>
-            <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${tipoConstruccion}</td>
-            <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${predioLabel}</td>
-            <td class="text-center align-middle py-3 border-0 text-detalle-unidad">${ucAsociada}</td>
+            <td class="text-center align-middle py-3 border-0 text-detalle-unidad" style="cursor:pointer">${identificador}</td>
+            <td class="text-center align-middle py-3 border-0 text-detalle-unidad" style="cursor:pointer">${tipoConstruccion}</td>
+            <td class="text-center align-middle py-3 border-0 text-detalle-unidad" style="cursor:pointer">${predioLabel}</td>
+            <td class="text-center align-middle py-3 border-0 text-detalle-unidad" style="cursor:pointer">${ucAsociada}</td>
           `;
 
           const trDetail = document.createElement("tr");

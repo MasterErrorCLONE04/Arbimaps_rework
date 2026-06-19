@@ -42,7 +42,11 @@ services:
 
     # Cambia 5434 por 5435 si el puerto está ocupado
     ports:
+<<<<<<< Updated upstream
       - "5432:5432"
+=======
+      - "5433:5432"
+>>>>>>> Stashed changes
 
     volumes:
       - postgres_data:/var/lib/postgresql/data

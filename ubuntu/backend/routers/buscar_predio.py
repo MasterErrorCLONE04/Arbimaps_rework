@@ -435,13 +435,62 @@ def predio_detalle(
     FROM {_qualified_table(tenant, 'arb_uebaunit')} u
     WHERE u.baunit::text = %s::text;
     """
-
-    sql_direcciones = f"""
+    sql_marcas = f"""
     SELECT
-      dx.*,
-      ST_AsGeoJSON(dx.geometria)::json AS geom
-    FROM {_qualified_table(tenant, 'arb_direccion')} dx
-    WHERE dx.arb_predio_direccion::text = %s::text;
+      m.marca_tipo,
+      mt.dispname AS marca_tipo_nombre,
+      m.fecha_creacion,
+      m.fecha_finalizacion,
+      m.resuelta,
+      m.observacion
+    FROM {_qualified_table(tenant, 'arb_marca')} m
+    LEFT JOIN {_qualified_table(tenant, 'arb_marcapredialtipo')} mt
+      ON mt.t_id::text = m.marca_tipo::text
+    WHERE m.predio::text = %s::text
+    ORDER BY m.fecha_creacion DESC NULLS LAST, m.t_id DESC;
+    """
+
+    sql_novedad_fmi_template = """
+    SELECT
+      nf.tipo_novedad_fmi,
+      nft.dispname AS tipo_novedad_fmi_nombre,
+      {codigo_orip_select} AS codigo_orip,
+      nf.numero_fmi
+    FROM {novedad_table} nf
+    LEFT JOIN {tipo_table} nft
+      ON nft.t_id::text = nf.tipo_novedad_fmi::text
+    WHERE nf.arb_predio_novedad_fmi::text = %s::text
+    ORDER BY nf.t_id DESC;
+    """
+
+    sql_novedad_numero_predial = f"""
+    SELECT
+      nnp.tipo_novedad,
+      nnpt.dispname AS tipo_novedad_nombre,
+      nnp.numero_predial
+    FROM {_qualified_table(tenant, 'arb_novedadnumeropredialvalor')} nnp
+    LEFT JOIN {_qualified_table(tenant, 'arb_novedadnumeropredialtipo')} nnpt
+      ON nnpt.t_id::text = nnp.tipo_novedad::text
+    WHERE nnp.arb_predio_novedad_numero_predial::text = %s::text
+    ORDER BY nnp.t_id DESC;
+    """
+
+    sql_tramites = f"""
+    SELECT
+      tr.entidad,
+      et.dispname AS entidad_nombre,
+      tr.tramite,
+      tt.dispname AS tramite_nombre,
+      tr.resuelta,
+      tr.fecha_radicacion,
+      tr.observacion
+    FROM {_qualified_table(tenant, 'arb_tramite')} tr
+    LEFT JOIN {_qualified_table(tenant, 'arb_entidadtipo')} et
+      ON et.t_id::text = tr.entidad::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_tramitetipo')} tt
+      ON tt.t_id::text = tr.tramite::text
+    WHERE tr.predio::text = %s::text
+    ORDER BY tr.fecha_radicacion DESC NULLS LAST, tr.t_id DESC;
     """
 
     try:
@@ -462,6 +511,10 @@ def predio_detalle(
 
             derechos_interesados = []
             direcciones = []
+            marcas = []
+            novedades_fmi = []
+            novedades_numero_predial = []
+            tramites = []
 
             try:
                 cur.execute(sql_dif, (predio_id,))
@@ -471,11 +524,85 @@ def predio_detalle(
                 derechos_interesados = []
 
             try:
-                cur.execute(sql_direcciones, (predio_id,))
-                direcciones = cur.fetchall()
+                if not _table_exists(cur, schema, "arb_direccion"):
+                    direcciones = []
+                else:
+                    direccion_cols = _table_columns(cur, schema, "arb_direccion")
+                    geom_select = (
+                        ", ST_AsGeoJSON(dx.geometria)::json AS geom"
+                        if "geometria" in direccion_cols
+                        else ""
+                    )
+                    clase_via_join = ""
+                    clase_via_select = ""
+                    if _table_exists(cur, schema, "arb_claseviaprincipaltipo"):
+                        clase_via_select = ", cvp.dispname AS clase_via_principal_nombre"
+                        clase_via_join = f"""
+                    LEFT JOIN {_qualified_table(tenant, 'arb_claseviaprincipaltipo')} cvp
+                      ON cvp.t_id::text = dx.clase_via_principal::text"""
+                    sql_direcciones = f"""
+                    SELECT
+                      dx.*{geom_select}{clase_via_select}
+                    FROM {_qualified_table(tenant, 'arb_direccion')} dx
+                    {clase_via_join}
+                    WHERE dx.arb_predio_direccion::text = %s::text
+                    ORDER BY
+                      CASE
+                        WHEN NULLIF(BTRIM(COALESCE(dx.nombre_predio::text, '')), '') IS NOT NULL THEN 0
+                        ELSE 1
+                      END,
+                      dx.t_id;
+                    """
+                    cur.execute(sql_direcciones, (predio_id,))
+                    direcciones = cur.fetchall()
             except Exception:
                 _rollback_safely(conn)
                 direcciones = direcciones or []
+            try:
+                if _table_exists(cur, schema, "arb_marca"):
+                    cur.execute(sql_marcas, (predio_id,))
+                    marcas = cur.fetchall()
+            except Exception:
+                _rollback_safely(conn)
+                marcas = marcas or []
+
+            try:
+                if _table_exists(cur, schema, "arb_novedadfmivalor"):
+                    novedad_cols = _table_columns(cur, schema, "arb_novedadfmivalor")
+                    codigo_orip_col = "codigo_orip" if "codigo_orip" in novedad_cols else "codio_orip"
+                    codigo_orip_select = (
+                        f"nf.{codigo_orip_col}"
+                        if codigo_orip_col in novedad_cols
+                        else "NULL"
+                    )
+                    cur.execute(
+                        sql_novedad_fmi_template.format(
+                            codigo_orip_select=codigo_orip_select,
+                            novedad_table=_qualified_table(tenant, 'arb_novedadfmivalor'),
+                            tipo_table=_qualified_table(tenant, 'arb_novedadfmitipo'),
+                        ),
+                        (predio_id,),
+                    )
+                    novedades_fmi = cur.fetchall()
+            except Exception:
+                _rollback_safely(conn)
+                novedades_fmi = novedades_fmi or []
+
+            try:
+                if _table_exists(cur, schema, "arb_novedadnumeropredialvalor"):
+                    cur.execute(sql_novedad_numero_predial, (predio_id,))
+                    novedades_numero_predial = cur.fetchall()
+            except Exception:
+                _rollback_safely(conn)
+                novedades_numero_predial = novedades_numero_predial or []
+
+            try:
+                if _table_exists(cur, schema, "arb_tramite"):
+                    cur.execute(sql_tramites, (predio_id,))
+                    tramites = cur.fetchall()
+            except Exception:
+                _rollback_safely(conn)
+                tramites = tramites or []
     except Exception as exc:
         _rollback_safely(conn)
         logger.exception(
@@ -499,12 +626,14 @@ def predio_detalle(
         "derechos": derechos_interesados,
         "interesados": derechos_interesados,
         "uebaunit": uebaunit_rows,
-        "novedad_fmi": [],
+        "novedad_fmi": novedades_fmi,
         "datos_adicionales": [],
-        "estructura_novedad_np": [],
+        "estructura_novedad_np": novedades_numero_predial,
+        "tramites": tramites,
         "fuente_administrativa": derechos_interesados,
         "contacto_visita": [],
         "direcciones": direcciones,
+        "marcas": marcas,
         "rrr_interesado": [],
     }
 
