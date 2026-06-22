@@ -663,13 +663,13 @@
         left: 16px;
         bottom: 84px;
         z-index: 20;
-        min-width: 248px;
-        max-width: 280px;
-        padding: 14px 16px;
-        border-radius: 18px;
+        min-width: 210px;
+        max-width: 236px;
+        padding: 10px 12px;
+        border-radius: 16px;
         background: rgba(255, 255, 255, 0.96);
         border: 1px solid rgba(15, 23, 42, 0.08);
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
         backdrop-filter: blur(8px);
       }
 
@@ -683,24 +683,25 @@
       .vm-legend-list {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 7px;
       }
 
       .vm-legend-item {
         display: flex;
         align-items: center;
-        gap: 10px;
-        font-size: 12px;
+        gap: 8px;
+        font-size: 11px;
         font-weight: 600;
         color: #243b53;
+        line-height: 1.2;
       }
 
       .vm-legend-swatch {
         display: inline-flex;
-        width: 20px;
-        height: 14px;
+        width: 16px;
+        height: 11px;
         flex: 0 0 auto;
-        border-radius: 4px;
+        border-radius: 3px;
       }
 
       .vm-legend-swatch-terreno {
@@ -738,8 +739,8 @@
       }
 
       .vm-legend-swatch-direccion {
-        width: 22px;
-        height: 4px;
+        width: 18px;
+        height: 3px;
         border-radius: 999px;
         background: #2563eb;
       }
@@ -872,9 +873,10 @@
 
       .vm-measure-panel {
         position: absolute;
-        right: 16px;
-        bottom: 92px;
-        z-index: 23;
+        left: 72px;
+        right: auto;
+        bottom: 62px;
+        z-index: 27;
         width: 220px;
         padding: 12px 14px;
         border-radius: 16px;
@@ -996,7 +998,7 @@
           left: 10px;
           bottom: 72px;
           min-width: 0;
-          max-width: calc(100% - 20px);
+          max-width: min(220px, calc(100% - 20px));
         }
 
         .vm-info-popup {
@@ -1018,9 +1020,10 @@
         }
 
         .vm-measure-panel {
-          right: 10px;
+          left: 10px;
+          right: auto;
           bottom: 108px;
-          width: 200px;
+          width: min(200px, calc(100% - 20px));
         }
 
         .vm-north-indicator {
