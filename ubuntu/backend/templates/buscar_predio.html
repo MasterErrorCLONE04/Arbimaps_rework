@@ -488,21 +488,21 @@
                   </div>
 
                   <div class="row g-4 tarjet-row-pot ms-2 mt-1">
-                    <div class="col-12 col-md-4">
+                    <!-- <div class="col-12 col-md-4">
                       <div class="d-flex flex-column">
                         <div class="fw-bold text-start tex-num">Coeficiente de copropiedad</div>
                         <div class="text-start">----</div>
                       </div>
-                    </div>
+                    </div> -->
 
-                    <div class="col-12 col-md-4">
+                    <!-- <div class="col-12 col-md-4">
                       <div class="d-flex flex-column">
                         <div class="fw-bold text-start tex-num">Área de coeficiente de copropiedad</div>
                         <div class="text-start">----</div>
                       </div>
-                    </div>
+                    </div> -->
 
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-6">
                       <div class="d-flex flex-column">
                         <div class="fw-bold text-start tex-num">Condición del predio</div>
                         <div class="text-start">----</div>
@@ -723,7 +723,7 @@
 
                   <!-- acordión de restulado de información PH -->
 
-                  <div class="part-juy p-3 d-flex align-items-center gap-2 w-100 mt-3" data-bs-toggle="collapse"
+                  <div class="part-juy p-3 d-flex align-items-center gap-2 w-100 mt-3 d-none" data-bs-toggle="collapse"
                     data-bs-target="#contenidoPH" aria-expanded="false" aria-controls="contenidoJuridico"
                     onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-juridico').classList.toggle('rotate-180')"
                     style="cursor: pointer;">
@@ -734,19 +734,19 @@
                     <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-juridico"></i>
                   </div>
 
-                  <div class="collapse w-100" id="contenidoPH">
+                  <div class="collapse w-100 d-none" id="contenidoPH">
                     <div class="contenido-visita p-1">
                       <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
                         <div class="col-12 col-md-6">
                           <div class="d-flex flex-column w-100">
-                            <div class="fw-bold text-start tex-num">Nombre</div>
+                            <div class="fw-bold text-start tex-num">Total unidades privadas</div>
                             <div class="text-start">----</div>
                           </div>
                         </div>
 
                         <div class="col-12 col-md-5">
                           <div class="d-flex flex-column w-100">
-                            <div class="fw-bold text-start tex-num">Beneficio de comunidades indígenas</div>
+                            <div class="fw-bold text-start tex-num">Número de torres</div>
                             <div class="text-start">----</div>
                           </div>
                         </div>
@@ -755,14 +755,14 @@
                       <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
                         <div class="col-12 col-md-6">
                           <div class="d-flex flex-column w-100">
-                            <div class="fw-bold text-start tex-num">Predio Matriz</div>
+                            <div class="fw-bold text-start tex-num">Área total de terreno (m2)</div>
                             <div class="text-start">----</div>
                           </div>
                         </div>
 
                         <div class="col-12 col-md-5">
                           <div class="d-flex flex-column w-100">
-                            <div class="fw-bold text-start tex-num">Control de calidad</div>
+                            <div class="fw-bold text-start tex-num">Área total de terreno común (m2)</div>
                             <div class="text-start">----</div>
                           </div>
                         </div>
@@ -771,14 +771,14 @@
                       <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
                         <div class="col-12 col-md-6">
                           <div class="d-flex flex-column w-100">
-                            <div class="fw-bold text-start tex-num">Comodato</div>
+                            <div class="fw-bold text-start tex-num">Área total de terreno privada (m2)</div>
                             <div class="text-start">----</div>
                           </div>
                         </div>
 
                         <div class="col-12 col-md-5">
                           <div class="d-flex flex-column w-100">
-                            <div class="fw-bold text-start tex-num">Cabida y Linderos</div>
+                            <div class="fw-bold text-start tex-num">Área total construida (m2)</div>
                             <div class="text-start">----</div>
                           </div>
                         </div>
@@ -786,14 +786,57 @@
                       <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
                         <div class="col-12 col-md-6">
                           <div class="d-flex flex-column w-100">
-                            <div class="fw-bold text-start tex-num">Observación jurídica</div>
+                            <div class="fw-bold text-start tex-num">Área total construida común (m2)</div>
                             <div class="text-start">----</div>
                           </div>
                         </div>
 
                         <div class="col-12 col-md-5">
                           <div class="d-flex flex-column w-100">
-                            <div class="fw-bold text-start tex-num">¿Validó control de calidad?</div>
+                            <div class="fw-bold text-start tex-num">Área total construida privada (m2)</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- acordión  de información PH asociado -->
+
+                  <div class="part-juy p-3 d-flex align-items-center gap-2 w-100 mt-3" data-bs-toggle="collapse"
+                    data-bs-target="#contenidoPHasociado" aria-expanded="false" aria-controls="contenidoJuridico"
+                    onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-juridico').classList.toggle('rotate-180')"
+                    style="cursor: pointer;">
+                    <!-- <i class="fa-solid fa-scale-balanced text-white fs-5"></i>
+                    <i class="fa-regular fa-font-awesome" style="color: #ffffff;"></i> -->
+                    <i class="bi bi-house-add-fill text-white"></i>
+                    <div class="tit-iops fw-semibold">Información de PH asociado</div>
+                    <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-juridico"></i>
+                  </div>
+
+                  <div class="collapse w-100" id="contenidoPHasociado">
+                    <div class="contenido-visita p-1">
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 ">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">NPN Predio matriz</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num ">Coeficiente de copropiedad (0-100)</div>
+                            <div class="text-start">----</div>
+                          </div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                          <div class="d-flex flex-column w-100">
+                            <div class="fw-bold text-start tex-num">Área de coeficiente de copropiedad (m2)</div>
                             <div class="text-start">----</div>
                           </div>
                         </div>
@@ -3251,6 +3294,78 @@
       .replace(/'/g, "&#39;");
   }
 
+  function renderInformacionPH(infoPH) {
+    const contenedor = document.querySelector("#contenidoPH .contenido-visita");
+    if (!contenedor) return;
+
+    if (!infoPH) {
+      contenedor.innerHTML = `
+        <div class="text-center text-muted py-3">
+          Sin informaci&oacute;n de PH
+        </div>
+      `;
+      return;
+    }
+
+    contenedor.innerHTML = `
+      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+        <div class="col-12 col-md-6">
+          <div class="d-flex flex-column w-100">
+            <div class="fw-bold text-start tex-num">Total unidades privadas</div>
+            <div class="text-start">${escapeHtml(_fmtText(infoPH?.total_unidades_privadas))}</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-5">
+          <div class="d-flex flex-column w-100">
+            <div class="fw-bold text-start tex-num">N&uacute;mero de torres</div>
+            <div class="text-start">${escapeHtml(_fmtText(infoPH?.numero_torres))}</div>
+          </div>
+        </div>
+      </div>
+      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+        <div class="col-12 col-md-6">
+          <div class="d-flex flex-column w-100">
+            <div class="fw-bold text-start tex-num">&Aacute;rea total de terreno (m2)</div>
+            <div class="text-start">${escapeHtml(_fmtText(infoPH?.area_total_terreno))}</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-5">
+          <div class="d-flex flex-column w-100">
+            <div class="fw-bold text-start tex-num">&Aacute;rea total de terreno com&uacute;n (m2)</div>
+            <div class="text-start">${escapeHtml(_fmtText(infoPH?.area_total_terreno_comun))}</div>
+          </div>
+        </div>
+      </div>
+      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+        <div class="col-12 col-md-6">
+          <div class="d-flex flex-column w-100">
+            <div class="fw-bold text-start tex-num">&Aacute;rea total de terreno privada (m2)</div>
+            <div class="text-start">${escapeHtml(_fmtText(infoPH?.area_total_terreno_privada))}</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-5">
+          <div class="d-flex flex-column w-100">
+            <div class="fw-bold text-start tex-num">&Aacute;rea total construida (m2)</div>
+            <div class="text-start">${escapeHtml(_fmtText(infoPH?.area_total_construida))}</div>
+          </div>
+        </div>
+      </div>
+      <div class="row g-1 tarjet-row-pot-visita justify-content-center ms-3 mt-1">
+        <div class="col-12 col-md-6">
+          <div class="d-flex flex-column w-100">
+            <div class="fw-bold text-start tex-num">&Aacute;rea total construida com&uacute;n (m2)</div>
+            <div class="text-start">${escapeHtml(_fmtText(infoPH?.area_total_construida_comun))}</div>
+          </div>
+        </div>
+        <div class="col-12 col-md-5">
+          <div class="d-flex flex-column w-100">
+            <div class="fw-bold text-start tex-num">&Aacute;rea total construida privada (m2)</div>
+            <div class="text-start">${escapeHtml(_fmtText(infoPH?.area_total_construida_privada))}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
   function renderMarcasPrediales(marcas = []) {
     const contenedor = document.querySelector("#contenidoMarcasPrediales .contenido-visita");
     if (!contenedor) return;
@@ -3492,7 +3607,40 @@
     });
   }
 
+  function setPredioConditionAccordionVisibility(targetId, predio, expectedItfcodes) {
+    const trigger = document.querySelector(`[data-bs-target="#${targetId}"]`);
+    const content = document.getElementById(targetId);
+    const rawItfcode = String(predio?.condicion_predio_itfcode ?? "").trim();
+    const validItfcodes = Array.isArray(expectedItfcodes) ? expectedItfcodes : [expectedItfcodes];
+    const isVisible = validItfcodes.map(String).includes(rawItfcode);
+
+    if (trigger) {
+      trigger.classList.toggle("d-none", !isVisible);
+      trigger.setAttribute("aria-expanded", isVisible ? trigger.getAttribute("aria-expanded") || "false" : "false");
+      if (!isVisible) {
+        trigger.classList.remove("part-juy-open");
+        trigger.querySelector(".icon-flecha-juridico")?.classList.remove("rotate-180");
+      }
+    }
+
+    if (content) {
+      content.classList.toggle("d-none", !isVisible);
+      if (!isVisible) {
+        content.classList.remove("show");
+      }
+    }
+  }
+
+  function updatePHVisibility(predio) {
+    setPredioConditionAccordionVisibility("contenidoPH", predio, ["1", "3", "5"]);
+  }
+
+  function updatePHasociadoVisibility(predio) {
+    setPredioConditionAccordionVisibility("contenidoPHasociado", predio, ["2", "4", "6"]);
+  }
   function populatePredioModalInfo(predio, data) {
+    updatePHVisibility(predio);
+    updatePHasociadoVisibility(predio);
     const root = document.getElementById("modalInformacionPredio");
     if (!root || !predio) return;
 
@@ -3667,6 +3815,7 @@
       const marcas = data?.marcas || [];
       const novedadesFMI = data?.novedad_fmi || [];
       const novedadesNumeroPredial = data?.estructura_novedad_np || [];
+      const informacionPH = data?.informacion_ph || null;
       const tramites = data?.tramites || [];
       unidadesData = unidades || [];
 
@@ -3675,6 +3824,7 @@
       renderMarcasPrediales(marcas);
       renderNovedadesFMI(novedadesFMI);
       renderNovedadesNumeroPredial(novedadesNumeroPredial);
+      renderInformacionPH(informacionPH);
       renderTramites(tramites);
 
       const gridPredio = document.getElementById("gridPredio");

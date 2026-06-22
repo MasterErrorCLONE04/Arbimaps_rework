@@ -323,6 +323,7 @@ def predio_detalle(
       p.numero_predial AS numero_predial_nacional,
       tp.dispname AS tipo_nombre,
       cp.dispname AS condicion_predio_nombre,
+      cp.itfcode AS condicion_predio_itfcode,
       de.dispname AS destinacion_economica_nombre,
       rv.dispname AS resultado_visita_nombre,
       tdoc.dispname AS tipo_documento_quien_atendio_nombre,
@@ -493,6 +494,22 @@ def predio_detalle(
     ORDER BY tr.fecha_radicacion DESC NULLS LAST, tr.t_id DESC;
     """
 
+    sql_informacion_ph = f"""
+    SELECT
+      iph.total_unidades_privadas,
+      iph.numero_torres,
+      iph.area_total_terreno,
+      iph.area_total_terreno_comun,
+      iph.area_total_terreno_privada,
+      iph.area_total_construida,
+      iph.area_total_construida_comun,
+      iph.area_total_construida_privada
+    FROM {_qualified_table(tenant, 'arb_informacionph')} iph
+    WHERE iph.{{ph_predio_column}}::text = %s::text
+    ORDER BY iph.t_id DESC
+    LIMIT 1;
+    """
+
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql_base, (predio_id,))
@@ -515,6 +532,7 @@ def predio_detalle(
             novedades_fmi = []
             novedades_numero_predial = []
             tramites = []
+            informacion_ph = None
 
             try:
                 cur.execute(sql_dif, (predio_id,))
@@ -603,6 +621,16 @@ def predio_detalle(
             except Exception:
                 _rollback_safely(conn)
                 tramites = tramites or []
+
+            try:
+                if _table_exists(cur, schema, "arb_informacionph"):
+                    informacion_ph_cols = _table_columns(cur, schema, "arb_informacionph")
+                    ph_predio_column = "arb_predio" if "arb_predio" in informacion_ph_cols else "predio"
+                    cur.execute(sql_informacion_ph.format(ph_predio_column=ph_predio_column), (predio_id,))
+                    informacion_ph = cur.fetchone()
+            except Exception:
+                _rollback_safely(conn)
+                informacion_ph = informacion_ph or None
     except Exception as exc:
         _rollback_safely(conn)
         logger.exception(
@@ -630,6 +658,7 @@ def predio_detalle(
         "datos_adicionales": [],
         "estructura_novedad_np": novedades_numero_predial,
         "tramites": tramites,
+        "informacion_ph": informacion_ph,
         "fuente_administrativa": derechos_interesados,
         "contacto_visita": [],
         "direcciones": direcciones,
