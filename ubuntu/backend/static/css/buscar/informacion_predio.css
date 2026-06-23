@@ -425,7 +425,24 @@
     color: #032F57;
     font-size: 1rem;
 }
+.accordion-item{
+    border-radius: 18px;
+}
+.accordion-button{
+    background-color: #032f57;
+    color: white;
+    border-radius: 18px;
+}
 
+.accordion-button:focus{
+    border: none !important;
+}
+
+.accordion-button:not(.collapsed){
+    background-color: #002F55 !important;
+    color: white;
+    border: none ;
+}
 .text-two {
     font-size: 0.833rem;
 }
@@ -1081,7 +1098,18 @@
 
 .tex-num {
     color: #002F55;
-    font-size: 0.833rem;
+    font-size: 0.90rem;
+    text-wrap: wrap;
+}
+
+.dato_info{
+    font-size: 0.82rem;
+    margin-top: 1px;
+}
+
+.dato{
+    background-color: #002f550d;
+    border-radius: 10px;
 }
 
 .tarjet-row-pot {
@@ -2082,4 +2110,100 @@
     #modalInformacionMarcas .contenido-visita {
         padding: 0.7rem 0.85rem !important;
     }
+}
+
+/* Radios del modal informacion predio alineados con rounded-4 */
+#modalInformacionPredio .modal-predio-content {
+    border-radius: 1rem !important;
+    overflow: hidden;
+}
+
+#modalInformacionPredio .tarjeta-modal-predio,
+#modalInformacionPredio .tarjeta-modal-visita {
+    border-radius: 1rem !important;
+    overflow: hidden;
+}
+
+#modalInformacionPredio .part-ge,
+#modalInformacionPredio .dato {
+    border-radius: 0.75rem;
+}
+
+/* Ajustes Bootstrap accordion en modal informacion predio */
+#modalInformacionPredio .accordion-item {
+    border: 0;
+    border-radius: 1rem !important;
+    overflow: hidden;
+    background-color: transparent;
+}
+
+#modalInformacionPredio .accordion-button {
+    border-radius: 1rem !important;
+    background-color: #032F57 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+#modalInformacionPredio .accordion-button:not(.collapsed) {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+#modalInformacionPredio .accordion-button:focus {
+    box-shadow: none !important;
+    border-color: transparent !important;
+}
+
+#modalInformacionPredio .accordion-button::after {
+    --bs-accordion-btn-icon-width: 1rem;
+    filter: brightness(0) invert(1);
+}
+
+#modalInformacionPredio .accordion-collapse {
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+    overflow: hidden;
+}
+
+#modalInformacionPredio .accordion-body {
+    background-color: #F0F6FB;
+    border-left: 1px solid #032e5738;
+    border-right: 1px solid #032e5738;
+    border-bottom: 1px solid #032e5738;
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
+    padding: 0.75rem;
+}
+/* Loader global de la vista buscar predio */
+.module-information-predio {
+    position: relative;
+}
+
+.vista-predio-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 2050;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background: rgba(240, 246, 251, 0.92);
+    backdrop-filter: blur(2px);
+}
+
+.vista-predio-loader.d-none {
+    display: none !important;
+}
+
+.vista-predio-spinner {
+    width: 2.75rem;
+    height: 2.75rem;
+    color: #032F57;
+}
+
+.vista-predio-loader-text {
+    color: #032F57;
+    font-size: 0.95rem;
+    font-weight: 700;
 }
