@@ -214,12 +214,24 @@
                     </div>
                   </div>
 
-                  <button type="button"
-                    class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
-                    data-bs-toggle="modal" data-bs-target="#modalInformacionAdicional"
-                    aria-label="Ver información adicional">
-                    <i class="fa-regular fa-eye eye-icon-predio"></i>
-                  </button>
+                  <div class="d-flex align-items-center  gap-2">
+                    <div id="badgeJuridicoCountContainer"
+                      class=" rounded-pill d-flex px-2 py-2 ps-3 align-items-center gap-2"
+                      style="background-color: #5B9BD5; color: #ffffff; font-size: 0.85rem; font-weight: 700;  border-radius: 20px !important;">
+                      <div id="badgeJuridicoInteresadosCount">0</div>
+                      <div class="d-flex alig-items-center justify-content-center bg-white p-1"
+                        style="border-radius: 55px; color: #002f55;">
+                        <i class="fa-solid fa-user" style="font-size: 0.75rem;"></i>
+                      </div>
+                    </div>
+                    <button type="button"
+                      class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+                      data-bs-toggle="modal" data-bs-target="#modalInformacionAdicional"
+                      aria-label="Ver información adicional">
+                      <i class="fa-regular fa-eye eye-icon-predio"></i>
+                    </button>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -293,7 +305,7 @@
 
                   <div class="collapse mt-2" id="detalleConstrucciones">
                     <div class="tabla-construcciones-wrap mt-3 flex-grow-1">
-                      <div class="table-responsive" style="max-height: 305px; overflow-y: auto;">
+                      <div class="table-responsive constucc" style="max-height: 305px; overflow-y: auto;">
                         <table class="table tabla-construcciones mb-0" id="tblConsCollapse" style="display:none;">
                           <thead>
                             <tr>
@@ -1103,15 +1115,14 @@
           <div class="card border-0 rounded-4 shadow-none tarjeta-modal-predio">
             <div class="card-body p-0 m-0">
 
-
               <div class="table-responsive tabla-modal-interesados-wrap">
                 <table class="table align-middle mb-0 tabla-modal-interesados">
                   <thead>
                     <tr>
-                      <th>Interesado</th>
-                      <th>Sexo</th>
-                      <th>Cuota participación</th>
-                      <th>Tipo de persona</th>
+                      <th class="text-center">Interesado</th>
+                      <th class="text-center">Sexo</th>
+                      <th class="text-center">Cuota participación</th>
+                      <th class="text-center">Tipo de persona</th>
                       <th class="text-center">ver detalles</th>
                     </tr>
                   </thead>
@@ -1128,10 +1139,10 @@
 
 
 <div class="offcanvas offcanvas-end m-3 rounded-4" tabindex="-1" id="panelDerechoPredio"
-  aria-labelledby="panelDerechoPredioLabel" style="--bs-offcanvas-width: 75vw;">
+  aria-labelledby="panelDerechoPredioLabel" style="--bs-offcanvas-width: 55vw;">
 
   <!-- header -->
-  <div class="offcanvas-header-one border-0 p-4">
+  <div class="offcanvas-header-one rounded-top-4 p-4" style="border-bottom:3px solid #002f5585 ;">
     <div class="d-flex align-items-center justify-content-between w-100 gap-3 flex-wrap">
       <button type="button" class="d-inline-flex align-items-center gap-2 border-0 px-3 py-2 text-white boton-jdk"
         data-bs-dismiss="offcanvas" aria-label="Cerrar panel lateral" style="background-color: #032F57;">
@@ -1148,7 +1159,7 @@
   </div>
 
   <!-- body -->
-  <div class="offcanvas-body p-0">
+  <div class="offcanvas-body p-0 d-flex flex-column">
 
     <!-- bloque usuario -->
     <div class="open-modal p-3 d-flex align-items-center gap-3">
@@ -1161,29 +1172,29 @@
     </div>
 
     <!-- contenido -->
-    <div class="container-fluid p-1 p-md-4">
-      <div class="row g-4 align-items-start">
+    <div class="container-fluid  ">
+      <div class="row ">
         <!-- encabezado secciones -->
-        <div class="content-hearder-ops py-4 overflow-hidden">
+        <div class="content-hearder-ops py-3 overflow-hidden mt-0">
           <div class="container-fluid px-0">
-            <div class="row align-items-center text-center gx-0 mx-0">
-              <div class="col-12 col-md-6">
-                <div class="fw-bold text-mdlo">Información de Derechos</div>
+            <div class="row ">
+              <div class="col-12 col-md-6 ">
+                <div class="fw-bold text-mdlo w-100 text-center">Información de Derechos</div>
               </div>
 
-              <div class="d-none d-md-flex col-md-1 justify-content-center">
+              <!-- <div class="d-none d-md-flex col-md-1 justify-content-center">
                 <div class="vr opacity-100 h-100"></div>
-              </div>
+              </div> -->
 
-              <div class="col-12 col-md-5 mt-3 mt-md-0">
-                <div class="fw-bold text-mdlo">Información de fuente administrativa</div>
+              <div class="col-12 col-md-6 mt-3 mt-md-0 " style="border-left: 1px solid #002f5559">
+                <div class="fw-bold text-mdlo w-100 text-center">Información de fuente administrativa</div>
               </div>
             </div>
           </div>
         </div>
 
         <!-- columna izquierda -->
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-6 ">
           <div class="card border-0 rounded-4 h-100">
             <div class="card-body">
 
@@ -1191,30 +1202,38 @@
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Fecha inicio de tenencia</div>
-                    <div class="text-end" id="derechoFechaInicio">----</div>
+                    <div class="text-end dato_info" id="derechoFechaInicio">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Tipo de derecho</div>
-                    <div class="text-end" id="derechoTipo">----</div>
+                    <div class="text-end dato_info" id="derechoTipo">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Posesión ancestral o tradicional</div>
-                    <div class="text-end" id="derechoPosesion">----</div>
+                    <div class="text-end dato_info" id="derechoPosesion">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
-                  <div class="border rounded-4 p-3 p-md-4">
-                    <div class="text-start tex-num mb-4">Descripción</div>
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Participación</div>
+                    <div class="text-end dato_info" id="derechoParticipacion">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="rounded-4 p-0 " style="box-shadow: 1px 2px 3px #002f5553; ">
+                    <div class="text-start tex-num p-2 px-3 text-white rounded-4 rounded-bottom-0"
+                      style="background-color: #002f55;">Descripción derechos</div>
 
                     <div class="d-flex justify-content-center align-items-center text-center py-4">
-                      <div class="fw-bold text-num" id="derechoDescripcion">----</div>
+                      <div class="dato_info" id="derechoDescripcion">----</div>
                     </div>
                   </div>
                 </div>
@@ -1224,7 +1243,7 @@
         </div>
 
         <!-- columna derecha -->
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-6  ">
           <div class="card border-0 rounded-4 h-100">
             <div class="card-body">
 
@@ -1232,68 +1251,90 @@
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Tipo de fuente administrativa</div>
-                    <div class="text-end" id="fuenteTipo">----</div>
+                    <div class="text-end dato_info" id="fuenteTipo">----</div>
+                  </div>
+                </div>
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Naturaleza Jurídica</div>
+                    <div class="text-end dato_info" id="fuenteNaturalezaJuridica">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Código Naturaleza Jurídica</div>
+                    <div class="text-end dato_info" id="fuenteCodigoNaturalezaJuridica">----</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div class="text-start tex-num">Fecha documento fuente </div>
+                    <div class="text-end dato_info" id="fuenteFechaDocumento">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Número fuente</div>
-                    <div class="text-end" id="fuenteNumero">----</div>
+                    <div class="text-end dato_info" id="fuenteNumero">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Ente Emisor</div>
-                    <div class="text-end" id="fuenteEnteEmisor">----</div>
+                    <div class="text-end dato_info" id="fuenteEnteEmisor">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Oficina de origen</div>
-                    <div class="text-end" id="fuenteOficinaOrigen">----</div>
+                    <div class="text-end dato_info" id="fuenteOficinaOrigen">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Nombre (Escritura)</div>
-                    <div class="text-end" id="fuenteNombre">----</div>
+                    <div class="text-end dato_info" id="fuenteNombre">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Ciudad de origen</div>
-                    <div class="text-end" id="fuenteCiudadOrigen">----</div>
+                    <div class="text-end dato_info" id="fuenteCiudadOrigen">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="text-start tex-num">Estado disponibilidad</div>
-                    <div class="text-end" id="fuenteEstadoDisponibilidad">----</div>
+                    <div class="text-end dato_info" id="fuenteEstadoDisponibilidad">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
-                  <div class="border rounded-4 p-3 p-md-4">
-                    <div class="text-start tex-num mb-4">Descripción de fuente</div>
+                  <div class="rounded-4 p-0 " style="box-shadow: 1px 2px 3px #002f5553; ">
+                    <div class="text-start tex-num p-2 px-3 text-white rounded-4 rounded-bottom-0"
+                      style="background-color: #002f55;">Descripción de fuente</div>
 
                     <div class="d-flex justify-content-center align-items-center text-center py-4">
-                      <div class="fw-bold text-num" id="fuenteDescripcion">----</div>
+                      <div class=" dato_info" id="fuenteDescripcion">----</div>
                     </div>
                   </div>
                 </div>
 
                 <div class="col-12">
-                  <div class="border rounded-4 p-3 p-md-4">
-                    <div class="text-start tex-num mb-4">Observación de la fuente administrativa</div>
+                  <div class="rounded-4 p-0 " style="box-shadow: 1px 2px 3px #002f5553; ">
+                    <div class="text-start tex-num p-2 px-3 text-white rounded-4 rounded-bottom-0"
+                      style="background-color: #002f55;">Observación de la fuente administrativa</div>
 
                     <div class="d-flex justify-content-center align-items-center text-center py-4">
-                      <div class="fw-bold text-num" id="fuenteObservacion">----</div>
+                      <div class=" dato_info" id="fuenteObservacion">----</div>
                     </div>
                   </div>
                 </div>
@@ -1506,7 +1547,7 @@
                   </div>
 
                   <div class="uc-pair">
-                    <div class="uc-info-label">Enchape de baÃ±o</div>
+                    <div class="uc-info-label">Enchape de baño</div>
                     <div class="uc-info-value" id="convencionalEnchapeBanio">----</div>
                   </div>
 
@@ -2223,27 +2264,62 @@
       return;
     }
 
+
+    const primerValorConContenido = (...valores) =>
+      valores.find((valor) => valor !== null && valor !== undefined && String(valor).trim() !== "") ?? "";
+
     const interesados = interesadosRaw.map((i) => {
-      const nombreCompuesto = [
-        i.primer_nombre,
-        i.segundo_nombre,
-        i.primer_apellido,
-        i.segundo_apellido,
-      ].filter(Boolean).join(" ");
+      const nombres = [
+        primerValorConContenido(i.i_primer_nombre, i.primer_nombre),
+        primerValorConContenido(i.i_segundo_nombre, i.segundo_nombre),
+      ].filter((valor) => String(valor ?? "").trim()).join(" ");
+
+      const apellidos = [
+        primerValorConContenido(i.i_primer_apellido, i.primer_apellido),
+        primerValorConContenido(i.i_segundo_apellido, i.segundo_apellido),
+      ].filter((valor) => String(valor ?? "").trim()).join(" ");
+
+      const nombreCompuesto = [nombres, apellidos]
+        .filter((valor) => String(valor ?? "").trim())
+        .join(" ");
+
+      const razonSocial = primerValorConContenido(i.i_razon_social, i.razon_social);
+      const tipoPersonaCodigo = String(
+        primerValorConContenido(i.i_tipo_itfcode, i.tipo_persona_itfcode)
+      ).trim();
+      const documentoIdentidad = i.i_documento_identidad ?? i.documento_identidad;
+      const autorizaNotificacionValor = i.ic_autoriza_notificacion_correo;
+      const esValorVerdadero = (valor) =>
+        valor === true ||
+        ["true", "t", "1", "si", "sí"].includes(
+          String(valor ?? "").trim().toLowerCase()
+        );
+      const autorizaNotificacionCorreo = esValorVerdadero(autorizaNotificacionValor);
+      const autorreconocimientoEtnico = esValorVerdadero(i.i_autorreconocimiento_etnico);
+      const autorreconocimientoCampesino = esValorVerdadero(i.i_autorreconocimiento_campesino);
+      const tipoDocumentoNombre = i.i_tipo_documento_nombre ?? i.tipo_documento_nombre;
+      const grupoEtnicoNombre = i.i_grupo_etnico_nombre ?? i.grupo_etnico_nombre;
+      const naturalezaJuridicaNombre = i.naturaleza_juridica_nombre ?? i.naturaleza_juridica;
+      const codigoNaturalezaJuridicaNombre = i.codigo_naturaleza_juridica_nombre ?? i.codigo_naturaleza_juridica;
 
       const nombreMostrar =
         i.nombre_completo ||
-        i.razon_social ||
+        razonSocial ||
         nombreCompuesto ||
+        documentoIdentidad ||
         "---";
 
-      const partesNombre = nombreMostrar.trim().split(/\s+/);
-      const linea1 = partesNombre.slice(0, 2).join(" ") || nombreMostrar;
-      const linea2 = partesNombre.slice(2).join(" ");
+      const esPersonaJuridica = tipoPersonaCodigo === "1";
+      const esPersonaNatural = tipoPersonaCodigo === "0";
+      const linea1 = esPersonaJuridica
+        ? (razonSocial || nombreMostrar)
+        : (nombres || nombreMostrar);
+      const linea2 = esPersonaNatural ? apellidos : "";
 
-      const sexo = i.sexo_nombre || i.sexo || "---";
+      const sexo = i.sexo_nombre || i.i_sexo_nombre || i.sexo || i.i_sexo || "---";
 
       const cuotaBase =
+        i.d_cuota_participacion ??
         i.cuota_participacion ??
         i.porcentaje_participacion ??
         i.fraccion ??
@@ -2257,7 +2333,9 @@
       const tipoPersona =
         i.tipo_persona_nombre ||
         i.tipo_persona ||
-        (i.razon_social ? "Persona Jurídica" : "Persona Natural");
+        i.i_tipo_nombre ||
+        i.i_tipo ||
+        (esPersonaJuridica ? "Persona Jurídica" : "Persona Natural");
 
       return {
         ...i,
@@ -2265,35 +2343,47 @@
         linea2,
         sexo,
         cuotaTexto,
-        tipoPersona
+        tipoPersona,
+        razonSocial,
+        documentoIdentidad,
+        autorizaNotificacionCorreo,
+        autorreconocimientoEtnico,
+        autorreconocimientoCampesino,
+        tipoDocumentoNombre,
+        grupoEtnicoNombre,
+        naturalezaJuridicaNombre,
+        codigoNaturalezaJuridicaNombre,
       };
     });
 
     interesadosModalData = interesados;
 
+    console.log(interesadosModalData);
+
     tbody.innerHTML = interesados.map((item, index) => `
+    
       <tr class="fila-interesado-principal" data-detalle-id="detalleInteresado_${index}">
-        <td>
+        <td >
           <div class="d-flex align-items-center gap-3">
             <div class="icono-interesado-circle">
               <i class="fa-solid fa-user"></i>
             </div>
-            <div class="info-interesado-nombre">
+            <div class="info-interesado-nombre ">
               <div>${item.linea1 || "---"}</div>
               <div>${item.linea2 || ""}</div>
             </div>
           </div>
         </td>
 
-        <td class="columna-con-linea">
+        <td class="columna-con-linea text-center">
           <span class="texto-tabla-interesado fw-semibold">${item.sexo || "---"}</span>
         </td>
 
-        <td>
+        <td class="text-center">
           <span class="badge-cuota-participacion">${item.cuotaTexto || "---"}</span>
         </td>
 
-        <td>
+        <td class="text-center">
           <span class="texto-tabla-interesado">${item.tipoPersona || "---"}</span>
         </td>
 
@@ -2314,76 +2404,84 @@
       <tr class="fila-detalle-interesado">
         <td colspan="5" class="p-0 border-0">
           <div class="collapse" id="detalleInteresado_${index}">
-            <div class="p-4 border-top detalle-interesado-contenido">
-              <div class="tarjet-infop d-inline-block w-50 px-3 py-2 rounded-3">
+            <div class="p-4 border-top detalle-interesado-contenido text-white" style="background-color:#002f55 !important; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;" >
+              <div class="tarjet-infop d-inline-block w-75 px-3 py-2 rounded-3" style="margin-left:12.5% !important">
                 <div class="text-white text-center mb-0 text-infort">Información personal</div>
               </div>
               <div class="row mt-4 w-100 mx-0">
                 <div class="col-12 col-md-6 pe-md-5">
                   <div class="row g-3">
+
+                    <div class="col-12 mt-4">
+                      <div class="d-flex justify-content-between align-items-center w-100">
+                        <div class="text-start text-lojh mb-0">Razón Social</div>
+                        <div class="text-end mb-0 dato_info">${item.razonSocial || "---"}</div>
+                      </div>
+                    </div>
+
                     <div class="col-12">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Tipo de documento</div>
-                        <div class="text-end mb-0">${item.tipo_documento_nombre || "---"}</div>
+                        <div class="text-end mb-0 dato_info">${item.tipoDocumentoNombre || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Documento de identidad</div>
-                        <div class="text-end mb-0">${item.documento_identidad || "---"}</div>
+                        <div class="text-end mb-0 dato_info">${item.documentoIdentidad || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12">
                       <div class="d-flex justify-content-between align-items-center w-100">
-                        <div class="text-start text-lojh mb-0">Grupo Ã©tnico</div>
-                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                        <div class="text-start text-lojh mb-0">Grupo Étnico</div>
+                        <div class="text-end mb-0 dato_info">${item.grupoEtnicoNombre || "---"}</div>
                       </div>
                     </div>
 
-                    <div class="col-12 mt-4">
-                      <div class="d-flex justify-content-between align-items-center w-100">
-                        <div class="text-start text-lojh mb-0">Razón Social</div>
-                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
-                      </div>
-                    </div>
+                    
+
+                    
+
                   </div>
                 </div>
 
                 <div class="col-12 col-md-6 ps-md-5">
                   <div class="row g-3">
-                    <div class="col-12">
+
+                    <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
-                        <div class="text-start text-lojh mb-0">Naturaleja Jurídica</div>
-                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                        <div class="text-start text-lojh mb-0">Autorreconocimiento étnico</div>
+                        <div class="text-end mb-0 dato_info">${item.autorreconocimientoEtnico ? "Sí" : "No"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
-                        <div class="text-start text-lojh mb-0">Autorreconocimiento ?tnico</div>
-                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                        <div class="text-start text-lojh mb-0">Nombre de la comunidad</div>
+                        <div class="text-end mb-0 dato_info">${item.ie_nombre_comunidad || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
-                        <div class="text-start text-lojh mb-0">Código Naturaleza Jurídica</div>
-                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                        <div class="text-start text-lojh mb-0">Nombre del pueblo</div>
+                        <div class="text-end mb-0 dato_info">${item.ie_nombre_pueblo_nombre || item.ie_nombre_pueblo || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Autorreconocimiento campesino</div>
-                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                        <div class="text-end mb-0 dato_info">${item.autorreconocimientoCampesino ? "Sí" : "No"}</div>
                       </div>
                     </div>
+                    
                   </div>
                 </div>
               </div>
-              <div class="tarjet-infop d-inline-block w-50 px-3 py-2 rounded-3 mt-4">
+              <div class="tarjet-infop d-inline-block w-75 px-3 py-2 rounded-3 mt-5" style="margin-left:12.5% !important">
                 <div class="text-white text-center mb-0 text-infort">Información de contacto</div>
               </div>
               <div class="row mt-4 w-100 mx-0">
@@ -2391,29 +2489,29 @@
                   <div class="row g-3">
                     <div class="col-12">
                       <div class="d-flex justify-content-between align-items-center w-100">
-                        <div class="text-start text-lojh mb-0">Departamento</div>
-                        <div class="text-end mb-0">${item.documento_identidad || "---"}</div>
+                        <div class="text-start text-lojh mb-0">Departamento de residencia</div>
+                        <div class="text-end mb-0 dato_info">${item.ic_departamento || "Sin dato"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
-                        <div class="text-start text-lojh mb-0">TelÃ©fono</div>
-                        <div class="text-end mb-0">${item.tipo_documento_nombre || "---"}</div>
+                        <div class="text-start text-lojh mb-0">Teléfono</div>
+                        <div class="text-end mb-0 dato_info">${item.ic_telefono || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
-                        <div class="text-start text-lojh mb-0">Municipio</div>
-                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                        <div class="text-start text-lojh mb-0">Municipio de residencia</div>
+                        <div class="text-end mb-0 dato_info">${item.ic_municipio || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Correo electrónico</div>
-                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                        <div class="text-end mb-0 dato_info">${item.ic_correo_electronico || "---"}</div>
                       </div>
                     </div>
                   </div>
@@ -2424,21 +2522,21 @@
                     <div class="col-12">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Domicilio de notificación</div>
-                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                        <div class="text-end mb-0 dato_info">${item.ic_domicilio_notificacion || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">¿Autoriza notificación de correo?</div>
-                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                        <div class="text-end mb-0 dato_info">${item.autorizaNotificacionCorreo ? "Sí" : "No"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="fw-bold text-start text-lojh mb-0">Dirección de residencia</div>
-                        <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                        <div class="text-end mb-0 dato_info">${item.ic_direccion_residencia || "---"}</div>
                       </div>
                     </div>
                   </div>
@@ -2447,7 +2545,7 @@
               <div class="d-flex justify-content-end mt-4">
                 <button
                   type="button"
-                  class="btn-gunmi d-inline-flex align-items-center gap-2 px-4 py-2"
+                  class="btn-gunmi d-inline-flex align-items-center gap-2 p-2 px-3"
                   onclick="abrirPanelDerechoDesdeModal(${index})"
                   aria-label="Abrir panel lateral derecho"
                 >
@@ -2690,6 +2788,8 @@
 
     const unidades = [...unidadesReales];
 
+    console.log(unidades);
+
     if (!unidades.length) {
       tbody.innerHTML = `
       <tr class="fila-vacia-unidad">
@@ -2718,6 +2818,7 @@
         "----";
 
       const tipoPlanta = item?.tipo_planta_nombre ?? "---";
+      const tipoUnidadConstruccion = item?.tipo_unidad_construccion_nombre ?? "---";
       const relacionSuperficie = item?.relacion_superficie_nombre ?? "---";
       const estadoUnidad =
         item?.estado_unidad_construccion_nombre ??
@@ -2747,44 +2848,53 @@
         </td>
         <td class="text-center align-middle text-unidad-card">${plantaUbicacion}</td>
         <td class="text-center align-middle text-unidad-card">${altura}</td>
-        <td class="text-center align-middle text-unidad-card">${etiqueta}</td>
+        <td class="text-center align-middle text-unidad-card">${tipoUnidadConstruccion}</td>
         <td class="text-center align-middle text-unidad-card">${identificador}</td>
       </tr>
 
       <tr class="fila-detalle-unidad-card ">
         <td colspan="5" class="p-0 border-0">
           <div class="collapse collapse-detalle-uc-card" id="${rowId}">
-            <div class="detalle-unidad-card-contenido px-4 px-md-4 px-lg-5 pt-3 pb-3">
-              <div class="row gy-4 gx-4 gx-lg-5 align-items-start">
-                <div class="col-12 col-md-7 col-lg-4">
-                  <div class="detalle-uc-label">Tipo de planta</div>
-                  <div class="detalle-uc-value">${tipoPlanta}</div>
+            <div class="detalle-unidad-card-contenido p-1 ps-5">
+              <div class="row g-1 justify-content-center m-2 mt-0">
+
+                <div class="col-12 col-md-4">
+                  <div class="d-flex flex-column w-100 dato p-2">
+                      <div class="fw-bold text-start tex-num">Tipo de planta</div>
+                      <div class="text-start dato_info">${tipoPlanta}</div>
+                  </div>
                 </div>
 
-                <div class="col-12 col-md-7 col-lg-4">
-                  <div class="detalle-uc-label">Relación superficie</div>
-                  <div class="detalle-uc-value">${relacionSuperficie}</div>
+                <div class="col-12 col-md-4">
+                  <div class="d-flex flex-column w-100 dato p-2">
+                      <div class="fw-bold text-start tex-num">Relación Superficie</div>
+                      <div class="text-start dato_info">${relacionSuperficie}</div>
+                  </div>
+                </div>
+                
+                <div class="col-12 col-md-4">
+                  <div class="d-flex flex-column w-100 dato p-2 ">
+                      <div class="fw-bold text-start tex-num">Estado U. Construcción</div>
+                      <div class="text-start dato_info">${estadoUnidad}</div>
+                  </div>
                 </div>
 
-                <div class="col-12 col-md-7 col-lg-4">
-                  <div class="detalle-uc-label">Estado unidad construcción</div>
-                  <div class="detalle-uc-value">${estadoUnidad}</div>
+                <div class="col-12 col-md-4">
+                  <div class="d-flex flex-column w-100 dato p-2 ">
+                      <div class="fw-bold text-start tex-num">Etiqueta</div>
+                      <div class="text-start dato_info">${etiqueta}</div>
+                  </div>
                 </div>
-              </div>
 
-              <div class="row gy-3 gx-4 gx-lg-5 mt-1 align-items-end">
+                <div class="col-12 col-md-4">
+                  <div class="d-flex flex-column w-100 dato p-2 ">
+                      <div class="fw-bold text-start tex-num">Observaciones</div>
+                      <div class="text-start dato_info observaciones-unidad-card">${observaciones}</div>
+                  </div>
+                </div>
+
                 <div class="col-12 col-lg-4">
-                  <div class="detalle-uc-label">Etiqueta</div>
-                  <div class="detalle-uc-value">${etiqueta}</div>
-                </div>
-
-                <div class="col-12 col-lg-4">
-                  <div class="detalle-uc-label">Observaciones</div>
-                  <div class="detalle-uc-value">${observaciones}</div>
-                </div>
-
-                <div class="col-12 col-lg-4">
-                  <div class="detalle-uc-acciones d-flex justify-content-lg-end">
+                  <div class="detalle-uc-acciones d-flex justify-content-center align-items-center  py-3">
                     <button
                       type="button"
                       class="btn btn-caracteristicas-uc"
@@ -2796,7 +2906,9 @@
                     </button>
                   </div>
                 </div>
+
               </div>
+              
             </div>
           </div>
         </td>
@@ -3178,6 +3290,32 @@
     loadUnidadExtra(unitId);
   }
 
+  function contarInteresadosPredio(interesadosRaw = []) {
+    const registros = Array.isArray(interesadosRaw) ? interesadosRaw : [];
+    const claves = new Set();
+
+    registros.forEach((interesado, index) => {
+      const clave = [
+        interesado?.i_documento_identidad,
+        interesado?.documento_identidad,
+        interesado?.numero_documento,
+        interesado?.i_nombre,
+        interesado?.nombre,
+        interesado?.i_razon_social,
+        interesado?.razon_social,
+        index,
+      ].find((valor) => String(valor ?? "").trim());
+      claves.add(String(clave ?? index).trim());
+    });
+
+    return claves.size;
+  }
+
+  function actualizarConteoInteresadosPredio(total) {
+    document.querySelectorAll("#resumenPredioInteresados, #badgeJuridicoInteresadosCount").forEach((el) => {
+      el.textContent = total;
+    });
+  }
   function updateDerechosCards(derechos) {
     if (!derechos || !derechos.length) return;
     const cont = document.getElementById("contDerechos");
@@ -3659,8 +3797,30 @@
     _setModalFieldByLabel(root, "Valido control de calidad", _fmtBool(_pickValue(src, ["valido_control_calidad", "valido_control", "valida_control_calidad"])));
   }
 
-  function agruparConstrucciones(unidades = [], numeroPredial = "") {
+  function agruparConstrucciones(construccionesRaw = [], unidades = [], numeroPredial = "") {
     const grupos = new Map();
+
+    construccionesRaw.forEach((construccion) => {
+      const consId = construccion.id ?? construccion.t_id ?? construccion.construccion_id;
+      if (!consId) return;
+
+      grupos.set(consId, {
+        id: consId,
+        identificador: construccion.identificador || "---",
+        tipo_construccion_nombre: construccion.tipo_construccion_nombre || "---",
+        tipo_dominio_nombre: construccion.tipo_dominio_nombre || "---",
+        total_mezaninis: construccion.total_mezaninis,
+        total_pisos: construccion.total_pisos,
+        total_semisotanos: construccion.total_semisotanos,
+        total_sotanos: construccion.total_sotanos,
+        area_total_construccion: construccion.area_total_construccion,
+        observacion: construccion.observacion,
+        etiqueta: construccion.etiqueta,
+        estado_construccion_nombre: construccion.estado_construccion_nombre || "---",
+        predio_numero_predial: numeroPredial,
+        unidades: [],
+      });
+    });
 
     unidades.forEach((unidad) => {
       const consId = unidad.construccion_id;
@@ -3690,7 +3850,6 @@
 
     return Array.from(grupos.values());
   }
-
   function seleccionarConstruccion(c) {
     const cardUnidadConstruccion = document.getElementById("cardUnidadConstruccion");
     const detalleUnidadCard = document.getElementById("detalleUnidadConstruccionCard");
@@ -3772,6 +3931,7 @@
       const data = await response.json();
 
       const predio = data?.predio;
+      const construccionesRaw = data?.construcciones || [];
       const derechos = data?.derechos || [];
       const unidades = data?.unidades_construccion || [];
       const fuentes = data?.fuente_administrativa || [];
@@ -3809,16 +3969,15 @@
         resumenPredioDireccion.textContent = formatearResumenDireccion(direccionPredio);
       }
 
-      if (resumenPredioInteresados) {
-        resumenPredioInteresados.textContent = interesadosRaw.length;
-      }
+      const totalInteresadosPredio = contarInteresadosPredio(interesadosRaw);
+      actualizarConteoInteresadosPredio(totalInteresadosPredio);
 
       if (resumenPredioNpn) {
         resumenPredioNpn.textContent = predio?.numero_predial_nacional ?? "-";
       }
 
       const numeroPredialNpn = predio?.numero_predial_nacional ?? predio?.numero_predial ?? "-";
-      const construcciones = agruparConstrucciones(unidades, numeroPredialNpn);
+      const construcciones = agruparConstrucciones(construccionesRaw, unidades, numeroPredialNpn);
 
       if (resumenPredioConstrucciones) {
         resumenPredioConstrucciones.textContent = construcciones.length;
@@ -3876,22 +4035,32 @@
         });
       }
 
+      const primerValorConContenido = (...valores) =>
+        valores.find((valor) => valor !== null && valor !== undefined && String(valor).trim() !== "") ?? "";
+
       const interesados = interesadosRaw.map((i) => {
         const nombreCompuesto = [
-          i.primer_nombre,
-          i.segundo_nombre,
-          i.primer_apellido,
-          i.segundo_apellido,
-        ].filter(Boolean).join(" ");
+          primerValorConContenido(i.i_primer_nombre, i.primer_nombre),
+          primerValorConContenido(i.i_segundo_nombre, i.segundo_nombre),
+          primerValorConContenido(i.i_primer_apellido, i.primer_apellido),
+          primerValorConContenido(i.i_segundo_apellido, i.segundo_apellido),
+        ].filter((valor) => String(valor ?? "").trim()).join(" ");
+
+        const razonSocial = primerValorConContenido(i.i_razon_social, i.razon_social);
+        const documentoIdentidad = i.i_documento_identidad ?? i.documento_identidad;
+        const tipoDocumentoNombre = i.i_tipo_documento_nombre ?? i.tipo_documento_nombre;
+        const grupoEtnicoNombre = i.i_grupo_etnico_nombre ?? i.grupo_etnico_nombre;
 
         return {
           ...i,
-          _nombre_mostrado: i.nombre_completo || i.razon_social || nombreCompuesto,
+          documento_identidad: documentoIdentidad,
+          tipo_documento_nombre: tipoDocumentoNombre,
+          grupo_etnico_nombre: grupoEtnicoNombre,
+          _nombre_mostrado: i.nombre_completo || razonSocial || nombreCompuesto || documentoIdentidad || "---",
         };
       });
 
       renderInteresadosModal(interesadosRaw);
-
       renderRecords("contInteresados", interesados, "Interesado", [
         ["Nombre", "_nombre_mostrado"],
         ["Documento", "documento_identidad"],
@@ -3983,51 +4152,74 @@
           trDetail.innerHTML = `
             <td colspan="5" class="p-0 border-0">
               <div class="collapse" id="${detailId}">
-                <div class="detalle-unidad-contenido px-5 pt-2 pb-4 ms-5">
-                  <div class="row gx-5 gy-4 mb-4">
+                <div class="detalle-unidad-contenido construcc px-2 pt-0 pb-4 ms-4 ">
+                  <div class="row g-1 justify-content-center m-2 mt-0">
+
                     <div class="col-12 col-md-4">
-                      <div class="fw-bold mb-1 text-detalle-unidad">Tipo dominio</div>
-                      <div class="text-detalle-unidad">${tipoDominio}</div>
+                      <div class="d-flex flex-column w-100 dato p-2">
+                        <div class="fw-bold text-start tex-num">Tipo Dominio</div>
+                        <div class="text-start dato_info">${tipoDominio}</div>
+                      </div>
                     </div>
+
                     <div class="col-12 col-md-4">
-                      <div class="fw-bold mb-1 text-detalle-unidad">Total mezaninis</div>
-                      <div class="text-detalle-unidad">${totalMezaninis}</div>
+                      <div class="d-flex flex-column w-100 dato p-2">
+                        <div class="fw-bold text-start tex-num">Total mezaninis</div>
+                        <div class="text-start dato_info">${totalMezaninis}</div>
+                      </div>
                     </div>
+
                     <div class="col-12 col-md-4">
-                      <div class="fw-bold mb-1 text-detalle-unidad">Etiqueta</div>
-                      <div class="text-detalle-unidad">${etiqueta}</div>
+                      <div class="d-flex flex-column w-100 dato p-2">
+                        <div class="fw-bold text-start tex-num">Etiqueta</div>
+                        <div class="text-start dato_info">${etiqueta}</div>
+                      </div>
                     </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column w-100 dato p-2">
+                        <div class="fw-bold text-start tex-num">Total Pisos</div>
+                        <div class="text-start dato_info">${totalPisos}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column w-100 dato p-2">
+                        <div class="fw-bold text-start tex-num">Total Semisótanos</div>
+                        <div class="text-start dato_info">${totalSemisotanos}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column w-100 dato p-2">
+                        <div class="fw-bold text-start tex-num">Estado Construcción</div>
+                        <div class="text-start dato_info">${estadoConstruccion}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column w-100 dato p-2">
+                        <div class="fw-bold text-start tex-num">Total Sótanos</div>
+                        <div class="text-start dato_info">${totalSotanos}</div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column w-100 dato p-2">
+                        <div class="fw-bold text-start tex-num">Área Total Construcción</div>
+                        <div class="text-start dato_info">${totalConstruccion} <span style="color:#002f55">m²</span></div>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4">
+                      <div class="d-flex flex-column w-100 dato p-2">
+                        <div class="fw-bold text-start tex-num">Observación</div>
+                        <div class="text-start dato_info">${observacion}</div>
+                      </div>
+                    </div>
+
                   </div>
 
-                  <div class="row gx-5 gy-4 mb-4">
-                    <div class="col-12 col-md-4">
-                      <div class="fw-bold mb-1 text-detalle-unidad">Total pisos</div>
-                      <div class="text-detalle-unidad">${totalPisos}</div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                      <div class="fw-bold mb-1 text-detalle-unidad">Total semisotanos</div>
-                      <div class="text-detalle-unidad">${totalSemisotanos}</div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                      <div class="fw-bold mb-1 text-detalle-unidad">Estado construccion</div>
-                      <div class="text-detalle-unidad">${estadoConstruccion}</div>
-                    </div>
-                  </div>
-
-                  <div class="row gx-5 gy-4">
-                    <div class="col-12 col-md-4">
-                      <div class="fw-bold mb-1 text-detalle-unidad">Total Sotanos</div>
-                      <div class="text-detalle-unidad">${totalSotanos}</div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                      <div class="fw-bold mb-1 text-detalle-unidad">Total construccion</div>
-                      <div class="text-detalle-unidad">${totalConstruccion}</div>
-                    </div>
-                    <div class="col-12 col-md-4">
-                      <div class="fw-bold mb-1 text-detalle-unidad">Observación</div>
-                      <div class="text-detalle-unidad">${observacion}</div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </td>
@@ -4276,7 +4468,7 @@
     }
   }
 
-  function actualizarBadgeConstruccion(unitData) {
+  function actualizarBadgeConstruccion(unitData = null) {
     const badge = document.getElementById("badgeConstruccionActiva");
     const badgeValor = document.getElementById("badgeConstruccionValor");
     const contenedorBadgesUc = document.getElementById("contenedorBadgesUc");
@@ -4284,7 +4476,12 @@
 
     if (!badge || !badgeValor) return;
 
-    if (!unitData) {
+    const identificadorConstruccion =
+      construccionActiva?.identificador ??
+      unitData?.construccion_identificador ??
+      null;
+
+    if (!identificadorConstruccion) {
       badge.classList.add("d-none");
       badgeValor.textContent = "";
 
@@ -4303,14 +4500,7 @@
       return;
     }
 
-    const identificador =
-      unitData.caracteristica_identificador ??
-      unitData.identificador ??
-      unitData.etiqueta ??
-      unitData.t_id ??
-      "---";
-
-    badgeValor.textContent = identificador;
+    badgeValor.textContent = identificadorConstruccion;
     badge.classList.remove("d-none");
 
     if (contenedorBadgesUc) {
@@ -4321,7 +4511,6 @@
       mensajeSinSeleccionUc.classList.add("d-none");
     }
   }
-
   function abrirPanelDerechoDesdeModal(index) {
     const modalEl = document.getElementById("modalInformacionAdicional");
     const panelEl = document.getElementById("panelDerechoPredio");
@@ -4333,6 +4522,8 @@
     if (interesado) {
       const nombreConSalto = `${interesado.linea1 || ""}<br>${interesado.linea2 || ""}`;
       nombreEl.innerHTML = nombreConSalto;
+
+
 
       // Populate offcanvas fields
       setTextById("derechoFechaInicio", _fmtDate(interesado.d_fecha_inicio_tenencia ?? interesado.fecha_inicio_tenencia));
@@ -4346,9 +4537,13 @@
           interesado.d_posesion_ancestral_tradicional
         )
       );
+      setTextById("derechoParticipacion", interesado.participacion);
       setTextById("derechoDescripcion", interesado.d_descripcion ?? interesado.descripcion ?? interesado.descripcion_derecho);
 
       setTextById("fuenteTipo", interesado.fa_tipo_nombre ?? interesado.tipo_fuente_administrativa_nombre ?? interesado.fa_tipo);
+      setTextById("fuenteNaturalezaJuridica", interesado.naturaleza_juridica_nombre ?? interesado.naturaleza_juridica);
+      setTextById("fuenteCodigoNaturalezaJuridica", interesado.codigo_naturaleza_juridica_nombre ?? interesado.codigo_naturaleza_juridica);
+      setTextById("fuenteFechaDocumento", _fmtDate(interesado.fa_fecha_documento_fuente ?? interesado.fecha_documento_fuente));
       setTextById("fuenteNumero", interesado.fa_numero_fuente ?? interesado.numero_fuente);
       setTextById("fuenteEnteEmisor", interesado.fa_ente_emisor ?? interesado.ente_emisor);
       setTextById("fuenteOficinaOrigen", interesado.oficina_origen ?? interesado.fa_oficina_origen);
@@ -4361,8 +4556,8 @@
       nombreEl.textContent = "---";
       // Clear offcanvas fields
       const fields = [
-        "derechoFechaInicio", "derechoTipo", "derechoPosesion", "derechoDescripcion",
-        "fuenteTipo", "fuenteNumero", "fuenteEnteEmisor", "fuenteOficinaOrigen",
+        "derechoFechaInicio", "derechoTipo", "derechoPosesion", "derechoParticipacion", "derechoDescripcion",
+        "fuenteTipo", "fuenteNaturalezaJuridica", "fuenteCodigoNaturalezaJuridica", "fuenteFechaDocumento", "fuenteNumero", "fuenteEnteEmisor", "fuenteOficinaOrigen",
         "fuenteNombre", "fuenteCiudadOrigen", "fuenteEstadoDisponibilidad",
         "fuenteDescripcion", "fuenteObservacion"
       ];

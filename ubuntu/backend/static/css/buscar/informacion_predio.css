@@ -425,24 +425,27 @@
     color: #032F57;
     font-size: 1rem;
 }
-.accordion-item{
+
+.accordion-item {
     border-radius: 18px;
 }
-.accordion-button{
+
+.accordion-button {
     background-color: #032f57;
     color: white;
     border-radius: 18px;
 }
 
-.accordion-button:focus{
+.accordion-button:focus {
     border: none !important;
 }
 
-.accordion-button:not(.collapsed){
+.accordion-button:not(.collapsed) {
     background-color: #002F55 !important;
     color: white;
-    border: none ;
+    border: none;
 }
+
 .text-two {
     font-size: 0.833rem;
 }
@@ -558,8 +561,8 @@
     /* Optimiza el rendimiento del navegador */
 }
 
-.tarjeta-placeholder-superior:hover ,
-.tarjeta-inferior-base:hover  {
+.tarjeta-placeholder-superior:hover,
+.tarjeta-inferior-base:hover {
     transform: scale(1.01);
     /* background-color: #ffffff09 !important; */
     /* Nota: Intenta quitar el !important si puedes manejarlo con especificidad de selectores */
@@ -643,6 +646,7 @@
     background-color: #F0F6FB !important;
     transition: background-color 0.25s ease;
 }
+
 
 .animar-actualizacion-unidad {
     animation: actualizarUnidadFlash 0.7s ease;
@@ -780,9 +784,9 @@
     border-bottom: 0 !important;
 }
 
-.detalle-unidad-card-contenido {
+/* .detalle-unidad-card-contenido {
     padding: 1.25rem 2rem 1.25rem 2rem !important;
-}
+} */
 
 .detalle-uc-label {
     font-size: 0.833rem;
@@ -824,9 +828,9 @@
     background-color: #032F57;
     color: #FFFFFF;
     border: none;
-    border-radius: 14px;
+    border-radius: 10px;
     padding: 0.75rem 1.15rem;
-    font-size: 0.600rem;
+    font-size: 0.8rem;
     font-weight: 500;
     line-height: 1.2;
     white-space: nowrap;
@@ -834,7 +838,7 @@
 }
 
 .btn-caracteristicas-uc:hover {
-    background-color: #053867;
+    background-color: #0a5397;
     color: #FFFFFF;
 }
 
@@ -1098,18 +1102,20 @@
 
 .tex-num {
     color: #002F55;
-    font-size: 0.90rem;
+    font-size: 0.95rem;
     text-wrap: wrap;
+    font-weight: 600;
 }
 
-.dato_info{
+.dato_info {
     font-size: 0.82rem;
     margin-top: 1px;
 }
 
-.dato{
+.dato {
     background-color: #002f550d;
     border-radius: 10px;
+    height: 100%;
 }
 
 .tarjet-row-pot {
@@ -1173,7 +1179,7 @@
 }
 
 .tabla-modal-interesados thead th {
-    background-color: #F0F6FB;
+    background-color: #e5f4ff;
     color: #0b3b68;
     font-size: 1rem;
     font-weight: 700;
@@ -1272,14 +1278,32 @@
     background-color: #ffffff !important;
 }
 
+#modalInformacionAdicional .modal-predio-body {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #002f55 #f1f1f1;
+
+    /* Para Chrome, Safari y Edge */
+    &::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* Para Firefox y Estándar moderno */
+    scrollbar-width: none;
+
+    /* Para Internet Explorer y Edge antiguo */
+    -ms-overflow-style: none;
+}
 
 
-.tabla-modal-interesados tr.fila-interesado-activa>td,
-.tabla-modal-interesados tr.fila-detalle-interesado-activa>td,
-.tabla-modal-interesados .detalle-interesado-contenido-activo {
-    background-color: #002F55 !important;
+
+.tabla-modal-interesados tr.fila-interesado-activa>td {
+    background-color: #002f55 !important;
     color: #FFFFFF !important;
 }
+
+
+
 
 .tabla-modal-interesados tr.fila-interesado-activa .texto-tabla-interesado,
 .tabla-modal-interesados tr.fila-interesado-activa .info-interesado-nombre,
@@ -1314,7 +1338,8 @@
 }
 
 .text-lojh {
-    font-size: 0.833rem;
+    font-size: 0.94rem;
+    font-weight: 700;
 }
 
 #modalInformacionAdicional .modal-dialog {
@@ -1344,13 +1369,25 @@
 
 .btn-gunmi {
     background-color: #fff;
+    border: none;
     border-radius: 15px;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2 ease;
+}
+
+.btn-gunmi i {
+    display: block;
+    transition: transform 0.2s ease;
 }
 
 .btn-gunmi:hover {
     background-color: #dceefddf;
     color: #032F57;
+    transform: scale(1.01);
+    font-weight: 500;
+}
+
+.btn-gunmi:hover i {
+    transform: rotate(-25deg);
 }
 
 .boton-jdk {
@@ -1378,7 +1415,7 @@
 }
 
 .nombre-interesado-panel {
-    font-size: 0.733rem;
+    font-size: 0.833rem;
     line-height: 1.3;
 }
 
@@ -1407,6 +1444,19 @@
 
 #panelDerechoPredio .offcanvas-body {
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #002f55 #f1f1f1;
+
+    /* Para Chrome, Safari y Edge */
+    &::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* Para Firefox y Estándar moderno */
+    scrollbar-width: none;
+
+    /* Para Internet Explorer y Edge antiguo */
+    -ms-overflow-style: none;
 }
 
 #panelDerechoPredio .tex-num {
@@ -1675,6 +1725,8 @@
     font-weight: 700;
 }
 
+
+
 @media (max-width: 991.98px) {
     .btn-ver-detalle-uc {
         width: 100%;
@@ -1852,7 +1904,7 @@
     }
 
     .tex-num {
-        font-size: 0.8rem;
+        font-size: 0.95rem;
     }
 }
 
@@ -1896,6 +1948,7 @@
 
     .detalle-unidad-card-contenido {
         padding: 1rem 1.25rem !important;
+        
     }
 
     .detalle-uc-label {
@@ -2004,6 +2057,7 @@
         max-width: 100%;
     }
 }
+
 #modalInformacionMarcas .modal-marcas-dialog {
     width: min(1180px, calc(100vw - 2rem));
     max-width: min(1180px, calc(100vw - 2rem));
@@ -2067,14 +2121,14 @@
 }
 
 @media (min-width: 1200px) {
-    #modalInformacionMarcas .modal-predio-row > .col-xl-auto {
+    #modalInformacionMarcas .modal-predio-row>.col-xl-auto {
         flex: 1 1 0;
         width: 0;
         min-width: 0;
         max-width: none;
     }
 
-    #modalInformacionMarcas .modal-predio-row > .col-xl-auto.d-none {
+    #modalInformacionMarcas .modal-predio-row>.col-xl-auto.d-none {
         flex: 0 0 auto;
         width: auto;
     }
@@ -2174,6 +2228,7 @@
     border-bottom-right-radius: 1rem;
     padding: 0.75rem;
 }
+
 /* Loader global de la vista buscar predio */
 .module-information-predio {
     position: relative;
@@ -2206,4 +2261,12 @@
     color: #032F57;
     font-size: 0.95rem;
     font-weight: 700;
+}
+.observaciones-unidad-card {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }

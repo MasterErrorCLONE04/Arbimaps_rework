@@ -26,3 +26,6 @@ Thumbs.db
 tokens/
 cookies.txt
 mergin_sync/
+
+#Docker compose
+ubuntu/docker-compose.yml

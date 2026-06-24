@@ -364,11 +364,14 @@ def predio_detalle(
     SELECT
       uc.*,
       car.identificador AS caracteristica_identificador,
+      uct.dispname AS tipo_unidad_construccion_nombre,
       car.total_plantas,
-      car.observaciones,
+      car.observaciones AS caracteristica_observaciones,
       calif.dispname AS tipo_calificacion_clase,
       COALESCE(calif.dispname, 'Unidad de Construccion ARB') AS tipo_calificacion_resumen,
       ect.dispname AS estado_construccion,
+      cpt.dispname AS tipo_planta_nombre,
+      rsct.dispname AS relacion_superficie_nombre,
       ST_AsGeoJSON(uc.geometria)::json AS geom,
       c.t_id AS construccion_id,
       c.identificador AS construccion_identificador,
@@ -382,15 +385,21 @@ def predio_detalle(
       tct.dispname AS construccion_tipo_construccion_nombre,
       tdct.dispname AS construccion_tipo_dominio_nombre,
       ect_c.dispname AS construccion_estado_construccion_nombre
-    FROM {_qualified_table(tenant, 'arb_unidadconstruccion')} uc
-    JOIN {_qualified_table(tenant, 'arb_construccion')} c
-      ON c.t_id = uc.construccion
+    FROM {_qualified_table(tenant, 'arb_construccion')} c
+    LEFT JOIN {_qualified_table(tenant, 'arb_unidadconstruccion')} uc
+      ON uc.construccion = c.t_id
     LEFT JOIN {_qualified_table(tenant, 'arb_caracteristicasunidadconstruccion')} car
       ON car.t_id = uc.caracteristicasunidadconstruccion
+    LEFT JOIN {_qualified_table(tenant, 'arb_unidadconstrucciontipo')} uct
+      ON uct.t_id::text = car.tipo_unidad_construccion::text
     LEFT JOIN {_qualified_table(tenant, 'arb_calificaciontipo')} calif
       ON calif.t_id::text = car.tipo_calificacion::text
     LEFT JOIN {_qualified_table(tenant, 'arb_estadoconstrucciontipo')} ect
       ON ect.t_id::text = uc.estado_unidad_construccion::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_construccionplantatipo')} cpt
+      ON cpt.t_id::text = uc.tipo_planta::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_relacionsuperficieconstrucciontipo')} rsct
+      ON rsct.t_id::text = uc.relacion_superficie::text
     LEFT JOIN {_qualified_table(tenant, 'arb_tipoconstrucciontipo')} tct
       ON tct.t_id::text = c.tipo_construccion::text
     LEFT JOIN {_qualified_table(tenant, 'arb_tipodominioconstrucciontipo')} tdct
@@ -406,11 +415,13 @@ def predio_detalle(
       dt.dispname AS d_tipo_nombre,
       fat.dispname AS fa_tipo_nombre,
       it.dispname AS i_tipo_nombre,
+      it.itfcode AS i_tipo_itfcode,
       idt.dispname AS i_tipo_documento_nombre,
       get.dispname AS i_grupo_etnico_nombre,
       njt.dispname AS naturaleza_juridica_nombre,
       cnjt.dispname AS codigo_naturaleza_juridica_nombre,
-      st.dispname AS sexo_nombre
+      st.dispname AS sexo_nombre,
+      npit.dispname AS ie_nombre_pueblo_nombre
     FROM {_qualified_table(tenant, 'arb_derechointeresadofuente')} di
     LEFT JOIN {_qualified_table(tenant, 'arb_derechotipo')} dt
       ON dt.t_id::text = di.d_tipo::text
@@ -428,6 +439,8 @@ def predio_detalle(
       ON cnjt.t_id::text = di.codigo_naturaleza_juridica::text
     LEFT JOIN {_qualified_table(tenant, 'arb_sexotipo')} st
       ON st.t_id::text = di.i_sexo::text
+    LEFT JOIN {_qualified_table(tenant, 'arb_nombrepueblosindigenastipo')} npit
+      ON npit.t_id::text = di.ie_nombre_pueblo::text
     WHERE di.predio::text = %s::text;
     """
 
@@ -518,7 +531,29 @@ def predio_detalle(
                 return JSONResponse({"error": "Predio no encontrado"}, status_code=404)
 
             cur.execute(sql_uc, (predio_id,))
-            unidades = cur.fetchall()
+            construccion_unidad_rows = cur.fetchall()
+            construcciones_por_id = {}
+            unidades = []
+            for row in construccion_unidad_rows:
+                construccion_id = row.get("construccion_id")
+                if construccion_id not in construcciones_por_id:
+                    construcciones_por_id[construccion_id] = {
+                        "id": construccion_id,
+                        "identificador": row.get("construccion_identificador"),
+                        "tipo_construccion_nombre": row.get("construccion_tipo_construccion_nombre"),
+                        "tipo_dominio_nombre": row.get("construccion_tipo_dominio_nombre"),
+                        "total_mezaninis": row.get("construccion_total_mezaninis"),
+                        "total_pisos": row.get("construccion_total_pisos"),
+                        "total_semisotanos": row.get("construccion_total_semisotanos"),
+                        "total_sotanos": row.get("construccion_total_sotanos"),
+                        "area_total_construccion": row.get("construccion_area_total_construccion"),
+                        "observacion": row.get("construccion_observacion"),
+                        "etiqueta": row.get("construccion_etiqueta"),
+                        "estado_construccion_nombre": row.get("construccion_estado_construccion_nombre"),
+                    }
+                if row.get("t_id") is not None:
+                    unidades.append(row)
+            construcciones = list(construcciones_por_id.values())
 
             if _table_exists(cur, schema, "arb_uebaunit"):
                 cur.execute(sql_uebaunit, (predio_id,))
@@ -650,6 +685,7 @@ def predio_detalle(
 
     return {
         "predio": base,
+        "construcciones": construcciones,
         "unidades_construccion": unidades,
         "derechos": derechos_interesados,
         "interesados": derechos_interesados,
