@@ -546,6 +546,20 @@
     line-height: 1;
     cursor: pointer;
   }
+
+  /* SweetAlert2 Premium Customizations */
+  .premium-alert-popup {
+    border-radius: 16px !important;
+    padding: 24px !important;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12) !important;
+    border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  }
+  .premium-alert-btn {
+    border-radius: 8px !important;
+    padding: 8px 24px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+  }
 </style>
 
 <div class="container-fluid page-wrapper page-wrapper-visor">
@@ -556,9 +570,12 @@
     <div class="restriccion-sidebar">
       
       <!-- Search & Selection Card -->
-      <div class="premium-card" style="flex-shrink: 0;">
+      <div class="premium-card" style="flex-shrink: 0; gap: 8px;">
         <h3 style="font-size: 1.05rem; color: #002f55; margin: 0; font-weight: 700;">Buscar y Restringir Predios</h3>
-        <p style="font-size: 0.78rem; color: #64748b; margin: 0;">Busca uno o varios números prediales a la vez (separados por comas o espacios) para restringir o liberar su asignación.</p>
+        <p style="font-size: 0.76rem; color: #475569; margin: 0; line-height: 1.4;">
+          Busca uno o varios números prediales a la vez para restringir o liberar su asignación.<br>
+          <span style="color: #dc2626; font-weight: 700; display: inline-block; margin-top: 2px;">⚠️ TODO PREDIO BLOQUEADO NO PUEDE SER USADO PARA LA RADICACIÓN DE PROCESO CATASTRAL.</span>
+        </p>
         
         <div class="d-flex gap-2 mt-2">
           <input type="text" id="vmPredioSearchInput" class="form-control form-control-sm shadow-none"
@@ -2282,6 +2299,45 @@
       await initMap();
       await loadProjectExtent();
       await loadRestricciones();
+
+      // Alerta informativa al ingresar a la vista
+      if (window.Swal) {
+        window.Swal.fire({
+          title: '<span style="color: #0f172a; font-size: 1.15rem; font-weight: 700; font-family: \'Outfit\', \'Inter\', sans-serif;">Módulo de Restricción de Predios</span>',
+          icon: 'warning',
+          html: `
+            <div style="font-family: 'Inter', sans-serif; text-align: left; margin-bottom: 14px;">
+              <p style="font-size: 0.85rem; color: #475569; line-height: 1.4; margin: 0 0 12px 0;">
+                Bienvenido al panel de restricción predial. Este módulo permite restringir (bloquear) y liberar números prediales nacionales para regular su estado y controlar la asignación catastral.
+              </p>
+              <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-left: 4px solid #dc2626; border-radius: 8px; padding: 12px 14px; display: flex; gap: 10px; align-items: start;">
+                <div style="color: #dc2626; font-size: 16px; line-height: 1; margin-top: 2px;">
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div>
+                  <strong style="font-size: 0.78rem; color: #991b1b; display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.02em;">Aviso de Bloqueo Catastral</strong>
+                  <span style="font-size: 0.78rem; color: #b91c1c; font-weight: 600; line-height: 1.35; display: block;">
+                    EL PREDIO BLOQUEADO NO PUEDE SER USADO PARA LA RADICACIÓN DE PROCESO CATASTRAL.
+                  </span>
+                </div>
+              </div>
+            </div>
+          `,
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#002f55',
+          buttonsStyling: true,
+          customClass: {
+            popup: 'premium-alert-popup',
+            confirmButton: 'premium-alert-btn'
+          },
+          showClass: {
+            popup: 'animate__animated animate__fadeInUp animate__faster'
+          },
+          hideClass: {
+            popup: 'animate__animated animate__fadeOutDown animate__faster'
+          }
+        });
+      }
 
       setTimeout(() => {
         mapInstance?.updateSize?.();

@@ -69,7 +69,9 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def _startup_registry() -> None:
         registry = init_municipality_registry(app)
-        manager = ConnectionManager()
+        min_conn = int(os.getenv("DB_POOL_MINCONN", 2))
+        max_conn = int(os.getenv("DB_POOL_MAXCONN", 30))
+        manager = ConnectionManager(minconn=min_conn, maxconn=max_conn)
         init_connection_manager(app, manager)
         logger.info(
             "Municipality registry loaded: total=%s active=%s codes=%s pool=%s-%s",

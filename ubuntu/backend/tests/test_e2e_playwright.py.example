@@ -1,0 +1,58 @@
+import pytest
+from playwright.sync_api import Page, expect
+
+# Para ejecutar estas pruebas de interfaz:
+# 1. Instalar dependencias: pip install pytest-playwright
+# 2. Instalar navegadores de prueba: playwright install
+# 3. Iniciar el servidor local: uvicorn main:app --port 8000
+# 4. Correr la prueba: pytest tests/test_e2e_playwright.py
+
+BASE_URL = "http://localhost:8000"
+
+def test_login_flow_and_municipality_selection(page: Page):
+    """
+    Prueba automatizada E2E del flujo de login seleccionando un municipio.
+    """
+    # 1. Ir a la página de login
+    page.goto(f"{BASE_URL}/login")
+    
+    # Verificar que el título de la página o los elementos principales estén visibles
+    expect(page).to_have_title("Arbitrium Maps - Login")
+    
+    # 2. Seleccionar el municipio del menú desplegable (dropdown)
+    # Reemplazar 'select#municipality' con el selector real de tu formulario HTML
+    page.select_option("select#municipality", value="sucre")
+    
+    # 3. Rellenar credenciales
+    # Reemplazar 'input#username' e 'input#password' con los selectores reales
+    page.fill("input#username", "usuario_de_prueba")
+    page.fill("input#password", "Arbitrium2026*")
+    
+    # 4. Enviar el formulario (clic en ingresar)
+    page.click("button[type='submit']")
+    
+    # 5. Verificar redirección exitosa al visor o panel de control
+    # Se espera que después de un login exitoso sea redirigido a la página principal del visor o panel
+    page.wait_for_url(f"{BASE_URL}/visor")
+    
+    # Verificar que elementos interactivos del visor (como el mapa o el selector de capas) estén presentes
+    expect(page.locator("#map")).to_be_visible()
+
+
+def test_restriccion_predios_page_loads_correctly(page: Page):
+    """
+    Prueba automatizada de interfaz para verificar que la página de restricciones de predios cargue.
+    """
+    # 1. Ir directamente a la URL de restricción de predios (asumiendo que hay una sesión activa o bypass temporal)
+    page.goto(f"{BASE_URL}/restriccion-predios")
+    
+    # 2. Verificar que se muestre el formulario o visor de restricciones catastrales
+    expect(page.locator("h1")).to_contain_text("Restricción de Predios")
+    
+    # 3. Probar una búsqueda básica (interactuar con botones)
+    page.fill("input#search-predio", "1234567890")
+    page.click("button#btn-buscar")
+    
+    # 4. Verificar que se cargue la tabla de resultados o alerta
+    # Reemplazar '#tabla-resultados' con el ID real en restriccion_predios.html
+    expect(page.locator("#tabla-resultados")).to_be_visible()

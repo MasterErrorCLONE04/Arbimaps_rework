@@ -1,4 +1,7 @@
 import os
+import time
+import urllib.parse
+from threading import Lock
 
 from fastapi import APIRouter, HTTPException, Request, Response
 import requests
@@ -7,6 +10,46 @@ from core.env_loader import load_env_file_if_present
 from services.session_auth import get_current_tenant_from_session
 
 router = APIRouter(prefix="/proxy", tags=["proxy"])
+
+
+class InMemoryCache:
+    def __init__(self, default_ttl: int = 60, max_size: int = 1000):
+        self.store = {}
+        self.lock = Lock()
+        self.default_ttl = default_ttl
+        self.max_size = max_size
+
+    def get(self, key: str):
+        with self.lock:
+            entry = self.store.get(key)
+            if entry:
+                content, content_type, status_code, headers, expires_at = entry
+                if time.time() < expires_at:
+                    return content, content_type, status_code, headers
+                else:
+                    del self.store[key]
+            return None
+
+    def set(self, key: str, content: bytes, content_type: str, status_code: int, headers: dict, ttl: int = None):
+        if ttl is None:
+            ttl = self.default_ttl
+        now = time.time()
+        with self.lock:
+            if len(self.store) >= self.max_size:
+                # Clean expired entries to free up space
+                self.store = {k: v for k, v in self.store.items() if now < v[4]}
+                if len(self.store) >= self.max_size:
+                    self.store.clear()
+            self.store[key] = (content, content_type, status_code, headers, now + ttl)
+
+
+def make_cache_key(url: str, params: dict) -> str:
+    sorted_params = sorted(params.items()) if params else []
+    query_str = urllib.parse.urlencode(sorted_params)
+    return f"{url}?{query_str}"
+
+
+local_cache = InMemoryCache()
 
 load_env_file_if_present()
 
@@ -66,12 +109,16 @@ def _resolve_geoserver_root(request: Request) -> str:
 
 def _forward_get(base_url: str, params: dict) -> Response:
     """
-    Proxy sencillo de peticiones GET al WMS.
-
-    Se usa para evitar problemas de CORS en el navegador.
+    Proxy sencillo de peticiones GET al WMS con soporte de caché.
     """
     if not base_url:
         raise HTTPException(status_code=500, detail="WMS_BASE_URL invalida")
+
+    cache_key = make_cache_key(base_url, params)
+    cached = local_cache.get(cache_key)
+    if cached is not None:
+        content, content_type, status_code, headers = cached
+        return Response(content=content, status_code=status_code, headers=headers)
 
     try:
         resp = requests.get(
@@ -90,6 +137,24 @@ def _forward_get(base_url: str, params: dict) -> Response:
         "Access-Control-Allow-Origin": "*",
         "Content-Type": content_type,
     }
+
+    if status_code == 200:
+        is_image = content_type.startswith("image/")
+        is_vector = (
+            "json" in content_type.lower()
+            or "xml" in content_type.lower()
+            or "javascript" in content_type.lower()
+            or "text" in content_type.lower()
+        )
+        if is_image:
+            cache_ttl = int(os.getenv("PROXY_IMAGE_CACHE_MAX_AGE", "300"))
+            headers["Cache-Control"] = f"public, max-age={cache_ttl}"
+        elif is_vector:
+            vector_ttl = int(os.getenv("PROXY_VECTOR_CACHE_TTL", "60"))
+            browser_ttl = int(os.getenv("PROXY_VECTOR_BROWSER_CACHE_MAX_AGE", "15"))
+            headers["Cache-Control"] = f"public, max-age={browser_ttl}"
+            local_cache.set(cache_key, body, content_type, status_code, headers, ttl=vector_ttl)
+
     return Response(content=body, status_code=status_code, headers=headers)
 
 
@@ -162,6 +227,14 @@ async def proxy_geoserver(path: str, request: Request) -> Response:
     target_url = f"{_resolve_geoserver_root(request)}/{path}"
     method = request.method
 
+    cache_key = None
+    if method == "GET":
+        cache_key = make_cache_key(target_url, params)
+        cached = local_cache.get(cache_key)
+        if cached is not None:
+            content, content_type, status_code, headers = cached
+            return Response(content=content, status_code=status_code, headers=headers)
+
     try:
         resp = requests.request(
             method=method,
@@ -173,11 +246,30 @@ async def proxy_geoserver(path: str, request: Request) -> Response:
             allow_redirects=True,
         )
         content_type = resp.headers.get("Content-Type", "image/png")
+        status_code = resp.status_code
         headers = {
             "Access-Control-Allow-Origin": "*",
             "Content-Type": content_type,
         }
-        return Response(content=resp.content, status_code=resp.status_code, headers=headers)
+
+        if method == "GET" and status_code == 200:
+            is_image = content_type.startswith("image/")
+            is_vector = (
+                "json" in content_type.lower()
+                or "xml" in content_type.lower()
+                or "javascript" in content_type.lower()
+                or "text" in content_type.lower()
+            )
+            if is_image:
+                cache_ttl = int(os.getenv("PROXY_IMAGE_CACHE_MAX_AGE", "300"))
+                headers["Cache-Control"] = f"public, max-age={cache_ttl}"
+            elif is_vector:
+                vector_ttl = int(os.getenv("PROXY_VECTOR_CACHE_TTL", "60"))
+                browser_ttl = int(os.getenv("PROXY_VECTOR_BROWSER_CACHE_MAX_AGE", "15"))
+                headers["Cache-Control"] = f"public, max-age={browser_ttl}"
+                local_cache.set(cache_key, resp.content, content_type, status_code, headers, ttl=vector_ttl)
+
+        return Response(content=resp.content, status_code=status_code, headers=headers)
     except Exception as exc:
         raise HTTPException(
             status_code=502,

@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 
 from routers.visor_queries import (
-    _table_name,
+    _main_table,
     dashboard_condicion_predio,
     project_extent,
     terreno_detalle,
@@ -72,7 +72,7 @@ def make_tenant(schema_main="a_base_principal") -> TenantContext:
 def test_table_name_uses_tenant_main_schema():
     tenant = make_tenant("catastro_sucre")
 
-    assert _table_name(tenant, "arb_predio") == "catastro_sucre.arb_predio"
+    assert _main_table(tenant, "arb_predio") == "catastro_sucre.arb_predio"
 
 
 def test_project_extent_queries_tenant_schema():

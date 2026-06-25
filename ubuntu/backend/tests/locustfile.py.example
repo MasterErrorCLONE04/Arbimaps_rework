@@ -1,0 +1,81 @@
+import random
+from locust import HttpUser, task, between
+
+# Para ejecutar esta prueba de carga y estrés con Locust:
+# 1. Instalar locust: pip install locust
+# 2. Correr locust en tu terminal local:
+#    locust -f backend/tests/locustfile.py.example
+# 3. Abrir la interfaz web de Locust en tu navegador: http://localhost:8089
+# 4. Configurar la URL destino: https://desarrollo.arbimaps.com
+# 5. Indicar número de usuarios concurrentes y tasa de incremento (spawn rate) y presionar "Start".
+
+class ArbimapsUser(HttpUser):
+    # Simula un tiempo de espera aleatorio entre 1 y 5 segundos entre tareas para simular el comportamiento de un humano real.
+    wait_time = between(1, 5)
+
+    def on_start(self):
+        """
+        Esta función se ejecuta al inicio de la simulación para cada usuario virtual.
+        Inicia sesión en la plataforma y almacena las cookies de sesión autenticadas.
+        """
+        self.username = "usuario_de_prueba"
+        self.password = "Arbitrium2026*"
+        self.municipality = random.choice(["sucre", "saravena", "almaguer", "neiva"])
+        
+        # Realizar el login. Locust maneja automáticamente las cookies de respuesta
+        # y las adjunta en las siguientes peticiones HTTP del usuario virtual.
+        response = self.client.post("/login", data={
+            "municipality_code": self.municipality,
+            "username": self.username,
+            "password": self.password
+        })
+        
+        if response.status_code != 200:
+            print(f"Error de login para {self.username} en {self.municipality}: {response.status_code}")
+
+    @task(3)
+    def view_protected_endpoint(self):
+        """
+        Tarea: Consultar el endpoint de usuario protegido para verificar autenticación activa.
+        """
+        self.client.get("/api/protected")
+
+    @task(5)
+    def query_visor_data(self):
+        """
+        Tarea: Simular la consulta del visor de mapas para obtener estadísticas de predios.
+        Esta tarea se ejecuta con más frecuencia por ser de las que más interactúan con la BD.
+        """
+        # Reemplazar con las rutas de endpoints reales que consultan datos de los predios
+        self.client.get("/visor/queries/resumen-predial")
+
+    @task(4)
+    def request_geoserver_wms(self):
+        """
+        Tarea: Simular la carga de teselas cartográficas (capas WMS) a través de GeoServer.
+        Esto estresa tanto al servidor de mapas (GeoServer) como a la base de datos PostgreSQL/PostGIS.
+        """
+        # Simulamos una petición WMS típica que realiza el mapa del visor
+        wms_params = {
+            "service": "WMS",
+            "version": "1.1.1",
+            "request": "GetMap",
+            "layers": f"{self.municipality.upper()}:Base_Principal",
+            "styles": "",
+            "bbox": "-74.1,4.5,-74.0,4.6",
+            "width": "256",
+            "height": "256",
+            "srs": "EPSG:4326",
+            "format": "image/png",
+            "transparent": "true"
+        }
+        # Hacemos la llamada al proxy del geoserver configurado en la API
+        self.client.get("/geoserver/proxy/wms", params=wms_params)
+
+    @task(2)
+    def search_predio_restrictions(self):
+        """
+        Tarea: Búsqueda de restricciones de un predio específico.
+        """
+        predio_random = random.randint(1000, 9999)
+        self.client.get(f"/restriccion-predios/buscar?predio_id={predio_random}")

@@ -54,4 +54,5 @@ EXPOSE 8000
 
 # Command to run the application
 # We use 0.0.0.0 to make it accessible outside the container
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use sh -c to expand environment variables with a default worker count of 4
+CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS:-4}"]

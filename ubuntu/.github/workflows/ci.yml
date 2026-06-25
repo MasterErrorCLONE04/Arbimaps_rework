@@ -1,0 +1,100 @@
+name: Integración Continua (CI) - Arbitrium Maps
+
+on:
+  push:
+    branches: [ main, desarrollo, master ]
+  pull_request:
+    branches: [ main, desarrollo, master ]
+
+jobs:
+  test-backend:
+    name: Backend Tests & Quality Rules
+    runs-on: ubuntu-latest
+
+    services:
+      # Base de datos PostgreSQL con PostGIS para pruebas de integración
+      postgres:
+        image: postgis/postgis:15-3.3
+        env:
+          POSTGRES_DB: programacion
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: Arbitrium2026_test_pwd
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Descargar Código
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Configurar Entorno Java (Requerido para ilivalidator / ili2pg)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Descargar ilivalidator e ili2pg (Dependencias del motor de calidad)
+        run: |
+          sudo mkdir -p /opt/ili2pg /opt/ilivalidator/libs
+          # Descargar ili2pg
+          sudo wget -O /opt/ili2pg/ili2pg-5.1.0.jar https://downloads.interlis.ch/ili2pg/ili2pg-5.1.0.jar
+          # Descargar ilivalidator
+          sudo wget -O /opt/ilivalidator/ilivalidator-1.14.1.jar https://downloads.interlis.ch/ilivalidator/ilivalidator-1.14.1.jar
+
+      - name: Instalar Dependencias del Backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pytest pytest-cov playwright pytest-playwright
+
+      - name: Configurar Variables de Entorno para Pruebas
+        run: |
+          echo "APP_NAME=\"ArbitriumSAS API TEST\"" > backend/.env
+          echo "APP_VERSION=\"0.1.0\"" >> backend/.env
+          echo "STATIC_URL=\"/static\"" >> backend/.env
+          echo "MUNICIPALITIES=sucre" >> backend/.env
+          echo "DB_HOST=localhost" >> backend/.env
+          echo "DB_PORT=5432" >> backend/.env
+          echo "DB_NAME=programacion" >> backend/.env
+          echo "DB_USER=postgres" >> backend/.env
+          echo "DB_PASSWORD=Arbitrium2026_test_pwd" >> backend/.env
+          echo "DB_SSLMODE=disable" >> backend/.env
+          echo "DATABASE_URL=postgresql://postgres:Arbitrium2026_test_pwd@localhost:5432/programacion" >> backend/.env
+          echo "DEFAULT_TENANT=ARB" >> backend/.env
+          echo "ALLOW_LEGACY_DB_CONFIG=true" >> backend/.env
+          echo "MUNICIPALITY_SUCRE_DB_HOST=localhost" >> backend/.env
+          echo "MUNICIPALITY_SUCRE_DB_PORT=5432" >> backend/.env
+          echo "MUNICIPALITY_SUCRE_DB_NAME=programacion" >> backend/.env
+          echo "MUNICIPALITY_SUCRE_DB_USER=postgres" >> backend/.env
+          echo "MUNICIPALITY_SUCRE_DB_PASSWORD=Arbitrium2026_test_pwd" >> backend/.env
+          echo "MUNICIPALITY_SUCRE_DB_SSLMODE=disable" >> backend/.env
+          echo "MUNICIPALITY_SUCRE_SCHEMA_APP=arbimaps_app" >> backend/.env
+          echo "MUNICIPALITY_SUCRE_SCHEMA_MAIN=a_base_principal" >> backend/.env
+          echo "MUNICIPALITY_SUCRE_SCHEMA_WORK=b_asignaciones_arb" >> backend/.env
+          echo "MUNICIPALITY_SUCRE_SCHEMA_HISTORY=c_base_historico" >> backend/.env
+          echo "MUNICIPALITY_SUCRE_SCHEMA_WORKFLOW=d_workflow" >> backend/.env
+          echo "ILI2PG_JAR=/opt/ili2pg/ili2pg-5.1.0.jar" >> backend/.env
+          echo "ILI2PG_TIMEOUT_SEC=600" >> backend/.env
+          echo "ILIVALIDATOR_JAR=/opt/ilivalidator/ilivalidator-1.14.1.jar" >> backend/.env
+          echo "ILIVALIDATOR_LIB_DIR=/opt/ilivalidator/libs" >> backend/.env
+
+      - name: Ejecutar Pruebas Automatizadas (pytest)
+        run: |
+          cd backend
+          pytest --cov=. --cov-report=xml tests/
+
+      - name: Subir Reporte de Cobertura (Opcional)
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./backend/coverage.xml
+          fail_ci_if_error: false
