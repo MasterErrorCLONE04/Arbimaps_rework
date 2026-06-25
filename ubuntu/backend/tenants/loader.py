@@ -16,12 +16,14 @@ DEFAULT_NAMES = {
     "saravena": "Saravena",
     "almaguer": "Almaguer",
     "neiva": "Neiva",
+    "pitalito": "Pitalito",
 }
 DEFAULT_DB_NAMES = {
     "sucre": "programacion",
     "saravena": "saravena",
     "almaguer": "almaguer",
     "neiva": "neiva",
+    "pitalito": "pitalito",
 }
 
 
