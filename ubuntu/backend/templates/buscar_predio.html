@@ -1361,8 +1361,8 @@
         <div id="offcanvasUcConvencionalLabel" class="titulo-offcanvas-uc">
           ID Unidad Construcción
         </div>
-        <div class="subtitulo-offcanvas-uc p-1 text-center">
-          b
+        <div id="subtituloUcConvencional" class="subtitulo-offcanvas-uc p-1 text-center">
+          ----
         </div>
       </div>
     </div>
@@ -1391,7 +1391,7 @@
           </button>
 
           <div class="collapse" id="contenidoUcConvencional">
-            <div class="uc-accordion-body">
+            <div class="uc-accordion-body px-3  rounded-bottom-4 ">
               <div class="row g-4">
 
                 <div class="col-12">
@@ -1424,7 +1424,7 @@
 
                 <div class="col-12">
                   <div class="uc-info-row">
-                    <div class="uc-info-label">ÁÃ±o de construcción</div>
+                    <div class="uc-info-label">Áño de construcción</div>
                     <div class="uc-info-value" id="convencionalAnioConstruccion">----</div>
                   </div>
                 </div>
@@ -1452,11 +1452,11 @@
 
                 <div class="col-12">
                   <div class="border rounded-4 overflow-hidden bg-white">
-                    <div class="px-3 py-3 border-bottom uc-info-label bg-light">
+                    <div class="text-start tex-num p-2 px-3 text-white rounded-4 rounded-bottom-0" style="background-color: #002f55;">
                       Observaciones
                     </div>
-                    <div class="px-3 py-4 text-start uc-info-value fw-normal" id="convencionalObservaciones">
-                      ----
+                    <div class="d-flex justify-content-center align-items-center text-center py-4" >
+                      <div class="dato_info" id="convencionalObservaciones">----</div>
                     </div>
                   </div>
                 </div>
@@ -1473,12 +1473,12 @@
             data-bs-toggle="collapse" data-bs-target="#contenidoUcConvencionalDos" aria-expanded="false"
             aria-controls="contenidoUcConvencionalDos"
             onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
-            <span class="uc-accordion-title">Califiación unidad de construcción</span>
+            <span class="uc-accordion-title">Calificación de la  unidad de construcción</span>
             <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
           </button>
 
           <div class="collapse" id="contenidoUcConvencionalDos">
-            <div class="uc-accordion-body">
+            <div class="uc-accordion-body px-3  rounded-bottom-4">
               <div class="uc-calificacion-wrap">
 
                 <!-- fila superior -->
@@ -1538,11 +1538,11 @@
                 </div>
 
                 <!-- SECCI?N: BA?OS -->
-                <div class="uc-section-title">Información de baÃ±os</div>
+                <div class="uc-section-title">Información de baños</div>
 
                 <div class="uc-two-col-grid">
                   <div class="uc-pair">
-                    <div class="uc-info-label">TamaÃ±o de baÃ±o</div>
+                    <div class="uc-info-label">Tamaño de baño</div>
                     <div class="uc-info-value" id="convencionalTamanioBanio">----</div>
                   </div>
 
@@ -1552,12 +1552,12 @@
                   </div>
 
                   <div class="uc-pair">
-                    <div class="uc-info-label">Mobiliario de baÃ±o</div>
+                    <div class="uc-info-label">Mobiliario de baño</div>
                     <div class="uc-info-value" id="convencionalMobiliarioBanio">----</div>
                   </div>
 
                   <div class="uc-pair">
-                    <div class="uc-info-label">Conservación de baÃ±o</div>
+                    <div class="uc-info-label">Conservación de baño</div>
                     <div class="uc-info-value" id="convencionalConservacionBanio">----</div>
                   </div>
                 </div>
@@ -1567,7 +1567,7 @@
 
                 <div class="uc-two-col-grid">
                   <div class="uc-pair">
-                    <div class="uc-info-label">TamaÃ±o de cocina</div>
+                    <div class="uc-info-label">Tamaño de cocina</div>
                     <div class="uc-info-value" id="convencionalTamanioCocina">----</div>
                   </div>
 
@@ -1609,27 +1609,27 @@
                   <div class="col-12 col-md-4">
                     <div class="uc-mini-card">
                       <div class="uc-mini-card-label">Total habitaciones</div>
-                      <div class="uc-mini-card-value">1</div>
+                      <div id="convencionalTotalHabitaciones" class="uc-mini-card-value">----</div>
                     </div>
                   </div>
 
                   <div class="col-12 col-md-4">
                     <div class="uc-mini-card">
-                      <div class="uc-mini-card-label">Total baÃ±os</div>
-                      <div class="uc-mini-card-value">1</div>
+                      <div class="uc-mini-card-label">Total baños</div>
+                      <div id="convencionalTotalBanios" class="uc-mini-card-value">----</div>
                     </div>
                   </div>
 
                   <div class="col-12 col-md-4">
                     <div class="uc-mini-card">
                       <div class="uc-mini-card-label">Total locales</div>
-                      <div class="uc-mini-card-value">1</div>
+                      <div id="convencionalTotalLocales" class="uc-mini-card-value">----</div>
                     </div>
                   </div>
                 </div>
 
                 <!-- OBSERVACIONES -->
-                <div class="mt-3">
+                <!-- <div class="mt-3">
                   <div class="border rounded-4 overflow-hidden bg-white">
                     <div class="px-3 py-3 border-bottom uc-info-label bg-light">
                       Observaciones
@@ -1639,7 +1639,7 @@
                       ----
                     </div>
                   </div>
-                </div>
+                </div> -->
 
                 <!-- TOTAL CALIFICACI?N -->
                 <div class="d-flex justify-content-end mt-3">
@@ -1673,8 +1673,8 @@
         <div id="offcanvasUcNoConvencionalLabel" class="titulo-offcanvas-uc">
           ID Unidad Construcción
         </div>
-        <div class="subtitulo-offcanvas-uc p-1 text-center">
-          a
+        <div id="subtituloUcNoConvencional" class="subtitulo-offcanvas-uc p-1 text-center">
+          ----
         </div>
       </div>
     </div>
@@ -1703,72 +1703,79 @@
           </button>
 
           <div class="collapse" id="contenidoUcNoConvencional">
-            <div class="uc-accordion-body">
+            <div class="uc-accordion-body px-0">
               <div class="row g-4">
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Tipo de calificación</div>
-                    <div class="uc-info-value">No Convencional</div>
+                    <div id="noConvencionalTipoCalificacion" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Tipo de unidad de construcción</div>
-                    <div class="uc-info-value">Anexo</div>
+                    <div id="noConvencionalTipoUnidad" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Uso</div>
-                    <div class="uc-info-value">Albercas - BaÃ±aderas</div>
+                    <div id="noConvencionalUso" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Total de plantas</div>
-                    <div class="uc-info-value">1</div>
+                    <div id="noConvencionalTotalPlantas" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
-                    <div class="uc-info-label">AÃ±o de construcción</div>
-                    <div class="uc-info-value">2015</div>
+                    <div class="uc-info-label">Año de construcción</div>
+                    <div id="noConvencionalAnioConstruccion" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Área de construida [m2]</div>
-                    <div class="uc-info-value">5</div>
+                    <div id="noConvencionalAreaConstruida" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Área privada construida [m2]</div>
-                    <div class="uc-info-value">2</div>
+                    <div id="noConvencionalAreaPrivadaConstruida" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Usos tradicionales culturales</div>
-                    <div class="uc-info-value">Null</div>
+                    <div id="noConvencionalUsosTradicionales" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
-                  <div class="border rounded-4 overflow-hidden bg-white">
+                  <!-- <div class="border rounded-4 overflow-hidden bg-white">
                     <div class="px-3 py-3 border-bottom uc-info-label bg-light">
                       Observaciones
                     </div>
-                    <div class="px-3 py-4 text-start uc-info-value fw-normal">
-                      La alberca se encuentra en muy buenas condiciones tiene enchape laminado en Oro.
+                    <div id="noConvencionalObservaciones" class="px-3 py-4 text-start uc-info-value fw-normal">----</div>
+                  </div> -->
+
+                  <div class="border rounded-4 overflow-hidden bg-white">
+                    <div class="text-start tex-num p-2 px-3 text-white rounded-4 rounded-bottom-0" style="background-color: #002f55;">
+                      Observaciones
+                    </div>
+                    <div class="d-flex justify-content-center align-items-center text-center py-4" >
+                      <div class="dato_info" id="noConvencionalObservaciones">----</div>
                     </div>
                   </div>
                 </div>
@@ -1796,14 +1803,14 @@
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Tipo de Anexo</div>
-                    <div class="uc-info-value">----</div>
+                    <div id="noConvencionalTipoAnexo" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">conservación del anexo</div>
-                    <div class="uc-info-value">----</div>
+                    <div id="noConvencionalConservacionAnexo" class="uc-info-value">----</div>
                   </div>
                 </div>
 
@@ -1830,8 +1837,8 @@
         <div id="offcanvasUcTipologiaLabel" class="titulo-offcanvas-uc">
           ID Unidad Construcción
         </div>
-        <div class="subtitulo-offcanvas-uc p-1 text-center">
-          c
+        <div id="subtituloUcTipologia" class="subtitulo-offcanvas-uc p-1 text-center">
+          ----
         </div>
       </div>
     </div>
@@ -1866,68 +1873,77 @@
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Tipo de calificación</div>
-                    <div class="uc-info-value">Por Tipología</div>
+                    <div id="tipologiaTipoCalificacion" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Tipo de unidad de construcción</div>
-                    <div class="uc-info-value">Anexo</div>
+                    <div id="tipologiaTipoUnidad" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Uso</div>
-                    <div class="uc-info-value">Albercas - BaÃ±aderas</div>
+                    <div id="tipologiaUso" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Total de plantas</div>
-                    <div class="uc-info-value">1</div>
+                    <div id="tipologiaTotalPlantas" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
-                    <div class="uc-info-label">AÃ±o de construcción</div>
-                    <div class="uc-info-value">2015</div>
+                    <div class="uc-info-label">Año de construcción</div>
+                    <div id="tipologiaAnioConstruccion" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Área de construida [m2]</div>
-                    <div class="uc-info-value">5</div>
+                    <div id="tipologiaAreaConstruida" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Área privada construida [m2]</div>
-                    <div class="uc-info-value">2</div>
+                    <div id="tipologiaAreaPrivadaConstruida" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Usos tradicionales culturales</div>
-                    <div class="uc-info-value">Null</div>
+                    <div id="tipologiaUsosTradicionales" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
-                  <div class="border rounded-4 overflow-hidden bg-white">
+
+                  <!-- <div class="border rounded-4 overflow-hidden bg-white">
                     <div class="px-3 py-3 border-bottom uc-info-label bg-light">
                       Observaciones
                     </div>
-                    <div class="px-3 py-4 text-start uc-info-value fw-normal">
-                      La alberca se encuentra en muy buenas condiciones tiene enchape laminado en Oro.
+                    <div id="tipologiaObservaciones" class="px-3 py-4 text-start uc-info-value fw-normal">----</div>
+                  </div> -->
+
+                  <div class="border rounded-4 overflow-hidden bg-white">
+                    <div class="text-start tex-num p-2 px-3 text-white rounded-4 rounded-bottom-0" style="background-color: #002f55;">
+                      Observaciones
+                    </div>
+                    <div class="d-flex justify-content-center align-items-center text-center py-4" >
+                      <div class="dato_info" id="tipologiaObservaciones">----</div>
                     </div>
                   </div>
+                  
                 </div>
 
               </div>
@@ -1953,14 +1969,14 @@
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">Tipo Tipología</div>
-                    <div class="uc-info-value">Residencial sencilla tipo 1</div>
+                    <div id="tipologiaTipo" class="uc-info-value">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="uc-info-row">
                     <div class="uc-info-label">conservación de tipología</div>
-                    <div class="uc-info-value">Muy bueno - 1.5</div>
+                    <div id="tipologiaConservacion" class="uc-info-value">----</div>
                   </div>
                 </div>
 
@@ -2670,7 +2686,7 @@
       ["Tipo unidad construcción", "tipo_unidad_construccion_nombre"],
       ["Total plantas", "total_plantas"],
       ["Uso", "uso_nombre"],
-      ["AÃ±o construcción", "anio_construccion"],
+      ["Año construcción", "anio_construccion"],
       ["Área construida", "area_construida"],
       ["Área privada construida", "area_privada_construida"],
       ["Observaciones", "observaciones"],
@@ -2688,11 +2704,11 @@
       ["Cubrimiento muros", "cubrimiento_muros_nombre"],
       ["Piso", "piso_nombre"],
       ["Conservación acabados", "conservacion_acabados_nombre"],
-      ["TamaÃ±o baÃ±o", "tamanio_banio_nombre"],
-      ["Enchape baÃ±o", "enchape_banio_nombre"],
-      ["Mobiliario baÃ±o", "mobiliario_banio_nombre"],
-      ["Conservación baÃ±o", "conservacion_banio_nombre"],
-      ["TamaÃ±o cocina", "tamanio_cocina_nombre"],
+      ["Tamaño baño", "tamanio_banio_nombre"],
+      ["Enchape baño", "enchape_banio_nombre"],
+      ["Mobiliario baño", "mobiliario_banio_nombre"],
+      ["Conservación baño", "conservacion_banio_nombre"],
+      ["Tamaño cocina", "tamanio_cocina_nombre"],
       ["Enchape cocina", "enchape_cocina_nombre"],
       ["Mobiliario cocina", "mobiliario_cocina_nombre"],
       ["Conservación cocina", "conservacion_cocina_nombre"],
@@ -3053,6 +3069,9 @@
     setTextById("convencionalTipoUnidad", car?.tipo_unidad_construccion_nombre);
     setTextById("convencionalUso", car?.uso_nombre);
     setTextById("convencionalTotalPlantas", car?.total_plantas);
+    setTextById("convencionalTotalHabitaciones", car?.total_habitaciones);
+    setTextById("convencionalTotalBanios", car?.total_banios);
+    setTextById("convencionalTotalLocales", car?.total_locales);
     setTextById("convencionalAnioConstruccion", car?.anio_construccion);
     setTextById("convencionalAreaConstruida", car?.area_construida);
     setTextById("convencionalAreaPrivadaConstruida", car?.area_privada_construida);
@@ -3088,6 +3107,40 @@
     }
   }
 
+  function poblarOffcanvasNoConvencional(detalle = {}) {
+    const car = detalle?.caracteristicas || {};
+    const tipNc = detalle?.tipologia_no_convencional || {};
+
+    setTextById("noConvencionalTipoCalificacion", car?.tipo_calificacion_nombre);
+    setTextById("noConvencionalTipoUnidad", car?.tipo_unidad_construccion_nombre);
+    setTextById("noConvencionalUso", car?.uso_nombre);
+    setTextById("noConvencionalTotalPlantas", car?.total_plantas);
+    setTextById("noConvencionalAnioConstruccion", car?.anio_construccion);
+    setTextById("noConvencionalAreaConstruida", car?.area_construida);
+    setTextById("noConvencionalAreaPrivadaConstruida", car?.area_privada_construida);
+    setTextById("noConvencionalUsosTradicionales", car?.usos_tradicionales_culturales_nombre ?? car?.usos_tradicionales_culturales);
+    setTextById("noConvencionalObservaciones", car?.observaciones);
+    setTextById("noConvencionalTipoAnexo", tipNc?.tipo_anexo_nombre);
+    setTextById("noConvencionalConservacionAnexo", tipNc?.conservacion_anexo_nombre);
+  }
+
+  function poblarOffcanvasTipologia(detalle = {}) {
+    const car = detalle?.caracteristicas || {};
+    const tip = detalle?.tipologia_construccion || {};
+
+    setTextById("tipologiaTipoCalificacion", car?.tipo_calificacion_nombre);
+    setTextById("tipologiaTipoUnidad", car?.tipo_unidad_construccion_nombre);
+    setTextById("tipologiaUso", car?.uso_nombre);
+    setTextById("tipologiaTotalPlantas", car?.total_plantas);
+    setTextById("tipologiaAnioConstruccion", car?.anio_construccion);
+    setTextById("tipologiaAreaConstruida", car?.area_construida);
+    setTextById("tipologiaAreaPrivadaConstruida", car?.area_privada_construida);
+    setTextById("tipologiaUsosTradicionales", car?.usos_tradicionales_culturales_nombre ?? car?.usos_tradicionales_culturales);
+    setTextById("tipologiaObservaciones", car?.observaciones);
+    setTextById("tipologiaTipo", tip?.tipo_tipologia_nombre);
+    setTextById("tipologiaConservacion", tip?.conservacion_nombre);
+  }
+
   function abrirModalSegunTipoUc(data = {}) {
     const { identificador = "", tipo = null, unidadId = null } = data;
     const detalle =
@@ -3098,11 +3151,19 @@
       {};
 
     poblarOffcanvasConvencional(detalle);
+    poblarOffcanvasNoConvencional(detalle);
+    poblarOffcanvasTipologia(detalle);
 
     const offcanvasConvencional = document.getElementById("offcanvasUcConvencional");
     const offcanvasNoConvencional = document.getElementById("offcanvasUcNoConvencional");
     const offcanvasTipologia = document.getElementById("offcanvasUcTipologia");
     const tipoNormalizado = String(tipo || detalle?.unidad?.tipo_calificacion_modal || "").trim().toLowerCase();
+
+    const identificadorCaracteristica = valorDominio(detalle?.caracteristicas?.identificador);
+    ["subtituloUcConvencional", "subtituloUcNoConvencional", "subtituloUcTipologia"].forEach((id) => {
+      const subtitulo = document.getElementById(id);
+      if (subtitulo) subtitulo.textContent = identificadorCaracteristica;
+    });
 
     const idMostrar = valorDominio(identificador || detalle?.caracteristicas?.identificador || detalle?.unidad?.identificador);
     const lblConv = document.getElementById("offcanvasUcConvencionalLabel");
@@ -4010,7 +4071,7 @@
           [
             "Departamento",
             predio.departamento === 52 || predio.departamento === "52"
-              ? "52 - NariÃ±o"
+              ? "52 - Nariño"
               : predio.departamento,
           ],
           [

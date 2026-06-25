@@ -1442,6 +1442,25 @@
     padding: 1.25rem 1.25rem;
 }
 
+#offcanvasUcConvencional .offcanvas-body,
+#offcanvasUcNoConvencional .offcanvas-body,
+#offcanvasUcTipologia .offcanvas-body {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #002f55 #f1f1f1;
+
+    /* Para Chrome, Safari y Edge */
+    &::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    /* Para Firefox y Estándar moderno */
+    scrollbar-width: none;
+
+    /* Para Internet Explorer y Edge antiguo */
+    -ms-overflow-style: none;
+}
+
 #panelDerechoPredio .offcanvas-body {
     overflow-y: auto;
     scrollbar-width: thin;
@@ -1515,7 +1534,7 @@
     font-size: 0.833rem;
     background-color: #6095C1;
     color: #ffffff;
-    border-radius: 18px;
+    border-radius: 8px;
     font-weight: 500;
 }
 
@@ -1652,6 +1671,7 @@
     font-weight: 700;
     padding: 0.8rem 1rem;
     margin-top: 0;
+    border-radius: 12px;
 }
 
 .uc-two-col-grid {
@@ -1948,7 +1968,7 @@
 
     .detalle-unidad-card-contenido {
         padding: 1rem 1.25rem !important;
-        
+
     }
 
     .detalle-uc-label {
@@ -2262,6 +2282,7 @@
     font-size: 0.95rem;
     font-weight: 700;
 }
+
 .observaciones-unidad-card {
     width: 100%;
     min-width: 0;
