@@ -5,7 +5,7 @@ from .base import DatasetReader, RuleIssue
 COMPONENT_SLUG = "economico"
 
 DEFAULT_RULE_IDS = frozenset({
-    "4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9",
+    "4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10",
 })
 
 
@@ -99,29 +99,169 @@ class EconomicoHelper:
         return "".join(ch for ch in text if ch.isalnum())
 
 
+def _is_empty(value: object) -> bool:
+    if value is None:
+        return True
+
+    text = str(value).strip()
+    return text == "" or text.upper() in {"NULL", "<NULL>"} or text.lower() in {"none", "nan"}
+
+
 def _is_not_empty(value: object) -> bool:
-    return value not in (None, "") and str(value).strip() != ""
+    return not _is_empty(value)
+
+
+def _as_text(value: object) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _normalized_domain_text(value: object) -> str:
+    return EconomicoHelper._normalize_key(_as_text(value))
+
+
+def _normalizar_valor_dominio(value: object) -> str:
+    if _is_empty(value):
+        return ""
+
+    text = _as_text(value)
+    norm = _normalized_domain_text(text)
+
+    generic = {
+        "residencial": "Residencial",
+        "comercial": "Comercial",
+        "industrial": "Industrial",
+        "institucional": "Institucional",
+        "anexo": "Anexo",
+        "conservacionproteccionambiental": "Conservacion_Proteccion_Ambiental",
+        "sinbanio": "Sin_Banio",
+        "sinbano": "Sin_Banio",
+        "sincocina": "Sin_Cocina",
+        "cancelacion": "Cancelacion",
+        "cancelacionporenglobe": "Cancelacion_Por_Englobe",
+        "cancelacionpordesenglobe": "Cancelacion_Por_Desenglobe",
+    }
+
+    return generic.get(norm, text)
 
 
 def _unidad_construccion_tipo_ilicode(value: object) -> str:
-    if value in (None, ""):
+    """Normaliza tipo_unidad_construccion igual que QGIS para 4.1 a 4.4."""
+    if _is_empty(value):
         return ""
 
-    text = str(value).strip()
+    text = _normalizar_valor_dominio(value)
+    norm = _normalized_domain_text(text)
 
     mapping = {
+        # iliCode / dispName
+        "conservacionproteccionambiental": "Conservacion_Proteccion_Ambiental",
+        "industrial": "Industrial",
+        "institucional": "Institucional",
+        "anexo": "Anexo",
+        "residencial": "Residencial",
+        "comercial": "Comercial",
+
+        # itfCode del dominio ARB_UnidadConstruccionTipo
+        "2": "Conservacion_Proteccion_Ambiental",
+        "3": "Industrial",
+        "4": "Institucional",
+        "5": "Anexo",
+        "0": "Residencial",
+        "1": "Comercial",
+
+        # t_id vistos en modelo 1.0
+        "1058": "Conservacion_Proteccion_Ambiental",
+        "1059": "Industrial",
+        "1060": "Institucional",
+        "1061": "Anexo",
+        "1062": "Residencial",
+        "1063": "Comercial",
+
+        # compatibilidad con modelos anteriores usados en web/QGIS
+        "1348": "Conservacion_Proteccion_Ambiental",
+        "1349": "Industrial",
+        "1350": "Institucional",
+        "1351": "Anexo",
         "1352": "Residencial",
-        "Residencial": "Residencial",
+        "1353": "Comercial",
+        "287": "Industrial",
+        "288": "Institucional",
+        "289": "Anexo",
+        "290": "Residencial",
+        "291": "Comercial",
     }
 
-    return mapping.get(text, text)
+    return mapping.get(norm, text)
+
+
+_TIPOLOGIAS_RESIDENCIALES_QGIS_ANTERIOR = {
+    "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
+}
+
+_TIPOLOGIAS_COMERCIALES_QGIS_ANTERIOR = {
+   "25", "26", "27", "28", "29", "30", "31", "32", 
+}
+
+_TIPOLOGIAS_INDUSTRIALES_QGIS_ANTERIOR = {
+   "33", "34","35", "36", "37"
+}
+
+_TIPOLOGIAS_INSTITUCIONALES_QGIS_ANTERIOR = {
+   "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", 
+}
+
+_TIPOLOGIAS_CONSERVACION_QGIS_ANTERIOR = {
+    "14", "15", "16", "17", "18", "19", 
+}
+
+def _tipologia_ilicode(value: object) -> str:
+    """Normaliza tipo_tipologia / ct_tipo_tipologia para validar 4.1 a 4.4 sobre ILICODE."""
+    if _is_empty(value):
+        return ""
+
+    text = _as_text(value)
+
+    # Si el XTF ya trae iliCode completo, se conserva.
+    if "." in text:
+        return text
+
+    norm = _normalized_domain_text(text)
+
+    # Compatibilidad cuando el lector trae displayName simple.
+    display_prefix = {
+        "residencial": "Residencial.DisplayName",
+        "comercial": "Comercial.DisplayName",
+        "industrial": "Industrial.DisplayName",
+        "institucional": "Institucional.DisplayName",
+    }
+
+    for prefix, fallback in display_prefix.items():
+        if norm.startswith(prefix):
+            return fallback
+
+    # Compatibilidad con códigos numéricos del modelo QGIS anterior.
+    if norm in _TIPOLOGIAS_RESIDENCIALES_QGIS_ANTERIOR:
+        return text
+    if norm in _TIPOLOGIAS_COMERCIALES_QGIS_ANTERIOR:
+        return text
+    if norm in _TIPOLOGIAS_INDUSTRIALES_QGIS_ANTERIOR:
+        return text
+    if norm in _TIPOLOGIAS_INSTITUCIONALES_QGIS_ANTERIOR:
+        return text
+    if norm in _TIPOLOGIAS_CONSERVACION_QGIS_ANTERIOR:
+        return text
+
+    return text
 
 
 def _tipologia_residencial_valida(value: object) -> bool:
-    if value in (None, ""):
+    if _is_empty(value):
         return True
 
-    tipologia = str(value).strip()
+    tipologia = _as_text(value)
+    norm = _normalized_domain_text(value)
 
     excepciones = {
         "Conservacion.Residencial_Sencilla_Tipo_1_4014011",
@@ -136,13 +276,15 @@ def _tipologia_residencial_valida(value: object) -> bool:
     return (
         tipologia.startswith("Residencial.")
         or tipologia in excepciones
+        or norm in _TIPOLOGIAS_RESIDENCIALES_QGIS_ANTERIOR
     )
 
+
 def _tipologia_comercial_excepcion(value: object) -> bool:
-    if value in (None, ""):
+    if _is_empty(value):
         return False
 
-    tipologia = str(value).strip()
+    tipologia = _as_text(value)
 
     excepciones = {
         "Conservacion.Construccion_Tipo_4_Restaurada_4034024",
@@ -155,40 +297,79 @@ def _tipologia_comercial_excepcion(value: object) -> bool:
 
 
 def _tipologia_comercial_valida(value: object) -> bool:
-    if value in (None, ""):
+    if _is_empty(value):
         return True
 
-    tipologia = str(value).strip()
+    tipologia = _as_text(value)
+    norm = _normalized_domain_text(value)
 
-    return tipologia.startswith("Comercial.")
+    return tipologia.startswith("Comercial.") or norm in _TIPOLOGIAS_COMERCIALES_QGIS_ANTERIOR
+
 
 def _tipologia_industrial_valida(value: object) -> bool:
-    if value in (None, ""):
+    if _is_empty(value):
         return True
 
-    tipologia = str(value).strip()
+    tipologia = _as_text(value)
+    norm = _normalized_domain_text(value)
 
-    return tipologia.startswith("Industrial.")
+    return tipologia.startswith("Industrial.") or norm in _TIPOLOGIAS_INDUSTRIALES_QGIS_ANTERIOR
+
 
 def _tipologia_institucional_valida(value: object) -> bool:
-    if value in (None, ""):
+    if _is_empty(value):
         return True
 
-    tipologia = str(value).strip()
+    tipologia = _as_text(value)
+    norm = _normalized_domain_text(value)
 
-    return tipologia.startswith("Institucional.")
+    return tipologia.startswith("Institucional.") or norm in _TIPOLOGIAS_INSTITUCIONALES_QGIS_ANTERIOR
+
+def _tipologia_conservacion_valida(value: object) -> bool:
+    """Valida tipologias de conservacion usando iliCode.
+
+    En ARB_TipologiaTipo normalmente llegan como
+    Conservacion.Residencial_Sencilla_Tipo_1_4014011, etc.
+    Tambien acepta los codigos numericos antiguos definidos para QGIS.
+    """
+    if _is_empty(value):
+        return True
+
+    tipologia = _as_text(value)
+    norm = _normalized_domain_text(value)
+
+    return (
+        tipologia.startswith("Conservacion.")
+        or tipologia.startswith("Conservación.")
+        or norm.startswith("conservacion")
+        or norm in _TIPOLOGIAS_CONSERVACION_QGIS_ANTERIOR
+    )
+
 
 def _tipo_calificar_ilicode(value: object) -> str:
-    if value in (None, ""):
+    if _is_empty(value):
         return ""
 
-    text = str(value).strip()
+    text = _normalizar_valor_dominio(value)
+    norm = _normalized_domain_text(text)
 
     mapping = {
-        "Industrial": "Industrial",
+        "industrial": "Industrial",
+        "287": "Industrial",
+        "residencial": "Residencial",
+        "290": "Residencial",
+        "comercial": "Comercial",
+        "291": "Comercial",
+        "institucional": "Institucional",
+        "288": "Institucional",
+        "0": "Residencial",
+        "1": "Industrial",
+        "2": "Comercial",
+        "3": "Institucional",
     }
 
-    return mapping.get(text, text)
+    return mapping.get(norm, text)
+
 
 def _tamanio_banio_requiere_conservacion(value: object) -> bool:
     if value in (None, ""):
@@ -230,14 +411,15 @@ def _rule_4_1(dataset: DatasetReader) -> list[RuleIssue]:
     for table_name, row in helper.iter_caracteristicas_unidad_construccion():
 
         tipo_unidad = helper.get_field_value(row, ("tipo_unidad_construccion",))
-        tipo_tipologia = helper.get_field_value(row, ("tipo_tipologia",))
+        tipo_tipologia = helper.get_field_value(row, ("tipo_tipologia", "ct_tipo_tipologia"))
 
         tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad)
+        tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
 
         if (
             tipo_unidad_str == "Residencial"
-            and tipo_tipologia not in (None, "")
-            and not _tipologia_residencial_valida(tipo_tipologia)
+            and _is_not_empty(tipo_tipologia_ilicode)
+            and not _tipologia_residencial_valida(tipo_tipologia_ilicode)
         ):
             issues.append(
                 helper.make_issue(
@@ -250,7 +432,9 @@ def _rule_4_1(dataset: DatasetReader) -> list[RuleIssue]:
                     details={
                         "tabla": table_name,
                         "tipo_unidad_construccion": tipo_unidad,
+                        "tipo_unidad_construccion_ilicode": tipo_unidad_str,
                         "tipo_tipologia": tipo_tipologia,
+                        "tipo_tipologia_ilicode": tipo_tipologia_ilicode,
                     },
                 )
             )
@@ -265,31 +449,22 @@ def _rule_4_2(dataset: DatasetReader) -> list[RuleIssue]:
         tipo_unidad = helper.get_field_value(row, ("tipo_unidad_construccion",))
         tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad)
 
-        tipo_tipologia = helper.get_field_value(row, ("tipo_tipologia",))
+        tipo_tipologia = helper.get_field_value(row, ("tipo_tipologia", "ct_tipo_tipologia"))
+        tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
 
-        if not _is_not_empty(tipo_tipologia):
+        if not _is_not_empty(tipo_tipologia_ilicode):
             continue
 
         message = None
 
         if (
             tipo_unidad_str == "Comercial"
-            and not _tipologia_comercial_valida(tipo_tipologia)
+            and not _tipologia_comercial_valida(tipo_tipologia_ilicode)
         ):
             message = (
                 "Cuando el tipo de unidad de construcción es Comercial, "
                 "en caso de usos de calificación por tipologías, solamente "
                 "se pueden asociar tipologías comerciales."
-            )
-
-        elif (
-            tipo_unidad_str != "Comercial"
-            and _tipologia_comercial_excepcion(tipo_tipologia)
-        ):
-            message = (
-                "Cuando la tipología corresponde a una tipología comercial "
-                "especial o de conservación, el tipo de unidad de construcción "
-                "debe ser Comercial."
             )
 
         if message:
@@ -303,6 +478,7 @@ def _rule_4_2(dataset: DatasetReader) -> list[RuleIssue]:
                         "tipo_unidad_construccion": tipo_unidad,
                         "tipo_unidad_construccion_ilicode": tipo_unidad_str,
                         "tipo_tipologia": tipo_tipologia,
+                        "tipo_tipologia_ilicode": tipo_tipologia_ilicode,
                     },
                 )
             )
@@ -317,12 +493,13 @@ def _rule_4_3(dataset: DatasetReader) -> list[RuleIssue]:
         tipo_unidad = helper.get_field_value(row, ("tipo_unidad_construccion",))
         tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad)
 
-        tipo_tipologia = helper.get_field_value(row, ("tipo_tipologia",))
+        tipo_tipologia = helper.get_field_value(row, ("tipo_tipologia", "ct_tipo_tipologia"))
+        tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
 
         if (
             tipo_unidad_str == "Industrial"
-            and _is_not_empty(tipo_tipologia)
-            and not _tipologia_industrial_valida(tipo_tipologia)
+            and _is_not_empty(tipo_tipologia_ilicode)
+            and not _tipologia_industrial_valida(tipo_tipologia_ilicode)
         ):
             issues.append(
                 helper.make_issue(
@@ -338,6 +515,7 @@ def _rule_4_3(dataset: DatasetReader) -> list[RuleIssue]:
                         "tipo_unidad_construccion": tipo_unidad,
                         "tipo_unidad_construccion_ilicode": tipo_unidad_str,
                         "tipo_tipologia": tipo_tipologia,
+                        "tipo_tipologia_ilicode": tipo_tipologia_ilicode,
                     },
                 )
             )
@@ -352,12 +530,13 @@ def _rule_4_4(dataset: DatasetReader) -> list[RuleIssue]:
         tipo_unidad = helper.get_field_value(row, ("tipo_unidad_construccion",))
         tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad)
 
-        tipo_tipologia = helper.get_field_value(row, ("tipo_tipologia",))
+        tipo_tipologia = helper.get_field_value(row, ("tipo_tipologia", "ct_tipo_tipologia"))
+        tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
 
         if (
             tipo_unidad_str == "Institucional"
-            and _is_not_empty(tipo_tipologia)
-            and not _tipologia_institucional_valida(tipo_tipologia)
+            and _is_not_empty(tipo_tipologia_ilicode)
+            and not _tipologia_institucional_valida(tipo_tipologia_ilicode)
         ):
             issues.append(
                 helper.make_issue(
@@ -373,11 +552,51 @@ def _rule_4_4(dataset: DatasetReader) -> list[RuleIssue]:
                         "tipo_unidad_construccion": tipo_unidad,
                         "tipo_unidad_construccion_ilicode": tipo_unidad_str,
                         "tipo_tipologia": tipo_tipologia,
+                        "tipo_tipologia_ilicode": tipo_tipologia_ilicode,
                     },
                 )
             )
 
     return issues
+
+def _rule_4_10(dataset: DatasetReader) -> list[RuleIssue]:
+    """Cuando la unidad es Conservacion_Proteccion_Ambiental, solo permite tipologias de Conservacion."""
+    helper = EconomicoHelper(dataset)
+    issues: list[RuleIssue] = []
+
+    for table_name, row in helper.iter_caracteristicas_unidad_construccion():
+        tipo_unidad = helper.get_field_value(row, ("tipo_unidad_construccion",))
+        tipo_tipologia = helper.get_field_value(row, ("tipo_tipologia", "ct_tipo_tipologia"))
+
+        tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad)
+        tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
+
+        if (
+            tipo_unidad_str == "Conservacion_Proteccion_Ambiental"
+            and _is_not_empty(tipo_tipologia_ilicode)
+            and not _tipologia_conservacion_valida(tipo_tipologia_ilicode)
+        ):
+            issues.append(
+                helper.make_issue(
+                    row,
+                    rule_id="4.10",
+                    message=(
+                        "Cuando el tipo de unidad de construcción es "
+                        "Conservacion_Proteccion_Ambiental, solamente se pueden "
+                        "asociar tipologías de Conservación."
+                    ),
+                    details={
+                        "tabla": table_name,
+                        "tipo_unidad_construccion": tipo_unidad,
+                        "tipo_unidad_construccion_ilicode": tipo_unidad_str,
+                        "tipo_tipologia": tipo_tipologia,
+                        "tipo_tipologia_ilicode": tipo_tipologia_ilicode,
+                    },
+                )
+            )
+
+    return issues
+
 
 def _rule_4_5(dataset: DatasetReader) -> list[RuleIssue]:
     helper = EconomicoHelper(dataset)
@@ -684,6 +903,8 @@ def _rule_4_9(dataset: DatasetReader) -> list[RuleIssue]:
 
     return issues
 
+
+
 RULE_FUNCTIONS = {
     "4.1": _rule_4_1,
     "4.2": _rule_4_2,
@@ -694,4 +915,5 @@ RULE_FUNCTIONS = {
     "4.7": _rule_4_7,
     "4.8": _rule_4_8,
     "4.9": _rule_4_9,
+    "4.10": _rule_4_10,
 }
