@@ -42,7 +42,7 @@ services:
 
     # Cambia 5434 por 5435 si el puerto está ocupado
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
 
     volumes:

@@ -449,9 +449,11 @@
             </div>
 
             <button class="btn-add-user-custom" data-bs-toggle="modal" data-bs-target="#modalUsuario" id="btnAddNewUser"
-              {% if effective_role not in ['admin', 'soporte' , 'lider_reconocimiento', 'coordinador' ] %}style="display: none;" {%
-              endif %}>
-              <i class="bi bi-plus-lg"></i> <span id="btnAddNewUserText">{% if effective_role in ['lider_reconocimiento', 'coordinador'] %}Solicitar creación de usuario{% else %}Agregar nuevo usuario{% endif %}</span>
+              {% if effective_role not in ['admin', 'soporte' , 'lider_reconocimiento' , 'coordinador' ]
+              %}style="display: none;" {% endif %}>
+              <i class="bi bi-plus-lg"></i> <span id="btnAddNewUserText">{% if effective_role in
+                ['lider_reconocimiento', 'coordinador'] %}Solicitar creación de usuario{% else %}Agregar nuevo usuario{%
+                endif %}</span>
             </button>
           </div>
         </div>
@@ -840,6 +842,18 @@
         <div class="modal-body">
           <div id="usrMsg" class="msg"></div>
           <div class="modal-form-grid">
+            <div class="form-group full-width">
+              <label class="form-label" style="font-size: 0.8rem;" for="usrRol">Rol *</label>
+              <select id="usrRol" class="form-input" required>
+                <option value="">Cargando...</option>
+              </select>
+            </div>
+            <div class="form-group full-width d-none" id="usrSupervisorWrap">
+              <label class="form-label" style="font-size: 0.8rem;" for="usrSupervisor">Coordinador encargado</label>
+              <select id="usrSupervisor" class="form-input">
+                <option value="">Sin coordinador</option>
+              </select>
+            </div>
             <div class="form-group">
               <label class="form-label" style="font-size: 0.8rem;" for="usrUsername">Nombre de usuario *</label>
               <input type="text" id="usrUsername" class="form-input" required placeholder="Ej: alex_calderon">
@@ -874,18 +888,7 @@
 
 
 
-            <div class="form-group full-width">
-              <label class="form-label" style="font-size: 0.8rem;" for="usrRol">Rol *</label>
-              <select id="usrRol" class="form-input" required>
-                <option value="">Cargando...</option>
-              </select>
-            </div>
-            <div class="form-group full-width d-none" id="usrSupervisorWrap">
-              <label class="form-label" style="font-size: 0.8rem;" for="usrSupervisor">Coordinador encargado</label>
-              <select id="usrSupervisor" class="form-input">
-                <option value="">Sin coordinador</option>
-              </select>
-            </div>
+
             <div class="form-group full-width">
               <label class="form-label" style="font-size: 0.8rem;" for="usrPassword">Contraseña inicial</label>
               <input type="password" id="usrPassword" class="form-input" autocomplete="new-password"
@@ -1456,7 +1459,24 @@
       container.appendChild(prevBtn);
 
       // Pages
-      for (let i = 1; i <= totalPages; i++) {
+      let startPage, endPage;
+      if (totalPages <= 7) {
+        startPage = 1;
+        endPage = totalPages;
+      } else {
+        if (currentPage <= 4) {
+          startPage = 1;
+          endPage = 5;
+        } else if (currentPage + 3 >= totalPages) {
+          startPage = totalPages - 4;
+          endPage = totalPages;
+        } else {
+          startPage = currentPage - 2;
+          endPage = currentPage + 2;
+        }
+      }
+
+      const appendPageBtn = (i) => {
         const pageBtn = document.createElement("button");
         pageBtn.type = "button";
         pageBtn.className = `page-btn ${currentPage === i ? 'active' : ''}`;
@@ -1466,6 +1486,30 @@
           aplicarBusqueda();
         });
         container.appendChild(pageBtn);
+      };
+
+      const appendEllipsis = () => {
+        const span = document.createElement("span");
+        span.className = "page-btn disabled";
+        span.style.cursor = "default";
+        span.style.background = "transparent";
+        span.style.border = "none";
+        span.textContent = "...";
+        container.appendChild(span);
+      };
+
+      if (totalPages <= 7) {
+        for (let i = startPage; i <= endPage; i++) appendPageBtn(i);
+      } else {
+        if (startPage > 1) {
+          appendPageBtn(1);
+          if (startPage > 2) appendEllipsis();
+        }
+        for (let i = startPage; i <= endPage; i++) appendPageBtn(i);
+        if (endPage < totalPages) {
+          if (endPage < totalPages - 1) appendEllipsis();
+          appendPageBtn(totalPages);
+        }
       }
 
       // Forwards button
@@ -1850,6 +1894,24 @@
 
       if (!payload.username || !payload.first_name || !payload.last_name || !payload.rol) {
         showMsg("Completa los campos obligatorios.", "error");
+        submitBtn.disabled = false;
+        submitBtn.textContent = isEdit ? "Actualizar usuario" : (isRequest ? "Solicitar creación" : "Guardar usuario");
+        return;
+      }
+
+      const valUsername = payload.username.toLowerCase();
+      const isUsernameTaken = (usuariosCache || []).some(u => (u.username || "").toLowerCase() === valUsername && (!isEdit || u.id_global !== editingId)) || 
+                              (typeof solicitudesCache !== 'undefined' && solicitudesCache.some(s => (s.username || "").toLowerCase() === valUsername && s.estado === 'PENDIENTE'));
+      
+      if (isUsernameTaken) {
+        Swal.fire({
+          title: 'Nombre no disponible',
+          text: `El nombre de usuario "${payload.username}" ya está en uso. Por favor, intenta con otro distinto.`,
+          icon: 'warning',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#2563eb'
+        });
+        showMsg("El nombre de usuario ya está en uso. Por favor, selecciona otro.", "error");
         submitBtn.disabled = false;
         submitBtn.textContent = isEdit ? "Actualizar usuario" : (isRequest ? "Solicitar creación" : "Guardar usuario");
         return;
@@ -2431,8 +2493,8 @@
       const listContainer = document.getElementById("detCuaIntegrantesList");
 
       document.getElementById("detCuaNombre").textContent = c.nombre || "Cuadrilla";
-      document.getElementById("detCuaEncargado").textContent = c.coordinador_username || "Sin coordinador";
-      document.getElementById("detCuaZona").textContent = c.coordinador_id ?? "-";
+      document.getElementById("detCuaEncargado").textContent = c.coordinador_id ? getCoordinadorLabelById(c.coordinador_id) : (c.coordinador_username || "Sin coordinador");
+      document.getElementById("detCuaZona").textContent = c.zona_nombre ?? "-";
 
       if (!reconocedores.length) {
         listContainer.innerHTML = '<li class="list-group-item border-0 px-0 bg-transparent text-muted">Sin reconocedores registrados.</li>';
@@ -2552,7 +2614,66 @@
 
     form.addEventListener("submit", guardarUsuario);
     formCuadrilla.addEventListener("submit", guardarCuadrilla);
-    selectRol.addEventListener("change", () => syncSupervisorField());
+    function autoGenerateUsername() {
+      const role = (selectRol.value || "").toLowerCase();
+      let prefix = "";
+      switch (role) {
+        case "reconocedor": prefix = "Rec_"; break;
+        case "coordinador": prefix = "Coord_"; break;
+        case "lider_reconocimiento": prefix = "Lider_"; break;
+        case "digitalizador": prefix = "Dig_"; break;
+      }
+      
+      if (!prefix) return;
+      
+      let maxNum = 0;
+      const allNames = [
+        ...(usuariosCache || []).map(u => u.username),
+        ...(typeof solicitudesCache !== 'undefined' ? solicitudesCache.map(s => s.username) : [])
+      ];
+      
+      const regex = new RegExp(`^${prefix}(\\d+)$`, 'i');
+      for (const name of allNames) {
+        if (!name) continue;
+        const match = name.match(regex);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxNum) maxNum = num;
+        }
+      }
+      
+      const nextNum = String(maxNum + 1).padStart(3, '0');
+      inputUsername.value = `${prefix}${nextNum}`;
+      validateUsernameRealtime();
+    }
+
+    function validateUsernameRealtime() {
+      if (editingId) {
+        inputUsername.style.borderColor = "";
+        return;
+      }
+      const val = inputUsername.value.trim().toLowerCase();
+      if (!val) {
+        inputUsername.style.borderColor = "";
+        return;
+      }
+      const isTaken = (usuariosCache || []).some(u => (u.username || "").toLowerCase() === val) || 
+                      (typeof solicitudesCache !== 'undefined' && solicitudesCache.some(s => (s.username || "").toLowerCase() === val && s.estado === 'PENDIENTE'));
+      if (isTaken) {
+        inputUsername.style.borderColor = "red";
+      } else {
+        inputUsername.style.borderColor = "green";
+      }
+    }
+
+    inputUsername.addEventListener("input", validateUsernameRealtime);
+
+    selectRol.addEventListener("change", () => {
+      syncSupervisorField();
+      if (editingId === null) {
+        autoGenerateUsername();
+      }
+    });
 
     if (resetBtn) {
       resetBtn.addEventListener("click", (e) => {
@@ -2782,7 +2903,24 @@
       container.appendChild(prevBtn);
 
       // Pages
-      for (let i = 1; i <= totalPages; i++) {
+      let startPage, endPage;
+      if (totalPages <= 7) {
+        startPage = 1;
+        endPage = totalPages;
+      } else {
+        if (solCurrentPage <= 4) {
+          startPage = 1;
+          endPage = 5;
+        } else if (solCurrentPage + 3 >= totalPages) {
+          startPage = totalPages - 4;
+          endPage = totalPages;
+        } else {
+          startPage = solCurrentPage - 2;
+          endPage = solCurrentPage + 2;
+        }
+      }
+
+      const appendPageBtn = (i) => {
         const pageBtn = document.createElement("button");
         pageBtn.type = "button";
         pageBtn.className = `page-btn ${solCurrentPage === i ? 'active' : ''}`;
@@ -2792,6 +2930,30 @@
           aplicarBusquedaSolicitudes();
         });
         container.appendChild(pageBtn);
+      };
+
+      const appendEllipsis = () => {
+        const span = document.createElement("span");
+        span.className = "page-btn disabled";
+        span.style.cursor = "default";
+        span.style.background = "transparent";
+        span.style.border = "none";
+        span.textContent = "...";
+        container.appendChild(span);
+      };
+
+      if (totalPages <= 7) {
+        for (let i = startPage; i <= endPage; i++) appendPageBtn(i);
+      } else {
+        if (startPage > 1) {
+          appendPageBtn(1);
+          if (startPage > 2) appendEllipsis();
+        }
+        for (let i = startPage; i <= endPage; i++) appendPageBtn(i);
+        if (endPage < totalPages) {
+          if (endPage < totalPages - 1) appendEllipsis();
+          appendPageBtn(totalPages);
+        }
       }
 
       // Forwards button
@@ -2845,48 +3007,182 @@
       });
     }
 
-    function aprobarSolicitud(s) {
+    async function aprobarSolicitud(s) {
       Swal.fire({
         title: 'Aprobar creación de usuario',
-        text: `Ingresa la contraseña inicial para el nuevo usuario "${s.username}":`,
-        input: 'password',
-        inputPlaceholder: 'Contraseña (mínimo 4 caracteres)',
-        inputAttributes: {
-          autocapitalize: 'off',
-          autocorrect: 'off'
-        },
+        html: `
+      <p class="mb-3">
+        Ingresa la contraseña inicial para el nuevo usuario
+        "<b>${s.username}</b>":
+      </p>
+
+      <div class="input-group py-4">
+        <input
+          id="swal-password-input"
+          type="password"
+          class="form-control"
+          placeholder="Contraseña (mínimo 4 caracteres)"
+          autocomplete="new-password"
+        >
+
+        <button
+          type="button"
+          class="btn text-white"
+          style="background-color: #002f55;"
+          id="togglePassword"
+          tabindex="-1"
+        >
+          <i class="bi bi-eye-slash"></i>
+        </button>
+      </div>
+    `,
         showCancelButton: true,
         confirmButtonText: 'Aprobar y Crear',
         cancelButtonText: 'Cancelar',
         confirmButtonColor: '#10b981',
         cancelButtonColor: '#6b7280',
-        inputValidator: (value) => {
-          if (!value || value.length < 4) {
-            return 'La contraseña debe tener al menos 4 caracteres';
-          }
-        }
-      }).then(async (result) => {
-        if (result.isConfirmed) {
-          const password = result.value;
-          try {
-            const response = await fetch(`${rp}/usuarios/solicitudes/${s.id}/aprobar`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ password })
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.detail || 'Error al aprobar solicitud');
+        focusConfirm: false,
 
-            Swal.fire('¡Aprobado!', `El usuario "${s.username}" ha sido registrado con éxito.`, 'success');
-            await cargarSolicitudes();
-            await cargarUsuarios();
-          } catch (error) {
-            Swal.fire('Error', error.message, 'error');
+        didOpen: () => {
+          const input = document.getElementById('swal-password-input');
+          const toggle = document.getElementById('togglePassword');
+
+          input.focus();
+
+          toggle.addEventListener('click', () => {
+            const visible = input.type === 'text';
+
+            input.type = visible ? 'password' : 'text';
+
+            toggle.innerHTML = visible
+              ? '<i class="bi bi-eye-slash"></i>'
+              : '<i class="bi bi-eye"></i>';
+
+            input.focus();
+          });
+
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              Swal.clickConfirm();
+            }
+          });
+        },
+
+        preConfirm: () => {
+          const password = document.getElementById('swal-password-input').value.trim();
+
+          if (password.length < 4) {
+            Swal.showValidationMessage(
+              'La contraseña debe tener al menos 4 caracteres.'
+            );
+            return false;
           }
+
+          return password;
         }
+
+      }).then(async (result) => {
+
+        if (!result.isConfirmed) return;
+
+        const password = result.value;
+
+        try {
+          const response = await fetch(`${rp}/usuarios/solicitudes/${s.id}/aprobar`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({ password })
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.detail || 'Error al aprobar solicitud');
+          }
+
+          Swal.fire({
+            icon: 'success',
+            title: '¡Aprobado!',
+            text: `El usuario "${s.username}" ha sido registrado con éxito.`
+          });
+
+          await cargarSolicitudes();
+          await cargarUsuarios();
+
+        } catch (error) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message
+          });
+        }
+
       });
     }
+
+    // function aprobarSolicitud(s) {
+    //   Swal.fire({
+    //     title: 'Aprobar creación de usuario',
+    //     html: `Ingresa la contraseña inicial para el nuevo usuario "<b>${s.username}</b>":`,
+    //     input: 'password',
+    //     inputPlaceholder: 'Contraseña (mínimo 4 caracteres)',
+    //     inputAttributes: {
+    //       autocapitalize: 'off',
+    //       autocorrect: 'off',
+    //       id: 'swal-password-input'
+    //     },
+    //     showCancelButton: true,
+    //     confirmButtonText: 'Aprobar y Crear',
+    //     cancelButtonText: 'Cancelar',
+    //     confirmButtonColor: '#10b981',
+    //     cancelButtonColor: '#6b7280',
+    //     didOpen: () => {
+    //       const input = document.getElementById('swal-password-input');
+    //       if (input && input.parentNode) {
+    //         input.parentNode.style.position = 'relative';
+    //         const toggleBtn = document.createElement('button');
+    //         toggleBtn.type = 'button';
+    //         toggleBtn.innerHTML = '<i class="bi bi-eye-slash"></i>';
+    //         toggleBtn.style.cssText = 'position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#6b7280;font-size:1.15rem;padding:0;line-height:1;z-index:10;display:flex;align-items:center;';
+    //         toggleBtn.addEventListener('click', () => {
+    //           const isPassword = input.type === 'password';
+    //           input.type = isPassword ? 'text' : 'password';
+    //           toggleBtn.innerHTML = isPassword ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+    //         });
+    //         input.parentNode.appendChild(toggleBtn);
+    //         input.style.paddingRight = '40px';
+    //       }
+    //     },
+    //     inputValidator: (value) => {
+    //       if (!value || value.length < 4) {
+    //         return 'La contraseña debe tener al menos 4 caracteres';
+    //       }
+    //     }
+    //   }).then(async (result) => {
+    //     if (result.isConfirmed) {
+    //       const password = result.value;
+    //       try {
+    //         const response = await fetch(`${rp}/usuarios/solicitudes/${s.id}/aprobar`, {
+    //           method: 'POST',
+    //           headers: { 'Content-Type': 'application/json' },
+    //           credentials: 'include',
+    //           body: JSON.stringify({ password })
+    //         });
+    //         const data = await response.json();
+    //         if (!response.ok) throw new Error(data.detail || 'Error al aprobar solicitud');
+
+    //         Swal.fire('¡Aprobado!', `El usuario "${s.username}" ha sido registrado con éxito.`, 'success');
+    //         await cargarSolicitudes();
+    //         await cargarUsuarios();
+    //       } catch (error) {
+    //         Swal.fire('Error', error.message, 'error');
+    //       }
+    //     }
+    //   });
+    // }
 
     function rechazarSolicitud(s) {
       Swal.fire({
@@ -2966,4 +3262,5 @@
       cargarSolicitudes();
     }
   })();
+</script>;
 </script>

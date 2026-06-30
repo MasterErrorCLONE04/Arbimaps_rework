@@ -145,6 +145,8 @@
     color: #16A34A;
     border-color: #73D08E;
     background-color: #DCFCE7;
+    border-radius: 8px ;
+    
 }
 
 .chip.off {
@@ -513,7 +515,7 @@
 
 /* NUEVA SECCION INFORMACION BASICA */
 .container-content-table {
-    background-color: #ffffff;
+    background-color: #ff0000;
     border-radius: 2rem !important;
 }
 
@@ -634,10 +636,10 @@
 
 .info-basic-panel {
     background: #FFFFFF;
-    border-radius: 1.8rem;
-    padding: 1.6rem 1.5rem;
+    border-radius: 18px;
+    padding: 1.2rem 1.1rem;
     height: 100%;
-    box-shadow: 0 .125rem .25rem rgba(0, 0, 0, 0.04);
+    /* box-shadow: 0 .125rem .25rem rgba(0, 0, 0, 0.04); */
     border: 1px solid #9bb1c35c !important;
 }
 
@@ -649,7 +651,7 @@
 }
 
 .title {
-    font-size: 1.35rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: #032F57;
     line-height: 1.1;
@@ -1847,7 +1849,7 @@ table.dataTable tbody td {
     background-color: #021f3c !important;
     border-radius: 24px !important;
     color: #FFFFFF !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+    /* box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important; */
 }
 
 @media (min-width: 768px) {
@@ -1910,6 +1912,43 @@ table.dataTable tbody td {
     text-transform: none !important;
 }
 
+#tablaPredios tbody tr {
+    cursor: pointer;
+    transition: background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+#tablaPredios tbody tr:hover td {
+    background-color: #F1F6FA !important;
+}
+
+#tablaPredios tbody tr.predio-row-active td {
+    background-color: #DCEAF5 !important;
+    color: #032F57 !important;
+    font-weight: 600;
+}
+
+#tablaPredios tbody tr.predio-row-active td:first-child {
+    box-shadow: inset 4px 0 0 #F5A800 !important;
+}
+
+#tablaPredios tbody tr.predio-row-active:hover td {
+    background-color: #D4E5F2 !important;
+}
+
+#tablaPredios_wrapper .dataTables_filter {
+    display: flex;
+    justify-content: flex-end;
+}
+
+#tablaPredios_wrapper .dataTables_filter label {
+    width: min(100%, 320px);
+    margin-bottom: 0;
+}
+
+#tablaPredios_wrapper .dataTables_filter input {
+    width: 100% !important;
+    margin-left: 0 !important;
+}
 /* Hide DataTables sorting arrows */
 #tablaPredios thead th::before,
 #tablaPredios thead th::after,
@@ -1927,12 +1966,14 @@ table.dataTable tbody td {
 /* Pagination buttons styling */
 #tablaPredios_wrapper .dataTables_paginate .pagination {
     gap: 6px !important;
+    /* border: 1px solid pink; */
+    margin-top: 12px;
 }
 
 #tablaPredios_wrapper .dataTables_paginate .page-link {
-    background-color: #032F57 !important;
-    color: #ffffff !important;
-    border: none !important;
+    background-color: #fafdff !important;
+    color: #002f55 !important;
+    border: 1px solid #002f5563 !important;
     border-radius: 6px !important;
     min-width: 32px;
     height: 32px;
@@ -1959,8 +2000,9 @@ table.dataTable tbody td {
 }
 
 #tablaPredios_wrapper .dataTables_paginate .page-item.disabled .page-link {
-    background-color: #032F57 !important;
-    color: #ffffff !important;
+    background-color: #f4faff !important;
+    color: #002f55 !important;
+    border: 1px solid #002f5563 !important;
     opacity: 0.4 !important;
     box-shadow: none !important;
     cursor: not-allowed;
@@ -2116,14 +2158,14 @@ table.dataTable tbody td {
 }
 
 .stat-card-value {
-    font-size: 2rem !important;
+    font-size: 1.2rem !important;
     font-weight: 800 !important;
     color: #032F57 !important;
     line-height: 1 !important;
     margin-top: 2px !important;
 }
 
-@media (min-width: 992px) {
+/* @media (min-width: 992px) {
     .col-custom-izq {
         flex: 0 0 55% !important;
         width: 55% !important;
@@ -2132,7 +2174,7 @@ table.dataTable tbody td {
         flex: 0 0 45% !important;
         width: 45% !important;
     }
-}
+} */
 
 /* Center eye icons inside circular buttons */
 .btn-eye-predio-edit {
@@ -2142,7 +2184,7 @@ table.dataTable tbody td {
     width: 42px !important;
     height: 42px !important;
     min-width: 42px !important;
-    background-color: #032F57 !important;
+    background-color: #ffffff !important;
     color: #FFFFFF !important;
     border-radius: 50% !important;
     padding: 0 !important;
@@ -2151,7 +2193,7 @@ table.dataTable tbody td {
 }
 
 .btn-eye-predio-edit:hover {
-    background-color: #053867 !important;
+    background-color: #05386732 !important;
     color: #FFFFFF !important;
 }
 
@@ -2164,6 +2206,7 @@ table.dataTable tbody td {
     margin: 0 !important;
     padding: 0 !important;
     line-height: 1 !important;
+    color: #002f55;
 }
 
 /* Center icons in the left circles */
@@ -2205,12 +2248,20 @@ table.dataTable tbody td {
 /* Center the predio cards content vertically */
 .tarjeta-predio-edit {
     background-color: #FFFFFF !important;
-    border-color: rgba(108, 117, 125, 0.18) !important;
+    border: none;
+    /* border-color: rgba(108, 117, 125, 0.18) !important; */
     min-height: 86px !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: center !important;
     align-items: center !important;
+    border-radius: 18px;
+}
+
+.card-header-edit{
+    background-color: #6aa4d4 !important;
+    border-bottom-left-radius:0px !important;
+    border-bottom-right-radius: 0px !important;
 }
 
 .seccion-tabla-predio {
@@ -2284,6 +2335,10 @@ table.dataTable tbody td {
     border-radius: 6px !important;
 }
 
+.resumen-item-label{
+    font-size: 0.78rem !important;
+}
+
 /* ==========================================================================
    CONSOLIDATED LINKS MODAL STYLING
    ========================================================================== */
@@ -2345,4 +2400,124 @@ table.dataTable tbody td {
 /* Hide default Bootstrap caret on the Acciones dropdown button to avoid double arrows */
 #dropdownAcciones::after {
     display: none !important;
+}
+/* Estetica compartida con buscar_predio para secciones comunes, sin cambiar proporciones. */
+.tarjeta-inferior-base-edit.tarjeta-placeholder-superior,
+.tarjeta-predio.tarjeta-placeholder-superior {
+    background-color: #fbfeff !important;
+    border-color: rgba(108, 117, 125, 0.18) !important;
+}
+
+.label-npn-edit{
+    font-size: 1rem;
+}
+
+.tarjeta-inferior-base-edit .table-icon-circle-edit {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    background-color: #6aa4d4 !important;
+    color: #ffffff !important;
+    box-shadow: 1px 1px 2px #0f172a81;
+}
+
+.tarjeta-inferior-base-edit .table-icon-circle-edit i {
+    color: #ffffff !important;
+    font-size: 1.1rem !important;
+}
+
+.tarjeta-inferior-base-edit .table-item-label-edit,
+.tarjeta-predio.tarjeta-placeholder-superior .title-part-predio {
+    font-size: 0.94rem !important;
+    color: #123A63 !important;
+    font-weight: 700 !important;
+}
+
+.tarjeta-inferior-base-edit .table-item-text-edit {
+    color: #123A63 !important;
+}
+/* Modal de marcas, novedades y tramites en asignaciones_detalle. */
+#modalInformacionMarcasAsignacion .modal-marcas-dialog {
+    width: min(980px, calc(100vw - 2rem));
+    max-width: min(980px, calc(100vw - 2rem));
+}
+
+#modalInformacionMarcasAsignacion .modal-content,
+#modalInformacionMarcasAsignacion .modal-predio-content-edit {
+    border-radius: 18px !important;
+    --bs-modal-border-radius: 18px !important;
+    --bs-modal-inner-border-radius: 17px !important;
+    max-height: calc(100vh - 2rem);
+    overflow: hidden;
+}
+
+#modalInformacionMarcasAsignacion .modal-header {
+    border-top-left-radius: 18px !important;
+    border-top-right-radius: 18px !important;
+    padding: 1rem 1.25rem;
+}
+
+#modalInformacionMarcasAsignacion .modal-predio-body-edit {
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 1rem 1.1rem;
+}
+
+#modalInformacionMarcasAsignacion .modal-predio-row-edit {
+    --bs-gutter-x: 1rem;
+    row-gap: 1rem;
+}
+
+#modalInformacionMarcasAsignacion .tarjeta-modal-visita-edit,
+#modalInformacionMarcasAsignacion .tarjeta-modal-visita-edit .card-body,
+#modalInformacionMarcasAsignacion .collapse,
+#modalInformacionMarcasAsignacion .collapsing,
+#modalInformacionMarcasAsignacion .part-juy,
+#modalInformacionMarcasAsignacion .contenido-visita {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+
+#modalInformacionMarcasAsignacion .tarjeta-modal-visita-edit {
+    border-radius: 16px !important;
+    overflow: hidden;
+}
+
+#modalInformacionMarcasAsignacion .contenido-visita {
+    padding: 0.75rem 0.9rem !important;
+}
+
+#modalInformacionMarcasAsignacion .tarjet-row-pot-visita {
+    width: 100%;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+#modalInformacionMarcasAsignacion .tex-num,
+#modalInformacionMarcasAsignacion .dato_info,
+#modalInformacionMarcasAsignacion .text-start,
+#modalInformacionMarcasAsignacion .tit-iops {
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+
+
+@media (min-width: 1200px) {
+    #modalInformacionMarcasAsignacion .modal-predio-row-edit > .col-xl-auto {
+        flex: 1 1 0;
+        width: 0;
+        min-width: 0;
+        max-width: none;
+    }
+}
+
+@media (max-width: 575.98px) {
+    #modalInformacionMarcasAsignacion .modal-marcas-dialog {
+        width: calc(100vw - 1rem);
+        max-width: calc(100vw - 1rem);
+        margin-left: auto;
+        margin-right: auto;
+    }
 }

@@ -1,158 +1,169 @@
 <!-- OFFCANVAS U.C. POR TIPOLOGÍA -->
-  <div class="offcanvas offcanvas-end m-3 rounded-4" tabindex="-1" id="offcanvasUcTipologia"
-    aria-labelledby="offcanvasUcTipologiaLabel" style="--bs-offcanvas-width: 850px;">
+<div class="offcanvas offcanvas-end m-3 rounded-4" tabindex="-1" id="offcanvasUcTipologia"
+  aria-labelledby="offcanvasUcTipologiaLabel" style="--bs-offcanvas-width: 850px;">
 
-    <div class="offcanvas-header border-0 p-4">
-      <div class="d-flex align-items-center gap-3">
-        <div class="icono-offcanvas-uc">
-          <i class="fa-solid fa-house-chimney"></i>
+  <div class="offcanvas-header border-0 p-4">
+    <div class="d-flex align-items-center gap-3">
+      <div class="icono-offcanvas-uc">
+        <i class="fa-solid fa-house-chimney"></i>
+      </div>
+      <div>
+        <div id="offcanvasUcTipologiaLabel" class="titulo-offcanvas-uc">
+          ID Unidad Construcción
         </div>
-        <div>
-          <div id="offcanvasUcTipologiaLabel" class="titulo-offcanvas-uc">
-            ID Unidad Construcción
-          </div>
-          <div class="subtitulo-offcanvas-uc p-1 text-center">
-            -
-          </div>
+        <div class="subtitulo-offcanvas-uc p-1 text-center">
+          -
         </div>
       </div>
-
-      <button type="button"
-        class="d-inline-flex align-items-center gap-2 border-0 px-3 py-2 boton-jdk btn-volver-offcanvas-uc"
-        data-bs-dismiss="offcanvas" aria-label="Volver">
-        <i class="fa-solid fa-arrow-left-long"></i>
-        <span>Volver</span>
-      </button>
     </div>
 
-    <div class="offcanvas-body p-4">
-      <div class="card border-0 rounded-4 card-offcanvas-uc">
-        <div class="card-body p-0 w-100">
+    <button type="button"
+      class="d-inline-flex align-items-center gap-2 border-0 px-3 py-2 boton-jdk btn-volver-offcanvas-uc"
+      data-bs-dismiss="offcanvas" aria-label="Volver">
+      <i class="fa-solid fa-arrow-left-long"></i>
+      <span>Volver</span>
+    </button>
+  </div>
 
-          <!-- TARJETA 1 -->
-          <div class="uc-accordion-card">
-            <button type="button"
-              class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
-              data-bs-toggle="collapse" data-bs-target="#contenidoUcTipologia" aria-expanded="false"
-              aria-controls="contenidoUcTipologia"
-              onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
-              <span class="uc-accordion-title">Característica de la unidad de construcción</span>
-              <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
-            </button>
+  <div class="offcanvas-body p-4">
+    <div class="card border-0 rounded-4 card-offcanvas-uc">
+      <div class="card-body p-0 w-100">
 
-            <div class="collapse show" id="contenidoUcTipologia">
-              <div class="uc-accordion-body">
-                <div class="row g-4">
+        <!-- TARJETA 1 -->
+        <div class="uc-accordion-card">
+          <button type="button"
+            class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
+            data-bs-toggle="collapse" data-bs-target="#contenidoUcTipologia" aria-expanded="false"
+            aria-controls="contenidoUcTipologia"
+            onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
+            <span class="uc-accordion-title">Característica de la unidad de construcción</span>
+            <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
+          </button>
 
-                  <div class="col-12">
-                    <div class="uc-info-row">
-                      <div class="uc-info-label">Tipo de calificación</div>
-                      <div class="uc-info-value" id="tipologiaTipoCalificacion">Por Tipología</div>
+          <div class="collapse show" id="contenidoUcTipologia">
+            <div class="uc-accordion-body">
+              <div class="row g-4">
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Tipo de calificación</div>
+                    <div class="uc-info-value" id="tipologiaTipoCalificacion">Por Tipología</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Tipo de unidad de construcción</div>
+                    <div class="uc-info-value" id="tipologiaTipoUnidad">Anexo</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Uso</div>
+                    <div class="uc-info-value" id="tipologiaUso">Albercas - Bañaderas</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Total de plantas</div>
+                    <div class="uc-info-value" id="tipologiaTotalPlantas">1</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Año de construcción</div>
+                    <div class="uc-info-value" id="tipologiaAnioConstruccion">2015</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Área de construida [m2]</div>
+                    <div class="uc-info-value" id="tipologiaAreaConstruida">5</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Área privada construida [m2]</div>
+                    <div class="uc-info-value" id="tipologiaAreaPrivadaConstruida">2</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Usos tradicionales culturales</div>
+                    <div class="uc-info-value" id="tipologiaUsosTradicionales">Null</div>
+                  </div>
+                </div>
+
+                <!-- <div class="col-12">
+                  <div class="border rounded-4 overflow-hidden bg-white">
+                    <div class="px-3 py-3 border-bottom uc-info-label bg-light">
+                      Observaciones
+                    </div>
+                    <div class="px-3 py-4 text-start uc-info-value fw-normal" id="tipologiaObservaciones">
+                      La alberca se encuentra en muy buenas condiciones tiene enchape laminado en Oro.
                     </div>
                   </div>
+                </div> -->
 
-                  <div class="col-12">
-                    <div class="uc-info-row">
-                      <div class="uc-info-label">Tipo de unidad de construcción</div>
-                      <div class="uc-info-value" id="tipologiaTipoUnidad">Anexo</div>
+                <div class="col-12">
+                  <div class="border rounded-4 overflow-hidden bg-white">
+                    <div class="text-start tex-num p-2 px-3 text-white rounded-4 rounded-bottom-0"
+                      style="background-color: #002f55;">
+                      Observaciones
                     </div>
-                  </div>
-
-                  <div class="col-12">
-                    <div class="uc-info-row">
-                      <div class="uc-info-label">Uso</div>
-                      <div class="uc-info-value" id="tipologiaUso">Albercas - Bañaderas</div>
-                    </div>
-                  </div>
-
-                  <div class="col-12">
-                    <div class="uc-info-row">
-                      <div class="uc-info-label">Total de plantas</div>
-                      <div class="uc-info-value" id="tipologiaTotalPlantas">1</div>
-                    </div>
-                  </div>
-
-                  <div class="col-12">
-                    <div class="uc-info-row">
-                      <div class="uc-info-label">Año de construcción</div>
-                      <div class="uc-info-value" id="tipologiaAnioConstruccion">2015</div>
-                    </div>
-                  </div>
-
-                  <div class="col-12">
-                    <div class="uc-info-row">
-                      <div class="uc-info-label">Área de construida [m2]</div>
-                      <div class="uc-info-value" id="tipologiaAreaConstruida">5</div>
-                    </div>
-                  </div>
-
-                  <div class="col-12">
-                    <div class="uc-info-row">
-                      <div class="uc-info-label">Área privada construida [m2]</div>
-                      <div class="uc-info-value" id="tipologiaAreaPrivadaConstruida">2</div>
-                    </div>
-                  </div>
-
-                  <div class="col-12">
-                    <div class="uc-info-row">
-                      <div class="uc-info-label">Usos tradicionales culturales</div>
-                      <div class="uc-info-value" id="tipologiaUsosTradicionales">Null</div>
-                    </div>
-                  </div>
-
-                  <div class="col-12">
-                    <div class="border rounded-4 overflow-hidden bg-white">
-                      <div class="px-3 py-3 border-bottom uc-info-label bg-light">
-                        Observaciones
-                      </div>
-                      <div class="px-3 py-4 text-start uc-info-value fw-normal" id="tipologiaObservaciones">
-                        La alberca se encuentra en muy buenas condiciones tiene enchape laminado en Oro.
-                      </div>
+                    <div class="d-flex justify-content-center align-items-center text-center py-4">
+                      <div class="dato_info" id="tipologiaObservaciones">----</div>
                     </div>
                   </div>
 
                 </div>
+
               </div>
             </div>
           </div>
-
-          <!-- TARJETA 2 -->
-          <div class="uc-accordion-card mt-2">
-            <button type="button"
-              class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
-              data-bs-toggle="collapse" data-bs-target="#contenidoUcTipologiaDos" aria-expanded="false"
-              aria-controls="contenidoUcTipologiaDos"
-              onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
-              <span class="uc-accordion-title">Calificación unidad de construcción</span>
-              <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
-            </button>
-
-            <div class="collapse show" id="contenidoUcTipologiaDos">
-              <div class="uc-accordion-body">
-                <div class="row g-4">
-
-                  <div class="col-12">
-                    <div class="uc-info-row">
-                      <div class="uc-info-label">Tipo Tipología</div>
-                      <div class="uc-info-value" id="tipologiaTipoTipologia">Residencial sencilla tipo 1</div>
-                    </div>
-                  </div>
-
-                  <div class="col-12">
-                    <div class="uc-info-row">
-                      <div class="uc-info-label">conservación de tipología</div>
-                      <div class="uc-info-value" id="tipologiaConservacionTipologia">Muy bueno - 1.5</div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
+
+        <!-- TARJETA 2 -->
+        <div class="uc-accordion-card mt-2">
+          <button type="button"
+            class="uc-accordion-header w-100 border-0 d-flex align-items-center justify-content-between"
+            data-bs-toggle="collapse" data-bs-target="#contenidoUcTipologiaDos" aria-expanded="false"
+            aria-controls="contenidoUcTipologiaDos"
+            onclick="this.querySelector('.uc-accordion-icon').classList.toggle('rotate-180')">
+            <span class="uc-accordion-title">Calificación unidad de construcción</span>
+            <i class="fa-solid fa-chevron-down uc-accordion-icon"></i>
+          </button>
+
+          <div class="collapse show" id="contenidoUcTipologiaDos">
+            <div class="uc-accordion-body">
+              <div class="row g-4">
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">Tipo Tipología</div>
+                    <div class="uc-info-value" id="tipologiaTipoTipologia">Residencial sencilla tipo 1</div>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="uc-info-row">
+                    <div class="uc-info-label">conservación de tipología</div>
+                    <div class="uc-info-value" id="tipologiaConservacionTipologia">Muy bueno - 1.5</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
-
-  
+</div>

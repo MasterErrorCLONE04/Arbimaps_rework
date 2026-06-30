@@ -167,7 +167,7 @@ def _backup_equipo_trabajo(
         INSERT INTO {_app_table(tenant, 'equipos_trabajo_backup')}
           (equipo_id_original, datos_equipo, datos_reconocedores, fecha_eliminacion, eliminado_por)
         VALUES
-          (%s, %s, %s, COALESCE(%s, CURRENT_TIMESTAMP), %s)
+          (%s, %s, %s, COALESCE(%s, CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota'), %s)
         """,
         (
             equipo.get("equipo_id_original") or equipo.get("t_id") or equipo.get("equipo_id") or equipo.get("id"),
@@ -488,8 +488,11 @@ def listar_usuarios(
         params = ()
     elif role == "coordinador":
         where_scope = """
-                WHERE LOWER(COALESCE(u.rol, '')) = 'reconocedor'
-                  AND NULLIF(TRIM(u.supervisor), '') = %s::text
+                WHERE (
+                    (LOWER(COALESCE(u.rol, '')) = 'reconocedor'
+                     AND NULLIF(TRIM(u.supervisor), '') = %s::text)
+                    OR LOWER(COALESCE(u.rol, '')) = 'coordinador'
+                )
         """
         params = (_current_user_id(current_user),)
     try:
@@ -805,7 +808,7 @@ def crear_equipo_trabajo(
                 f"""
                 INSERT INTO {_app_table(tenant, 'equipos_trabajo')}
                   (nombre, coordinador_id, zona_id, fecha_creacion)
-                VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+                VALUES (%s, %s, %s, CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')
                 RETURNING t_id
                 """,
                 (body.nombre.strip(), body.coordinador_id, body.zona_id),

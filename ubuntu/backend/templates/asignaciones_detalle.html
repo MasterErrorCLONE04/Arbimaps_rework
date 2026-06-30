@@ -44,89 +44,127 @@
         <!-- Botones de Acción -->
         <div class="d-flex gap-2 justify-content-lg-end flex-wrap w-100 justify-content-start">
           <div class="dropdown" id="dropdownAccionesWrapper">
-            <button class="btn rounded-3 fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2 dropdown-toggle" type="button" id="dropdownAcciones" data-bs-toggle="dropdown" aria-expanded="false" style="background-color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;" onmouseover="this.style.backgroundColor='#02203d'" onmouseout="this.style.backgroundColor='#032F57'">
+            <button
+              class="btn rounded-3 fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2 dropdown-toggle"
+              type="button" id="dropdownAcciones" data-bs-toggle="dropdown" aria-expanded="false"
+              style="background-color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;"
+              onmouseover="this.style.backgroundColor='#02203d'" onmouseout="this.style.backgroundColor='#032F57'">
               <span>Acciones</span>
               <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.75rem;"></i>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dropdownAcciones" style="border-radius: 6px; border: 1px solid #E4EBF2; min-width: 280px; padding: 6px 0; background-color: #FFFFFF;">
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dropdownAcciones"
+              style="border-radius: 6px; border: 1px solid #E4EBF2; min-width: 280px; padding: 6px 0; background-color: #FFFFFF;">
               <!-- Workflow Actions -->
               <li>
-                <button id="btnHeaderSyncXtf" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #032F57; background: transparent; border: none; text-align: left; width: 100%;">
+                <button id="btnHeaderSyncXtf" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #032F57; background: transparent; border: none; text-align: left; width: 100%;">
                   <i class="fa-solid fa-code-branch fs-6" style="color: #032F57; width: 20px; text-align: center;"></i>
                   <span>Sincronizar XTF</span>
                 </button>
               </li>
               <li>
-                <button id="btnHeaderSubmitQA" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #16a34a; background: transparent; border: none; text-align: left; width: 100%;">
+                <button id="btnHeaderSubmitQA" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #16a34a; background: transparent; border: none; text-align: left; width: 100%;">
                   <i class="fa-solid fa-paper-plane fs-6" style="color: #16a34a; width: 20px; text-align: center;"></i>
                   <span>Enviar a Control de Calidad</span>
                 </button>
               </li>
               <li>
-                <button id="btnHeaderQCReview" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #d97706; background: transparent; border: none; text-align: left; width: 100%;">
-                  <i class="fa-solid fa-clipboard-check fs-6" style="color: #d97706; width: 20px; text-align: center;"></i>
+                <button id="btnHeaderQCReview" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #d97706; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-clipboard-check fs-6"
+                    style="color: #d97706; width: 20px; text-align: center;"></i>
                   <span>Revisar Control de Calidad</span>
                 </button>
               </li>
               <li>
-                <button id="btnHeaderSubmitSoporteLink" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #7c3aed; background: transparent; border: none; text-align: left; width: 100%;">
+                <button id="btnHeaderSubmitSoporteLink" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #7c3aed; background: transparent; border: none; text-align: left; width: 100%;">
                   <i class="fa-solid fa-paper-plane fs-6" style="color: #7c3aed; width: 20px; text-align: center;"></i>
                   <span>Enviar enlace a Coordinador</span>
                 </button>
               </li>
               <li>
-                <button id="btnHeaderViewSoporteLink" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #0891b2; background: transparent; border: none; text-align: left; width: 100%;">
+                <button id="btnHeaderViewSoporteLink" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #0891b2; background: transparent; border: none; text-align: left; width: 100%;">
                   <i class="fa-solid fa-link fs-6" style="color: #0891b2; width: 20px; text-align: center;"></i>
                   <span>Ver enlace de Soporte</span>
                 </button>
               </li>
               <li>
-                <button id="btnHeaderSubmitQA2" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #0d9488; background: transparent; border: none; text-align: left; width: 100%;">
+                <button id="btnHeaderSubmitQA2" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #0d9488; background: transparent; border: none; text-align: left; width: 100%;">
                   <i class="fa-solid fa-paper-plane fs-6" style="color: #0d9488; width: 20px; text-align: center;"></i>
                   <span>Enviar a Control de Calidad 2</span>
                 </button>
               </li>
               <li>
-                <button id="btnHeaderQCReview2" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #ea580c; background: transparent; border: none; text-align: left; width: 100%;">
-                  <i class="fa-solid fa-clipboard-check fs-6" style="color: #ea580c; width: 20px; text-align: center;"></i>
+                <button id="btnHeaderQCReview2" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #ea580c; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-clipboard-check fs-6"
+                    style="color: #ea580c; width: 20px; text-align: center;"></i>
                   <span>Revisar Control de Calidad 2</span>
                 </button>
               </li>
               <li>
-                <button id="btnHeaderLiderReview" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #4f46e5; background: transparent; border: none; text-align: left; width: 100%;">
-                  <i class="fa-solid fa-clipboard-check fs-6" style="color: #4f46e5; width: 20px; text-align: center;"></i>
+                <button id="btnHeaderLiderReview" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #4f46e5; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-clipboard-check fs-6"
+                    style="color: #4f46e5; width: 20px; text-align: center;"></i>
                   <span>Revisión de Líder</span>
                 </button>
               </li>
               <li>
-                <button id="btnHeaderViewDigitalizacionLink" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" style="font-size: 0.85rem; color: #4f46e5; background: transparent; border: none; text-align: left; width: 100%;">
+                <button id="btnHeaderViewDigitalizacionLink" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #4f46e5; background: transparent; border: none; text-align: left; width: 100%;">
                   <i class="fa-solid fa-link fs-6" style="color: #4f46e5; width: 20px; text-align: center;"></i>
                   <span>Ver enlace de Digitalización</span>
                 </button>
               </li>
-              
+
               <!-- Divider to separate workflow from permanent links -->
-              <li class="dropdown-divider-workflow" style="border-top: 1px solid #E4EBF2; margin: 6px 0; display: none;"></li>
-              
+              <li class="dropdown-divider-workflow"
+                style="border-top: 1px solid #E4EBF2; margin: 6px 0; display: none;"></li>
+
               <!-- Permanent actions -->
               <li>
-                <button id="btnHeaderVerEnlaces" type="button" class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalEnlacesAsignacion" style="font-size: 0.85rem; color: #16a34a; background: transparent; border: none; text-align: left; width: 100%;">
+                <button id="btnHeaderVerEnlaces" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold" data-bs-toggle="modal"
+                  data-bs-target="#modalEnlacesAsignacion"
+                  style="font-size: 0.85rem; color: #16a34a; background: transparent; border: none; text-align: left; width: 100%;">
                   <i class="fa-solid fa-link fs-6" style="color: #16a34a; width: 20px; text-align: center;"></i>
                   <span>Ver Enlaces</span>
                 </button>
               </li>
               <li>
-                <button id="btnHeaderComentarios" type="button" class="dropdown-item d-inline-flex align-items-center justify-content-between px-3 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalComentarios" style="font-size: 0.85rem; color: #032F57; background: transparent; border: none; width: 100%;">
+                <button id="btnHeaderComentarios" type="button"
+                  class="dropdown-item d-inline-flex align-items-center justify-content-between px-3 py-2 fw-semibold"
+                  data-bs-toggle="modal" data-bs-target="#modalComentarios"
+                  style="font-size: 0.85rem; color: #032F57; background: transparent; border: none; width: 100%;">
                   <div class="d-flex align-items-center gap-3">
                     <i class="fa-solid fa-comments fs-6" style="color: #032F57; width: 20px; text-align: center;"></i>
                     <span>Comentarios y recomendaciones</span>
                   </div>
-                  <span id="badgeComentariosCount" class="badge rounded-pill bg-danger d-none ms-2" style="font-size: 0.72rem; padding: 0.25em 0.6em;">0</span>
+                  <span id="badgeComentariosCount" class="badge rounded-pill bg-danger d-none ms-2"
+                    style="font-size: 0.72rem; padding: 0.25em 0.6em;">0</span>
                 </button>
               </li>
               <li>
-                <button id="btnHeaderHistorial" type="button" class="dropdown-item d-inline-flex align-items-center gap-3 px-3 py-2 fw-semibold" data-bs-toggle="modal" data-bs-target="#modalHistorial" style="font-size: 0.85rem; color: #5b9bd5; background: transparent; border: none; text-align: left; width: 100%;">
-                  <i class="fa-solid fa-clock-rotate-left fs-6" style="color: #5b9bd5; width: 20px; text-align: center;"></i>
+                <button id="btnHeaderHistorial" type="button"
+                  class="dropdown-item d-inline-flex align-items-center gap-3 px-3 py-2 fw-semibold"
+                  data-bs-toggle="modal" data-bs-target="#modalHistorial"
+                  style="font-size: 0.85rem; color: #5b9bd5; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-clock-rotate-left fs-6"
+                    style="color: #5b9bd5; width: 20px; text-align: center;"></i>
                   <span>Historial de la asignación</span>
                 </button>
               </li>
@@ -137,63 +175,65 @@
     </div>
   </div>
 
-  <div class="row g-4 mt-2 align-items-stretch">
-    <!-- COLUMNA IZQUIERDA -->
-    <div class="col-12 col-lg-7 col-xl-7 col-custom-izq">
-      <div class="unified-detail-card p-3 mt-0"
-        style="background-color: #021f3c !important; border-radius: 24px !important; color: #ffffff !important; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-          <h2 class="fw-bold mb-0 text-white" style="font-size: clamp(1.2rem, 1.5vw, 1.8rem);">
-            Asignación: <span id="d_titulo">-</span>
-          </h2>
-          <div class="d-inline-flex align-items-center px-3 py-1.5 rounded-pill"
-            style="background-color: #6095C1; border: 1px solid rgba(255, 255, 255, 0.25);">
-            <span class="me-2 fw-bold text-white-50" style="font-size: 0.9rem;">•</span>
-            <small id="d_estado" class="fw-bold mb-0 text-white text-uppercase"
-              style="font-size: 0.75rem; letter-spacing: 0.05em;">-</small>
-          </div>
-        </div>
+  <div class="container-fluid">
+    <div class="row g-4 mt-2 align-items-stretch ">
+      <!-- COLUMNA IZQUIERDA -->
+      <div class="col-12 col-md-6 col-xl-5 col-custom-izq px-0 ">
 
-        <!-- METADATA ROW -->
-        <div class="row g-3 align-items-center py-2">
-          <!-- COL 1: ASIGNADO POR -->
-          <div class="col-12 col-md-4 meta-col-separator">
-            <div class="d-flex align-items-center">
-              <div id="d_coord_avatar_container"
-                class="me-3 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
-                style="width: 38px; height: 38px; background-color: rgba(255,255,255,0.15); border: 1.5px solid transparent; overflow: hidden; transition: background-color 0.2s ease, border-color 0.2s ease;">
-                <i id="d_coord_icon" class="fa-solid fa-circle-user text-white fs-5" style="display: block;"></i>
-              </div>
-              <div class="min-w-0">
-                <small class="d-block fw-bold text-uppercase text-white-50"
-                  style="font-size: 0.65rem; letter-spacing: 0.05em;">
-                  ASIGNADO POR:
-                </small>
-                <small id="d_coord" class="d-block text-white fw-bold"
-                  style="font-size: 0.85rem; white-space: normal; word-break: break-word;">-</small>
-              </div>
+        <div class="unified-detail-card p-4 mt-0"
+          style="background-color: #021f3c !important; border-radius: 24px !important; color: #ffffff !important;">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+            <h2 class="fw-bold mb-0 text-white" style="font-size: 1rem;">
+              Asignación: <span id="d_titulo">-</span>
+            </h2>
+            <div class="d-inline-flex align-items-center px-3 py-1 rounded-3" style="background-color: #6095C1; ">
+              <span class="me-2 fw-bold text-white-50" style="font-size: 0.95rem;">•</span>
+              <small id="d_estado" class="fw-bold mb-0 text-white text-uppercase"
+                style="font-size: 0.65rem; letter-spacing: 0.05em;">-</small>
             </div>
           </div>
 
-          <!-- COL 2: FECHA DE ASIGNACION -->
-          <div class="col-12 col-md-4 meta-col-separator">
-            <div class="d-flex align-items-center ps-md-3">
-              <div class="me-3 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
-                style="width: 38px; height: 38px; background-color: #6095C1;">
-                <i class="fa-solid fa-calendar-days text-white fs-5"></i>
+          <!-- METADATA ROW -->
+          <div class="container-fluid ">
+            <div class="row g-3 align-items-center py-2">
+              <!-- COL 1: COORDINADOR -->
+              <div class="col-12 col-md-6 meta-col-separator">
+                <div class="d-flex align-items-center justify-content-center ">
+                  <div id="d_coord_avatar_container"
+                    class="me-2 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+                    style="width: 38px; height: 38px; background-color: #6095C1;">
+                    <i id="d_coord_icon" class="bi bi-person-circle text-white " style="display: block;"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <small class="d-block fw-bold text-uppercase text-white-50"
+                      style="font-size: 0.65rem; letter-spacing: 0.05em;">
+                      COORDINADOR:
+                    </small>
+                    <small id="d_coord" class="d-block text-white fw-bold"
+                      style="font-size: 0.85rem; white-space: normal; word-break: break-word;">-</small>
+                  </div>
+                </div>
               </div>
-              <div class="min-w-0">
-                <small class="d-block fw-bold text-uppercase text-white-50"
-                  style="font-size: 0.65rem; letter-spacing: 0.05em;">
-                  FECHA DE ASIGNACIÓN:
-                </small>
-                <small id="d_fecha" class="d-block text-white fw-bold" style="font-size: 0.85rem;">-</small>
-              </div>
-            </div>
-          </div>
 
-          <!-- COL 3: ULTIMA SINCRONIZACION -->
-          <div class="col-12 col-md-4">
+              <!-- COL 2: FECHA DE ASIGNACION -->
+              <div class="col-12 col-md-6 ">
+                <div class="d-flex align-items-center justify-content-center ">
+                  <div class="me-2 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+                    style="width: 38px; height: 38px; background-color: #6095C1;">
+                    <i class="bi bi-calendar-check text-white "></i>
+                  </div>
+                  <div class="min-w-0">
+                    <small class="d-block fw-bold text-uppercase text-white-50"
+                      style="font-size: 0.65rem; letter-spacing: 0.05em;">
+                      FECHA DE ASIGNACIÓN:
+                    </small>
+                    <small id="d_fecha" class="d-block text-white fw-bold" style="font-size: 0.85rem;">-</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- COL 3: ULTIMA SINCRONIZACION -->
+              <!-- <div class="col-12 col-md-3">
             <div class="d-flex align-items-center ps-md-3">
               <div class="me-3 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
                 style="width: 38px; height: 38px; background-color: #6095C1;">
@@ -207,204 +247,215 @@
                 <small id="d_last_sync" class="d-block text-white fw-bold" style="font-size: 0.85rem;">-</small>
               </div>
             </div>
-          </div>
-        </div>
+          </div> -->
 
-        <!-- QA and Devolution links hidden from the card, managed in consolidated modal -->
-        <div id="d_qa_link_row" class="d-none"></div>
-        <div id="d_devolucion_link_row" class="d-none"></div>
-
-        <!-- STATISTICS CARDS -->
-        <div class="row g-3 mt-3 justify-content-center">
-          <!-- Card 1: Asignados -->
-          <div class="col-12 col-md-4 col-lg-3">
-            <div class="stat-card stat-card-left h-100">
-              <div class="stat-card-icon-wrap stat-card-icon-blue">
-                <i class="fa-solid fa-map-location-dot fs-5"></i>
+              <!-- COL 4: FECHA DE ENTREGA -->
+              <!-- <div class="col-12 col-md-4">
+            <div class="d-flex align-items-center ps-md-3">
+              <div class="me-3 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+                style="width: 38px; height: 38px; background-color: #6095C1;">
+                <i class="bi bi-calendar-x text-white"></i>
               </div>
               <div class="min-w-0">
-                <small class="d-block stat-card-title">Predios Asignados</small>
-                <span id="d_asig" class="d-block stat-card-value">0</span>
+                <small class="d-block fw-bold text-uppercase text-white-50"
+                  style="font-size: 0.65rem; letter-spacing: 0.05em;">
+                  fECHA DE ENTREGA:
+                </small>
+                <small id="d_last_sync" class="d-block text-white fw-bold" style="font-size: 0.85rem;">-</small>
               </div>
+            </div>
+          </div> -->
+
             </div>
           </div>
 
-          <!-- Card 2: Eliminados -->
-          <div class="col-12 col-md-4 col-lg-3">
-            <div class="stat-card stat-card-right stat-card-border-red h-100">
-              <div class="min-w-0">
-                <small class="d-block stat-card-title">Predios Eliminados</small>
-                <span id="d_elim" class="d-block stat-card-value">0</span>
-              </div>
-              <div class="stat-card-icon-wrap stat-card-icon-red">
-                <svg width="22" height="22" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path fill-rule="evenodd" clip-rule="evenodd"
-                    d="M16.7409 1.82115C17.0419 2.00527 17.2225 2.33225 17.2225 2.68462L17.2193 7.14482C16.592 6.88768 15.9076 6.748 15.1915 6.748C13.5756 6.748 12.1181 7.46544 11.1359 8.60192V5.44962L7.08027 4.0941V13.1256L10.2867 14.1954C10.5434 14.9097 10.8888 15.5763 11.2373 16.1573C11.3672 16.3731 11.5003 16.5858 11.6365 16.789L6.14557 14.9541L2.467 16.7985C2.15332 16.9573 1.78261 16.9382 1.48161 16.7541C1.1806 16.57 1 16.243 1 15.8906V4.71631C1 4.33219 1.21545 3.97982 1.56082 3.80522L5.61644 1.77353C5.85724 1.6529 6.1329 1.63385 6.38954 1.71956L12.0738 3.6211L15.7555 1.7767C16.0692 1.61798 16.4399 1.63703 16.7409 1.82115Z"
-                    fill="#CD2023" />
-                  <path
-                    d="M13.9751 8.76184L13.8248 9.20832H12.1658C11.8599 9.20832 11.6128 9.45295 11.6128 9.75573C11.6128 10.0585 11.8599 10.3031 12.1658 10.3031H18.8017C19.1076 10.3031 19.3547 10.0585 19.3547 9.75573C19.3547 9.45295 19.1076 9.20832 18.8017 9.20832H17.1427L16.9924 8.76184C16.9164 8.53774 16.7055 8.38721 16.4671 8.38721H14.5005C14.262 8.38721 14.0512 8.53774 14.0505 8.76184ZM18.8017 11.1243H12.1658L12.5304 16.6514C12.5581 17.0842 12.921 17.4195 13.3582 17.4195H17.6093C18.0465 17.4195 18.4095 17.0842 18.4371 16.6514L18.8017 11.1243Z"
-                    fill="#CD2023" />
-                </svg>
-              </div>
-            </div>
-          </div>
+          <!-- QA and Devolution links hidden from the card, managed in consolidated modal -->
+          <div id="d_qa_link_row" class="d-none"></div>
+          <div id="d_devolucion_link_row" class="d-none"></div>
 
-          <!-- Card 3: Nuevos -->
-          <div class="col-12 col-md-4 col-lg-3">
-            <div class="stat-card stat-card-right stat-card-border-green h-100">
-              <div class="min-w-0">
-                <small class="d-block stat-card-title">Predios Nuevos</small>
-                <span id="d_new" class="d-block stat-card-value">0</span>
-              </div>
-              <div class="stat-card-icon-wrap stat-card-icon-green">
-                <svg width="22" height="22" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <g clip-path="url(#clip0_4588_2618)">
-                    <path fill-rule="evenodd" clip-rule="evenodd"
-                      d="M16.7409 1.82115C17.0419 2.00527 17.2225 2.33225 17.2225 2.68462L17.2193 7.14482C16.592 6.88768 15.9076 6.748 15.1915 6.748C13.5756 6.748 12.1181 7.46544 11.1359 8.60192V5.44962L7.08027 4.0941V13.1256L10.2867 14.1954C10.5434 14.9097 10.8888 15.5763 11.2373 16.1573C11.3672 16.3731 11.5003 16.5858 11.6365 16.789L6.14557 14.9541L2.467 16.7985C2.15332 16.9573 1.78261 16.9382 1.48161 16.7541C1.1806 16.57 1 16.243 1 15.8906V4.71631C1 4.33219 1.21545 3.97982 1.56082 3.80522L5.61644 1.77353C5.85724 1.6529 6.1329 1.63385 6.38954 1.71956L12.0738 3.6211L15.7555 1.7767C16.0692 1.61798 16.4399 1.63703 16.7409 1.82115Z"
-                      fill="#03A025" />
-                    <path
-                      d="M20 12.2581C20 13.4558 19.5242 14.6045 18.6773 15.4515C17.8303 16.2984 16.6817 16.7742 15.4839 16.7742C14.2862 16.7742 13.1375 16.2984 12.2905 15.4515C11.4436 14.6045 10.9678 13.4558 10.9678 12.2581C10.9678 11.0603 11.4436 9.91163 12.2905 9.06469C13.1375 8.21775 14.2862 7.74194 15.4839 7.74194C16.6817 7.74194 17.8303 8.21775 18.6773 9.06469C19.5242 9.91163 20 11.0603 20 12.2581ZM15.7662 10.2823C15.7662 10.2074 15.7364 10.1356 15.6835 10.0827C15.6306 10.0297 15.5588 10 15.4839 10C15.409 10 15.3372 10.0297 15.2843 10.0827C15.2314 10.1356 15.2016 10.2074 15.2016 10.2823V11.9758H13.5081C13.4332 11.9758 13.3614 12.0056 13.3085 12.0585C13.2556 12.1114 13.2258 12.1832 13.2258 12.2581C13.2258 12.3329 13.2556 12.4047 13.3085 12.4577C13.3614 12.5106 13.4332 12.5403 13.5081 12.5403H15.2016V14.2339C15.2016 14.3087 15.2314 14.3805 15.2843 14.4335C15.3372 14.4864 15.409 14.5161 15.4839 14.5161C15.5588 14.5161 15.6306 14.4864 15.6835 14.4335C15.7364 14.3805 15.7662 14.3087 15.7662 14.2339V12.5403H17.4597C17.5346 12.5403 17.6064 12.5106 17.6593 12.4577C17.7122 12.4047 17.742 12.3329 17.742 12.2581C17.7122 12.1832 17.7122 12.1114 17.6593 12.0585C17.6064 12.0056 17.5346 11.9758 17.4597 11.9758H15.7662V10.2823Z"
-                      fill="#03A025" />
-                  </g>
-                  <defs>
-                    <clipPath id="clip0_4588_2618">
-                      <rect width="20" height="20" fill="white" />
-                    </clipPath>
-                  </defs>
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="container-content-table mt-2 mt-md-3 p-2 p-md-2 p-xl-3 rounded-5 w-100">
-
-
-        <!-- CONTENIDO PRINCIPAL -->
-        <div class="info-basic-main-wrap mt-0">
-          <div class="row g-4 align-items-stretch">
-
-            <!-- IZQUIERDA -->
-            <div class="col-12">
-              <div class="info-basic-panel h-100">
-                <div class="d-flex align-items-start align-items-md-center justify-content-between gap-3 flex-wrap">
-                  <div>
-                    <h2 class="title mb-1">Desglose Predios</h2>
-                    <p class="sub mb-0">
-                      Consulta los predios correspondiente a esta asignación
-                    </p>
+          <!-- STATISTICS CARDS -->
+          <div class="container  mt-3">
+            <div class="row">
+              <!-- Card 1: Asignados -->
+              <div class="col-12 col-md-4 px-1 ">
+                <div class="stat-card stat-card-left h-100">
+                  <div class="stat-card-icon-wrap stat-card-icon-blue">
+                    <i class="fa-solid fa-map-location-dot fs-5"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <small class="d-block stat-card-title">Predios Asignados</small>
+                    <span id="d_asig" class="d-block stat-card-value">0</span>
                   </div>
                 </div>
+              </div>
 
-                <hr class="info-basic-divider my-4">
-
-                <div class="asigDetailPanel">
-                  <div class="row g-4">
-                    <div class="col-12">
-                      <div class="asigDetailTableWrap asig-table-light h-100">
-                        <div class="table-responsive">
-                          <table id="tablaPredios" class="asigDetailTable table mb-0">
-                            <thead>
-                              <tr>
-                                <!-- <th>Editar</th> -->
-                                <th>Número predial</th>
-                                <th>T_ID</th>
-                                <th>Estado</th>
-                                <th>Creado por</th>
-                              </tr>
-                            </thead>
-                            <tbody id="asigDetallePrediosBody"></tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
+              <!-- Card 2: Eliminados -->
+              <div class="col-12 col-md-4 px-1">
+                <div class="stat-card stat-card-right stat-card-border-red h-100">
+                  <div class="min-w-0">
+                    <small class="d-block stat-card-title">Predios Eliminados</small>
+                    <span id="d_elim" class="d-block stat-card-value">0</span>
                   </div>
-
-                  <div class="row g-3 mt-3 d-none">
-                    <div class="col-12 col-md-6">
-                      <small class="d-block text-muted">Dataset principal</small>
-                      <small id="d_main" class="fw-semibold d-block">-</small>
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <small class="d-block text-muted">Workspace</small>
-                      <small id="d_work" class="fw-semibold d-block">-</small>
-                    </div>
-                    <div class="col-12">
-                      <small class="d-block text-muted">Error</small>
-                      <small id="d_error" class="fw-semibold d-block">-</small>
-                    </div>
+                  <div class="stat-card-icon-wrap stat-card-icon-red">
+                    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path fill-rule="evenodd" clip-rule="evenodd"
+                        d="M16.7409 1.82115C17.0419 2.00527 17.2225 2.33225 17.2225 2.68462L17.2193 7.14482C16.592 6.88768 15.9076 6.748 15.1915 6.748C13.5756 6.748 12.1181 7.46544 11.1359 8.60192V5.44962L7.08027 4.0941V13.1256L10.2867 14.1954C10.5434 14.9097 10.8888 15.5763 11.2373 16.1573C11.3672 16.3731 11.5003 16.5858 11.6365 16.789L6.14557 14.9541L2.467 16.7985C2.15332 16.9573 1.78261 16.9382 1.48161 16.7541C1.1806 16.57 1 16.243 1 15.8906V4.71631C1 4.33219 1.21545 3.97982 1.56082 3.80522L5.61644 1.77353C5.85724 1.6529 6.1329 1.63385 6.38954 1.71956L12.0738 3.6211L15.7555 1.7767C16.0692 1.61798 16.4399 1.63703 16.7409 1.82115Z"
+                        fill="#CD2023" />
+                      <path
+                        d="M13.9751 8.76184L13.8248 9.20832H12.1658C11.8599 9.20832 11.6128 9.45295 11.6128 9.75573C11.6128 10.0585 11.8599 10.3031 12.1658 10.3031H18.8017C19.1076 10.3031 19.3547 10.0585 19.3547 9.75573C19.3547 9.45295 19.1076 9.20832 18.8017 9.20832H17.1427L16.9924 8.76184C16.9164 8.53774 16.7055 8.38721 16.4671 8.38721H14.5005C14.262 8.38721 14.0512 8.53774 14.0505 8.76184ZM18.8017 11.1243H12.1658L12.5304 16.6514C12.5581 17.0842 12.921 17.4195 13.3582 17.4195H17.6093C18.0465 17.4195 18.4095 17.0842 18.4371 16.6514L18.8017 11.1243Z"
+                        fill="#CD2023" />
+                    </svg>
                   </div>
+                </div>
+              </div>
 
-                  <div id="asigDetailMsg" class="mt-3">Ingresa un id y presiona Buscar.</div>
+              <!-- Card 3: Nuevos -->
+              <div class="col-12 col-md-4 px-1">
+                <div class="stat-card stat-card-right stat-card-border-green h-100">
+                  <div class="min-w-0">
+                    <small class="d-block stat-card-title">Predios Nuevos</small>
+                    <span id="d_new" class="d-block stat-card-value">0</span>
+                  </div>
+                  <div class="stat-card-icon-wrap stat-card-icon-green">
+                    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <g clip-path="url(#clip0_4588_2618)">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                          d="M16.7409 1.82115C17.0419 2.00527 17.2225 2.33225 17.2225 2.68462L17.2193 7.14482C16.592 6.88768 15.9076 6.748 15.1915 6.748C13.5756 6.748 12.1181 7.46544 11.1359 8.60192V5.44962L7.08027 4.0941V13.1256L10.2867 14.1954C10.5434 14.9097 10.8888 15.5763 11.2373 16.1573C11.3672 16.3731 11.5003 16.5858 11.6365 16.789L6.14557 14.9541L2.467 16.7985C2.15332 16.9573 1.78261 16.9382 1.48161 16.7541C1.1806 16.57 1 16.243 1 15.8906V4.71631C1 4.33219 1.21545 3.97982 1.56082 3.80522L5.61644 1.77353C5.85724 1.6529 6.1329 1.63385 6.38954 1.71956L12.0738 3.6211L15.7555 1.7767C16.0692 1.61798 16.4399 1.63703 16.7409 1.82115Z"
+                          fill="#03A025" />
+                        <path
+                          d="M20 12.2581C20 13.4558 19.5242 14.6045 18.6773 15.4515C17.8303 16.2984 16.6817 16.7742 15.4839 16.7742C14.2862 16.7742 13.1375 16.2984 12.2905 15.4515C11.4436 14.6045 10.9678 13.4558 10.9678 12.2581C10.9678 11.0603 11.4436 9.91163 12.2905 9.06469C13.1375 8.21775 14.2862 7.74194 15.4839 7.74194C16.6817 7.74194 17.8303 8.21775 18.6773 9.06469C19.5242 9.91163 20 11.0603 20 12.2581ZM15.7662 10.2823C15.7662 10.2074 15.7364 10.1356 15.6835 10.0827C15.6306 10.0297 15.5588 10 15.4839 10C15.409 10 15.3372 10.0297 15.2843 10.0827C15.2314 10.1356 15.2016 10.2074 15.2016 10.2823V11.9758H13.5081C13.4332 11.9758 13.3614 12.0056 13.3085 12.0585C13.2556 12.1114 13.2258 12.1832 13.2258 12.2581C13.2258 12.3329 13.2556 12.4047 13.3085 12.4577C13.3614 12.5106 13.4332 12.5403 13.5081 12.5403H15.2016V14.2339C15.2016 14.3087 15.2314 14.3805 15.2843 14.4335C15.3372 14.4864 15.409 14.5161 15.4839 14.5161C15.5588 14.5161 15.6306 14.4864 15.6835 14.4335C15.7364 14.3805 15.7662 14.3087 15.7662 14.2339V12.5403H17.4597C17.5346 12.5403 17.6064 12.5106 17.6593 12.4577C17.7122 12.4047 17.742 12.3329 17.742 12.2581C17.7122 12.1832 17.7122 12.1114 17.6593 12.0585C17.6064 12.0056 17.5346 11.9758 17.4597 11.9758H15.7662V10.2823Z"
+                          fill="#03A025" />
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_4588_2618">
+                          <rect width="20" height="20" fill="white" />
+                        </clipPath>
+                      </defs>
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>
-
-
-
           </div>
         </div>
-      </div>
-    </div> <!-- Cierre Columna Izquierda -->
 
-    <!-- COLUMNA DERECHA: VISOR -->
-    <div class="col-12 col-lg-5 col-xl-5 col-custom-der d-flex flex-column">
-      <div class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio-edit h-100 d-flex flex-column"
-        style="background-color: #F0F6FB !important;">
-        <div class="card-header border-0 p-0 rounded-top-4 flex-shrink-0">
-          <div class="d-flex align-items-start gap-2 px-3 py-3">
-            <span class="lh-1"><i class="bi bi-crosshair fs-4" style="color: #ffffff !important;"></i></span>
-            <div class="lh-sm">
-              <div class="fw-bold mb-0 text-visor-edit fs-5 text-white" style="color: #ffffff !important;">Visor</div>
-              <div class="text-white-50 d-block text-visualizacion-edit" style="color: rgba(255, 255, 255, 0.7) !important;">
-                Visualización espacial del predio
+        <div class="col-12 mt-3">
+          <div class="info-basic-panel h-100">
+            <div class="d-flex align-items-start align-items-md-center justify-content-between gap-3 flex-wrap">
+              <div>
+                <h4 class="title mb-1">Desglose Predios</h4>
+                <p class="sub mb-0">
+                  Consulta los predios correspondiente a esta asignación
+                </p>
               </div>
+            </div>
+
+            <hr class="info-basic-divider my-3 mb-4">
+
+            <div class="asigDetailPanel">
+              <div class="row g-4">
+                <div class="col-12">
+                  <div class="asigDetailTableWrap asig-table-light h-100">
+                    <div class="table-responsive">
+                      <table id="tablaPredios" class="asigDetailTable table mb-0">
+                        <thead>
+                          <tr>
+                            <!-- <th>Editar</th> -->
+                            <th class="text-center">T_ID</th>
+                            <th class="text-center">Número predial</th>
+                            <th class="text-center">Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody id="asigDetallePrediosBody"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3 mt-3 d-none">
+                <div class="col-12 col-md-6">
+                  <small class="d-block text-muted">Dataset principal</small>
+                  <small id="d_main" class="fw-semibold d-block">-</small>
+                </div>
+                <div class="col-12 col-md-6">
+                  <small class="d-block text-muted">Workspace</small>
+                  <small id="d_work" class="fw-semibold d-block">-</small>
+                </div>
+                <div class="col-12">
+                  <small class="d-block text-muted">Error</small>
+                  <small id="d_error" class="fw-semibold d-block">-</small>
+                </div>
+              </div>
+
+              <div id="asigDetailMsg" class="mt-3">Ingresa un id y presiona Buscar.</div>
             </div>
           </div>
         </div>
-        <div class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1"
-          style="min-height: 400px;">
-          <div id="map" class="w-100 h-100 m-0 p-0"></div>
-          <div
-            class="vp-map-tools-edit position-absolute top-0 end-0 mt-2 me-2 d-flex flex-column gap-1 align-items-end"
-            style="z-index: 1000;">
-            <button type="button" class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto" id="btnZoomPredio">
-              Zoom predio
-            </button>
-            <button type="button" class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto" id="btnZoomProyecto">
+
+      </div> <!-- Cierre Columna Izquierda -->
+
+      <!-- COLUMNA DERECHA: VISOR -->
+      <div class="col-12 col-md-6 col-xl-7 col-custom-der d-flex flex-column pe-0">
+        <div class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio-edit h-100 d-flex flex-column"
+          style="background-color: #F0F6FB !important;">
+          <div class="card-header border-0 p-0 rounded-top-4 flex-shrink-0">
+            <div class="d-flex align-items-start gap-2 px-3 py-3">
+              <span class="lh-1"><i class="bi bi-crosshair fs-4" style="color: #ffffff !important;"></i></span>
+              <div class="lh-sm">
+                <div class="fw-bold mb-0 text-visor-edit fs-5 text-white" style="color: #ffffff !important;">Visor</div>
+                <div class="text-white-50 d-block text-visualizacion-edit"
+                  style="color: rgba(255, 255, 255, 0.7) !important;">
+                  Visualización espacial del predio
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1"
+            style="min-height: 400px;">
+            <div id="map" class="w-100 h-100 m-0 p-0"></div>
+            <div
+              class="vp-map-tools-edit position-absolute top-0 end-0 mt-2 me-2 d-flex flex-column gap-1 align-items-end"
+              style="z-index: 1000;">
+              <button type="button" class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto" id="btnZoomPredio">
+                Zoom predio
+              </button>
+              <!-- <button type="button" class="vp-map-btn-edit btn btn-light btn-sm px-2 py-1 w-auto" id="btnZoomProyecto">
               Ver proyecto
-            </button>
-          </div>
-          <div class="position-absolute start-0 bottom-0 ms-2 mb-2 px-2 py-1 rounded-3 bg-white border shadow-sm"
-            style="font-size:11px; line-height:1.2; z-index: 1000; opacity:0.95;">
-            <div class="d-flex align-items-center gap-2 mb-1">
-              <span
-                style="display:inline-block;width:14px;height:10px;background:rgba(34, 197, 94, 0.14);border:2px solid #16a34a;"></span>
-              <span>Alcance asignación</span>
+            </button> -->
             </div>
-            <div class="d-flex align-items-center gap-2 mb-1">
-              <span
-                style="display:inline-block;width:14px;height:10px;background:rgba(0,0,0,0);border:2px solid #ef4444;"></span>
-              <span>U. construcción</span>
-            </div>
-            <div class="d-flex align-items-center gap-2">
-              <span
-                style="display:inline-block;width:14px;height:10px;background:rgba(37, 99, 235, 0.24);border:2px solid #2563eb;"></span>
-              <span>Predio seleccionado</span>
+            <div class="position-absolute start-0 bottom-0 ms-2 mb-2 px-2 py-1 rounded-3 bg-white border shadow-sm"
+              style="font-size:11px; line-height:1.2; z-index: 1000; opacity:0.95;">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span
+                  style="display:inline-block;width:14px;height:10px;background:rgba(34, 197, 94, 0.14);border:2px solid #16a34a;"></span>
+                <span>Alcance asignación</span>
+              </div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span
+                  style="display:inline-block;width:14px;height:10px;background:rgba(0,0,0,0);border:2px solid #ef4444;"></span>
+                <span>U. construcción</span>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span
+                  style="display:inline-block;width:14px;height:10px;background:rgba(37, 99, 235, 0.24);border:2px solid #2563eb;"></span>
+                <span>Predio seleccionado</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div> <!-- Cierre Main Row -->
+  </div>
+
+  <!-- Cierre Main Row -->
 
   <!-- Tarjeta Detalle del Predio (Traída de edicion_asignaciones.html sin columna de visor) -->
-  <div class="container-content">
+  <div class="container-content mt-5">
     <div class="container-fluid p-0 m-0 mt-4 border rounded-4 shadow-sm bg-white overflow-hidden">
       <div
         class="card-header-edit rounded-bottom px-3 py-3 mb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div class="title-consultas-edit mb-0">Detalle del predio</div>
+        <div class="title-consultas-edit text-white mb-0 fs-5">Detalle del predio</div>
 
         <div class="d-flex gap-2">
           <button type="button"
@@ -417,138 +468,160 @@
 
       <div class="row g-3 align-items-stretch px-3 py-3">
         <!-- Columna izquierda: Resumen -->
-        <div class="col-12 col-lg-6">
-          <div class="card border rounded-4 shadow-sm h-100 tarjeta-predio-secon">
+        <div class="col-12 col-lg-7">
+          <div class="card rounded-4  h-100 tarjeta-predio p-2">
             <div class="card-body d-flex flex-column justify-content-between gap-3 h-100">
               <div class="row g-3 align-items-start">
                 <div class="col-12 col-md">
                   <div class="d-flex align-items-center gap-2">
-                    <div class="section-icons mb-0">
+                    <!-- <div class="section-icons mb-0">
                       <div class="icons-bgrt">
                         <i class="fa-solid fa-map-location-dot"></i>
                       </div>
+                    </div> -->
+                    <div class="icons-bg  d-flex justify-content-center align-items-center "
+                      style="width: 50px; height: 50px;">
+                      <!-- <i class=" fa-solid fa-map-location-dot"></i> -->
+                      <svg xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 640 512"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+                        <path fill="#FFFFFF"
+                          d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
+                      </svg>
                     </div>
-                    <div class="section-title-card-secon mb-0 fw-bold">Resumen</div>
+                    <div class="section-title-card-secon text-white mb-0 fw-bold">Resumen</div>
+                    <!-- NPN a nivel de bloque por encima de las métricas -->
+
                   </div>
                 </div>
                 <div class="col-12 col-md-auto">
-                  <div class="d-inline-flex align-items-center px-3 py-2 rounded-3 text-white fw-medium"
+                  <!-- <div class="d-inline-flex align-items-center px-3 py-2 rounded-3 text-white fw-medium"
                     style="background-color: #021f3c; font-size: 0.85rem; border-radius: 12px !important;">
                     <span class="me-1">ID Operación:</span>
                     <span id="resumenPredioOperacionId" class="fw-bold">-</span>
+                  </div> -->
+                  <div
+                    class="mostrar-id-predio d-flex align-items-center justify-content-between text-white  text-center">
+                    <small class="text-white d-block text-id-predio fw-light mt-0 me-2">ID Operación:</small>
+                    <div id="resumenPredioOperacionId" class="num-id-predio">
+
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <!-- NPN a nivel de bloque por encima de las métricas -->
+
               <div class="w-100">
-                <div class="fw-bold mb-1 text-label-npn-edit" style="color: #021f3c; font-size: 0.9rem;">
+                <div class="fw-bold mb-1 text-label-npn-edit" style="color: #ffffff; font-size: 0.97rem;">
                   Número predial :
                 </div>
                 <div id="resumenPredioNumero" class="result-npn-edit"
-                  style="font-family: var(--font-primary, 'Poppins'), sans-serif; font-size: 0.95rem; color: #021f3c; word-break: break-all; font-weight: 500;">
+                  style="font-family: var(--font-primary, 'Poppins'), sans-serif; font-size: 0.95rem; color: #ffffff; word-break: break-all; font-weight: 500;">
                   -
+                </div>
+                <div class="d-flex align-items-center justify-content-start gap-2">
+                  <div class="d-flex align-items-center gap-1">
+                    <i class="bi bi-signpost"></i>
+                    <small class="fw-bold"> Dirección: </small>
+                  </div>
+                  <div id="resumenPredioDireccion" class="result-npn text-white">
+                    -
+                  </div>
                 </div>
               </div>
 
               <!-- Metricas horizontal row -->
-              <div class="w-100 mt-auto">
-                <div class="row g-2">
-                  <div class="col-4">
-                    <div class="d-flex align-items-center gap-2 resumen-interesado-edit p-2 h-100"
-                      style="border-left: 3px solid #021f3c !important; border-top-left-radius: 4px !important; border-bottom-left-radius: 4px !important; border: 1px solid #cbd5e1; background-color: #F0F6FB;">
+              <div class="w-100 container-fluid ">
+                <div class="row">
+                  <div class="col-12 col-sm-6 col-xl-4 px-1 mt-0">
+                    <div class="d-flex align-items-center gap-2 resumen-interesado interesado p-3 h-100">
                       <div
-                        class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle-edit"
-                        style="width: 32px; height: 32px; background-color: #021f3c;">
-                        <i class="fa-solid fa-users" style="font-size: 0.75rem; color: #ffffff;"></i>
+                        class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle"
+                        style="width: 38px; height: 38px;">
+                        <i class="bi bi-people-fill "></i>
                       </div>
                       <div class="d-flex flex-column lh-sm">
-                        <div class="resumen-item-label-edit"
-                          style="font-family: 'Small Desktop regular', var(--font-primary, 'Poppins'), sans-serif; font-size: 0.75rem; color: #64748b; font-weight: 400;">
-                          Interesados
-                        </div>
-                        <div id="resumenPredioInteresados" class="resumen-item-value-edit"
-                          style="font-size: 0.95rem; font-weight: 700; color: #021f3c;">0</div>
+                        <small class="resumen-item-label">Interesados</small>
+                        <div id="resumenPredioInteresados" class="resumen-item-value">0</div>
                       </div>
                     </div>
                   </div>
-                  <div class="col-4">
-                    <div class="d-flex align-items-center gap-2 resumen-interesado-edit p-2 h-100"
-                      style="border-left: 3px solid #021f3c !important; border-top-left-radius: 4px !important; border-bottom-left-radius: 4px !important; border: 1px solid #cbd5e1; background-color: #F0F6FB;">
-                      <div
-                        class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle-edit"
-                        style="width: 32px; height: 32px; background-color: #021f3c;">
-                        <i class="fa-solid fa-building-circle-check" style="font-size: 0.75rem; color: #ffffff;"></i>
+
+                  <div class="col-12 col-sm-6 col-xl-4 px-1 mt-0">
+                    <div
+                      class="d-flex align-items-center gap-2 resumen-interesado construcciones flex-shrink-0 p-3 h-100">
+                      <div class="rounded-circle d-flex align-items-center justify-content-center resumen-icon-circle"
+                        style="width: 38px; height: 38px;">
+                        <i class="bi bi-houses-fill "></i>
                       </div>
                       <div class="d-flex flex-column lh-sm">
-                        <div class="resumen-item-label-edit"
-                          style="font-family: 'Small Desktop regular', var(--font-primary, 'Poppins'), sans-serif; font-size: 0.75rem; color: #64748b; font-weight: 400;">
-                          Construcciones
-                        </div>
-                        <div id="resumenPredioConstrucciones" class="resumen-item-value-edit"
-                          style="font-size: 0.95rem; font-weight: 700; color: #021f3c;">0</div>
+                        <small class="resumen-item-label">Construcciones</small>
+                        <div id="resumenPredioConstrucciones" class="resumen-item-value">0</div>
                       </div>
                     </div>
                   </div>
-                  <div class="col-4">
-                    <div class="d-flex align-items-center gap-2 resumen-interesado-edit p-2 h-100"
-                      style="border-left: 3px solid #021f3c !important; border-top-left-radius: 4px !important; border-bottom-left-radius: 4px !important; border: 1px solid #cbd5e1; background-color: #F0F6FB;">
-                      <div
-                        class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle-edit"
-                        style="width: 32px; height: 32px; background-color: #021f3c;">
-                        <i class="fa-solid fa-house-chimney" style="font-size: 0.75rem; color: #ffffff;"></i>
+
+                  <div class="col-12 col-sm-6 col-xl-4 px-1 mt-0">
+                    <div
+                      class="d-flex align-items-center gap-2 resumen-interesado u_construccion flex-shrink-0 p-3 h-100">
+                      <div class="rounded-circle d-flex align-items-center justify-content-center resumen-icon-circle"
+                        style="width: 38px; height: 38px;">
+                        <i class="bi bi-house-fill "></i>
                       </div>
                       <div class="d-flex flex-column lh-sm">
-                        <div class="resumen-item-label-edit"
-                          style="font-family: 'Small Desktop regular', var(--font-primary, 'Poppins'), sans-serif; font-size: 0.75rem; color: #64748b; font-weight: 400;">
-                          U. Construcción
-                        </div>
-                        <div id="resumenPredioUnidadConstruccion" class="resumen-item-value-edit"
-                          style="font-size: 0.95rem; font-weight: 700; color: #021f3c;">0</div>
+                        <small class="resumen-item-label">U. Construcción</small>
+                        <div id="resumenPredioUnidadConstruccion" class="resumen-item-value">0</div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
 
-        <!-- Columna derecha: Información tabla predio e Información Jurídica -->
-        <div class="col-12 col-lg-6 d-flex flex-column gap-3 justify-content-between">
-          <!-- TARJETA INFERIOR 1 (Información tabla predio) -->
+        <!-- Columna derecha: Informacion tabla predio, juridica y marcas -->
+        <div class="col-12 col-lg-5 d-flex flex-column gap-3 justify-content-between ">
+
+          <!-- TARJETA INFERIOR 1 (Informacion tabla predio) -->
           <div
-            class="card border rounded-4 shadow-sm w-100 tarjeta-predio-edit tarjeta-placeholder-superior flex-grow-1 d-flex align-items-center"
-            style="min-height: 86px;">
-            <div class="seccion-tabla-predio d-flex align-items-center justify-content-between w-100 px-3 mt-0">
+            class="card rounded-4 shadow w-100 tarjeta-predio tarjeta-placeholder-superior flex-grow-1 d-flex align-items-center"
+            style="min-height: 60px;">
+            <div class="seccion-tabla-predio d-flex align-items-center justify-content-between w-100 h-100">
               <div class="d-flex align-items-center gap-3">
-                <div class="part-icon-edit d-inline-flex justify-content-center align-items-center rounded-circle p-2">
-                  <i class="fa-solid fa-house-chimney icono-predio-edit"></i>
+                <div class="section-icons mb-0">
+                  <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+                    style="background-color: #6aa4d4;">
+                    <i class="fa-solid fa-location-dot fs-5"></i>
+                  </div>
                 </div>
-                <div class="title-part-predio-edit mb-0">
+                <div class="title-part-predio mb-0">
                   Información tabla predio
                 </div>
               </div>
               <button type="button"
-                class="btn-eye-predio-edit d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+                class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
                 data-bs-toggle="modal" data-bs-target="#modalInformacionPredio"
                 aria-label="Ver información tabla predio">
-                <i class="fa-solid fa-eye eye-icon-predio-edit"></i>
+                <i class="fa-regular fa-eye eye-icon-predio"></i>
               </button>
             </div>
           </div>
 
-          <!-- TARJETA DEL MEDIO (Información Jurídica) -->
+          <!-- TARJETA DEL MEDIO (Informacion Juridica) -->
           <div
-            class="card border rounded-4 shadow-sm w-100 tarjeta-predio-edit tarjeta-placeholder-superior flex-grow-1 d-flex align-items-center"
-            style="min-height: 86px;">
-            <div class="seccion-tabla-predio d-flex align-items-center justify-content-between w-100 px-3 mt-0">
+            class="card rounded-4 shadow w-100 tarjeta-predio tarjeta-placeholder-superior flex-grow-1 d-flex align-items-center"
+            style="min-height: 60px;">
+            <div class="seccion-tabla-predio d-flex align-items-center justify-content-between w-100 h-100">
               <div class="d-flex align-items-center gap-3">
-                <div class="part-icon-edit d-inline-flex justify-content-center align-items-center rounded-circle p-2">
-                  <i class="fa-solid fa-scale-unbalanced icono-predio-edit"></i>
+                <div class="section-icons mb-0">
+                  <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+                    style="background-color: #6aa4d4;">
+                    <i class="fa-solid fa-scale-unbalanced fs-5"></i>
+                  </div>
                 </div>
-                <div class="title-part-predio-edit mb-0">
-                  Información Jurídica
+                <div class="title-part-predio mb-0">
+                  Derecho, Interesado, Fuente
                 </div>
               </div>
               <div class="d-flex align-items-center gap-2">
@@ -559,28 +632,55 @@
                   <i class="fa-solid fa-user" style="font-size: 0.75rem;"></i>
                 </div>
                 <button type="button"
-                  class="btn-eye-predio-edit d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+                  class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
                   data-bs-toggle="modal" data-bs-target="#modalInformacionAdicional"
                   aria-label="Ver información adicional">
-                  <i class="fa-solid fa-eye eye-icon-predio-edit"></i>
+                  <i class="fa-regular fa-eye eye-icon-predio"></i>
                 </button>
               </div>
             </div>
           </div>
+
+          <!-- TARJETA DEL marcas (marcas, tramites y novedades) -->
+          <div
+            class="card rounded-4 shadow w-100 tarjeta-predio tarjeta-placeholder-superior flex-grow-1 d-flex align-items-center"
+            style="min-height: 60px;">
+            <div class="seccion-tabla-predio d-flex align-items-center justify-content-between w-100 h-100">
+              <div class="d-flex align-items-center gap-3">
+                <div class="section-icons mb-0">
+                  <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+                    style="background-color: #6aa4d4;">
+                    <i class="bi bi-flag-fill fs-5"></i>
+                  </div>
+                </div>
+                <div class="title-part-predio mb-0">
+                  Marcas, novedades y trámites
+                </div>
+              </div>
+              <button type="button"
+                class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+                data-bs-toggle="modal" data-bs-target="#modalInformacionMarcasAsignacion"
+                aria-label="Ver marcas, novedades y trámites">
+                <i class="fa-regular fa-eye eye-icon-predio"></i>
+              </button>
+            </div>
+          </div>
+
         </div>
 
         <!-- SECCION INFERIOR: Construcciones y UC -->
-        <div class="col-12 col-lg-6 mt-2 d-flex">
-          <div class="card border rounded-4 shadow-sm w-100 d-flex flex-column tarjeta-inferior-base-edit">
+        <div class="col-12 col-lg-6 mt-3 d-flex">
+          <div
+            class="card rounded-4 shadow w-100 d-flex flex-column tarjeta-predio tarjeta-placeholder-superior tarjeta-inferior-base-edit">
             <div class="card-body d-flex flex-column">
               <div class="d-flex justify-content-between align-items-center mt-1">
                 <div class="d-flex align-items-start gap-2 flex-grow-1">
                   <div
                     class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 table-icon-circle-edit">
-                    <i class="fa-solid fa-building-circle-check"></i>
+                    <i class="bi bi-houses-fill fs-5"></i>
                   </div>
                   <div class="d-flex flex-column lh-sm">
-                    <div class="fw-bold table-item-label-edit">
+                    <div class="fw-bold table-item-label-edit mb-1">
                       Información de construcciones
                     </div>
                     <div class="table-item-text-edit">
@@ -621,15 +721,16 @@
           </div>
         </div>
 
-        <div class="col-12 col-lg-6 mt-2 d-flex">
-          <div class="card border rounded-4 shadow-sm w-100 d-flex flex-column tarjeta-inferior-base-edit"
+        <div class="col-12 col-lg-6 mt-3 d-flex">
+          <div
+            class="card rounded-4 shadow w-100 d-flex flex-column tarjeta-predio tarjeta-placeholder-superior tarjeta-inferior-base-edit"
             id="cardUnidadConstruccion">
             <div class="card-body d-flex flex-column">
               <div class="encabezado-unidad-construccion-edit d-flex justify-content-between align-items-center w-100">
                 <div class="titulo-unidad-construccion-edit d-flex align-items-center gap-2">
                   <div
                     class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 table-icon-circle-edit">
-                    <i class="fa-solid fa-house-chimney"></i>
+                    <i class="bi bi-house-fill fs-5"></i>
                   </div>
                   <div>
                     <div class="fw-bold table-item-label-edit mb-0">
@@ -686,6 +787,119 @@
   </div>
 
   <!-- Modales y Offcanvas de Detalle del Predio -->
+  <!-- MODAL MARCAS, NOVEDADES Y TRAMITES -->
+  <div class="modal fade" id="modalInformacionMarcasAsignacion" tabindex="-1"
+    aria-labelledby="modalInformacionMarcasAsignacionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-marcas-dialog">
+      <div class="modal-content rounded-4 border-0 shadow modal-predio-content-edit">
+        <div class="modal-header border-0 d-flex justify-content-between align-items-center bg-white">
+          <div class="d-flex align-items-center gap-3">
+            <div class="section-icons mb-0">
+              <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+                style="background-color: #6aa4d4;">
+                <i class="bi bi-flag-fill fs-5"></i>
+              </div>
+            </div>
+            <div class="title-part-predio mb-0" id="modalInformacionMarcasAsignacionLabel">
+              Desglose de marcas
+            </div>
+          </div>
+          <button type="button"
+            class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+            data-bs-dismiss="modal" aria-label="Cerrar marcas, novedades y trámites">
+            <i class="fa-regular fa-eye-slash eye-icon-predio"></i>
+          </button>
+        </div>
+
+        <div class="modal-body modal-predio-body-edit">
+          <div class="container-fluid p-0">
+            <div class="row g-3 g-xl-0 align-items-stretch modal-predio-row-edit justify-content-center">
+              <div class="col-12 col-xl-6">
+                <div class="card border-0 rounded-4 shadow-none h-100 tarjeta-modal-visita-edit">
+                  <div class="card-body p-0 m-0 d-flex flex-column align-items-start">
+                    <div class="part-juy p-3 d-flex align-items-center gap-2 w-100" data-bs-toggle="collapse"
+                      data-bs-target="#contenidoMarcasPredialesAsignacion" aria-expanded="false"
+                      aria-controls="contenidoMarcasPredialesAsignacion"
+                      onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-visita-edit').classList.toggle('rotate-180')"
+                      style="cursor: pointer;">
+                      <i class="bi bi-geo text-white"></i>
+                      <div class="tit-iops fw-semibold">Marcas prediales</div>
+                      <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-visita-edit"></i>
+                    </div>
+                    <div class="collapse w-100" id="contenidoMarcasPredialesAsignacion">
+                      <div class="contenido-visita p-1">
+                        <div class="text-center text-muted py-3">Selecciona un predio para consultar la información.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="part-juy p-3 d-flex align-items-center gap-2 w-100 mt-3" data-bs-toggle="collapse"
+                      data-bs-target="#contenidoNovedadFMIAsignacion" aria-expanded="false"
+                      aria-controls="contenidoNovedadFMIAsignacion"
+                      onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-juridico-edit').classList.toggle('rotate-180')"
+                      style="cursor: pointer;">
+                      <i class="bi bi-file-earmark-plus text-white"></i>
+                      <div class="tit-iops fw-semibold">Novedad FMI</div>
+                      <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-juridico-edit"></i>
+                    </div>
+                    <div class="collapse border-0 w-100" id="contenidoNovedadFMIAsignacion">
+                      <div class="contenido-visita p-1">
+                        <div class="text-center text-muted py-3">Selecciona un predio para consultar la información.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- <div class="col-12 col-xl-1 d-none d-xl-flex justify-content-center px-3">
+                <div class="vr h-100 modal-predio-divider"></div>
+              </div> -->
+
+              <div class="col-12 col-xl-6 " style="border-left: 1px solid #002f556d;">
+                <div class="card border-0 rounded-4 shadow-none h-100 tarjeta-modal-visita-edit">
+                  <div class="card-body p-0 m-0 d-flex flex-column align-items-start w-100">
+                    <div class="part-juy p-3 d-flex align-items-center gap-2 w-100" data-bs-toggle="collapse"
+                      data-bs-target="#contenidoNovedadNumeroPredialAsignacion" aria-expanded="false"
+                      aria-controls="contenidoNovedadNumeroPredialAsignacion"
+                      onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-visita-edit').classList.toggle('rotate-180')"
+                      style="cursor: pointer;">
+                      <i class="bi bi-tag text-white"></i>
+                      <div class="tit-iops fw-semibold">Novedad número predial</div>
+                      <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-visita-edit"></i>
+                    </div>
+                    <div class="collapse w-100" id="contenidoNovedadNumeroPredialAsignacion">
+                      <div class="contenido-visita p-1">
+                        <div class="text-center text-muted py-3">Selecciona un predio para consultar la información.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="part-juy p-3 d-flex align-items-center gap-2 w-100 mt-3" data-bs-toggle="collapse"
+                      data-bs-target="#contenidoTramitesAsignacion" aria-expanded="false"
+                      aria-controls="contenidoTramitesAsignacion"
+                      onclick="this.classList.toggle('part-juy-open'); this.querySelector('.icon-flecha-juridico-edit').classList.toggle('rotate-180')"
+                      style="cursor: pointer;">
+                      <i class="bi bi-journal-medical text-white"></i>
+                      <div class="tit-iops fw-semibold">Trámites</div>
+                      <i class="fa-solid fa-chevron-down text-white ms-auto icon-flecha-juridico-edit"></i>
+                    </div>
+                    <div class="collapse w-100" id="contenidoTramitesAsignacion">
+                      <div class="contenido-visita p-1">
+                        <div class="text-center text-muted py-3">Selecciona un predio para consultar la información.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL INFORMACION TABLA PREDIO -->
   <div class="modal fade" id="modalInformacionPredio" tabindex="-1" aria-labelledby="modalInformacionPredioLabel"
     aria-hidden="true">
@@ -693,15 +907,18 @@
       <div class="modal-content rounded-4 border-0 shadow modal-predio-content-edit">
         <div class="modal-header border-0 d-flex justify-content-between align-items-center bg-white">
           <div class="d-flex align-items-center gap-3">
-            <div class="part-icon-edit d-inline-flex justify-content-center align-items-center rounded-circle p-2">
-              <i class="fa-solid fa-house-chimney icono-predio-edit"></i>
+            <div class="section-icons mb-0">
+              <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+                style="background-color: #6aa4d4;">
+                <i class="fa-solid fa-location-dot fs-5"></i>
+              </div>
             </div>
-            <div class="title-part-predio-edit mb-0">
+            <div class="title-part-predio mb-0">
               Información tabla predio
             </div>
           </div>
           <button type="button"
-            class="btn-eye-predio-edit d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+            class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
             data-bs-dismiss="modal" aria-label="Cerrar información tabla predio">
             <i class="fa-regular fa-eye-slash eye-icon-predio-edit"></i>
           </button>
@@ -717,8 +934,9 @@
                         Información general del predio
                       </div>
                     </div>
-                    <div class="row g-4 tarjet-row-pot-edit ms-2 mt-1">
-                      <div class="col-12 col-md-4">
+                    <div class="row g-1 justify-content-center m-2">
+
+                      <!-- <div class="col-12 col-md-4">
                         <div class="d-flex flex-column">
                           <div class="fw-bold text-start tex-num-edit">Número predial anterior</div>
                           <div class="text-start" id="modal_numero_predial_anterior">----</div>
@@ -735,10 +953,9 @@
                           <div class="fw-bold text-start tex-num-edit">Matrícula Inmobiliaria</div>
                           <div class="text-start" id="modal_matricula_inmobiliaria">----</div>
                         </div>
-                      </div>
-                    </div>
-                    <div class="row g-4 tarjet-row-pot-edit ms-2 mt-1">
-                      <div class="col-12 col-md-4">
+                      </div> -->
+
+                      <!-- <div class="col-12 col-md-4">
                         <div class="d-flex flex-column">
                           <div class="fw-bold text-start tex-num-edit">Estado de FMI</div>
                           <div class="text-start" id="modal_estado_fmi">----</div>
@@ -756,8 +973,7 @@
                           <div class="text-start" id="modal_fecha_inscripcion_catastral">----</div>
                         </div>
                       </div>
-                    </div>
-                    <div class="row g-4 tarjet-row-pot-edit ms-2 mt-1">
+
                       <div class="col-12 col-md-4">
                         <div class="d-flex flex-column">
                           <div class="fw-bold text-start tex-num-edit">Vigencia de actualización</div>
@@ -776,8 +992,7 @@
                           <div class="text-start" id="modal_area_catastral_terreno">----</div>
                         </div>
                       </div>
-                    </div>
-                    <div class="row g-4 tarjet-row-pot-edit ms-2 mt-1">
+
                       <div class="col-12 col-md-4">
                         <div class="d-flex flex-column">
                           <div class="fw-bold text-start tex-num-edit">Coeficiente de copropiedad</div>
@@ -796,8 +1011,7 @@
                           <div class="text-start" id="modal_condicion_predio">----</div>
                         </div>
                       </div>
-                    </div>
-                    <div class="row g-4 tarjet-row-pot-edit ms-2 mt-1 mb-3">
+
                       <div class="col-12 col-md-4">
                         <div class="d-flex flex-column">
                           <div class="fw-bold text-start tex-num-edit">Tipo de predio</div>
@@ -809,15 +1023,103 @@
                           <div class="fw-bold text-start tex-num-edit">Destinación económica</div>
                           <div class="text-start" id="modal_destinacion_economica">----</div>
                         </div>
+                      </div> -->
+
+                      <!-- ========================  actializado ================================================= -->
+
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Número predial anterior</div>
+                          <div class="text-start dato_info" id="modal_numero_predial_anterior">----</div>
+                        </div>
                       </div>
+
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Código Orip</div>
+                          <div class="text-start dato_info" id="modal_codigo_orip">----</div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Matrícula Inmobiliaria</div>
+                          <div class="text-start dato_info" id="modal_matricula_inmobiliaria">----</div>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Estado de FMI</div>
+                          <div class="text-start dato_info" id="modal_estado_fmi">----</div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Fecha de apertura de FMI</div>
+                          <div class="text-start dato_info" id="modal_fecha_apertura_fmi">----</div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Fecha de inscripción catastral</div>
+                          <div class="text-start dato_info" id="modal_fecha_inscripcion_catastral">----</div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Vigencia de actualización</div>
+                          <div class="text-start dato_info" id="modal_vigencia_actualizacion">----</div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Área registral (m2)</div>
+                          <div class="text-start dato_info" id="modal_area_registral">----</div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Área catastral de terreno (m2)</div>
+                          <div class="text-start dato_info" id="modal_area_catastral_terreno">----</div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Condición del predio</div>
+                          <div class="text-start dato_info" id="modal_condicion_predio">----</div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Tipo de predio</div>
+                          <div class="text-start dato_info" id="modal_tipo_predio">----</div>
+                        </div>
+                      </div>
+
+                      <div class="col-12 col-md-4">
+                        <div class="d-flex flex-column w-100 dato p-2">
+                          <div class="fw-bold text-start tex-num">Destinación económica</div>
+                          <div class="text-start dato_info" id="modal_destinacion_economica">----</div>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 </div>
               </div>
+
               <div class="col-12 col-xl-auto d-none d-xl-flex justify-content-center px-3">
                 <div class="vr h-100 modal-predio-divider-edit"></div>
               </div>
-              <div class="col-12 col-xl-auto">
+
+              <!-- <div class="col-12 col-xl-auto">
                 <div class="card border-0 rounded-4 shadow-none h-100 tarjeta-modal-visita-edit">
                   <div class="card-body p-0 m-0 d-flex flex-column align-items-start">
                     <div class="part-juy-edit p-3 d-flex align-items-center gap-2 w-100" data-bs-toggle="collapse"
@@ -973,7 +1275,299 @@
                     </div>
                   </div>
                 </div>
+              </div> -->
+
+              <div class="col-12 col-md-5">
+
+                <!-- =======================prueba=================================== -->
+                <div class="accordion" id="accordionExample">
+
+                  <!-- acordeón de resultado de la visita -->
+                  <div class="accordion-item  mb-3 ">
+                    <h2 class="accordion-header ">
+                      <button class="accordion-button " type="button" data-bs-toggle="collapse"
+                        data-bs-target="#ResultadoVisita" aria-expanded="false" aria-controls="ResultadoVisita">
+                        <i class="fa-solid fa-door-open text-white fs-5 me-2"></i>
+                        Información de la visita
+                      </button>
+                    </h2>
+                    <div id="ResultadoVisita" class="accordion-collapse collapse " data-bs-parent="#accordionExample">
+                      <div class="accordion-body">
+                        <div class="p-1">
+                          <div class="row g-1  justify-content-center m-2">
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Fecha de visita predial</div>
+                                <div class="text-start dato_info" id="modal_fecha_visita_predial">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Correo electrónico</div>
+                                <div class="text-start dato_info" id="modal_correo_visita">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Resultado de visita predial</div>
+                                <div class="text-start dato_info" id="modal_resultado_visita_predial">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Celular</div>
+                                <div class="text-start dato_info" id="modal_celular_visita">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Tipo de documento de quien atendió</div>
+                                <div class="text-start dato_info" id="modal_tipo_documento_atendio">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Domicilio de notificaciones</div>
+                                <div class="text-start dato_info" id="modal_domicilio_notificacion">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Número de documento de quien atendió</div>
+                                <div class="text-start dato_info" id="modal_numero_documento_atendio">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">¿Autoriza notificaciones?</div>
+                                <div class="text-start dato_info" id="modal_autoriza_notificaciones">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Nombres y apellidos de quien atendió</div>
+                                <div class="text-start dato_info" id="modal_nombre_atendio">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Tipo de captura</div>
+                                <div class="text-start dato_info" id="modal_tipo_captura">----</div>
+                              </div>
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- acordeón de información jurídica del predio -->
+                  <div class="accordion-item mb-3">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#ContenidoJuridico" aria-expanded="false" aria-controls="ContenidoJuridico">
+                        <i class="fa-solid fa-scale-balanced text-white fs-5 me-2"></i>
+                        Información jurídica del predio
+                      </button>
+                    </h2>
+                    <div id="ContenidoJuridico" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                      <div class="accordion-body">
+                        <div class=" p-1">
+
+                          <div class="row g-1  justify-content-center m-2">
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Nombre</div>
+                                <div class="text-start dato_info" id="modal_juridico_nombre">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Beneficio de comunidades indígenas</div>
+                                <div class="text-start dato_info" id="modal_beneficio_comunidades_indigenas">----</div>
+                              </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Predio Matriz</div>
+                                <div class="text-start dato_info" id="modal_predio_matriz">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Control de calidad</div>
+                                <div class="text-start dato_info" id="modal_control_calidad">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Comodato</div>
+                                <div class="text-start dato_info" id="modal_comodato">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Cabida y Linderos</div>
+                                <div class="text-start dato_info" id="modal_cabida_linderos">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Observación jurídica</div>
+                                <div class="text-start dato_info" id="modal_observacion_juridica">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">¿Validó control de calidad?</div>
+                                <div class="text-start dato_info" id="modal_valido_control_calidad">----</div>
+                              </div>
+                            </div>
+
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- acordeón de información de PH-->
+                  <div class="accordion-item mb-3">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#contenidoPH" aria-expanded="false" aria-controls="contenidoPH">
+                        <i class="bi bi-building-exclamation text-white me-2"></i>
+                        Información de PH
+                      </button>
+                    </h2>
+                    <div id="contenidoPH" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                      <div class="accordion-body">
+                        <div class=" p-1">
+
+                          <div class="row g-1  justify-content-center m-2">
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Total unidades privadas</div>
+                                <div class="text-start dato_info" id="modal_ph_total_unidades_privadas">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Número de torres</div>
+                                <div class="text-start dato_info" id="modal_ph_numero_torres">----</div>
+                              </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Área total de terreno (m2)</div>
+                                <div class="text-start dato_info" id="modal_ph_area_total_terreno">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Área total de terreno común (m2)</div>
+                                <div class="text-start dato_info" id="modal_ph_area_total_terreno_comun">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Área total de terreno privada (m2)</div>
+                                <div class="text-start dato_info" id="modal_ph_area_total_terreno_privada">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Área total construida (m2)</div>
+                                <div class="text-start dato_info" id="modal_ph_area_total_construida">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Área total construida común (m2)</div>
+                                <div class="text-start dato_info" id="modal_ph_area_total_construida_comun">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 col-md-6">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num">Área total construida privada (m2)</div>
+                                <div class="text-start dato_info" id="modal_ph_area_total_construida_privada">----</div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- acordeón de información de PH asociado -->
+                  <div class="accordion-item mb-3">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#contenidoPHasociado" aria-expanded="false" aria-controls="contenidoPHasociado">
+                        <i class="bi bi-house-add-fill text-white me-2"></i>
+                        Información de PH asociado
+                      </button>
+                    </h2>
+                    <div id="contenidoPHasociado" class="accordion-collapse collapse"
+                      data-bs-parent="#accordionExample">
+                      <div class="accordion-body">
+                        <div class=" p-1 ">
+                          <div class="row g-1  justify-content-center m-2">
+                            <div class="col-12 py-1">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num   ">NPN Predio matriz</div>
+                                <div class="text-start dato_info" id="modal_ph_asoc_predio_matriz">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 py-1">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num  ">Coeficiente de copropiedad (0-100)</div>
+                                <div class="text-start dato_info" id="modal_ph_asoc_coeficiente_copropiedad">----</div>
+                              </div>
+                            </div>
+
+                            <div class="col-12 py-1">
+                              <div class="d-flex flex-column w-100 dato p-2">
+                                <div class="fw-bold text-start tex-num  ">Área de coeficiente de copropiedad (m2)</div>
+                                <div class="text-start dato_info" id="modal_ph_asoc_area_coeficiente_copropiedad">----</div>
+                              </div>
+                            </div>
+
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- ================================================================= -->
+
               </div>
+
             </div>
           </div>
         </div>
@@ -988,15 +1582,18 @@
       <div class="modal-content rounded-4 border-0 shadow modal-predio-content-edit">
         <div class="modal-header border-0 d-flex justify-content-between align-items-center bg-white">
           <div class="d-flex align-items-center gap-3">
-            <div class="part-icon-edit d-inline-flex justify-content-center align-items-center rounded-circle p-2">
-              <i class="fa-solid fa-scale-unbalanced icono-predio-edit"></i>
+            <div class="section-icons mb-0">
+              <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+                style="background-color: #6aa4d4;">
+                <i class="fa-solid fa-scale-unbalanced fs-5"></i>
+              </div>
             </div>
-            <div class="title-part-predio-edit mb-0">
+            <div class="title-part-predio mb-0">
               Información Jurídica
             </div>
           </div>
           <button type="button"
-            class="btn-eye-predio-edit d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+            class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
             data-bs-dismiss="modal" aria-label="Cerrar información jurídica">
             <i class="fa-regular fa-eye-slash eye-icon-predio-edit"></i>
           </button>
@@ -1110,7 +1707,7 @@
       currentLoggedUser: "{{ user }}",
       currentLoggedRole: "{{ effective_role }}",
       asigSchemaWork: {{ asig_schema_work | tojson }},
-      assignWmsLayerDetail: {{ asig_geoserver_layer | default('B_ASIGNACIONES_ARB:ASIGNACIONES') | tojson }}
+    assignWmsLayerDetail: { { asig_geoserver_layer | default ('B_ASIGNACIONES_ARB:ASIGNACIONES') | tojson } }
     };
   </script>
   <script src="{{ rp }}/static/js/asignaciones/asignaciones_detalle.js?v={{ range(1000, 9999)|random }}"></script>

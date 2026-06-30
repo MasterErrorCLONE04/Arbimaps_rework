@@ -264,15 +264,15 @@
                 </div>
 
                 <div class="col-12 col-lg">
-                  <div class="row g-2 justify-content-center justify-content-lg-end">
-                    <div class="col-auto">
+                  <div class="row g-2 justify-content-center justify-content-lg-end ">
+                    <div class="col-auto d-none">
                       <div id="badgeExisten" class="badge-contador-estado badge-contador-existen d-none">
                         <i class="bi bi-patch-check-fill"></i>
                         <small id="badgeExistenText">0 Existen</small>
                       </div>
                     </div>
 
-                    <div class="col-auto">
+                    <div class="col-auto d-none">
                       <div id="badgeNoExisten" class="badge-contador-estado badge-contador-noexisten d-none">
                         <i class="bi bi-x-octagon-fill"></i>
                         <small id="badgeNoExistenText">0 No existen</small>
@@ -672,6 +672,49 @@
 <script>
   const injectedRp = "{{ rp if rp is defined else '' }}";
   const rp = injectedRp || (window.location.pathname.startsWith("/api/") ? "/api" : "");
+
+  function mostrarAlerta({ title, text, icon = "info", confirmButtonText = "Entendido" }) {
+    if (window.Swal) {
+      return Swal.fire({
+        title,
+        text,
+        icon,
+        confirmButtonText,
+        confirmButtonColor: "#032F57",
+        buttonsStyling: true,
+        heightAuto: false
+      });
+    }
+
+    window.alert(text || title);
+    return Promise.resolve();
+  }
+
+  async function mostrarConfirmacion({
+    title,
+    text,
+    icon = "question",
+    confirmButtonText = "Confirmar"
+  }) {
+    if (window.Swal) {
+      const result = await Swal.fire({
+        title,
+        text,
+        icon,
+        showCancelButton: true,
+        confirmButtonText,
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#032F57",
+        cancelButtonColor: "#6C757D",
+        reverseButtons: true,
+        focusCancel: true,
+        heightAuto: false
+      });
+      return result.isConfirmed;
+    }
+
+    return window.confirm(text || title);
+  }
 
   let dtResultados = null;
   let ultimoResultadoBusqueda = null;
@@ -1194,24 +1237,23 @@
             .map(c => `${c.numero_predial_nacional || ""}${c.usuario_asignado ? ` · asignado a ${c.usuario_asignado}` : ""}`)
             .join("\n");
 
-          const confirmar = window.confirm(
-            `${detail.message || "Algunos predios ya están asignados."}\n${lista}\n¿Deseas reasignarlos?`
-          );
+          const confirmar = await mostrarConfirmacion({
+            title: "Predios ya asignados",
+            text: `${detail.message || "Algunos predios ya están asignados."}\n${lista}\n¿Deseas reasignarlos?`,
+            icon: "warning",
+            confirmButtonText: "Reasignar predios"
+          });
 
           if (confirmar) {
             return asignarPredios({ reasignar: true });
           }
         }
 
-        if (window.Swal) {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Asignación no permitida',
-            text: detail?.message || data.detail || "Error asignando.",
-            confirmButtonText: 'Entendido',
-            confirmButtonColor: '#032F57'
-          });
-        }
+        await mostrarAlerta({
+          icon: "warning",
+          title: "Asignación no permitida",
+          text: detail?.message || data.detail || "Error asignando."
+        });
 
         msg.textContent = detail?.message || data.detail || "Error asignando.";
         return;
@@ -1379,13 +1421,13 @@
     document.getElementById("modalReconocedor").classList.add("d-none");
   }
 
-  function seleccionarReconocedor(rec) {
+  async function seleccionarReconocedor(rec) {
     ocultarModalReconocedores();
 
     const prediosParaAsignar = Array.from(seleccionadosActivos);
 
     if (prediosParaAsignar.length === 0) {
-      alert("No hay predios seleccionados.");
+      await mostrarAlerta({ title: "Sin predios seleccionados", text: "Selecciona al menos un predio antes de continuar.", icon: "warning" });
       return;
     }
 
@@ -1478,12 +1520,12 @@
     const observaciones = document.getElementById("txtObservacionesSolicitud").value.trim();
 
     if (!nombre) {
-      alert("Por favor ingrese el nombre de la solicitud.");
+      await mostrarAlerta({ title: "Nombre requerido", text: "Ingresa un nombre para la solicitud.", icon: "warning" });
       return;
     }
 
     if (asignacionesCreadas.length === 0) {
-      alert("No hay ninguna asignación en el desglose.");
+      await mostrarAlerta({ title: "Solicitud vacía", text: "Agrega al menos una asignación al desglose antes de enviar.", icon: "warning" });
       return;
     }
 
@@ -1510,11 +1552,11 @@
 
       const data = await r.json().catch(() => ({}));
       if (!r.ok) {
-        alert(data.detail || "Error al enviar la solicitud.");
+        await mostrarAlerta({ title: "No se pudo enviar", text: data.detail || "Error al enviar la solicitud.", icon: "error" });
         return;
       }
 
-      alert("Solicitud creada exitosamente y guardada en base de datos. Se notificó al Soporte.");
+      await mostrarAlerta({ title: "Solicitud creada", text: "La solicitud se guardó correctamente y se notificó al equipo de soporte.", icon: "success", confirmButtonText: "Continuar" });
 
       // Limpiar y resetear
       agendadosActivos.clear();
@@ -1536,7 +1578,7 @@
       }
     } catch (e) {
       console.error(e);
-      alert("Ocurrió un error inesperado al enviar la solicitud.");
+      await mostrarAlerta({ title: "Error inesperado", text: "Ocurrió un error inesperado al enviar la solicitud.", icon: "error" });
     } finally {
       btn.disabled = false;
       btn.innerHTML = origHtml;
@@ -1747,7 +1789,7 @@
     try {
       const r = await fetch(`${rp}/asignaciones/solicitudes/${id}`);
       if (!r.ok) {
-        alert("No se pudo obtener el detalle de la solicitud.");
+        await mostrarAlerta({ title: "Detalle no disponible", text: "No se pudo obtener el detalle de la solicitud.", icon: "error" });
         return;
       }
       const sol = await r.json();
@@ -1791,7 +1833,7 @@
       document.getElementById("modalDetalleSolicitud").classList.remove("d-none");
     } catch (e) {
       console.error(e);
-      alert("Error al cargar detalles de la solicitud.");
+      await mostrarAlerta({ title: "Error de carga", text: "No fue posible cargar los detalles de la solicitud.", icon: "error" });
     }
   }
 

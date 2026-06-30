@@ -60,8 +60,7 @@ def mock_db_connection(monkeypatch):
                 "work_datasetname": "work_ds",
                 "error_msg": None,
                 "predios_soporte_extra": 0,
-                "coord_first_name": "Soporte",
-                "coord_last_name": "Interno",
+                "coord_username": "coord_asignado",
                 "asignado_first_name": "Juan",
                 "asignado_last_name": "Ramon",
             }
@@ -146,6 +145,7 @@ def test_obtener_detalle_asignacion_includes_username(mock_db_connection):
     res_json = response.json()
     assert res_json["id"] == 145
     assert res_json["estado"] == "DEVUELTO_CAMPO"
+    assert res_json["coordinador"] == "coord_asignado"
     assert res_json["usuario_asignado_username"] == "juan_ramon"
     assert res_json["enlace_control_calidad"] == "https://example.com/evidence"
     assert res_json["usuario_asignado"] == "Juan Ramon (juan_ramon)"

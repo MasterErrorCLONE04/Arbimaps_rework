@@ -1885,6 +1885,32 @@ def obtener_detalle_predio_completo_asignacion(
             raw_value=condicion_predio_raw,
         ) or _first_non_empty(predio, "condicion_predio_nombre", "condicion_predio")
 
+        condicion_predio_itfcode = None
+        if condicion_predio_raw is not None:
+            for table in ("arb_condicionprediotipo", "ilc_condicionprediotipo", "col_condicionprediotipo"):
+                if _table_exists(cur, safe_schema, table):
+                    cols = _table_columns(cur, safe_schema, table)
+                    if "itfcode" in cols:
+                        key_col = next((c for c in ("t_id", "ilicode", "codigo", "valor") if c in cols), None)
+                        if key_col:
+                            try:
+                                cur.execute(
+                                    f"""
+                                    SELECT "itfcode"::text AS itfcode
+                                    FROM {_qident(safe_schema)}.{_qident(table)}
+                                    WHERE {_qident(key_col)}::text = %s
+                                    LIMIT 1
+                                    """,
+                                    (str(condicion_predio_raw).strip(),),
+                                )
+                                r_itf = cur.fetchone()
+                                if r_itf:
+                                    condicion_predio_itfcode = r_itf.get("itfcode")
+                                    break
+                            except Exception:
+                                pass
+        predio["condicion_predio_itfcode"] = condicion_predio_itfcode
+
         if True:
             tipo_predio_raw = _first_non_empty(predio, "tipo_predio", "tipo")
             predio["tipo_predio_nombre"] = _resolve_domain_name(
@@ -2362,6 +2388,32 @@ def obtener_detalle_predio_completo_asignacion(
                     raw_value=i_tipo,
                 ) or _first_non_empty(item, "tipo_persona_nombre")
 
+                tipo_persona_itfcode = None
+                if i_tipo is not None:
+                    for table in ("arb_interesadotipo", "ilc_interesadotipo", "col_interesadotipo"):
+                        if _table_exists(cur, schema_work, table):
+                            cols = _table_columns(cur, schema_work, table)
+                            if "itfcode" in cols:
+                                key_col = next((c for c in ("t_id", "ilicode", "codigo", "valor") if c in cols), None)
+                                if key_col:
+                                    try:
+                                        cur.execute(
+                                            f"""
+                                            SELECT "itfcode"::text AS itfcode
+                                            FROM {_qident(schema_work)}.{_qident(table)}
+                                            WHERE {_qident(key_col)}::text = %s
+                                            LIMIT 1
+                                            """,
+                                            (str(i_tipo).strip(),),
+                                        )
+                                        r_itf = cur.fetchone()
+                                        if r_itf:
+                                            tipo_persona_itfcode = r_itf.get("itfcode")
+                                            break
+                                    except Exception:
+                                        pass
+                item["tipo_persona_itfcode"] = tipo_persona_itfcode
+
                 item["grupo_etnico_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
@@ -2475,6 +2527,33 @@ def obtener_detalle_predio_completo_asignacion(
                 ) or _first_non_empty(pr, "tipo_punto_nombre", "tipo_punto_referencia")
                 pr["descripcion"] = pr.get("observacion") or ""
 
+            informacion_ph = None
+            if _table_exists(cur, schema_work, "arb_informacionph"):
+                informacion_ph_cols = _table_columns(cur, schema_work, "arb_informacionph")
+                ph_predio_column = "arb_predio" if "arb_predio" in informacion_ph_cols else "predio"
+                try:
+                    cur.execute(
+                        f"""
+                        SELECT
+                          total_unidades_privadas,
+                          numero_torres,
+                          area_total_terreno,
+                          area_total_terreno_comun,
+                          area_total_terreno_privada,
+                          area_total_construida,
+                          area_total_construida_comun,
+                          area_total_construida_privada
+                        FROM {_qident(schema_work)}."arb_informacionph"
+                        WHERE {_qident(ph_predio_column)}::text = %s::text
+                        ORDER BY "t_id" DESC
+                        LIMIT 1
+                        """,
+                        (str(workspace_predio_t_id),),
+                    )
+                    informacion_ph = cur.fetchone()
+                except Exception:
+                    pass
+
     return {
         "predio": predio,
         "puntos_referencia": puntos_referencia,
@@ -2490,6 +2569,7 @@ def obtener_detalle_predio_completo_asignacion(
         "estructura_novedad_np": estructura_novedad_np,
         "contacto_visita": contacto_visita,
         "rrr_interesado": rrr_interesado,
+        "informacion_ph": informacion_ph,
         "schema_work": schema_work,
     }
 
@@ -3528,6 +3608,9 @@ def asignaciones_unidad_detalle(
                     "identificador",
                     "tipo_unidad_construccion",
                     "total_plantas",
+                    "total_habitaciones",
+                    "total_banios",
+                    "total_locales",
                     "uso",
                     "anio_construccion",
                     "area_construida",
