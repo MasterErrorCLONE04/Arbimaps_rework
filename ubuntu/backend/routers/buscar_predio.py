@@ -270,6 +270,7 @@ def predio_buscar(
       p.*,
       p.numero_predial AS numero_predial_nacional,
       uat.dispname AS tipo_nombre,
+      uat.dispname AS tipo_predio_nombre,
       c.dispname AS condicion_predio_nombre,
       de.dispname AS destinacion_economica_nombre
     FROM {_qualified_table(tenant, 'arb_predio')} p
@@ -322,6 +323,7 @@ def predio_detalle(
       p.*,
       p.numero_predial AS numero_predial_nacional,
       tp.dispname AS tipo_nombre,
+      tp.dispname AS tipo_predio_nombre,
       cp.dispname AS condicion_predio_nombre,
       cp.itfcode AS condicion_predio_itfcode,
       de.dispname AS destinacion_economica_nombre,
@@ -429,6 +431,7 @@ def predio_detalle(
       ON fat.t_id::text = di.fa_tipo::text
     LEFT JOIN {_qualified_table(tenant, 'arb_interesadotipo')} it
       ON it.t_id::text = di.i_tipo::text
+      OR it.itfcode::text = di.i_tipo::text
     LEFT JOIN {_qualified_table(tenant, 'arb_interesadodocumentotipo')} idt
       ON idt.t_id::text = di.i_tipo_documento::text
     LEFT JOIN {_qualified_table(tenant, 'arb_grupoetnicotipo')} get

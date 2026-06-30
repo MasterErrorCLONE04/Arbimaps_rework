@@ -1891,7 +1891,7 @@ def obtener_detalle_predio_completo_asignacion(
                 if _table_exists(cur, safe_schema, table):
                     cols = _table_columns(cur, safe_schema, table)
                     if "itfcode" in cols:
-                        key_col = next((c for c in ("t_id", "ilicode", "codigo", "valor") if c in cols), None)
+                        key_col = next((c for c in ("t_id", "itfcode", "ilicode", "codigo", "valor") if c in cols), None)
                         if key_col:
                             try:
                                 cur.execute(
@@ -2394,7 +2394,7 @@ def obtener_detalle_predio_completo_asignacion(
                         if _table_exists(cur, schema_work, table):
                             cols = _table_columns(cur, schema_work, table)
                             if "itfcode" in cols:
-                                key_col = next((c for c in ("t_id", "ilicode", "codigo", "valor") if c in cols), None)
+                                key_col = next((c for c in ("t_id", "itfcode", "ilicode", "codigo", "valor") if c in cols), None)
                                 if key_col:
                                     try:
                                         cur.execute(
@@ -2413,6 +2413,7 @@ def obtener_detalle_predio_completo_asignacion(
                                     except Exception:
                                         pass
                 item["tipo_persona_itfcode"] = tipo_persona_itfcode
+                item["i_tipo_itfcode"] = tipo_persona_itfcode
 
                 item["grupo_etnico_nombre"] = _resolve_domain_name(
                     cur,

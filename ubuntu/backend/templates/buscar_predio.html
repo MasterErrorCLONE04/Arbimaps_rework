@@ -2325,8 +2325,9 @@
         documentoIdentidad ||
         "---";
 
-      const esPersonaJuridica = tipoPersonaCodigo === "1";
-      const esPersonaNatural = tipoPersonaCodigo === "0";
+      const tieneNombreNatural = Boolean(nombres || apellidos);
+      const esPersonaJuridica = tipoPersonaCodigo === "1" || Boolean(razonSocial && !tieneNombreNatural);
+      const esPersonaNatural = tipoPersonaCodigo === "0" || (!esPersonaJuridica && tieneNombreNatural);
       const linea1 = esPersonaJuridica
         ? (razonSocial || nombreMostrar)
         : (nombres || nombreMostrar);
@@ -3834,7 +3835,7 @@
     _setModalFieldByLabel(root, "Coeficiente de copropiedad", _fmtText(_pickValue(src, ["coeficiente_copropiedad", "coef_copropiedad"])));
     _setModalFieldByLabel(root, "Area de coeficiente de copropiedad", _fmtText(_pickValue(src, ["area_coeficiente_copropiedad", "area_coeficiente", "area_coef_copropiedad"])));
     _setModalFieldByLabel(root, "Condicion del predio", _fmtText(_pickValue(src, ["condicion_predio_nombre", "condicion_predio"])));
-    _setModalFieldByLabel(root, "Tipo de predio", _fmtText(_pickValue(src, ["tipo_nombre", "tipo"])));
+    _setModalFieldByLabel(root, "Tipo de predio", _fmtText(_pickValue(predio, ["tipo_predio_nombre", "tipo_nombre", "tipo"])));
     _setModalFieldByLabel(root, "Destinacion economica", _fmtText(_pickValue(src, ["destinacion_economica_nombre", "destinacion_economica"])));
 
     _setModalFieldByLabel(root, "Fecha de visita predial", _fmtDate(_pickValue(src, ["fecha_visita_predial"])));

@@ -2403,6 +2403,7 @@ let assignmentWmsLayerDetail = null;
 let assignmentPrediosLayerDetail = null;
 let assignmentTerrenosLayerDetail = null;
 let assignmentUcLayerDetail = null;
+let selectedUnitLayerDetail = null;
 let assignedScopeLayerDetail = null;
 let highlightLayerDetail = null;
 let currentPredioFeatureDetail = null;
@@ -2507,6 +2508,16 @@ function initMapDetail() {
     visible: !SHOULD_USE_WMS_DETAIL,
   });
 
+  selectedUnitLayerDetail = new ol.layer.Vector({
+    source: new ol.source.Vector(),
+    style: new ol.style.Style({
+      stroke: new ol.style.Stroke({ color: "#f59e0b", width: 4 }),
+      fill: new ol.style.Fill({ color: "rgba(245, 158, 11, 0.28)" }),
+    }),
+    visible: true,
+    zIndex: 32,
+  });
+
   highlightLayerDetail = new ol.layer.Vector({
     source: new ol.source.Vector(),
     style: new ol.style.Style({
@@ -2587,6 +2598,7 @@ function initMapDetail() {
       assignmentPrediosLayerDetail,
       assignmentUcLayerDetail,
       assignedScopeLayerDetail,
+      selectedUnitLayerDetail,
       highlightLayerDetail,
     ],
     view: new ol.View({
@@ -2602,6 +2614,7 @@ function clearAssignmentScopeGeometryDetail() {
   assignmentPrediosLayerDetail?.getSource?.().clear();
   assignmentTerrenosLayerDetail?.getSource?.().clear();
   assignmentUcLayerDetail?.getSource?.().clear();
+  selectedUnitLayerDetail?.getSource?.().clear();
   assignedScopeLayerDetail?.getSource?.().clear();
   if (assignmentWmsLayerDetail?.getSource) {
     assignmentWmsLayerDetail.getSource().updateParams({
@@ -2826,6 +2839,71 @@ async function loadAssignmentScopeDetalle(asignacionId) {
   } catch (_err) { }
 }
 
+function clearSelectedUnitGeometryDetalle() {
+  selectedUnitLayerDetail?.getSource?.().clear();
+}
+
+function findUnidadFeatureDetalle(unitId) {
+  const id = String(unitId ?? "").trim();
+  if (!id || !assignmentUcLayerDetail?.getSource) return null;
+  const features = assignmentUcLayerDetail.getSource().getFeatures() || [];
+  return features.find((feature) => {
+    const props = feature?.getProperties?.() || {};
+    const candidates = [
+      props.unidad_construccion_t_id,
+      props.unidad_id,
+      props.t_id,
+      feature?.get?.("unidad_construccion_t_id"),
+    ];
+    return candidates.some((value) => String(value ?? "").trim() === id);
+  }) || null;
+}
+
+function buildUnidadFeatureFromGeomDetalle(unidad = {}) {
+  const geometryObj = _parseGeometryCandidateDetalle(unidad?.geom || unidad?.geometry || unidad?.geometria);
+  if (!geometryObj || !window.ol) return null;
+  const format = new ol.format.GeoJSON();
+  try {
+    return format.readFeature(
+      { type: "Feature", geometry: geometryObj },
+      { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
+    );
+  } catch (_e) {
+    try {
+      return format.readFeature(
+        { type: "Feature", geometry: geometryObj },
+        { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" }
+      );
+    } catch (_e2) {
+      return null;
+    }
+  }
+}
+
+function highlightUnidadOnMapDetalle(unitId, unidad = {}) {
+  initMapDetail();
+  if (!mapInstanceDetail || !selectedUnitLayerDetail?.getSource) return;
+
+  const source = selectedUnitLayerDetail.getSource();
+  source.clear();
+
+  let feature = findUnidadFeatureDetalle(unitId);
+  if (feature) {
+    feature = feature.clone();
+  } else {
+    feature = buildUnidadFeatureFromGeomDetalle(unidad);
+  }
+
+  const geometry = feature?.getGeometry?.();
+  if (!geometry) return;
+
+  source.addFeature(feature);
+  mapInstanceDetail.getView().fit(geometry.getExtent(), {
+    padding: [40, 40, 40, 40],
+    duration: 500,
+    maxZoom: 21,
+  });
+}
 function zoomToProjectDetalle() {
   if (!mapInstanceDetail) return;
   const targetExtent = isValidExtentDetail(assignmentExtentDetail) ? assignmentExtentDetail : projectExtentDetail;
@@ -3512,7 +3590,8 @@ function renderUnidadConstruccionCardEdit(unidades = []) {
       const rowId = row.dataset.rowId;
       const unitId = row.dataset.unitId;
 
-      seleccionarUnidadEdit(unitId);
+      const unidad = unidadesDataEdit.find((u) => String(u?.t_id ?? u?.unidad_id ?? u?.id ?? '') === String(unitId));
+      seleccionarUnidadEdit(unitId, unidad);
 
       const collapseEl = document.getElementById(rowId);
       if (!collapseEl) return;
@@ -3551,6 +3630,9 @@ function renderUnidadConstruccionCardEdit(unidades = []) {
       const principalRow = detailRow?.previousElementSibling;
 
       if (principalRow) {
+        const unitId = principalRow.dataset.unitId;
+        const unidad = unidadesDataEdit.find((u) => String(u?.t_id ?? u?.unidad_id ?? u?.id ?? "") === String(unitId));
+        seleccionarUnidadEdit(unitId, unidad);
         principalRow.classList.add("fila-unidad-card-activa");
         const icon = principalRow.querySelector(".icon-toggle-uc");
         if (icon) {
@@ -3569,6 +3651,10 @@ function renderUnidadConstruccionCardEdit(unidades = []) {
       const principalRow = detailRow?.previousElementSibling;
 
       if (principalRow) {
+        if (String(unidadActivaEdit ?? "") === String(principalRow.dataset.unitId ?? "")) {
+          unidadActivaEdit = null;
+          clearSelectedUnitGeometryDetalle();
+        }
         principalRow.classList.remove("fila-unidad-card-activa");
         const icon = principalRow.querySelector(".icon-toggle-uc");
         if (icon) {
@@ -3642,8 +3728,9 @@ function cutString(str, len) {
   return str.length > len ? str.substring(0, len) + "..." : str;
 }
 
-function seleccionarUnidadEdit(unitId) {
+function seleccionarUnidadEdit(unitId, unidad = null) {
   unidadActivaEdit = unitId;
+  highlightUnidadOnMapDetalle(unitId, unidad || {});
 
   const tbody = document.getElementById("tbodyUnidadConstruccionCard");
   if (!tbody) return;
@@ -3830,6 +3917,7 @@ function seleccionarConstruccionEdit(index) {
   actualizarBadgeConstruccionActivaEdit(construccion);
 
   const unidades = obtenerListaUnidadesConstruccionEdit(construccion);
+  clearSelectedUnitGeometryDetalle();
   renderUnidadConstruccionCardEdit(unidades);
 }
 
@@ -4394,21 +4482,46 @@ function setPanelTextEdit(id, value) {
 }
 
 function construirNombreInteresadoEdit(item = {}) {
-  const nombreCompuesto = [
-    item.primer_nombre,
-    item.segundo_nombre,
-    item.primer_apellido,
-    item.segundo_apellido
-  ].filter(Boolean).join(" ");
+  const linea1 = String(item.linea1 ?? "").trim();
+  const linea2 = String(item.linea2 ?? "").trim();
+  if (linea1 || linea2) {
+    return { html: `${esc(linea1 || "---")}<br>${esc(linea2)}` };
+  }
 
-  return item.nombre_completo || item.razon_social || nombreCompuesto || "---";
+  const primerValorConContenido = (...valores) => valores.find((valor) =>
+    valor !== null && valor !== undefined && String(valor).trim() !== ""
+  );
+  const nombres = [
+    primerValorConContenido(item.i_primer_nombre, item.primer_nombre),
+    primerValorConContenido(item.i_segundo_nombre, item.segundo_nombre),
+  ].filter((valor) => String(valor ?? "").trim()).join(" ");
+  const apellidos = [
+    primerValorConContenido(item.i_primer_apellido, item.primer_apellido),
+    primerValorConContenido(item.i_segundo_apellido, item.segundo_apellido),
+  ].filter((valor) => String(valor ?? "").trim()).join(" ");
+  const razonSocial = primerValorConContenido(item.i_razon_social, item.razon_social);
+  const tipoPersonaCodigo = String(primerValorConContenido(item.i_tipo_itfcode, item.tipo_persona_itfcode)).trim();
+  const tieneNombreNatural = Boolean(nombres || apellidos);
+  const esPersonaJuridica = tipoPersonaCodigo === "1" || Boolean(razonSocial && !tieneNombreNatural);
+  const nombreCompuesto = [nombres, apellidos].filter(Boolean).join(" ");
+  const nombreMostrar = item.nombre_completo || razonSocial || nombreCompuesto || item.documento_identidad || "---";
+
+  if (esPersonaJuridica) {
+    return { html: esc(razonSocial || nombreMostrar) };
+  }
+
+  return { html: `${esc(nombres || nombreMostrar)}<br>${esc(apellidos)}` };
 }
 
 function verInformacionCompletaInteresadoEdit(index) {
   const item = interesadosModalEditData[index];
   if (!item) return;
 
-  setPanelTextEdit("nombreInteresadoPanelEdit", construirNombreInteresadoEdit(item));
+  const nombrePanel = construirNombreInteresadoEdit(item);
+  const nombrePanelEl = document.getElementById("nombreInteresadoPanelEdit");
+  if (nombrePanelEl) {
+    nombrePanelEl.innerHTML = nombrePanel?.html || "---";
+  }
 
   /* informacion de derechos */
   setPanelTextEdit("panel_fecha_inicio_tenencia_edit", item.fecha_inicio_tenencia || "---");
@@ -4459,33 +4572,48 @@ function renderInteresadosModalEdit(interesadosRaw) {
   }
 
   const interesados = interesadosRaw.map((i) => {
-    const nombreCompuesto = [
-      i.primer_nombre,
-      i.segundo_nombre,
-      i.primer_apellido,
-      i.segundo_apellido,
-    ].filter(Boolean).join(" ");
+    const primerValorConContenido = (...valores) => valores.find((valor) =>
+      valor !== null && valor !== undefined && String(valor).trim() !== ""
+    );
+
+    const nombres = [
+      primerValorConContenido(i.i_primer_nombre, i.primer_nombre),
+      primerValorConContenido(i.i_segundo_nombre, i.segundo_nombre),
+    ].filter((valor) => String(valor ?? "").trim()).join(" ");
+
+    const apellidos = [
+      primerValorConContenido(i.i_primer_apellido, i.primer_apellido),
+      primerValorConContenido(i.i_segundo_apellido, i.segundo_apellido),
+    ].filter((valor) => String(valor ?? "").trim()).join(" ");
+
+    const nombreCompuesto = [nombres, apellidos]
+      .filter((valor) => String(valor ?? "").trim())
+      .join(" ");
+
+    const razonSocial = primerValorConContenido(i.i_razon_social, i.razon_social);
+    const tipoPersonaCodigo = String(
+      primerValorConContenido(i.i_tipo_itfcode, i.tipo_persona_itfcode)
+    ).trim();
+    const documentoIdentidad = primerValorConContenido(i.i_documento_identidad, i.documento_identidad);
 
     const nombreMostrar =
       i.nombre_completo ||
-      i.razon_social ||
+      razonSocial ||
       nombreCompuesto ||
+      documentoIdentidad ||
       "---";
 
-    const esPersonaJuridica = String(i.tipo_persona_itfcode ?? "").trim() === "1" || !!i.razon_social;
-    const esPersonaNatural = String(i.tipo_persona_itfcode ?? "").trim() === "0" || (!i.razon_social && (i.primer_nombre || i.primer_apellido));
-
-    const nombres = [i.primer_nombre, i.segundo_nombre].filter(Boolean).join(" ");
-    const apellidos = [i.primer_apellido, i.segundo_apellido].filter(Boolean).join(" ");
-
+    const esPersonaJuridica = tipoPersonaCodigo === "1";
+    const esPersonaNatural = tipoPersonaCodigo === "0";
     const linea1 = esPersonaJuridica
-      ? (i.razon_social || nombreMostrar)
+      ? (razonSocial || nombreMostrar)
       : (nombres || nombreMostrar);
     const linea2 = esPersonaNatural ? apellidos : "";
 
-    const sexo = i.sexo_nombre || i.sexo || "---";
+    const sexo = i.sexo_nombre || i.i_sexo_nombre || i.sexo || i.i_sexo || "---";
 
     const cuotaBase =
+      i.d_cuota_participacion ??
       i.cuota_participacion ??
       i.porcentaje_participacion ??
       i.fraccion ??
@@ -4499,7 +4627,9 @@ function renderInteresadosModalEdit(interesadosRaw) {
     const tipoPersona =
       i.tipo_persona_nombre ||
       i.tipo_persona ||
-      (i.razon_social ? "Persona Jurídica" : "Persona Natural");
+      i.i_tipo_nombre ||
+      i.i_tipo ||
+      (esPersonaJuridica ? "Persona Jurídica" : "Persona Natural");
 
     return {
       ...i,
@@ -4507,7 +4637,9 @@ function renderInteresadosModalEdit(interesadosRaw) {
       linea2,
       sexo,
       cuotaTexto,
-      tipoPersona
+      tipoPersona,
+      razonSocial,
+      documentoIdentidad,
     };
   });
 
