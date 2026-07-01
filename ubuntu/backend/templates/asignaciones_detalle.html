@@ -459,9 +459,10 @@
 
         <div class="d-flex gap-2">
           <button type="button"
-            class="btn btn-light border rounded-3 fw-semibold px-3 py-2 d-inline-flex align-items-center gap-2"
-            style="background-color: #ffffff; color: #021f3c; border-color: #cbd5e1; font-size: 0.85rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <i class="fa-solid fa-file-pdf" style="color: #021f3c;"></i> Ver carpeta de adjuntos
+            class="bt-adjunto border-0 rounded-3 fw-semibold px-3 py-2 d-inline-flex align-items-center gap-2"
+            data-bs-toggle="modal" data-bs-target="#modalAdjuntosPredio">
+            <i class="bi bi-file-earmark-richtext"></i> Ver carpeta de adjuntos
+            <!-- <i class="fa-solid fa-file-pdf" style="color: #021f3c;"></i> Ver carpeta de adjuntos -->
           </button>
         </div>
       </div>
@@ -1639,6 +1640,8 @@
   {% include "asignaciones_detalle/offcanvas_interesado_edicion.html" %}
 
   {% include "asignaciones_detalle/modal_validadores_xtf.html" %}
+
+  {% include "asignaciones_detalle/modal_adjuntos_predio.html" %}
 
   <!-- MODAL ENLACES DE LA ASIGNACION -->
   <div class="modal fade" id="modalEnlacesAsignacion" tabindex="-1" aria-labelledby="modalEnlacesAsignacionLabel"

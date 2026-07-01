@@ -18,6 +18,16 @@ router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 logger = logging.getLogger(__name__)
 
 ALLOWED_ROLES = ("admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento", "consulta", "consolidador", "soporte")
+USERNAME_PREFIX_BY_ROLE = {
+    "admin": "Admin_",
+    "soporte": "Sop_",
+    "coordinador": "Coord_",
+    "lider_reconocimiento": "Lider_",
+    "reconocedor": "Rec_",
+    "digitalizador": "Dig_",
+    "consulta": "Cons_",
+    "consolidador": "Conso_",
+}
 IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
@@ -107,7 +117,57 @@ def _normalized_email(value: str | None) -> str | None:
         raise HTTPException(status_code=400, detail="Email invalido")
     return email
 
+def _username_prefix_for_role(role: str) -> str:
+    normalized = _normalized_role(role)
+    prefix = USERNAME_PREFIX_BY_ROLE.get(normalized)
+    if not prefix:
+        raise HTTPException(status_code=400, detail="No hay estructura de username definida para este rol.")
+    return prefix
 
+
+def _generate_next_username(cur, tenant: TenantContext, role: str) -> str:
+    normalized = _normalized_role(role)
+    prefix = _username_prefix_for_role(normalized)
+    cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (f"{tenant.schemas.app}:users:{normalized}",))
+    pattern = f"^{re.escape(prefix)}([0-9]+)$"
+    cur.execute(
+        f"""
+        WITH nombres AS (
+            SELECT username
+            FROM {_app_table(tenant, 'users')}
+            WHERE username ~* %s
+            UNION ALL
+            SELECT username
+            FROM {_app_table(tenant, 'solicitud_creacion_usuario')}
+            WHERE estado = 'PENDIENTE'
+              AND username ~* %s
+        )
+        SELECT COALESCE(MAX((substring(username from %s))::int), 0) AS max_num
+        FROM nombres
+        """,
+        (pattern, pattern, pattern),
+    )
+    row = cur.fetchone() or {}
+    next_num = int(row.get("max_num") or 0) + 1
+    return f"{prefix}{next_num:03d}"
+
+
+def _generate_next_cuadrilla_name(cur, tenant: TenantContext, coordinador_id: int) -> str:
+    coordinator_id = int(coordinador_id)
+    cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (f"{tenant.schemas.app}:equipos_trabajo:{coordinator_id}",))
+    pattern = r"^Cuadrilla_([0-9]+)$"
+    cur.execute(
+        f"""
+        SELECT COALESCE(MAX((substring(nombre from %s))::int), 0) AS max_num
+        FROM {_app_table(tenant, 'equipos_trabajo')}
+        WHERE coordinador_id = %s
+          AND nombre ~* %s
+        """,
+        (pattern, coordinator_id, pattern),
+    )
+    row = cur.fetchone() or {}
+    next_num = int(row.get("max_num") or 0) + 1
+    return f"Cuadrilla_{next_num:02d}"
 def _validate_supervisor_id(conn, tenant: TenantContext, supervisor_id: int | None) -> int | None:
     if supervisor_id is None:
         return None
@@ -180,7 +240,7 @@ def _backup_equipo_trabajo(
 
 
 class UsuarioCreate(BaseModel):
-    username: str = Field(min_length=3)
+    username: str | None = Field(default=None, min_length=3)
     first_name: str = Field(min_length=1)
     last_name: str = Field(min_length=1)
     rol: str
@@ -217,7 +277,7 @@ class UsuarioUpdate(BaseModel):
 
 
 class EquipoTrabajoUpsert(BaseModel):
-    nombre: str = Field(min_length=1)
+    nombre: str | None = Field(default=None, min_length=1)
     coordinador_id: int
     zona_id: int
     reconocedor_ids: list[int] = Field(default_factory=list)
@@ -374,7 +434,7 @@ def listar_roles(
     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_admin(current_user)
+    _require_admin_or_coordinador(current_user)
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
@@ -398,6 +458,34 @@ def listar_roles(
     return [name for name in names if name in ALLOWED_ROLES]
 
 
+
+@router.get("/siguiente-username")
+def obtener_siguiente_username(
+    rol: str,
+    current_user: Annotated[dict[str, Any], Depends(get_current_user)],
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+    conn=Depends(get_tenant_db_connection),
+):
+    _require_admin_or_coordinador(current_user)
+    role = _normalized_role(rol)
+    try:
+        asignaciones_repo.ensure_asignacion_tables(conn, tenant)
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            username = _generate_next_username(cur, tenant, role)
+        conn.commit()
+        return {"username": username, "rol": role, "prefix": _username_prefix_for_role(role)}
+    except HTTPException:
+        _rollback_safely(conn)
+        raise
+    except Exception as exc:
+        _rollback_safely(conn)
+        logger.exception(
+            "Error generando username municipality=%s schema=%s role=%s",
+            tenant.municipality_code,
+            tenant.schemas.app,
+            role,
+        )
+        raise HTTPException(status_code=500, detail=f"Error generando username: {exc}") from exc
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def crear_usuario(
     body: UsuarioCreate,
@@ -410,14 +498,16 @@ def crear_usuario(
     email = _normalized_email(body.email)
     supervisor_id = getattr(body, "supervisor_id", None)
     supervisor_id = _validate_supervisor_id(conn, tenant, supervisor_id) if role == "reconocedor" else None
-    username = body.username.strip()
+    username = ""
     if not body.password:
         raise HTTPException(status_code=400, detail="Debe especificar una contraseña inicial")
 
     pwd_hash = hash_password(body.password)
     try:
         role_id = _get_role_id(conn, tenant, role)
+        asignaciones_repo.ensure_asignacion_tables(conn, tenant)
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            username = _generate_next_username(cur, tenant, role)
             cur.execute(
                 f"SELECT 1 FROM {_app_table(tenant, 'users')} WHERE username = %s",
                 (username,),
@@ -804,6 +894,7 @@ def crear_equipo_trabajo(
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             _validate_equipo_payload(cur, tenant, body, None)
+            nombre_equipo = _generate_next_cuadrilla_name(cur, tenant, body.coordinador_id)
             cur.execute(
                 f"""
                 INSERT INTO {_app_table(tenant, 'equipos_trabajo')}
@@ -811,7 +902,7 @@ def crear_equipo_trabajo(
                 VALUES (%s, %s, %s, CURRENT_TIMESTAMP AT TIME ZONE 'America/Bogota')
                 RETURNING t_id
                 """,
-                (body.nombre.strip(), body.coordinador_id, body.zona_id),
+                (nombre_equipo, body.coordinador_id, body.zona_id),
             )
             row = cur.fetchone()
             equipo_id = int(row["t_id"])
@@ -832,6 +923,37 @@ def crear_equipo_trabajo(
         raise HTTPException(status_code=500, detail=f"Error creando equipo de trabajo: {exc}") from exc
 
 
+
+@router.get("/equipos-trabajo/siguiente-nombre")
+def obtener_siguiente_nombre_equipo_trabajo(
+    coordinador_id: int,
+    current_user: Annotated[dict[str, Any], Depends(get_current_user)],
+    tenant: Annotated[TenantContext, Depends(get_current_tenant)],
+    conn=Depends(get_tenant_db_connection),
+):
+    _require_admin_or_coordinador(current_user)
+    if get_user_role(current_user) == "coordinador":
+        current_coordinator_id = _current_user_id(current_user)
+        if int(coordinador_id) != current_coordinator_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No puedes generar cuadrillas para otro coordinador.")
+    try:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            _validate_supervisor_id(conn, tenant, coordinador_id)
+            nombre = _generate_next_cuadrilla_name(cur, tenant, coordinador_id)
+        conn.commit()
+        return {"nombre": nombre, "coordinador_id": int(coordinador_id)}
+    except HTTPException:
+        _rollback_safely(conn)
+        raise
+    except Exception as exc:
+        _rollback_safely(conn)
+        logger.exception(
+            "Error generando nombre de cuadrilla municipality=%s schema=%s coordinador_id=%s",
+            tenant.municipality_code,
+            tenant.schemas.app,
+            coordinador_id,
+        )
+        raise HTTPException(status_code=500, detail=f"Error generando nombre de cuadrilla: {exc}") from exc
 @router.put("/equipos-trabajo/{id_global}")
 def actualizar_equipo_trabajo(
     id_global: int,
@@ -867,7 +989,7 @@ def actualizar_equipo_trabajo(
                     zona_id = %s
                 WHERE t_id = %s
                 """,
-                (body.nombre.strip(), body.coordinador_id, body.zona_id, id_global),
+                ((body.nombre or equipo.get("nombre") or "").strip(), body.coordinador_id, body.zona_id, id_global),
             )
             _sync_equipo_reconocedores(cur, tenant, id_global, list(dict.fromkeys([int(x) for x in body.reconocedor_ids if int(x) > 0])))
             detalle = _fetch_equipo_trabajo(cur, tenant, id_global)
@@ -1105,7 +1227,7 @@ def eliminar_usuario(
 
 # Solicitud de creación de usuario schemas y endpoints
 class SolicitudCreacionUsuarioCreate(BaseModel):
-    username: str = Field(min_length=3)
+    username: str | None = Field(default=None, min_length=3)
     first_name: str = Field(min_length=1)
     last_name: str = Field(min_length=1)
     rol: str
@@ -1144,7 +1266,7 @@ def crear_solicitud_creacion_usuario(
     # Asegurar DDL
     asignaciones_repo.ensure_asignacion_tables(conn, tenant)
     
-    username = body.username.strip()
+    username = ""
     role = body.rol.strip().lower()
     email = _normalized_email(body.email)
     
@@ -1162,6 +1284,7 @@ def crear_solicitud_creacion_usuario(
         
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            username = _generate_next_username(cur, tenant, role)
             # Validar que username no exista en users
             cur.execute(
                 f"SELECT 1 FROM {_app_table(tenant, 'users')} WHERE username = %s",

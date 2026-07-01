@@ -731,17 +731,19 @@
       <form id="formCuadrilla">
         <div class="modal-body">
           <div id="cuaMsg" class="msg"></div>
-          <div class="modal-form-grid">
+          <div class="form-group full-width">
+            <label class="form-label" for="cuaEncargado">Nombre del encargado *</label>
+            <select id="cuaEncargado" class="form-input" required>
+              <option value="">Selecciona coordinador</option>
+            </select>
+          </div>
+          <div class="modal-form-grid mt-3">
             <div class="form-group full-width">
               <label class="form-label" for="cuaNombre">Nombre de la cuadrilla *</label>
-              <input type="text" id="cuaNombre" class="form-input" required placeholder="Cuadrilla 2">
+              <input type="text" id="cuaNombre" class="form-input" required readonly
+                placeholder="Se generar&aacute; autom&aacute;ticamente">
             </div>
-            <div class="form-group full-width">
-              <label class="form-label" for="cuaEncargado">Nombre del encargado *</label>
-              <select id="cuaEncargado" class="form-input" required>
-                <option value="">Selecciona coordinador</option>
-              </select>
-            </div>
+
             <div class="form-group full-width">
               <label class="form-label" for="cuaZona">Zona de intervención</label>
               <select id="cuaZona" class="form-input" required>
@@ -856,7 +858,8 @@
             </div>
             <div class="form-group">
               <label class="form-label" style="font-size: 0.8rem;" for="usrUsername">Nombre de usuario *</label>
-              <input type="text" id="usrUsername" class="form-input" required placeholder="Ej: alex_calderon">
+              <input type="text" id="usrUsername" class="form-input" required readonly
+                placeholder="Se generar&aacute; autom&aacute;ticamente">
             </div>
             <div class="form-group">
               <label class="form-label" style="font-size: 0.8rem;" for="usrEmail">Email</label>
@@ -1288,6 +1291,7 @@
       editingId = null;
       form.reset();
       inputUsername.disabled = false;
+      inputUsername.readOnly = true;
       if (CURRENT_ROLE === "lider_reconocimiento" || CURRENT_ROLE === "coordinador") {
         submitBtn.textContent = "Solicitar creación";
       } else {
@@ -1877,6 +1881,10 @@
       submitBtn.disabled = true;
       submitBtn.textContent = isEdit ? "Actualizando..." : (isRequest ? "Enviando solicitud..." : "Guardando...");
 
+      if (!isEdit && !inputUsername.value.trim()) {
+        await autoGenerateUsername();
+      }
+
       const payload = {
         username: inputUsername.value.trim(),
         first_name: inputFirstName.value.trim(),
@@ -1900,9 +1908,9 @@
       }
 
       const valUsername = payload.username.toLowerCase();
-      const isUsernameTaken = (usuariosCache || []).some(u => (u.username || "").toLowerCase() === valUsername && (!isEdit || u.id_global !== editingId)) || 
-                              (typeof solicitudesCache !== 'undefined' && solicitudesCache.some(s => (s.username || "").toLowerCase() === valUsername && s.estado === 'PENDIENTE'));
-      
+      const isUsernameTaken = (usuariosCache || []).some(u => (u.username || "").toLowerCase() === valUsername && (!isEdit || u.id_global !== editingId)) ||
+        (typeof solicitudesCache !== 'undefined' && solicitudesCache.some(s => (s.username || "").toLowerCase() === valUsername && s.estado === 'PENDIENTE'));
+
       if (isUsernameTaken) {
         Swal.fire({
           title: 'Nombre no disponible',
@@ -2194,11 +2202,50 @@
       }
     }
 
+
+    let cuadrillaNameGenerationSeq = 0;
+
+    async function autoGenerateCuadrillaName() {
+      if (editingCuadrillaId !== null) return cuaNombre.value.trim();
+      const coordinadorId = parseInt(cuaEncargado.value, 10);
+      if (!Number.isFinite(coordinadorId)) {
+        cuaNombre.value = "";
+        return "";
+      }
+
+      const seq = ++cuadrillaNameGenerationSeq;
+      cuaNombre.value = "Generando...";
+
+      try {
+        const params = new URLSearchParams({ coordinador_id: String(coordinadorId) });
+        const response = await fetch(`${rp}/usuarios/equipos-trabajo/siguiente-nombre?${params.toString()}`, {
+          credentials: "include",
+          headers: { "Accept": "application/json" },
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || "No se pudo generar el nombre de la cuadrilla.");
+        if (seq !== cuadrillaNameGenerationSeq) return cuaNombre.value.trim();
+        cuaNombre.value = data.nombre || "";
+        return cuaNombre.value.trim();
+      } catch (err) {
+        console.error("Error generando nombre de cuadrilla:", err);
+        if (seq === cuadrillaNameGenerationSeq) {
+          cuaNombre.value = "";
+          const msgCua = document.getElementById("cuaMsg");
+          msgCua.textContent = err.message || "No se pudo generar el nombre de la cuadrilla.";
+          msgCua.className = "msg error";
+        }
+        return "";
+      }
+    }
     async function guardarCuadrilla(e) {
       e.preventDefault();
 
-      const nameVal = cuaNombre.value.trim();
       const coordinadorId = parseInt(cuaEncargado.value, 10);
+      if (editingCuadrillaId === null && !cuaNombre.value.trim() && Number.isFinite(coordinadorId)) {
+        await autoGenerateCuadrillaName();
+      }
+      const nameVal = cuaNombre.value.trim();
       const zonaId = parseInt(cuaZona.value, 10);
       let integrantesVal = [...new Set(selectedReconocedores.map(id => parseInt(id, 10)).filter(Number.isFinite))];
 
@@ -2305,6 +2352,7 @@
     cuaEncargado.addEventListener("change", async () => {
       if (editingCuadrillaId === null) {
         selectedReconocedores = [];
+        await autoGenerateCuadrillaName();
         await renderDropdownReconocedores(true);
         return;
       }
@@ -2522,6 +2570,7 @@
       editingCuadrillaId = Number(cEdit.equipo_id ?? cEdit.id);
       document.getElementById("modalCuadrillaLabel").textContent = "Editar cuadrilla";
       cuaNombre.value = cEdit.nombre || "";
+      cuaNombre.readOnly = true;
       populateCuadrillaFormSelects();
       cuaEncargado.value = String(cEdit.coordinador_id || "");
       cuaZona.value = String(cEdit.zona_id || "");
@@ -2603,8 +2652,10 @@
       editingCuadrillaId = null;
       selectedReconocedores = [];
       formCuadrilla.reset();
+      cuaNombre.readOnly = true;
       document.getElementById("modalCuadrillaLabel").textContent = "Crear cuadrilla";
       populateCuadrillaFormSelects();
+      await autoGenerateCuadrillaName();
       renderSelectedReconocedores();
       await renderDropdownReconocedores(true);
       const msgCua = document.getElementById("cuaMsg");
@@ -2614,37 +2665,35 @@
 
     form.addEventListener("submit", guardarUsuario);
     formCuadrilla.addEventListener("submit", guardarCuadrilla);
-    function autoGenerateUsername() {
+    let usernameGenerationSeq = 0;
+
+    async function autoGenerateUsername() {
       const role = (selectRol.value || "").toLowerCase();
-      let prefix = "";
-      switch (role) {
-        case "reconocedor": prefix = "Rec_"; break;
-        case "coordinador": prefix = "Coord_"; break;
-        case "lider_reconocimiento": prefix = "Lider_"; break;
-        case "digitalizador": prefix = "Dig_"; break;
-      }
-      
-      if (!prefix) return;
-      
-      let maxNum = 0;
-      const allNames = [
-        ...(usuariosCache || []).map(u => u.username),
-        ...(typeof solicitudesCache !== 'undefined' ? solicitudesCache.map(s => s.username) : [])
-      ];
-      
-      const regex = new RegExp(`^${prefix}(\\d+)$`, 'i');
-      for (const name of allNames) {
-        if (!name) continue;
-        const match = name.match(regex);
-        if (match) {
-          const num = parseInt(match[1], 10);
-          if (num > maxNum) maxNum = num;
+      if (!role || editingId !== null) return inputUsername.value.trim();
+
+      const seq = ++usernameGenerationSeq;
+      inputUsername.value = "Generando...";
+      inputUsername.style.borderColor = "";
+
+      try {
+        const params = new URLSearchParams({ rol: role });
+        const r = await fetch(`${rp}/usuarios/siguiente-username?${params.toString()}`, { credentials: "include" });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.detail || "No se pudo generar el nombre de usuario.");
+        if (seq !== usernameGenerationSeq) return inputUsername.value.trim();
+
+        inputUsername.value = data.username || "";
+        validateUsernameRealtime();
+        return inputUsername.value.trim();
+      } catch (err) {
+        console.error("Error generando username:", err);
+        if (seq === usernameGenerationSeq) {
+          inputUsername.value = "";
+          inputUsername.style.borderColor = "red";
+          showMsg(err.message || "No se pudo generar el nombre de usuario.", "error");
         }
+        return "";
       }
-      
-      const nextNum = String(maxNum + 1).padStart(3, '0');
-      inputUsername.value = `${prefix}${nextNum}`;
-      validateUsernameRealtime();
     }
 
     function validateUsernameRealtime() {
@@ -2657,8 +2706,8 @@
         inputUsername.style.borderColor = "";
         return;
       }
-      const isTaken = (usuariosCache || []).some(u => (u.username || "").toLowerCase() === val) || 
-                      (typeof solicitudesCache !== 'undefined' && solicitudesCache.some(s => (s.username || "").toLowerCase() === val && s.estado === 'PENDIENTE'));
+      const isTaken = (usuariosCache || []).some(u => (u.username || "").toLowerCase() === val) ||
+        (typeof solicitudesCache !== 'undefined' && solicitudesCache.some(s => (s.username || "").toLowerCase() === val && s.estado === 'PENDIENTE'));
       if (isTaken) {
         inputUsername.style.borderColor = "red";
       } else {
@@ -2668,10 +2717,10 @@
 
     inputUsername.addEventListener("input", validateUsernameRealtime);
 
-    selectRol.addEventListener("change", () => {
+    selectRol.addEventListener("change", async () => {
       syncSupervisorField();
       if (editingId === null) {
-        autoGenerateUsername();
+        await autoGenerateUsername();
       }
     });
 

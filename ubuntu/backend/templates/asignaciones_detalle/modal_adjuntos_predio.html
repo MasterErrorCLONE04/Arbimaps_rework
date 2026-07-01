@@ -1,0 +1,157 @@
+<div class="modal fade" id="modalAdjuntosPredio" tabindex="-1" aria-labelledby="modalAdjuntosPredioLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+    <div class="modal-content adjuntos-predio-modal border-0">
+      <div class="modal-header adjuntos-predio-header border-0 px-4 py-4 align-items-start justify-content-between gap-3">
+        <div class="d-flex align-items-start gap-3">
+          <div class="adjuntos-predio-header-icon d-flex align-items-center justify-content-center">
+            <i class="bi bi-folder2-open"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-white mb-1" id="modalAdjuntosPredioLabel">Adjuntos del predio</h5>
+            <small class="text-white-50 d-block">Consulta archivos, soportes y evidencias asociados al predio seleccionado.</small>
+          </div>
+        </div>
+        <button type="button" class="btn p-0 border-0 shadow-none adjuntos-predio-close d-flex align-items-center justify-content-center" data-bs-dismiss="modal" aria-label="Cerrar adjuntos del predio">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="modal-body adjuntos-predio-body p-4">
+        <div class="row g-3">
+          <div class="col-12 col-lg-7">
+            <div class="adjuntos-panel h-100">
+              <div class="d-flex align-items-center justify-content-between gap-3 mb-3 flex-wrap">
+                <div>
+                  <h6 class="fw-bold mb-1 adjuntos-section-title">Lista de adjuntos</h6>
+                  <small class="text-muted">Elementos maquetados: 5</small>
+                </div>
+                <div class="d-inline-flex align-items-center gap-2 adjuntos-pill">
+                  <i class="bi bi-cloud-check"></i>
+                  <span>Repositorio predial</span>
+                </div>
+              </div>
+
+              <div class="input-group mb-3 adjuntos-search">
+                <input type="text" class="form-control" placeholder="Buscar archivo o carpeta" disabled>
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+              </div>
+
+              <div class="d-flex flex-column gap-2 adjuntos-list">
+                <div class="adjunto-row d-flex align-items-center gap-3">
+                  <div class="adjunto-icon adjunto-icon-folder"><i class="bi bi-folder-fill"></i></div>
+                  <div class="min-w-0 flex-grow-1">
+                    <div class="fw-bold adjunto-name">Soportes juridicos</div>
+                    <small class="text-muted">Carpeta - 3 archivos</small>
+                  </div>
+                  <button type="button" class="adjunto-action" aria-label="Abrir carpeta"><i class="bi bi-chevron-right"></i></button>
+                </div>
+
+                <div class="adjunto-row d-flex align-items-center gap-3">
+                  <div class="adjunto-icon adjunto-icon-pdf"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+                  <div class="min-w-0 flex-grow-1">
+                    <div class="fw-bold adjunto-name">Certificado_tradicion.pdf</div>
+                    <small class="text-muted">PDF - 1.8 MB - Actualizado hoy</small>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="adjunto-action" aria-label="Ver archivo"><i class="bi bi-eye"></i></button>
+                    <button type="button" class="adjunto-action" aria-label="Descargar archivo"><i class="bi bi-download"></i></button>
+                  </div>
+                </div>
+
+                <div class="adjunto-row d-flex align-items-center gap-3">
+                  <div class="adjunto-icon adjunto-icon-image"><i class="bi bi-image-fill"></i></div>
+                  <div class="min-w-0 flex-grow-1">
+                    <div class="fw-bold adjunto-name">Fachada_predio.jpg</div>
+                    <small class="text-muted">Imagen - 924 KB - Evidencia de campo</small>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="adjunto-action" aria-label="Ver imagen"><i class="bi bi-eye"></i></button>
+                    <button type="button" class="adjunto-action" aria-label="Descargar imagen"><i class="bi bi-download"></i></button>
+                  </div>
+                </div>
+
+                <div class="adjunto-row d-flex align-items-center gap-3">
+                  <div class="adjunto-icon adjunto-icon-zip"><i class="bi bi-file-earmark-zip-fill"></i></div>
+                  <div class="min-w-0 flex-grow-1">
+                    <div class="fw-bold adjunto-name">Levantamiento_campo.zip</div>
+                    <small class="text-muted">Comprimido - 12.4 MB - Captura tecnica</small>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="adjunto-action" aria-label="Ver comprimido"><i class="bi bi-eye"></i></button>
+                    <button type="button" class="adjunto-action" aria-label="Descargar comprimido"><i class="bi bi-download"></i></button>
+                  </div>
+                </div>
+
+                <div class="adjunto-row d-flex align-items-center gap-3">
+                  <div class="adjunto-icon adjunto-icon-doc"><i class="bi bi-file-earmark-text-fill"></i></div>
+                  <div class="min-w-0 flex-grow-1">
+                    <div class="fw-bold adjunto-name">Observaciones_visita.docx</div>
+                    <small class="text-muted">Documento - 312 KB - Revision pendiente</small>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="adjunto-action" aria-label="Ver documento"><i class="bi bi-eye"></i></button>
+                    <button type="button" class="adjunto-action" aria-label="Descargar documento"><i class="bi bi-download"></i></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-5">
+            <div class="adjuntos-panel h-100">
+              <div class="d-flex align-items-center justify-content-between py-1 pb-2">
+                <div>
+                  <h6 class="fw-bold mb-1 adjuntos-section-title">Previsualizacion</h6>
+                  <small class="text-muted">Selecciona un adjunto para ver el detalle.</small>
+                </div>
+              </div>
+              <div class="adjuntos-preview d-flex flex-column align-items-center justify-content-center text-center">
+                <i class="bi bi-file-earmark-text"></i>
+                <p class="fw-bold mb-1">Vista previa no disponible</p>
+                <small class="text-muted px-3">Maqueta visual pendiente de conexion a los adjuntos reales del predio.</small>
+              </div>
+              <div class="row g-2 mt-3">
+                <div class="col-6"><div class="adjuntos-summary"><small>Archivos</small><strong>4</strong></div></div>
+                <div class="col-6"><div class="adjuntos-summary"><small>Carpetas</small><strong>1</strong></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .adjuntos-predio-modal { border-radius: 16px !important; overflow: hidden; box-shadow: 0 18px 45px rgba(2, 31, 60, 0.22); }
+  .adjuntos-predio-header { background-color: #002f55; }
+  .adjuntos-predio-header-icon { width: 44px; height: 44px; border-radius: 12px; background-color: #6aa4d4; color: #fff; font-size: 1.35rem; flex: 0 0 auto; }
+  .adjuntos-predio-close { width: 38px; height: 38px; border-radius: 50%; color: #fff; background-color: rgba(255, 255, 255, 0.12) !important; }
+  .adjuntos-predio-body { background-color: #f8fbfe; }
+  .adjuntos-panel { background-color: #fff; border: 1px solid #e4ebf2; border-radius: 14px; padding: 16px; box-shadow: 0 8px 22px rgba(2, 31, 60, 0.08); }
+  .adjuntos-section-title { color: #002b49; }
+  .adjuntos-pill { background-color: #e8f4ff; color: #002b49; border-radius: 999px; padding: 6px 12px; font-size: 0.78rem; font-weight: 700; }
+  .adjuntos-search { border: 1px solid #002f55; border-radius: 10px; overflow: hidden; }
+  .adjuntos-search .form-control, .adjuntos-search .input-group-text { height: 44px; border: none; background-color: #f8fbfe; box-shadow: none; }
+  .adjuntos-search .input-group-text { background-color: #002b49; color: #fff; }
+  .adjuntos-list { max-height: 410px; overflow-y: auto; padding-right: 4px; }
+  .adjuntos-list::-webkit-scrollbar { width: 5px; }
+  .adjuntos-list::-webkit-scrollbar-thumb { background-color: #002f55; border-radius: 6px; }
+  .adjunto-row { min-height: 68px; border: 1px solid #edf2f7; border-radius: 12px; padding: 10px 12px; background-color: #fff; transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease; }
+  .adjunto-row:hover { background-color: #f8fbfe; border-color: #c9dceb; transform: translateY(-1px); }
+  .adjunto-icon { width: 42px; height: 42px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; color: #fff; flex: 0 0 auto; font-size: 1.15rem; }
+  .adjunto-icon-folder { background-color: #6aa4d4; }
+  .adjunto-icon-pdf { background-color: #dc2626; }
+  .adjunto-icon-image { background-color: #16a34a; }
+  .adjunto-icon-zip { background-color: #d97706; }
+  .adjunto-icon-doc { background-color: #2563eb; }
+  .adjunto-name { color: #002b49; font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .adjunto-action { width: 34px; height: 34px; border: none; border-radius: 9px; background-color: #edf5fb; color: #002b49; display: inline-flex; align-items: center; justify-content: center; transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease; }
+  .adjunto-action:hover { background-color: #002b49; color: #fff; transform: scale(1.05); }
+  .adjuntos-preview { min-height: 330px; border-radius: 12px; background-color: #fff; border: 1px dashed #b7cce0; color: #002b49; }
+  .adjuntos-preview > i { font-size: 4rem; color: #6aa4d4; opacity: 0.7; }
+  .adjuntos-summary { border-radius: 12px; background-color: #f0f6fb; border-left: 4px solid #002b49; padding: 12px; display: flex; align-items: center; justify-content: space-between; color: #002b49; }
+  .adjuntos-summary small { color: #64748b; font-weight: 600; }
+  .adjuntos-summary strong { font-size: 1.1rem; }
+  @media (max-width: 576px) { .adjunto-row { align-items: flex-start !important; } .adjunto-name { white-space: normal; } }
+</style>

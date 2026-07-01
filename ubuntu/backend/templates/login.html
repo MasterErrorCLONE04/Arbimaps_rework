@@ -53,7 +53,8 @@
       grid-template-columns: 1.15fr 1fr;
       width: 960px;
       max-width: 100%;
-      background: transparent;
+      /* background: transparent; */
+      background: #ffffff;
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-radius: 35px;
@@ -76,15 +77,9 @@
 
     .brand-panel {
       background: linear-gradient(135deg,
-        rgba(18, 63, 104, 0.92) 0%,
-        rgba(3, 47, 87, 0.96) 100%),
-      url("{{ rp }}/static/icon.png");
-
-      /* background-size: contain; */
-      background-position: 110% -80%;
-      background-repeat: no-repeat;
-
-      padding: 45px;
+          rgba(18, 63, 104, 0.96) 0%,
+          rgba(3, 47, 87, 0.98) 100%);
+      padding: 48px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -93,15 +88,38 @@
       overflow: hidden;
     }
 
+    .brand-panel::before {
+      content: "";
+      position: absolute;
+      width: 620px;
+      height: 620px;
+      left: -190px;
+      bottom: -180px;
+      background: url("{{ rp }}/static/icon.png") center / contain no-repeat;
+      opacity: 0.10;
+      pointer-events: none;
+      z-index: 1;
+    }
+
     .brand-panel::after {
       content: "";
       position: absolute;
       width: 300px;
       height: 300px;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 70%);
+      background: radial-gradient(circle,
+          rgba(255, 255, 255, 0.12) 0%,
+          rgba(255, 255, 255, 0) 70%);
       top: -100px;
       right: -100px;
       pointer-events: none;
+      z-index: 1;
+    }
+
+    .brand-header,
+    .brand-content,
+    .brand-footer {
+      position: relative;
+      z-index: 2;
     }
 
     .brand-header {
@@ -475,6 +493,32 @@
       }
     }
 
+    .brand-name-wrap {
+      display: flex;
+      flex-direction: column;
+      width: fit-content;
+      overflow: hidden;
+    }
+
+    .brand-underline {
+      width: 35%;
+      height: 2px;
+      margin-top: 4px;
+      background-color: #ffffff;
+      border-radius: 999px;
+      animation: moveUnderline 1.8s ease-in-out infinite alternate;
+    }
+
+    @keyframes moveUnderline {
+      from {
+        margin-left: 0;
+      }
+
+      to {
+        margin-left: 65%;
+      }
+    }
+
     @media (max-width: 768px) {
       .login-card {
         grid-template-columns: 1fr;
@@ -493,6 +537,7 @@
       .form-panel {
         padding: 48px 32px;
       }
+
     }
   </style>
 </head>
@@ -505,12 +550,15 @@
     <div class="brand-panel">
       <div class="brand-header">
         <img src="{{ rp }}/static/icon.png" alt="Icon" class="brand-logo" />
-        <span class="brand-name">ARBIMapps</span>
+        <div class="brand-name-wrap">
+          <span class="brand-name">ARBIMapps</span>
+          <div class="brand-underline"></div>
+        </div>
       </div>
 
       <div class="brand-content">
         <h2 class="brand-title">Plataforma Integral de Gestión Catastral</h2>
-        <p class="brand-subtitle">Centraliza la administración de proyectos, la asignación de actividades y el
+        <p class="brand-subtitle">Centraliza la administración de proyectos, gestiona la asignación de actividades y el
           seguimiento de los procesos catastrales y prediales.</p>
       </div>
 

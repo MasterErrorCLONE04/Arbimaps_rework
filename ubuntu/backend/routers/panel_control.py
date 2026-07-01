@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from psycopg2.extras import RealDictCursor
 
 from routers.auth import get_current_tenant, require_user, get_user_role, normalize_role
@@ -10,6 +10,14 @@ from repositories.asignaciones_repo import ensure_geoserver_assignment_status_vi
 
 router = APIRouter(prefix="/panel-control", tags=["panel_control"])
 logger = logging.getLogger(__name__)
+
+def _require_panel_control_access(user: dict) -> None:
+    role = normalize_role(get_user_role(user))
+    if role not in {"admin", "soporte", "coordinador"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Rol '{role}' sin permisos para acceder al panel de control.",
+        )
 
 _ESTADOS_DISTRIBUCION = (
     "EN_CAMPO",
@@ -78,6 +86,8 @@ def resumen_estados(
     Resumen de asignaciones agrupado por estado.
     Alimenta las gráficas de dona del panel de control.
     """
+    _require_panel_control_access(user)
+
     try:
         ensure_geoserver_assignment_status_view(conn, tenant)
     except Exception as exc:
@@ -202,6 +212,8 @@ def coordinadores(
     Datos por coordinador: nro. reconocedores, asignaciones, predios activos,
     distribución por estado (para barras) y lista de reconocedores (para modal).
     """
+    _require_panel_control_access(user)
+
     app_schema = tenant.schemas.app
     excluded_usernames = _get_excluded_usernames(conn, app_schema, user)
 

@@ -709,6 +709,12 @@ def panel_panel_control(request: Request):
             status_code=302
         )
 
+    if _effective_role(user) not in {"coordinador", "soporte", "admin"}:
+        return RedirectResponse(
+            url=with_root_path(request, "/panel"),
+            status_code=302
+        )
+
     return _render_panel(request, user, view="panel_control")
 
 
