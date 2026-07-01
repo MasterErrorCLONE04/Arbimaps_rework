@@ -15,7 +15,7 @@
     },
     {
       "slug": "economico",
-      "rule_count": 12
+      "rule_count": 13
     },
     {
       "slug": "topologico",
@@ -996,6 +996,15 @@
     },
     {
       "id": "4.10",
+      "description": "Para unidades de conservacion y proteccion ambiental, en caso de usos de calificación por tipologías, solamente se pueden asociar tipologías conservacion.",
+      "classes": "ILC_EstructuraAvaluo",
+      "variables": "Valor_Comercial\nValor_Comercial_Terreno\nValor_Comercial_Total_UnidadesConstruccion",
+      "technical_rule": "En la base catastral final (producto de la actualizacion catastral) ILC_EstructuraAvaluo.Valor_Comercial = ILC_EstructuraAvaluo.Valor_Comercial_Terreno + ILC_EstructuraAvaluo.Valor_Comercial_Total_UnidadesConstruccion y > \"0\"",
+      "component": "Economico",
+      "sheet_slug": "economico"
+    },
+    {
+      "id": "4.10.1",
       "description": "En la base catastral final (producto de la actualizacion catastral) el avaluo comercial registrado debe corresponder a la sumatoria del avalúo comercial de terreno mas el avaluo comercial total de las unidades de construcción y este valor debe se mayor a \"0\".",
       "classes": "ILC_EstructuraAvaluo",
       "variables": "Valor_Comercial\nValor_Comercial_Terreno\nValor_Comercial_Total_UnidadesConstruccion",

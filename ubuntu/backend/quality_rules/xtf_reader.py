@@ -10,6 +10,9 @@ TARGET_CLASSES = {
     # ILC
     "ILC_Predio",
     "ILC_DatosAdicionalesLevantamientoCatastral",
+    "ILC_CaracteristicasUnidadConstruccion",
+    "ILC_UnidadConstruccion",
+    "ILC_EstructuraAvaluo",
 
     # ARB capas principales
     "ARB_MarcaPredial",
@@ -33,7 +36,12 @@ TARGET_CLASSES = {
     "ARB_DerechoTipo",
     "ARB_CaracteristicasUnidadConstruccion",
     "ARB_AvaluoValor",
+    "CCA_AvaluoValor",
     "ARB_PredioTipo",
+    "CUC_TipologiaConstruccion",
+    "CUC_TipologiaNoConvencional",
+    "CUC_CalificacionConvencional",
+    "cuc_calificacion_unidadconstruccion",
     "ARB_AdjuntoUnidadConstruccion",
     "ARB_AdjuntoTerreno",
     "ARB_AdjuntoPuntoReferencia",
@@ -44,6 +52,8 @@ TARGET_CLASSES = {
     "ARB_CondicionPredioTipo",
     "ARB_NovedadNumeroPredialTipo",
     "ARB_ConstruccionPlantaTipo",
+    "ARB_UnidadConstruccionTipo",
+    "ARB_TipologiaTipo",
     "ARB_Predio_Novedad_Numero_Predial",
     "ARB_Predio_Derecho",
     "ARB_Predio_Terreno",
@@ -52,6 +62,9 @@ TARGET_CLASSES = {
     # variantes minúsculas
     "ilc_predio",
     "ilc_datosadicionaleslevantamientocatastral",
+    "ilc_caracteristicasunidadconstruccion",
+    "ilc_unidadconstruccion",
+    "ilc_estructuraavaluo",
 
     "arb_marcapredial",
     "arb_marca",
@@ -74,7 +87,12 @@ TARGET_CLASSES = {
     "arb_derechotipo",
     "arb_caracteristicasunidadconstruccion",
     "arb_avaluovalor",
+    "cca_avaluovalor",
     "arb_prediotipo",
+    "cuc_tipologiaconstruccion",
+    "cuc_tipologianoconvencional",
+    "cuc_calificacionconvencional",
+    "cuc_calificacion_unidadconstruccion",
     "arb_adjuntounidadconstruccion",
     "arb_adjuntoterreno",
     "arb_adjuntopuntoreferencia",
@@ -84,6 +102,8 @@ TARGET_CLASSES = {
     "arb_condicionprediotipo",
     "arb_novedadnumeropredialtipo",
     "arb_construccionplantatipo",
+    "arb_unidadconstrucciontipo",
+    "arb_tipologiatipo",
     "arb_predio_novedad_numero_predial",
     "arb_predio_derecho",
     "arb_predio_terreno",
@@ -103,7 +123,9 @@ ALIASES_BY_NORMALIZED = {
     "arbpuntoreferencia": "ARB_PuntoReferencia",
     "arbunidadconstruccion": "ARB_UnidadConstruccion",
     "dunidaddeconstruccion": "ARB_UnidadConstruccion",
+    "dunidadconstruccion": "ARB_UnidadConstruccion",
     "unidaddeconstruccion": "ARB_UnidadConstruccion",
+    "unidadconstruccion": "ARB_UnidadConstruccion",
     "arbconstruccion": "ARB_Construccion",
     "arbconstruccionunidadconstruccion": "ARB_Construccion_UnidadConstruccion",
     "arbterrenohistorico": "ARB_TerrenoHistorico",
@@ -123,6 +145,7 @@ ALIASES_BY_NORMALIZED = {
     "arbderechotipo": "ARB_DerechoTipo",
     "arbcaracteristicasunidadconstruccion": "ARB_CaracteristicasUnidadConstruccion",
     "arbavaluovalor": "ARB_AvaluoValor",
+    "ccavaluovalor": "CCA_AvaluoValor",
     "arbprediotipo": "ARB_PredioTipo",
     "apredio": "ARB_Predio",
 
@@ -137,6 +160,8 @@ ALIASES_BY_NORMALIZED = {
     "arbcondicionprediotipo": "ARB_CondicionPredioTipo",
     "arbnovedadnumeropredialtipo": "ARB_NovedadNumeroPredialTipo",
     "arbconstruccionplantatipo": "ARB_ConstruccionPlantaTipo",
+    "arbunidadconstrucciontipo": "ARB_UnidadConstruccionTipo",
+    "arbtipologiatipo": "ARB_TipologiaTipo",
     "arbpredionovedadnumeropredial": "ARB_Predio_Novedad_Numero_Predial",
     "arbpredioderecho": "arb_predio_derecho",
     "arbpredioterreno": "arb_predio_terreno",
@@ -145,6 +170,15 @@ ALIASES_BY_NORMALIZED = {
     # ILC
     "ilcpredio": "ILC_Predio",
     "ilcdatosadicionaleslevantamientocatastral": "ILC_DatosAdicionalesLevantamientoCatastral",
+    "ilccaracteristicasunidadconstruccion": "ILC_CaracteristicasUnidadConstruccion",
+    "ilcunidadconstruccion": "ILC_UnidadConstruccion",
+    "ilcestructuraavaluo": "ILC_EstructuraAvaluo",
+
+    # CUC
+    "cuctipologiaconstruccion": "CUC_TipologiaConstruccion",
+    "cuctipologianoconvencional": "CUC_TipologiaNoConvencional",
+    "cuccalificacionconvencional": "CUC_CalificacionConvencional",
+    "cuccalificacionunidadconstruccion": "cuc_calificacion_unidadconstruccion",
 }
 
 
@@ -286,11 +320,17 @@ def parse_xtf_tables(
             "ARB_Terreno": "arb_predio_terreno",
             "ARB_DerechoInteresadoFuente": "arb_predio_derecho",
             "ARB_Construccion": "arb_predio_construccion",
+            "ARB_AvaluoValor": "arb_predio_avaluo",
+            "CCA_AvaluoValor": "cca_predio_avaluo",
+            "ILC_EstructuraAvaluo": "ilc_predio_avaluo",
         }
 
         predio_relation_field = predio_relation_fields.get(canonical_class_name)
         if predio_relation_field:
-            predio_ref = _find_parent_ref(element, parents, "ARB_Predio", allowed_classes)
+            predio_ref = (
+                _find_parent_ref(element, parents, "ARB_Predio", allowed_classes)
+                or _find_parent_ref(element, parents, "ILC_Predio", allowed_classes)
+            )
             if predio_ref:
                 record.setdefault("predio", predio_ref)
                 record.setdefault(predio_relation_field, predio_ref)
@@ -300,7 +340,10 @@ def parse_xtf_tables(
             if construccion_ref:
                 record.setdefault("construccion", construccion_ref)
                 record.setdefault("arb_construccion_unidadconstruccion", construccion_ref)
-            predio_ref = _find_parent_ref(element, parents, "ARB_Predio", allowed_classes)
+            predio_ref = (
+                _find_parent_ref(element, parents, "ARB_Predio", allowed_classes)
+                or _find_parent_ref(element, parents, "ILC_Predio", allowed_classes)
+            )
             if predio_ref:
                 record.setdefault("predio", predio_ref)
                 record.setdefault("arb_predio_unidadconstruccion", predio_ref)
