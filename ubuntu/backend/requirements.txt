@@ -25,3 +25,4 @@ fiona==1.9.5
 pyproj==3.6.1
 reportlab==4.5.1
 pytest==9.1.1
+httpx==0.27.2

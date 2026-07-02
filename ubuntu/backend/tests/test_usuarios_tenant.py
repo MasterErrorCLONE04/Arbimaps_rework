@@ -20,7 +20,7 @@ from tenants.models import MunicipalityDbConfig, MunicipalitySchemas
 
 class FakeCursor:
     def __init__(self, plan):
-        self.plan = list(plan)
+        self.plan = plan
         self.current = None
         self.executed = []
         self.rowcount = 0
@@ -71,11 +71,17 @@ class FakeConnection:
 
 class UsuarioCreateStub:
     def __init__(self, **kwargs):
+        self.fecha_inicio = None
+        self.fecha_fin = None
+        self.supervisor_id = None
         self.__dict__.update(kwargs)
 
 
 class UsuarioUpdateStub:
     def __init__(self, **kwargs):
+        self.fecha_inicio = None
+        self.fecha_fin = None
+        self.supervisor_id = None
         self.__dict__.update(kwargs)
 
 
@@ -359,7 +365,7 @@ def test_crear_usuario_uses_tenant_app_schema_and_commits():
 
     result = crear_usuario(body, {"role_code": "admin"}, tenant, conn)
 
-    executed = conn.cursors[0].executed
+    executed = [exc for cursor in conn.cursors for exc in cursor.executed]
     assert result["username"] == "jperez"
     assert "FROM arbimaps_sucre.roles" in executed[0][0]
     assert "FROM arbimaps_sucre.users WHERE username = %s" in executed[1][0]
@@ -372,8 +378,8 @@ def test_crear_reconocedor_uses_supervisor_id():
     tenant = make_tenant(app_schema="arbimaps_sucre")
     conn = FakeConnection(
         [
-            {"row": {"t_id": 4}},
             {"row": {"id_global": 7, "rol": "coordinador", "activo": True}},
+            {"row": {"t_id": 4}},
             {"row": None},
             {"row": {"id_global": 9, "username": "cvallarta", "rol": "reconocedor", "activo": True}},
         ]
@@ -391,7 +397,7 @@ def test_crear_reconocedor_uses_supervisor_id():
 
     result = crear_usuario(body, {"role_code": "admin"}, tenant, conn)
 
-    executed = conn.cursors[0].executed
+    executed = [exc for cursor in conn.cursors for exc in cursor.executed]
     assert result["username"] == "cvallarta"
     assert "supervisor" in executed[3][0]
     assert executed[3][1][6] == 7
@@ -426,8 +432,8 @@ def test_actualizar_usuario_libera_reconocedores_al_demover_coordinador():
     tenant = make_tenant(app_schema="arbimaps_app")
     conn = FakeConnection(
         [
-            {"row": {"rol": "coordinador"}},
             {"row": {"t_id": 2}},
+            {"row": {"rol": "coordinador"}},
             {"row": {"id_global": 7, "username": "coord1", "email": "coord1@example.com", "first_name": "Coord", "last_name": "Uno", "rol": "consulta", "activo": True, "creado_en": "2026-05-29", "supervisor": None}},
             {"rowcount": 2},
         ]

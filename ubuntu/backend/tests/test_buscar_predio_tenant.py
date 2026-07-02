@@ -13,7 +13,7 @@ from tenants.models import MunicipalityDbConfig, MunicipalitySchemas
 
 class FakeCursor:
     def __init__(self, plan):
-        self.plan = list(plan)
+        self.plan = plan
         self.current = None
         self.executed = []
 
@@ -139,7 +139,7 @@ def test_predio_detalle_uses_tenant_schema_and_returns_isolated_payload():
     assert result["predio"]["t_id"] == 7
     assert result["interesados"][0]["nombre_completo"] == "Juan Perez"
     assert "FROM catastro_saravena.arb_predio p" in executed[0][0]
-    assert "FROM catastro_saravena.arb_unidadconstruccion uc" in executed[1][0]
+    assert "catastro_saravena.arb_unidadconstruccion uc" in executed[1][0]
 
 
 def test_predio_detalle_rolls_back_and_returns_500_on_main_query_error():

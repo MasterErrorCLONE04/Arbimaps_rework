@@ -1,4 +1,5 @@
 import pytest
+from contextlib import contextmanager
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
 
@@ -10,6 +11,34 @@ from routers.visor_queries import (
 )
 from tenants import TenantContext
 from tenants.models import MunicipalityDbConfig, MunicipalitySchemas
+
+
+class FakeState:
+    def __init__(self, manager):
+        self.tenant_connection_manager = manager
+
+
+class FakeApp:
+    def __init__(self, manager):
+        self.state = FakeState(manager)
+
+
+class FakeRequest:
+    def __init__(self, manager):
+        self.app = FakeApp(manager)
+
+
+class FakeConnectionManager:
+    def __init__(self, conn):
+        self.conn = conn
+
+    @contextmanager
+    def connection(self, tenant):
+        try:
+            yield self.conn
+        except Exception:
+            self.conn.rollback()
+            raise
 
 
 class FakeCursor:
@@ -80,8 +109,10 @@ def test_project_extent_queries_tenant_schema():
     conn = FakeConnection(
         row={"xmin": 1, "ymin": 2, "xmax": 3, "ymax": 4},
     )
+    manager = FakeConnectionManager(conn)
+    request = FakeRequest(manager)
 
-    result = project_extent({"username": "jperez"}, tenant, conn)
+    result = project_extent(request, {"username": "jperez"}, tenant)
 
     sql = conn.cursors[0].executed[0][0]
     assert result == {"extent": [1.0, 2.0, 3.0, 4.0]}
@@ -97,8 +128,10 @@ def test_terreno_detalle_uses_tenant_schema_and_returns_row():
             "numero_predial_nacional": "001",
         },
     )
+    manager = FakeConnectionManager(conn)
+    request = FakeRequest(manager)
 
-    result = terreno_detalle(9, {"username": "jperez"}, tenant, conn)
+    result = terreno_detalle(request, 9, {"username": "jperez"}, tenant)
 
     sql, params = conn.cursors[0].executed[0]
     assert result["terreno_id"] == 9
@@ -115,8 +148,10 @@ def test_dashboard_condicion_predio_isolated_by_tenant():
             {"condicion_predio": "RURAL", "total": 4},
         ],
     )
+    manager = FakeConnectionManager(conn)
+    request = FakeRequest(manager)
 
-    result = dashboard_condicion_predio({"username": "jperez"}, tenant, conn)
+    result = dashboard_condicion_predio(request, {"username": "jperez"}, tenant)
 
     sql = conn.cursors[0].executed[0][0]
     assert result["items"][0]["condicion_predio"] == "URBANO"
@@ -126,9 +161,11 @@ def test_dashboard_condicion_predio_isolated_by_tenant():
 def test_project_extent_rolls_back_and_raises_http_500_on_db_error():
     tenant = make_tenant("catastro_sucre")
     conn = FakeConnection(fail=True)
+    manager = FakeConnectionManager(conn)
+    request = FakeRequest(manager)
 
     with pytest.raises(HTTPException) as exc:
-        project_extent({"username": "jperez"}, tenant, conn)
+        project_extent(request, {"username": "jperez"}, tenant)
 
     assert exc.value.status_code == 500
     assert conn.rollback_calls == 1
@@ -137,8 +174,10 @@ def test_project_extent_rolls_back_and_raises_http_500_on_db_error():
 def test_terreno_detalle_returns_404_json_when_not_found():
     tenant = make_tenant("catastro_sucre")
     conn = FakeConnection(row=None)
+    manager = FakeConnectionManager(conn)
+    request = FakeRequest(manager)
 
-    result = terreno_detalle(999, {"username": "jperez"}, tenant, conn)
+    result = terreno_detalle(request, 999, {"username": "jperez"}, tenant)
 
     assert isinstance(result, JSONResponse)
     assert result.status_code == 404

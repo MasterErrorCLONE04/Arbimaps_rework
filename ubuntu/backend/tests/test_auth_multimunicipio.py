@@ -18,6 +18,7 @@ from tenants import (
     MunicipalityDbConfig,
     MunicipalityRegistry,
     MunicipalitySchemas,
+    TenantContext,
 )
 from tenants.dependencies import get_tenant_context_from_session
 
@@ -94,26 +95,9 @@ def make_registry() -> MunicipalityRegistry:
 def make_request(session_payload: dict | None = None, row: dict | None = None):
     registry = make_registry()
     manager = ConnectionManager(pool_class=FakePool)
-    tenant = registry.require_active("sucre")
-    pool = manager.get_pool(
-        SimpleNamespace(
-            connection_key=tenant.code,
-            municipality_code=tenant.code,
-            db_params={
-                "host": tenant.db.host,
-                "port": tenant.db.port,
-                "dbname": tenant.db.db_name,
-                "user": tenant.db.user,
-                "password": tenant.db.password,
-                "sslmode": tenant.db.sslmode,
-                "connect_timeout": tenant.db.connect_timeout,
-                "keepalives": tenant.db.keepalives,
-                "keepalives_idle": tenant.db.keepalives_idle,
-                "keepalives_interval": tenant.db.keepalives_interval,
-                "keepalives_count": tenant.db.keepalives_count,
-            },
-        )
-    )
+    config = registry.require_active("sucre")
+    tenant = TenantContext.from_config(config)
+    pool = manager.get_pool(tenant)
     pool._row = row
     cookies = {}
     if session_payload is not None:
@@ -249,7 +233,8 @@ def test_authenticate_user_for_tenant_uses_selected_municipality_pool():
             "role_code": "admin",
         }
     )
-    tenant = make_registry().require_active("sucre")
+    config = make_registry().require_active("sucre")
+    tenant = TenantContext.from_config(config)
 
     user = authenticate_user_for_tenant(
         request,
@@ -284,14 +269,9 @@ def test_authenticate_user_for_tenant_uses_tenant_app_schema():
         ]
     )
     manager = ConnectionManager(pool_class=FakePool)
-    tenant = registry.require_active("sucre")
-    pool = manager.get_pool(
-        SimpleNamespace(
-            connection_key=tenant.code,
-            municipality_code=tenant.code,
-            db_params=tenant.db_params,
-        )
-    )
+    config = registry.require_active("sucre")
+    tenant = TenantContext.from_config(config)
+    pool = manager.get_pool(tenant)
     pool._row = {
         "id_global": 7,
         "username": "jperez",
@@ -337,7 +317,8 @@ def test_authenticate_user_for_tenant_rejects_wrong_password():
             "role_code": "admin",
         }
     )
-    tenant = make_registry().require_active("sucre")
+    config = make_registry().require_active("sucre")
+    tenant = TenantContext.from_config(config)
 
     user = authenticate_user_for_tenant(
         request,

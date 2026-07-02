@@ -137,6 +137,6 @@ def test_tenant_context_derives_from_config(clean_municipality_env, monkeypatch)
 
     assert tenant.municipality_code == "sucre"
     assert tenant.municipality_name == "Sucre"
-    assert tenant.connection_key == "sucre"
+    assert tenant.connection_key == "sucre|db.example|5432|programacion"
     assert tenant.db_params["dbname"] == "programacion"
     assert tenant.schemas.work == "b_asignaciones_arb"

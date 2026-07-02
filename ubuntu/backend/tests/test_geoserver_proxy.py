@@ -1,4 +1,6 @@
+import pytest
 from fastapi import HTTPException
+from unittest.mock import AsyncMock, MagicMock
 
 from routers.pages import _default_visor_geoserver_layers
 from routers.proxy import _resolve_geoserver_root, _resolve_wms_base_url
@@ -87,3 +89,18 @@ def test_resolve_wms_base_url_falls_back_without_session(monkeypatch):
     )
 
     assert _resolve_wms_base_url(object()).startswith("http")
+
+
+@pytest.mark.anyio
+async def test_proxy_geoserver_rejects_path_traversal():
+    request = MagicMock()
+    request.body = AsyncMock(return_value=b"")
+    request.query_params = {}
+    request.method = "GET"
+
+    from routers.proxy import proxy_geoserver
+
+    with pytest.raises(HTTPException) as exc:
+        await proxy_geoserver("dir/../../admin", request)
+    assert exc.value.status_code == 400
+    assert exc.value.detail == "Path no permitido"

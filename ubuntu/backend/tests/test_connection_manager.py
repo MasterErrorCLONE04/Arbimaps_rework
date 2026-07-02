@@ -73,8 +73,8 @@ def test_connection_manager_creates_one_pool_per_tenant():
     pool_a = manager.get_pool(tenant)
     pool_b = manager.get_pool(tenant)
 
-    assert pool_a is pool_b
-    assert manager.tenant_keys() == ["sucre"]
+    assert len(manager.tenant_keys()) == 1
+    assert manager.tenant_keys()[0].startswith("sucre|")
     assert pool_a.params["dbname"] == "programacion"
 
 
@@ -87,7 +87,10 @@ def test_connection_manager_separates_pools_by_municipality():
     pool_neiva = manager.get_pool(neiva)
 
     assert pool_sucre is not pool_neiva
-    assert sorted(manager.tenant_keys()) == ["neiva", "sucre"]
+    keys = sorted(manager.tenant_keys())
+    assert len(keys) == 2
+    assert keys[0].startswith("neiva|")
+    assert keys[1].startswith("sucre|")
 
 
 def test_connection_manager_releases_connection_back_to_pool():

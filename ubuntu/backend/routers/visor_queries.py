@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from psycopg2.extras import RealDictCursor
 
@@ -33,10 +33,13 @@ def project_extent(
     """
 
     connection_manager = get_connection_manager(request.app)
-    with connection_manager.connection(tenant) as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(sql)
-            row = cur.fetchone()
+    try:
+        with connection_manager.connection(tenant) as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(sql)
+                row = cur.fetchone()
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error obteniendo extension espacial: {exc}") from exc
 
     if not row:
         return JSONResponse({"error": "No se encontro extension espacial"}, status_code=404)

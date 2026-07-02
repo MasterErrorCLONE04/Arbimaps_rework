@@ -185,6 +185,11 @@ async def proxy_geoserver(path: str, request: Request) -> Response:
     """
     Proxy de GeoServer: redirige las peticiones locales /geoserver/... al GeoServer remoto.
     """
+    # Prevencion de Path Traversal
+    clean_path = str(path or "").strip()
+    if ".." in clean_path or "/." in clean_path or ".\\" in clean_path:
+        raise HTTPException(status_code=400, detail="Path no permitido")
+
     params = dict(request.query_params)
     body = await request.body()
 

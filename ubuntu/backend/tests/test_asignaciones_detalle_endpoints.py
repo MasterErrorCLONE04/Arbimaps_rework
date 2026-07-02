@@ -51,7 +51,7 @@ def mock_db_connection(monkeypatch):
                 "id": 145,
                 "estado": "DEVUELTO_CAMPO",
                 "creado_en": None,
-                "creado_por": "soporte",
+                "creado_por": "coord_asignado",
                 "usuario_asignado": "juan_ramon",
                 "enlace_control_calidad": "https://example.com/evidence",
                 "titulo": "Asignacion de Prueba",

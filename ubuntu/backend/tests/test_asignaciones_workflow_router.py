@@ -39,6 +39,9 @@ app.dependency_overrides[get_tenant_context_from_session] = mock_get_tenant_cont
 app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
 app.dependency_overrides[get_tenant_db_connection] = mock_get_tenant_db_connection
 
+from routers.asignaciones_workflow import verify_assignment_isolation
+app.dependency_overrides[verify_assignment_isolation] = lambda: None
+
 
 @pytest.fixture
 def mock_command_service():

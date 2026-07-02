@@ -138,7 +138,7 @@ def test_predio_summary_assigns_unidentified_issue_to_single_predio():
                 "details": {"tabla": "ARB_CaracteristicasUnidadConstruccion"},
             }
         ],
-        {"ARB_Predio": [{"numero_predial": "PREDIO-1", "TID": "p1"}]},
+        {"ARB_Predio": [{"id_operacion": "PREDIO-1", "TID": "p1"}]},
     )
 
     assert predio_summary == [{"object_id": "PREDIO-1", "issue_count": 1}]

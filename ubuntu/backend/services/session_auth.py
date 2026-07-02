@@ -28,15 +28,31 @@ def _get_bool_env(name: str, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "t", "yes", "y", "on"}
 
 
+import sys
+
 COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "session_user")
-SECRET = os.getenv("SESSION_SECRET", "cambia-esto-por-una-clave-larga")
+
+SECRET = os.getenv("SESSION_SECRET")
+if not SECRET or SECRET == "cambia-esto-por-una-clave-larga":
+    if (
+        "PYTEST_CURRENT_TEST" in os.environ
+        or "pytest" in sys.modules
+        or any("pytest" in arg for arg in sys.argv)
+    ):
+        SECRET = "test-secret-key-for-testing-purposes-only-32-chars-long"
+    else:
+        raise RuntimeError(
+            "La variable de entorno SESSION_SECRET no esta configurada o usa el valor por defecto inseguro. "
+            "Es obligatoria para asegurar la integridad de las sesiones en produccion."
+        )
+
 SESSION_VERSION = 2
 DEFAULT_ROLE = os.getenv("DEFAULT_ROLE", "digitalizador")
 SESSION_MAX_AGE_SECONDS = int(os.getenv("SESSION_MAX_AGE_SECONDS", "43200"))
 SESSION_REMEMBER_MAX_AGE_SECONDS = int(
     os.getenv("SESSION_REMEMBER_MAX_AGE_SECONDS", str(60 * 60 * 24 * 14))
 )
-SESSION_COOKIE_SECURE = _get_bool_env("SESSION_COOKIE_SECURE", False)
+SESSION_COOKIE_SECURE = _get_bool_env("SESSION_COOKIE_SECURE", True)
 SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "lax").strip().lower() or "lax"
 SESSION_COOKIE_PATH = os.getenv("SESSION_COOKIE_PATH", "/") or "/"
 

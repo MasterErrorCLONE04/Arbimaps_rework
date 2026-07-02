@@ -146,7 +146,7 @@ def test_rule_10_3_flags_touching_edges_without_area_overlap():
     issues = rule_10_3(dataset)
 
     assert len(issues) == 1
-    assert issues[0].details["motivo"] == "Existe planta inferior, pero no hay superposición espacial."
+    assert issues[0].details["motivo"] == "Existe planta inferior, pero no hay superposición espacial con área mayor a cero."
 
 
 def test_rule_10_3_flags_unknown_construction_for_upper_floor():
@@ -172,8 +172,8 @@ def test_rule_10_3_flags_unknown_construction_for_upper_floor():
     issues = rule_10_3(dataset)
 
     assert len(issues) == 1
-    assert issues[0].details["identificador"] == "u2"
-    assert issues[0].details["motivo"] == "No se pudo determinar la construcción asociada a la unidad."
+    assert issues[0].details["unidad_superior"] == "u2"
+    assert issues[0].details["motivo"] == "Construcción no resuelta."
 
 
 def test_rule_10_3_uses_construction_unit_association():
@@ -210,7 +210,7 @@ def test_rule_10_3_uses_construction_unit_association():
     issues = rule_10_3(dataset)
 
     assert len(issues) == 1
-    assert issues[0].details["identificador"] == "u2"
+    assert issues[0].details["unidad_superior"] == "u2"
     assert issues[0].details["construccion"] == "c1"
 
 
@@ -241,7 +241,7 @@ def test_rule_10_3_deduplicates_same_upper_floor_error():
     issues = rule_10_3(dataset)
 
     assert len(issues) == 1
-    assert issues[0].details["identificador"] == "u2"
+    assert issues[0].details["unidad_superior"] == "u2"
 
 
 def test_rule_10_4_uses_parent_ref_for_nested_novedad(tmp_path):
