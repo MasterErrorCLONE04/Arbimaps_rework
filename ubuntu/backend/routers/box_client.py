@@ -1,48 +1,96 @@
 from boxsdk import JWTAuth, Client, OAuth2
 from boxsdk.exception import BoxAPIException
+from dotenv import load_dotenv
+from pathlib import Path
 import os
 import json
+import tempfile
 
-BOX_AUTH_MODE = os.getenv("BOX_AUTH_MODE", "jwt")
-BOX_CONFIG_FILE = os.getenv("BOX_CONFIG_FILE", "/home/ubuntu/backend/box_config.json")
-BOX_TOKENS_FILE = os.getenv("BOX_TOKENS_FILE", "/home/ubuntu/backend/tokens/box_oauth_tokens.json")
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+PROJECT_DIR = BACKEND_DIR.parent
+
+# Load the project env before reading Box settings. This module is imported by
+# several routers, so relying on another module to call load_dotenv is fragile.
+load_dotenv(PROJECT_DIR / ".env")
+load_dotenv(BACKEND_DIR / ".env")
+
+
+def _resolve_runtime_path(value: str | None, default: str) -> str:
+    raw = (value or default or "").strip()
+    path = Path(raw)
+    if path.is_absolute():
+        return str(path)
+    return str((BACKEND_DIR / path).resolve())
+
+
+BOX_AUTH_MODE = os.getenv("BOX_AUTH_MODE", "jwt").strip().lower()
+BOX_CONFIG_FILE = _resolve_runtime_path(os.getenv("BOX_CONFIG_FILE"), "box_config.json")
+BOX_TOKENS_FILE = _resolve_runtime_path(os.getenv("BOX_TOKENS_FILE"), "tokens/box_oauth_tokens.json")
 
 
 def clean_box_id(item_id: str) -> str:
-    """Elimina cualquier prefijo o carácter no numérico de los IDs de Box."""
+    """Elimina cualquier prefijo o caracter no numerico de los IDs de Box."""
     if not item_id:
         return item_id
-    
+
     s_id = str(item_id).strip()
-    # Filtramos para dejar ÚNICAMENTE los números
     cleaned_id = "".join(filter(str.isdigit, s_id))
-    
+
     print(f"DEBUG: ID Original: '{item_id}' -> ID Limpio: '{cleaned_id}'")
     return cleaned_id
 
 
-def save_tokens(access_token, refresh_token):
-    print("🔄 Nuevo access token generado")
-    print("🔄 Nuevo refresh token generado")
+def _write_json_atomic(path: str, data: dict) -> None:
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
 
-    os.makedirs(os.path.dirname(BOX_TOKENS_FILE), exist_ok=True)
+    tmp_name = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            dir=str(target.parent),
+            delete=False,
+        ) as tmp:
+            tmp_name = tmp.name
+            json.dump(data, tmp)
+            tmp.flush()
+            os.fsync(tmp.fileno())
+
+        os.replace(tmp_name, target)
+        try:
+            os.chmod(target, 0o600)
+        except OSError:
+            pass
+    finally:
+        if tmp_name and os.path.exists(tmp_name):
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
+
+
+def save_tokens(access_token, refresh_token):
+    print("Nuevo access token generado")
+    print("Nuevo refresh token generado")
 
     data = {
         "access_token": access_token,
-        "refresh_token": refresh_token
+        "refresh_token": refresh_token,
     }
 
-    with open(BOX_TOKENS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f)
-
-    print(f"✅ Tokens actualizados en {BOX_TOKENS_FILE}")
+    _write_json_atomic(BOX_TOKENS_FILE, data)
+    print(f"Tokens actualizados en {BOX_TOKENS_FILE}")
 
 
 def load_tokens():
     if os.path.exists(BOX_TOKENS_FILE):
-        with open(BOX_TOKENS_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return data.get("access_token"), data.get("refresh_token")
+        try:
+            with open(BOX_TOKENS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                return data.get("access_token"), data.get("refresh_token")
+        except json.JSONDecodeError as exc:
+            raise RuntimeError(f"El archivo de tokens de Box no contiene JSON valido: {BOX_TOKENS_FILE}") from exc
 
     return os.getenv("BOX_ACCESS_TOKEN"), os.getenv("BOX_REFRESH_TOKEN")
 
@@ -55,19 +103,18 @@ if BOX_AUTH_MODE == "oauth":
         client_secret=os.getenv("BOX_CLIENT_SECRET"),
         access_token=access_token,
         refresh_token=refresh_token,
-        store_tokens=save_tokens
+        store_tokens=save_tokens,
     )
     client = Client(auth)
-    print("✅ Box conectado en modo OAuth")
+    print(f"Box conectado en modo OAuth. Tokens: {BOX_TOKENS_FILE}")
 else:
     auth = JWTAuth.from_settings_file(BOX_CONFIG_FILE)
     client = Client(auth)
-    print("✅ Box conectado en modo JWT")
+    print(f"Box conectado en modo JWT. Config: {BOX_CONFIG_FILE}")
 
 
 def get_client():
     return client
-
 
 def create_folder(parent_folder_id, folder_name):
     import time

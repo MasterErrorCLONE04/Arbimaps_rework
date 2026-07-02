@@ -4,7 +4,7 @@ import geopandas as gpd
 
 
 # =========================================================
-# 🔍 NORMALIZAR TEXTO
+# Ã°Å¸â€Â NORMALIZAR TEXTO
 # =========================================================
 def normalize_text(value):
     if value is None:
@@ -19,10 +19,10 @@ def normalize_text(value):
 
 
 # =========================================================
-# 📁 CREAR CARPETEO
+# Ã°Å¸â€œÂ CREAR CARPETEO
 # =========================================================
 def create_carpeteo(create_folder, root_id, numero_predial):
-    print(f"📁 Creando estructura para: {numero_predial}")
+    print(f"Ã°Å¸â€œÂ Creando estructura para: {numero_predial}")
 
     predial_id = create_folder(root_id, numero_predial)
 
@@ -39,7 +39,7 @@ def create_carpeteo(create_folder, root_id, numero_predial):
     create_folder(gnss_id, "01_base")
     create_folder(gnss_id, "02_pto_GPS")
 
-    print("✅ Carpeteo completo")
+    print("Ã¢Å“â€¦ Carpeteo completo")
 
     return {
         "root": predial_id,
@@ -51,7 +51,7 @@ def create_carpeteo(create_folder, root_id, numero_predial):
 
 
 # =========================================================
-# 🧾 EXTRAER PREDIOS DESDE GPKG
+# Ã°Å¸Â§Â¾ EXTRAER PREDIOS DESDE GPKG
 # Devuelve:
 # {
 #   "AR001": "73055....",
@@ -64,10 +64,10 @@ def extract_predios_from_gpkg(gpkg_path):
     try:
         layers = fiona.listlayers(gpkg_path)
     except Exception as e:
-        print(f"❌ Error listando capas en {gpkg_path}: {e}")
+        print(f"Ã¢ÂÅ’ Error listando capas en {gpkg_path}: {e}")
         return result
 
-    print(f"📚 Capas detectadas en {gpkg_path}: {layers}")
+    print(f"Ã°Å¸â€œÅ¡ Capas detectadas en {gpkg_path}: {layers}")
 
     target_layer = None
 
@@ -101,20 +101,20 @@ def extract_predios_from_gpkg(gpkg_path):
                     target_layer = layer
                     break
 
-    print(f"🎯 Capa elegida para predios: {target_layer}")
+    print(f"Ã°Å¸Å½Â¯ Capa elegida para predios: {target_layer}")
 
     if not target_layer:
-        print(f"⚠️ No se encontró capa de predio en {gpkg_path}")
+        print(f"Ã¢Å¡Â Ã¯Â¸Â No se encontrÃƒÂ³ capa de predio en {gpkg_path}")
         return result
 
     try:
         gdf = gpd.read_file(gpkg_path, layer=target_layer)
     except Exception as e:
-        print(f"❌ Error leyendo capa predio: {e}")
+        print(f"Ã¢ÂÅ’ Error leyendo capa predio: {e}")
         return result
 
-    print(f"🔍 Leyendo capa predio de {gpkg_path}")
-    print(f"🧾 Columnas predio: {list(gdf.columns)}")
+    print(f"Ã°Å¸â€Â Leyendo capa predio de {gpkg_path}")
+    print(f"Ã°Å¸Â§Â¾ Columnas predio: {list(gdf.columns)}")
 
     id_col = None
     npn_col = None
@@ -152,7 +152,7 @@ def extract_predios_from_gpkg(gpkg_path):
                 break
 
     if not id_col or not npn_col:
-        print(f"⚠️ No se detectaron columnas clave en predio. id_col={id_col}, npn_col={npn_col}")
+        print(f"Ã¢Å¡Â Ã¯Â¸Â No se detectaron columnas clave en predio. id_col={id_col}, npn_col={npn_col}")
         return result
 
     for _, row in gdf.iterrows():
@@ -162,12 +162,12 @@ def extract_predios_from_gpkg(gpkg_path):
         if predio_id and npn:
             result[predio_id] = npn
 
-    print(f"✅ Predios encontrados: {result}")
+    print(f"Ã¢Å“â€¦ Predios encontrados: {result}")
     return result
 
 
 # =========================================================
-# 📸 EXTRAER FOTOS DESDE GPKG
+# Ã°Å¸â€œÂ¸ EXTRAER FOTOS DESDE GPKG
 # Devuelve:
 # {
 #   "AR004": [
@@ -175,86 +175,30 @@ def extract_predios_from_gpkg(gpkg_path):
 #   ]
 # }
 # =========================================================
-def extract_fotos_from_gpkg(gpkg_path):
-    result = {}
+# ADJUNTOS POR GPKG
+# =========================================================
+DOC_ATTACHMENT_GPKGS = {
+    "arb_adjunto_fuente_administrativa.gpkg",
+    "arb_adjunto_interesado.gpkg",
+}
 
-    try:
-        layers = fiona.listlayers(gpkg_path)
-    except Exception as e:
-        print(f"❌ Error listando capas en {gpkg_path}: {e}")
-        return result
-
-    print(f"📚 Capas detectadas en {gpkg_path}: {layers}")
-
-    target_layer = None
-    for layer in layers:
-        lname = layer.lower().strip()
-        if lname == "registro_fotografico" or "registro_fotografico" in lname:
-            target_layer = layer
-            break
-
-    print(f"🎯 Capa elegida para fotos: {target_layer}")
-
-    if not target_layer:
-        print(f"⚠️ No se encontró capa 'registro_fotografico' en {gpkg_path}")
-        return result
-
-    try:
-        gdf = gpd.read_file(gpkg_path, layer=target_layer)
-    except Exception as e:
-        print(f"❌ Error leyendo capa registro_fotografico: {e}")
-        return result
-
-    print(f"🔍 Leyendo capa registro_fotografico de {gpkg_path}")
-    print(f"🧾 Columnas registro_fotografico: {list(gdf.columns)}")
-
-    id_col = None
-    foto_col = None
-
-    for col in gdf.columns:
-        c = col.lower().strip()
-
-        if c in ["id predio", "id_predio", "idpredio"]:
-            id_col = col
-
-        if c in ["registro foto", "registro_foto", "foto", "path_foto", "adjunto"]:
-            foto_col = col
-
-    if not id_col:
-        for col in gdf.columns:
-            c = col.lower().strip()
-            if "id" in c and "predio" in c:
-                id_col = col
-                break
-
-    if not foto_col:
-        for col in gdf.columns:
-            c = col.lower().strip()
-            if "foto" in c or "imagen" in c or "path" in c or "adjunto" in c:
-                foto_col = col
-                break
-
-    if not id_col or not foto_col:
-        print(f"⚠️ No se detectaron columnas clave en registro_fotografico. id_col={id_col}, foto_col={foto_col}")
-        return result
-
-    for _, row in gdf.iterrows():
-        predio_id = normalize_text(row[id_col])
-        foto_path = normalize_text(row[foto_col])
-
-        if predio_id and foto_path:
-            result.setdefault(predio_id, []).append(foto_path)
-
-    print(f"✅ Fotos por predio: {result}")
-    return result
+IMAGE_ATTACHMENT_GPKGS = {
+    "arb_adjunto_punto_de_referencia.gpkg",
+    "arb_adjunto_terreno.gpkg",
+    "arb_adjunto_unidad_de_construccin.gpkg",
+    "arb_adjunto_unidad_de_construccion.gpkg",
+}
 
 
 # =========================================================
-# 📂 BUSCAR ARCHIVOS CLAVE EN PROYECTO LOCAL
+# BUSCAR ARCHIVOS CLAVE EN PROYECTO LOCAL
 # =========================================================
 def find_project_files(local_project_path):
     predio_gpkg = None
-    registro_gpkg = None
+    attachment_gpkgs = {
+        "doc": [],
+        "img": [],
+    }
     pdfs = []
     images = []
 
@@ -263,7 +207,7 @@ def find_project_files(local_project_path):
 
         for file in files:
             full_path = os.path.join(root, file)
-            name = file.lower()
+            name = file.lower().strip()
 
             if name.endswith(".gpkg") and (
                 name == "predio.gpkg" or
@@ -277,12 +221,15 @@ def find_project_files(local_project_path):
                     "area_predio",
                     "datos_adicionales_predio",
                     "info_economica_predio",
-                    "registro_fotografico"
+                    "registro_fotografico",
                 ]):
                     predio_gpkg = full_path
 
-            elif name.endswith(".gpkg") and "registro_fotografico" in name:
-                registro_gpkg = full_path
+            elif name in DOC_ATTACHMENT_GPKGS:
+                attachment_gpkgs["doc"].append(full_path)
+
+            elif name in IMAGE_ATTACHMENT_GPKGS:
+                attachment_gpkgs["img"].append(full_path)
 
             elif name.endswith(".pdf"):
                 pdfs.append(full_path)
@@ -290,182 +237,230 @@ def find_project_files(local_project_path):
             elif name.endswith((".jpg", ".jpeg", ".png", ".tif", ".tiff")):
                 images.append(full_path)
 
-    print(f"📌 predio_gpkg detectado: {predio_gpkg}")
-    print(f"📌 registro_gpkg detectado: {registro_gpkg}")
-    print(f"📌 PDFs detectados: {len(pdfs)}")
-    print(f"📌 imágenes detectadas: {len(images)}")
+    print(f"predio_gpkg detectado: {predio_gpkg}")
+    print(f"GPKG adjuntos doc detectados: {len(attachment_gpkgs['doc'])}")
+    print(f"GPKG adjuntos img detectados: {len(attachment_gpkgs['img'])}")
+    print(f"PDFs detectados en proyecto: {len(pdfs)}")
+    print(f"imagenes detectadas en proyecto: {len(images)}")
 
     return {
         "predio_gpkg": predio_gpkg,
-        "registro_gpkg": registro_gpkg,
+        "attachment_gpkgs": attachment_gpkgs,
         "pdfs": pdfs,
-        "images": images
+        "images": images,
     }
 
 
 # =========================================================
-# 📸 RESOLVER RUTAS DE FOTOS
+# EXTRAER ADJUNTOS DESDE GPKG
+# Devuelve: {npn: [ruta_archivo]}
 # =========================================================
-def resolve_photo_paths(local_project_path, fotos_by_predio):
-    import os
+def extract_attachments_from_gpkg(gpkg_path):
+    result = {}
 
-    resolved = {}
+    try:
+        layers = fiona.listlayers(gpkg_path)
+    except Exception as e:
+        print(f"Error listando capas en {gpkg_path}: {e}")
+        return result
 
-    def norm(s):
-        return str(s).replace("\\", "/").strip().lower()
+    print(f"Capas detectadas en {gpkg_path}: {layers}")
 
-    # -------------------------------------------------
-    # Índices robustos de todas las imágenes del proyecto
-    # -------------------------------------------------
-    all_files = []
-    by_basename = {}
-    by_stem = {}
-    by_relpath = {}
+    for layer in layers:
+        try:
+            gdf = gpd.read_file(gpkg_path, layer=layer)
+        except Exception as e:
+            print(f"Error leyendo capa {layer} en {gpkg_path}: {e}")
+            continue
+
+        print(f"Leyendo capa adjuntos {layer} de {gpkg_path}")
+        print(f"Columnas adjuntos: {list(gdf.columns)}")
+
+        npn_col = None
+        archivo_col = None
+
+        for col in gdf.columns:
+            c = col.lower().strip()
+
+            if c == "npn" or "numero_predial" in c or "cedula_catastral" in c:
+                npn_col = col
+
+            if c == "archivo" or "archivo" in c or "adjunto" in c or "ruta" in c or "path" in c:
+                archivo_col = col
+
+        if not npn_col or not archivo_col:
+            print(f"No se detectaron columnas npn/archivo en {gpkg_path}, capa={layer}. npn_col={npn_col}, archivo_col={archivo_col}")
+            continue
+
+        for _, row in gdf.iterrows():
+            npn = normalize_text(row[npn_col])
+            archivo = normalize_text(row[archivo_col])
+
+            if npn and archivo:
+                result.setdefault(npn, []).append(archivo)
+
+    print(f"Adjuntos extraidos de {os.path.basename(gpkg_path)}: {sum(len(v) for v in result.values())}")
+    return result
+
+
+# =========================================================
+# INDICE Y RESOLUCION DE ARCHIVOS DEL PROYECTO
+# =========================================================
+def build_project_file_index(local_project_path):
+    def norm(value):
+        return str(value).replace("\\", "/").strip().lower()
+
+    index = {
+        "all_files": [],
+        "by_relpath": {},
+        "by_basename": {},
+        "by_stem": {},
+    }
 
     for root, dirs, files in os.walk(local_project_path):
         dirs[:] = [d for d in dirs if d != ".mergin"]
 
-        for f in files:
-            fl = f.lower()
-            if fl.endswith((".jpg", ".jpeg", ".png", ".tif", ".tiff")):
-                abs_path = os.path.join(root, f)
-                rel_path = os.path.relpath(abs_path, local_project_path)
+        for file in files:
+            abs_path = os.path.join(root, file)
+            rel_path = os.path.relpath(abs_path, local_project_path)
+            rel_norm = norm(rel_path)
+            base = os.path.basename(file).lower().strip()
+            stem = os.path.splitext(base)[0]
 
-                all_files.append(abs_path)
+            index["all_files"].append(abs_path)
+            index["by_relpath"].setdefault(rel_norm, []).append(abs_path)
+            index["by_basename"].setdefault(base, []).append(abs_path)
+            index["by_stem"].setdefault(stem, []).append(abs_path)
 
-                base = os.path.basename(f).lower()
-                stem = os.path.splitext(base)[0]
+            parts = rel_norm.split("/")
+            for i in range(len(parts)):
+                suffix = "/".join(parts[i:])
+                index["by_relpath"].setdefault(suffix, []).append(abs_path)
 
-                by_basename.setdefault(base, []).append(abs_path)
-                by_stem.setdefault(stem, []).append(abs_path)
+    print(f"Total archivos indexados: {len(index['all_files'])}")
+    return index
 
-                # guardar varias formas de ruta relativa
-                rel_norm = norm(rel_path)
-                by_relpath.setdefault(rel_norm, []).append(abs_path)
 
-                # también por si viene con carpetas internas raras
-                parts = rel_norm.split("/")
-                for i in range(len(parts)):
-                    suffix = "/".join(parts[i:])
-                    by_relpath.setdefault(suffix, []).append(abs_path)
+def resolve_attachment_path(file_index, archivo, used_paths):
+    clean = str(archivo).replace("\\", "/").strip().lower()
+    file_name = os.path.basename(clean)
+    file_stem = os.path.splitext(file_name)[0]
 
-    print(f"🗂️ Total imágenes indexadas: {len(all_files)}")
+    candidates = []
 
-    # -------------------------------------------------
-    # Resolver fotos por predio
-    # -------------------------------------------------
-    for predio_id, paths in fotos_by_predio.items():
-        usados = set()
+    if clean in file_index["by_relpath"]:
+        candidates.extend(file_index["by_relpath"][clean])
 
-        for rel_path in paths:
-            clean_rel = norm(rel_path)
-            file_name = os.path.basename(clean_rel)
-            file_stem = os.path.splitext(file_name)[0]
+    if file_name in file_index["by_basename"]:
+        candidates.extend(file_index["by_basename"][file_name])
 
-            found = None
+    if file_stem in file_index["by_stem"]:
+        candidates.extend(file_index["by_stem"][file_stem])
 
-            print(f"🔎 Buscando foto para {predio_id}: {clean_rel}")
+    if file_stem:
+        for stem_key, stem_candidates in file_index["by_stem"].items():
+            if file_stem in stem_key or stem_key in file_stem:
+                candidates.extend(stem_candidates)
 
-            # 1. ruta relativa exacta
-            if clean_rel in by_relpath:
-                for candidate in by_relpath[clean_rel]:
-                    if candidate not in usados:
-                        found = candidate
-                        break
+    for candidate in candidates:
+        if candidate not in used_paths:
+            return candidate
 
-            # 2. basename exacto
-            if not found and file_name in by_basename:
-                for candidate in by_basename[file_name]:
-                    if candidate not in usados:
-                        found = candidate
-                        break
+    return None
 
-            # 3. stem exacto
-            if not found and file_stem in by_stem:
-                for candidate in by_stem[file_stem]:
-                    if candidate not in usados:
-                        found = candidate
-                        break
 
-            # 4. coincidencia parcial fuerte por stem
-            if not found and file_stem:
-                for stem_key, candidates in by_stem.items():
-                    if file_stem in stem_key or stem_key in file_stem:
-                        for candidate in candidates:
-                            if candidate not in usados:
-                                found = candidate
-                                break
-                    if found:
-                        break
+def merge_attachment_maps(target, source):
+    for npn, paths in source.items():
+        target.setdefault(npn, []).extend(paths)
+
+
+def resolve_attachments_by_npn(local_project_path, attachment_paths_by_npn):
+    resolved = {}
+    file_index = build_project_file_index(local_project_path)
+
+    for npn, archivos in attachment_paths_by_npn.items():
+        used_paths = set()
+
+        for archivo in archivos:
+            print(f"Buscando adjunto para NPN {npn}: {archivo}")
+            found = resolve_attachment_path(file_index, archivo, used_paths)
 
             if found:
-                usados.add(found)
-                resolved.setdefault(predio_id, []).append(found)
-                print(f"✅ Foto resuelta para {predio_id}: {found}")
+                used_paths.add(found)
+                resolved.setdefault(npn, []).append(found)
+                print(f"Adjunto resuelto para NPN {npn}: {found}")
             else:
-                print(f"⚠️ No se encontró foto para {predio_id}: {clean_rel}")
+                print(f"No se encontro adjunto para NPN {npn}: {archivo}")
 
     return resolved
 
+
 # =========================================================
-# 📦 PROCESAR PROYECTO LOCAL Y CREAR CARPETEO
+# PROCESAR PROYECTO LOCAL Y CREAR CARPETEO
 # =========================================================
 def process_local_project_for_carpeteo(local_project_path, root_box_folder_id, create_folder, upload_file):
     files_info = find_project_files(local_project_path)
 
     predio_gpkg = files_info["predio_gpkg"]
-    registro_gpkg = files_info["registro_gpkg"]
-    pdfs = files_info["pdfs"]
+    attachment_gpkgs = files_info["attachment_gpkgs"]
 
     if not predio_gpkg:
-        print("❌ No se encontró archivo GPKG principal de predio")
+        print("No se encontro archivo GPKG principal de predio")
         return
 
     project_name = os.path.basename(local_project_path)
-    print(f"\n📦 Creando carpeta de proyecto en BOX: {project_name}")
+    print(f"\nCreando carpeta de proyecto en BOX: {project_name}")
     project_folder_id = create_folder(root_box_folder_id, project_name)
 
     predios = extract_predios_from_gpkg(predio_gpkg)
 
     if not predios:
-        print("⚠️ No se encontraron predios/NPN válidos")
+        print("No se encontraron predios/NPN validos")
         return
 
-    fotos_by_predio = {}
-    if registro_gpkg:
-        fotos_by_predio = extract_fotos_from_gpkg(registro_gpkg)
+    doc_paths_by_npn = {}
+    img_paths_by_npn = {}
 
-    fotos_resueltas = resolve_photo_paths(local_project_path, fotos_by_predio)
-    for k, v in fotos_resueltas.items():
-        print(f"📸 Predio {k} -> fotos resueltas: {len(v)}")
+    for gpkg_path in attachment_gpkgs["doc"]:
+        merge_attachment_maps(doc_paths_by_npn, extract_attachments_from_gpkg(gpkg_path))
 
-    print(f"🧩 Predios detectados (claves): {list(predios.keys())[:20]}")
-    print(f"🧩 Fotos resueltas (claves): {list(fotos_resueltas.keys())[:20]}")
+    for gpkg_path in attachment_gpkgs["img"]:
+        merge_attachment_maps(img_paths_by_npn, extract_attachments_from_gpkg(gpkg_path))
+
+    doc_files_by_npn = resolve_attachments_by_npn(local_project_path, doc_paths_by_npn)
+    img_files_by_npn = resolve_attachments_by_npn(local_project_path, img_paths_by_npn)
+
+    print(f"Predios detectados (claves): {list(predios.keys())[:20]}")
+    print(f"NPN con docs resueltos: {list(doc_files_by_npn.keys())[:20]}")
+    print(f"NPN con imagenes resueltas: {list(img_files_by_npn.keys())[:20]}")
 
     for predio_id, npn in predios.items():
-        predio_images = fotos_resueltas.get(predio_id, [])
+        predio_docs = doc_files_by_npn.get(npn, [])
+        predio_images = img_files_by_npn.get(npn, [])
 
-        print(f"\n🚀 Procesando predio {predio_id} -> NPN {npn}")
-        print(f"🔗 Predio {predio_id} tiene {len(predio_images)} imágenes asociadas")
+        print(f"\nProcesando predio {predio_id} -> NPN {npn}")
+        print(f"NPN {npn} tiene {len(predio_docs)} documentos soporte asociados")
+        print(f"NPN {npn} tiene {len(predio_images)} imagenes asociadas")
 
-        # 🔥 CLAVE: si no hay nada que subir, NO crear estructura
-        if not pdfs and not predio_images:
-            print(f"⏭️ Se omite NPN {npn}: sin PDFs ni imágenes asociadas")
+        if not predio_docs and not predio_images:
+            print(f"Se omite NPN {npn}: sin documentos ni imagenes asociadas")
             continue
 
         structure = create_carpeteo(create_folder, project_folder_id, npn)
 
-        for pdf_path in pdfs:
-            print(f"📄 PDF -> {pdf_path}")
-            upload_file(structure["doc"], pdf_path)
+        for doc_path in predio_docs:
+            print(f"DOC -> {doc_path}")
+            upload_file(structure["doc"], doc_path)
 
         for img_path in predio_images:
-            print(f"🖼️ IMG {predio_id} -> {img_path}")
+            print(f"IMG -> {img_path}")
             upload_file(structure["img"], img_path)
 
-        print("✅ Carpeteo por NPN finalizado")
+        print("Carpeteo por NPN finalizado")
+
+
 # =========================================================
-# 🔥 COMPATIBILIDAD CON TU FLUJO ACTUAL
+# COMPATIBILIDAD CON TU FLUJO ACTUAL
 # =========================================================
 def get_npn_from_box(download_file_func, folder_items_func, folder_id):
     import tempfile
@@ -488,12 +483,12 @@ def get_npn_from_box(download_file_func, folder_items_func, folder_id):
                         if predios:
                             return list(predios.values())[0]
                     except Exception as e:
-                        print(f"⚠️ Error leyendo gpkg temporal: {e}")
+                        print(f"Ã¢Å¡Â Ã¯Â¸Â Error leyendo gpkg temporal: {e}")
 
         return None
 
     try:
-        print("🔍 Buscando NPN en BOX...")
+        print("Ã°Å¸â€Â Buscando NPN en BOX...")
         resultado = buscar_en_carpeta(folder_id)
 
         if resultado:
@@ -502,5 +497,5 @@ def get_npn_from_box(download_file_func, folder_items_func, folder_id):
         return "SIN_NPN"
 
     except Exception as e:
-        print("❌ ERROR leyendo BOX:", str(e))
+        print("Ã¢ÂÅ’ ERROR leyendo BOX:", str(e))
         return "ERROR_NPN"

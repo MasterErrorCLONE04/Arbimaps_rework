@@ -23,7 +23,7 @@
               <div class="d-flex align-items-center justify-content-between gap-3 mb-3 flex-wrap">
                 <div>
                   <h6 class="fw-bold mb-1 adjuntos-section-title">Lista de adjuntos</h6>
-                  <small class="text-muted">Elementos maquetados: 5</small>
+                  <small id="adjuntosPredioStatus" class="text-muted">Selecciona un predio para consultar su carpeta Box.</small>
                 </div>
                 <div class="d-inline-flex align-items-center gap-2 adjuntos-pill">
                   <i class="bi bi-cloud-check"></i>
@@ -32,66 +32,13 @@
               </div>
 
               <div class="input-group mb-3 adjuntos-search">
-                <input type="text" class="form-control" placeholder="Buscar archivo o carpeta" disabled>
+                <input id="adjuntosPredioSearch" type="text" class="form-control" placeholder="Buscar archivo o carpeta">
                 <span class="input-group-text"><i class="bi bi-search"></i></span>
               </div>
 
-              <div class="d-flex flex-column gap-2 adjuntos-list">
-                <div class="adjunto-row d-flex align-items-center gap-3">
-                  <div class="adjunto-icon adjunto-icon-folder"><i class="bi bi-folder-fill"></i></div>
-                  <div class="min-w-0 flex-grow-1">
-                    <div class="fw-bold adjunto-name">Soportes juridicos</div>
-                    <small class="text-muted">Carpeta - 3 archivos</small>
-                  </div>
-                  <button type="button" class="adjunto-action" aria-label="Abrir carpeta"><i class="bi bi-chevron-right"></i></button>
-                </div>
-
-                <div class="adjunto-row d-flex align-items-center gap-3">
-                  <div class="adjunto-icon adjunto-icon-pdf"><i class="bi bi-file-earmark-pdf-fill"></i></div>
-                  <div class="min-w-0 flex-grow-1">
-                    <div class="fw-bold adjunto-name">Certificado_tradicion.pdf</div>
-                    <small class="text-muted">PDF - 1.8 MB - Actualizado hoy</small>
-                  </div>
-                  <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="adjunto-action" aria-label="Ver archivo"><i class="bi bi-eye"></i></button>
-                    <button type="button" class="adjunto-action" aria-label="Descargar archivo"><i class="bi bi-download"></i></button>
-                  </div>
-                </div>
-
-                <div class="adjunto-row d-flex align-items-center gap-3">
-                  <div class="adjunto-icon adjunto-icon-image"><i class="bi bi-image-fill"></i></div>
-                  <div class="min-w-0 flex-grow-1">
-                    <div class="fw-bold adjunto-name">Fachada_predio.jpg</div>
-                    <small class="text-muted">Imagen - 924 KB - Evidencia de campo</small>
-                  </div>
-                  <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="adjunto-action" aria-label="Ver imagen"><i class="bi bi-eye"></i></button>
-                    <button type="button" class="adjunto-action" aria-label="Descargar imagen"><i class="bi bi-download"></i></button>
-                  </div>
-                </div>
-
-                <div class="adjunto-row d-flex align-items-center gap-3">
-                  <div class="adjunto-icon adjunto-icon-zip"><i class="bi bi-file-earmark-zip-fill"></i></div>
-                  <div class="min-w-0 flex-grow-1">
-                    <div class="fw-bold adjunto-name">Levantamiento_campo.zip</div>
-                    <small class="text-muted">Comprimido - 12.4 MB - Captura tecnica</small>
-                  </div>
-                  <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="adjunto-action" aria-label="Ver comprimido"><i class="bi bi-eye"></i></button>
-                    <button type="button" class="adjunto-action" aria-label="Descargar comprimido"><i class="bi bi-download"></i></button>
-                  </div>
-                </div>
-
-                <div class="adjunto-row d-flex align-items-center gap-3">
-                  <div class="adjunto-icon adjunto-icon-doc"><i class="bi bi-file-earmark-text-fill"></i></div>
-                  <div class="min-w-0 flex-grow-1">
-                    <div class="fw-bold adjunto-name">Observaciones_visita.docx</div>
-                    <small class="text-muted">Documento - 312 KB - Revision pendiente</small>
-                  </div>
-                  <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="adjunto-action" aria-label="Ver documento"><i class="bi bi-eye"></i></button>
-                    <button type="button" class="adjunto-action" aria-label="Descargar documento"><i class="bi bi-download"></i></button>
-                  </div>
+              <div id="adjuntosPredioList" class="d-flex flex-column gap-2 adjuntos-list">
+                <div class="adjuntos-empty text-center text-muted py-4">
+                  Selecciona un predio para consultar su carpeta Box.
                 </div>
               </div>
             </div>
@@ -101,18 +48,18 @@
             <div class="adjuntos-panel h-100">
               <div class="d-flex align-items-center justify-content-between py-1 pb-2">
                 <div>
-                  <h6 class="fw-bold mb-1 adjuntos-section-title">Previsualizacion</h6>
+                  <h6 class="fw-bold mb-1 adjuntos-section-title">Previsualización</h6>
                   <small class="text-muted">Selecciona un adjunto para ver el detalle.</small>
                 </div>
               </div>
-              <div class="adjuntos-preview d-flex flex-column align-items-center justify-content-center text-center">
+              <div id="adjuntosPredioPreview" class="adjuntos-preview d-flex flex-column align-items-center justify-content-center text-center">
                 <i class="bi bi-file-earmark-text"></i>
                 <p class="fw-bold mb-1">Vista previa no disponible</p>
-                <small class="text-muted px-3">Maqueta visual pendiente de conexion a los adjuntos reales del predio.</small>
+                <small class="text-muted px-3">Selecciona un archivo para abrir una previsualizaci?n de Box.</small>
               </div>
               <div class="row g-2 mt-3">
-                <div class="col-6"><div class="adjuntos-summary"><small>Archivos</small><strong>4</strong></div></div>
-                <div class="col-6"><div class="adjuntos-summary"><small>Carpetas</small><strong>1</strong></div></div>
+                <div class="col-6"><div class="adjuntos-summary"><small>Archivos</small><strong id="adjuntosPredioFileCount">0</strong></div></div>
+                <div class="col-6"><div class="adjuntos-summary"><small>Carpetas</small><strong id="adjuntosPredioFolderCount">0</strong></div></div>
               </div>
             </div>
           </div>

@@ -1717,6 +1717,124 @@ def obtener_scope_geojson_asignacion(
     }
 
 
+
+def _box_norm_name(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def _box_item_payload(item: Any) -> dict:
+    return {
+        "id": str(getattr(item, "id", "") or ""),
+        "name": str(getattr(item, "name", "") or ""),
+        "type": str(getattr(item, "type", "") or ""),
+        "size": getattr(item, "size", None),
+        "modified_at": getattr(item, "modified_at", None),
+    }
+
+
+def _box_find_child_folder(client: Any, parent_folder_id: str, folder_names: list[str]) -> Optional[dict]:
+    wanted = {_box_norm_name(name) for name in folder_names if _box_norm_name(name)}
+    if not wanted:
+        return None
+
+    for item in client.folder(parent_folder_id).get_items(limit=1000):
+        if getattr(item, "type", "") == "folder" and _box_norm_name(getattr(item, "name", "")) in wanted:
+            return _box_item_payload(item)
+    return None
+
+
+def _box_folder_tree(client: Any, folder_id: str, *, depth: int = 0, max_depth: int = 2) -> list[dict]:
+    items: list[dict] = []
+    for item in client.folder(folder_id).get_items(limit=1000):
+        payload = _box_item_payload(item)
+        if payload["type"] == "folder" and depth < max_depth:
+            payload["items"] = _box_folder_tree(client, payload["id"], depth=depth + 1, max_depth=max_depth)
+        else:
+            payload["items"] = []
+        items.append(payload)
+
+    return sorted(items, key=lambda x: (0 if x.get("type") == "folder" else 1, _box_norm_name(x.get("name"))))
+
+
+@router.get("/{asignacion_id}/predios/{numero_predial}/box-folder")
+def obtener_carpeta_box_predio_asignacion(
+    asignacion_id: int,
+    numero_predial: str,
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento")
+    _ensure_assignment_access(conn, tenant, asignacion_id, user)
+
+    npn = str(numero_predial or "").strip()
+    if not npn:
+        raise HTTPException(status_code=400, detail="Numero predial requerido.")
+
+    asignacion_table = _app_table(tenant, "asignacion")
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            f"""
+            SELECT id, titulo, work_datasetname
+            FROM {asignacion_table}
+            WHERE id = %s
+            LIMIT 1
+            """,
+            (asignacion_id,),
+        )
+        asignacion = cur.fetchone()
+
+    if not asignacion:
+        raise HTTPException(status_code=404, detail="Asignacion no encontrada.")
+
+    from routers.box_client import clean_box_id, get_client
+
+    root_folder_id = clean_box_id(os.getenv("BOX_ROOT_FOLDER_ID", "377319267695"))
+    client = get_client()
+
+    assignment_candidates = []
+    for candidate in (
+        asignacion.get("work_datasetname"),
+        asignacion.get("titulo"),
+        f"asignacion_{asignacion_id}",
+    ):
+        value = str(candidate or "").strip()
+        if value and value not in assignment_candidates:
+            assignment_candidates.append(value)
+
+    assignment_folder = _box_find_child_folder(client, root_folder_id, assignment_candidates)
+    if not assignment_folder:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "message": "No se encontro carpeta Box para la asignacion.",
+                "root_folder_id": root_folder_id,
+                "assignment_candidates": assignment_candidates,
+            },
+        )
+
+    predio_folder = _box_find_child_folder(client, assignment_folder["id"], [npn])
+    if not predio_folder:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "message": "No se encontro carpeta Box para el predio dentro de la asignacion.",
+                "assignment_folder": assignment_folder,
+                "npn": npn,
+            },
+        )
+
+    return {
+        "assignment": {
+            "id": asignacion.get("id"),
+            "titulo": asignacion.get("titulo"),
+            "work_datasetname": asignacion.get("work_datasetname"),
+        },
+        "root_folder_id": root_folder_id,
+        "assignment_folder": assignment_folder,
+        "predio_folder": predio_folder,
+        "items": _box_folder_tree(client, predio_folder["id"], max_depth=2),
+    }
 @router.get("/{asignacion_id}/predios/{predio_t_id}/detalle-completo")
 def obtener_detalle_predio_completo_asignacion(
     asignacion_id: int,

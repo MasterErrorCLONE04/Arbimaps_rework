@@ -1,161 +1,179 @@
-import sys
 import os
-sys.path.append("/app")
 import shutil
+import sys
 
-from routers.box_client import create_folder, upload_file
-from mergin import MerginClient
+sys.path.append("/app")
+
 from dotenv import load_dotenv
+from mergin import MerginClient
+from routers.box_client import create_folder, upload_file
 
-print("🚀 INICIO SCRIPT")
+print("INICIO SCRIPT MERGIN SYNC")
 
-# ==============================
-# 🔐 CONFIG
-# ==============================
 load_dotenv("/app/.env")
+load_dotenv("/mergin_sync/.env")
 
 MERGIN_URL = os.getenv("MERGIN_URL")
 MERGIN_USERNAME = os.getenv("MERGIN_USERNAME")
 MERGIN_PASSWORD = os.getenv("MERGIN_PASSWORD")
+MERGIN_WORKSPACE = os.getenv("MERGIN_WORKSPACE", "Reconocimiento Predial").strip()
+ROOT_FOLDER_ID = os.getenv("BOX_MERGIN_SYNC_ROOT_FOLDER_ID", "376705885660").strip()
+TEMP_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), "temp"))
+PHOTO_EXTENSIONS = (".jpg", ".jpeg", ".png", ".tif", ".tiff")
 
-ROOT_FOLDER_ID = "369427324549"  # ID de la carpeta raíz en Box
-TEMP_BASE = os.path.join(os.path.dirname(__file__), "temp")
 
-TARGET_WORKSPACE = "Reconocimiento Predial"
+def require_config():
+    missing = [
+        name for name, value in {
+            "MERGIN_URL": MERGIN_URL,
+            "MERGIN_USERNAME": MERGIN_USERNAME,
+            "MERGIN_PASSWORD": MERGIN_PASSWORD,
+            "MERGIN_WORKSPACE": MERGIN_WORKSPACE,
+            "BOX_MERGIN_SYNC_ROOT_FOLDER_ID": ROOT_FOLDER_ID,
+        }.items()
+        if not value
+    ]
 
-os.makedirs(TEMP_BASE, exist_ok=True)
+    if missing:
+        raise RuntimeError(f"Faltan variables de entorno: {', '.join(missing)}")
 
-# ==============================
-# 🔌 CONEXIÓN
-# ==============================
-print(f"🔌 Conectando a Mergin: {MERGIN_URL}")
-client = MerginClient(MERGIN_URL)
-client.login(MERGIN_USERNAME, MERGIN_PASSWORD)
-print("✅ Login Mergin OK")
 
-# ==============================
-# 📋 LISTAR PROYECTOS
-# ==============================
-projects = client.projects_list()
+def project_temp_path(project_name):
+    local_path = os.path.abspath(os.path.join(TEMP_BASE, project_name))
+    if not local_path.startswith(TEMP_BASE + os.sep):
+        raise RuntimeError(f"Ruta temporal insegura para proyecto: {project_name}")
+    return local_path
 
-print(f"\n🔎 Buscando proyectos en: {TARGET_WORKSPACE}\n")
 
-for project in projects:
+def remove_local_project(local_path):
+    if os.path.exists(local_path):
+        print(f"Eliminando carpeta temporal: {local_path}")
+        shutil.rmtree(local_path)
+
+
+def classify_files(local_path):
+    photo_files = {}
+    data_files = {}
+
+    for root, dirs, files in os.walk(local_path):
+        dirs[:] = [d for d in dirs if d != ".mergin"]
+
+        for file_name in files:
+            full_path = os.path.join(root, file_name)
+            folder_name = os.path.basename(root)
+
+            if file_name.lower().endswith(PHOTO_EXTENSIONS):
+                photo_files.setdefault(folder_name, []).append(full_path)
+            else:
+                data_files.setdefault(folder_name, []).append(full_path)
+
+    return photo_files, data_files
+
+
+def upload_group(parent_folder_id, category, files, label):
+    failures = 0
+    category_folder_id = create_folder(parent_folder_id, category)
+
+    for file_path in files:
+        print(f"SUBIENDO {label}: {file_path}")
+        try:
+            uploaded_id = upload_file(category_folder_id, file_path)
+            if uploaded_id:
+                print(f"{label} OK: {file_path}")
+            else:
+                failures += 1
+                print(f"{label} SIN ID: {file_path}")
+        except Exception as exc:
+            failures += 1
+            print(f"ERROR {label} {file_path}: {exc}")
+
+    return failures
+
+
+def process_project(client, project):
+    full_project_name = f"{project['namespace']}/{project['name']}"
+    project_name = project["name"]
+    local_path = project_temp_path(project_name)
+    failures = 0
+
+    print("\n======================================")
+    print(f"Procesando: {full_project_name}")
+    print("======================================")
+
     try:
-        if project["namespace"] != TARGET_WORKSPACE:
-            continue
+        remove_local_project(local_path)
 
-        full_project_name = f"{project['namespace']}/{project['name']}"
-        project_name = project["name"]
+        print("Descargando proyecto...")
+        client.download_project(full_project_name, local_path)
+        print("Descarga completa")
 
-        print("\n======================================")
-        print(f"🚀 Procesando: {full_project_name}")
-        print("======================================")
-
-        LOCAL_PATH = f"{TEMP_BASE}/{project_name}"
-
-        # ==============================
-        # 🧹 LIMPIEZA PREVIA
-        # ==============================
-        if os.path.exists(LOCAL_PATH):
-            print("🧹 Eliminando carpeta anterior...")
-            shutil.rmtree(LOCAL_PATH)
-
-        # ==============================
-        # 📥 DESCARGA
-        # ==============================
-        print("📥 Descargando...")
-        client.download_project(full_project_name, LOCAL_PATH)
-        print("✅ Descarga completa")
-
-        # ==============================
-        # 🔍 CLASIFICACIÓN
-        # ==============================
-        photo_files = {}
-        data_files = {}
-
-        for root, dirs, files in os.walk(LOCAL_PATH):
-            for file in files:
-                full_path = os.path.join(root, file)
-                folder_name = os.path.basename(root)
-
-                if file.lower().endswith((".jpg", ".jpeg", ".png")):
-                    photo_files.setdefault(folder_name, []).append(full_path)
-                else:
-                    data_files.setdefault(folder_name, []).append(full_path)
-
-        # ==============================
-        # 📊 RESULTADO
-        # ==============================
-        print("\n📊 RESULTADO:")
-
+        photo_files, data_files = classify_files(local_path)
         total_photos = sum(len(v) for v in photo_files.values())
         total_data = sum(len(v) for v in data_files.values())
 
-        print(f"📸 Fotos: {total_photos}")
-        print(f"📦 Data: {total_data}")
+        print("\nRESULTADO:")
+        print(f"Fotos: {total_photos}")
+        print(f"Data: {total_data}")
 
-        # ==============================
-        # 📤 SUBIR A BOX
-        # ==============================
-        print("\n📤 Subiendo a Box...\n")
-
-        VERSION = f"v{project.get('version', 'auto')}"
-
+        print("\nSubiendo a Box...\n")
+        version = f"v{project.get('version', 'auto')}"
         project_folder_id = create_folder(ROOT_FOLDER_ID, project_name)
-        version_folder_id = create_folder(project_folder_id, VERSION)
-
+        version_folder_id = create_folder(project_folder_id, version)
         data_folder_id = create_folder(version_folder_id, "data")
         photos_folder_id = create_folder(version_folder_id, "fotos")
 
-        # ==============================
-        # 📦 DATA
-        # ==============================
         for category, files in data_files.items():
-            category_folder_id = create_folder(data_folder_id, category)
+            failures += upload_group(data_folder_id, category, files, "DATA")
 
-            for file_path in files:
-                print(f"⬆️ DATA: {file_path}")
-                try:
-                    uploaded_id = upload_file(category_folder_id, file_path)
-                    if uploaded_id:
-                        print(f"✅ DATA OK: {file_path}")
-                    else:
-                        print(f"⚠️ DATA SIN ID: {file_path}")
-                except Exception as e:
-                    print(f"❌ ERROR DATA {file_path}: {e}")
-
-        # ==============================
-        # 📸 FOTOS
-        # ==============================
         for category, files in photo_files.items():
-            category_folder_id = create_folder(photos_folder_id, category)
+            failures += upload_group(photos_folder_id, category, files, "FOTO")
 
-            for file_path in files:
-                print(f"⬆️ FOTO: {file_path}")
-                try:
-                    uploaded_id = upload_file(category_folder_id, file_path)
-                    if uploaded_id:
-                        print(f"✅ FOTO OK: {file_path}")
-                    else:
-                        print(f"⚠️ FOTO SIN ID: {file_path}")
-                except Exception as e:
-                    print(f"❌ ERROR FOTO {file_path}: {e}")
+        if failures:
+            raise RuntimeError(f"Proyecto {project_name} termino con {failures} archivo(s) fallidos")
 
-        print("✅ SUBIDA COMPLETA")
+        print("SUBIDA COMPLETA")
+        return 0
 
-        # ==============================
-        # 🧹 LIMPIEZA FINAL
-        # ==============================
-        print("🧹 Eliminando archivos locales...")
+    finally:
+        remove_local_project(local_path)
 
-        if os.path.exists(LOCAL_PATH):
-            shutil.rmtree(LOCAL_PATH)
-            print("✅ Carpeta eliminada")
-        else:
-            print("⚠️ No se encontró carpeta")
 
-    except Exception as e:
-        print(f"❌ ERROR PROCESANDO PROYECTO {project.get('name', 'SIN_NOMBRE')}: {e}")
+def main():
+    require_config()
+    os.makedirs(TEMP_BASE, exist_ok=True)
 
-print("\n🎉 PROCESO COMPLETO FINALIZADO\n")
+    print(f"Conectando a Mergin: {MERGIN_URL}")
+    client = MerginClient(MERGIN_URL)
+    client.login(MERGIN_USERNAME, MERGIN_PASSWORD)
+    print("Login Mergin OK")
+
+    projects = client.projects_list()
+    filtered_projects = [p for p in projects if p["namespace"] == MERGIN_WORKSPACE]
+
+    print(f"\nBuscando proyectos en: {MERGIN_WORKSPACE}")
+    print(f"Proyectos encontrados: {len(filtered_projects)}\n")
+
+    if not filtered_projects:
+        raise RuntimeError(f"No se encontraron proyectos en el workspace: {MERGIN_WORKSPACE}")
+
+    failed_projects = 0
+
+    for project in filtered_projects:
+        try:
+            process_project(client, project)
+        except Exception as exc:
+            failed_projects += 1
+            print(f"ERROR PROCESANDO PROYECTO {project.get('name', 'SIN_NOMBRE')}: {exc}")
+
+    if failed_projects:
+        raise RuntimeError(f"Sync terminado con {failed_projects} proyecto(s) fallidos")
+
+    print("\nPROCESO COMPLETO FINALIZADO\n")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as exc:
+        print(f"ERROR GENERAL: {exc}", file=sys.stderr)
+        sys.exit(1)

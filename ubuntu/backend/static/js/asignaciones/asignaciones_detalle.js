@@ -1469,7 +1469,7 @@ document.getElementById("btnConfirmDevolucion")?.addEventListener("click", async
       const rawText = await response.text();
       let data = {};
       try { data = JSON.parse(rawText); } catch (e) { }
-      throw new Error(data?.detail || rawText || "Error al realizar la devolución.");
+      throw new Error(data?.detail || rawText || "Error al realizar la devolucin.");
     }
 
     devolucionTargetAction = "";
@@ -1504,8 +1504,8 @@ document.getElementById("btnQCApprove")?.addEventListener("click", () => {
   }
 
   showConfirm(
-    "¿Confirmar Aprobación?",
-    "¿Estás seguro de que deseas aprobar este trabajo y enviarlo a generación XTF?",
+    "Confirmar Aprobacin?",
+    "Ests seguro de que deseas aprobar este trabajo y enviarlo a generacin XTF?",
     "Sí, aprobar"
   ).then(async (result) => {
     if (!result.isConfirmed) return;
@@ -1539,7 +1539,7 @@ document.getElementById("btnQCApprove")?.addEventListener("click", () => {
       }
 
       if (!response.ok) {
-        throw new Error(data?.detail || rawText || "Error al aprobar la asignación.");
+        throw new Error(data?.detail || rawText || "Error al aprobar la asignacin.");
       }
 
       const modalEl = document.getElementById("modalQCReview");
@@ -1800,8 +1800,8 @@ document.getElementById("btnViewSoporteContinuarRecon")?.addEventListener("click
   }
 
   showConfirm(
-    "¿Continuar con Reconocedor?",
-    "¿Estás seguro de que deseas continuar con el mismo reconocedor para digitalización?",
+    "Continuar con Reconocedor?",
+    "Ests seguro de que deseas continuar con el mismo reconocedor para digitalizacin?",
     "Sí, continuar"
   ).then(async (result) => {
     if (!result.isConfirmed) return;
@@ -1971,8 +1971,8 @@ document.getElementById("btnQC2Approve")?.addEventListener("click", () => {
   }
 
   showConfirm(
-    "¿Confirmar Aprobación?",
-    "¿Estás seguro de que deseas aprobar este trabajo de digitalización?",
+    "Confirmar Aprobacin?",
+    "Ests seguro de que deseas aprobar este trabajo de digitalizacin?",
     "Sí, aprobar"
   ).then(async (result) => {
     if (!result.isConfirmed) return;
@@ -1999,7 +1999,7 @@ document.getElementById("btnQC2Approve")?.addEventListener("click", () => {
         const rawText = await response.text();
         let data = {};
         try { data = JSON.parse(rawText); } catch (e) { }
-        throw new Error(data?.detail || rawText || "Error al aprobar digitalización.");
+        throw new Error(data?.detail || rawText || "Error al aprobar digitalizacin.");
       }
 
       const modalEl = document.getElementById("modalQCReview2");
@@ -2068,8 +2068,8 @@ document.getElementById("btnLiderApprove")?.addEventListener("click", () => {
   }
 
   showConfirm(
-    "¿Confirmar Aprobación?",
-    "¿Estás seguro de que deseas aprobar este trabajo de digitalización y comenzar la sincronización?",
+    "Confirmar Aprobacin?",
+    "Ests seguro de que deseas aprobar este trabajo de digitalizacin y comenzar la sincronizacin?",
     "Sí, aprobar y sincronizar"
   ).then(async (result) => {
     if (!result.isConfirmed) return;
@@ -2096,7 +2096,7 @@ document.getElementById("btnLiderApprove")?.addEventListener("click", () => {
         const rawText = await response.text();
         let data = {};
         try { data = JSON.parse(rawText); } catch (e) { }
-        throw new Error(data?.detail || rawText || "Error al aprobar digitalización.");
+        throw new Error(data?.detail || rawText || "Error al aprobar digitalizacin.");
       }
 
       const modalEl = document.getElementById("modalLiderReview");
@@ -3068,6 +3068,168 @@ async function seleccionarPredioDetalle(predioId, predioTId, numeroPredial) {
   }
 }
 
+
+function adjuntosPredioSetStatus(text) {
+  const el = document.getElementById("adjuntosPredioStatus");
+  if (el) el.textContent = text || "";
+}
+
+function adjuntosPredioResetPreview(message = "Selecciona un archivo para abrir una previsualizacion de Box.") {
+  const preview = document.getElementById("adjuntosPredioPreview");
+  if (!preview) return;
+  preview.innerHTML = `
+    <i class="bi bi-file-earmark-text"></i>
+    <p class="fw-bold mb-1">Vista previa no disponible</p>
+    <small class="text-muted px-3">${esc(message)}</small>
+  `;
+}
+
+function adjuntosPredioIconClass(item) {
+  if (item?.type === "folder") return "adjunto-icon-folder bi-folder-fill";
+  const name = String(item?.name || "").toLowerCase();
+  if (name.endsWith(".pdf")) return "adjunto-icon-pdf bi-file-earmark-pdf-fill";
+  if (/\.(jpg|jpeg|png|tif|tiff|webp)$/i.test(name)) return "adjunto-icon-image bi-image-fill";
+  if (/\.(zip|rar|7z)$/i.test(name)) return "adjunto-icon-zip bi-file-earmark-zip-fill";
+  return "adjunto-icon-doc bi-file-earmark-text-fill";
+}
+
+function adjuntosPredioFlatten(items = [], depth = 0, rows = []) {
+  items.forEach((item) => {
+    rows.push({ item, depth });
+    if (item?.type === "folder" && Array.isArray(item.items) && item.items.length) {
+      adjuntosPredioFlatten(item.items, depth + 1, rows);
+    }
+  });
+  return rows;
+}
+
+function adjuntosPredioCount(items = []) {
+  let files = 0;
+  let folders = 0;
+  items.forEach((item) => {
+    if (item?.type === "folder") {
+      folders += 1;
+      const childCounts = adjuntosPredioCount(item.items || []);
+      files += childCounts.files;
+      folders += childCounts.folders;
+    } else if (item?.type === "file") {
+      files += 1;
+    }
+  });
+  return { files, folders };
+}
+
+function adjuntosPredioRender(items = [], filter = "") {
+  const list = document.getElementById("adjuntosPredioList");
+  if (!list) return;
+
+  const query = String(filter || "").trim().toLowerCase();
+  const rows = adjuntosPredioFlatten(items).filter(({ item }) => {
+    if (!query) return true;
+    return String(item?.name || "").toLowerCase().includes(query);
+  });
+
+  if (!rows.length) {
+    list.innerHTML = `<div class="adjuntos-empty text-center text-muted py-4">No se encontraron archivos para este filtro.</div>`;
+    return;
+  }
+
+  list.innerHTML = rows.map(({ item, depth }) => {
+    const iconClass = adjuntosPredioIconClass(item);
+    const isFolder = item?.type === "folder";
+    const meta = isFolder
+      ? `Carpeta${Array.isArray(item.items) ? ` - ${item.items.length} elemento(s)` : ""}`
+      : `Archivo${item.size ? ` - ${formatFileSize(Number(item.size))}` : ""}`;
+    const actionButtons = isFolder
+      ? `<span class="adjunto-action" aria-hidden="true"><i class="bi bi-folder2-open"></i></span>`
+      : `<button type="button" class="adjunto-action" data-box-preview-id="${esc(item.id)}" data-box-preview-type="file" aria-label="Ver archivo"><i class="bi bi-eye"></i></button>`;
+
+    return `
+      <div class="adjunto-row d-flex align-items-center gap-3" style="margin-left:${depth * 14}px" data-box-item-name="${esc(item.name)}">
+        <div class="adjunto-icon ${iconClass.split(" ")[0]}"><i class="bi ${iconClass.split(" ")[1]}"></i></div>
+        <div class="min-w-0 flex-grow-1">
+          <div class="fw-bold adjunto-name">${esc(item.name || "-")}</div>
+          <small class="text-muted">${esc(meta)}</small>
+        </div>
+        <div class="d-flex align-items-center gap-2">${actionButtons}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+async function adjuntosPredioOpenFile(fileId) {
+  const preview = document.getElementById("adjuntosPredioPreview");
+  if (!preview || !fileId) return;
+
+  preview.innerHTML = `<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>`;
+
+  try {
+    const params = new URLSearchParams({ item_type: "file", item_id: String(fileId) });
+    const resp = await fetch(`${rp}/api/box/open?${params.toString()}`, { credentials: "same-origin" });
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(formatBackendDetail(data?.detail) || "No se pudo abrir el archivo en Box.");
+
+    preview.innerHTML = `
+      <iframe src="${esc(data.preview_url || data.url || "")}" title="${esc(data.name || "Vista previa Box")}" style="width:100%;height:330px;border:0;border-radius:12px;background:#fff;"></iframe>
+      <a class="btn btn-sm btn-outline-primary mt-2" href="${esc(data.url || "#")}" target="_blank" rel="noopener">Abrir en Box</a>
+    `;
+  } catch (err) {
+    adjuntosPredioResetPreview(err.message || "No se pudo abrir el archivo.");
+  }
+}
+
+async function cargarAdjuntosPredioBox() {
+  const asignacionId = Number(elId?.value || idFromUrl);
+  const npn = String(predioSeleccionadoNumero || "").trim();
+  const list = document.getElementById("adjuntosPredioList");
+  const search = document.getElementById("adjuntosPredioSearch");
+  const fileCount = document.getElementById("adjuntosPredioFileCount");
+  const folderCount = document.getElementById("adjuntosPredioFolderCount");
+
+  if (fileCount) fileCount.textContent = "0";
+  if (folderCount) folderCount.textContent = "0";
+  if (search) search.value = "";
+  adjuntosPredioResetPreview();
+
+  if (!asignacionId || !npn) {
+    adjuntosPredioSetStatus("Selecciona un predio para consultar su carpeta Box.");
+    if (list) list.innerHTML = `<div class="adjuntos-empty text-center text-muted py-4">Selecciona un predio para consultar su carpeta Box.</div>`;
+    return;
+  }
+
+  adjuntosPredioSetStatus(`Consultando carpeta Box del NPN ${npn}...`);
+  if (list) list.innerHTML = `<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2"></div>Cargando carpeta Box...</div>`;
+
+  try {
+    const resp = await fetch(
+      `${rp}/asignaciones/${encodeURIComponent(asignacionId)}/predios/${encodeURIComponent(npn)}/box-folder`,
+      { credentials: "same-origin" }
+    );
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) throw new Error(formatBackendDetail(data?.detail) || "No se encontro la carpeta Box del predio.");
+
+    const items = Array.isArray(data.items) ? data.items : [];
+    const counts = adjuntosPredioCount(items);
+    if (fileCount) fileCount.textContent = String(counts.files);
+    if (folderCount) folderCount.textContent = String(counts.folders);
+    adjuntosPredioSetStatus(`${data.assignment_folder?.name || "Asignacion"} / ${data.predio_folder?.name || npn}`);
+    adjuntosPredioRender(items);
+
+    if (search) {
+      search.oninput = () => adjuntosPredioRender(items, search.value);
+    }
+  } catch (err) {
+    adjuntosPredioSetStatus("No se pudo cargar la carpeta Box del predio.");
+    if (list) list.innerHTML = `<div class="adjuntos-empty text-center text-muted py-4">${esc(err.message || "No se pudo cargar la carpeta Box del predio.")}</div>`;
+  }
+}
+
+document.getElementById("modalAdjuntosPredio")?.addEventListener("shown.bs.modal", cargarAdjuntosPredioBox);
+document.getElementById("adjuntosPredioList")?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-box-preview-id]");
+  if (!button) return;
+  adjuntosPredioOpenFile(button.getAttribute("data-box-preview-id"));
+});
 document.addEventListener("DOMContentLoaded", () => {
   initMapDetail();
   loadProjectExtentDetail();
@@ -3337,8 +3499,8 @@ function renderTablaConstruccionesEdit(construcciones = []) {
 
                                   <div class="col-12 col-md-4">
                                     <div class="d-flex flex-column w-100 dato p-2">
-                                      <div class="fw-bold text-start text-detalle-unidad">Área Total Construcción</div>
-                                      <div class="text-start detalle-uc-value">${areaTotalConstruccion} <span style="color:#002f55">m²</span></div>
+                                      <div class="fw-bold text-start text-detalle-unidad">?rea Total Construcci?n</div>
+                                      <div class="text-start detalle-uc-value">${areaTotalConstruccion} <span style="color:#002f55">m?</span></div>
                                     </div>
                                   </div>
 
@@ -3890,7 +4052,7 @@ function poblarOffcanvasTipologiaEdit(detalle = {}) {
   const car = detalle?.caracteristicas || {};
   const cal = detalle?.tipologia_construccion || {};
 
-  setTextByIdEdit("tipologiaTipoCalificacion", car?.tipo_calificacion_nombre || "Por Tipología");
+  setTextByIdEdit("tipologiaTipoCalificacion", car?.tipo_calificacion_nombre || "Por Tipologa");
   setTextByIdEdit("tipologiaTipoUnidad", car?.tipo_unidad_construccion_nombre);
   setTextByIdEdit("tipologiaUso", car?.uso_nombre);
   setTextByIdEdit("tipologiaTotalPlantas", car?.total_plantas);
@@ -3984,10 +4146,10 @@ function renderMarcasPredialesAsignacionEdit(marcas = []) {
         ${index > 0 ? '<div class="border-top my-3"></div>' : ''}
         <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
           <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Tipo de marca</div><div class="text-start dato_info">${esc(normalizarTextoEdit(marca?.marca_tipo_nombre ?? marca?.marca_tipo))}</div></div></div>
-          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Fecha de creación</div><div class="text-start dato_info">${esc(formatDateMaybeEdit(marca?.fecha_creacion))}</div></div></div>
-          <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Fecha de finalización</div><div class="text-start dato_info">${esc(formatDateMaybeEdit(marca?.fecha_finalizacion))}</div></div></div>
-          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">¿Fue resuelta?</div><div class="text-start dato_info">${esc(asSiNoEdit(marca?.resuelta))}</div></div></div>
-          <div class="col-12"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Observación</div><div class="text-start dato_info">${esc(normalizarTextoEdit(marca?.observacion))}</div></div></div>
+          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Fecha de creacin</div><div class="text-start dato_info">${esc(formatDateMaybeEdit(marca?.fecha_creacion))}</div></div></div>
+          <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Fecha de finalizacin</div><div class="text-start dato_info">${esc(formatDateMaybeEdit(marca?.fecha_finalizacion))}</div></div></div>
+          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Fue resuelta?</div><div class="text-start dato_info">${esc(asSiNoEdit(marca?.resuelta))}</div></div></div>
+          <div class="col-12"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Observacin</div><div class="text-start dato_info">${esc(normalizarTextoEdit(marca?.observacion))}</div></div></div>
         </div>
       `).join("");
 }
@@ -4004,8 +4166,8 @@ function renderNovedadesFMIAsignacionEdit(novedades = []) {
         ${index > 0 ? '<div class="border-top my-3"></div>' : ''}
         <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
           <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Tipo de novedad</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.tipo_novedad_fmi_nombre ?? novedad?.tipo_novedad_fmi))}</div></div></div>
-          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Código ORIP</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.codigo_orip))}</div></div></div>
-          <div class="col-12"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Número FMI</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.numero_fmi))}</div></div></div>
+          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Cdigo ORIP</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.codigo_orip))}</div></div></div>
+          <div class="col-12"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Nmero FMI</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.numero_fmi))}</div></div></div>
         </div>
       `).join("");
 }
@@ -4022,7 +4184,7 @@ function renderNovedadesNumeroPredialAsignacionEdit(novedades = []) {
         ${index > 0 ? '<div class="border-top my-3"></div>' : ''}
         <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
           <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Tipo de novedad</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.tipo_novedad_nombre ?? novedad?.tipo_novedad))}</div></div></div>
-          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Número predial</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.numero_predial))}</div></div></div>
+          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Nmero predial</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.numero_predial))}</div></div></div>
         </div>
       `).join("");
 }
@@ -4039,10 +4201,10 @@ function renderTramitesAsignacionEdit(tramites = []) {
         ${index > 0 ? '<div class="border-top my-3"></div>' : ''}
         <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
           <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Entidad</div><div class="text-start dato_info">${esc(normalizarTextoEdit(tramite?.entidad_nombre ?? tramite?.entidad))}</div></div></div>
-          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Trámite</div><div class="text-start dato_info">${esc(normalizarTextoEdit(tramite?.tramite_nombre ?? tramite?.tramite))}</div></div></div>
-          <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Fecha de radicación</div><div class="text-start dato_info">${esc(formatDateMaybeEdit(tramite?.fecha_radicacion))}</div></div></div>
-          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">¿Fue resuelta?</div><div class="text-start dato_info">${esc(asSiNoEdit(tramite?.resuelta))}</div></div></div>
-          <div class="col-12"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Observación</div><div class="text-start dato_info">${esc(normalizarTextoEdit(tramite?.observacion))}</div></div></div>
+          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Trmite</div><div class="text-start dato_info">${esc(normalizarTextoEdit(tramite?.tramite_nombre ?? tramite?.tramite))}</div></div></div>
+          <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Fecha de radicacin</div><div class="text-start dato_info">${esc(formatDateMaybeEdit(tramite?.fecha_radicacion))}</div></div></div>
+          <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Fue resuelta?</div><div class="text-start dato_info">${esc(asSiNoEdit(tramite?.resuelta))}</div></div></div>
+          <div class="col-12"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Observacin</div><div class="text-start dato_info">${esc(normalizarTextoEdit(tramite?.observacion))}</div></div></div>
         </div>
       `).join("");
 }
@@ -4629,7 +4791,7 @@ function renderInteresadosModalEdit(interesadosRaw) {
       i.tipo_persona ||
       i.i_tipo_nombre ||
       i.i_tipo ||
-      (esPersonaJuridica ? "Persona Jurídica" : "Persona Natural");
+      (esPersonaJuridica ? "Persona Jurdica" : "Persona Natural");
 
     return {
       ...i,
@@ -4646,13 +4808,13 @@ function renderInteresadosModalEdit(interesadosRaw) {
   interesadosModalEditData = interesados;
 
   tbody.innerHTML = interesados.map((item, index) => {
-    const autorizaNotif = item.autoriza_notificacion_correo === true || item.autoriza_notificacion_correo === 'true' || item.autoriza_notificacion_correo === 't' ? 'Sí' :
+    const autorizaNotif = item.autoriza_notificacion_correo === true || item.autoriza_notificacion_correo === 'true' || item.autoriza_notificacion_correo === 't' ? 'S' :
       (item.autoriza_notificacion_correo === false || item.autoriza_notificacion_correo === 'false' || item.autoriza_notificacion_correo === 'f' ? 'No' : '---');
 
-    const campesinoTexto = item.autorreconocimiento_campesino === true || item.autorreconocimiento_campesino === 'true' || item.autorreconocimiento_campesino === 't' ? 'Sí' :
+    const campesinoTexto = item.autorreconocimiento_campesino === true || item.autorreconocimiento_campesino === 'true' || item.autorreconocimiento_campesino === 't' ? 'S' :
       (item.autorreconocimiento_campesino === false || item.autorreconocimiento_campesino === 'false' || item.autorreconocimiento_campesino === 'f' ? 'No' : '---');
 
-    const etnicoTexto = item.autorreconocimiento_etnico === true || item.autorreconocimiento_etnico === 'true' || item.autorreconocimiento_etnico === 't' ? 'Sí' :
+    const etnicoTexto = item.autorreconocimiento_etnico === true || item.autorreconocimiento_etnico === 'true' || item.autorreconocimiento_etnico === 't' ? 'S' :
       (item.autorreconocimiento_etnico === false || item.autorreconocimiento_etnico === 'false' || item.autorreconocimiento_etnico === 'f' ? 'No' : '---');
 
     return `
@@ -4817,7 +4979,7 @@ function renderInteresadosModalEdit(interesadosRaw) {
 
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
-                                                <div class="text-start text-lojh-edit mb-0">¿Autoriza notificación por correo?</div>
+                                                <div class="text-start text-lojh-edit mb-0">Autoriza notificacin por correo?</div>
                                                 <div class="text-end mb-0">${autorizaNotif}</div>
                                             </div>
                                         </div>

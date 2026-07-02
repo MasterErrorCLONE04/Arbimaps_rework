@@ -1,9 +1,6 @@
 import os
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
-from dotenv import load_dotenv
 from routers.box_client import get_client, clean_box_id
-
-load_dotenv(os.path.join(os.path.dirname(__file__), "../.env"))
 
 router = APIRouter(prefix="/box", tags=["box"])
 
