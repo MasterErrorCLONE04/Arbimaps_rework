@@ -1,5 +1,13 @@
 from quality_rules.dataset import InMemoryDataset
-from quality_rules.economico import _rule_4_1, _rule_4_2, _rule_4_3, _rule_4_4, _rule_4_10
+from quality_rules.economico import (
+    _rule_4_1,
+    _rule_4_2,
+    _rule_4_3,
+    _rule_4_4,
+    _rule_4_10,
+    _rule_4_14,
+    _rule_4_15,
+)
 from quality_rules.xtf_reader import TARGET_CLASSES, parse_xtf_tables
 
 
@@ -156,6 +164,36 @@ def test_rule_4_10_detects_conservation_unit_with_non_conservation_tipologia():
     assert issues[0].object_ref == "uc-conservacion"
     assert issues[0].details["tipo_unidad_construccion_ilicode"] == "Conservacion_Proteccion_Ambiental"
     assert issues[0].details["tipo_tipologia_ilicode"] == "Comercial.Especializado_2_2036543"
+
+
+def test_rules_4_14_and_4_15_detect_missing_anexo_fields_for_no_convencional():
+    dataset = InMemoryDataset(
+        {
+            "ARB_CaracteristicasUnidadConstruccion": [
+                {
+                    "TID": "uc-no-convencional",
+                    "Tipo_Unidad_Construccion": "Anexo",
+                    "Tipo_Calificacion": "No_Convencional",
+                },
+                {
+                    "TID": "uc-convencional",
+                    "Tipo_Unidad_Construccion": "Residencial",
+                    "Tipo_Calificacion": "Convencional",
+                },
+            ]
+        }
+    )
+
+    issues_4_14 = _rule_4_14(dataset)
+    issues_4_15 = _rule_4_15(dataset)
+
+    assert len(issues_4_14) == 1
+    assert issues_4_14[0].object_ref == "uc-no-convencional"
+    assert issues_4_14[0].details["tipo_calificacion_ilicode"] == "No_Convencional"
+
+    assert len(issues_4_15) == 1
+    assert issues_4_15[0].object_ref == "uc-no-convencional"
+    assert issues_4_15[0].details["tipo_calificacion_ilicode"] == "No_Convencional"
 
 
 def test_xtf_reader_loads_domain_tables_and_detects_relation_error(tmp_path):

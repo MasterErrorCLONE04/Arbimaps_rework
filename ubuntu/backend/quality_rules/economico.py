@@ -7,7 +7,7 @@ from .base import DatasetReader, RuleIssue
 COMPONENT_SLUG = "economico"
 
 DEFAULT_RULE_IDS = frozenset({
-    "4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10",
+    "4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "4.11", "4.12", "4.13", "4.14", "4.15",
 })
 
 
@@ -74,6 +74,15 @@ class EconomicoHelper:
         "arb_tipologiatipo",
         "CUC_TipologiaTipo",
         "cuc_tipologiatipo",
+    )
+
+    CALIFICACION_TIPO_TABLES = (
+        "ARB_CalificacionTipo",
+        "arb_calificaciontipo",
+        "CCA_CalificacionTipo",
+        "cca_calificaciontipo",
+        "ILC_CalificacionTipo",
+        "ilc_calificaciontipo",
     )
 
     AVALUO_TABLES = (
@@ -180,7 +189,7 @@ class EconomicoHelper:
             tipo_unidad_resuelta = self._resolve_domain_value(
                 tipo_unidad,
                 self._domain_values_by_ref(self.UNIDAD_TIPO_TABLES),
-                _TIPO_UNIDAD_RELACION_BY_REF,
+                {},
             )
             tipo_tipologia_resuelta = self._resolve_domain_value(
                 tipo_tipologia,
@@ -188,7 +197,7 @@ class EconomicoHelper:
                     **self._domain_values_by_ref(self.TIPOLOGIA_TIPO_TABLES),
                     **self._tipologias_by_ref(),
                 },
-                _TIPOLOGIA_RELACION_BY_REF,
+                {},
             )
 
             details: dict[str, object] = {
@@ -228,24 +237,21 @@ class EconomicoHelper:
         ) or self.identify(row)
 
     def _domain_row_value(self, row: dict[str, object]) -> str | None:
-        for candidates in (
+        # IMPORTANTE:
+        # Para dominios solo usamos ILICODE. No usamos dispname, itfcode,
+        # seq ni description porque esos valores pueden producir falsos positivos
+        # cuando cambian entre proyectos/modelos.
+        return self.get_field_value(
+            row,
             ("ilicode", "iliCode", "IliCode", "ILICODE"),
-            ("dispname", "DispName", "nombre", "Nombre"),
-            ("itfcode", "itfCode", "ITFCODE"),
-            ("description", "Description"),
-        ):
-            value = self.get_field_value(row, candidates)
-            if value:
-                return value
-        return self.identify(row)
+        )
+
 
     def _domain_identifiers(self, row: dict[str, object]) -> list[str]:
-        identifiers = self.row_identifiers(row)
-        for field in ("itfcode", "itfCode", "ITFCODE", "seq", "Seq"):
-            value = self.get_field_value(row, (field,))
-            if value and value not in identifiers:
-                identifiers.append(value)
-        return identifiers
+        # Solo se indexa por identificadores reales del registro:
+        # TID/t_id/id/t_ili_tid. No se indexa por itfcode ni seq.
+        return self.row_identifiers(row)
+
 
     def _domain_values_by_ref(self, table_names: tuple[str, ...]) -> dict[str, str]:
         lookup: dict[str, str] = {}
@@ -267,6 +273,14 @@ class EconomicoHelper:
             return None
         text = str(value).strip()
         return lookup.get(text) or fallback.get(self._normalize_key(text)) or text
+
+    def resolve_tipo_calificacion(self, value: object) -> str | None:
+        """Resuelve Tipo_Calificacion contra ARB_CalificacionTipo por ilicode."""
+        return self._resolve_domain_value(
+            value,
+            self._domain_values_by_ref(self.CALIFICACION_TIPO_TABLES),
+            {},
+        )
 
     def _tipologias_by_ref(self) -> dict[str, str]:
         lookup: dict[str, str] = {}
@@ -529,9 +543,6 @@ def _unidad_construccion_tipo_ilicode(value: object, *, table_name: str | None =
     norm = _normalized_domain_text(text)
     table_norm = _normalized_domain_text(table_name)
 
-    if norm in _TIPO_UNIDAD_RELACION_BY_REF:
-        return _TIPO_UNIDAD_RELACION_BY_REF[norm]
-
     named_mapping = (
         ("conservacionproteccionambiental", "Conservacion_Proteccion_Ambiental"),
         ("residencial", "Residencial"),
@@ -618,9 +629,6 @@ def _tipologia_ilicode(value: object) -> str:
 
     norm = _normalized_domain_text(text)
 
-    if norm in _TIPOLOGIA_RELACION_BY_REF:
-        return _TIPOLOGIA_RELACION_BY_REF[norm]
-
     # Compatibilidad cuando el lector trae displayName simple.
     display_prefix = {
         "residencial": "Residencial.DisplayName",
@@ -647,6 +655,28 @@ def _tipologia_ilicode(value: object) -> str:
 
     return text
 
+def _tipo_calificacion_ilicode(value: object) -> str:
+    """
+    Normaliza Tipo_Calificacion usando ILICODE.
+    No depende de t_id, itfcode ni seq.
+    """
+    if _is_empty(value):
+        return ""
+
+    text = _normalizar_valor_dominio(value)
+    norm = _normalized_domain_text(text)
+
+    named_mapping = (
+        ("tipologia", "Tipologia"),
+        ("noconvencional", "No_Convencional"),
+        ("convencional", "Convencional"),
+    )
+
+    for key, canonical in named_mapping:
+        if norm == key or norm.endswith(key):
+            return canonical
+
+    return text
 
 def _tipologia_segments(value: object) -> list[str]:
     text = _as_text(value)
@@ -841,6 +871,58 @@ def _novedad_es_cancelacion(value: object) -> bool:
         return False
 
     return str(value).strip().startswith("Cancelacion")
+TIPO_CALIFICACION_FIELDS = (
+    "tipo_calificacion",
+    "Tipo_Calificacion",
+    "ct_tipo_calificacion",
+    "CT_Tipo_Calificacion",
+    "calificacion_tipo",
+    "Calificacion_Tipo",
+    "arb_calificaciontipo",
+    "ARB_CalificacionTipo",
+    "calificaciontipo",
+    "CalificacionTipo",
+)
+
+CNC_TIPO_ANEXO_FIELDS = (
+    "cnc_tipo_anexo",
+    "CNC_Tipo_Anexo",
+    "tipo_anexo",
+    "Tipo_Anexo",
+)
+
+CNC_CONSERVACION_ANEXO_FIELDS = (
+    "cnc_conservacion_anexo",
+    "CNC_Conservacion_Anexo",
+    "conservacion_anexo",
+    "Conservacion_Anexo",
+)
+
+
+def _get_tipo_calificacion_resuelto(
+    helper: EconomicoHelper,
+    row: dict[str, object],
+) -> tuple[str | None, str | None, str]:
+    raw = helper.get_field_value(row, TIPO_CALIFICACION_FIELDS)
+    resuelto = helper.resolve_tipo_calificacion(raw)
+    ilicode = _tipo_calificacion_ilicode(resuelto)
+    return raw, resuelto, ilicode
+
+
+def _get_tipo_unidad_resuelto(
+    helper: EconomicoHelper,
+    row: dict[str, object],
+    table_name: str,
+) -> tuple[str | None, str | None, str]:
+    raw = helper.get_field_value(row, helper.TIPO_UNIDAD_FIELDS)
+    resuelto = helper._resolve_domain_value(
+        raw,
+        helper._domain_values_by_ref(helper.UNIDAD_TIPO_TABLES),
+        {},
+    )
+    ilicode = _unidad_construccion_tipo_ilicode(resuelto, table_name=table_name)
+    return raw, resuelto, ilicode
+
 # -------------------- Reglas --------------------
 
 def _rule_4_1(dataset: DatasetReader) -> list[RuleIssue]:
@@ -967,46 +1049,6 @@ def _rule_4_4(dataset: DatasetReader) -> list[RuleIssue]:
                     message=(
                         "Cuando el tipo de unidad de construccion es Institucional, "
                         "solamente se pueden asociar tipologias institucionales."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "tipo_unidad_construccion": tipo_unidad,
-                        "tipo_unidad_construccion_ilicode": tipo_unidad_str,
-                        "tipo_tipologia": tipo_tipologia,
-                        "tipo_tipologia_ilicode": tipo_tipologia_ilicode,
-                        **relation_details,
-                    },
-                )
-            )
-
-    return issues
-
-
-def _rule_4_10(dataset: DatasetReader) -> list[RuleIssue]:
-    """
-    Regla 4.10:
-    Si el tipo de unidad de construcción es Conservación y protección ambiental,
-    la tipología asociada también debe ser de Conservación.
-    """
-    helper = EconomicoHelper(dataset)
-    issues: list[RuleIssue] = []
-
-    for table_name, row, tipo_unidad, tipo_tipologia, relation_details in helper.iter_caracteristicas_tipologia():
-        tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad, table_name=table_name)
-        tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
-
-        if (
-            tipo_unidad_str == "Conservacion_Proteccion_Ambiental"
-            and _is_not_empty(tipo_tipologia_ilicode)
-            and not _tipologia_conservacion_valida(tipo_tipologia_ilicode)
-        ):
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="4.10",
-                    message=(
-                        "Cuando el tipo de unidad de construccion es Conservacion y proteccion ambiental, "
-                        "solamente se pueden asociar tipologias de conservacion."
                     ),
                     details={
                         "tabla": table_name,
@@ -1326,6 +1368,271 @@ def _rule_4_9(dataset: DatasetReader) -> list[RuleIssue]:
 
     return issues
 
+def _rule_4_10(dataset: DatasetReader) -> list[RuleIssue]:
+    """
+    Regla 4.10:
+    Si el tipo de unidad de construcción es Conservación y protección ambiental,
+    la tipología asociada también debe ser de Conservación.
+    """
+    helper = EconomicoHelper(dataset)
+    issues: list[RuleIssue] = []
+
+    for table_name, row, tipo_unidad, tipo_tipologia, relation_details in helper.iter_caracteristicas_tipologia():
+        tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad, table_name=table_name)
+        tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
+
+        if (
+            tipo_unidad_str == "Conservacion_Proteccion_Ambiental"
+            and _is_not_empty(tipo_tipologia_ilicode)
+            and not _tipologia_conservacion_valida(tipo_tipologia_ilicode)
+        ):
+            issues.append(
+                helper.make_issue(
+                    row,
+                    rule_id="4.10",
+                    message=(
+                        "Cuando el tipo de unidad de construccion es Conservacion y proteccion ambiental, "
+                        "solamente se pueden asociar tipologias de conservacion."
+                    ),
+                    details={
+                        "tabla": table_name,
+                        "tipo_unidad_construccion": tipo_unidad,
+                        "tipo_unidad_construccion_ilicode": tipo_unidad_str,
+                        "tipo_tipologia": tipo_tipologia,
+                        "tipo_tipologia_ilicode": tipo_tipologia_ilicode,
+                        **relation_details,
+                    },
+                )
+            )
+
+    return issues
+
+def _rule_4_11(dataset: DatasetReader) -> list[RuleIssue]:
+    helper = EconomicoHelper(dataset)
+    issues: list[RuleIssue] = []
+
+    for table_name, row in helper.iter_caracteristicas_unidad_construccion():
+        tipo_calificacion_raw = helper.get_field_value(
+            row,
+            (
+                "tipo_calificacion",
+                "Tipo_Calificacion",
+                "ct_tipo_calificacion",
+                "CT_Tipo_Calificacion",
+            ),
+        )
+
+        tipo_calificacion_resuelto = helper.resolve_tipo_calificacion(tipo_calificacion_raw)
+        tipo_calificacion_ilicode = _tipo_calificacion_ilicode(tipo_calificacion_resuelto)
+
+        ct_tipo_tipologia = helper.get_field_value(
+            row,
+            (
+                "ct_tipo_tipologia",
+                "CT_Tipo_Tipologia",
+            ),
+        )
+
+        if (
+            tipo_calificacion_ilicode == "Tipologia"
+            and not _is_not_empty(ct_tipo_tipologia)
+        ):
+            issues.append(
+                helper.make_issue(
+                    row,
+                    rule_id="4.11",
+                    message=(
+                        "Cuando el Tipo de Calificacion es Tipologia, "
+                        "el campo CT_Tipo_Tipologia debe estar diligenciado."
+                    ),
+                    details={
+                        "tabla": table_name,
+                        "tipo_calificacion": tipo_calificacion_raw,
+                        "tipo_calificacion_resuelto": tipo_calificacion_resuelto,
+                        "tipo_calificacion_ilicode": tipo_calificacion_ilicode,
+                        "ct_tipo_tipologia": ct_tipo_tipologia,
+                    },
+                )
+            )
+
+    return issues
+
+def _rule_4_12(dataset: DatasetReader) -> list[RuleIssue]:
+    helper = EconomicoHelper(dataset)
+    issues: list[RuleIssue] = []
+
+    for table_name, row in helper.iter_caracteristicas_unidad_construccion():
+        tipo_calificacion_raw = helper.get_field_value(
+            row,
+            (
+                "tipo_calificacion",
+                "Tipo_Calificacion",
+                "ct_tipo_calificacion",
+                "CT_Tipo_Calificacion",
+            ),
+        )
+
+        tipo_calificacion_resuelto = helper.resolve_tipo_calificacion(tipo_calificacion_raw)
+        tipo_calificacion_ilicode = _tipo_calificacion_ilicode(tipo_calificacion_resuelto)
+
+        ct_conservacion_tipologia = helper.get_field_value(
+            row,
+            (
+                "ct_conservacion_tipologia",
+                "CT_Conservacion_Tipologia",
+            ),
+        )
+
+        if (
+            tipo_calificacion_ilicode == "Tipologia"
+            and not _is_not_empty(ct_conservacion_tipologia)
+        ):
+            issues.append(
+                helper.make_issue(
+                    row,
+                    rule_id="4.12",
+                    message=(
+                        "Cuando el Tipo de Calificacion es Tipologia, "
+                        "el campo CT_Conservacion_Tipologia debe estar diligenciado."
+                    ),
+                    details={
+                        "tabla": table_name,
+                        "tipo_calificacion": tipo_calificacion_raw,
+                        "tipo_calificacion_resuelto": tipo_calificacion_resuelto,
+                        "tipo_calificacion_ilicode": tipo_calificacion_ilicode,
+                        "ct_conservacion_tipologia": ct_conservacion_tipologia,
+                    },
+                )
+            )
+
+    return issues
+
+def _rule_4_13(dataset: DatasetReader) -> list[RuleIssue]:
+    """
+    Regla 4.13:
+    Si Tipo_Calificacion es No_Convencional,
+    entonces Tipo_Unidad_Construccion debe ser Anexo.
+
+    Nota: esta regla NO marca error por el caso contrario
+    (por ejemplo Tipologia + Anexo), para evitar falsos positivos.
+    """
+    helper = EconomicoHelper(dataset)
+    issues: list[RuleIssue] = []
+
+    for table_name, row in helper.iter_caracteristicas_unidad_construccion():
+        tipo_calificacion_raw, tipo_calificacion_resuelto, tipo_calificacion_ilicode = (
+            _get_tipo_calificacion_resuelto(helper, row)
+        )
+        tipo_unidad_raw, tipo_unidad_resuelto, tipo_unidad_ilicode = (
+            _get_tipo_unidad_resuelto(helper, row, table_name)
+        )
+
+        # Si no es No_Convencional, esta regla no aplica.
+        if tipo_calificacion_ilicode != "No_Convencional":
+            continue
+
+        if tipo_unidad_ilicode != "Anexo":
+            issues.append(
+                helper.make_issue(
+                    row,
+                    rule_id="4.13",
+                    message=(
+                        "Cuando el Tipo_Calificacion es No_Convencional, "
+                        "el Tipo_Unidad_Construccion debe ser Anexo."
+                    ),
+                    details={
+                        "tabla": table_name,
+                        "tipo_calificacion": tipo_calificacion_raw,
+                        "tipo_calificacion_resuelto": tipo_calificacion_resuelto,
+                        "tipo_calificacion_ilicode": tipo_calificacion_ilicode,
+                        "tipo_unidad_construccion": tipo_unidad_raw,
+                        "tipo_unidad_construccion_resuelto": tipo_unidad_resuelto,
+                        "tipo_unidad_construccion_ilicode": tipo_unidad_ilicode,
+                    },
+                )
+            )
+
+    return issues
+
+
+def _rule_4_14(dataset: DatasetReader) -> list[RuleIssue]:
+    """
+    Regla 4.14:
+    Si Tipo_Calificacion es No_Convencional,
+    el campo CNC_Tipo_Anexo debe estar diligenciado.
+    """
+    helper = EconomicoHelper(dataset)
+    issues: list[RuleIssue] = []
+
+    for table_name, row in helper.iter_caracteristicas_unidad_construccion():
+        tipo_calificacion_raw, tipo_calificacion_resuelto, tipo_calificacion_ilicode = (
+            _get_tipo_calificacion_resuelto(helper, row)
+        )
+        cnc_tipo_anexo = helper.get_field_value(row, CNC_TIPO_ANEXO_FIELDS)
+
+        if (
+            tipo_calificacion_ilicode == "No_Convencional"
+            and not _is_not_empty(cnc_tipo_anexo)
+        ):
+            issues.append(
+                helper.make_issue(
+                    row,
+                    rule_id="4.14",
+                    message=(
+                        "Cuando el Tipo_Calificacion es No_Convencional, "
+                        "el campo CNC_Tipo_Anexo debe estar diligenciado."
+                    ),
+                    details={
+                        "tabla": table_name,
+                        "tipo_calificacion": tipo_calificacion_raw,
+                        "tipo_calificacion_resuelto": tipo_calificacion_resuelto,
+                        "tipo_calificacion_ilicode": tipo_calificacion_ilicode,
+                        "cnc_tipo_anexo": cnc_tipo_anexo,
+                    },
+                )
+            )
+
+    return issues
+
+
+def _rule_4_15(dataset: DatasetReader) -> list[RuleIssue]:
+    """
+    Regla 4.15:
+    Si Tipo_Calificacion es No_Convencional,
+    el campo CNC_Conservacion_Anexo debe estar diligenciado.
+    """
+    helper = EconomicoHelper(dataset)
+    issues: list[RuleIssue] = []
+
+    for table_name, row in helper.iter_caracteristicas_unidad_construccion():
+        tipo_calificacion_raw, tipo_calificacion_resuelto, tipo_calificacion_ilicode = (
+            _get_tipo_calificacion_resuelto(helper, row)
+        )
+        cnc_conservacion_anexo = helper.get_field_value(row, CNC_CONSERVACION_ANEXO_FIELDS)
+
+        if (
+            tipo_calificacion_ilicode == "No_Convencional"
+            and not _is_not_empty(cnc_conservacion_anexo)
+        ):
+            issues.append(
+                helper.make_issue(
+                    row,
+                    rule_id="4.15",
+                    message=(
+                        "Cuando el Tipo_Calificacion es No_Convencional, "
+                        "el campo CNC_Conservacion_Anexo debe estar diligenciado."
+                    ),
+                    details={
+                        "tabla": table_name,
+                        "tipo_calificacion": tipo_calificacion_raw,
+                        "tipo_calificacion_resuelto": tipo_calificacion_resuelto,
+                        "tipo_calificacion_ilicode": tipo_calificacion_ilicode,
+                        "cnc_conservacion_anexo": cnc_conservacion_anexo,
+                    },
+                )
+            )
+
+    return issues
 
 
 RULE_FUNCTIONS = {
@@ -1339,4 +1646,9 @@ RULE_FUNCTIONS = {
     "4.8": _rule_4_8,
     "4.9": _rule_4_9,
     "4.10": _rule_4_10,
+    "4.11": _rule_4_11,
+    "4.12": _rule_4_12,
+    "4.13": _rule_4_13,
+    "4.14": _rule_4_14,
+    "4.15": _rule_4_15,
 }
