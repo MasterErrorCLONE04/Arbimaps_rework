@@ -26,6 +26,7 @@ from routers.sync_routes import router as sync_router
 from routers.asignaciones_workflow import router as asignaciones_workflow_router
 from routers.panel_control import router as panel_control_router
 from routers.restriccion_predios import router as restriccion_predios_router
+from routers.sincronizacion_mergin import router as sincronizacion_mergin_router
 from tenants import ConnectionManager, init_connection_manager, init_municipality_registry
 
 
@@ -156,6 +157,7 @@ def create_app() -> FastAPI:
     app.include_router(asignaciones_workflow_router)
     app.include_router(panel_control_router)
     app.include_router(restriccion_predios_router)
+    app.include_router(sincronizacion_mergin_router)
 
 
     box_router = _load_optional_router("routers.box_routes")

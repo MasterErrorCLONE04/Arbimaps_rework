@@ -16,6 +16,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgdal-dev \
     libgeos-dev \
     libproj-dev \
+    gdal-bin \
+    python3-gdal \
     curl \
     unzip \
     default-jre-headless \

@@ -1,0 +1,456 @@
+<div class="mergin-sync-page">
+  <div class="mergin-sync-hero">
+    <div>
+      <div class="mergin-sync-kicker">MODULO LOCAL &gt; SINCRONIZACION MERGIN</div>
+      <h2 class="mergin-sync-title">Sincronizacion Mergin</h2>
+      <p class="mergin-sync-subtitle">
+        Conecta un PostgreSQL local, selecciona un schema existente compatible con LADM-COL
+        y analiza el ZIP retornado desde campo antes de habilitar la sincronizacion.
+      </p>
+    </div>
+    <div class="mergin-sync-badge">
+      <span>Fase activa</span>
+      <strong>1, 2 y 3</strong>
+    </div>
+  </div>
+  <div class="mergin-sync-stepper" aria-label="Asistente de sincronizacion">
+    <div class="mergin-sync-step is-active">
+      <span class="mergin-sync-step-index">1</span>
+      <span>Configuracion local</span>
+    </div>
+    <div class="mergin-sync-step is-active">
+      <span class="mergin-sync-step-index">2</span>
+      <span>Destino</span>
+    </div>
+    <div class="mergin-sync-step is-active">
+      <span class="mergin-sync-step-index">3</span>
+      <span>Proyecto Mergin</span>
+    </div>
+    <div class="mergin-sync-step">
+      <span class="mergin-sync-step-index">4</span>
+      <span>Sincronizacion</span>
+    </div>
+  </div>
+  <div class="mergin-sync-grid">
+    <section class="mergin-sync-card">
+      <div class="mergin-sync-card-head">
+        <h3>Paso 1. Configuracion PostgreSQL local</h3>
+        <p>La conexion se usa solo para este flujo y no depende de tenants ni de configuracion productiva.</p>
+      </div>
+      <form id="merginConnectionForm" class="mergin-sync-form" novalidate>
+        <div class="mergin-sync-form-grid">
+          <label class="mergin-sync-field">
+            <span>Host</span>
+            <input type="text" name="host" value="localhost" placeholder="localhost" required />
+          </label>
+          <label class="mergin-sync-field">
+            <span>Puerto</span>
+            <input type="number" name="port" value="5432" min="1" max="65535" required />
+          </label>
+          <label class="mergin-sync-field">
+            <span>Usuario</span>
+            <input type="text" name="user" placeholder="postgres" required />
+          </label>
+          <label class="mergin-sync-field">
+            <span>Contrasena</span>
+            <input type="password" name="password" placeholder="Ingresa la contrasena local" />
+          </label>
+        </div>
+        <div class="mergin-sync-actions">
+          <button id="btnTestConnection" type="submit" class="mergin-sync-btn primary">
+            <i class="bi bi-plug-fill"></i>
+            Probar conexion
+          </button>
+          <div id="connectionStatus" class="mergin-sync-status neutral" aria-live="polite">
+            Configura las credenciales y ejecuta la prueba.
+          </div>
+        </div>
+      </form>
+    </section>
+    <section class="mergin-sync-card">
+      <div class="mergin-sync-card-head">
+        <h3>Paso 2. Seleccion de destino</h3>
+        <p>Despues de conectar, selecciona la base local y el schema destino ya creado mediante LADM-COL.</p>
+      </div>
+      <div class="mergin-sync-form">
+        <div class="mergin-sync-form-grid">
+          <label class="mergin-sync-field">
+            <span>Base de datos</span>
+            <input id="database" name="database" type="text" class="form-control" placeholder="Ej: pitalito" required>
+          </label>
+          <label class="mergin-sync-field mergin-sync-field-span">
+            <span>Schema destino</span>
+            <select id="schemaSelect" name="schema" disabled>
+              <option value="">Selecciona una base de datos</option>
+            </select>
+          </label>
+        </div>
+        <div id="schemaStatus" class="mergin-sync-status neutral" aria-live="polite">
+          Aun no se han cargado schemas.
+        </div>
+      </div>
+    </section>
+  </div>
+  <section class="mergin-sync-card">
+    <div class="mergin-sync-card-head">
+      <h3>Schemas detectados</h3>
+      <p>Se marca compatibilidad con base en la presencia de tablas base de workspace LADM-COL/Arbimaps.</p>
+    </div>
+    <div class="mergin-sync-table-wrap">
+      <table class="mergin-sync-table">
+        <thead>
+          <tr>
+            <th>Schema</th>
+            <th>Compatibilidad</th>
+            <th>Tablas clave</th>
+            <th>Detalle</th>
+          </tr>
+        </thead>
+        <tbody id="schemaTableBody">
+          <tr>
+            <td colspan="4" class="is-empty">Conecta una base local para listar schemas compatibles.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="mergin-sync-card">
+    <div class="mergin-sync-card-head">
+      <h3>Paso 3. Analisis del archivo ZIP</h3>
+      <p>Se extraen todos los GPKG del proyecto Mergin y se clasifica cada capa segun la whitelist de Fase 3, sin importar datos.</p>
+    </div>
+    <div class="mergin-sync-form">
+      <div class="mergin-sync-form-grid">
+        <label class="mergin-sync-field mergin-sync-field-span">
+          <span>Archivo ZIP</span>
+          <input id="zipFileInput" type="file" accept=".zip" />
+        </label>
+      </div>
+      <div class="mergin-sync-actions">
+        <button id="btnAnalyzeZip" type="button" class="mergin-sync-btn primary">
+          <i class="bi bi-file-earmark-zip"></i>
+          Analizar
+        </button>
+        <div id="zipStatus" class="mergin-sync-status neutral" aria-live="polite">
+          Selecciona un ZIP de Mergin para iniciar el analisis.
+        </div>
+      </div>
+    </div>
+    <div id="zipAnalysisPanel" class="mergin-sync-analysis" hidden>
+      <div class="mergin-sync-analysis-grid">
+        <article class="mergin-sync-analysis-card">
+          <h4>Proyecto</h4>
+          <div class="mergin-sync-kv-list">
+            <div class="mergin-sync-kv"><span>Proyecto</span><strong id="zipProject">No disponible</strong></div>
+            <div class="mergin-sync-kv"><span>Workspace</span><strong id="zipWorkspace">No disponible</strong></div>
+            <div class="mergin-sync-kv"><span>Version</span><strong id="zipVersion">No disponible</strong></div>
+            <div class="mergin-sync-kv"><span>Usuario</span><strong id="zipUser">No disponible</strong></div>
+            <div class="mergin-sync-kv"><span>Fecha</span><strong id="zipDate">No disponible</strong></div>
+          </div>
+        </article>
+        <article class="mergin-sync-analysis-card">
+          <h4>Compatibilidad</h4>
+          <div class="mergin-sync-compatibility">
+            <span id="zipCompatibilityPill" class="mergin-sync-pill no">Sin analizar</span>
+            <p id="zipCompatibilityDetail" class="mergin-sync-compatibility-detail">Aun no se ha analizado el conjunto de GPKG.</p>
+          </div>
+          <div class="mergin-sync-kv-list compact">
+            <div class="mergin-sync-kv"><span>ZIP</span><strong id="zipFileName">No disponible</strong></div>
+            <div class="mergin-sync-kv"><span>Metadata</span><strong id="zipMetadataFile">No encontrada</strong></div>
+            <div class="mergin-sync-kv"><span>Proyecto QGIS</span><strong id="zipProjectFile">No encontrado</strong></div>
+            <div class="mergin-sync-kv"><span>Attachments</span><strong id="zipAttachments">No encontrados</strong></div>
+            <div class="mergin-sync-kv"><span>Total GPKG</span><strong id="zipTotalGpkg">0</strong></div>
+            <div class="mergin-sync-kv"><span>Registros transferibles</span><strong id="zipTransferableRecords">0</strong></div>
+            <div class="mergin-sync-kv"><span>Registros ignorados</span><strong id="zipIgnoredRecords">0</strong></div>
+          </div>
+        </article>
+      </div>
+      <div class="mergin-sync-table-wrap">
+        <table class="mergin-sync-table">
+          <thead>
+            <tr>
+              <th>GPKG analizado</th>
+              <th>Categoria</th>
+              <th>Capas transferibles</th>
+              <th>Capas ignoradas</th>
+              <th>Registros transferibles</th>
+              <th>Registros ignorados</th>
+            </tr>
+          </thead>
+          <tbody id="zipGpkgTableBody">
+            <tr>
+              <td colspan="6" class="is-empty">Los GPKG analizados apareceran aqui.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mergin-sync-table-wrap">
+        <table class="mergin-sync-table">
+          <thead>
+            <tr>
+              <th colspan="5">Capas transferibles</th>
+            </tr>
+            <tr>
+              <th>Capa</th>
+              <th>GPKG</th>
+              <th>Registros</th>
+              <th>Geometria</th>
+              <th>CRS</th>
+            </tr>
+          </thead>
+          <tbody id="zipTransferableTableBody">
+            <tr>
+              <td colspan="5" class="is-empty">Las capas transferibles apareceran aqui.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mergin-sync-table-wrap">
+        <table class="mergin-sync-table">
+          <thead>
+            <tr>
+              <th colspan="4">Capas transferibles faltantes</th>
+            </tr>
+            <tr>
+              <th>Capa esperada</th>
+              <th>Estado</th>
+              <th>Impacto</th>
+              <th>Detalle</th>
+            </tr>
+          </thead>
+          <tbody id="zipMissingTableBody">
+            <tr>
+              <td colspan="4" class="is-empty">Las capas faltantes apareceran aqui.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mergin-sync-table-wrap">
+        <table class="mergin-sync-table">
+          <thead>
+            <tr>
+              <th colspan="5">Capas ignoradas por adjuntos/Box o fuera de whitelist</th>
+            </tr>
+            <tr>
+              <th>Capa</th>
+              <th>GPKG</th>
+              <th>Registros</th>
+              <th>Geometria</th>
+              <th>Motivo</th>
+            </tr>
+          </thead>
+          <tbody id="zipIgnoredTableBody">
+            <tr>
+              <td colspan="5" class="is-empty">Las capas ignoradas apareceran aqui.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  <section class="mergin-sync-card">
+    <div class="mergin-sync-card-head">
+      <h3>Paso 4. Importacion a schema temporal</h3>
+      <p>La importacion se limita al schema staging. El schema destino solo se valida y nunca se modifica en esta fase.</p>
+    </div>
+    <div class="mergin-sync-form">
+      <div class="mergin-sync-form-grid">
+        <label class="mergin-sync-field">
+          <span>Schema temporal/staging</span>
+          <input id="stagingSchemaInput" type="text" placeholder="transferencia_pitalito_5" />
+        </label>
+        <label class="mergin-sync-field">
+          <span>Modo de reemplazo</span>
+          <div class="mergin-sync-checkbox-wrap">
+            <input id="replaceStagingCheckbox" type="checkbox" />
+            <span>Recrear el schema staging si ya existe</span>
+          </div>
+        </label>
+      </div>
+      <div class="mergin-sync-actions">
+        <button id="btnDryRunImport" type="button" class="mergin-sync-btn primary">Simular importacion</button>
+        <button id="btnImportStaging" type="button" class="mergin-sync-btn secondary">Importar a schema temporal</button>
+        <div id="stagingStatus" class="mergin-sync-status neutral" aria-live="polite">
+          Analiza el ZIP y define el schema staging antes de ejecutar la simulacion o la importacion.
+        </div>
+      </div>
+    </div>
+    <div id="stagingReportPanel" class="mergin-sync-analysis" hidden>
+      <div class="mergin-sync-analysis-grid">
+        <article class="mergin-sync-analysis-card">
+          <h4>Resumen de staging</h4>
+          <div class="mergin-sync-kv-list compact">
+            <div class="mergin-sync-kv"><span>Modo</span><strong id="stagingMode">No ejecutado</strong></div>
+            <div class="mergin-sync-kv"><span>Schema destino</span><strong id="stagingTargetSchema">No seleccionado</strong></div>
+            <div class="mergin-sync-kv"><span>Schema staging</span><strong id="stagingSchemaName">No definido</strong></div>
+            <div class="mergin-sync-kv"><span>Schema creado</span><strong id="stagingSchemaCreated">No</strong></div>
+            <div class="mergin-sync-kv"><span>Capas importadas</span><strong id="stagingImportedCount">0</strong></div>
+            <div class="mergin-sync-kv"><span>Registros importados</span><strong id="stagingImportedRecords">0</strong></div>
+            <div class="mergin-sync-kv"><span>Capas ignoradas</span><strong id="stagingIgnoredCount">0</strong></div>
+            <div class="mergin-sync-kv"><span>Capas faltantes</span><strong id="stagingMissingCount">0</strong></div>
+          </div>
+        </article>
+        <article class="mergin-sync-analysis-card">
+          <h4>Observaciones</h4>
+          <div class="mergin-sync-kv-list compact">
+            <div class="mergin-sync-kv"><span>Advertencias</span><strong id="stagingWarningsCount">0</strong></div>
+            <div class="mergin-sync-kv"><span>Errores</span><strong id="stagingErrorsCount">0</strong></div>
+          </div>
+          <div id="stagingWarningsList" class="mergin-sync-note-list"></div>
+          <div id="stagingErrorsList" class="mergin-sync-note-list errors"></div>
+        </article>
+      </div>
+      <div class="mergin-sync-table-wrap">
+        <table class="mergin-sync-table">
+          <thead>
+            <tr>
+              <th>Capa</th>
+              <th>Tabla</th>
+              <th>Estado</th>
+              <th>Registros</th>
+              <th>Geometria</th>
+              <th>SRID</th>
+            </tr>
+          </thead>
+          <tbody id="stagingImportedTableBody">
+            <tr>
+              <td colspan="6" class="is-empty">El reporte de capas importadas aparecera aqui.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mergin-sync-table-wrap">
+        <table class="mergin-sync-table">
+          <thead>
+            <tr>
+              <th>Capa ignorada</th>
+              <th>GPKG</th>
+              <th>Registros</th>
+              <th>Motivo</th>
+            </tr>
+          </thead>
+          <tbody id="stagingIgnoredTableBody">
+            <tr>
+              <td colspan="4" class="is-empty">Las capas ignoradas apareceran aqui.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mergin-sync-table-wrap">
+        <table class="mergin-sync-table">
+          <thead>
+            <tr>
+              <th>Capas faltantes</th>
+            </tr>
+          </thead>
+          <tbody id="stagingMissingTableBody">
+            <tr>
+              <td class="is-empty">Las capas faltantes apareceran aqui.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  <section class="mergin-sync-card">
+    <div class="mergin-sync-card-head">
+      <h3>Paso 5. ETL staging hacia schema destino</h3>
+      <p>Se transfieren solo tablas operativas desde el staging hacia el schema oficial seleccionado, respetando llaves, constraints y dominios del target.</p>
+    </div>
+    <div class="mergin-sync-form">
+      <div class="mergin-sync-actions">
+        <button id="btnDryRunEtl" type="button" class="mergin-sync-btn primary">Simular transferencia</button>
+        <button id="btnApplyEtl" type="button" class="mergin-sync-btn secondary">Aplicar transferencia</button>
+        <div id="etlStatus" class="mergin-sync-status neutral" aria-live="polite">
+          Ejecuta primero la importacion a staging y luego simula la transferencia antes de aplicar.
+        </div>
+      </div>
+    </div>
+    <div id="etlReportPanel" class="mergin-sync-analysis" hidden>
+      <div class="mergin-sync-analysis-grid">
+        <article class="mergin-sync-analysis-card">
+          <h4>Resumen ETL</h4>
+          <div class="mergin-sync-kv-list compact">
+            <div class="mergin-sync-kv"><span>Modo</span><strong id="etlMode">No ejecutado</strong></div>
+            <div class="mergin-sync-kv"><span>Staging</span><strong id="etlStagingSchema">No definido</strong></div>
+            <div class="mergin-sync-kv"><span>Target</span><strong id="etlTargetSchema">No definido</strong></div>
+            <div class="mergin-sync-kv"><span>Tablas sincronizables</span><strong id="etlSyncableTables">0</strong></div>
+            <div class="mergin-sync-kv"><span>Tablas no sincronizables</span><strong id="etlNonSyncableTables">0</strong></div>
+            <div class="mergin-sync-kv"><span>Insert estimados</span><strong id="etlInsertEstimated">0</strong></div>
+            <div class="mergin-sync-kv"><span>Updates estimados</span><strong id="etlUpdateEstimated">0</strong></div>
+            <div class="mergin-sync-kv"><span>Errores criticos</span><strong id="etlCriticalCount">0</strong></div>
+          </div>
+        </article>
+        <article class="mergin-sync-analysis-card">
+          <h4>Observaciones</h4>
+          <div class="mergin-sync-kv-list compact">
+            <div class="mergin-sync-kv"><span>Advertencias</span><strong id="etlWarningsCount">0</strong></div>
+            <div class="mergin-sync-kv"><span>Registros no sincronizables</span><strong id="etlNonSyncableRecords">0</strong></div>
+            <div class="mergin-sync-kv"><span>Tablas excluidas</span><strong id="etlExcludedTables">0</strong></div>
+            <div class="mergin-sync-kv"><span>Solo en staging</span><strong id="etlStagingOnlyTables">0</strong></div>
+            <div class="mergin-sync-kv"><span>Solo en target</span><strong id="etlTargetOnlyTables">0</strong></div>
+          </div>
+          <div id="etlWarningsList" class="mergin-sync-note-list"></div>
+          <div id="etlCriticalList" class="mergin-sync-note-list errors"></div>
+        </article>
+      </div>
+      <div class="mergin-sync-table-wrap">
+        <table class="mergin-sync-table">
+          <thead>
+            <tr>
+              <th>Tabla</th>
+              <th>Estado</th>
+              <th>Llave</th>
+              <th>Insertables</th>
+              <th>Actualizables</th>
+              <th>No sincronizables</th>
+            </tr>
+          </thead>
+          <tbody id="etlTablesBody">
+            <tr>
+              <td colspan="6" class="is-empty">El reporte ETL aparecera aqui.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mergin-sync-table-wrap">
+        <table class="mergin-sync-table">
+          <thead>
+            <tr>
+              <th>Tabla excluida</th>
+              <th>Motivo</th>
+              <th>Registros staging</th>
+              <th>Registros target</th>
+            </tr>
+          </thead>
+          <tbody id="etlExcludedBody">
+            <tr>
+              <td colspan="4" class="is-empty">Las tablas excluidas apareceran aqui.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mergin-sync-table-wrap">
+        <table class="mergin-sync-table">
+          <thead>
+            <tr>
+              <th>Tabla solo en un schema</th>
+              <th>Ubicacion</th>
+              <th>Motivo</th>
+              <th>Registros staging</th>
+              <th>Registros target</th>
+            </tr>
+          </thead>
+          <tbody id="etlSchemaMismatchBody">
+            <tr>
+              <td colspan="5" class="is-empty">Las diferencias entre staging y target apareceran aqui.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+<script src="{{ rp }}/static/js/sincronizacion_mergin.js?v=8"></script>
+<script src="{{ rp }}/static/js/sincronizacion_mergin_phase5.js?v=2"></script>
+
