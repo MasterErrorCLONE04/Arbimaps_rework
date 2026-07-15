@@ -8,6 +8,13 @@ from .dataset import InMemoryDataset
 from .components import COMPONENTS, run_all_components
 from .loader import load_rule_group
 from .xtf_reader import parse_xtf_tables, TARGET_CLASSES
+from .npn_resolver import (
+    annotate_ids_with_npns,
+    build_npn_lookup,
+    build_tid_lookup,
+    resolve_display_tid,
+    resolve_issue_npn,
+)
 
 
 def _load_available_rule_ids() -> list[str]:
@@ -191,6 +198,8 @@ def run_quality_checks(
     try:
         tables = parse_xtf_tables(xtf_path, TARGET_CLASSES)
         _debug_tables(tables)
+        npn_lookup = build_npn_lookup(tables)
+        tid_lookup = build_tid_lookup(tables)
     except Exception as exc:
         return {
             "status": "error",
@@ -226,7 +235,7 @@ def run_quality_checks(
     for component_result in component_results:
         result = component_result.result
         for issue in result.issues:
-            display_id = (
+            raw_display_id = (
                 issue.details.get("t_ili_tid")
                 or issue.details.get("T_Ili_Tid")
                 or issue.details.get("T_ILI_TID")
@@ -236,6 +245,7 @@ def run_quality_checks(
                 or issue.details.get("id_predio")
                 or issue.details.get("predio_id")
             )
+            display_id = resolve_display_tid(raw_display_id, tid_lookup)
 
             issues.append(
                 {
@@ -244,7 +254,15 @@ def run_quality_checks(
                     "object_id": display_id,
                     "tid": issue.object_ref,
                     "object_class": issue.details.get("class"),
-                    "message": issue.message,
+                    "npn": resolve_issue_npn(
+                        {
+                            "object_id": display_id,
+                            "object_ref": issue.object_ref,
+                            "details": issue.details,
+                        },
+                        npn_lookup,
+                    ),
+                    "message": annotate_ids_with_npns(issue.message, npn_lookup),
                     "details": issue.details,
                     "component": component_result.component,
                 }
@@ -311,6 +329,7 @@ def run_quality_checks(
         "issues": issues,
         "message": None,
         "quality": {
+            "npn_by_object_id": npn_lookup,
             "summary": {
                 "total_rules": len(rule_status),
                 "available_rules": len(available_rule_ids),

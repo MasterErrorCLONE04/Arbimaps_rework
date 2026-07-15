@@ -1307,7 +1307,7 @@ def _rule_4_8(dataset: DatasetReader) -> list[RuleIssue]:
 
     return issues
 
-def _rule_4_9(dataset: DatasetReader) -> list[RuleIssue]:
+#def _rule_4_9(dataset: DatasetReader) -> list[RuleIssue]:
     helper = EconomicoHelper(dataset)
     issues: list[RuleIssue] = []
 
@@ -1644,7 +1644,7 @@ RULE_FUNCTIONS = {
     "4.6": _rule_4_6,
     "4.7": _rule_4_7,
     "4.8": _rule_4_8,
-    "4.9": _rule_4_9,
+    #"4.9": _rule_4_9,
     "4.10": _rule_4_10,
     "4.11": _rule_4_11,
     "4.12": _rule_4_12,

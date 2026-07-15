@@ -16,6 +16,7 @@ from typing import Any
 from uuid import uuid4
 
 from quality_rules.runner import run_quality_checks
+from quality_rules.npn_resolver import attach_npns_to_errors, resolve_issue_npn
 from services.validation_excel_report import build_validation_errors_excel, validation_excel_filename
 from services.validation_pdf_report import build_validation_pdf, validation_pdf_filename
 
@@ -32,6 +33,8 @@ COMPONENT_LABELS = {
     "obligatorias": "Obligatorias",
 }
 
+
+DEFAULT_EXPECTED_XTF_MODEL = "Captura_ArbiMaps_V1_0"
 
 class XTFValidationService:
     def __init__(self):
@@ -53,6 +56,10 @@ class XTFValidationService:
         self.validator_jar = self._resolve_validator_jar()
         self.model_dir = Path(os.getenv("ILIVALIDATOR_MODEL_DIR", str(self._abs_path("resource", "model"))))
         self.models = os.getenv("ILIVALIDATOR_MODELS")
+        self.expected_model = (
+            os.getenv("XTF_EXPECTED_MODEL", DEFAULT_EXPECTED_XTF_MODEL).strip()
+            or DEFAULT_EXPECTED_XTF_MODEL
+        )
         extra_args = os.getenv("ILIVALIDATOR_EXTRA_ARGS", "")
         self.extra_args = shlex.split(extra_args) if extra_args else []
 
@@ -327,6 +334,17 @@ class XTFValidationService:
         log_path = (self.log_dir / f"{job_id}.log").resolve()
         report_path = (self.report_dir / f"{job_id}.xml").resolve()
         model_names = self._extract_xtf_model_names(file_path)
+        model_error = self._model_mismatch_message(model_names)
+        if model_error:
+            return self._build_validation_result(
+                status="error",
+                message=model_error,
+                schema_errors=[],
+                rule_errors=[],
+                quality=self._empty_quality_result(),
+                model_names=model_names,
+            )
+
         quality_result = self._run_internal_quality(
             file_path,
             municipality_code=municipality_code,
@@ -434,6 +452,11 @@ class XTFValidationService:
 
         schema_errors = self._collect_validation_errors(
             report_path, log_path, process.stdout, process.stderr
+        )
+
+        attach_npns_to_errors(
+            schema_errors,
+            quality.get("npn_by_object_id") or {},
         )
 
         return self._build_validation_result(
@@ -1120,6 +1143,18 @@ class XTFValidationService:
 
         return names
 
+    def _model_mismatch_message(self, model_names: list[str]) -> str | None:
+        expected_model = str(self.expected_model or "").strip()
+        if expected_model and expected_model in model_names:
+            return None
+
+        found_models = ", ".join(model_names) if model_names else "no identificado"
+        return (
+            "El archivo XTF no corresponde al modelo esperado "
+            f"'{expected_model or DEFAULT_EXPECTED_XTF_MODEL}'. "
+            f"Modelo encontrado: {found_models}. No se proceso el archivo."
+        )
+
     def _collect_validation_errors(
         self,
         report_path: Path,
@@ -1330,6 +1365,7 @@ class XTFValidationService:
         """Normaliza quality y copia los issues internos a rule_errors para que el frontend los muestre."""
         quality = self._normalize_quality_result(quality_result)
         rule_errors: list[dict[str, Any]] = []
+        npn_lookup = quality.get("npn_by_object_id") or {}
 
         catalog = quality.get("rule_catalog") or self._load_rule_catalog_fallback()
         rule_meta_by_id = {
@@ -1382,6 +1418,7 @@ class XTFValidationService:
                     "severity": issue.get("severity") or "ERROR",
                     "object_id": str(object_id).strip() if object_id else None,
                     "object_class": issue.get("object_class") or issue.get("class") or issue.get("tabla"),
+                    "npn": issue.get("npn") or resolve_issue_npn(issue, npn_lookup),
                     "rule": rule_id,
                     "message": issue.get("message") or description or "Error de regla interna.",
                     "description": description,

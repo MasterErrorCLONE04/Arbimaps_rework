@@ -4318,7 +4318,7 @@ VERSION "1.0"  // Modelo ArbiMaps personalizado, versión 1.0 // =
       );
 
 
-      /** Estado actual del folio de matrÃ­cula inmobiliaria.
+      /** Estado actual del folio de matrícula inmobiliaria.
        */
       ARB_EstadoFMITipo = (
         !!@ ili2db.dispName=Activo
@@ -4516,6 +4516,20 @@ VERSION "1.0"  // Modelo ArbiMaps personalizado, versión 1.0 // =
         Oferta_Economica,
         !!@ ili2db.dispName=Otro
         Otro
+      );
+
+      !!@ ili2db.dispName="Tipo documento soporte"
+      ARB_DocumentoSoporteTipo = (
+        !!@ ili2db.dispName="Escritura Publica"
+        Escritura_Publica,
+        !!@ ili2db.dispName="Documento Identificacion"
+        Documento_Identificacion,
+        !!@ ili2db.dispName="Acto Administrativo"
+        Acto_Administrativo,
+        !!@ ili2db.dispName="Sentencia Judicial"
+        Sentencia_Judicial,
+        !!@ ili2db.dispName="Documento Privado"
+        Documento_Privado
       );
 
       ARB_ReferenciaTipo = (
@@ -5681,6 +5695,10 @@ VERSION "1.0"  // Modelo ArbiMaps personalizado, versión 1.0 // =
 
     !!@ ili2db.dispName="(ARB) Adjunto Fuente Administrativa"
     STRUCTURE ARB_AdjuntoFuenteAdministrativaValor =
+      !!@ ili2db.dispName=NPN
+      npn : TEXT*30;
+      !!@ ili2db.dispName="Tipo de documento soporte"
+      f_documento_soporte_tipo : MANDATORY ARB_DocumentoSoporteTipo;
       !!@ ili2db.dispName=Archivo
       Archivo : TEXT;
       !!@ ili2db.dispName=Observación
@@ -5734,6 +5752,8 @@ VERSION "1.0"  // Modelo ArbiMaps personalizado, versión 1.0 // =
 
     !!@ ili2db.dispName="(ARB) Adjunto Interesado"
     STRUCTURE ARB_AdjuntoInteresadoValor =
+      !!@ ili2db.dispName=NPN
+      npn : TEXT*30;
       !!@ ili2db.dispName=Archivo
       Archivo : TEXT;
       !!@ ili2db.dispName=Observación
@@ -5742,6 +5762,8 @@ VERSION "1.0"  // Modelo ArbiMaps personalizado, versión 1.0 // =
 
     !!@ ili2db.dispName="(ARB) Adjunto Punto de Referencia"
     STRUCTURE ARB_AdjuntoPuntoReferenciaValor =
+      !!@ ili2db.dispName=NPN
+      npn : TEXT*30;
       !!@ ili2db.dispName=Archivo
       Archivo : TEXT;
       !!@ ili2db.dispName=Observación
@@ -5750,6 +5772,8 @@ VERSION "1.0"  // Modelo ArbiMaps personalizado, versión 1.0 // =
 
     !!@ ili2db.dispName="(ARB) Adjunto Terreno"
     STRUCTURE ARB_AdjuntoTerrenoValor =
+      !!@ ili2db.dispName=NPN
+      npn : TEXT*30;
       !!@ ili2db.dispName=Archivo
       Archivo : TEXT;
       !!@ ili2db.dispName=Observación
@@ -5854,6 +5878,8 @@ VERSION "1.0"  // Modelo ArbiMaps personalizado, versión 1.0 // =
     STRUCTURE ARB_AdjuntoUnidadConstruccionValor =
       !!@ ili2db.dispName="Tipo de elemento"
       Tipo_Elemento : MANDATORY ARB_AdjuntoElementoTipo;
+      !!@ ili2db.dispName=NPN
+      npn : TEXT*30;
       !!@ ili2db.dispName=Archivo
       Archivo : TEXT;
       !!@ ili2db.dispName=Observación
@@ -6290,6 +6316,10 @@ VERSION "1.0"  // Modelo ArbiMaps personalizado, versión 1.0 // =
     CLASS ARB_Terreno =
       !!@ ili2db.dispName=Etiqueta
       Etiqueta : TEXT*255;
+      /** Área del terreno.
+       */
+      !!@ ili2db.dispName="Área terreno [m2]"
+      Area_Terreno : 0.0 .. 99999999999999.9 [Captura_ArbiMaps_V1_0.m2];
       !!@ ili2db.dispName="Relacion superficie"
       Relacion_Superficie : ARB_RelacionSuperficieTerrenoTipo;
       !!@ ili2db.dispName="Estado terreno"
@@ -6342,9 +6372,9 @@ VERSION "1.0"  // Modelo ArbiMaps personalizado, versión 1.0 // =
       Estado_FMI : ARB_EstadoFMITipo;
       !!@ ili2db.dispName="Fecha apertura FMI"
       Fecha_Apertura_FMI : INTERLIS.XMLDate;
-      !!@ ili2db.dispName="Fecha inscripciÃ³n catastral"
+      !!@ ili2db.dispName="Fecha inscripción catastral"
       Fecha_Inscripcion_Catastral : INTERLIS.XMLDate;
-      !!@ ili2db.dispName="Vigencia actualizaciÃ³n"
+      !!@ ili2db.dispName="Vigencia actualización"
       Vigencia_Actualizacion : INTERLIS.XMLDate;
       /** Registro asociado a la anotación en antiguo sistema de registro. (Libros)
        */
@@ -6479,6 +6509,10 @@ VERSION "1.0"  // Modelo ArbiMaps personalizado, versión 1.0 // =
        */
       !!@ ili2db.dispName=Altura
       Altura : 0.000 .. 1000.000 [INTERLIS.m];
+      /** Área de la unidad de construcción.
+       */
+      !!@ ili2db.dispName="Área unidad de construcción"
+      Area_Unidad_Construccion : 0.0 .. 99999999999999.9 [Captura_ArbiMaps_V1_0.m2];
       !!@ ili2db.dispName=Etiqueta
       Etiqueta : TEXT*100;
       !!@ ili2db.dispName="Relacion superficie"

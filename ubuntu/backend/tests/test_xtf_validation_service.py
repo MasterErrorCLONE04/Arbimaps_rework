@@ -4,6 +4,66 @@ from zipfile import ZipFile
 from services.validation_excel_report import build_validation_errors_excel, validation_excel_filename
 from services.xtf_validation_service import XTFValidationService
 from quality_rules.runner import _build_predio_summary
+from quality_rules.npn_resolver import (
+    annotate_ids_with_npns,
+    build_npn_lookup,
+    build_tid_lookup,
+    resolve_display_tid,
+    resolve_issue_npn,
+)
+
+
+def test_validate_xtf_stops_when_declared_model_does_not_match(tmp_path):
+    xtf_path = tmp_path / "modelo_incorrecto.xtf"
+    xtf_path.write_text(
+        """<?xml version="1.0" encoding="UTF-8"?>
+<TRANSFER xmlns="http://www.interlis.ch/INTERLIS2.3">
+  <HEADERSECTION VERSION="2.3" SENDER="test">
+    <MODELS>
+      <MODEL NAME="Otro_Modelo_V1" VERSION="1.0" URI="https://example.test" />
+    </MODELS>
+  </HEADERSECTION>
+  <DATASECTION />
+</TRANSFER>
+""",
+        encoding="utf-8",
+    )
+
+    service = XTFValidationService()
+    quality_was_run = False
+
+    def fail_if_quality_runs(*args, **kwargs):
+        nonlocal quality_was_run
+        quality_was_run = True
+        raise AssertionError("No deben ejecutarse reglas para un modelo incorrecto")
+
+    service._run_internal_quality = fail_if_quality_runs
+
+    result = service._validate_xtf("modelo-incorrecto", xtf_path)
+
+    assert result["status"] == "error"
+    assert result["model_names"] == ["Otro_Modelo_V1"]
+    assert "no corresponde al modelo esperado 'Captura_ArbiMaps_V1_0'" in result["message"]
+    assert "Modelo encontrado: Otro_Modelo_V1" in result["message"]
+    assert quality_was_run is False
+
+
+def test_model_check_accepts_expected_model_among_declared_models():
+    service = XTFValidationService()
+
+    message = service._model_mismatch_message(
+        ["LADM_COL_V3_1", "Captura_ArbiMaps_V1_0"]
+    )
+
+    assert message is None
+
+
+def test_model_check_rejects_xtf_without_declared_model():
+    service = XTFValidationService()
+
+    message = service._model_mismatch_message([])
+
+    assert "Modelo encontrado: no identificado" in message
 
 
 def test_normalize_quality_expands_partial_rules_with_catalog_metadata():
@@ -129,6 +189,60 @@ def test_normalize_quality_keeps_uncatalogued_issue_as_failed_rule():
     assert normalized["summary"]["failed_rules"] == 1
 
 
+def test_npn_lookup_resolves_unit_characteristics_and_related_layers():
+    npn = "415510101000003890019000000000"
+    tables = {
+        "ARB_Predio": [{"TID": "predio-1", "Numero_Predial": npn}],
+        "ARB_Terreno": [{"TID": "terreno-1", "predio": "predio-1"}],
+        "ARB_Construccion": [{"TID": "construccion-1", "predio": "predio-1"}],
+        "ARB_UnidadConstruccion": [
+            {
+                "TID": "unidad-1",
+                "construccion": "construccion-1",
+                "caracteristicasunidadconstruccion": "caracteristica-1",
+            }
+        ],
+        "ARB_CaracteristicasUnidadConstruccion": [{"TID": "caracteristica-1"}],
+    }
+
+    lookup = build_npn_lookup(tables)
+
+    assert lookup["predio-1"] == npn
+    assert lookup["terreno-1"] == npn
+    assert lookup["construccion-1"] == npn
+    assert lookup["unidad-1"] == npn
+    assert lookup["caracteristica-1"] == npn
+
+    tid_lookup = build_tid_lookup(tables)
+    assert tid_lookup[npn] == "predio-1"
+    assert resolve_display_tid(npn, tid_lookup) == "predio-1"
+    assert resolve_display_tid("unidad-1", tid_lookup) == "unidad-1"
+    assert resolve_issue_npn(
+        {
+            "object_id": "unidad-1 <-> terreno-1",
+            "details": {
+                "id_uconstruccion": "unidad-1",
+                "id_terreno": "terreno-1",
+            },
+        },
+        lookup,
+    ) == npn
+
+
+def test_error_description_keeps_tid_and_adds_npn():
+    tid = "d8d9aaf7-bcc1-4465-aae9-86d258556eb1"
+    npn = "415510101000006350010901010002"
+
+    message = annotate_ids_with_npns(
+        f"La unidad con ID {tid} presenta un error.",
+        {tid: npn},
+    )
+
+    assert message == (
+        f"La unidad con ID {tid} (NPN: {npn}) presenta un error."
+    )
+
+
 def test_predio_summary_assigns_unidentified_issue_to_single_predio():
     predio_summary = _build_predio_summary(
         [
@@ -204,6 +318,7 @@ def test_validation_excel_has_consolidated_and_component_sheets():
             "rule_errors": [
                 {
                     "display_id": "PREDIO-1",
+                    "npn": "415510101000003890019000000000",
                     "object_class": "Administrativo.Predio",
                     "rule": "1.1",
                     "message": "Falta direccion",
@@ -242,6 +357,8 @@ def test_validation_excel_has_consolidated_and_component_sheets():
     assert 'name="Juridico"' in workbook_xml
     assert 'name="Estructural XTF"' in workbook_xml
     assert "Componente" in consolidated_xml
+    assert "NPN" in consolidated_xml
+    assert "415510101000003890019000000000" in consolidated_xml
     assert "PREDIO-1" in consolidated_xml
     assert "Administrativo.Predio" in consolidated_xml
     assert "Falta direccion" in consolidated_xml

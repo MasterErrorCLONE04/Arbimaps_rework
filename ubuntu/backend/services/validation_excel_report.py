@@ -9,7 +9,7 @@ from xml.sax.saxutils import escape, quoteattr
 from zipfile import ZIP_DEFLATED, ZipFile
 
 
-HEADERS = ("Componente", "ID", "Capa", "Error", "Descripcion")
+HEADERS = ("Componente", "ID", "NPN", "Capa", "Error", "Descripcion")
 MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
@@ -58,6 +58,7 @@ def _sheets_for_report(report: dict[str, Any]) -> list[dict[str, Any]]:
         rows = [
             {
                 "component": component_label,
+                "npn": "",
                 "id": "",
                 "layer": "",
                 "error": "",
@@ -129,6 +130,7 @@ def _error_rows(report: dict[str, Any]) -> list[dict[str, str]]:
         rows.append(
             {
                 "component": component,
+                "npn": _npn_for_item(item),
                 "id": _clean_text(
                     item.get("display_id")
                     or item.get("object_id")
@@ -153,6 +155,7 @@ def _error_rows(report: dict[str, Any]) -> list[dict[str, str]]:
         rows.append(
             {
                 "component": "Estructural XTF",
+                "npn": _npn_for_item(item),
                 "id": _clean_text(
                     item.get("display_id")
                     or item.get("object_id")
@@ -166,6 +169,18 @@ def _error_rows(report: dict[str, Any]) -> list[dict[str, str]]:
         )
 
     return rows
+
+
+def _npn_for_item(item: dict[str, Any]) -> str:
+    details = item.get("details")
+    if not isinstance(details, dict):
+        details = {}
+    return _clean_text(
+        item.get("npn")
+        or details.get("npn")
+        or details.get("numero_predial")
+        or details.get("numero_predial_nacional")
+    )
 
 
 def _rule_meta_by_id(quality: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -183,6 +198,7 @@ def _row_values(row: dict[str, str]) -> list[str]:
     return [
         row["component"],
         row["id"],
+        row["npn"],
         row["layer"],
         row["error"],
         row["description"],
@@ -212,11 +228,12 @@ def _worksheet_xml(rows: list[list[str]]) -> str:
         '<col min="1" max="1" width="22" customWidth="1"/>'
         '<col min="2" max="2" width="26" customWidth="1"/>'
         '<col min="3" max="3" width="34" customWidth="1"/>'
-        '<col min="4" max="4" width="18" customWidth="1"/>'
-        '<col min="5" max="5" width="72" customWidth="1"/>'
+        '<col min="4" max="4" width="34" customWidth="1"/>'
+        '<col min="5" max="5" width="18" customWidth="1"/>'
+        '<col min="6" max="6" width="72" customWidth="1"/>'
         '</cols>'
         f'<sheetData>{"".join(row_xml)}</sheetData>'
-        f'<autoFilter ref="A1:E{last_row}"/>'
+        f'<autoFilter ref="A1:F{last_row}"/>'
         "</worksheet>"
     )
 
