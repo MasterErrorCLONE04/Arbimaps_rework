@@ -473,6 +473,21 @@ async function cargarDetalle() {
       }
     }
 
+    // 1.2b Mostrar/Ocultar botón de Asignar Digitalizador (para Coordinador/Lider/Admin)
+    const btnAssignDigitalizador = document.getElementById("btnHeaderAssignDigitalizador");
+    if (btnAssignDigitalizador) {
+      const isCoordinatorOrAdmin = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_tecnico" || currentLoggedRole === "lider_reconocimiento";
+      const isGeneracionXtf = dataDet.estado === "GENERACION_XTF_CAMPO";
+
+      if (isCoordinatorOrAdmin && isGeneracionXtf) {
+        btnAssignDigitalizador.classList.remove("d-none");
+        btnAssignDigitalizador.classList.add("d-inline-flex");
+      } else {
+        btnAssignDigitalizador.classList.add("d-none");
+        btnAssignDigitalizador.classList.remove("d-inline-flex");
+      }
+    }
+
     // 1.3 Mostrar/Ocultar botón de Ver Enlace de Soporte (para Coordinador/Admin/Lider/Asignado)
     let canViewSoporte = false;
     const btnViewSoporteLink = document.getElementById("btnHeaderViewSoporteLink");
@@ -531,6 +546,21 @@ async function cargarDetalle() {
       }
     }
 
+    // 1.5b Mostrar/Ocultar botón de Enviar a Líder Técnico (para Coordinador/Admin)
+    const btnSubmitToLider = document.getElementById("btnHeaderSubmitToLider");
+    if (btnSubmitToLider) {
+      const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin";
+      const isAprobadoDig = dataDet.estado === "APROBADO_DIGITALIZACION";
+
+      if (isReviewerRole && isAprobadoDig) {
+        btnSubmitToLider.classList.remove("d-none");
+        btnSubmitToLider.classList.add("d-inline-flex");
+      } else {
+        btnSubmitToLider.classList.add("d-none");
+        btnSubmitToLider.classList.remove("d-inline-flex");
+      }
+    }
+
     // 1.6 Mostrar/Ocultar botón de Revisión de Líder (para Lider de Reconocimiento/Admin)
     const btnLiderReview = document.getElementById("btnHeaderLiderReview");
     if (btnLiderReview) {
@@ -567,8 +597,8 @@ async function cargarDetalle() {
     // 1.8 Mostrar/Ocultar botón de Sincronizar XTF (para Soporte/Admin)
     const btnSyncXtf = document.getElementById("btnHeaderSyncXtf");
     if (btnSyncXtf) {
-      const isAllowedSyncRole = currentLoggedRole === "soporte" || currentLoggedRole === "admin";
-      const isSyncState = dataDet.estado === "EN_SINCRONIZACION";
+      const isAllowedSyncRole = currentLoggedRole === "soporte" || currentLoggedRole === "admin" || currentLoggedRole === "lider_tecnico" || currentLoggedRole === "lider_reconocimiento";
+      const isSyncState = dataDet.estado === "EN_SINCRONIZACION" || dataDet.estado === "EN_APROBACION";
 
       if (isAllowedSyncRole && isSyncState) {
         btnSyncXtf.classList.remove("d-none");
@@ -582,7 +612,7 @@ async function cargarDetalle() {
     // Manage visibility of the divider in the dropdown menu
     const workflowButtons = [
       "btnHeaderSyncXtf", "btnHeaderSubmitQA", "btnHeaderQCReview",
-      "btnHeaderSubmitSoporteLink", "btnHeaderViewSoporteLink", "btnHeaderSubmitQA2",
+      "btnHeaderSubmitSoporteLink", "btnHeaderAssignDigitalizador", "btnHeaderViewSoporteLink", "btnHeaderSubmitQA2",
       "btnHeaderQCReview2", "btnHeaderLiderReview", "btnHeaderViewDigitalizacionLink"
     ];
     let anyWorkflowVisible = false;
@@ -1634,6 +1664,217 @@ document.getElementById("btnConfirmSubmitSoporteLink")?.addEventListener("click"
     }
 
     showSuccess("El enlace de soporte ha sido enviado exitosamente al coordinador.");
+    invalidarCachesDetalleAsignacion();
+    await cargarDetalle();
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    if (btnConfirm) btnConfirm.disabled = false;
+    if (btnCancel) btnCancel.disabled = false;
+  }
+});
+
+// Assign Digitalizador button click opens the assign modal and loads digitalizadores
+document.getElementById("btnHeaderAssignDigitalizador")?.addEventListener("click", async () => {
+  const inpLink = document.getElementById("inpAssignDigitalizadorLink");
+  const errEl = document.getElementById("assignDigitalizadorLinkError");
+  const selectEl = document.getElementById("selectAssignDigitalizador");
+  const selectErr = document.getElementById("assignDigitalizadorSelectError");
+  const commentEl = document.getElementById("txtAssignDigitalizadorComment");
+
+  // Set the Box link field to empty by default
+  if (inpLink) {
+    inpLink.value = "";
+  }
+  if (errEl) errEl.classList.add("d-none");
+  if (selectErr) selectErr.classList.add("d-none");
+  if (commentEl) commentEl.value = "";
+
+  if (selectEl) {
+    selectEl.innerHTML = '<option value="" disabled selected>Cargando digitalizadores...</option>';
+    try {
+      const response = await fetch(`${rp}/asignaciones/usuarios-disponibles`, { credentials: "same-origin" });
+      const users = await response.json().catch(() => []);
+      if (response.ok && Array.isArray(users)) {
+        const digitalizadores = users.filter(u => u.rol && u.rol.toLowerCase() === "digitalizador");
+        selectEl.innerHTML = '<option value="" disabled selected>Selecciona un digitalizador...</option>';
+        digitalizadores.forEach(u => {
+          const opt = document.createElement("option");
+          opt.value = String(u.id_global);
+          opt.textContent = `${u.first_name || ""} ${u.last_name || ""} (${u.username})`;
+          selectEl.appendChild(opt);
+        });
+      } else {
+        selectEl.innerHTML = '<option value="" disabled selected>Error al cargar digitalizadores</option>';
+      }
+    } catch (err) {
+      selectEl.innerHTML = '<option value="" disabled selected>Error al cargar digitalizadores</option>';
+    }
+  }
+
+  const modalEl = document.getElementById("modalAssignDigitalizador");
+  if (modalEl && window.bootstrap) {
+    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  }
+});
+
+// Confirm Digitalizador assignment from modal
+document.getElementById("btnConfirmAssignDigitalizador")?.addEventListener("click", async () => {
+  const idActual = Number(elId?.value || idFromUrl);
+  if (!idActual || idActual < 1) {
+    showWarning("Debes cargar primero una asignación.");
+    return;
+  }
+
+  const inpLink = document.getElementById("inpAssignDigitalizadorLink");
+  const errEl = document.getElementById("assignDigitalizadorLinkError");
+  const linkVal = inpLink?.value?.trim() || "";
+
+  const selectEl = document.getElementById("selectAssignDigitalizador");
+  const selectedId = selectEl?.value;
+  const selectErr = document.getElementById("assignDigitalizadorSelectError");
+
+  let hasError = false;
+
+  if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
+    if (errEl) {
+      errEl.textContent = "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
+      errEl.classList.remove("d-none");
+    }
+    hasError = true;
+  } else {
+    if (errEl) errEl.classList.add("d-none");
+  }
+
+  if (!selectedId) {
+    if (selectErr) selectErr.classList.remove("d-none");
+    hasError = true;
+  } else {
+    if (selectErr) selectErr.classList.add("d-none");
+  }
+
+  if (hasError) return;
+
+  const commentVal = document.getElementById("txtAssignDigitalizadorComment")?.value?.trim() || "";
+
+  const btnConfirm = document.getElementById("btnConfirmAssignDigitalizador");
+  const btnCancel = document.querySelector("#modalAssignDigitalizador [data-bs-dismiss='modal']");
+  if (btnConfirm) btnConfirm.disabled = true;
+  if (btnCancel) btnCancel.disabled = true;
+
+  try {
+    const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/assign-digitalizador`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        digitalizador_id: selectedId,
+        enlace_soporte: linkVal,
+        comentario: commentVal || null
+      }),
+      credentials: "same-origin"
+    });
+
+    if (!response.ok) {
+      const rawText = await response.text();
+      let data = {};
+      try { data = JSON.parse(rawText); } catch (e) {}
+      throw new Error(data?.detail || rawText || "Error al asignar digitalizador.");
+    }
+
+    const modalEl = document.getElementById("modalAssignDigitalizador");
+    if (modalEl && window.bootstrap) {
+      window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+    }
+
+    showSuccess("Se ha asignado el digitalizador y enviado el enlace exitosamente.");
+    invalidarCachesDetalleAsignacion();
+    await cargarDetalle();
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    if (btnConfirm) btnConfirm.disabled = false;
+    if (btnCancel) btnCancel.disabled = false;
+  }
+});
+
+// Submit to Lider button click opens the modal
+document.getElementById("btnHeaderSubmitToLider")?.addEventListener("click", () => {
+  const inpLink = document.getElementById("inpSubmitToLiderLink");
+  const errEl = document.getElementById("submitToLiderLinkError");
+  const commentEl = document.getElementById("txtSubmitToLiderComment");
+
+  // Set the Box link field to empty by default
+  if (inpLink) {
+    inpLink.value = "";
+  }
+  if (errEl) errEl.classList.add("d-none");
+  if (commentEl) commentEl.value = "";
+
+  const modalEl = document.getElementById("modalSubmitToLider");
+  if (modalEl && window.bootstrap) {
+    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  }
+});
+
+// Confirm Submit to Lider from modal
+document.getElementById("btnConfirmSubmitToLider")?.addEventListener("click", async () => {
+  const idActual = Number(elId?.value || idFromUrl);
+  if (!idActual || idActual < 1) {
+    showWarning("Debes cargar primero una asignación.");
+    return;
+  }
+
+  const inpLink = document.getElementById("inpSubmitToLiderLink");
+  const errEl = document.getElementById("submitToLiderLinkError");
+  const linkVal = inpLink?.value?.trim() || "";
+
+  if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
+    if (errEl) {
+      errEl.textContent = "Por favor ingresa un enlace de entregable válido (debe iniciar con http:// o https://).";
+      errEl.classList.remove("d-none");
+    }
+    return;
+  }
+
+  if (errEl) errEl.classList.add("d-none");
+
+  const commentVal = document.getElementById("txtSubmitToLiderComment")?.value?.trim() || "";
+
+  const btnConfirm = document.getElementById("btnConfirmSubmitToLider");
+  const btnCancel = document.querySelector("#modalSubmitToLider [data-bs-dismiss='modal']");
+  if (btnConfirm) btnConfirm.disabled = true;
+  if (btnCancel) btnCancel.disabled = true;
+
+  try {
+    const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/submit-to-lider`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        enlace_digitalizacion: linkVal,
+        comentario: commentVal || null
+      }),
+      credentials: "same-origin"
+    });
+
+    if (!response.ok) {
+      const rawText = await response.text();
+      let data = {};
+      try { data = JSON.parse(rawText); } catch (e) {}
+      throw new Error(data?.detail || rawText || "Error al enviar al Líder Técnico.");
+    }
+
+    const modalEl = document.getElementById("modalSubmitToLider");
+    if (modalEl && window.bootstrap) {
+      window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+    }
+
+    showSuccess("Se ha enviado el trabajo al Líder Técnico exitosamente.");
     invalidarCachesDetalleAsignacion();
     await cargarDetalle();
   } catch (err) {

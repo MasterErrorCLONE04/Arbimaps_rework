@@ -3400,7 +3400,7 @@ def importar_retorno_xtf(
     conn=Depends(get_tenant_db_connection),
 ):
     del conn
-    _require_assignment_access(user, "admin")
+    _require_assignment_access(user, "admin", "lider_tecnico", "lider_reconocimiento")
     return _procesar_retorno_xtf(
         tenant,
         request.app.state.tenant_connection_manager,
@@ -3421,7 +3421,7 @@ def importar_retorno_xtf_workspace(
     conn=Depends(get_tenant_db_connection),
 ):
     del conn
-    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento")
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento", "lider_tecnico")
     return _procesar_retorno_xtf(
         tenant,
         request.app.state.tenant_connection_manager,

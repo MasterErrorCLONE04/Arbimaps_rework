@@ -568,6 +568,9 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 
+  const currentUserId = "{{ current_user_id }}";
+  const effectiveRole = "{{ effective_role }}";
+
   const injectedRp = "{{ rp if rp is defined else '' }}";
   const rp = injectedRp || (window.location.pathname.startsWith("/api/") ? "/api" : "");
 
@@ -1451,7 +1454,11 @@
 
         // Cargar Coordinadores
         selectCoord.innerHTML = '<option value="" disabled selected>Selecciona un coordinador...</option>';
-        const coordinadores = users.filter(u => u.rol && u.rol.toLowerCase() === "coordinador");
+        let coordinadores = users.filter(u => u.rol && u.rol.toLowerCase() === "coordinador");
+        if (effectiveRole === "coordinador") {
+          coordinadores = coordinadores.filter(u => String(u.id_global) === String(currentUserId));
+        }
+
         actualizarContadoresUsuariosDisponibles(coordinadores.length, 0);
         coordinadores.forEach(u => {
           const opt = document.createElement("option");
@@ -1490,6 +1497,13 @@
           selectDest.disabled = false;
           toggleNotificacionAsignacion(false);
         });
+
+        // Si es coordinador, auto-seleccionar y deshabilitar
+        if (effectiveRole === "coordinador" && coordinadores.length > 0) {
+          selectCoord.value = coordinadores[0].id_global;
+          selectCoord.dispatchEvent(new Event("change"));
+          selectCoord.disabled = true;
+        }
 
       } catch (e) {
         console.warn("No se pudieron cargar usuarios", e);

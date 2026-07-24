@@ -89,6 +89,14 @@
                 </button>
               </li>
               <li>
+                <button id="btnHeaderAssignDigitalizador" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #3b82f6; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-user-plus fs-6" style="color: #3b82f6; width: 20px; text-align: center;"></i>
+                  <span>Asignar Digitalizador</span>
+                </button>
+              </li>
+              <li>
                 <button id="btnHeaderViewSoporteLink" type="button"
                   class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
                   style="font-size: 0.85rem; color: #0891b2; background: transparent; border: none; text-align: left; width: 100%;">
@@ -111,6 +119,14 @@
                   <i class="fa-solid fa-clipboard-check fs-6"
                     style="color: #ea580c; width: 20px; text-align: center;"></i>
                   <span>Revisar Control de Calidad 2</span>
+                </button>
+              </li>
+              <li>
+                <button id="btnHeaderSubmitToLider" type="button"
+                  class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #6366f1; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="fa-solid fa-paper-plane fs-6" style="color: #6366f1; width: 20px; text-align: center;"></i>
+                  <span>Enviar a Líder Técnico</span>
                 </button>
               </li>
               <li>
@@ -1710,7 +1726,7 @@
       currentLoggedUser: "{{ user }}",
       currentLoggedRole: "{{ effective_role }}",
       asigSchemaWork: {{ asig_schema_work | tojson }},
-    assignWmsLayerDetail: { { asig_geoserver_layer | default ('B_ASIGNACIONES_ARB:ASIGNACIONES') | tojson } }
+      assignWmsLayerDetail: {{ asig_geoserver_layer | default('B_ASIGNACIONES_ARB:ASIGNACIONES') | tojson }}
     };
   </script>
   <script src="{{ rp }}/static/js/asignaciones/asignaciones_detalle.js?v={{ range(1000, 9999)|random }}"></script>

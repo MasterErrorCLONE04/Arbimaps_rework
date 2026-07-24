@@ -633,11 +633,62 @@ def test_approve_digitalization_success(mock_command_service, monkeypatch):
         client = TestClient(app)
         response = client.post("/api/workflow/asignaciones/123/approve-digitalization")
         assert response.status_code == 200
-        assert len(notifications_sent) == 1
-        assert notifications_sent[0]["id_usuario_destino"] == 300
-        assert notifications_sent[0]["rol_destino"] == "lider_reconocimiento"
+        assert len(notifications_sent) == 0
     finally:
         app.dependency_overrides[get_tenant_db_connection] = mock_get_tenant_db_connection
+        app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
+
+
+def test_submit_to_lider_success(monkeypatch):
+    mock_conn = MagicMock()
+    mock_cur = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cur
+    mock_cur.fetchone.return_value = {
+        "creado_por_id": 200,
+        "titulo": "Asignacion Test",
+        "estado": "APROBADO_DIGITALIZACION"
+    }
+    mock_cur.fetchall.return_value = [{"id_global": 300, "username": "lider1"}]
+
+    app.dependency_overrides[get_tenant_db_connection] = lambda: mock_conn
+    app.dependency_overrides[get_current_user_from_session] = lambda: {"id_global": "100", "username": "coord1", "role_code": "coordinador"}
+
+    notifications_sent = []
+    def spy_safe_crear_notificacion(conn, tenant, id_asignacion, id_usuario_destino, id_usuario_origen, rol_origen, rol_destino, tipo, titulo, mensaje, url_destino, prioridad, metadata):
+        notifications_sent.append({"id_usuario_destino": id_usuario_destino, "rol_destino": rol_destino})
+
+    import routers.asignaciones_workflow as workflow_router
+    monkeypatch.setattr(workflow_router.asignaciones_repo, "safe_crear_notificacion", spy_safe_crear_notificacion)
+    monkeypatch.setattr(workflow_router.asignaciones_repo, "update_asignacion_fields", lambda *a, **k: None)
+    monkeypatch.setattr(workflow_router.asignaciones_repo, "insert_asignacion_comentario", lambda *a, **k: None)
+    monkeypatch.setattr(workflow_router.asignaciones_repo, "safe_log_event", lambda *a, **k: None)
+
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/api/workflow/asignaciones/123/submit-to-lider",
+            json={"enlace_digitalizacion": "https://box.com/final-xtf", "comentario": "Listo para revision"}
+        )
+        assert response.status_code == 200
+        assert len(notifications_sent) == 1
+        assert notifications_sent[0]["id_usuario_destino"] == 300
+        assert notifications_sent[0]["rol_destino"] == "lider_tecnico"
+    finally:
+        app.dependency_overrides[get_tenant_db_connection] = mock_get_tenant_db_connection
+        app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
+
+
+def test_submit_to_lider_forbidden_for_lider():
+    app.dependency_overrides[get_current_user_from_session] = lambda: {"id_global": "300", "username": "lider1", "role_code": "lider_reconocimiento"}
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/api/workflow/asignaciones/123/submit-to-lider",
+            json={"enlace_digitalizacion": "https://box.com/final-xtf"}
+        )
+        assert response.status_code == 403
+        assert response.json()["detail"] == "Solo coordinadores o admins pueden enviar la revisión al Líder Técnico."
+    finally:
         app.dependency_overrides[get_current_user_from_session] = mock_get_current_user
 
 
@@ -675,7 +726,7 @@ def test_lider_approve_success(mock_command_service, monkeypatch):
         assert response.status_code == 200
         assert len(notifications_sent) == 1
         assert notifications_sent[0]["id_usuario_destino"] == 400
-        assert notifications_sent[0]["rol_destino"] == "consolidador"
+        assert notifications_sent[0]["rol_destino"] == "admin"
     finally:
         app.dependency_overrides[get_tenant_db_connection] = mock_get_tenant_db_connection
         app.dependency_overrides[get_current_user_from_session] = mock_get_current_user

@@ -22,6 +22,9 @@ ROLE_ALIASES = {
     "administrator": "admin",
     "coord": "coordinador",
     "coordinator": "coordinador",
+    "lider_reconocimiento": "lider_tecnico",
+    "lider": "lider_tecnico",
+    "lider_tecnico": "lider_tecnico",
 }
 
 

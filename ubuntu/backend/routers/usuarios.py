@@ -17,12 +17,13 @@ import repositories.asignaciones_repo as asignaciones_repo
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 logger = logging.getLogger(__name__)
 
-ALLOWED_ROLES = ("admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento", "consulta", "consolidador", "soporte")
+ALLOWED_ROLES = ("admin", "coordinador", "digitalizador", "reconocedor", "lider_tecnico", "lider_reconocimiento", "consulta", "consolidador", "soporte")
 USERNAME_PREFIX_BY_ROLE = {
     "admin": "Admin_",
     "soporte": "Sop_",
     "coordinador": "Coord_",
     "lider_reconocimiento": "Lider_",
+    "lider_tecnico": "Lider_",
     "reconocedor": "Rec_",
     "digitalizador": "Dig_",
     "consulta": "Cons_",
@@ -62,7 +63,7 @@ def _require_admin(user: dict[str, Any]) -> None:
 
 def _require_admin_or_coordinador(user: dict[str, Any]) -> str:
     role = get_user_role(user)
-    if role not in {"admin", "coordinador", "soporte", "lider_reconocimiento"}:
+    if role not in {"admin", "coordinador", "soporte", "lider_tecnico", "lider_reconocimiento"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Rol '{role}' sin permisos para esta accion",
@@ -486,6 +487,7 @@ def obtener_siguiente_username(
             role,
         )
         raise HTTPException(status_code=500, detail=f"Error generando username: {exc}") from exc
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def crear_usuario(
     body: UsuarioCreate,
@@ -493,11 +495,24 @@ def crear_usuario(
     tenant: Annotated[TenantContext, Depends(get_current_tenant)],
     conn=Depends(get_tenant_db_connection),
 ):
-    _require_admin(current_user)
+    role_caller = get_user_role(current_user)
+    if role_caller not in {"admin", "soporte", "coordinador"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Rol '{role_caller}' sin permisos para esta accion",
+        )
     role = _normalized_role(body.rol)
+    if role_caller == "coordinador":
+        if role not in {"reconocedor", "digitalizador"}:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Como coordinador solo puedes crear usuarios con rol reconocedor o digitalizador.",
+            )
+        body.supervisor_id = _current_user_id(current_user)
+
     email = _normalized_email(body.email)
     supervisor_id = getattr(body, "supervisor_id", None)
-    supervisor_id = _validate_supervisor_id(conn, tenant, supervisor_id) if role == "reconocedor" else None
+    supervisor_id = _validate_supervisor_id(conn, tenant, supervisor_id) if role in {"reconocedor", "digitalizador"} else None
     username = ""
     if not body.password:
         raise HTTPException(status_code=400, detail="Debe especificar una contraseña inicial")
@@ -505,9 +520,11 @@ def crear_usuario(
     pwd_hash = hash_password(body.password)
     try:
         role_id = _get_role_id(conn, tenant, role)
-        asignaciones_repo.ensure_asignacion_tables(conn, tenant)
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            username = _generate_next_username(cur, tenant, role)
+            username = body.username.strip() if body.username else ""
+            if not username:
+                username = _generate_next_username(cur, tenant, role)
+
             cur.execute(
                 f"SELECT 1 FROM {_app_table(tenant, 'users')} WHERE username = %s",
                 (username,),
@@ -571,7 +588,7 @@ def listar_usuarios(
     role = _require_admin_or_coordinador(current_user)
     where_scope = ""
     params: tuple[Any, ...] = ()
-    if role == "lider_reconocimiento":
+    if role in {"lider_reconocimiento", "lider_tecnico"}:
         where_scope = """
                 WHERE LOWER(COALESCE(u.rol, '')) IN ('reconocedor', 'digitalizador', 'coordinador')
         """
@@ -579,7 +596,7 @@ def listar_usuarios(
     elif role == "coordinador":
         where_scope = """
                 WHERE (
-                    (LOWER(COALESCE(u.rol, '')) = 'reconocedor'
+                    (LOWER(COALESCE(u.rol, '')) IN ('reconocedor', 'digitalizador')
                      AND NULLIF(TRIM(u.supervisor), '') = %s::text)
                     OR LOWER(COALESCE(u.rol, '')) = 'coordinador'
                 )
@@ -894,7 +911,9 @@ def crear_equipo_trabajo(
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             _validate_equipo_payload(cur, tenant, body, None)
-            nombre_equipo = _generate_next_cuadrilla_name(cur, tenant, body.coordinador_id)
+            nombre_equipo = body.nombre.strip() if getattr(body, "nombre", None) else ""
+            if not nombre_equipo:
+                nombre_equipo = _generate_next_cuadrilla_name(cur, tenant, body.coordinador_id)
             cur.execute(
                 f"""
                 INSERT INTO {_app_table(tenant, 'equipos_trabajo')}

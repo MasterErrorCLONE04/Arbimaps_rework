@@ -84,6 +84,7 @@ class WorkflowRole(_StrEnum):
             "administrador": cls.ADMINISTRADOR,
             "lider": cls.LIDER,
             "lider_reconocimiento": cls.LIDER,
+            "lider_tecnico": cls.LIDER,
             "coordinador": cls.COORDINADOR,
             "asignador": cls.ASIGNADOR,
             "reconocedor": cls.RECONOCEDOR,

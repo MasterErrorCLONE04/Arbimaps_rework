@@ -158,6 +158,112 @@
     </div>
   </div>
 
+  <!-- Modal Asignar Digitalizador (Coordinador/Admin) -->
+  <div class="modal fade" id="modalAssignDigitalizador" tabindex="-1" aria-labelledby="modalAssignDigitalizadorLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="border-radius: 6px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #032F57; color: white;">
+          <h5 class="modal-title fw-bold" id="modalAssignDigitalizadorLabel">
+            <i class="fa-solid fa-user-plus me-2"></i>Asignar Digitalizador
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            Ingresa el enlace final de la carpeta de entregables (Box / Drive) para el digitalizador y selecciona el profesional asignado.
+          </p>
+          <div class="mb-3">
+            <label for="inpAssignDigitalizadorLink" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Enlace del Entregable *</label>
+            <div class="input-group">
+              <span class="input-group-text"
+                style="background-color: #fff; border-right: none; border-radius: 10px 0 0 10px;">
+                <i class="fa-solid fa-link text-muted"></i>
+              </span>
+              <input type="url" class="form-control" id="inpAssignDigitalizadorLink" placeholder="https://..." required
+                style="border-left: none; border-radius: 0 10px 10px 0; font-size: 0.9rem; padding: 10px 12px; box-shadow: none; border-color: #dee2e6;" />
+            </div>
+            <div id="assignDigitalizadorLinkError" class="text-danger small mt-1 d-none">Por favor ingresa un enlace válido.</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="selectAssignDigitalizador" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Selecciona un Digitalizador / Consolidador *</label>
+            <select id="selectAssignDigitalizador" class="form-select"
+              style="border-radius: 10px; font-size: 0.9rem; padding: 10px 12px; border-color: #dee2e6; box-shadow: none;">
+              <option value="" disabled selected>Cargando digitalizadores...</option>
+            </select>
+            <div id="assignDigitalizadorSelectError" class="text-danger small mt-1 d-none">Por favor selecciona un digitalizador válido.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="txtAssignDigitalizadorComment" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Comentario adicional</label>
+            <textarea class="form-control" id="txtAssignDigitalizadorComment" rows="3" placeholder="Escribe un comentario opcional..." style="border-radius: 10px; font-size: 0.9rem; resize: none; border-color: #dee2e6; box-shadow: none;"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
+            style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <button id="btnConfirmAssignDigitalizador" type="button"
+            class="btn rounded-3 px-4 py-2 fw-semibold text-white border-0"
+            style="background-color: #032F57; font-size: 0.85rem;">
+            Asignar y Continuar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Enviar a Líder Técnico (Coordinador/Admin) -->
+  <div class="modal fade" id="modalSubmitToLider" tabindex="-1" aria-labelledby="modalSubmitToLiderLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content"
+        style="border-radius: 6px; overflow: hidden; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div class="modal-header" style="background-color: #032F57; color: white;">
+          <h5 class="modal-title fw-bold" id="modalSubmitToLiderLabel">
+            <i class="fa-solid fa-paper-plane me-2"></i>Enviar a Líder Técnico
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body p-4" style="background-color: #f8fafc;">
+          <p class="text-muted small mb-3">
+            Ingresa el enlace final de la carpeta de entregables (Box / Drive) de la digitalización para la revisión y aprobación del Líder Técnico.
+          </p>
+          <div class="mb-3">
+            <label for="inpSubmitToLiderLink" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Enlace del Entregable *</label>
+            <div class="input-group">
+              <span class="input-group-text"
+                style="background-color: #fff; border-right: none; border-radius: 10px 0 0 10px;">
+                <i class="fa-solid fa-link text-muted"></i>
+              </span>
+              <input type="url" class="form-control" id="inpSubmitToLiderLink" placeholder="https://..." required
+                style="border-left: none; border-radius: 0 10px 10px 0; font-size: 0.9rem; padding: 10px 12px; box-shadow: none; border-color: #dee2e6;" />
+            </div>
+            <div id="submitToLiderLinkError" class="text-danger small mt-1 d-none">Por favor ingresa un enlace válido.</div>
+          </div>
+          <div class="mb-3">
+            <label for="txtSubmitToLiderComment" class="form-label fw-semibold text-dark" style="font-size: 0.90rem;">Comentario adicional</label>
+            <textarea class="form-control" id="txtSubmitToLiderComment" rows="3" placeholder="Escribe un comentario opcional..." style="border-radius: 10px; font-size: 0.9rem; resize: none; border-color: #dee2e6; box-shadow: none;"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-3" style="background-color: #f1f5f9;">
+          <button type="button" class="btn rounded-3 px-4 py-2 fw-semibold text-dark border-0" data-bs-dismiss="modal"
+            style="background-color: #e2e8f0; font-size: 0.85rem;">
+            Cancelar
+          </button>
+          <button id="btnConfirmSubmitToLider" type="button"
+            class="btn rounded-3 px-4 py-2 fw-semibold text-white border-0"
+            style="background-color: #032F57; font-size: 0.85rem;">
+            Enviar a Líder
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal Ver Enlace de Soporte -->
   <div class="modal fade" id="modalViewSoporteLink" tabindex="-1" aria-labelledby="modalViewSoporteLinkLabel"
     aria-hidden="true">

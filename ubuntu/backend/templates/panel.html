@@ -94,7 +94,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <span>Consultar predio</span>
               </a>
 
-              {% if effective_role in ['admin', 'coordinador', 'soporte', 'lider_reconocimiento'] %}
+              {% if effective_role in ['admin', 'coordinador', 'soporte', 'lider_tecnico'] %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}"
                 href="{{ rp }}/panel/usuarios">
                 <i class="bi bi-people"></i>
@@ -124,7 +124,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                     class="accordion-collapse collapse {% if view == 'asignaciones' %}show{% endif %}"
                     data-bs-parent="#asignacionesAccordionDesktop">
                     <div class="accordion-body p-2">
-                      {% if effective_role in ['admin', 'soporte'] %}
+                      {% if effective_role in ['admin', 'soporte', 'coordinador'] %}
                       <a class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
                         href="{{ rp }}/panel/asignaciones/cargas#asig-open">
                         <!-- <img src="{{ rp }}/static/img/PNG/cargaicon.png" alt="logo cargas" class="logo-submenu" /> -->
@@ -176,7 +176,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <i class="bi bi-arrow-repeat"></i>
                 <span>Sincronizacion Mergin</span>
               </a>
-              {% if effective_role in ['coordinador', 'soporte', 'admin'] %}
+              {% if effective_role in ['coordinador', 'soporte', 'admin', 'lider_tecnico'] %}
               <div class="px-3">
                 <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
               </div>
@@ -395,7 +395,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
         </a>
         {% endif %}
 
-        {% if effective_role in ['coordinador', 'soporte', 'admin'] %}
+        {% if effective_role in ['coordinador', 'soporte', 'admin', 'lider_tecnico'] %}
         <div class="px-3">
           <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
         </div>

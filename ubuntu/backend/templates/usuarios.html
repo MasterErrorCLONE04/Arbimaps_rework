@@ -306,7 +306,7 @@
     <button class="tab-btn" id="tabCuadrillas">
       <i class="bi bi-people fs-5"></i> Cuadrillas <span class="tab-badge" id="tabBadgeCuadrillas">0</span>
     </button>
-    {% if effective_role in ['admin', 'soporte', 'coordinador', 'lider_reconocimiento'] %}
+    {% if effective_role in ['admin', 'soporte', 'coordinador', 'lider_tecnico'] %}
     <button class="tab-btn" id="tabSolicitudes">
       <i class="bi bi-file-earmark-person fs-5"></i> Solicitudes <span class="tab-badge"
         id="tabBadgeSolicitudes">0</span>
@@ -318,7 +318,7 @@
   <div id="usuariosTabContent">
     <div class="container-fluid pb-3 px-lg-2">
       <div class="row">
-        {% if effective_role in ['admin', 'soporte', 'lider_reconocimiento'] %}
+        {% if effective_role in ['admin', 'soporte', 'lider_tecnico'] %}
         <div class="col-6 col-md-2  p-2">
           <!-- Total -->
           <div class="stat-card total ">
@@ -360,7 +360,7 @@
           </div>
         </div>
         {% endif %}
-        {% if effective_role in ['admin', 'soporte', 'lider_reconocimiento'] %}
+        {% if effective_role in ['admin', 'soporte', 'lider_tecnico'] %}
         <div class="col-6 col-md-2 p-2">
           <!-- Coordinador -->
           <div class="stat-card role-coordinador">
@@ -414,7 +414,7 @@
           </div>
         </div>
         {% endif %}
-        {% if effective_role in ['admin', 'soporte', 'lider_reconocimiento'] %}
+        {% if effective_role in ['admin', 'soporte', 'lider_tecnico'] %}
         <div class="col-6 col-md-2 p-2">
           <!-- digitalizador -->
           <div class="stat-card role-digitalizador">
@@ -449,11 +449,9 @@
             </div>
 
             <button class="btn-add-user-custom" data-bs-toggle="modal" data-bs-target="#modalUsuario" id="btnAddNewUser"
-              {% if effective_role not in ['admin', 'soporte' , 'lider_reconocimiento' , 'coordinador' ]
+              {% if effective_role not in ['admin', 'soporte', 'coordinador']
               %}style="display: none;" {% endif %}>
-              <i class="bi bi-plus-lg"></i> <span id="btnAddNewUserText">{% if effective_role in
-                ['lider_reconocimiento', 'coordinador'] %}Solicitar creación de usuario{% else %}Agregar nuevo usuario{%
-                endif %}</span>
+              <i class="bi bi-plus-lg"></i> <span id="btnAddNewUserText">Agregar nuevo usuario</span>
             </button>
           </div>
         </div>
@@ -987,9 +985,9 @@
       "soporte": "Soporte",
       "reconocedor": "Reconocedor",
       "admin": "Administrador",
-      "lider_reconocimiento": "Lider de reco.",
+      "lider_tecnico": "Líder Técnico",
       "consulta": "Consulta",
-      "digitalizador": "Digitalizador",
+      "digitalizador": "Digitalizador / Consolidador",
     };
 
     const roleBadges = {
@@ -997,7 +995,7 @@
       "soporte": "soporte",
       "coordinador": "coordinador",
       "reconocedor": "reconocedor",
-      "lider_reconocimiento": "lider_reconocimiento",
+      "lider_tecnico": "lider_tecnico",
       "consulta": "consulta",
       "digitalizador": "digitalizador",
     };
@@ -1292,11 +1290,7 @@
       form.reset();
       inputUsername.disabled = false;
       inputUsername.readOnly = true;
-      if (CURRENT_ROLE === "lider_reconocimiento" || CURRENT_ROLE === "coordinador") {
-        submitBtn.textContent = "Solicitar creación";
-      } else {
-        submitBtn.textContent = "Guardar usuario";
-      }
+      submitBtn.textContent = "Guardar usuario";
       inputPassword.value = "";
       inputFechaInicio.value = "";
       inputFechaFin.value = "";
@@ -1318,7 +1312,7 @@
       usuariosCache.forEach(u => {
         const rol = (u.rol || "").toLowerCase().trim();
         if (rol === "admin" || rol === "administrador") admin++;
-        else if (rol === "lider_reconocimiento" || rol === "lider de reco." || rol === "lider") lider++;
+        else if (rol === "lider_reconocimiento" || rol === "lider_tecnico" || rol === "lider de reco." || rol === "lider") lider++;
         else if (rol === "coordinador") coordinador++;
         else if (rol === "reconocedor") reconocedor++;
         else if (rol === "soporte") soporte++;
@@ -1876,7 +1870,7 @@
     async function guardarUsuario(evt) {
       evt.preventDefault();
       const isEdit = editingId !== null;
-      const isRequest = CURRENT_ROLE === "lider_reconocimiento" || CURRENT_ROLE === "coordinador";
+      const isRequest = false;
 
       submitBtn.disabled = true;
       submitBtn.textContent = isEdit ? "Actualizando..." : (isRequest ? "Enviando solicitud..." : "Guardando...");
@@ -2035,8 +2029,8 @@
       usuariosTabContent.style.display = "block";
       cuadrillasTabContent.style.display = "none";
       if (solicitudesTabContent) solicitudesTabContent.style.display = "none";
-      btnAddNewUser.style.display = (IS_ADMIN || CURRENT_ROLE === "lider_reconocimiento" || CURRENT_ROLE === "coordinador") ? "inline-flex" : "none";
-      btnAddNewUserText.textContent = (CURRENT_ROLE === "lider_reconocimiento" || CURRENT_ROLE === "coordinador") ? "Solicitar creación de usuario" : "Agregar nuevo usuario";
+      btnAddNewUser.style.display = (IS_ADMIN || CURRENT_ROLE === "coordinador") ? "inline-flex" : "none";
+      btnAddNewUserText.textContent = "Agregar nuevo usuario";
       btnAddNewCuadrilla.style.display = "none";
     });
 
@@ -2641,11 +2635,7 @@
 
     btnAddNewUser.addEventListener("click", () => {
       resetForm();
-      if (CURRENT_ROLE === "lider_reconocimiento" || CURRENT_ROLE === "coordinador") {
-        document.getElementById("modalUsuarioLabel").textContent = "Solicitar creación de usuario";
-      } else {
-        document.getElementById("modalUsuarioLabel").textContent = "Crear nuevo usuario";
-      }
+      document.getElementById("modalUsuarioLabel").textContent = "Crear nuevo usuario";
     });
 
     btnAddNewCuadrilla.addEventListener("click", async () => {
@@ -3283,31 +3273,23 @@
     if (IS_ADMIN) {
       cargarRoles();
     }
-    if (CURRENT_ROLE === "lider_reconocimiento") {
-      const pwdGroup = inputPassword.closest(".form-group");
-      if (pwdGroup) pwdGroup.style.display = "none";
-      inputPassword.required = false;
-
+    if (CURRENT_ROLE === "lider_tecnico") {
       selectRol.innerHTML = `
         <option value="">Selecciona...</option>
         <option value="coordinador">Coordinador</option>
         <option value="reconocedor">Reconocedor</option>
-        <option value="digitalizador">Digitalizador</option>
+        <option value="digitalizador">Digitalizador / Consolidador</option>
       `;
     }
     if (CURRENT_ROLE === "coordinador") {
-      const pwdGroup = inputPassword.closest(".form-group");
-      if (pwdGroup) pwdGroup.style.display = "none";
-      inputPassword.required = false;
-
       selectRol.innerHTML = `
         <option value="">Selecciona...</option>
         <option value="reconocedor">Reconocedor</option>
-        <option value="digitalizador">Digitalizador</option>
+        <option value="digitalizador">Digitalizador / Consolidador</option>
       `;
     }
     cargarUsuarios();
-    if (CURRENT_ROLE === "admin" || CURRENT_ROLE === "soporte" || CURRENT_ROLE === "coordinador" || CURRENT_ROLE === "lider_reconocimiento") {
+    if (CURRENT_ROLE === "admin" || CURRENT_ROLE === "soporte" || CURRENT_ROLE === "coordinador" || CURRENT_ROLE === "lider_tecnico") {
       cargarSolicitudes();
     }
   })();

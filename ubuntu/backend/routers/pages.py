@@ -37,7 +37,7 @@ xtf_service = XTFValidationService()
 
 # si algn da usas /api
 BASE_PATH = os.getenv("APP_BASE_PATH", "").rstrip("/")
-ASIGNACIONES_ROLES = {"admin", "coordinador", "digitalizador", "reconocedor", "soporte", "lider_reconocimiento"}
+ASIGNACIONES_ROLES = {"admin", "coordinador", "digitalizador", "reconocedor", "soporte", "lider_tecnico"}
 
 
 # -------------------------------------------------
@@ -485,7 +485,7 @@ def panel_asignaciones_cargas(request: Request):
         )
 
     role = _effective_role(user)
-    if role not in {"admin", "soporte"}:
+    if role not in {"admin", "soporte", "coordinador"}:
         return RedirectResponse(
             url=with_root_path(request, "/panel"),
             status_code=302
@@ -587,7 +587,7 @@ def panel_usuarios(request: Request):
             status_code=302
         )
 
-    if _effective_role(user) not in {"admin", "coordinador", "soporte", "lider_reconocimiento"}:
+    if _effective_role(user) not in {"admin", "coordinador", "soporte", "lider_tecnico"}:
         return RedirectResponse(
             url=with_root_path(request, "/panel"),
             status_code=302
@@ -769,7 +769,7 @@ def panel_restriccion_predios(request: Request):
             status_code=302
         )
 
-    if _effective_role(user) not in {"admin", "coordinador", "soporte", "lider_reconocimiento"}:
+    if _effective_role(user) not in {"admin", "coordinador", "soporte", "lider_tecnico"}:
         return RedirectResponse(
             url=with_root_path(request, "/panel"),
             status_code=302
