@@ -1055,6 +1055,13 @@ async function cargarDetalle() {
         workflowContainer.insertAdjacentHTML("beforeend", digCardHtml);
       }
 
+      // 5. Coordinator Link
+      if (dataDet.enlace_coordinador) {
+        hasWorkflowLinks = true;
+        const coordCardHtml = buildLinkItemHtml("Enlace de Revisión (Coordinador)", dataDet.enlace_coordinador, "fa-solid fa-link", "rgba(249, 115, 22, 0.1)", "#f97316");
+        workflowContainer.insertAdjacentHTML("beforeend", coordCardHtml);
+      }
+
       if (!hasWorkflowLinks) {
         workflowContainer.innerHTML = `<p class="text-muted small mb-0 text-center py-3">No hay enlaces de flujo de trabajo disponibles.</p>`;
       }
@@ -2268,7 +2275,7 @@ document.getElementById("btnHeaderLiderReview")?.addEventListener("click", () =>
   const commentEl = document.getElementById("txtLiderReviewComment");
   if (commentEl) commentEl.value = "";
 
-  const currentLink = currentAssignmentData?.enlace_digitalizacion || "";
+  const currentLink = currentAssignmentData?.enlace_coordinador || currentAssignmentData?.enlace_digitalizacion || "";
   if (qcLinkEl) {
     qcLinkEl.href = currentLink;
     qcLinkEl.textContent = currentLink || "Sin enlace de evidencia";

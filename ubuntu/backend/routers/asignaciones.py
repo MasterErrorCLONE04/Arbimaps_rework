@@ -1432,6 +1432,14 @@ def listar_asignaciones(
             if str(row.get("usuario_asignado") or "").strip().lower() == username
             or str(row.get("usuario_reconocedor") or "").strip().lower() == username
         ]
+    elif role == "coordinador":
+        coord_id = str(user.get("id_global") or "").strip()
+        rows = [
+            row
+            for row in rows
+            if str(row.get("creado_por") or "").strip().lower() == username
+            or str(row.get("coordinador_asignado_id") or "").strip() == coord_id
+        ]
 
     # Admin / Soporte isolation
     user_role = normalize_role(get_user_role(user))

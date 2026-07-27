@@ -1222,7 +1222,7 @@ def return_to_digitalization(
         # 2. Update legacy fields
         with conn.cursor() as cur:
             cur.execute(
-                f"UPDATE {asignacion_table} SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL, enlace_devolucion = %s WHERE id = %s",
+                f"UPDATE {asignacion_table} SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL, enlace_coordinador = NULL, enlace_devolucion = %s WHERE id = %s",
                 (payload.enlace if payload else None, int(assignment_id))
             )
             if payload and payload.comentario:
@@ -1440,7 +1440,7 @@ def submit_to_lider(
             tenant,
             int(assignment_id),
             estado="EN_APROBACION",
-            enlace_digitalizacion=link,
+            enlace_coordinador=link,
         )
 
         if payload.comentario:
@@ -1528,7 +1528,7 @@ def lider_approve_assignment(
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
-            f"SELECT enlace_digitalizacion, creado_por_id, titulo, estado FROM {asignacion_table} WHERE id = %s",
+            f"SELECT enlace_digitalizacion, enlace_coordinador, creado_por_id, titulo, estado FROM {asignacion_table} WHERE id = %s",
             (int(assignment_id),)
         )
         asig_row = cur.fetchone()
@@ -1536,7 +1536,7 @@ def lider_approve_assignment(
     if not asig_row:
         raise HTTPException(status_code=404, detail="Asignación no encontrada.")
 
-    enlace = asig_row["enlace_digitalizacion"] or ""
+    enlace = asig_row.get("enlace_coordinador") or asig_row.get("enlace_digitalizacion") or ""
     asig_title = asig_row["titulo"] or f"Trabajo #{assignment_id}"
 
     actor = ActorContext(
@@ -1679,7 +1679,7 @@ def lider_reject_assignment(
         # 2. Update legacy fields: state to 'DEVUELTO_DIGITALIZACION', clear evidence link
         with conn.cursor() as cur:
             cur.execute(
-                f"UPDATE {asignacion_table} SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL, enlace_devolucion = %s WHERE id = %s",
+                f"UPDATE {asignacion_table} SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL, enlace_coordinador = NULL, enlace_devolucion = %s WHERE id = %s",
                 (payload.enlace if payload else None, int(assignment_id))
             )
             if payload and payload.comentario:

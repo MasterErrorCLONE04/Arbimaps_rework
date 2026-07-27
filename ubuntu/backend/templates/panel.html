@@ -82,12 +82,10 @@ effective_role in ['digitalizador', 'reconocedor'] %}
             <nav class="menu sidebar-nav d-flex flex-column gap-2 mt-2">
               <span class="titleHerr text-white">Herramientas principales</span>
 
-              {% if not limited_assignment_role %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'visor' else '' }}" href="{{ rp }}/panel">
                 <i class="bi bi-house-fill"></i>
                 <span>Visor geográfico</span>
               </a>
-              {% endif %}
 
               <a class="menuBtn sidebar-link {{ 'active' if view in ['buscar', 'buscar_predio'] else '' }}" href="{{ rp }}/panel/buscar">
                 <i class="bi bi-search"></i>
@@ -371,12 +369,10 @@ effective_role in ['digitalizador', 'reconocedor'] %}
       <nav class="menu sidebar-nav d-flex flex-column gap-2">
         <span class="titleHerr text-white mb-2">Herramientas principales</span>
 
-        {% if not limited_assignment_role %}
         <a class="menuBtn sidebar-link {{ 'active' if view == 'visor' else '' }}" href="{{ rp }}/panel">
           <i class="bi bi-house-fill"></i>
           <span>Visor geográfico</span>
         </a>
-        {% endif %}
 
         <a class="menuBtn sidebar-link {{ 'active' if view in ['buscar', 'buscar_predio'] else '' }}" href="{{ rp }}/panel/buscar">
           <span>Documentos</span>

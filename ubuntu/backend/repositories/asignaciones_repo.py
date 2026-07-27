@@ -179,6 +179,7 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
         # En runtime solo asumimos que ya existe el esquema (migrado en startup).
         return
 
+    success = False
     with conn.cursor() as cur:
         # Nunca esperar indefinidamente por locks de DDL.
         cur.execute("SET LOCAL lock_timeout = '10s'")
@@ -294,6 +295,12 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 f"""
                 ALTER TABLE IF EXISTS {app_schema}.asignacion
                 ADD COLUMN IF NOT EXISTS enlace_digitalizacion TEXT
+                """
+            )
+            cur.execute(
+                f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion
+                ADD COLUMN IF NOT EXISTS enlace_coordinador TEXT
                 """
             )
             cur.execute(
@@ -602,6 +609,7 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
             )
             if in_transaction:
                 cur.execute("RELEASE SAVEPOINT ensure_asig_tables_sp")
+            success = True
         except Exception as exc:
             if in_transaction:
                 try:
@@ -609,10 +617,11 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 except Exception as rollback_exc:
                     logger.warning("Failed to rollback to savepoint: %s", rollback_exc)
             logger.warning("ensure_asignacion_tables: DDL omitido/fallido por contencion de locks: %s", exc)
-    if isinstance(_ASIG_TABLES_ENSURED, set):
-        _ASIG_TABLES_ENSURED.add(cache_key)
-    else:
-        _ASIG_TABLES_ENSURED = True
+    if success:
+        if isinstance(_ASIG_TABLES_ENSURED, set):
+            _ASIG_TABLES_ENSURED.add(cache_key)
+        else:
+            _ASIG_TABLES_ENSURED = True
 
 
 def fail_stale_workspace_assignments(
@@ -1232,6 +1241,7 @@ def update_asignacion_fields(*args, **kwargs) -> None:
     enlace_control_calidad = kwargs.get("enlace_control_calidad")
     enlace_soporte = kwargs.get("enlace_soporte")
     enlace_digitalizacion = kwargs.get("enlace_digitalizacion")
+    enlace_coordinador = kwargs.get("enlace_coordinador")
     enlace_devolucion = kwargs.get("enlace_devolucion")
     usuario_reconocedor = kwargs.get("usuario_reconocedor")
     usuario_reconocedor_id = kwargs.get("usuario_reconocedor_id")
@@ -1266,6 +1276,9 @@ def update_asignacion_fields(*args, **kwargs) -> None:
     if enlace_digitalizacion is not None:
         sets.append("enlace_digitalizacion=%s")
         params.append(enlace_digitalizacion)
+    if enlace_coordinador is not None:
+        sets.append("enlace_coordinador=%s")
+        params.append(enlace_coordinador)
     if enlace_devolucion is not None:
         sets.append("enlace_devolucion=%s")
         params.append(enlace_devolucion)
@@ -1827,6 +1840,7 @@ def get_asignacion_for_paquete(conn, *args, **kwargs) -> Optional[dict]:
 
 
 def list_asignaciones(conn, tenant=None) -> list[dict]:
+    ensure_asignacion_tables(conn, tenant)
     app_schema = "arbimaps_app"
     if tenant is not None:
         if hasattr(tenant, "schemas"):

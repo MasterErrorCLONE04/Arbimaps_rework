@@ -590,7 +590,7 @@ def test_return_to_digitalization_success(mock_command_service, monkeypatch):
         response = client.post("/api/workflow/asignaciones/123/return-to-digitalization")
         assert response.status_code == 200
         mock_cur.execute.assert_any_call(
-            "UPDATE arbimaps_app.asignacion SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL, enlace_devolucion = %s WHERE id = %s",
+            "UPDATE arbimaps_app.asignacion SET estado = 'DEVUELTO_DIGITALIZACION', enlace_digitalizacion = NULL, enlace_coordinador = NULL, enlace_devolucion = %s WHERE id = %s",
             (None, 123)
         )
         assert len(notifications_sent) == 1

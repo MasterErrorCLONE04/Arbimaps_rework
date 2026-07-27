@@ -366,6 +366,7 @@ class AsignacionDetalleResponse(BaseModel):
     enlace_control_calidad: Optional[str] = None
     enlace_soporte: Optional[str] = None
     enlace_digitalizacion: Optional[str] = None
+    enlace_coordinador: Optional[str] = None
     enlace_devolucion: Optional[str] = None
     titulo: Optional[str] = None
     observaciones: Optional[str] = None
@@ -1218,6 +1219,7 @@ def obtener_detalle_asignacion(
                 a.enlace_control_calidad,
                 a.enlace_soporte,
                 a.enlace_digitalizacion,
+                a.enlace_coordinador,
                 a.enlace_devolucion,
                 a.titulo,
                 a.observaciones,
@@ -1400,6 +1402,7 @@ def obtener_detalle_asignacion(
         enlace_control_calidad=asignacion.get("enlace_control_calidad"),
         enlace_soporte=asignacion.get("enlace_soporte"),
         enlace_digitalizacion=asignacion.get("enlace_digitalizacion"),
+        enlace_coordinador=asignacion.get("enlace_coordinador"),
         enlace_devolucion=asignacion.get("enlace_devolucion"),
         titulo=asignacion.get("titulo"),
         observaciones=asignacion.get("observaciones"),
