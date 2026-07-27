@@ -897,12 +897,16 @@ def assign_digitalizador(
         except Exception as notif_err:
             logger.error(f"Fallo al notificar al digitalizador: {notif_err}")
 
+        log_msg = f"Trabajo asignado al digitalizador {dig_user['username']}. Estado: EN_DIGITALIZACION."
+        if payload.enlace_soporte:
+            log_msg += f" Enlace: {payload.enlace_soporte}"
+
         asignaciones_repo.safe_log_event(
             conn,
             tenant,
             int(assignment_id),
             "ESTADO_CAMBIADO",
-            f"Trabajo asignado al digitalizador {dig_user['username']}. Estado: EN_DIGITALIZACION.",
+            log_msg,
             user.get("username")
         )
         conn.commit()
@@ -1492,7 +1496,7 @@ def submit_to_lider(
             tenant,
             int(assignment_id),
             "ESTADO_CAMBIADO",
-            "Trabajo enviado a Líder Técnico. Estado: EN_APROBACION.",
+            f"Trabajo enviado a Líder Técnico. Estado: EN_APROBACION. Enlace: {link}",
             user.get("username")
         )
         conn.commit()

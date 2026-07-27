@@ -781,6 +781,12 @@ async function cargarDetalle() {
           } else if (msg.includes("devuelto a soporte")) {
             orig = "GENERACION_XTF_CAMPO";
             dest = "GENERACION_XTF_CAMPO";
+          } else if (msg.includes("EN_DIGITALIZACION")) {
+            orig = "CONTROL_CALIDAD_1";
+            dest = "EN_DIGITALIZACION";
+          } else if (msg.includes("EN_APROBACION")) {
+            orig = "APROBADO_DIGITALIZACION";
+            dest = "EN_APROBACION";
           }
 
           return {
