@@ -1435,7 +1435,7 @@ def siguiente_consecutivo(
         count = cur.fetchone()[0]
 
     siguiente = count + 1
-    nombre_siguiente = f"Lote-{siguiente:03d}"
+    nombre_siguiente = f"Asignacion-{siguiente:03d}"
     return {"consecutivo": nombre_siguiente}
 
 
