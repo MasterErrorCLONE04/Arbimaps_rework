@@ -92,7 +92,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <span>Consultar predio</span>
               </a>
 
-              {% if effective_role in ['admin', 'coordinador', 'soporte', 'lider_tecnico'] %}
+              {% if effective_role in ['coordinador', 'admin', 'soporte'] %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}"
                 href="{{ rp }}/panel/usuarios">
                 <i class="bi bi-people"></i>
@@ -143,7 +143,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               </div>
               {% endif %}
 
-              {% if not limited_assignment_role %}
+              {% if effective_role in ['coordinador', 'admin', 'soporte'] %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'restriccion_predios' else '' }}"
                 href="{{ rp }}/panel/restriccion-predios">
                 <i class="bi bi-slash-circle"></i>
@@ -169,12 +169,14 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <i class="bi bi-check-circle"></i>
                 <span>Validación XTF</span>
               </a>
+              {% if effective_role == 'lider_tecnico' %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'sincronizacion_mergin' else '' }}"
                 href="{{ rp }}/panel/sincronizacion-mergin">
                 <i class="bi bi-arrow-repeat"></i>
                 <span>Sincronizacion Mergin</span>
               </a>
-              {% if effective_role in ['coordinador', 'soporte', 'admin', 'lider_tecnico'] %}
+              {% endif %}
+              {% if effective_role in ['admin', 'soporte'] %}
               <div class="px-3">
                 <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
               </div>
@@ -378,11 +380,13 @@ effective_role in ['digitalizador', 'reconocedor'] %}
           <span>Documentos</span>
         </a>
 
+        {% if effective_role == 'lider_tecnico' %}
         <a class="menuBtn sidebar-link {{ 'active' if view == 'sincronizacion_mergin' else '' }}"
           href="{{ rp }}/panel/sincronizacion-mergin">
           <i class="bi bi-arrow-repeat"></i>
           <span>Sincronizacion Mergin</span>
         </a>
+        {% endif %}
 
         {# {% if not limited_assignment_role %}
         <a class="menuBtn sidebar-link">

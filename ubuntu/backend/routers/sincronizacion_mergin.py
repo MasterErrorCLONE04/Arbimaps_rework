@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from routers.auth import require_user
+from routers.auth import require_roles
 from services.sincronizacion_mergin import LocalPostgresConnectionService, zip_analyzer, staging_importer
 from services.sincronizacion_mergin import staging_to_target_etl
 
@@ -15,7 +15,7 @@ connection_service = LocalPostgresConnectionService()
 router = APIRouter(
     prefix="/api/sincronizacion-mergin",
     tags=["Sincronizacion Mergin"],
-    dependencies=[Depends(require_user)],
+    dependencies=[Depends(require_roles("lider_tecnico"))],
 )
 
 

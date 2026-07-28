@@ -76,13 +76,8 @@ def _effective_role(user: dict[str, Any]) -> str:
 
 def _can_access_asignaciones(user: dict[str, Any]) -> bool:
     role = _effective_role(user)
-    if role in ASIGNACIONES_ROLES:
+    if role in {"coordinador", "admin", "soporte"}:
         return can_access_assignment_model(user, role=role)
-
-    username = str(user.get("username") or "").strip().lower()
-    if username in {"admin", "administrador"}:
-        return can_access_assignment_model(user, role="admin")
-
     return False
 
 
@@ -587,7 +582,7 @@ def panel_usuarios(request: Request):
             status_code=302
         )
 
-    if _effective_role(user) not in {"admin", "coordinador", "soporte", "lider_tecnico"}:
+    if _effective_role(user) not in {"coordinador", "admin", "soporte"}:
         return RedirectResponse(
             url=with_root_path(request, "/panel"),
             status_code=302
@@ -621,6 +616,13 @@ def panel_sincronizacion_mergin(request: Request):
     if not user:
         return RedirectResponse(
             url=with_root_path(request, "/login"),
+            status_code=302
+        )
+
+    role = _effective_role(user)
+    if role != "lider_tecnico":
+        return RedirectResponse(
+            url=with_root_path(request, "/panel"),
             status_code=302
         )
 
@@ -723,7 +725,7 @@ def panel_panel_control(request: Request):
             status_code=302
         )
 
-    if _effective_role(user) not in {"coordinador", "soporte", "admin"}:
+    if _effective_role(user) not in {"admin", "soporte"}:
         return RedirectResponse(
             url=with_root_path(request, "/panel"),
             status_code=302
@@ -769,7 +771,7 @@ def panel_restriccion_predios(request: Request):
             status_code=302
         )
 
-    if _effective_role(user) not in {"admin", "coordinador", "soporte", "lider_tecnico"}:
+    if _effective_role(user) not in {"coordinador", "admin", "soporte"}:
         return RedirectResponse(
             url=with_root_path(request, "/panel"),
             status_code=302
