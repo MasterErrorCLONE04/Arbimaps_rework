@@ -157,12 +157,12 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <span>Documentos</span>
               </a>
 
-              {% if not limited_assignment_role %}
+              {# {% if not limited_assignment_role %}
               <a class="menuBtn sidebar-link">
                 <i class="bi bi-arrow-down-up"></i>
                 <span>Reporte SINIC</span>
               </a>
-              {% endif %}
+              {% endif %} #}
 
               <a class="menuBtn sidebar-link {{ 'active' if view == 'validacion_xtf' else '' }}"
                 href="{{ rp }}/panel/validacion-xtf">
@@ -187,7 +187,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <span>Panel de control</span>
               </a>
 
-              <div class="px-3">
+              {# <div class="px-3">
                 <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
               </div>
 
@@ -197,7 +197,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 href="{{ rp }}/panel/solicitudes_asignaciones">
                 <i class="bi bi-database-add"></i>
                 <span>S. Asignaciones</span>
-              </a>
+              </a> #}
               {% endif %}
 
             </nav>
@@ -384,14 +384,14 @@ effective_role in ['digitalizador', 'reconocedor'] %}
           <span>Sincronizacion Mergin</span>
         </a>
 
-        {% if not limited_assignment_role %}
+        {# {% if not limited_assignment_role %}
         <a class="menuBtn sidebar-link">
           <i class="bi bi-arrow-down-up"></i>
           <span>Reporte SINIC</span>
         </a>
-        {% endif %}
+        {% endif %} #}
 
-        {% if effective_role in ['coordinador', 'soporte', 'admin', 'lider_tecnico'] %}
+        {# {% if effective_role in ['coordinador', 'soporte', 'admin', 'lider_tecnico'] %}
         <div class="px-3">
           <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
         </div>
@@ -403,7 +403,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
           <i class="bi bi-database-add"></i>
           <span>S. Asignaciones</span>
         </a>
-        {% endif %}
+        {% endif %} #}
       </nav>
     </div>
   </div>
