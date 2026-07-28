@@ -1,4 +1,4 @@
-﻿﻿﻿<div class="container-fluid page-wrapper page-wrapper-visor">
+﻿<div class="container-fluid page-wrapper page-wrapper-visor">
   {% set municipality_label = current_municipality_name|default(current_municipality, true)|default('Municipio actual', true) %}
 
   <div class="visor-map-stage panel-card rounded-3 visor-card">
@@ -26,7 +26,7 @@
         </button>
       </div>
 
-      <div class="visor-floating-card visor-info-card" aria-live="polite">
+      <div class="visor-floating-card visor-info-card d-none" id="vmVisorInfoCard" aria-live="polite">
         <div class="visor-floating-head">
           <strong>Información del predio</strong>
         </div>
@@ -178,10 +178,10 @@
             <span class="vm-map-status-item">EPSG <strong>9377</strong></span>
             <span class="vm-map-status-item">Escala <strong id="vmScaleText">--</strong></span>
           </div>
-          <div class="vm-north-indicator" aria-label="Norte">
+          {# <div class="vm-north-indicator" aria-label="Norte">
             <div class="vm-north-arrow"></div>
             <div class="vm-north-label">N</div>
-          </div>
+          </div> #}
           <div id="vmMeasurePanel" class="vm-measure-panel hidden" aria-live="polite">
             <div class="vm-measure-title">Medición</div>
             <div id="vmMeasureStatus" class="vm-measure-status">Activa una herramienta para medir.</div>
@@ -2279,6 +2279,7 @@
 
   function clearFloatingPredioInfo() {
     selectedTerrainDetail = null;
+    document.getElementById("vmVisorInfoCard")?.classList.add("d-none");
     document.getElementById("vmSelectionEmpty")?.classList.remove("d-none");
     document.getElementById("vmSelectionContent")?.classList.add("d-none");
     const detailsBtn = document.getElementById("vmSidebarDetailsBtn");
@@ -2295,6 +2296,7 @@
     }
 
     selectedTerrainDetail = detail;
+    document.getElementById("vmVisorInfoCard")?.classList.remove("d-none");
     document.getElementById("vmSelectionEmpty")?.classList.add("d-none");
     document.getElementById("vmSelectionContent")?.classList.remove("d-none");
 

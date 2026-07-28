@@ -92,7 +92,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <span>Consultar predio</span>
               </a>
 
-              {% if effective_role in ['coordinador', 'admin', 'soporte'] %}
+              {% if effective_role in ['admin', 'coordinador', 'soporte', 'lider_tecnico'] %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'usuarios' else '' }}"
                 href="{{ rp }}/panel/usuarios">
                 <i class="bi bi-people"></i>
@@ -143,7 +143,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               </div>
               {% endif %}
 
-              {% if effective_role in ['coordinador', 'admin', 'soporte'] %}
+              {% if not limited_assignment_role %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'restriccion_predios' else '' }}"
                 href="{{ rp }}/panel/restriccion-predios">
                 <i class="bi bi-slash-circle"></i>
@@ -169,7 +169,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <i class="bi bi-check-circle"></i>
                 <span>Validación XTF</span>
               </a>
-              {% if effective_role == 'lider_tecnico' %}
+              {% if effective_role in ['lider_tecnico', 'soporte'] %}
               <a class="menuBtn sidebar-link {{ 'active' if view == 'sincronizacion_mergin' else '' }}"
                 href="{{ rp }}/panel/sincronizacion-mergin">
                 <i class="bi bi-arrow-repeat"></i>
@@ -380,7 +380,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
           <span>Documentos</span>
         </a>
 
-        {% if effective_role == 'lider_tecnico' %}
+        {% if effective_role in ['lider_tecnico', 'soporte'] %}
         <a class="menuBtn sidebar-link {{ 'active' if view == 'sincronizacion_mergin' else '' }}"
           href="{{ rp }}/panel/sincronizacion-mergin">
           <i class="bi bi-arrow-repeat"></i>

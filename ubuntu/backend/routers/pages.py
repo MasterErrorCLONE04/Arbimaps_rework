@@ -76,8 +76,13 @@ def _effective_role(user: dict[str, Any]) -> str:
 
 def _can_access_asignaciones(user: dict[str, Any]) -> bool:
     role = _effective_role(user)
-    if role in {"coordinador", "admin", "soporte"}:
+    if role in ASIGNACIONES_ROLES:
         return can_access_assignment_model(user, role=role)
+
+    username = str(user.get("username") or "").strip().lower()
+    if username in {"admin", "administrador"}:
+        return can_access_assignment_model(user, role="admin")
+
     return False
 
 
@@ -582,7 +587,7 @@ def panel_usuarios(request: Request):
             status_code=302
         )
 
-    if _effective_role(user) not in {"coordinador", "admin", "soporte"}:
+    if _effective_role(user) not in {"admin", "coordinador", "soporte", "lider_tecnico"}:
         return RedirectResponse(
             url=with_root_path(request, "/panel"),
             status_code=302
@@ -771,7 +776,7 @@ def panel_restriccion_predios(request: Request):
             status_code=302
         )
 
-    if _effective_role(user) not in {"coordinador", "admin", "soporte"}:
+    if _effective_role(user) not in {"admin", "coordinador", "soporte", "lider_tecnico"}:
         return RedirectResponse(
             url=with_root_path(request, "/panel"),
             status_code=302

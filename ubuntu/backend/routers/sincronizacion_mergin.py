@@ -15,7 +15,7 @@ connection_service = LocalPostgresConnectionService()
 router = APIRouter(
     prefix="/api/sincronizacion-mergin",
     tags=["Sincronizacion Mergin"],
-    dependencies=[Depends(require_roles("lider_tecnico"))],
+    dependencies=[Depends(require_roles("lider_tecnico", "soporte"))],
 )
 
 
