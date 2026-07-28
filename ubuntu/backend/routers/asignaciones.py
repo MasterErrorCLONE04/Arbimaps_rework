@@ -1415,6 +1415,30 @@ def cerrar_asignacion(
     }
 
 
+@router.get("/siguiente-consecutivo")
+def siguiente_consecutivo(
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
+    _require_assignment_access(user, "admin", "coordinador", "soporte")
+
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor() as cur:
+        cur.execute(f"SELECT COUNT(*) FROM {app_schema}.asignacion")
+        count = cur.fetchone()[0]
+
+    siguiente = count + 1
+    nombre_siguiente = f"Lote-{siguiente:03d}"
+    return {"consecutivo": nombre_siguiente}
+
+
 @router.get("/listado", response_model=List[AsignacionListadoItem])
 def listar_asignaciones(
     user: dict = Depends(get_current_user),

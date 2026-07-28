@@ -219,11 +219,13 @@
             </div>
 
             <div class="buscador-ai-actions  d-flex pt-3 justify-content-end align-items-center gap-3">
+              {% if effective_role != 'coordinador' %}
               <div class="reconocedores-pill" title="Coordinadores disponibles para asignación">
                 <span class="reconocedores-pill-icon"><i class="bi bi-person-badge-fill"></i></span>
                 <span>Coord. Disponibles:</span>
                 <strong id="contadorCoordinadoresDisponibles">0</strong>
               </div>
+              {% endif %}
 
               <div class=" d-flex justify-content-center align-items-center gap-4 px-3 ">
                 <div class="consultaButtons d-flex justify-content-end">
@@ -424,7 +426,7 @@
             <label class="consultaLabel label-asignacion mt-4 fw-bold" for="inpNombreLote">
               Nombre de la asignación
             </label>
-            <input id="inpNombreLote" class="form-control consultaInput w-100 mt-2" placeholder="Ej: Lote-001">
+            <input id="inpNombreLote" class="form-control consultaInput w-100 mt-2" placeholder="Ej: Lote-001" readonly>
 
             <label class="consultaLabel label-asignacion mt-4 fw-bold" for="inpCoordinador">
               Selecciona coordinador
@@ -806,6 +808,7 @@
     cerrarTarjetaConfirmacion();
     togglePanelConfiguracionAsignacion(false);
     destruirDataTableResultados();
+    cargarSiguienteConsecutivo();
     actualizarBadgeSeleccionados();
 
     if (tbody) tbody.innerHTML = "";
@@ -1394,7 +1397,24 @@
     }
   }
 
+  async function cargarSiguienteConsecutivo() {
+    try {
+      const r = await fetch(`${rp}/asignaciones/siguiente-consecutivo`);
+      if (!r.ok) return;
+      const data = await r.json();
+      if (data && data.consecutivo) {
+        const inp = document.getElementById("inpNombreLote");
+        if (inp) {
+          inp.value = data.consecutivo;
+        }
+      }
+    } catch (e) {
+      console.warn("No se pudo cargar el consecutivo de asignación", e);
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
+    cargarSiguienteConsecutivo();
     document.getElementById("btnBuscar")?.addEventListener("click", buscarPredios);
     document.getElementById("btnLimpiar")?.addEventListener("click", limpiarBusquedaPredios);
 
