@@ -24,7 +24,6 @@ services:
       DB_USER: postgres
       DB_PASSWORD: Arbitrium2026*
       DB_SSLMODE: prefer
-      # OAuth de Box rota refresh tokens; varios workers pueden invalidarse entre si.
       UVICORN_WORKERS: 1
 
     depends_on:
@@ -42,7 +41,7 @@ services:
       POSTGRES_PASSWORD: Arbitrium2026*
       POSTGRES_DB: programacion
 
-    # Cambia 5434 por 5435 si el puerto está ocupado
+
     ports:
       - "5432:5432"
 

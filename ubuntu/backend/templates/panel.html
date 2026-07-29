@@ -281,7 +281,25 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 user-dropdown">
                   <li class="px-3 py-2 border-bottom">
                     <div class="fw-semibold text-dark">{{ user }}</div>
-                    <div class="small text-muted">Panel de administración</div>
+                    <div class="small text-muted">
+                      {% if effective_role == 'admin' %}
+                        Administrador
+                      {% elif effective_role == 'soporte' %}
+                        Soporte
+                      {% elif effective_role == 'coordinador' %}
+                        Coordinador
+                      {% elif effective_role == 'reconocedor' %}
+                        Reconocedor
+                      {% elif effective_role == 'lider_tecnico' %}
+                        Líder Técnico
+                      {% elif effective_role == 'consulta' %}
+                        Consulta
+                      {% elif effective_role == 'digitalizador' %}
+                        Digitalizador / Consolidador
+                      {% else %}
+                        {{ effective_role }}
+                      {% endif %}
+                    </div>
                   </li>
                   <li>
                     <a class="dropdown-item d-flex align-items-center gap-2" href="{{ rp }}/logout-app">
