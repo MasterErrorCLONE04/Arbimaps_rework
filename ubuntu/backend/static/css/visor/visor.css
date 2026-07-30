@@ -1087,3 +1087,20 @@ body {
 .page-wrapper-visor .vm-map-statusbar {
     border-radius: 14px;
 }
+/* Margen interno visible para la barra blanca de estado. */
+.page-wrapper-visor .vm-map-statusbar {
+    left: 64px;
+    right: 14px;
+    bottom: 14px !important;
+    border: 1px solid #c7d3cd;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(10, 44, 27, 0.12);
+}
+
+@media (max-width: 991.98px) {
+    .page-wrapper-visor .vm-map-statusbar {
+        left: 10px;
+        right: 10px;
+        bottom: 10px !important;
+    }
+}

@@ -63,7 +63,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   {% if view == 'usuarios' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_saas.css?v=16" />
   {% endif %} {% if view == 'visor' or view == 'restriccion_predios' %}
-  <link rel="stylesheet" href="{{ rp }}/static/css/visor/visor.css?v=8" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/visor/visor.css?v=9" />
   {% endif %} {% if view == 'buscar' or view == 'buscar_predio' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/buscar.css" />
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/informacion_predio.css" />
@@ -88,7 +88,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   <link rel="stylesheet" href="{{ rp }}/static/css/edicion_asignacion/editar.css" />
   {% endif %} {% endif %}
 
-  <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel.css?v=12" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel.css?v=14" />
 </head>
 
 <body class="panel-body view-{{ view }}">
@@ -314,28 +314,13 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 </button>
 
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 user-dropdown">
-                  <li class="px-3 py-2 border-bottom">
-                    <div class="fw-semibold text-dark">{{ user }}</div>
-                    <div class="small text-muted">
-                      {% if effective_role == 'admin' %}
-                        Administrador
-                      {% elif effective_role == 'soporte' %}
-                        Soporte
-                      {% elif effective_role == 'coordinador' %}
-                        Coordinador
-                      {% elif effective_role == 'reconocedor' %}
-                        Reconocedor
-                      {% elif effective_role == 'lider_tecnico' %}
-                        Líder Técnico
-                      {% elif effective_role == 'consulta' %}
-                        Consulta
-                      {% elif effective_role == 'digitalizador' %}
-                        Digitalizador / Consolidador
-                      {% else %}
-                        {{ effective_role }}
-                      {% endif %}
-                    </div>
+                  <li>
+                    <button class="dropdown-item profile-dropdown-item d-flex align-items-center gap-2" type="button">
+                      <i class="bi bi-person-circle"></i>
+                      <span>Perfil</span>
+                    </button>
                   </li>
+                  <li><hr class="dropdown-divider" /></li>
                   <li>
                     <a class="dropdown-item d-flex align-items-center gap-2" href="{{ rp }}/logout-app">
                       <i class="bi bi-box-arrow-right"></i>

@@ -1552,3 +1552,182 @@ body.view-visor .footer-simple {
         min-height: 430px;
     }
 }
+/* Ajuste fino de separación del perfil y respiración vertical del visor. */
+.panel-topbar > .d-flex.align-items-center:last-child {
+    gap: 28px !important;
+}
+
+.user-menu-button {
+    gap: 22px;
+}
+
+.user-dropdown {
+    min-width: 230px !important;
+    padding: 10px !important;
+    border-radius: 20px !important;
+}
+
+.user-dropdown .dropdown-item {
+    min-height: 52px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    color: #0a2c1b;
+    font-size: 0.95rem;
+}
+
+.user-dropdown .dropdown-item i {
+    width: 22px;
+    color: #0a2c1b;
+    font-size: 1.05rem;
+    text-align: center;
+}
+
+.user-dropdown .profile-dropdown-item {
+    font-size: 1rem;
+}
+
+.user-dropdown .dropdown-divider {
+    margin: 4px 0;
+    border-color: #c7d3cd;
+    opacity: 1;
+}
+
+body.view-visor .page-wrapper-visor {
+    margin-top: -16px;
+}
+
+body.view-visor .visor-map-stage {
+    height: calc(100vh - 188px);
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+@media (max-width: 767.98px) {
+    .panel-topbar > .d-flex.align-items-center:last-child {
+        gap: 10px !important;
+    }
+
+    .user-menu-button {
+        gap: 8px;
+    }
+
+    body.view-visor .page-wrapper-visor {
+        margin-top: -10px;
+    }
+
+    body.view-visor .visor-map-stage {
+        height: calc(100dvh - 160px);
+        border: 0 !important;
+    }
+}
+/* Tipografía de la referencia y perfil sin espacio reservado. */
+html,
+body,
+button,
+input,
+select,
+textarea,
+a,
+span,
+div,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+label {
+    font-family: "Poppins", sans-serif !important;
+}
+
+.titleHerr {
+    font-size: 0.98rem;
+    font-weight: 700;
+}
+
+.sidebar-link span,
+.sidebar-toggle-custom span,
+.menuBtn span {
+    font-size: 0.9rem;
+    font-weight: 400;
+    line-height: 1.25;
+}
+
+.sidebar-link.active span,
+.sidebar-toggle-custom.active span,
+.menuBtn.active span {
+    font-weight: 700;
+}
+
+.sidebar-link i,
+.sidebar-toggle-custom i,
+.menuBtn i {
+    color: #7f8e85;
+    font-size: 1.15rem;
+}
+
+.sidebar-link:hover i,
+.sidebar-toggle-custom:hover i,
+.menuBtn:hover i,
+.sidebar-link.active i,
+.sidebar-toggle-custom.active i,
+.menuBtn.active i {
+    color: #0a2c1b;
+}
+
+.popupItem span {
+    font-size: 0.86rem;
+}
+
+.brand-description {
+    font-size: 0.7rem;
+    line-height: 1.45;
+}
+
+.topbar-brand {
+    font-size: 1.45rem;
+    font-weight: 700;
+}
+
+.topbar-title-pri {
+    font-size: 0.86rem;
+}
+
+.topbar-user-meta {
+    min-width: 0;
+    width: max-content;
+    line-height: 1.2;
+}
+
+.profile-name,
+.profile-role,
+.profile-module {
+    font-size: 0.86rem;
+}
+
+.profile-name {
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.profile-role strong {
+    font-weight: 800;
+}
+
+.user-menu-button {
+    gap: 10px;
+}
+
+@media (max-width: 1199.98px) {
+    .topbar-brand {
+        font-size: 1.25rem;
+    }
+
+    .profile-name,
+    .profile-role,
+    .profile-module {
+        font-size: 0.78rem;
+    }
+}
