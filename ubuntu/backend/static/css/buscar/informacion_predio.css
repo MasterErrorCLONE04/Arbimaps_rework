@@ -20,7 +20,7 @@
 
 .text-title-header {
     font-size: 0.833rem;
-    color: #032F57;
+    color: #092c1c;
     font-weight: 400;
 }
 
@@ -422,7 +422,7 @@
 }
 
 .title-one {
-    color: #032F57;
+    color: #092c1c;
     font-size: 1rem;
 }
 
@@ -431,7 +431,7 @@
 }
 
 .accordion-button {
-    background-color: #032f57;
+    background-color: #092c1c;
     color: white;
     border-radius: 18px;
 }
@@ -665,7 +665,7 @@
 }
 
 .badge-construccion-activa {
-    background-color: #032F57;
+    background-color: #092c1c;
     color: #FFFFFF;
     border-radius: 14px;
     min-width: 112px;
@@ -816,7 +816,7 @@
 }
 
 .btn-toggle-detalle-uc:hover {
-    color: #032F57 !important;
+    color: #092c1c !important;
 }
 
 .icon-toggle-uc {
@@ -825,7 +825,7 @@
 }
 
 .btn-caracteristicas-uc {
-    background-color: #032F57;
+    background-color: #092c1c;
     color: #FFFFFF;
     border: none;
     border-radius: 10px;
@@ -1037,7 +1037,7 @@
     width: 34px;
     height: 34px;
     min-width: 34px;
-    background-color: #032F57;
+    background-color: #092c1c;
     color: #FFFFFF;
     box-shadow: none;
     padding: 0;
@@ -1127,8 +1127,8 @@
 }
 
 .part-juy {
-    background-color: #032F57;
-    border: 1px solid #032F57;
+    background-color: #092c1c;
+    border: 1px solid #092c1c;
     border-radius: 18px;
     min-width: 510px;
     max-width: 510px;
@@ -1203,7 +1203,7 @@
     height: 40px;
     min-width: 40px;
     border-radius: 50%;
-    background-color: #032F57;
+    background-color: #092c1c;
     color: #ffffff;
     display: flex;
     align-items: center;
@@ -1243,7 +1243,7 @@
 }
 
 .btn-detalle-tabla:hover {
-    color: #032F57;
+    color: #092c1c;
 }
 
 .columna-con-linea {
@@ -1381,7 +1381,7 @@
 
 .btn-gunmi:hover {
     background-color: #dceefddf;
-    color: #032F57;
+    color: #092c1c;
     transform: scale(1.01);
     font-weight: 500;
 }
@@ -1421,12 +1421,12 @@
 
 .content-hearder-ops {
     background-color: #F0F6FB;
-    color: #032F57;
+    color: #092c1c;
     border-radius: 10px;
 }
 
 .content-hearder-ops .vr {
-    color: #032F57;
+    color: #092c1c;
     min-height: 36px;
 }
 
@@ -1491,7 +1491,7 @@
 }
 
 .btn-ver-detalle-uc {
-    background-color: #032F57;
+    background-color: #092c1c;
     color: #FFFFFF;
     border-radius: 14px;
     padding: 0.55rem 0.9rem;
@@ -1517,7 +1517,7 @@
     height: 42px;
     border-radius: 50%;
     background-color: #ffffff;
-    color: #032F57;
+    color: #092c1c;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1542,7 +1542,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: #032F57;
+    background-color: #092c1c;
     color: #FFFFFF;
     border-radius: 999px;
     padding: 0.45rem 0.9rem;
@@ -1573,7 +1573,7 @@
 }
 
 .offcanvas-header {
-    background-color: #032F57;
+    background-color: #092c1c;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
 }
@@ -1733,7 +1733,7 @@
 
 .uc-total-card {
     min-width: 170px;
-    background-color: #032F57;
+    background-color: #092c1c;
     color: #ffffff;
     border-radius: 10px;
     padding: 0.95rem 1rem;
@@ -2213,7 +2213,7 @@
 
 #modalInformacionPredio .accordion-button {
     border-radius: 1rem !important;
-    background-color: #032F57 !important;
+    background-color: #092c1c !important;
     color: #ffffff !important;
     box-shadow: none !important;
 }
@@ -2274,11 +2274,11 @@
 .vista-predio-spinner {
     width: 2.75rem;
     height: 2.75rem;
-    color: #032F57;
+    color: #092c1c;
 }
 
 .vista-predio-loader-text {
-    color: #032F57;
+    color: #092c1c;
     font-size: 0.95rem;
     font-weight: 700;
 }

@@ -11,16 +11,16 @@ body,
 
 .title-consultar {
     font-size: 2.074rem;
-    color: #032F57;
+    color: #092c1c;
 }
 
 .subtitulo {
     font-size: 1rem;
-    color: #54748d;
+    color: #4d6b58;
 }
 
 .consultaWrap {
-    background-color: #032f57;
+    background-color: #092c1c;
 }
 
 .consulta-col {
@@ -42,7 +42,7 @@ body,
 .consulta-control {
     height: 42px;
     border-radius: 9px;
-    color: #163c62;
+    color: #153c2a;
     font-size: 1rem;
 }
 
@@ -71,7 +71,7 @@ body,
 }
 
 .btn-consultar {
-    background-color: #69a9e8;
+    background-color: #53775c;
     color: #fff;
     height: 35px;
     border: none;
@@ -80,14 +80,14 @@ body,
 .btn-consultar:hover,
 .btn-consultar:focus,
 .btn-consultar:active {
-    background-color: #5c9ad7 !important;
+    background-color: #3d5e47 !important;
     color: #fff !important;
     border: none !important;
 }
 
 .btn-limpiar {
     background-color: #ffffff;
-    color: #163c62;
+    color: #153c2a;
     font-size: 1rem;
     height: 34px;
     border: none;
@@ -97,7 +97,7 @@ body,
 .btn-limpiar:focus,
 .btn-limpiar:active {
     background-color: #f3f6f9 !important;
-    color: #163c62 !important;
+    color: #153c2a !important;
     border: none !important;
 }
 
@@ -114,12 +114,12 @@ body,
 .titulo-resultados {
     font-size: 1.44rem;
     font-weight: 800;
-    color: #032F57;
+    color: #092c1c;
     line-height: 1.1;
 }
 
 .contador-resultados {
-    background-color: #032F57;
+    background-color: #092c1c;
     color: #ffffff;
     min-height: 44px;
     min-width: 165px;
@@ -144,7 +144,7 @@ body,
 .linea-separacion {
     width: 100%;
     height: 2px;
-    background-color: #c8d7e6;
+    background-color: #ccd6d0;
 }
 
 /* ESTADOS DE MENSAJES */
@@ -155,7 +155,7 @@ body,
 
 .hint-default,
 .sub {
-    background-color: #032F57;
+    background-color: #092c1c;
     color: #fff;
     margin-top: 0;
     min-height: 50px;
@@ -185,7 +185,7 @@ body,
 
 .hint-no-results {
     background-color: #ffffff !important;
-    color: #032F57 !important;
+    color: #092c1c !important;
     min-height: auto !important;
     display: block !important;
     padding: 1.6rem 1.7rem !important;
@@ -205,13 +205,13 @@ body,
 .hint-no-results .hint-no-results-title {
     font-size: 1.9rem;
     font-weight: 800;
-    color: #032F57;
+    color: #092c1c;
     line-height: 1.1;
     margin: 0;
 }
 
 .hint-no-results .hint-no-results-badge {
-    background-color: #032F57;
+    background-color: #092c1c;
     color: #ffffff;
     min-height: 44px;
     min-width: 390px;
@@ -230,7 +230,7 @@ body,
 .hint-no-results .hint-no-results-badge i {
     font-size: 0.95rem;
     line-height: 1;
-    color: #032F57;
+    color: #092c1c;
     background: #ffffff;
     border-radius: 4px;
     width: 18px;
@@ -244,13 +244,13 @@ body,
 .hint-no-results .hint-no-results-divider {
     width: 100%;
     height: 2px;
-    background-color: #c8d7e6;
+    background-color: #ccd6d0;
     margin: 0.95rem 0 1.9rem 0;
 }
 
 .hint-no-results .hint-no-results-text {
     text-align: center;
-    color: #54748d;
+    color: #4d6b58;
     font-size: 0.98rem;
     font-weight: 500;
     margin: 0;
@@ -267,7 +267,7 @@ body,
 .tabla-predios thead th {
     border: none !important;
     background: transparent !important;
-    color: #032F57 !important;
+    color: #092c1c !important;
     font-size: 1rem !important;
     font-weight: 800;
     padding: 0.75rem 1.2rem 0.5rem 1.2rem;
@@ -278,7 +278,7 @@ body,
 .tabla-predios tbody td {
     border: none !important;
     background: transparent !important;
-    color: #032F57 !important;
+    color: #092c1c !important;
     font-size: 1rem !important;
     padding: 0.45rem 1.2rem;
     vertical-align: middle;
@@ -295,7 +295,7 @@ body,
 }
 
 .lnkVer {
-    color: #032F57 !important;
+    color: #092c1c !important;
     font-size: 1rem !important;
     text-decoration: none;
     display: inline-flex;
@@ -304,7 +304,7 @@ body,
 }
 
 .lnkVer:hover {
-    color: #032F57 !important;
+    color: #092c1c !important;
     text-decoration: none;
 }
 
@@ -324,7 +324,7 @@ body,
 #tbl_wrapper .dataTables_paginate .paginate_button,
 #tbl_wrapper .dataTables_paginate .page-link {
     font-size: 1rem !important;
-    color: #032F57 !important;
+    color: #092c1c !important;
 }
 
 #tbl_wrapper {
@@ -344,24 +344,24 @@ body,
 .dataTables_wrapper .dataTables_length label,
 .dataTables_wrapper .dataTables_filter label {
     font-weight: 600;
-    color: #032F57 !important;
+    color: #092c1c !important;
 }
 
 .dataTables_wrapper .dataTables_length select {
-    border: 1px solid #c8d7e6 !important;
+    border: 1px solid #ccd6d0 !important;
     border-radius: 10px !important;
     background-color: #ffffff !important;
-    color: #032F57 !important;
+    color: #092c1c !important;
     padding: 0.35rem 2rem 0.35rem 0.75rem !important;
     min-width: 90px;
     box-shadow: none !important;
 }
 
 .dataTables_wrapper .dataTables_filter input {
-    border: 1px solid #c8d7e6 !important;
+    border: 1px solid #ccd6d0 !important;
     border-radius: 10px !important;
     background-color: #ffffff !important;
-    color: #032F57 !important;
+    color: #092c1c !important;
     padding: 0.45rem 0.75rem !important;
     margin-left: 0.5rem !important;
     box-shadow: none !important;
@@ -369,7 +369,7 @@ body,
 
 .dataTables_wrapper .dataTables_filter input:focus,
 .dataTables_wrapper .dataTables_length select:focus {
-    border-color: #032F57 !important;
+    border-color: #092c1c !important;
     outline: none !important;
     box-shadow: 0 0 0 0.1rem rgba(3, 47, 87, 0.10) !important;
 }
@@ -377,7 +377,7 @@ body,
 .dataTables_wrapper .dataTables_info {
     margin-top: 0.35rem;
     font-weight: 500;
-    color: #032F57 !important;
+    color: #092c1c !important;
 }
 
 .dataTables_wrapper .dataTables_paginate {
@@ -394,9 +394,9 @@ body,
 }
 
 .dataTables_wrapper .dataTables_paginate .page-item .page-link {
-    background-color: #032F57 !important;
+    background-color: #092c1c !important;
     color: #ffffff !important;
-    border: 1px solid #032F57 !important;
+    border: 1px solid #092c1c !important;
     border-radius: 10px !important;
     font-size: 1rem !important;
     font-weight: 700 !important;
@@ -411,23 +411,23 @@ body,
 }
 
 .dataTables_wrapper .dataTables_paginate .page-item.active .page-link {
-    background-color: #032F57 !important;
+    background-color: #092c1c !important;
     color: #ffffff !important;
-    border-color: #032F57 !important;
+    border-color: #092c1c !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .page-item .page-link:hover,
 .dataTables_wrapper .dataTables_paginate .page-item .page-link:focus {
-    background-color: #032F57 !important;
+    background-color: #092c1c !important;
     color: #ffffff !important;
-    border-color: #032F57 !important;
+    border-color: #092c1c !important;
     box-shadow: none !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .page-item.disabled .page-link {
-    background-color: #032F57 !important;
+    background-color: #092c1c !important;
     color: #ffffff !important;
-    border-color: #032F57 !important;
+    border-color: #092c1c !important;
     opacity: 0.45;
 }
 

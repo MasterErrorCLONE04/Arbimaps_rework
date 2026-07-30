@@ -18,11 +18,12 @@
       --bg-color: #f8fafc;
       --text-main: #0f172a;
       --text-muted: #64748b;
-      --primary: #032f57;
-      --primary-hover: #0a416f;
-      --primary-light: rgba(3, 47, 87, 0.06);
-      --primary-focus: rgba(3, 47, 87, 0.15);
+      --primary: #063124; /* Dark green matching mockup */
+      --primary-hover: #0c4735;
+      --primary-light: rgba(6, 49, 36, 0.06);
+      --primary-focus: rgba(6, 49, 36, 0.15);
       --border-color: #e2e8f0;
+      --input-bg: #eff3f8; /* Soft grayish blue fill */
       --card-bg: #ffffff;
       --error-bg: #fef2f2;
       --error-border: #fee2e2;
@@ -31,200 +32,192 @@
 
     * {
       box-sizing: border-box;
-      /* font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; */
-      font-family: Poppins;
+      font-family: Poppins, 'Plus Jakarta Sans', sans-serif;
     }
 
     body {
       margin: 0;
       min-height: 100vh;
-      background: url("{{ rp }}/static/bg.png") center center / cover no-repeat fixed;
-      /* background: url("{{ rp }}/static/BG_2.png") center center / cover no-repeat fixed; */
-      display: grid;
-      place-items: center;
-      padding: 24px;
+      background: linear-gradient(rgba(11, 37, 58, 0.45), rgba(11, 37, 58, 0.45)), url("{{ rp }}/static/BG_1.jpeg") center center / cover no-repeat fixed;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 115px 24px 24px 24px; /* offset for top header */
       color: var(--text-main);
       position: relative;
       overflow-x: hidden;
     }
 
+    /* Top Header Bar */
+    .top-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 95px;
+      background-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .header-logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-logo {
+      object-fit: contain;
+    }
+
+    .logo-neiva {
+      height: 68px;
+      transform: translateY(2px);
+    }
+
+    .logo-arbitrium {
+      height: 68px;
+      transform: translateY(-2px);
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 48px;
+      background-color: rgba(255, 255, 255, 0.35);
+      margin: 0 20px;
+    }
+
     .login-card {
       display: grid;
-      grid-template-columns: 1.15fr 1fr;
-      width: 960px;
+      grid-template-columns: 1.05fr 1fr;
+      width: 980px;
       max-width: 100%;
-      /* background: transparent; */
       background: #ffffff;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-radius: 35px;
-      overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
-        0 0 0 1px rgba(255, 255, 255, 0.15);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border-radius: 30px;
+      overflow: visible;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      z-index: 2;
     }
 
-    /* .brand-panel {
-      background: linear-gradient(135deg, rgba(18, 63, 104, 0.92) 0%, rgba(3, 47, 87, 0.96) 100%);
-      padding: 48px;
+    /* Left Column: Picture of Neiva with padding and corner radius */
+    .image-panel {
+      padding: 20px;
       display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      color: #ffffff;
+      align-items: center;
+      justify-content: center;
+      background-color: #ffffff;
       position: relative;
-      overflow: hidden;
-    } */
-
-    .brand-panel {
-      background: linear-gradient(135deg,
-          rgba(18, 63, 104, 0.96) 0%,
-          rgba(3, 47, 87, 0.98) 100%);
-      padding: 48px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      color: #ffffff;
-      position: relative;
-      overflow: hidden;
+      border-radius: 30px 0 0 30px;
     }
 
-    .brand-panel::before {
-      content: "";
+    .image-panel img {
+      width: 100%;
+      height: 100%;
+      max-height: 480px;
+      object-fit: cover;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .image-overlay-text {
       position: absolute;
-      width: 620px;
-      height: 620px;
-      left: -190px;
-      bottom: -180px;
-      background: url("{{ rp }}/static/icon.png") center / contain no-repeat;
-      opacity: 0.10;
+      right: 40px;
+      bottom: 40px;
+      text-align: right;
+      z-index: 5;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
       pointer-events: none;
-      z-index: 1;
+      user-select: none;
     }
 
-    .brand-panel::after {
+    .brand-title-overlay {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0;
+      letter-spacing: -0.5px;
+    }
+
+    .copyright-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 25px;
+      height: 25px;
+      border: 2.5px solid #ffffff;
+      border-radius: 50%;
+      font-size: 15px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+      margin-right: 3px;
+    }
+
+    .brand-arbi {
+      color: #ffffff;
+    }
+
+    .brand-mapps {
+      color: transparent;
+      -webkit-text-stroke: 1.5px #ffffff;
+    }
+
+    .location-overlay {
+      font-size: 15px;
+      font-weight: 500;
+      margin-top: 4px;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    /* Right Column: Form Panel */
+    .form-panel {
+      padding: 30px 45px;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+      border-radius: 0 30px 30px 0;
+    }
+
+    /* Watermark of Neiva shield in the background */
+    .form-panel::after {
       content: "";
       position: absolute;
+      right: -60px;
+      bottom: -10px;
       width: 300px;
       height: 300px;
-      background: radial-gradient(circle,
-          rgba(255, 255, 255, 0.12) 0%,
-          rgba(255, 255, 255, 0) 70%);
-      top: -100px;
-      right: -100px;
+      background: url("{{ rp }}/static/logobnb.png") no-repeat bottom right;
+      background-size: contain;
+      opacity: 0.28; /* faint watermark */
       pointer-events: none;
-      z-index: 1;
-    }
-
-    .brand-header,
-    .brand-content,
-    .brand-footer {
-      position: relative;
-      z-index: 2;
-    }
-
-    .brand-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      /* gap: 12px; */
-      z-index: 2;
-    }
-
-    .brand-logo {
-      width: 100px;
-      height: 100px;
-      object-fit: contain;
-      margin-bottom: 10px;
-      border-radius: 15px;
-      /* box-shadow: 1px 1px 4px #032e576d; */
-      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-    }
-
-    .brand-name {
-      font-size: 20px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      background: linear-gradient(to right, #ffffff, #dbeafe);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .brand-content {
-      margin: 40px 0;
-      z-index: 2;
-      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
-    }
-
-    .brand-title {
-      font-size: 2.1rem;
-      font-weight: 700;
-      line-height: 1.25;
-      margin: 0 0 16px;
-      letter-spacing: -0.8px;
-      color: #ffffff;
-    }
-
-    .brand-subtitle {
-      font-size: 15px;
-      line-height: 1.6;
-      color: rgba(255, 255, 255, 0.85);
-      font-weight: 400;
-      margin: 0;
-    }
-
-    .brand-graphic {
-      position: absolute;
-      bottom: 20px;
-      right: -20px;
-      width: 320px;
-      height: 320px;
-      opacity: 0.85;
-      pointer-events: none;
-      transform: rotate(-5deg);
-      z-index: 1;
-    }
-
-    .brand-footer {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.60);
-      z-index: 2;
-    }
-
-    .form-panel {
-      padding: 40px;
-      background-color: rgb(255, 255, 255);
-      /* background: rgba(255, 255, 255, 0.92); */
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-
-    .mobile-logo-header {
-      display: none;
-      margin-bottom: 24px;
-      justify-content: center;
-    }
-
-    .mobile-logo {
-      height: 56px;
-      object-fit: contain;
+      z-index: 3;
     }
 
     .form-header {
-      margin-bottom: 32px;
+      margin-bottom: 15px;
+      text-align: center;
     }
 
     .form-header h1 {
-      font-size: 26px;
+      font-size: 28px;
       font-weight: 700;
-      color: var(--text-main);
-      margin: 0 0 8px;
+      color: var(--primary);
+      margin: 0 0 4px;
       letter-spacing: -0.5px;
     }
 
     .form-header .subtitle {
-      font-size: 14.5px;
+      font-size: 13.5px;
       color: var(--text-muted);
       margin: 0;
     }
@@ -233,10 +226,10 @@
       background: var(--error-bg);
       border: 1px solid var(--error-border);
       color: var(--error-text);
-      padding: 12px 16px;
+      padding: 10px 14px;
       border-radius: 10px;
-      margin-bottom: 24px;
-      font-size: 13.5px;
+      margin-bottom: 16px;
+      font-size: 13px;
       font-weight: 500;
       display: flex;
       align-items: center;
@@ -245,31 +238,23 @@
     }
 
     @keyframes shake {
-
-      0%,
-      100% {
-        transform: translateX(0);
-      }
-
-      25% {
-        transform: translateX(-4px);
-      }
-
-      75% {
-        transform: translateX(4px);
-      }
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
     }
 
     .input-field {
-      margin-bottom: 20px;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 5;
     }
 
     .input-field label {
       display: block;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       font-size: 13px;
       font-weight: 600;
-      color: var(--text-main);
+      color: var(--primary);
     }
 
     .input-container {
@@ -278,43 +263,29 @@
       align-items: center;
     }
 
-    .field-icon {
-      position: absolute;
-      left: 14px;
-      width: 18px;
-      height: 18px;
-      color: var(--text-muted);
-      pointer-events: none;
-      transition: color 0.2s;
-      z-index: 5;
-    }
-
     .input-container select,
     .input-container input {
       width: 100%;
-      padding: 12px 16px 12px 42px;
-      border-radius: 10px;
-      border: 1px solid var(--border-color);
-      background: #ffffff;
+      padding: 11px 15px;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      background-color: var(--input-bg);
       color: var(--text-main);
       outline: none;
       font-size: 14px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s ease;
     }
 
     .input-container select:hover,
     .input-container input:hover {
-      border-color: #cbd5e1;
+      background-color: #e5eaf1;
     }
 
     .input-container select:focus,
     .input-container input:focus {
+      background-color: #ffffff;
       border-color: var(--primary);
-      box-shadow: 0 0 0 4px var(--primary-focus);
-    }
-
-    .input-container:focus-within .field-icon {
-      color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-focus);
     }
 
     .input-container select {
@@ -322,15 +293,16 @@
       -webkit-appearance: none;
       -moz-appearance: none;
       background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right 14px center;
+      background-position: right 15px center;
       background-repeat: no-repeat;
       background-size: 1.25rem;
       cursor: pointer;
+      padding-right: 40px;
     }
 
     input::placeholder {
-      color: var(--text-muted);
-      opacity: 0.7;
+      color: #9ca3af;
+      opacity: 0.8;
     }
 
     .password-wrap input {
@@ -358,12 +330,12 @@
 
     .btn-eye-toggle:hover {
       color: var(--text-main);
-      background-color: #f1f5f9;
+      background-color: rgba(0, 0, 0, 0.05);
     }
 
     .btn-eye-toggle svg {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       display: block;
       fill: none;
     }
@@ -384,7 +356,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 16px;
+      margin-top: 12px;
       gap: 12px;
     }
 
@@ -439,25 +411,30 @@
       opacity: 1;
     }
 
+    .form-divider {
+      border-top: 1px solid var(--border-color);
+      margin: 15px 0 10px 0;
+    }
+
     .btn {
       width: 100%;
-      margin-top: 28px;
+      margin-top: 10px;
       padding: 13px;
       border: none;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      border-radius: 12px;
+      background: linear-gradient(90deg, #53775c 0%, #0c2b1a 15%, #051d11 100%);
       color: white;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      font-size: 15px;
-      box-shadow: 0 4px 6px -1px rgba(31, 95, 191, 0.12), 0 2px 4px -1px rgba(31, 95, 191, 0.08);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 15.5px;
+      box-shadow: 0 4px 10px rgba(5, 29, 17, 0.25);
+      transition: all 0.2s ease;
     }
 
     .btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 8px 16px -2px rgba(31, 95, 191, 0.2), 0 4px 8px -2px rgba(31, 95, 191, 0.15);
-      filter: brightness(1.05);
+      box-shadow: 0 8px 16px rgba(9, 44, 28, 0.3);
+      filter: brightness(1.1);
     }
 
     .btn:active {
@@ -465,79 +442,43 @@
     }
 
     .form-panel .footer {
-      margin-top: 36px;
+      margin-top: 20px;
       text-align: center;
       font-size: 11.5px;
       color: var(--text-muted);
       font-weight: 400;
       border-top: 1px solid var(--border-color);
-      padding-top: 20px;
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      padding-top: 12px;
     }
 
     @media (max-width: 992px) {
       .login-card {
         width: 100%;
-        max-width: 800px;
-      }
-    }
-
-    .brand-name-wrap {
-      display: flex;
-      flex-direction: column;
-      width: fit-content;
-      overflow: hidden;
-    }
-
-    .brand-underline {
-      width: 35%;
-      height: 2px;
-      margin-top: 4px;
-      background-color: #ffffff;
-      border-radius: 999px;
-      animation: moveUnderline 1.8s ease-in-out infinite alternate;
-    }
-
-    @keyframes moveUnderline {
-      from {
-        margin-left: 0;
-      }
-
-      to {
-        margin-left: 65%;
+        max-width: 850px;
       }
     }
 
     @media (max-width: 768px) {
+      body {
+        padding-top: 115px;
+      }
       .login-card {
         grid-template-columns: 1fr;
-        max-width: 460px;
+        max-width: 480px;
         border-radius: 20px;
       }
 
-      .brand-panel {
+      .image-panel {
         display: none;
       }
 
-      .mobile-logo-header {
-        display: flex;
-      }
-
       .form-panel {
-        padding: 48px 32px;
+        padding: 30px 24px;
+        border-radius: 20px;
       }
-
+      .form-panel::after {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -545,39 +486,32 @@
 <body>
   {% set rp = rp if rp is defined else request.scope.get('root_path','') %}
 
+  <!-- Top Header Bar -->
+  <div class="top-header">
+    <div class="header-logo-container">
+      <img src="{{ rp }}/static/Neiva.webp" alt="Alcaldía de Neiva" class="header-logo logo-neiva" />
+      <div class="header-divider"></div>
+      <img src="{{ rp }}/static/logo_1.png" alt="Arbitrium" class="header-logo logo-arbitrium" />
+    </div>
+  </div>
+
   <div class="login-card">
-    <!-- Left Column: Branding -->
-    <div class="brand-panel">
-      <div class="brand-header">
-        <img src="{{ rp }}/static/icon.png" alt="Icon" class="brand-logo" />
-        <div class="brand-name-wrap">
-          <span class="brand-name">ARBIMapps</span>
-          <div class="brand-underline"></div>
+    <!-- Left Column: Picture of Neiva -->
+    <div class="image-panel">
+      <img src="{{ rp }}/static/Neiva_1.webp" alt="Neiva" />
+      <div class="image-overlay-text">
+        <div class="brand-title-overlay">
+          <span class="copyright-circle">C</span><span class="brand-arbi">ARBI</span><span class="brand-mapps">Mapps</span>
         </div>
-      </div>
-
-      <div class="brand-content">
-        <h2 class="brand-title">Plataforma Integral de Gestión Catastral</h2>
-        <p class="brand-subtitle">Centraliza la administración de proyectos, gestiona la asignación de actividades y el
-          seguimiento de los procesos catastrales y prediales.</p>
-      </div>
-
-
-      <div class="brand-footer">
-        <span>Arbitrium SAS &copy; 2026</span>
+        <div class="location-overlay">Neiva</div>
       </div>
     </div>
 
     <!-- Right Column: Login Form -->
     <div class="form-panel">
-      <!-- Mobile Logo Header -->
-      <div class="mobile-logo-header">
-        <img src="{{ rp }}/static/logo_login.png" alt="Logo" class="mobile-logo" />
-      </div>
-
       <div class="form-header">
-        <h1 style="font-weight: 700 !important; color: #002f55; margin-bottom: 0px;">¡Bienvenido!</h1>
-        <p class="subtitle">Ingresa tus credenciales para continuar</p>
+        <h1>¡Bienvenido!</h1>
+        <p class="subtitle">Ingresa tus credenciales para iniciar sesión</p>
       </div>
 
       {% if error %}
@@ -593,15 +527,10 @@
       {% endif %}
 
       <form method="post" action="{{ rp }}/login">
-        <!-- Municipality field with custom icon wrapper -->
+        <!-- Municipio field with custom select style -->
         <div class="input-field">
           <label for="municipality">Municipio</label>
           <div class="input-container">
-            <svg class="field-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
             <select id="municipality" name="municipality_code" required>
               <option value="">Seleccione un municipio</option>
               {% for municipality in municipalities or [] %}
@@ -613,29 +542,19 @@
           </div>
         </div>
 
-        <!-- Username field with custom icon wrapper -->
+        <!-- Username field -->
         <div class="input-field">
           <label for="username">Usuario</label>
           <div class="input-container">
-            <svg class="field-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
             <input id="username" type="text" name="username" placeholder="Ingrese su usuario"
               value="{{ username or '' }}" required>
           </div>
         </div>
 
-        <!-- Password field with custom icon wrapper -->
+        <!-- Password field -->
         <div class="input-field">
           <label for="loginPassword">Contraseña</label>
           <div class="input-container password-wrap">
-            <svg class="field-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-            </svg>
             <input id="loginPassword" type="password" name="password" placeholder="Ingrese su contraseña" required>
             <button type="button" class="btn-eye-toggle" aria-label="Mostrar u ocultar contraseña">
               <!-- Open eye -->
@@ -663,7 +582,9 @@
           </label>
         </div>
 
-        <button class="btn" type="submit">Ingresar al sistema</button>
+        <div class="form-divider"></div>
+
+        <button class="btn" type="submit">Iniciar sesión</button>
       </form>
 
       <div class="footer">&copy; Copyright Arbitrium SAS &amp; ARBIMaps 2026</div>
