@@ -1,6 +1,41 @@
 {% set rp = rp if rp is defined else request.scope.get('root_path','') %} {% set
 view = view if view is defined else 'visor' %} {% set limited_assignment_role =
 effective_role in ['digitalizador', 'reconocedor'] %}
+{% set role_labels = {
+  'admin': 'Administrador',
+  'soporte': 'Soporte',
+  'coordinador': 'Coordinador',
+  'reconocedor': 'Reconocedor',
+  'lider_tecnico': 'Líder técnico',
+  'consulta': 'Consulta',
+  'digitalizador': 'Digitalizador / Consolidador'
+} %}
+{% set module_labels = {
+  'visor': 'Visor geográfico',
+  'buscar': 'Consulta de predios',
+  'buscar_predio': 'Detalle del predio',
+  'usuarios': 'Usuarios y cuadrillas',
+  'asignaciones': 'Asignaciones',
+  'restriccion_predios': 'Bloqueo de predios',
+  'box_explorer': 'Documentos',
+  'validacion_xtf': 'Validación XTF',
+  'sincronizacion_mergin': 'Sincronización Mergin',
+  'panel_control': 'Panel de control',
+  'solicitudes_asignaciones': 'Solicitudes de asignación',
+  'notificaciones': 'Notificaciones',
+  'edicion_asignaciones': 'Edición de asignaciones'
+} %}
+{% set role_display = role_labels.get(effective_role, effective_role|replace('_', ' ')|title) %}
+{% set current_module_display = module_labels.get(view, 'Panel principal') %}
+{% if view == 'asignaciones' %}
+  {% set assignment_module_labels = {
+    'cargas': 'Asignaciones · Cargas de trabajo',
+    'ver': 'Asignaciones · Ver asignaciones',
+    'detalle': 'Asignaciones · Detalle',
+    'editar_predio': 'Asignaciones · Editar predio'
+  } %}
+  {% set current_module_display = assignment_module_labels.get(asig_tab, current_module_display) %}
+{% endif %}
 <!doctype html>
 <html lang="es">
 
@@ -28,7 +63,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   {% if view == 'usuarios' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_saas.css?v=16" />
   {% endif %} {% if view == 'visor' or view == 'restriccion_predios' %}
-  <link rel="stylesheet" href="{{ rp }}/static/css/visor/visor.css?v=7" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/visor/visor.css?v=8" />
   {% endif %} {% if view == 'buscar' or view == 'buscar_predio' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/buscar.css" />
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/informacion_predio.css" />
@@ -53,30 +88,27 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   <link rel="stylesheet" href="{{ rp }}/static/css/edicion_asignacion/editar.css" />
   {% endif %} {% endif %}
 
-  <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel.css?v=8" />
+  <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel.css?v=12" />
 </head>
 
-<body class="panel-body">
+<body class="panel-body view-{{ view }}">
   <div class="container-fluid panel-wrapper px-2 py-2">
     <div class="row g-2 vh-100">
       <aside class="col-lg-3 col-xl-2 d-none d-lg-block h-100 pb-2 pb-xl-4">
         <div class="sidebar d-flex flex-column mt-1 h-100">
           <div class="sidebar-top d-flex flex-column h-100">
-            <div class="card-info mt-4 d-flex justify-content-center align-items-center text-center">
-              <div class="card-info-img me-0">
-                <img src="{{ rp }}/static/img/PNG/logoArbi.png" alt="Logo Arbimaps" class="logo-sidebar" />
-              </div>
-
-              <div class="card-info-title text-start">
-                <span class="title-arbi text-white fw-bold d-block mb-0">ARBIMapps</span>
-                <span class="text-white d-block mb-0 fw-normal" style="font-size: 0.633rem; line-height: 1.1">
-                  Aplicativo de Gestión Catastral
-                </span>
+            <div class="card-info mt-4">
+              <span class="brand-status-dot" aria-hidden="true"></span>
+              <img src="{{ rp }}/static/img/brand/marca-neiva.png" alt="" class="brand-watermark" aria-hidden="true" />
+              <img src="{{ rp }}/static/img/brand/escudo-neiva.png" alt="Escudo de Neiva" class="brand-crest" />
+              <div class="card-info-title">
+                <span class="title-arbi text-white fw-bold d-block mb-0">ARBI<span class="title-arbi-outline">Mapps</span></span>
+                <span class="brand-city text-white d-block fw-bold">Neiva</span>
+                <span class="brand-description text-white d-block">Aplicativo de Gestión Catastral</span>
               </div>
             </div>
-
             <div class="px-3">
-              <hr class="border-light opacity-25 mt-3 mb-0" />
+              <hr class="sidebar-divider mt-3 mb-0" />
             </div>
 
             <nav class="menu sidebar-nav d-flex flex-column gap-2 mt-2">
@@ -122,6 +154,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                     class="accordion-collapse collapse {% if view == 'asignaciones' %}show{% endif %}"
                     data-bs-parent="#asignacionesAccordionDesktop">
                     <div class="accordion-body p-2">
+                      <div class="submenu-heading">Acciones asignaciones</div>
                       {% if effective_role in ['admin', 'soporte', 'coordinador'] %}
                       <a class="popupItem {% if asig_tab == 'cargas' %}active{% endif %}"
                         href="{{ rp }}/panel/asignaciones/cargas#asig-open">
@@ -178,7 +211,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               {% endif %}
               {% if effective_role in ['admin', 'soporte'] %}
               <div class="px-3">
-                <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
+                <hr class="sidebar-divider w-100 mt-3 mb-0" />
               </div>
 
               <span class="titleHerr text-white">Seguimiento</span>
@@ -190,7 +223,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               </a>
 
               {# <div class="px-3">
-                <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
+                <hr class="sidebar-divider w-100 mt-3 mb-0" />
               </div>
 
               <span class="titleHerr text-white">Solicitudes</span>
@@ -239,7 +272,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <button id="notificationToggle"
                   class="btn p-0 border-0 bg-transparent d-inline-flex align-items-center justify-content-center notification-toggle text-white"
                   type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notificaciones">
-                  <i class="bi bi-bell-fill" style="color: #ffffff !important;"></i>
+                  <i class="bi bi-bell-fill"></i>
                   <span id="notificationBadge" class="notification-badge d-none">0</span>
                 </button>
 
@@ -257,7 +290,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   </div>
                   <div class="dropdown-divider m-0"></div>
                   <div class="p-2 text-center">
-                    <a href="{{ rp }}/panel/notificaciones" class="btn btn-link btn-sm text-decoration-none py-1 w-100 fw-semibold" style="color: #032f57; font-size: 0.833rem;">
+                    <a href="{{ rp }}/panel/notificaciones" class="btn btn-link btn-sm text-decoration-none py-1 w-100 fw-semibold" style="color: #0a2c1b; font-size: 0.833rem;">
                       Ver todas las notificaciones
                     </a>
                   </div>
@@ -265,17 +298,19 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               </div>
 
               <div class="dropdown">
-                <button class="btn p-0 border-0 bg-transparent d-flex align-items-center gap-2" type="button"
+                <button class="btn p-0 border-0 bg-transparent d-flex align-items-center user-menu-button" type="button"
                   data-bs-toggle="dropdown" aria-expanded="false">
                   <div class="topbar-user-meta d-none d-md-block">
-                    <div class="name">
-                      ¡Bienvenido!,<br />
-                      {{ user }}
-                    </div>
+                    <div class="profile-name">{{ user|replace('_', ' ')|upper }}</div>
+                    <div class="profile-role"><strong>Rol módulo:</strong> {{ role_display }}</div>
+                    <div class="profile-module">Módulo: {{ current_module_display }}</div>
                   </div>
-                  <div class="user-badge">
-                    {{ user[0]|upper if user else "A" }}
-                  </div>
+                  <span class="user-avatar-shell">
+                    <span class="user-badge">
+                      {{ user[0]|upper if user else "A" }}
+                    </span>
+                    <i class="bi bi-chevron-down user-menu-chevron" aria-hidden="true"></i>
+                  </span>
                 </button>
 
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 user-dropdown">
@@ -415,7 +450,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
 
         {# {% if effective_role in ['coordinador', 'soporte', 'admin', 'lider_tecnico'] %}
         <div class="px-3">
-          <hr class="border-light w-100 opacity-25 mt-3 mb-0" />
+          <hr class="sidebar-divider w-100 mt-3 mb-0" />
         </div>
 
         <span class="titleHerr text-white">Solicitudes</span>

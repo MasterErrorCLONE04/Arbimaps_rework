@@ -155,21 +155,21 @@
 {% set _validacion_styles %}
 <style>
     :root {
-        --validation-navy: #00345c;
-        --validation-navy-2: #002944;
-        --validation-blue: #6aa9dc;
-        --validation-blue-soft: #eaf3fb;
-        --validation-blue-line: #9fb9ce;
-        --validation-text: #00345c;
-        --validation-muted: #4c7192;
-        --validation-border: #b7cde0;
-        --validation-border-soft: #d9e6f1;
-        --validation-success: #00a332;
+        --validation-navy: #0a2c1b;
+        --validation-navy-2: #0f3d26;
+        --validation-blue: #80ac65;
+        --validation-blue-soft: #eef4f0;
+        --validation-blue-line: #aebfce;
+        --validation-text: #0a2c1b;
+        --validation-muted: #7f8e85;
+        --validation-border: #c7d3cd;
+        --validation-border-soft: #dde9e2;
+        --validation-success: #0aa36a;
         --validation-success-soft: #e2f6e5;
         --validation-danger: #d71920;
         --validation-danger-soft: #ffd8db;
         --validation-warning-soft: #ffe9cd;
-        --validation-shadow: 0 4px 8px rgba(0, 52, 92, 0.2);
+        --validation-shadow: 0 4px 8px rgba(10, 44, 27, 0.2);
     }
 
     body.validacion-xtf-standalone {
@@ -206,7 +206,7 @@
 
     .validation-subtitle {
         margin: 10px 0 0;
-        color: #214d76;
+        color: #7f8e85;
         font-size: 0.94rem;
         line-height: 1.5;
     }
@@ -267,7 +267,7 @@
     .stepper-line {
         width: 25px;
         height: 2px;
-        background: #5b7f9e;
+        background: #7f8e85;
         display: block;
     }
 
@@ -287,7 +287,7 @@
         width: min(780px, 100%);
         min-height: 268px;
         border: 2px dashed var(--validation-blue-line);
-        background: #edf5fb;
+        background: #eef4f0;
         border-radius: 20px;
         display: flex;
         align-items: center;
@@ -299,7 +299,7 @@
 
     .dropzone.dragover {
         border-color: var(--validation-navy);
-        background: #e5f1fb;
+        background: #dde9e2;
         transform: translateY(-1px);
     }
 
@@ -323,7 +323,7 @@
 
     .dropzone-text {
         margin: 12px 0 18px;
-        color: #214d76;
+        color: #7f8e85;
         font-size: 0.91rem;
     }
 
@@ -361,7 +361,7 @@
 
     .validation-button.blue:hover,
     .validation-button.blue:focus {
-        background: #579bd1;
+        background: #6f9958;
     }
 
     .validation-button.light {
@@ -382,7 +382,7 @@
 
     .format-note {
         margin-top: 24px;
-        color: #214d76;
+        color: #7f8e85;
         font-size: 0.9rem;
     }
 
@@ -414,7 +414,7 @@
 
     .file-card {
         border: 1px solid var(--validation-border);
-        background: #edf5fb;
+        background: #eef4f0;
         border-radius: 9px;
         min-height: 82px;
         display: grid;
@@ -484,7 +484,7 @@
         place-items: center;
         background:
             radial-gradient(circle at center, #fff 0 58%, transparent 59%),
-            conic-gradient(var(--validation-navy) calc(var(--progress) * 1%), #d6e8f7 0 100%);
+            conic-gradient(var(--validation-navy) calc(var(--progress) * 1%), #dde9e2 0 100%);
         border: 1px solid var(--validation-border);
         position: relative;
     }
@@ -511,7 +511,7 @@
 
     .process-text,
     .center-state-text {
-        color: #214d76;
+        color: #7f8e85;
         font-size: 0.9rem;
         margin: 0;
     }
@@ -575,7 +575,7 @@
     .status-art .dot {
         position: absolute;
         border-radius: 50%;
-        background: #65a4d8;
+        background: #80ac65;
     }
 
     .status-art.success .dot:nth-child(1) { width: 8px; height: 8px; left: 22px; top: 74px; }
@@ -713,7 +713,7 @@
         width: 54px;
         height: 54px;
         border-radius: 999px;
-        background: #77b6e6;
+        background: #8fba77;
         color: #fff;
         display: grid;
         place-items: center;
@@ -782,7 +782,7 @@
 
     .summary-card-title,
     .rules-card-title {
-        background: #edf5fb;
+        background: #eef4f0;
         padding: 20px;
         color: var(--validation-navy);
         font-weight: 800;
@@ -864,7 +864,7 @@
     }
 
     .predio-table-title {
-        background: #edf5fb;
+        background: #eef4f0;
         padding: 12px 20px;
         color: var(--validation-navy);
         font-weight: 800;
@@ -883,7 +883,7 @@
     .predio-table td {
         padding: 13px 20px;
         text-align: left;
-        border-bottom: 1px solid #edf3f8;
+        border-bottom: 1px solid #eef4f0;
     }
 
     .predio-table th:last-child,
@@ -892,7 +892,7 @@
     }
 
     .predio-table tbody tr:first-child td {
-        background: #cfe2f2;
+        background: #dde9e2;
     }
 
     .count-pill {
@@ -944,7 +944,7 @@
     }
 
     .pager button.is-active {
-        background: #6aa9dc;
+        background: #80ac65;
     }
 
     .metrics-grid {
@@ -961,8 +961,8 @@
     }
 
     .metric-card.blue {
-        background: #b9d7ee;
-        border-color: #b9d7ee;
+        background: #c7d3cd;
+        border-color: #c7d3cd;
     }
 
     .metric-card.green {
@@ -1017,7 +1017,7 @@
         border: 1px solid var(--validation-border);
         min-height: 112px;
         border-radius: 9px;
-        background: #edf5fb;
+        background: #eef4f0;
         padding: 14px 12px 12px;
         display: flex;
         flex-direction: column;
@@ -1125,7 +1125,7 @@
     }
 
     .component-tab.is-active {
-        background: #cfe2f2;
+        background: #dde9e2;
         border-left: 4px solid var(--validation-navy);
         padding-left: 18px;
     }
@@ -1308,9 +1308,9 @@
                 <div class="center-state">
                     <div class="status-art error" aria-hidden="true">
                         <span class="dot" style="width: 7px; height: 7px; left: 26px; top: 44px; background:#dc6468;"></span>
-                        <span class="dot" style="width: 9px; height: 9px; left: 102px; top: 26px; background:#65a4d8;"></span>
+                        <span class="dot" style="width: 9px; height: 9px; left: 102px; top: 26px; background:#80ac65;"></span>
                         <span class="dot" style="width: 11px; height: 11px; right: 42px; top: 72px; background:#dc6468;"></span>
-                        <span class="dot" style="width: 8px; height: 8px; left: 18px; bottom: 68px; background:#65a4d8;"></span>
+                        <span class="dot" style="width: 8px; height: 8px; left: 18px; bottom: 68px; background:#80ac65;"></span>
                         <span class="status-bubble">
                             <span class="status-mark"><i class="bi bi-x-lg"></i></span>
                         </span>
@@ -1427,9 +1427,9 @@
             <div class="center-state">
                 <div class="status-art error" aria-hidden="true">
                     <span class="dot" style="width: 7px; height: 7px; left: 26px; top: 44px; background:#dc6468;"></span>
-                    <span class="dot" style="width: 9px; height: 9px; left: 102px; top: 26px; background:#65a4d8;"></span>
+                    <span class="dot" style="width: 9px; height: 9px; left: 102px; top: 26px; background:#80ac65;"></span>
                     <span class="dot" style="width: 11px; height: 11px; right: 42px; top: 72px; background:#dc6468;"></span>
-                    <span class="dot" style="width: 8px; height: 8px; left: 18px; bottom: 68px; background:#65a4d8;"></span>
+                    <span class="dot" style="width: 8px; height: 8px; left: 18px; bottom: 68px; background:#80ac65;"></span>
                     <span class="status-bubble">
                         <span class="status-mark"><i class="bi bi-x-lg"></i></span>
                     </span>
@@ -1467,9 +1467,9 @@
                 <span class="dot"></span>
                 {% else %}
                 <span class="dot" style="width: 7px; height: 7px; left: 26px; top: 44px; background:#dc6468;"></span>
-                <span class="dot" style="width: 9px; height: 9px; left: 102px; top: 26px; background:#65a4d8;"></span>
+                <span class="dot" style="width: 9px; height: 9px; left: 102px; top: 26px; background:#80ac65;"></span>
                 <span class="dot" style="width: 11px; height: 11px; right: 42px; top: 72px; background:#dc6468;"></span>
-                <span class="dot" style="width: 8px; height: 8px; left: 18px; bottom: 68px; background:#65a4d8;"></span>
+                <span class="dot" style="width: 8px; height: 8px; left: 18px; bottom: 68px; background:#80ac65;"></span>
                 {% endif %}
                 <span class="status-bubble">
                     <span class="status-mark"><i class="bi {{ 'bi-check-lg' if result_is_clean else 'bi-x-lg' }}"></i></span>

@@ -962,3 +962,128 @@ body {
         align-items: stretch;
     }
 }
+
+/* Paleta institucional verde para los controles del visor. */
+.page-wrapper-visor .visor-card,
+.page-wrapper-visor .panel-card {
+    border-color: #c7d3cd;
+    box-shadow: 0 8px 22px rgba(10, 44, 27, 0.08);
+}
+
+.page-wrapper-visor .visor-map-search .input-group {
+    border-color: #c7d3cd;
+    box-shadow: 0 10px 24px rgba(10, 44, 27, 0.13);
+}
+
+.page-wrapper-visor .visor-map-search .input-group-text,
+.page-wrapper-visor .visor-map-search .form-control,
+.page-wrapper-visor .visor-search-btn,
+.page-wrapper-visor .visor-map-search-status {
+    color: #0a2c1b;
+}
+
+.page-wrapper-visor .visor-search-btn {
+    border-left-color: #c7d3cd;
+    background: #ffffff;
+}
+
+.page-wrapper-visor .visor-search-btn:hover,
+.page-wrapper-visor .visor-search-btn:focus {
+    background: #dde9e2;
+    color: #0a2c1b;
+}
+
+.page-wrapper-visor .vm-toolbar-btn,
+.page-wrapper-visor .vm-btn-primary {
+    background: #0a2c1b;
+    color: #ffffff;
+}
+
+.page-wrapper-visor .vm-toolbar-btn-light,
+.page-wrapper-visor .vm-btn {
+    background: #ffffff;
+    color: #0a2c1b;
+    border-color: #c7d3cd;
+}
+
+.page-wrapper-visor .vm-zoom-stack,
+.page-wrapper-visor .vm-north-indicator,
+.page-wrapper-visor .vm-map-statusbar,
+.page-wrapper-visor .vm-layer-panel,
+.page-wrapper-visor .vm-measure-panel,
+.page-wrapper-visor .vm-info-popup,
+.page-wrapper-visor .vm-legend-card {
+    border-color: #c7d3cd;
+    box-shadow: 0 12px 28px rgba(10, 44, 27, 0.14);
+}
+
+.page-wrapper-visor .vm-zoom-btn {
+    border-color: #c7d3cd;
+    color: #0a2c1b;
+}
+
+.page-wrapper-visor .vm-zoom-btn:hover,
+.page-wrapper-visor .vm-zoom-btn:focus,
+.page-wrapper-visor .vm-zoom-btn.is-active {
+    background: #0a2c1b;
+    border-color: #0a2c1b;
+    color: #ffffff;
+}
+
+.page-wrapper-visor .vm-map-status-item,
+.page-wrapper-visor .vm-map-status-item strong,
+.page-wrapper-visor .vm-layer-panel-head strong,
+.page-wrapper-visor .vm-layer-group-head,
+.page-wrapper-visor .vm-layer-label,
+.page-wrapper-visor .vm-legend-title,
+.page-wrapper-visor .vm-info-popup-title,
+.page-wrapper-visor .vm-measure-title,
+.page-wrapper-visor .vm-measure-value,
+.page-wrapper-visor .vm-north-label {
+    color: #0a2c1b;
+}
+
+.page-wrapper-visor .vm-layer-group-icon,
+.page-wrapper-visor .visor-info-icon {
+    color: #0aa36a;
+}
+
+.page-wrapper-visor .vm-layer-group-head,
+.page-wrapper-visor .vm-layer-item,
+.page-wrapper-visor .vm-select,
+.page-wrapper-visor .visor-info-number {
+    background: #eef4f0;
+    border-color: #c7d3cd;
+}
+
+.page-wrapper-visor .vm-layer-item.is-on {
+    border-color: #80ac65;
+    background: #dde9e2;
+}
+
+.page-wrapper-visor .vm-layer-toggle.is-on {
+    border-color: #0a2c1b;
+    background: #0a2c1b;
+    color: #ffffff;
+}
+
+.page-wrapper-visor .vm-north-arrow {
+    border-bottom-color: #0a2c1b;
+}
+
+.page-wrapper-visor .visor-detail-btn,
+.page-wrapper-visor .vm-info-popup-link,
+.page-wrapper-visor .vm-measure-clear {
+    border-color: #80ac65;
+    color: #0a2c1b;
+}
+
+.page-wrapper-visor .visor-detail-btn:hover,
+.page-wrapper-visor .vm-info-popup-link:hover,
+.page-wrapper-visor .vm-measure-clear:hover {
+    background: #dde9e2;
+}
+
+.page-wrapper-visor .vm-map-statusbar {
+    border-radius: 14px;
+}
