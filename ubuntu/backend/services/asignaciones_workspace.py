@@ -302,6 +302,38 @@ def _arb_disable_workspace_unique_constraints(
     conn.commit()
 
 
+def _ensure_workspace_enum_tables_populated(conn, tenant: TenantContext, schema_main: str, schema_work: str) -> None:
+    """
+    Copia los registros de las tablas de dominio (las que terminan en 'tipo')
+    desde el esquema principal (schema_main) al esquema de trabajo (schema_work)
+    si estas están vacías, para que ili2pg pueda traducir correctamente las enumeraciones.
+    """
+    with conn.cursor() as cur:
+        try:
+            # Buscar todas las tablas del esquema principal que terminen en 'tipo'
+            cur.execute(
+                """
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = %s AND table_name LIKE '%%tipo'
+                """,
+                (schema_main,)
+            )
+            tables = [row[0] for row in cur.fetchall()]
+            if not tables:
+                return
+
+            for table in tables:
+                # Verificar si la tabla de destino está vacía
+                cur.execute(f"SELECT COUNT(*) FROM {schema_work}.{table}")
+                count = cur.fetchone()[0]
+                if count == 0:
+                    logger.info("Poblando tabla de enum %s.%s desde %s", schema_work, table, schema_main)
+                    cur.execute(f"INSERT INTO {schema_work}.{table} SELECT * FROM {schema_main}.{table} ON CONFLICT DO NOTHING")
+        except Exception as e:
+            logger.warning("Error poblando tablas de dominio en workspace: %s", e)
+
+
 def _qualify(schema: str, table: str) -> str:
     schema = (schema or "").strip().strip('"')
     if not schema:
@@ -3060,6 +3092,7 @@ def build_workspace_for_assignment(
                 timeout_sec=timeout_sec,
             )
 
+        _ensure_workspace_enum_tables_populated(conn, tenant, schema_main, schema_work)
         export_service.ili2pg_import(
             conn,
             tenant,
@@ -3319,6 +3352,7 @@ def ensure_workspace_ready_for_export(
         if workspace_ctx.model_name == "arb":
             _arb_disable_workspace_unique_constraints(conn, tenant, schema_work)
 
+        _ensure_workspace_enum_tables_populated(conn, tenant, schema_main, schema_work)
         try:
             export_service.ili2pg_import(
                 conn,

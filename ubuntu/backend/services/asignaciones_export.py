@@ -364,6 +364,33 @@ def run_ili2pg(
     timeout_sec: int = 600,
     db_params: Optional[dict] = None,
 ) -> None:
+    args = list(args)
+    if "--modeldir" not in args and len(args) > 1:
+        model_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "resource", "model")
+        args = args[:-1] + ["--modeldir", model_dir] + [args[-1]]
+    if "--disableValidation" not in args and len(args) > 1:
+        args = args[:-1] + ["--disableValidation"] + [args[-1]]
+    if "--defaultSrsCode" not in args and len(args) > 1:
+        args = args[:-1] + ["--defaultSrsCode", "9377"] + [args[-1]]
+    if "--defaultSrsAuth" not in args and len(args) > 1:
+        args = args[:-1] + ["--defaultSrsAuth", "EPSG"] + [args[-1]]
+    if "--createBasketCol" not in args and len(args) > 1:
+        args = args[:-1] + ["--createBasketCol"] + [args[-1]]
+    for opt in [
+        "--createEnumTabsWithId",
+        "--smart2Inheritance",
+        "--coalesceArray",
+        "--expandLocalised",
+        "--coalesceJson",
+        "--coalesceCatalogueRef",
+        "--coalesceMultiPoint",
+        "--coalesceMultiSurface",
+        "--expandMultilingual",
+        "--coalesceMultiLine",
+    ]:
+        if opt not in args and len(args) > 1:
+            args = args[:-1] + [opt] + [args[-1]]
+
     cmd_text = _resolve_ili2pg_cmd(ili2pg_cmd)
     _ensure_ili2pg_runtime_available(cmd_text)
     if cmd_text:
@@ -3440,9 +3467,9 @@ def _sanitize_assignment_enums_and_coords_arb(conn, schema: str, datasetname: st
             UPDATE {schema}.arb_derechointeresadofuente
             SET i_tipo = CASE WHEN i_tipo = 13 THEN 2 ELSE i_tipo END,
                 naturaleza_juridica = CASE WHEN naturaleza_juridica = 15 THEN NULL ELSE naturaleza_juridica END,
-                codigo_naturaleza_juridica = CASE WHEN codigo_naturaleza_juridica = 16 THEN NULL ELSE codigo_naturaleza_juridica END,
+                codigo_naturaleza_juridica = CASE WHEN BTRIM(codigo_naturaleza_juridica::text) = '16' THEN NULL ELSE codigo_naturaleza_juridica END,
                 i_grupo_etnico = CASE WHEN i_grupo_etnico = 14 THEN 895 ELSE i_grupo_etnico END
-            WHERE i_tipo = 13 OR naturaleza_juridica = 15 OR codigo_naturaleza_juridica = 16 OR i_grupo_etnico = 14
+            WHERE i_tipo = 13 OR naturaleza_juridica = 15 OR BTRIM(codigo_naturaleza_juridica::text) = '16' OR i_grupo_etnico = 14
             """
         )
 
@@ -3527,7 +3554,7 @@ def _sanitize_assignment_enums_and_coords_arb(conn, schema: str, datasetname: st
         cur.execute(
             f"""
             SELECT COALESCE(
-                ST_Centroid(ST_Union(geometria)),
+                ST_Centroid(ST_Union(ST_MakeValid(geometria))),
                 ST_GeomFromText('POINT(4500000 2000000)', 9377)
             )
             FROM {schema}.arb_terreno

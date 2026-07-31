@@ -1,0 +1,1438 @@
+INTERLIS 2.3;
+
+/** CAMBIOS REALIZADOS FRENTE A LA VERSIÓN ANTERIOR (Vr 4.0)
+ * -----------------------------------------------------------------------
+ * 
+ * MODELO NÚCLEO LADM_COL: Se incopora el nuevo Modelo Núcleo LADM_COL Versión 4.0.1, adoptado por la ICDE mediante Acuerdo 002 de diciembre 2023.
+ * 
+ * CR_Predio: 
+ * - Se eliminan los atributos: Anio_Ultima_Mutacion y Valor_Referencia.
+ * - Se incorporan los atributos: Area_Catastral_Terreno, Predio_Origen_NPN, Predio_Matriz y Estado_Inscripcion_Catastral.
+ * - Se incorporan las estructuras: Referencia_Registral_Sistema_Antiguo y Alerta_Predio.
+ * - Se ajusta la estructura CR_EstructuraAvaluoCatastral
+ * - Se ajustan las definiciones de los Destinos Económicos y se agregan otras nuevas.
+ * 
+ * cr_predio_copropiedad: Se incorporan los atributos: Area_Privada_Terreno y Area_Privada_Construida[0..1] : Numérico.
+ * 
+ * CR_Construccion: Se elimina esta clase.
+ * 
+ * CR_CaracteristicasUnidadConstruccion:
+ * - Se elimina el atributo Area_Privada_Construida.
+ * - Se incorpora el atributo Estado_Conservacion
+ * 
+ * CR_SexoTipo (dominio):
+ * - Se ajusta cardinalidad a obligatorio (personas naturales).
+ * - Se incorpora la opción de No Binario
+ * - Se incorpora la opción de No aplica (peronas jurídicas)
+ * 
+ * CR_AutoreconocimientoEtnicoTipo: Cambio de nombre, antes llamado CR_GrupoEtnicoTipo.
+ * 
+ * -----------------------------------------------------------
+ * (c) IGAC y SNR 2024
+ * 
+ * -----------------------------------------------------------
+ */
+CONTRACTED MODEL Modelo_Aplicacion_LADMCOL_SINIC_V1_0 (es)
+AT "https://www.igac.gov.co/"
+VERSION "4.1"  // 2024_04 // =
+  IMPORTS ISO19107_PLANAS_V3_1,LADM_COL_v_4_0_1_Nucleo;
+
+  DOMAIN
+
+    /** Valores para indicar el autoreconocimiento etnico del interesado.
+     */
+    CR_AutoreconocimientoEtnicoTipo = (
+      /** Según la Corte Constitucional (sentencia T-445-22), las personas tienen el derecho a auto reconocerce como pertenicientes a cualquier etnia si subjetivamente considera que tiene los vínculos culturales, familiares o históricos.
+       * 
+       * En este sentido, la persona puede auto reconocerse como indígena, gitano Romaní, raizal, palenquero, negro o afrocolombiano.
+       */
+      Etnico(
+        /** Se Autoreconoce Indigena.
+         */
+        Indigena,
+        /** Se Autoreconoce Rrom.
+         */
+        Gitano_Rrom,
+        /** Se Autoreconoce Raizal.
+         */
+        Raizal,
+        /** Se Autoreconoce Palenquero.
+         */
+        Palenquero,
+        /** Se Autoreconoce Negro.
+         */
+        Negro,
+        /** Se Autoreconoce Afrocolombiano.
+         */
+        Afrocolombiano
+      ),
+      /** No se autoreconoce.
+       */
+      Ninguno
+    );
+
+    /** Valores para indicar el tipo de condición de predio
+     */
+    CR_CondicionPredioTipo = (
+      /** Predio no sometido al régimen de propiedad horizontal.
+       */
+      NPH,
+      /** Predio sometido al régimen de propiedad horizontal mediante escritura pública registrada.
+       */
+      PH(
+        /** Predio matriz del régimen de propiedad horizontal sobre el cual se segregan todas las unidades prediales.
+         */
+        Matriz,
+        /** Apartamento, garaje, depósito o cualquier otro tipo de unidad predial dentro del PH que se encuentra debidamente inscrito en el registro de instrumentos públicos.
+         */
+        Unidad_Predial
+      ),
+      /** Predio sometido al régimen de propiedad horizontal mediante escritura pública registrada en cuyo reglamento define para cada unidad predial un área privada de terreno.
+       */
+      Condominio(
+        /** Predio matriz del condominio sobre el cual se segregan todas las unidades prediales.
+         */
+        Matriz,
+        /** Unidad predial dentro del condominio matriz.
+         */
+        Unidad_Predial
+      ),
+      /** Predios sobre los cuales las áreas de terreno y construcciones son dedicadas a la cremación, inhumación o enterramiento de personas fallecidas.
+       */
+      Parque_Cementerio(
+        /** Predios sobre los cuales las áreas de terreno y construcciones son dedicadas a la cremación, inhumación o enterramiento de personas fallecidas.
+         */
+        Matriz,
+        /** Área o sección de terreno con función de tumba, esta debe encontrarse inscrita en el registro de instrumentos públicos.
+         */
+        Unidad_Predial
+      ),
+      /** Espacio (terreno y construcción) diseñado y destinado para el tránsito de vehículos, personas, entre otros.
+       */
+      Via,
+      /** Bien inmueble poseído u ocupado con ánimo de señor y dueño por quien carece del derecho real de dominio.
+       */
+      Informal,
+      /** Inmuebles que siendo de dominio de la Nación, o una entidad territorial o de particulares, están destinados al uso de los habitantes.
+       */
+      Bien_Uso_Publico
+    );
+
+    /** Valores para identificar la planta de la característica de construcción.
+     */
+    CR_ConstruccionPlantaTipo = (
+      /** Superficie horizontal de un espacio arquitectónico que divide los espacios en altura.
+       */
+      Piso,
+      /** Piso intermedio entre los pisos principales de una casa o edificio.
+       */
+      Mezanine,
+      /** Piso de un edificio situado por debajo del nivel de la calle.
+       */
+      Sotano,
+      /** Piso que sobresale por lo menos la mitad de su altura, del nivel de un patio de la calle.
+       */
+      Semisotano,
+      /** Construcción que se encuentra por debajo del nivel de la calle y que comprende grandes espacios.
+       */
+      Subterraneo
+    );
+
+    /** Clasificación que se da a cada inmueble en su conjunto -terreno y unidades de construcción-, en el momento de la identificación predial de conformidad con la actividad predominante que en él se desarrolle.
+     */
+    CR_DestinacionEconomicaTipo = (
+      /** Se califica con destino acuícola, aquellos predios donde se realizan cultivos de organismos acuáticos, en ambientes naturales o artificiales.
+       */
+      Acuicola,
+      /** Se califica con destino agrícola, aquellos predios con funcionalidad de laboreo agrícola, terrenos que han sido transformados y ocupados para la producción de cultivos cuyo objetivo es satisfacer las necesidades alimentarias, comerciales y agrícolas.
+       */
+      Agricola,
+      /** Se califica con destino agroindustrial, aquellos predios destinados a la actividad que implica cultivo (producción) y transformación (industrialización y comercialización) de productos agrícola, pecuario y forestal productor.
+       */
+      Agroindustrial,
+      /** Se califica con destino agroforestal, aquellos predios destinados al establecimiento y aprovechamiento combinado de especies forestales con actividades agrícolas o pecuarias con arreglos diferenciados. Incluye la actividad agrosilvícola, silvopastoril y agrosilvopastoril.
+       */
+      Agroforestal,
+      /** Se califica con destino Agropecuario, aquellos predios en los cuales se desarrollan actividades agrícolas y pecuarias.
+       */
+      Agropecuario,
+      /** Se califica con destino comercial, aquellos predios cuya finalidad es la de realizar la actividad económica de ofrecer, transar o almacenar bienes y/o servicios a través de un mercader o comerciante.
+       */
+      Comercial,
+      /** Se califica con destino Conservación y Protección Ambiental, aquellos predios urbanos y rurales que son objeto de especial protección ambiental y los que hacen parte de la estructura ecológica principal como las áreas del sistema nacional de áreas protegidas, las áreas de reserva forestal protectora, las áreas de manejo especial y las áreas de especial importancia ecosistémica, tales como páramos y subpáramos, nacimientos de agua, zonas de recarga de acuíferos, rondas hidráulicas de los cuerpos de agua, humedales, pantanos, lagos, lagunas, ciénagas, manglares y reservas de flora y fauna. (Decreto 3600 de 2007, Art. 4, numeral 1 compilado en el decreto 1077 del 2015), ademas de los no parcelables ni aprovechables para la explotación agricola o pecuaria y/o aquellas determinadas por el plan de ordenamiento territorial.
+       */
+      Conservacion_Proteccion_Ambiental,
+      /** Se califica con destino Cultural, aquellos predios considerados como bienes culturales de la nación, además los espacios destinados al desarrollo de actividades artísticas.
+       */
+      Cultural,
+      /** Se califica con destino Educativo, aquellos predios donde se desarrollan actividades académicas, tanto de la educación inicial, preescolar, básica, media y superior.
+       * 
+       * Incluye los jardines, escuelas, colegios, institutos técnicos, fundaciones educativas, centros de investigación y universidades.
+       */
+      Educativo,
+      /** Se califica con destino Forestal Productor, aquellos predios con áreas de bosque originado por la intervención directa del hombre para la extracción de productos obtenidos directamente a partir de las trozas como bloques, bancos, tablones, tablas y además chapas y astillas, entre otros.
+       */
+      Forestal_Productor,
+      /** Se califica con destino habitacional, aquellos predios de uso residencial cuya finalidad es la vivienda habitual de las personas. Incluye los parqueaderos, garajes y depósitos dentro de propiedad horizontal como también los predios rurales de vivienda campestre.
+       */
+      Habitacional,
+      /** Se califica con destino industrial, aquellos predios donde se desarrollan actividades de producción, fabricación, preparación, recuperación, reproducción, ensamblaje, construcción, transformación, tratamiento y manipulación de materias primas para producir bienes o productos materiales y que no estén clasificados dentro de los predios mineros.
+       */
+      Industrial,
+      /** Se califica con destino infraestructura asociada a la producción agropecuaria, aquellos predios sobre los cuales se encuentra la infraestructura requerida dentro de la actividad agropecuaria y que son de interés para el sector agropecuario, como: bancos de maquinaria, plantas de almacenamiento, centros de acopio, centros de transformación agrícola, mataderos, etc.
+       */
+      Infraestructura_Asociada_Produccion_Agropecuaria,
+      /** Se califica con destino Infraestructura Hidráulica, aquellos predios sobre los cuales se encuentra establecida infraestructura para controlar, almacenar y conducir un flujo continuo de agua. Incluye los embalses, represas, acueductos, centrales de tratamiento, distribución y plantas de potabilización de agua.
+       */
+      Infraestructura_Hidraulica,
+      /** Se califica con destino Infraestructura de Saneamiento Básico, aquellos predios sobre los cuales se encuentra establecida la infraestructura para el saneamiento básico. Incluye los centros de acopio de basura y material reciclable, rellenos sanitarios e incineradoras, alcantarillados y las estaciones depuradoras de aguas residuales.
+       */
+      Infraestructura_Saneamiento_Basico,
+      /** Se califica con destino Infraestructura de Seguridad, aquellos predios sobre los cuales se destinan para salvaguardar el orden público. Incluye las estaciones de policía, batallones, cárceles, etc. No incluye los predios con prestación de servicios de seguridad privada.
+       */
+      Infraestructura_Seguridad,
+      /** Se califica con destino infraestructura de transporte, aquellos predios en los cuales se encuentra establecida infraestructura para el desarrollo de actividad de transporte, muelles para embarque, desembarque de carga y/o pasajeros, pistas de aterrizaje, torres de control, etc. Se exceptúan de estas, aquellas plataformas flotantes y aquellas que se encuentren fuera de la plataforma continental.
+       */
+      Infraestructura_Transporte,
+      /** Se califica con destino Infraestructura para Energía Renovable y Eléctrica, aquellos predios sobre los cuales se encuentra establecida infraestructura para el suministro de energía. Incluye las plantas de generación de energía, las estaciones, subestaciones eléctricas, centrales hidroeléctricas, parques eólicos, granjas solares, entre otros.
+       */
+      Infraestructura_Energia_Renovable_Electrica,
+      /** Se califica con destino institucional, aquellos predios destinados a la administración y prestación de servicios del Estado tanto de orden nacional como territorial.
+       */
+      Institucional,
+      /** Se califica con destino Minería o Hidrocarburos, aquellos predios donde se hace aprovechamiento económico directo de los recursos minerales e hidrocarburos presentes en el suelo y el subsuelo o transformación primaria de los mismos.
+       */
+      Mineria_Hidrocarburos,
+      /** Se califica con destino Lote Urbanizable no Urbanizado, aquellos predios urbanos no construidos o construidos que predominantemente no ejecutan ninguna actividad económica, que no han sido desarrollados y sin restricción legal para adelantar algún tipo de proyecto.
+       */
+      Lote_Urbanizable_No_Urbanizado,
+      /** Se califica con destino Lote Urbanizado no Construido, aquellos predios urbanos no construidos o construidos que predominantemente no ejecutan ninguna actividad económica, que no han sido desarrollados ubicados en zonas urbanizadas, es decir, con infraestructura de servicios públicos e infraestructura vial.
+       */
+      Lote_Urbanizado_No_Construido,
+      /** Se califica con destino Lote no Urbanizable, aquellos predios con afectación por el instrumento de planeación municipal diferentes a la afectación ambiental, por ejemplo, los utilizados como servidumbres para los servicios públicos.
+       */
+      Lote_No_Urbanizable,
+      /** Se califica con destino Lote Rural, aquellos predios rurales no construidos que no desarrollan ninguna actividad económica.
+       */
+      Lote_Rural,
+      /** Se califica con destino pecuario, aquellos predios destinados a la cría, beneficio y aprovechamiento de especies de animales no domésticos, para el consumo humano (productos cárnicos y lácteos), uso artesanal (lana, cuero, plumas, etc.) y conservación de fauna (zoocría).
+       */
+      Pecuario,
+      /** Se califica con destino recreacional, aquellos predios que corresponden a equipamientos deportivos y recreativos, parques de propiedad privada o pública, clubes, generando bienestar físico y social.
+       */
+      Recreacional,
+      /** Se califica con destino Religioso, aquellos predios cuya finalidad es el culto religioso, incluye las parroquias, basílicas, catedrales, santuarios, capillas, colegiatas, monasterios, conventos, seminarios y mezquitas. No incluye predios que no sean de propiedad de entidades religiosas reconocidas por el gobierno nacional.
+       */
+      Religioso,
+      /** Se califica con destino Salubridad, aquellos predios destinados al cuidado de la salud de los ciudadanos, incluye los hospitales, centros de salud, clínicas, laboratorios y consultorios que prestan el servicio de salud tanto de carácter público o privado.
+       */
+      Salubridad,
+      /** Se califica con destino infraestructura de servicios funerarios, aquellos predios que prestan servicios de velatorio, cremación y entierro de personas fallecidas, incluye los cementerios, funerarias, morgue, anfiteatros, crematorios y demás relacionados.
+       */
+      Servicios_Funerarios,
+      /** Se califica con destino Servicios Sociales, aquellos predios que generan un beneficio social a la comunidad y que sean de propiedad de una organización sin animo de lucro, por ejemplo hogares geriátricos, fundaciones, entre otros.
+       */
+      Servicios_Sociales,
+      /** Se califica con destino Uso Público, Aquellos predios destinados al uso y goce de todos los habitantes del territorio, como las zonas verdes, alamedas, plazas (no se incluyen las plazas de mercado), plazoletas parques, cuerpos de agua, áreas de control, túneles, vías, ciclorutas, glorietas entre otros.
+       */
+      Uso_Publico
+    );
+
+    CR_DocumentoTipo
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_DocumentoTipo = (
+      /** Es un consecutivo asignado automáticamente en registro en lugar del número de la identificación de la persona que hace el trámite, se usa especialmente en trámites de construcción cuando el proyecto está a nombre de una Fiducia el cual tiene el mismo número del banco.
+       */
+      Secuencial,
+      /** Se utiliza cuando no se tiene información o precisión sobre el tipo de documento.
+       */
+      Sin_Informacion
+    );
+
+    /** Valores para indicar el estado del predio.
+     */
+    CR_EstadoTipo = (
+      /** El predio se encuentra activo en la base de datos catastral, debido a que no se ha efectuado un trámite de cancelación durante los procesos de conservación o actualización catastral por acto administrativo.
+       */
+      Activo,
+      /** El predio se encuentra cancelado en la base de datos catastral, debido a un trámite durante los procesos de conservación o actualización catastral por acto administrativo.
+       */
+      Cancelado
+    );
+
+    /** Valores de los tipos de fotoidentificación.
+     */
+    CR_FotoidentificacionTipo = (
+      /** Demarcación de un área con un punto que se encuentra visible en un proceso de fotoidentificación.
+       */
+      Visible,
+      /** Demarcación estimada mediante la interpretación de coberturas de un área con un punto en un proceso de fotoidentificación.
+       */
+      Estimado
+    );
+
+    /** Valores para indicar el tipo de fuente administrativa.
+     */
+    CR_FuenteAdministrativaTipo
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_FuenteAdministrativaTipo = (
+      /** Documento público es el otorgado por el funcionario público en ejercicio de sus funciones o con su intervención. Así mismo, es público el documento otorgado por un particular en ejercicio de funciones públicas o con su intervención. Cuando consiste en un escrito autorizado o suscrito por el respectivo funcionario, es instrumento público; cuando es autorizado por un notario o quien haga sus veces y ha sido incorporado en el respectivo protocolo, se denomina escritura pública; cuando el documento es expedido por una entidad pública se denomina acto administrativo; Cuando el documento lo expide un órgano jurisdiccional se denomina sentencia judicial.
+       */
+      Documento_Publico(
+        /** Una escritura pública es un documento público en el que se realiza ante un notario público un determinado hecho o un derecho autorizado por dicho fedatario público, que firma con el otorgante u otorgantes,mostrando sobre la capacidad jurídica del contenido y de la fecha en que se realizó
+         */
+        Escritura_Publica,
+        /** La sentencia es la resolución judicial definitiva dictada por un juez o tribunal que pone fin a la litis o caso sometido a su conocimiento y cierra definitivamente su actuación en el mismo.
+         */
+        Sentencia_Judicial,
+        /** Un acto administrativo es toda manifestación o declaración emanada de la administración pública en el ejercicio de potestades administrativas.
+         */
+        Acto_Administrativo
+      ),
+      /** Cuando no se haya documento soporte pero puede ser una declaración verbal.
+       */
+      Sin_Documento
+    );
+
+    /** Valores para indicar la mutación catastral realizada sobre el predio.
+     */
+    CR_MutacionTipo = (
+      /** Son aquellas que se presentan cuando cambia el propietario,
+       * poseedor u ocupante de un predio, y que no afectan el avalúo catastral de este.
+       * Cuando se realice la actualización del propietario en la base de datos catastral mediante la interoperabilidad entre las bases de datos del registro y el catastro, no será necesario emitir actos administrativos por parte del gestor catastral. No obstante, se debe asegurar la trazabilidad del cambio en la base de datos catastral.
+       */
+      Mutacion_Primera_Clase(
+        /** Cambio de propietario(s)  de un predio en la base catastral, basado en el registro público de la propiedad.
+         */
+        Cambio_Propietario,
+        /** Cambio de poseedor(es)  de un predio informal en la base catastral, basado en los documentos que acreditan la relación jurídica de posesión.
+         */
+        Cambio_Poseedor,
+        /** Cambio de ocupante(s)  de un predio informal en la base catastral, basado en los documentos que acreditan la relación jurídica de tenencia.
+         */
+        Cambio_Ocupante
+      ),
+      /** Son aquellas que, en predios formales, involucran cambios en los linderos de los predios por agregación o segregación, con o sin cambio de propietario, incluyendo aquellos que se encuentran bajo el régimen de propiedad horizontal. Se consideran también mutaciones de segunda clase aquellas en las que se modifiquen los coeficientes de copropiedad en predios sujetos al régimen de propiedad horizontal debidamente registrados.
+       * 
+       * Las mutaciones de segunda clase no proceden para predios en condición de informalidad.
+       */
+      Mutacion_Segunda_Clase(
+        /** Acto mediante el cual, se unen dos o más predios, que comparten uno o más linderos, con o sin cambio de propietario, este acto deberá estar soportado en el registro público de la propiedad.
+         */
+        Agregacion,
+        /** Acto mediante el cual, a través de la separación de un predio, se crean uno o más predios nuevos, con o sin cambio de propietario,   este acto deberá estar soportado en el registro público de la propiedad.
+         */
+        Segregacion,
+        /** Acto mediante el cual se modifican los coeficientes de copropiedad en predios bajo el régimen de propiedad horizontal, como resultado de una reforma al reglamento de propiedad horizontal debidamente inscrito en el registro público de la propiedad.
+         */
+        Modificacion_Coeficientes
+      ),
+      /** Son aquellas que se refieren a los cambios que ocurren en los predios por nuevas unidades de construcción, demoliciones y modificaciones de las condiciones y características constructivas. Así mismo, se incluyen los cambios que se presenten respecto del uso de la unidad de construcción y destino económico del predio.
+       */
+      Mutacion_Tercera_Clase(
+        /** Acto mediante el cual se ajusta el área construida de un predio. Este cambio puede deberse a modificaciones en las unidades de construcción existentes, nuevas edificaciones o demoliciones.
+         */
+        Cambio_Area_Construida,
+        /** Acto mediante el cual se modifican las características constructivas de una o varias unidades de construcción.
+         */
+        Modificaciones_Caracteristicas_Constructivas,
+        /** Acto mediante el cual se cambia el uso de una o varias unidades de construcción.
+         */
+        Cambio_Uso,
+        /** Acto mediante el cual se modifica el destino económico de un predio, de acuerdo con la actividad predominante que en él se desarrolle.
+         */
+        Cambio_Destino_Economico
+      ),
+      /** Son los cambios de los avalúos catastrales que pueden ser a solicitud de parte o de oficio por parte del gestor. Esto incluye el reajuste anual establecido por el artículo 6 de la Ley 14 de 1983, el artículo 6 de la Ley 242 de 1995 y el artículo 190 de la Ley 1607 de 2012, o las normas que los modifique, adicione o derogue. También hace parte de esta mutación la revisión del avalúo, las autoestimaciones del avalúo catastral debidamente aceptadas y las modificaciones de los estudios económicos que no provengan de errores en la información catastral.
+       */
+      Mutacion_Cuarta_Clase(
+        /** Proceso mediante el cual se ajusta el avalúo catastral asignado a un predio, cuando el valor no corresponde a sus características y condiciones.
+         */
+        Revision_Avaluo,
+        /** Proceso mediante el cual se adopta el avalúo catastral en función de la estimación del valor de un inmueble. Dicha estimación no podrá ser inferior al avalúo catastral vigente.
+         */
+        Autoestimacion_Avaluo,
+        /** Proceso por el cual se actualiza el valor de los avalúos catastrales cada primero (1) de enero, basándose en el porcentaje definido por el Gobierno nacional. Adicionalmente, los catastros descentralizados pueden determinar el porcentaje de actualización conforme a los índices de valoración inmobiliaria y con la aprobación del Consejo de Política Económica y Fiscal del ente territorial.
+         */
+        Reajuste_Anual,
+        /** Acto mediante el cual se realiza la modificación de los estudios económicos que no provienen de errores en la información catastral.
+         */
+        Modificaciones_Estudios_Economicos
+      ),
+      /** Son las que resultan de la incorporación de predios formales o bajo la condición de informalidad que no estaban incorporados previamente en la base de datos catastral.
+       */
+      Mutacion_Quinta_Clase(
+        /** Acto mediante el cual se incorporan a la base catastral predios nuevos formales (Dominio).
+         */
+        Predios_Nuevos_Formales,
+        /** Acto mediante el cual se incorporan a la base catastral predios nuevos informales (Posesión u ocupación).
+         */
+        Predios_Nuevos_Informales
+      ),
+      /** Es la corrección de la inscripción catastral de un predio ya sea de oficio por el gestor catastral o a petición de parte por el interesado.
+       */
+      Rectificaciones(
+        /** Acto mediante el cual se rectifica la inscripción de un predio dentro de la base catastral.
+         * Es importante destacar que esta rectificacion tendrá efecto únicamente para fines catastrales. Si se requiere una rectificación con efectos registrales, se deberán seguir las directrices establecidas en la normatividad vigente.
+         */
+        Errores_Inscripcion_Catastral,
+        /** Acto mediante el cual se realizan cambios para mejorar la precisión de la georreferenciación del terreno o las unidades de construcción, las cuales deben estar soportadas por un levantamiento topográfico.
+         */
+        Cambios_Georreferenciacion
+      ),
+      /** Incorporación de datos complementarios a la información de las mutaciones catastrales.
+       * Cada gestor catastral incorporara los datos adicionales o complementarios que considere necesarios para enriquecer la información de los predios en su jurisdicción.
+       */
+      Complementacion,
+      /** Son cambios en la base de datos catastral que no provienen de errores de la información en los procesos de actualización o conservación catastral.
+       */
+      Modificaciones(
+        /** Cambios originados a partir de actos administrativos expedidos por las entidades territoriales que afectan la información catastral al modificar el ordenamiento de sus territorios.
+         */
+        Ordenamiento_Territorial,
+        /** Acto mediante el cual se incorporan o modifican las variables prediales en la base de datos catastral que no están relacionadas con los tramites de mutación, rectificación, complementación o modificación.
+         */
+        Variables_Prediales
+      ),
+      /** Acto mediante el cual se cancela un predio en la base de datos catastral.
+       */
+      Cancelaciones(
+        /** Acto mediante el cual se procede a la cancelación de un predio en la base catastral debido a circunstancias excepcionales e imprevisibles.
+         */
+        Fuerza_Mayor,
+        /** Acto mediante el cual se cancela un predio en la base catastral debido a causas naturales.
+         */
+        Causa_Natural,
+        /** Acto mediante el cual se cancela la inscripción de un predio en la base catastral de una entidad territorial debido a un cambio de entidad administrativa.
+         */
+        Cambio_Entidad_Administrativa,
+        /** Acto mediante el cual se cancela un predio que se encuentre duplicado dentro de la base catastral de una misma entidad territorial.
+         */
+        Doble_Inscripcion
+      )
+    );
+
+    /** Valores para indicar los tipos de predios
+     */
+    CR_PredioTipo = (
+      /** Unidad administrativa básica de la temática catastral.
+       */
+      Predio(
+        /** Predio que no acredita propiedad privada de acuerdo con lo dispuesto en el artículo 48 de la Ley 160 de 1994.
+         */
+        Publico(
+          /** Los predios baldíos son aquellos inmuebles que no han salido del dominio de la nación, y esta determinación ha sido declarada por la autoridad de tierras a través de acto administrativo registrado.
+           */
+          Baldio,
+          /** Bienes inmuebles urbanos o rurales cuya titularidad del derecho real de dominio pertenece a las entidades de derecho público del nivel nacional, departamental o municipal.
+           */
+          Fiscal_Patrimonial,
+          /** Bienes inmuebles cuyo uso pertenece a todos los habitantes del territorio nacional. Esta identificación de predios de uso público tiene un carácter informativo no vinculante para fines catastrales.
+           */
+          Uso_Publico,
+          /** Bienes inmuebles sin folio de matrícula inmobiliaria o en cuyo folio de matrícula inmobiliaria no es posible determinar su naturaleza privada y no existe la determinación de baldío de manera expresa por parte de la autoridad de tierras, y que por tal razón hacer presumir su naturaleza baldía.
+           */
+          Presunto_Baldio
+        ),
+        /** Bienes inmuebles que acreditan dominio ajeno o propiedad privada mediante títulos originarios expedidos por el estado o títulos traslaticios de dominio debidamente inscritos anteriores al 05 de agosto de 1974 y cuentan con un propietario o titular del derecho real de dominio inscrito en el registro de instrumentos públicos.  La titularidad de estos predios puede estar en cabeza de una o varias personas naturales, personas jurídicas o comunidades en el caso de la propiedad colectiva.
+         */
+        Privado
+      )
+    );
+
+    /** Valores para indicar el procedimiento catastral registral realizado sobre el predio.
+     */
+    CR_ProcedimientoCatastralRegistralTipo = (
+      /** El gestor catastral competente, de oficio o a solicitud de parte del titular del derecho de dominio, o de las entidades públicas que con ocasión de sus funciones legales administran inmuebles propios o ajenos, podrán efectuar la actualización mediante la descripción técnica de linderos de bienes inmuebles, cuando sean verificables mediante métodos directos y/o indirectos sin variación, o cuando la variación o diferencia se encuentre dentro de los márgenes de tolerancia establecidos por la máxima autoridad catastral.
+       */
+      Actualizacion_Linderos,
+      /** La rectificación de área en el sistema catastral y/o registral procederá ante el gestor catastral, de oficio o a solicitud de parte del titular del derecho de dominio, o de las entidades públicas que con ocasión de sus funciones legales administran inmuebles propios o ajenos, cuando los linderos estén debida y técnicamente descritos, sean verificables mediante métodos directos y/o indirectos sin variación, pero que a lo largo de la tradición del bien inmueble el área de éste no haya sido determinada adecuadamente, o cuando la variación o diferencia se encuentre dentro de los márgenes de tolerancia establecidos por la máxima autoridad catastral.
+       */
+      Rectificacion_Area,
+      /** La rectificación de linderos en el sistema catastral y registral procederá de oficio o a solicitud de parte, ante el gestor catastral, siempre y cuando se haya suscrito acta de colindancia con pleno acuerdo entre los propietarios que compartan uno o varios linderos, pero se adviertan diferencias de linderos y áreas, entre la verificación mediante métodos directos y/o indirectos y la información del folio de matricula inmobiliaria. La rectificación de todos los linderos puede llevar a la certeza del área del inmueble.
+       */
+      Rectificacion_Linderos,
+      /** En los casos donde los folios de matrícula inmobiliaria no hayan contado con información de área y/o linderos, desde el inicio del ciclo traslaticio del bien inmueble que identifican; la Oficina de Registro de Instrumentos Públicos procederá la inclusión del dato de área y/o linderos en las respectivas matrículas inmobiliarias, que se tomará de la base catastral administrada por el gestor catastral competente.
+       */
+      Inclusion_Cabida_Linderos,
+      /** En el marco de los trámites de ordenamiento social de la propiedad que adelante la Agencia Nacional de Tierra (ANT), conforme a las competencias establecidas en el artículo 58 del Decreto Ley 902 de 2017 y atendiendo a la función de gestor catastral consignada en el artículo 80 de la Ley 1955 de 2019, cuando se identifique la existencia de una inconsistencia entre el levantamiento predial realizado por dicha entidad con la información registral, los actos administrativos que resuelven de fondo los asuntos sometidos a estudio ordenarán la aclaración, actualización masiva, rectificación de área por imprecisa determinación o inclusión del área del predio intervenido, siempre que los linderos estén debida y técnicamente descritos, sean verificables por métodos directos o indirectos y no exista variación en los mismos, sin necesidad de adelantar un proceso de  rectificación o inclusión de área.
+       */
+      Correccion_Inclusion_Procesos_OSPR,
+      /** En el marco de los procesos de actualización catastral, y como resultado del levantamiento de la información física y jurídica en terreno, el gestor catastral podrá remitir para inscripción a la Oficina de Registro de Instrumentos Públicos respectiva, el acto administrativo de actualización masiva de linderos o rectificación de área, según corresponda.
+       * 
+       * Cuando la diferencia en las magnitudes de cabida y/o linderos supere el rango de tolerancia establecido, deberá surtirse el trámite de rectificación de linderos o por imprecisa determinación, según corresponda.
+       */
+      Actualizacion_Masiva_Linderos,
+      /** En el marco de los procesos de actualización catastral, y como resultado del levantamiento de la información física y jurídica en terreno, el gestor catastral podrá remitir para inscripción a la Oficina de Registro de Instrumentos Públicos respectiva, el acto administrativo de actualización masiva de linderos o rectificación de área, según corresponda.
+       * 
+       * Cuando la diferencia en las magnitudes de cabida y/o linderos supere el rango de tolerancia establecido, deberá surtirse el trámite de rectificación de linderos o por imprecisa determinación, según corresponda.
+       */
+      Rectificacion_Masiva_Area
+    );
+
+    /** Conjunto de valores para indicar si se trata de un punto de control de referencia (un punto principal) o de apoyo (uso para levantamientos locales con estación total).
+     */
+    CR_PuntoControlTipo = (
+      /** Puntos de control de referencia en el terreno, levantados por topografía o geodesia que sirven de base para la orientación absoluta en la restitución fotogramétrica, y para efectuar un tratamiento geométrico o geo-referenciación de los datos en teledetección.
+       */
+      Control,
+      /** Puntos de apoyo en el terreno, levantados por topografía o geodesia que sirven de base para la orientación absoluta en la restitución fotogramétrica, y para efectuar un tratamiento geométrico o geo-referenciación de los datos en teledetección.
+       */
+      Apoyo
+    );
+
+    /** Valores para identificar los tipos de punto.
+     */
+    CR_PuntoTipo
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_PuntoTipo = (
+      /** Puntos de levantamiento Catastral.
+       */
+      Catastro(
+        /** Punto referido a los soportes verticales que sirven de apoyo, utilizados en la construcción de alambradas, tendidos eléctricos y telefónicos, televisión por cable, para iluminar calles, plazas o estadios y en las actividades agrícolas.
+         */
+        Poste,
+        /** Punto referido a las esquinas o sección de los paramentos de las construcciones y unidades de construcción.
+         */
+        Construccion,
+        /** Punto referido a los puntos limitantes con elementos hidrográficos que por su condición pueden variar su límite con el tiempo.
+         */
+        Punto_Dinamico,
+        /** Punto referido a los elementos naturales de la vegetación como los árboles, arbustos o cualquier otra especie de la fauna.
+         */
+        Elemento_Natural,
+        /** Punto referido a los elementos piedra o rocas.
+         */
+        Piedra,
+        /** Punto referido a las áreas de campos abiertos, zonas boscosas, desérticas o cualquier otro tipo de espacio donde no se aprecia una clara delimitación.
+         */
+        Sin_Materializacion,
+        /** Punto referido a los mojones utilizados en topografía que tienen datos de coordenadas espaciales.
+         */
+        Mojon,
+        /** Puntos referidos a las incrustaciones realizadas en el suelo.
+         */
+        Incrustacion,
+        /** Puntos referidos a las columnas verticales donde se encuentra materializado un punto con coordenadas espaciales.
+         */
+        Pilastra
+      )
+    );
+
+    /** Valores para indicar el sexo del interesado.
+     */
+    CR_SexoTipo = (
+      /** Identidad que representa la construcción sociocultural del hombre.
+       */
+      Masculino,
+      /** Identidad que representa la construcción sociocultural de la mujer.
+       */
+      Femenino,
+      /** Según la Corte Constitucional (Sentencia T-033-22), Identidad que no se concibe en el marco de las categorías dicotómicas, masculino o femenino, se aleja del sistema mayoritario de sexo-género, binario por tradición cultural.
+       */
+      No_Binario,
+      /** Corresponde a los datos sobre los cuales no se logró evidenciar el sexo (femenino, masculino o no binario), por no existir el soporte respectivo.
+       */
+      Sin_Determinar,
+      /** No aplica la identificación del tipo de sexo para personas jurídicas.
+       */
+      No_Aplica
+    );
+
+    /** Valores válidos para indicar el tipo de construcción empleada para levantar una unidad de construcción, con incidencia en su avalúo.
+     */
+    CR_UnidadConstruccionTipo = (
+      /** Tipo de unidad de construcción en uso para vivienda.
+       */
+      Residencial,
+      /** Tipo de unidad de construcción en uso de actividades comerciales.
+       */
+      Comercial,
+      /** Tipo de unidad de construcción en uso de actividades industriales.
+       */
+      Industrial,
+      /** Tipo de unidad de construcción en uso de actividades institucionales.
+       */
+      Institucional,
+      /** Tipo de unidad de construcción anexa, por ejemplo, piscinas, cobertizos, canchas de tenis o toboganes.
+       */
+      Anexo
+    );
+
+    /** Es la actividad que se desarrolla en las unidades de construcción al momento de la identificación predial.
+     */
+    CR_UsoUConsTipo = (
+      /** Tipo de unidad de construcción en uso residencial.
+       */
+      Residencial(
+        /** Es una vivienda que comprende una o más habitaciones en un edificio de varios pisos 4 o más, sometido a régimen de propiedad horizontal.
+         */
+        Apartamentos_4_y_mas_pisos_en_PH,
+        /** Es una vivienda que comprende una o más habitaciones, en un edificio de varios pisos 4 o más pisos.
+         */
+        Apartamentos_4_y_mas_pisos,
+        /** Dormitorios de las fuerzas armadas y militares.
+         */
+        Barracas,
+        /** Típica casa con mampostería de piedra, pizarra y madera. Ha sido rehabilitada respetando escrupulosamente sus características exteriores y decorada con un interior tradicional.
+         */
+        Casa_Elbas,
+        /** Edificación destinada al almacenamiento o resguardo de enceres, generalmente ubicados en los sótanos y semisótanos de los edificios, junto a los parqueaderos. Las áreas de estos depósitos generalmente no supera los 25 metros cuadrados.
+         */
+        Depositos_Lockers,
+        /** Es el lugar cubierto, destinado al estacionamiento privado de vehículos.
+         */
+        Garajes_Cubiertos,
+        /** Es el lugar cubierto, destinado al estacionamiento privado o comunal en viviendas sometidas a régimen de propiedad horizontal.
+         */
+        Garajes_En_PH,
+        /** Los salones comunales son dependencias que se construyen dentro de los edificios y conjuntos que sobrepasan un área determinada de construcción, y se clasifican de acuerdo a las normas urbanísticas como equipamiento comunal privado.
+         */
+        Salon_Comunal,
+        /** Bien inmueble cubierto o descubierto ubicado en el último piso de algunos edificios utilizado para extender y secar la ropa y que está sometido a régimen de propiedad horizontal.
+         */
+        Secadero_Ropa,
+        /** Son las viviendas construidas durante el tiempo de la colonia española, se caracterizan por tener varias habitaciones, con ventanales que dan a uno o dos patios generalmente ubicados en el centro de la vivienda. Los principales materiales de la época era la tapia, bahareque, ladrillo, paja y teja.
+         */
+        Vivienda_Colonial,
+        /** Es una vivienda que comprende una o más habitaciones en un edificio de 4 o más pisos sometidos a régimen de propiedad horizontal.  Se caracterizan por conservar gran parte o el total de la construcción original realizada durante el tiempo de la colonia española. Los principales materiales de la época era la tapia, bahareque, ladrillo, paja y teja.
+         */
+        Vivienda_Colonial_en_PH,
+        /** Es una casa de tres niveles cuya función arquitectónica y ambiental principal, es dar albergue en forma adecuada a una familia.
+         */
+        Vivienda_Hasta_3_Pisos,
+        /** Corresponde a edificaciones residenciales desarrolladas sobre un lote de terreno que comprende más de tres unidades prediales independientes, generalmente en edificios de varios pisos. Este tipo de vivienda prevé áreas de servicios comunales cuya propiedad y utilización privada se definen en reglamentos de propiedad horizontal.
+         */
+        Vivienda_Hasta_3_Pisos_En_PH,
+        /** Es una vivienda acondicionada para la realización de actividades recreativas libres y el descanso.
+         */
+        Vivienda_Recreacional,
+        /** Es una casa cuya función arquitectónica y ambiental principal, es brindar descanso y recreación. Este tipo de vivienda prevé áreas de servicios comunales cuya propiedad y utilización privada se definen en reglamentos de propiedad horizontal.
+         */
+        Vivienda_Recreacional_En_PH
+      ),
+      /** Tipo de unidad de construcción en uso para comercio.
+       */
+      Comercial(
+        /** Es el espacio construido para la recepción, almacenamiento y movimientos de materiales, materias primas y productos semielaborados, hasta el punto de consumo por un cliente externo o interno.
+         */
+        Bodegas_Comerciales_Grandes_Almacenes,
+        /** Espacio construido para el almacenamiento y movimiento  de materiales, materias primas y productos con el fin de su comercialización.
+         */
+        Bodegas_Comerciales,
+        /** Es el espacio construido para la ejecución la recepción, almacenamiento y movimientos de materiales, materias primas y productos semielaborados, hasta el punto de consumo por un cliente externo o interno sometido a régimen de propiedad horizontal.
+         */
+        Bodegas_Comerciales_en_PH,
+        /** Es una construcción que consta de uno o varios edificios, por lo general de gran tamaño, que albergan servicios, locales y oficinas comerciales aglutinados en un espacio determinado concentrando mayor cantidad de clientes potenciales dentro del recinto.
+         */
+        Centros_Comerciales,
+        /** Es una construcción que consta de uno o varios edificios, por lo general de gran tamaño, que albergan servicios, locales y oficinas comerciales aglutinados en un espacio determinado concentrando mayor cantidad de clientes potenciales dentro del recinto, sometido a régimen de propiedad horizontal.
+         */
+        Centros_Comerciales_en_PH,
+        /** Es la edificación o establecimiento que brinda servicios recreativos y tiene capacidad para ciertos juegos de azar.
+         */
+        Clubes_Casinos,
+        /** Se denomina a la construcción en la cual se lleva a acabo una actividad socioeconómica que consiste en el intercambio de algunos materiales en el mercado de compra y venta de bienes.
+         */
+        Comercio,
+        /** Se denomina a la construcción con características arquitectónicas coloniales, en el cual se lleva a acabo una actividad socioeconómica que consiste en el intercambio de algunos materiales en el mercado de compra y venta de bienes.
+         */
+        Comercio_Colonial,
+        /** Se denomina al espacio destinado al almacenamiento de materiales y productos relacionados con el espacio comercial.
+         */
+        Comercio_Deposito_Almacenamiento,
+        /** Se denomina a la construcción en la cual se lleva a acabo una actividad socioeconómica que consiste en el intercambio de algunos materiales en el mercado de compra y venta de bienes sometida a régimen de propiedad horizontal.
+         */
+        Comercio_en_PH,
+        /** Establecimiento que ocupa un edificio total o parcialmente con uso exclusivo de sus servicios (entradas, ascensores, escaleras, etc.) y que ofrece alojamiento y posee características arquitectónicas coloniales.
+         */
+        Hotel_Colonial,
+        /** Establecimiento que ocupa un edificio total o parcialmente con uso exclusivo de sus servicios (entradas, ascensores, escaleras, etc.) y que ofrece alojamiento.
+         */
+        Hoteles,
+        /** Establecimiento que ocupa un edificio total o parcialmente que ofrece alojamiento y se encuentra sometido al régimen de propiedad horizontal.
+         */
+        Hoteles_en_PH,
+        /** Espacio construido en el que se realiza un trabajo profesional de gestión, administración o atención médica.
+         */
+        Oficinas_Consultorios,
+        /** Espacio construido con características arquitectónicas coloniales en el que se realiza un trabajo profesional de gestión, administración o atención médica.
+         */
+        Oficinas_Consultorios_Coloniales,
+        /** Espacio construido en el que se realiza un trabajo profesional de gestión, administración o atención médica, sometida a régimen de propiedad horizontal.
+         */
+        Oficinas_Consultorios_en_PH,
+        /** Construcciones dedicadas al esparcimiento y a la diversión, generalmente son predios con grandes espacios, ejemplo parque salitre mágico.
+         */
+        Parque_Diversiones,
+        /** Es el espacio con ánimo de lucro que se destina al estacionamiento de vehículos que se encuentran dentro de una edificación construida para tal fin, o dentro de un predio habilitado con el mismo objeto.
+         */
+        Parqueaderos,
+        /** Es el espacio con ánimo de lucro que se destina al estacionamiento de vehículos que se encuentran dentro de una edificación construida para tal fin, o dentro de un predio habilitado con el mismo objeto, sometidos al régimen de propiedad horizontal.
+         */
+        Parqueaderos_en_PH,
+        /** Vivienda que proporciona alojamiento y hospedaje temporal.
+         */
+        Pensiones_y_Residencias,
+        /** Edificaciones tipo bodega destinadas a la prestacion de un servicio público, como es la oferta de productos básicos, principalmente de origen agropecuario y consumo doméstico.
+         */
+        Plaza_Mercado,
+        /** Establecimiento con características arquitectónicas coloniales en el que se preparan y sirven comidas.
+         */
+        Restaurante_Colonial,
+        /** Establecimiento en el que se preparan y sirven comidas.
+         */
+        Restaurantes,
+        /** Establecimiento en el que se preparan y sirven comidas sometido a régimen de propiedad horizontal.
+         */
+        Restaurantes_en_PH,
+        /** Edificación destinada a la proyección de películas cinematográfica o la presentación de obras artísticas actorales o musicales.
+         */
+        Teatro_Cinemas,
+        /** Establecimiento destinado a la proyección de películas cinematográficas sometida o la presentación de obras artísticas actores o musicales en un predio sometido en régimen de propiedad horizontal.
+         */
+        Teatro_Cinemas_en_PH
+      ),
+      /** Infraestructura destinada al desarrollo de actividades industriales.
+       */
+      Industrial(
+        /** Infraestructura de bombeo.
+         */
+        Bodega_Casa_Bomba,
+        /** Infraestructura de bombeo de bodegas sometidas a régimen de propiedad horizontal.
+         */
+        Bodegas_Casa_Bomba_en_PH,
+        /** Conjunto de instalaciones dedicadas a esta actividad de transformar las materias primas en productos elaborados.
+         */
+        Industrias,
+        /** Conjunto de instalaciones sometidas a régimen de propiedad horizontal dedicadas a la actividad de transformar las materias primas en productos elaborados.
+         */
+        Industrias_en_PH,
+        /** Es el espacio construido en el que se realiza un trabajo, manual en su origen, bien de tipo artesanal o fabril.
+         */
+        Talleres
+      ),
+      /** Instraestuctura destinada al desaroolo de actividades institucionales.
+       */
+      Institucional(
+        /** Es un salón de un edificio que se destina a actividades de enseñanza, y es la unidad básica de todo recinto destinado a la educación.
+         */
+        Aulas_de_Clases,
+        /** Edificación donde podemos encontrar libros o cualquier otro soporte de un texto, como publicaciones, revistas, documentos, catálogo entre otros.
+         */
+        Biblioteca,
+        /** Son instalaciones en las que se encarcela a los prisioneros, se encuentran bajo la autoridad del estado.
+         */
+        Carceles,
+        /** Lugar sin altar (diferente a iglesias y capillas) que congrega a un determinado número de personas para actividades de culto asociadas con manifestaciones religiosas.
+         */
+        Casas_de_Culto,
+        /** Establecimiento construido y destinado a proporcionar todo tipo de asistencia médica, incluidas operaciones quirúrgicas y estancia durante la recuperación o tratamiento, y en el que también se practican la investigación y la enseñanza médica.
+         */
+        Clinicas_Hospitales_Centros_Medicos,
+        /** Institución edificada destinada a la enseñanza primaria, secundaria y universitaria.
+         */
+        Colegio_y_Universidades,
+        /** Teatro o edificio destinado a espectáculos con capacidad para un gran número de personas.
+         */
+        Coliseos,
+        /** Institución edificada construcción con características arquitectónicas coloniales destinada a la enseñanza primaria.
+         */
+        Entidad_Educativa_Colonial_Colegio_Colonial,
+        /** Un estadio es una construcción cerrada con graderías para los espectadores, destinado a competiciones deportivas. Puede ser al aire libre o cubierto.
+         */
+        Estadios,
+        /** Lugar construido  fuerte, cercado de murallas, baluartes, fosos y otras fortificaciones.
+         */
+        Fuertes_y_Castillos,
+        /** Edificación en la que se reúnen y consagran a los fieles que le rinden culto a un ser superior.
+         */
+        Iglesia,
+        /** Edificación en la que se reúnen y consagran a los fieles que le rinden culto a un ser superior sometido a régimen de propiedad horizontal.
+         */
+        Iglesia_en_PH,
+        /** Construcciones adaptadas o utilizadas por los organismos de seguridad de una nación para acuartelar a las tropas y sus equipos. Estas son organizadas de una forma tal que les facilite cumplir con la rutina diaria de los cuerpos militares, desde dormitorios, patios de ejercicios, estacionamientos para los vehículos, parques, comedores, oficinas y son fortificadas a fin de presentar resistencia al momento de un posible ataque externo.
+         */
+        Instalaciones_Militares,
+        /** Construcción con características de una vivienda que se encarga de brindar educación y asistencia integral a los niños.
+         */
+        Jardin_Infantil_en_Casa,
+        /** Es un terreno que está destinado a árboles, jardines y prados donde se depositan los restos mortales o cadáveres.
+         */
+        Parque_Cementerio,
+        /** Centro cultural donde se realizan presentaciones astronómicas al público en general.
+         */
+        Planetario,
+        /** Son recintos cerrados, generalmente circulares y descubiertos, donde se celebran las corridas de toros.
+         */
+        Plaza_de_Toros,
+        /** Edificio donde se atiende a la población en un primer nivel asistencial sanitario.
+         */
+        Puestos_de_Salud,
+        /** Construcciones, oficiales o privadas, destinadas a salvaguardar obras de arte, reliquias o antigüedades de carácter histórico, religioso o científico, que representan un periodo, una época de la humanidad o del país.
+         */
+        Museos,
+        /** Edificación donde habitan congregaciones religiosas de distintas órdenes menticantes en el itinerario de formación o consagración religiosa.
+         */
+        Seminarios_Conventos,
+        /** Edificio o sala destinados a la representación de obras de teatro o de otro tipo de espectáculos, que dispone de un escenario y gradas o asientos para el público, se caracterizan por sus condiciones arquitectónicas.
+         */
+        Teatro,
+        /** Escenario deportivo destinado a la práctica de distintas disciplinas deportivas.
+         */
+        Unidad_Deportiva,
+        /** Instalación deportiva donde se desarrollan carreras ciclistas o de patinaje.
+         */
+        Velodromo_Patinodromo
+      ),
+      /** Edificaciones Anexas.
+       */
+      Anexo(
+        /** Depósito de agua construido a nivel del terreno con el propósito de almacenar agua, o en el caso de las bañaderas con el fin de hacer limpieza al ganado, estas construcciones son cubiertas para guardar de la intemperie.
+         */
+        Albercas_Banaderas,
+        /** Nombre dado en zonas cafeteras a aquellas construcciones donde realizan el beneficio del café. Consiste en áreas cubiertas dentro de las cuales se encuentran los elementos destinados a la labor de seleccionar, lavar y despulpar el grano y su posterior empaque.
+         */
+        Beneficiaderos,
+        /** Construcción para el desarrollo de proyectos acuícolas del cultivo de camarones.
+         */
+        Camaroneras,
+        /** Superficie de terreno adecuada sobre una placa para la práctica de deportes como fútbol de salón, voleibol, baloncesto u alguna otra disciplina que haga uso de la cancha, todo ello a pequeña escala. Se excluyen las canchas de tenis, los estadios, coliseo u otras edificaciones de gran tamaño.
+         */
+        Canchas,
+        /** Superficie terreno rectangular cruzada al medio por una red baja.
+         */
+        Canchas_de_Tenis,
+        /** Es una vía de transporte de dominio y uso público, proyectada y construida fundamentalmente para la circulación de vehículos automóviles.
+         */
+        Carretera,
+        /** Cada una de las superficies de un edificio que disponen de una cara al interior y de otra al exterior.
+         */
+        Cerramiento,
+        /** Construcción anexa conformada por unos cimientos, muros y placa base.
+         */
+        Cimientos_Estructura_Muros_y_Placa_Base,
+        /** Construcción destinada a la cría y albergue de cerdos. Se utiliza cualesquiera de los tres nombres enunciados según la región donde se ubique; los elementos que la conforman son: estructura, muros y pisos.
+         */
+        Cocheras_Marraneras_Porquerizas,
+        /** Tenso estructuras, arquitectura textil, o membranas arquitectónicas, son los nombres con los que se le conoce a los tipos de estructura que emplean materiales que trabajan bajo tensión, sean membranas textiles, láminas, mallas de cables, etc.
+         */
+        Construccion_en_Membrana_Arquitectonica,
+        /** Un contenedor es un recipiente de carga para el transporte marítimo o fluvial, transporte terrestre y transporte multimodal adecuado para la vivienda o el comercio o servicios.
+         */
+        Contenedor,
+        /** Sitio cerrado y descubierto que se utiliza para la cría y albergue de ganado generalmente vacuno. consta de los elementos estructura y pisos.
+         */
+        Corrales,
+        /** Lugar cubierto donde se encierra ganado o caballos y/o se realizan actividades propias de su explotación, constituidos por estructura, cubierta, muros y pisos.
+         */
+        Establos_Pesebreras_Caballerizas,
+        /** Son obras arquitectónicas  que se construyen con el objeto de elevar el nivel del agua de la fuente de riego a los sitios donde se desea utilizar.
+         */
+        Estacion_Bombeo,
+        /** Instalación que permite el tránsito de personas y la conexión con sistemas de transporte como buses, metro, tren, tranvía, terminales y estaciones, destinadas para la movilidad de las personas.
+         */
+        Estacion_Sistema_Transporte,
+        /** Unidad construida con destino a la cría y/o protección de aves principalmente para explotación avícola. Conformada por estructura cubierta pisos y muros que son parcialmente elaborados en ladrillo y el resto descubierto o con algún material provisional (plásticos, alambres, etc.).
+         */
+        Galpones_Gallineros,
+        /** Construcción en materiales livianos soportados sobre una base sólida anclada al piso, para uso temporal de vivienda (recreativa o de esparcimiento), generalmente aislada de otro tipo de construcciones.
+         */
+        Glamping,
+        /** Espacio destinado para el almacenamiento y disposición de aeronaves.
+         */
+        Hangar,
+        /** Construcción consistente en una cubierta apoyada en columnas de materiales diferentes, elaborados con el fin de guarecer de la intemperie.
+         */
+        Kioscos,
+        /** Son depósitos construidos mediante la excavación y compactación de la tierra que almacenan agua de cualquier calidad por un periodo determinado.
+         */
+        Lagunas_de_Oxidacion,
+        /** Cobertizo dentro de una edificación de mayor extensión o patio cubierto, clasificados según su estructura, pisos y el material de la cubierta.
+         */
+        Marquesinas_Patios_Cubiertos,
+        /** Deberán diferenciarse de acuerdo a su estructura, longitud, capacidad, usos turísticos o de carga.
+         */
+        Muelles,
+        /** Se denomina muralla a un muro cerrado destinado a la protección y defensa de determinado sitio.
+         */
+        Murallas,
+        /** Las pérgolas son estructuras compuestas por columnas y una armazón superior, cubiertas con mucho follaje o toldo especial que protegen de la lluvia y el sol, también usadas como elemento decorativo en un espacio de las viviendas.
+         */
+        Pergolas,
+        /** Estanque artificial con destino al deporte o a la recreación. Se diferencia por sus acabados y especificaciones técnicas para su mantenimiento y operación; sus dimensiones deben darse en unidades de área (m2).
+         */
+        Piscinas,
+        /** Edificación sin cubierta con que se identifican las pistas de los aeropuertos construidas en asfalto o concreto, incluye la zona o calle de redaje y calles de salida rápida.
+         */
+        Pista_Aeropuerto,
+        /** Perforaciones profundas manuales para extraer agua subterránea. Medida en metros de profundidad.
+         */
+        Pozos,
+        /** Consiste en un sitio cubierto elaborado con el fin de resguardar de la intemperie; el nombre de enramadas, cobertizos o caney se utiliza según la forma de la cubierta y la región donde se ubique.
+         */
+        Ramadas_Cobertizos_Caneyes,
+        /** Construcciones elaboradas con el objeto de secar en condiciones naturales el café principalmente, aunque es común su uso en otros productos. Consta de estructura y pisos para su calificación.
+         */
+        Secaderos,
+        /** Construcción de grandes dimensiones que sirve para almacén o depósito, se exceptúan los silos cafeteros.
+         */
+        Silos,
+        /** Depósitos subterráneos o de altura, construidos en zonas con deficiencias en abastecimiento para el consumo de los habitantes o para el uso agrícola.  El elemento a calificar es la estructura relacionada con la capacidad de almacenamiento medida en metros cúbicos.
+         * 
+         * Se excluyen de este tipo de construcción los tanques de almacenamiento domiciliario.
+         */
+        Tanques,
+        /** Deslizadores construidos alrededor de piscinas, medidos en metros lineales. Se clasifican según su altura y materiales de construcción.
+         */
+        Toboganes,
+        /** Edificio en forma de torre, en cuya cima se sitúa una sala de control, desde la que se dirige y controla el tráfico de un puerto, de un aeropuerto o de un circuito de carreras.
+         */
+        Torre_de_Control,
+        /** Son estructuras diseñadas para disminuir la temperatura del agua y otros medios.
+         */
+        Torres_de_Enfriamiento,
+        /** Parte de la infraestructura ferroviaria que une dos puntos determinados del territorio.
+         */
+        Via_Ferrea
+      )
+    );
+
+    /** Valores para indicar el tipo de informalidad.
+     */
+    SINIC_DerechoCatastralTipo = (
+      /** Persona natural o jurídica asentada en un predio con título de dominio.
+       */
+      Dominio,
+      /** Persona natural o jurídica asentada en un predio de propiedad privada con ánimo de señor y dueño, que no cuenta con título de dominio.
+       */
+      Posesion,
+      /** Persona natural o jurídica asentada en un predio público baldío, público fiscal patrimonial, uso público o público presunto baldío.
+       */
+      Ocupacion
+    );
+
+  TOPIC SINIC
+  EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo =
+    OID AS INTERLIS.UUIDOID;
+    DEPENDS ON LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo;
+
+    /** Clase que hereda los atributos de la  Clase COL_AgrupacionInteresados.
+     */
+    CLASS CR_AgrupacionInteresados
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_AgrupacionInteresados =
+    END CR_AgrupacionInteresados;
+
+    /** Clase que contiene los datos principales del predio matriz sometido al régimen de propiedad horizontal.
+     */
+    CLASS CR_DatosMatriz =
+      /** Área total del terreno del PH, Condominio, parque cementerio Matriz.
+       */
+      Area_Total_Terreno : 0.00 .. 99999999999999.98 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Área total privada del terreno del PH, Condominio, parque cementerio Matriz.
+       */
+      Area_Total_Terreno_Privada : 0.00 .. 99999999999999.98 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Área total de terreno común del PH, Condominio, parque cementerio Matriz.
+       */
+      Area_Total_Terreno_Comun : 0.00 .. 99999999999999.98 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Área total construida del PH, Condominio, parque cementerio Matriz.
+       */
+      Area_Total_Construida : 0.00 .. 99999999999999.98 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Área total construida privada del PH, Condominio, parque cementerio Matriz.
+       */
+      Area_Total_Construida_Privada : 0.00 .. 99999999999999.98 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Área total construida común del PH, Condominio, parque cementerio Matriz.
+       */
+      Area_Total_Construida_Comun : 0.00 .. 99999999999999.98 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Número de torres en el PH, Condominio, parque cementerio Matriz.
+       */
+      Numero_Torres : 0 .. 1000 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Total de unidades privadas en el PH, Condominio, parque cementerio Matriz.
+       */
+      Total_Unidades_Privadas : 0 .. 99999999 [LADM_COL_v_4_0_1_Nucleo.m2];
+    END CR_DatosMatriz;
+
+    /** Estructura que contiene el estado del predio en la base de datos catastral.
+     */
+    STRUCTURE CR_EstructuraAlertaPredio =
+      /** Descripción general de la alerta del predio en la base de datos catastral.
+       */
+      Descripcion_Alerta : MANDATORY TEXT*255;
+      /** Nombre de la entidad emisora del estado de alerta del predio.
+       */
+      Entidad_Emisora_Alerta : MANDATORY TEXT*255;
+      /** Fecha de apertura de la alerta emitida por la entidad competente o por el gestor catastral.
+       */
+      Fecha_Apertura_Alerta : MANDATORY INTERLIS.XMLDate;
+      /** Fecha de cierre de la alerta emitida por la entidad competente o por el gestor catastral.
+       */
+      Fecha_Cierre_Alerta : INTERLIS.XMLDate;
+    END CR_EstructuraAlertaPredio;
+
+    /** Estructura que contiene el avalúo del predio en la base de datos catastral.
+     */
+    STRUCTURE CR_EstructuraAvaluo =
+      /** Fecha de la realización del avalúo catastral.
+       */
+      Fecha_Avaluo : MANDATORY INTERLIS.XMLDate;
+      /** Precio más probable por el cual un predio se transaría en un mercado en donde el comprador y el vendedor actuarían libremente con el conocimiento de las condiciones físicas y jurídicas que afectan el bien, el cual debe contar con soporte económico acorde con la teoría de valor y su único fin es la determinación de los avalúos catastrales por parte de los gestores catastrales.
+       */
+      Valor_Comercial : LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.Peso;
+      /** Valor de un predio resultante de un ejercicio técnico en desarrollo de los procesos catastrales, que, en ningún caso, podrá ser inferior al 60% del valor comercial o superar el valor de este último.  
+       */
+      Avaluo_Catastral : MANDATORY LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.Peso;
+      /** Valor más probable por el cual se transaría el terreno en el mercado.
+       */
+      Valor_Comercial_Terreno : LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.Peso;
+      /** Avalúo catastral del terreno.
+       */
+      Avaluo_Catastral_Terreno : LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.Peso;
+      /** Valor más probable por el cual se transarían las unidades constructivas  en el mercado.
+       */
+      Valor_Comercial_Total_UnidadesConstruccion : LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.Peso;
+      /** Avalúo catastral de las unidades de construcción.
+       */
+      Avaluo_Catastral_Total_UnidadesConstruccion : LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.Peso;
+      /** Derecho que tiene todo interesado de presentar antes del 30 de junio de cada año ante el correspondiente gestor catastral, la Secretaría de Hacienda municipal, distrital y/o quien haga sus veces, la estimación del avalúo catastral de su inmueble.
+       */
+      Autoestimacion : MANDATORY BOOLEAN;
+      /** Se deberá indicar si el predio tuvo aplicación de lo dispuesto en el artículo 49 de la ley 2294 del 2023 por el cual se expide el plan nacional de desarrollo 2022 - 2026 "Colombia potencia mundial de la vida".
+       */
+      Incremento : BOOLEAN;
+    END CR_EstructuraAvaluo;
+
+    /** Estructura que contiene los avalúos de la característica de construcción.
+     */
+    STRUCTURE CR_EstructuraAvaluoCaracterizacion =
+      /** Corresponde a la fecha de la estimación o cálculo del avalúo.
+       */
+      Fecha_Avaluo : MANDATORY INTERLIS.XMLDate;
+      /** Corresponde al valor comercial de la caracteristica de construcción.
+       */
+      Valor_Comercial : LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.Peso;
+      /** Corresponde al avalúo catastral de la característica de construcción.
+       */
+      Avaluo_Catastral : MANDATORY LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.Peso;
+    END CR_EstructuraAvaluoCaracterizacion;
+
+    /** Estructura que define los valores de avaluos catastrales de la intersección de un predio informal con un predio formal.
+     */
+    STRUCTURE CR_EstructuraAvaluoInterseccion =
+      /** Avalúo Catastral de la intersección del terreno del predio informal con el terreno del predio formal.
+       */
+      Avaluo_Catastral_Interseccion_Terreno : MANDATORY LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.Peso;
+      /** Avalúo Catastral de la intersección de las unidades de construcción de un predio informal con el terreno de un predio formal.
+       */
+      Avaluo_Catastral_Interseccion_Unidades_Construccion : LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.Peso;
+      /** Avalúo Catastral de la intersección total.
+       */
+      Avaluo_Catastral_Interseccion_Total : MANDATORY LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.Peso;
+    END CR_EstructuraAvaluoInterseccion;
+
+    /** Estructura que permite identificar el predio o los predios de los cuales proviene(n) nueva(s) unidad(es) predial(es) producto de segregación o agregación.
+     */
+    STRUCTURE CR_EstructuraPredioMatrizNPN =
+      /** Código numérico de treinta (30) dígitos, que se le asigna a cada predio para su identificación en la base de datos catastral de acuerdo con la estructura definida por el IGAC.
+       */
+      Numero_Predial_Nacional : MANDATORY TEXT*30;
+      /** Es el área del terreno inscrita en la base de datos catastral, de conformidad con el artículo 5.2.3. de la Resolución 1040 de 2023.
+       */
+      Area_Catastral_Terreno : 0.00 .. 10000000000000000000000.00 [LADM_COL_v_4_0_1_Nucleo.m2];
+    END CR_EstructuraPredioMatrizNPN;
+
+    /** Estructura que permite identificar el  número predial nacional anterior a los cambios de renumeración producto de la adopción de la estructura definida por el IGAC  y que permite mantener el historial del predio.
+     */
+    STRUCTURE CR_EstructuraPredioOrigenNPN =
+      /** Código numérico de treinta (30) dígitos, que se le asigna a cada predio para su identificación en la base de datos catastral de acuerdo con la estructura definida por el IGAC.
+       */
+      Numero_Predial_Nacional : MANDATORY TEXT*30;
+      /** Fecha en la cual se cambió el Numero Predial Nacional.
+       */
+      Fecha_Cambio_NPN : MANDATORY INTERLIS.XMLDate;
+    END CR_EstructuraPredioOrigenNPN;
+
+    /** Estructura que contiene los procedimientos catastrales con efectos registrales.
+     */
+    STRUCTURE CR_EstructuraProcedimientoCatastralRegistral =
+      /** Indicar el o los procedimientos catastrales con efectos registrales utilizados sobre el predio.
+       */
+      ProcedimientoCatastralRegistral : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_ProcedimientoCatastralRegistralTipo;
+    END CR_EstructuraProcedimientoCatastralRegistral;
+
+    /** Estructura que permite incorporar referencias registrales del sistema antiguo.
+     */
+    STRUCTURE CR_EstructuraReferenciaRegistralSistemaAntiguo =
+      /** Valores: Estructurada y No Estructurada.
+       */
+      Tipo_Referencia : MANDATORY (
+        Estructurada,
+        No_Estructurada
+      );
+      /** Nombre de la oficina de registro de la referencia registral sistema antiguo diligenciada en la ficha catastral.
+       */
+      Oficina : TEXT*50;
+      /** Número del libro indicado en la ficha catastral.
+       */
+      Libro : TEXT*1;
+      /** Número del tomo indicado en la ficha catastral.
+       */
+      Tomo : TEXT*2;
+      /** Página de la referencia registral sistema antiguo diligenciada en la ficha catastral.
+       */
+      Pagina : TEXT*4;
+      /** Número de la referencia registral sistema antiguo diligenciada en la ficha catastral.
+       */
+      Numero : TEXT*4;
+      /** Día de la referencia registral sistema antiguo diligenciada en la ficha catastral.
+       */
+      Dia : TEXT*2;
+      /** Mes de la referencia registral sistema antiguo diligenciada en la ficha catastral.
+       */
+      Mes : TEXT*2;
+      /** Año de la referencia registral sistema antiguo diligenciada en la ficha catastral.
+       */
+      Anio : TEXT*2;
+      /** Número de la matrícula de la referencia registral sistema antiguo diligenciada en la ficha catastral.
+       */
+      Matricula : MANDATORY TEXT*20;
+    END CR_EstructuraReferenciaRegistralSistemaAntiguo;
+
+    /** Clase que almacena las fuentes administrativas (escrituras, sentencias, actos administrativos, etc) que sustentan el Derecho respecto de la relación de tenencia entre el Interesado y el predio.
+     */
+    CLASS CR_FuenteAdministrativa
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_FuenteAdministrativa =
+      /** Documentos como escritura pública, sentencia judicial, acto administrativo, documento privado o sin documento (puede ser una declaración verbal), que acredita la adquisición de derechos de dominio sobre un bien inmueble y la relación que existe entre el interesado y el predio.
+       */
+      Tipo (EXTENDED) : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_FuenteAdministrativaTipo;
+      /** El  tipo de oficina que emite el documento (notaria, juzgado, entidad pública).
+       */
+      Ente_Emisor : TEXT*255;
+      /** Es el número con el cual se identifica la oficina que origina el documento.
+       */
+      Oficina_Origen : 0 .. 100;
+      /** Es la ciudad donde se encuentra ubicada la oficina que expide el documento.
+       */
+      Ciudad_Origen : TEXT*60;
+    END CR_FuenteAdministrativa;
+
+    /** Clase que hereda los atributos de la Clase COL_FuenteEspacial.
+     */
+    CLASS CR_FuenteEspacial
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_FuenteEspacial =
+    END CR_FuenteEspacial;
+
+    /** Para el desarrollo de la gestión catastral es la persona que frente a un inmueble ostenta la relación jurídica de propietario, poseedor u ocupante.
+     */
+    CLASS CR_Interesado
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_Interesado =
+      /** Clase de documentos públicos que permite la identificación del interesado.
+       */
+      Tipo_Documento (EXTENDED) : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_DocumentoTipo;
+      /** Primer nombre del interesado en la gestión catastral.
+       */
+      Primer_Nombre : TEXT*100;
+      /** Segundo nombre del interesado en la gestión catastral.
+       */
+      Segundo_Nombre : TEXT*100;
+      /** Primer apellido del interesado en la gestión catastral.
+       */
+      Primer_Apellido : TEXT*100;
+      /** Segundo apellido del interesado en la gestión catastral.
+       */
+      Segundo_Apellido : TEXT*100;
+      /** Corresponde a “Masculino”, “Femenino”, “No Binario” o "Sin determinar" según como aparezca en el documento de identidad. No aplica este tipo de identificación para personas jurídicas.
+       */
+      Sexo : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_SexoTipo;
+      /** "Según la Corte Constitucional (sentencia T-445-22), las personas tienen el derecho a auto reconocerse como pertenecientes a cualquier etnia si subjetivamente considera que tiene los vínculos culturales, familiares o históricos.
+       * 
+       * En este sentido, la persona puede auto reconocerse como indígena, gitano Romaní, raizal, palenquero, negro o afrocolombiano"
+       */
+      AutoreconocimientoEtnico : Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_AutoreconocimientoEtnicoTipo;
+      /** Todo habitante de zonas rurales tiene la opción de autoreconocerse como campesino en función del artículo 64 de la Constitución Política.
+       */
+      AutoreconocimientoCampesino : BOOLEAN;
+      /** Nombre jurídico que recibe un sociedad colectiva o empresa constituida legalmente, con el cual se encuentra inscrito.
+       */
+      Razon_Social : TEXT*255;
+    END CR_Interesado;
+
+    /** Linea de división que separa un bien inmueble de otro, que puede o no estar materializada físicamente.
+     */
+    CLASS CR_Lindero
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_CadenaCarasLimite =
+      /** Longitud en metros del lindero.
+       */
+      Longitud : MANDATORY 0.0 .. 100000000000.0 [INTERLIS.m];
+    END CR_Lindero;
+
+    /** Puntos topográficos o geodésicos utilizados como amarre para la ejecución del levantamiento catastral.
+     */
+    CLASS CR_PuntoControl
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_Punto =
+      /** Nombre o código del punto de control.
+       */
+      ID_Punto_Control : MANDATORY TEXT*255;
+      /** Indica la clasificación del tipo de punto de acuerdo a sus características.
+       */
+      PuntoTipo (EXTENDED) : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_PuntoTipo;
+      /** Es el método utilizado para definir puntos de terreno que son identificables dentro de una fotografía, a los cuales se les puede determinar las coordenadas terrestres de linderos y vértices una vez realizada su digitalización.
+       */
+      Tipo_Punto_Control : Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_PuntoControlTipo;
+      /** Describe la cercanía en posición de los objetos en el conjunto de datos, con respecto a sus posiciones verdaderas (o las asumidas como verdaderas).
+       */
+      Exactitud_Horizontal : 0.000 .. 10.000 [INTERLIS.m];
+      MANDATORY CONSTRAINT PuntoTipo <> #Control ;
+      MANDATORY CONSTRAINT PuntoTipo <> #Otro ;
+    END CR_PuntoControl;
+
+    /** Punto que define la frontera de un predio con otro. La sucesión de estos puntos forma una línea que representa el límite entre dos terrenos. 
+     */
+    CLASS CR_PuntoLindero
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_Punto =
+      /** Nombre o código que identifica el punto lindero.
+       */
+      ID_Punto_Lindero : MANDATORY TEXT*255;
+      /** Indica la clasificación del tipo de punto de acuerdo a sus características.
+       */
+      PuntoTipo (EXTENDED) : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_PuntoTipo;
+      /** Indica si existe desacuerdo o no entre los colindantes en relación al punto lindero que se está midiendo.
+       */
+      Desacuerdo : MANDATORY BOOLEAN;
+      /** Es el método utilizado para definir puntos de terreno que son identificables dentro de una fotografía, a los cuales se les puede determinar las coordenadas terrestres de linderos y vértices una vez realizada su digitalización.
+       */
+      Fotoidentificacion : Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_FotoidentificacionTipo;
+      /** Describe la cercanía en posición de los objetos en el conjunto de datos, con respecto a sus posiciones verdaderas (o las asumidas como verdaderas).
+       */
+      Exactitud_Horizontal : 0.000 .. 10.000 [INTERLIS.m];
+      MANDATORY CONSTRAINT PuntoTipo <> #Control ;
+      MANDATORY CONSTRAINT PuntoTipo <> #Otro ;
+    END CR_PuntoLindero;
+
+    /** Extensión geográfica espacial del predio
+     */
+    CLASS CR_Terreno
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_UnidadEspacial =
+      /** Corresponde a la figura geométrica vectorial poligonal.
+       */
+      Geometria (EXTENDED) : MANDATORY ISO19107_PLANAS_V3_1.GM_MultiSurface3D;
+    END CR_Terreno;
+
+    /** Clase que contiene los cambios que se presentan en los componentes físico, jurídico o económico de un predio, una vez han sido formados.
+     */
+    CLASS CR_TramiteCatastral =
+      /** Cambios que se presentan en los componentes físico, jurídico o económico de un predio.
+       */
+      Clasificacion_Mutacion : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_MutacionTipo;
+      /** Numero de la resolucion de la mutación o trámite expedida por el gestor catastral.
+       */
+      Numero_Resolucion : MANDATORY TEXT*30;
+      /** Fecha de la resolucion de la mutación o trámite expedida por el gestor catastral.
+       */
+      Fecha_Resolucion : MANDATORY INTERLIS.XMLDate;
+      /** Fecha de la recepción de la solicitud ante el gestor catastral cuando es a solicitud de parte, o inicio de la actuación administrativa cuando es de oficio.
+       */
+      Fecha_Radicacion : MANDATORY INTERLIS.XMLDate;
+      /** Fecha  de incorporación de la mutación o trámite en la base de datos catastral.
+       */
+      Fecha_Inscripcion : MANDATORY INTERLIS.XMLDate;
+    END CR_TramiteCatastral;
+
+    /** Edificación dentro de un predio, que tiene unas características específicas en cuanto a uso y elementos constitutivos físicos.
+     */
+    CLASS CR_UnidadConstruccion
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_UnidadEspacial =
+      /** Indica el tipo de planta donde se ubica la unidad de construcción.
+       */
+      Tipo_Planta : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_ConstruccionPlantaTipo;
+      /** Indica numéricamente la ubicación de la planta.
+       */
+      Planta_Ubicacion : MANDATORY 0 .. 300;
+      /** Altura total de la planta.
+       */
+      Altura : 1 .. 1000 [INTERLIS.m];
+      /** Corresponde a la figura geométrica vectorial poligonal.
+       */
+      Geometria (EXTENDED) : ISO19107_PLANAS_V3_1.GM_MultiSurface3D;
+    END CR_UnidadConstruccion;
+
+    /** Derecho Catastral: Dominio (Formal), Ocupación (Informal) o Posesión (Informal)
+     */
+    CLASS SINIC_DerechoCatastral
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_DRR =
+      /** Tipo de informalidad que puede presentarse en cada predio.
+       */
+      Tipo : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.SINIC_DerechoCatastralTipo;
+    END SINIC_DerechoCatastral;
+
+    /** Clase que permite agrupar las unidades de construcción por identificador, uso y tipología.
+     */
+    CLASS CR_CaracteristicasUnidadConstruccion =
+      /** Identificador de la unidad de construcción, su codificación puede ser por letras del abecedario.
+       */
+      Identificador : MANDATORY TEXT*20;
+      /** Tipo de unidad de construcción.
+       */
+      Tipo_Unidad_Construccion : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_UnidadConstruccionTipo;
+      /** Número total de plantas en la unidad de construcción.
+       */
+      Total_Plantas : MANDATORY 0 .. 150;
+      /** Es la actividad que se desarrolla en las unidades de construcción al momento de la identificación predial.
+       */
+      Uso : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_UsoUConsTipo;
+      /** Año de construcción de la unidad de construcción.
+       */
+      Anio_Construccion : MANDATORY 1512 .. 2500;
+      /** Área total construida en la unidad de construcción.
+       */
+      Area_Construida : MANDATORY 0.0 .. 99999999999999.9;
+      /** Elemento que permite estimar el estado de las características constructivas en distintos criterios de integridad.
+       */
+      Estado_Conservacion : MANDATORY TEXT*30;
+      /** Avalúo correspondiente a la carateristica de las unidades de construcción.
+       */
+      Avaluo_Caracterizacion : BAG {0..*} OF Modelo_Aplicacion_LADMCOL_SINIC_V1_0.SINIC.CR_EstructuraAvaluoCaracterizacion;
+      /** Observaciones generales respecto de la unidad de construcción.
+       */
+      Observaciones : TEXT;
+    END CR_CaracteristicasUnidadConstruccion;
+
+    /** Clase especializada de BaUnit, que describe al predio como la unidad administrativa básica para la gestión catastral con enfoque multipropósito en Colombia.
+     * 
+     * Predio: inmueble con o sin título registrado, no separado por otro predio, con o sin unidades de construcción y vinculado con personas naturales o jurídicas, según su relación de tenencia: propietario, poseedor u ocupante.
+     */
+    CLASS SINIC_Predio
+    EXTENDS LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.COL_UnidadAdministrativaBasica =
+      /** Corresponde al codigo del departamento al cual pertenece el predio. Es asignado por DIVIPOLA y tiene 2 dígitos.
+       */
+      Departamento : MANDATORY TEXT*2;
+      /** Corresponde al código del municipio al cual pertenece el predio. Es asignado por DIVIPOLA y tiene 3 dígitos.
+       */
+      Municipio : MANDATORY TEXT*3;
+      /** Es la descripción de la ubicación del predio.
+       */
+      Direccion : BAG {1..*} OF LADM_COL_v_4_0_1_Nucleo.LADM_Nucleo.ExtDireccion;
+      /** Cifras distintivas de la oficina de registro, a la cual pertenece la matrícula inmobiliaria.
+       */
+      Codigo_ORIP : TEXT*4;
+      /** Folio destinado a la inscripción de los actos, contratos y providencias relacionados en el artículo 4° de la Ley 1579 de 2012 “Por la cual se expide el estatuto de registro de instrumentos públicos y se dictan otras disposiciones”, referente a un bien raíz, el cual se distinguirá con un código alfanumérico o complejo numeral indicativo del orden interno de cada oficina de registro y de la sucesión en que se vaya sentando.
+       */
+      Matricula_Inmobiliaria : 1 .. 9999999999;
+      /** Registro asociado a la anotación en antiguo sistema de registro (Libros).
+       */
+      Referencia_Registral_Sistema_Antiguo : Modelo_Aplicacion_LADMCOL_SINIC_V1_0.SINIC.CR_EstructuraReferenciaRegistralSistemaAntiguo;
+      /** Código numérico de treinta (30) dígitos, que se le asigna a cada predio para su identificación en la base de datos catastral de acuerdo con la estructura definida por el IGAC.
+       */
+      Numero_Predial_Nacional : MANDATORY TEXT*30;
+      /** Número predial nacional anterior a los cambios de renumeración producto de la adopación de la estructura definida por el IGAC  y que permite mantener el historial del predio. Ejemplo: cambio de predios formales a informales, mejoras a informales, rural a urbano, urbano a rural o cambio de vereda o manzana. En este caso el predio sigue siendo el mismo, solo cambia el identificador predial.
+       */
+      Predio_Origen_NPN : BAG {0..*} OF Modelo_Aplicacion_LADMCOL_SINIC_V1_0.SINIC.CR_EstructuraPredioOrigenNPN;
+      /** Predio o los predios de los cuales proviene(n) nueva(s) unidad(es) predial(es) producto de segregación o agregación.
+       */
+      Predio_Matriz_NPN : BAG {0..*} OF Modelo_Aplicacion_LADMCOL_SINIC_V1_0.SINIC.CR_EstructuraPredioMatrizNPN;
+      /** Código único para identificar los inmuebles en los sistemas de información catastral que se utiliza para efectos de la interrelación catastro-registro, el cual es entregado por el IGAC a los gestores catastrales para su correspondiente asignación.
+       */
+      Codigo_Homologado : MANDATORY TEXT*11;
+      /** Código único para identificar los predios tanto en los sistemas de información catastral como registral. El NUPRE se obtiene a partir del código homologado de identificación predial una vez efectuada la interrelación de la base catastral con la registral.  No implicará la supresión del número predial nacional ni la matrícula inmobiliaria actual. 
+       */
+      NUPRE : TEXT*11;
+      /** Fecha de registro de los ingresos, modificaciones o cancelaciones en la base de datos catastral, de acuerdo con lo señalado en el título IV de la Resolución 1040 de 2023.
+       */
+      Fecha_Inscripcion_Catastral : INTERLIS.XMLDate;
+      /** Distinción conceptual que permite identificar a qué régimen se encuentran sometidos los bienes inmuebles, y por tanto si son de propiedad privada o por el contrario son predios públicos que pueden catalogarse como: predios que pertenecen a la Nación, a una entidad territorial o a alguna entidad de derecho público.
+       */
+      Tipo_Predio : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_PredioTipo;
+      /** Caracterización temática de las condiciones de predio que se está censando relacionada a aspectos físicos y jurídicos.
+       */
+      Condicion_Predio : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_CondicionPredioTipo;
+      /** Clasificación que se da a cada inmueble en su conjunto -terreno y unidades de construcción-, en el momento de la identificación predial de conformidad con la actividad predominante que en él se desarrolle.
+       */
+      Destinacion_Economica : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_DestinacionEconomicaTipo;
+      /** Área del terreno inscrita en la base de datos catastral, de conformidad con el artículo 5.2.3. de la Resolución 1040 de 2023.
+       */
+      Area_Catastral_Terreno : MANDATORY 0.00 .. 10000000000000000000000.00 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Área consignada en el certificado de tradición y libertad, en la descripción de cabida y linderos o en los títulos registrados, expresada en metros cuadrados.
+       */
+      Area_Registral_M2 : 0.00 .. 10000000000000000000000.00 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Estructura que contiene los datos de los avalúos de la gestión catastral.
+       */
+      Avaluo : BAG {1..*} OF Modelo_Aplicacion_LADMCOL_SINIC_V1_0.SINIC.CR_EstructuraAvaluo;
+      /** Se considerará como procedimientos catastrales con efectos registrales los siguientes: actualización de linderos, rectificación de área por imprecisa determinación, actualización masiva y puntual de linderos y áreas, rectificación de linderos por acuerdo entre las partes, e inclusión de área y/o linderos.
+       */
+      Procedimiento_Catastral_Registral : BAG {0..*} OF Modelo_Aplicacion_LADMCOL_SINIC_V1_0.SINIC.CR_EstructuraProcedimientoCatastralRegistral;
+      /** Fecha en la que entró en vigencia el último proceso de actualización catastral.
+       */
+      Vigencia_Actualizacion_Catastral : MANDATORY INTERLIS.XMLDate;
+      /** Describe si el predio se encuentra activo o cancelado en la base de datos catastral.
+       */
+      Estado : MANDATORY Modelo_Aplicacion_LADMCOL_SINIC_V1_0.CR_EstadoTipo;
+      /** Advertencia generada por entidades públicas sobre el predio.
+       */
+      Alerta_Predio : BAG {0..*} OF Modelo_Aplicacion_LADMCOL_SINIC_V1_0.SINIC.CR_EstructuraAlertaPredio;
+      UNIQUE Numero_Predial_Nacional;
+      UNIQUE Codigo_Homologado;
+      UNIQUE NUPRE;
+    END SINIC_Predio;
+
+    /** Relación entre unidades prediales y predios matrices bajo el régimen de propiedad horizontal y condominio.
+     */
+    ASSOCIATION cr_predio_copropiedad =
+      unidad_predial -- {0..*} SINIC_Predio;
+      /** Unidades residenciales tales como edificios, conjuntos y tipos de urbanizaciones cerradas en las que se comparten áreas comunes y que tienen régimen de propiedad horizontal.
+       */
+      matriz -<> {0..1} SINIC_Predio;
+      /** Porcentaje de participación en la copropiedad de acuerdo con el reglamento de propiedad horizontal registrado.
+       */
+      Coeficiente : MANDATORY 0.000000000000 .. 1.000000000000;
+      /** Área con propósitos estadísticos calculada como el producto del coeficiente de copropiedad, tal como se establece en el reglamento de propiedad horizontal registrado, por las áreas comunes de terreno.
+       */
+      Area_Catastral_Terreno_Coeficiente : MANDATORY 0.00 .. 99999999999999.98 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Corresponde únicamente a los predios en condición de condominio (8), este dato es el resultante de la información registrada y consignado en los respectivos folios de matrícula inmobiliaria, los cuales están debidamente delimitados, funcionalmente independientes, de propiedad y aprovechamiento exclusivo, integrantes de un reglamento de propiedad horizontal debidamente registrado.
+       * 
+       * Para predios en condición de condominio unidad predial y cuya diferencia porcentual entre el área geométrica de terreno privada en relación con el área registral se encuentre dentro de la tolerancia, se incorporará en la base de datos el área registral. Si la diferencia excede los límites de tolerancia se incorporará el área geométrica.
+       */
+      Area_Privada_Terreno : 0.00 .. 1000000000000000000000000.00 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Área cubierta de cada bien privado, excluyendo los bienes comunes dentro de sus linderos, de acuerdo con el reglamento de propiedad horizontal debidamente registrado y las normas legales.
+       */
+      Area_Privada_Construida : 0.00 .. 1000000000000000000000000.00 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Área semidescubierta o descubierta, excluyendo los bienes comunes localizados dentro de sus linderos, de conformidad con el reglamento de propiedad horizontal debidamente registrado y las normas legales.
+       */
+      Area_Privada_Libre : 0.00 .. 1000000000000000000000000.00 [LADM_COL_v_4_0_1_Nucleo.m2];
+    END cr_predio_copropiedad;
+
+    /** Relación entre unidades prediales y predios matrices.
+     */
+    ASSOCIATION cr_predio_datosmatriz =
+      cr_predio -- {1} SINIC_Predio;
+      cr_datos_matriz -- {0..1} CR_DatosMatriz;
+    END cr_predio_datosmatriz;
+
+    /** Atributo que permite identificar las relaciones entre los predios formales e informales.
+     */
+    ASSOCIATION cr_predio_informalidad =
+      /** Relación de la llave principal (T_Id) de la clase predio del predio formal.
+       */
+      cr_predio_formal -- {0..*} SINIC_Predio;
+      /** Relación de llave principal (T_Id) de la clase predio del predio informal.
+       */
+      cr_predio_informal -- {0..*} SINIC_Predio;
+      /** Área del terreno donde se presenta la sobreposición entre el predio informal sobre el formal.
+       */
+      Area_Terreno_Interseccion : MANDATORY 0.00 .. 10000000000000000000000.00 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Área construida donde se presenta la sobreposición entre el predio informal sobre el formal.
+       */
+      Area_Construida_Interseccion : 0.00 .. 10000000000000000000000.00 [LADM_COL_v_4_0_1_Nucleo.m2];
+      /** Estructura que define los valores de avaluos catastrales de la intersección de un predio formal con un predio informal.
+       */
+      Avaluo_Catastral_Interseccion : Modelo_Aplicacion_LADMCOL_SINIC_V1_0.SINIC.CR_EstructuraAvaluoInterseccion;
+    END cr_predio_informalidad;
+
+    ASSOCIATION cr_predio_tramitecatastral =
+      cr_predio -- {0..*} SINIC_Predio;
+      cr_tramite_catastral -- {0..*} CR_TramiteCatastral;
+    END cr_predio_tramitecatastral;
+
+    ASSOCIATION cr_unidadconstruccion_caracteristicasunidadconstruccion =
+      cr_caracteristicasunidadconstruccion -- {1} CR_CaracteristicasUnidadConstruccion;
+      cr_unidadconsutruccion -- {1..*} CR_UnidadConstruccion;
+    END cr_unidadconstruccion_caracteristicasunidadconstruccion;
+
+  END SINIC;
+
+END Modelo_Aplicacion_LADMCOL_SINIC_V1_0.

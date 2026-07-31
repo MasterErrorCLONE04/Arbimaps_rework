@@ -192,14 +192,17 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
             # Para evitar "unsafe use of new value ... HINT: New enum values must be committed before they can be used",
             # abrimos una conexion temporal con autocommit=True.
             try:
-                from core.db.connection import get_db_params
                 import psycopg2
-                params = get_db_params()
+                if tenant and hasattr(tenant, "db_params"):
+                    params = tenant.db_params
+                else:
+                    from core.db.connection import get_db_params
+                    params = get_db_params()
                 with psycopg2.connect(**params) as temp_conn:
                     temp_conn.autocommit = True
                     with temp_conn.cursor() as temp_cur:
                         # 1. Asegurar asignacion_evento
-                        for val in ["WORKSPACE_READY", "WORKSPACE_READY_WARN", "PAQUETE_JOB_CREADO", "PAQUETE_JOB_DONE", "PAQUETE_JOB_ERROR", "ERROR", "ESTADO_CAMBIADO", "REASIGNADA", "CERRADA", "ASIGNADA"]:
+                        for val in ["WORKSPACE_READY", "WORKSPACE_READY_WARN", "PAQUETE_JOB_CREADO", "PAQUETE_JOB_DONE", "PAQUETE_JOB_ERROR", "ERROR", "ESTADO_CAMBIADO", "REASIGNADA", "CERRADA", "ASIGNADA", "WORKSPACE_EN_COLA", "WORKSPACE_OMITIDO", "WORKSPACE_CLEANUP_ERROR"]:
                             temp_cur.execute(
                                 """
                                 SELECT 1 FROM pg_enum 
@@ -607,6 +610,24 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 ON {app_schema}.restriccion_predio (numero_predial_nacional)
                 """
             )
+            # Asegurar compatibilidad de columnas en las tablas del modelo Interlis (Neiva/LADM)
+            main_schema = "a_base_principal"
+            work_schema = "b_asignaciones_arb"
+            if tenant and hasattr(tenant, "schemas"):
+                main_schema = getattr(tenant.schemas, "main", main_schema)
+                work_schema = getattr(tenant.schemas, "work", work_schema)
+
+            for schema in [main_schema, work_schema]:
+                try:
+                    cur.execute(f"ALTER TABLE {schema}.arb_predio ADD COLUMN IF NOT EXISTS control_calidad text")
+                    cur.execute(f"ALTER TABLE {schema}.arb_predio ADD COLUMN IF NOT EXISTS valido_control_calidad boolean")
+                except Exception as e:
+                    logger.warning("Fallo agregar columnas control_calidad a %s.arb_predio: %s", schema, e)
+                try:
+                    cur.execute(f"ALTER TABLE {schema}.arb_tramite ADD COLUMN IF NOT EXISTS predio bigint REFERENCES {schema}.arb_predio(t_id) DEFERRABLE INITIALLY DEFERRED")
+                except Exception as e:
+                    logger.warning("Fallo agregar columna predio a %s.arb_tramite: %s", schema, e)
+
             if in_transaction:
                 cur.execute("RELEASE SAVEPOINT ensure_asig_tables_sp")
             success = True
