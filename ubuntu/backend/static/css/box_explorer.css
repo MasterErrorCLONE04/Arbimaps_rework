@@ -1,0 +1,206 @@
+/* Tema Neiva exclusivo del modulo box_explorer. */
+body.view-box_explorer {
+  --mn-deep: #063622;
+  --mn-green: #0b5138;
+  --mn-teal: #0c706f;
+  --mn-aqua: #079f99;
+  --mn-emerald: #08a56b;
+  --mn-mint: #c4d5cc;
+  --mn-sage: #a5cb85;
+  --mn-pale: #d1dcd6;
+  --mn-gray: #ecefed;
+  --mn-soft: #f6f8f7;
+  --mn-line: #c7d4cd;
+  --mn-muted: #718379;
+  --mn-red: #d71920;
+  --mn-yellow: #e4df91;
+  --mn-cream: #fffbd8;
+  --mn-gradient: linear-gradient(120deg, #063622 0%, #0b5138 58%, #0c706f 145%);
+  --mn-soft-gradient: linear-gradient(145deg, #fff 0%, #eef3f0 100%);
+  --mn-shadow: 0 8px 22px rgba(6,54,34,.09);
+}
+
+body.view-box_explorer :where(h1,h2,h3,h4,h5,h6,p,small,label,input,select,textarea,button,a,span,div,table,th,td) {
+  font-family: "Poppins", sans-serif;
+}
+
+body.view-box_explorer .content-shell > section {
+  min-height: calc(100vh - 166px);
+  padding: 22px 24px 30px;
+  background: var(--mn-gray);
+  border-radius: 22px;
+}
+
+body.view-box_explorer :where(.text-title-header,.title-principal,.title-body h3,.section-title h3,h2,h4,h5,h6) {
+  color: var(--mn-deep) !important;
+}
+
+body.view-box_explorer :where(.parrafo-title,.text-muted,.text-secondary) {
+  color: var(--mn-muted) !important;
+}
+
+body.view-box_explorer :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea,.form-control,.form-select) {
+  color: var(--mn-deep) !important;
+  background-color: #fff !important;
+  border-color: var(--mn-line) !important;
+  border-radius: 11px !important;
+  box-shadow: none !important;
+}
+
+body.view-box_explorer :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea,.form-control,.form-select):focus {
+  border-color: var(--mn-teal) !important;
+  box-shadow: 0 0 0 3px rgba(12,112,111,.13) !important;
+}
+
+body.view-box_explorer :where(.btn-primary,.btn-success,.bg-primary,.bg-info) {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+  border-color: transparent !important;
+}
+
+body.view-box_explorer :where(.btn-outline-primary,.btn-light) {
+  color: var(--mn-deep) !important;
+  background: #fff !important;
+  border-color: var(--mn-line) !important;
+}
+
+body.view-box_explorer :where(.modal-content,.offcanvas,.swal2-popup) {
+  overflow: hidden;
+  color: var(--mn-deep) !important;
+  background: var(--mn-gray) !important;
+  border: 1px solid var(--mn-mint) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 22px 48px rgba(6,54,34,.22) !important;
+}
+
+body.view-box_explorer .modal-header {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+  border: 0 !important;
+}
+
+body.view-box_explorer .modal-header :where(h1,h2,h3,h4,h5,h6,p,span,i) { color: #fff !important; }
+
+body.view-box_explorer .content-shell > section > .d-flex:first-child h2 { color: var(--mn-deep) !important; }
+
+body.view-box_explorer #btnCarpeteo,
+body.view-box_explorer #btnBack,
+body.view-box_explorer .btn-edit {
+  color: #fff !important;
+  background: var(--mn-deep) !important;
+}
+
+body.view-box_explorer #btnSync {
+  color: var(--mn-deep) !important;
+  background: var(--mn-sage) !important;
+}
+
+body.view-box_explorer .content-shell > section > .card {
+  background: #fff !important;
+  border: 1px solid var(--mn-line) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--mn-shadow) !important;
+}
+
+body.view-box_explorer .content-shell > section > .card > .card-header {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+}
+
+body.view-box_explorer .content-shell > section > .card > .card-header :where(h1,h2,h3,h4,h5,h6,p,small,span,i) { color: #fff !important; }
+
+body.view-box_explorer :where(#btnNewFolder,label.btn[for],.btn-view,.btn-sync) {
+  color: #fff !important;
+  background: var(--mn-teal) !important;
+}
+
+body.view-box_explorer #fileSearch + .input-group-text {
+  color: #fff !important;
+  background: var(--mn-deep) !important;
+}
+
+body.view-box_explorer #tbl {
+  border-collapse: separate !important;
+  border-spacing: 0 6px !important;
+}
+
+body.view-box_explorer #tbl thead th {
+  color: var(--mn-deep) !important;
+  background: var(--mn-gray) !important;
+  border: 0 !important;
+}
+
+body.view-box_explorer #tbl tbody td { color: #294c39 !important; background: #fff !important; border-bottom-color: #dce4df !important; }
+
+body.view-box_explorer #tbl tbody tr:hover td { background: #f3f7f5 !important; }
+
+body.view-box_explorer #tbody .bi-folder-fill,
+body.view-box_explorer #tbody td span { color: var(--mn-deep) !important; }
+
+body.view-box_explorer .table-responsive::-webkit-scrollbar-thumb { background: #9eb5aa !important; }
+
+body.view-box_explorer .spinner-border.text-primary,
+body.view-box_explorer .text-primary { color: var(--mn-teal) !important; }
+
+@media (max-width: 991.98px) {
+body.view-box_explorer .content-shell > section {
+    padding: 16px 14px 24px;
+    border-radius: 16px;
+  }
+
+}
+
+body.view-box_explorer .content-shell > section .card {
+  border-color: var(--mn-line) !important;
+  border-radius: 18px !important;
+}
+
+body.view-box_explorer .content-shell > section table:not(.ol-control table) {
+  color: var(--mn-deep) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 6px !important;
+}
+
+body.view-box_explorer .content-shell > section table:not(.ol-control table) thead th {
+  color: var(--mn-deep) !important;
+  background: var(--mn-gray) !important;
+  border: 0 !important;
+  font-weight: 700 !important;
+}
+
+body.view-box_explorer .content-shell > section table:not(.ol-control table) thead th:first-child { border-radius: 14px 0 0 14px; }
+
+body.view-box_explorer .content-shell > section table:not(.ol-control table) thead th:last-child { border-radius: 0 14px 14px 0; }
+
+body.view-box_explorer .content-shell > section table:not(.ol-control table) tbody td {
+  color: #294c39 !important;
+  background: #fff !important;
+  border-top: 0 !important;
+  border-bottom-color: #dce4df !important;
+}
+
+body.view-box_explorer .content-shell > section > .card > .card-header :where(#btnNewFolder,label.btn) {
+  color: #fff !important;
+  background: var(--mn-teal) !important;
+  border-color: transparent !important;
+}
+
+body.view-box_explorer .content-shell > section .row.g-3 > [class*="col-"] > div {
+  border-color: var(--mn-line) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+
+body.view-box_explorer #viewerPlaceholder {
+  color: var(--mn-muted) !important;
+  background: var(--mn-soft-gradient) !important;
+  border-color: var(--mn-sage) !important;
+}
+
+body.view-box_explorer :where(#syncContainer,.progress) {
+  color: var(--mn-deep) !important;
+  background: #e5eee9 !important;
+  border-color: var(--mn-line) !important;
+}
+
+body.view-box_explorer #syncBar { background: var(--mn-gradient) !important; }

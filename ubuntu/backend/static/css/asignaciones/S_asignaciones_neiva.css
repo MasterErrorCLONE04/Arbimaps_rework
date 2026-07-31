@@ -1,0 +1,294 @@
+/* Tema Neiva exclusivo del modulo solicitudes_asignaciones. */
+body.view-solicitudes_asignaciones {
+  --mn-deep: #063622;
+  --mn-green: #0b5138;
+  --mn-teal: #0c706f;
+  --mn-aqua: #079f99;
+  --mn-emerald: #08a56b;
+  --mn-mint: #c4d5cc;
+  --mn-sage: #a5cb85;
+  --mn-pale: #d1dcd6;
+  --mn-gray: #ecefed;
+  --mn-soft: #f6f8f7;
+  --mn-line: #c7d4cd;
+  --mn-muted: #718379;
+  --mn-red: #d71920;
+  --mn-yellow: #e4df91;
+  --mn-cream: #fffbd8;
+  --mn-gradient: linear-gradient(120deg, #063622 0%, #0b5138 58%, #0c706f 145%);
+  --mn-soft-gradient: linear-gradient(145deg, #fff 0%, #eef3f0 100%);
+  --mn-shadow: 0 8px 22px rgba(6,54,34,.09);
+}
+
+body.view-solicitudes_asignaciones :where(h1,h2,h3,h4,h5,h6,p,small,label,input,select,textarea,button,a,span,div,table,th,td) {
+  font-family: "Poppins", sans-serif;
+}
+
+body.view-solicitudes_asignaciones .content-shell > section {
+  min-height: calc(100vh - 166px);
+  padding: 22px 24px 30px;
+  background: var(--mn-gray);
+  border-radius: 22px;
+}
+
+body.view-solicitudes_asignaciones :where(.text-title-header,.title-principal,.title-body h3,.section-title h3,h2,h4,h5,h6) {
+  color: var(--mn-deep) !important;
+}
+
+body.view-solicitudes_asignaciones :where(.parrafo-title,.text-muted,.text-secondary) {
+  color: var(--mn-muted) !important;
+}
+
+body.view-solicitudes_asignaciones :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea,.form-control,.form-select) {
+  color: var(--mn-deep) !important;
+  background-color: #fff !important;
+  border-color: var(--mn-line) !important;
+  border-radius: 11px !important;
+  box-shadow: none !important;
+}
+
+body.view-solicitudes_asignaciones :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea,.form-control,.form-select):focus {
+  border-color: var(--mn-teal) !important;
+  box-shadow: 0 0 0 3px rgba(12,112,111,.13) !important;
+}
+
+body.view-solicitudes_asignaciones :where(.btn-primary,.btn-success,.bg-primary,.bg-info) {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+  border-color: transparent !important;
+}
+
+body.view-solicitudes_asignaciones :where(.btn-outline-primary,.btn-light) {
+  color: var(--mn-deep) !important;
+  background: #fff !important;
+  border-color: var(--mn-line) !important;
+}
+
+body.view-solicitudes_asignaciones :where(.modal-content,.offcanvas,.swal2-popup) {
+  overflow: hidden;
+  color: var(--mn-deep) !important;
+  background: var(--mn-gray) !important;
+  border: 1px solid var(--mn-mint) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 22px 48px rgba(6,54,34,.22) !important;
+}
+
+body.view-solicitudes_asignaciones .modal-header {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+  border: 0 !important;
+}
+
+body.view-solicitudes_asignaciones .modal-header :where(h1,h2,h3,h4,h5,h6,p,span,i) { color: #fff !important; }
+
+body.view-solicitudes_asignaciones .content-section { padding: 0 !important; background: transparent !important; }
+
+body.view-solicitudes_asignaciones :where(.text-title-header,.text-section-search,.for-panel-title,.panel-title,.form-section-title) { color: var(--mn-deep) !important; }
+
+body.view-solicitudes_asignaciones .tab-custom {
+  color: #526c5e !important;
+  background: #fff !important;
+  border: 1px solid var(--mn-line) !important;
+  border-radius: 12px !important;
+}
+
+body.view-solicitudes_asignaciones .tab-custom.active {
+  color: var(--mn-deep) !important;
+  background: var(--mn-mint) !important;
+  border-color: var(--mn-mint) !important;
+}
+
+body.view-solicitudes_asignaciones .buscador-ai-box {
+  background: linear-gradient(145deg,#edf5f1,#e3eee8) !important;
+  border: 1px solid var(--mn-line) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--mn-shadow) !important;
+}
+
+body.view-solicitudes_asignaciones .buscador-ai-input-area {
+  background: #fff !important;
+  border: 1px solid #bfd0c7 !important;
+  border-radius: 15px !important;
+}
+
+body.view-solicitudes_asignaciones :where(.buscar,.btn-crear-solicitud,.btn-enviar-solicitud,.btn-confirmar-asignacion,.btn-procesar,.asigClearFiltersBtn) {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+  border-color: transparent !important;
+  border-radius: 11px !important;
+}
+
+body.view-solicitudes_asignaciones .limpiar {
+  color: var(--mn-deep) !important;
+  background: #fff !important;
+  border: 1px solid var(--mn-line) !important;
+}
+
+body.view-solicitudes_asignaciones .limpiar svg path { fill: var(--mn-deep) !important; }
+
+body.view-solicitudes_asignaciones :where(.reconocedores-pill,.predios-selected-badge,.selected-count-badge) {
+  color: var(--mn-deep) !important;
+  background: #fff !important;
+  border: 1px solid var(--mn-line) !important;
+}
+
+body.view-solicitudes_asignaciones .reconocedores-pill-icon { color: #fff !important; background: var(--mn-emerald) !important; }
+
+body.view-solicitudes_asignaciones :where(.card-panel,.asigVerShell,.custom-modal-content,.confirm-asignacion-card) {
+  background: #fff !important;
+  border: 1px solid var(--mn-line) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--mn-shadow) !important;
+}
+
+body.view-solicitudes_asignaciones :where(.custom-modal-header,.asigVerToolbar) {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+}
+
+body.view-solicitudes_asignaciones :where(.custom-modal-header,.asigVerToolbar) :where(h1,h2,h3,h4,h5,h6,p,span,i) { color: #fff !important; }
+
+body.view-solicitudes_asignaciones :where(.table-resultados,.asigTable) {
+  border-collapse: separate !important;
+  border-spacing: 0 6px !important;
+}
+
+body.view-solicitudes_asignaciones :where(.table-resultados,.asigTable) thead th {
+  color: var(--mn-deep) !important;
+  background: var(--mn-gray) !important;
+  border: 0 !important;
+  font-weight: 700 !important;
+}
+
+body.view-solicitudes_asignaciones :where(.table-resultados,.asigTable) tbody td {
+  color: #294c39 !important;
+  background: #fff !important;
+  border-bottom: 1px solid #dce4df !important;
+}
+
+body.view-solicitudes_asignaciones :where(.table-resultados,.asigTable) tbody tr:hover td { background: #f3f7f5 !important; }
+
+body.view-solicitudes_asignaciones :where(.contador-resultados-badge,.badge-contador-estado) { color: #fff !important; background: var(--mn-green) !important; }
+
+body.view-solicitudes_asignaciones .badge-contador-disponibles { background: var(--mn-emerald) !important; }
+
+body.view-solicitudes_asignaciones .asigTableControls { background: #fff !important; border-color: var(--mn-line) !important; }
+
+body.view-solicitudes_asignaciones .dataTables_wrapper .page-item.active .page-link { color: #fff !important; background: var(--mn-deep) !important; border-color: var(--mn-deep) !important; }
+
+@media (max-width: 991.98px) {
+body.view-solicitudes_asignaciones .content-shell > section {
+    padding: 16px 14px 24px;
+    border-radius: 16px;
+  }
+
+}
+
+body.view-solicitudes_asignaciones .content-shell > section .card {
+  border-color: var(--mn-line) !important;
+  border-radius: 18px !important;
+}
+
+body.view-solicitudes_asignaciones .content-shell > section table:not(.ol-control table) {
+  color: var(--mn-deep) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 6px !important;
+}
+
+body.view-solicitudes_asignaciones .content-shell > section table:not(.ol-control table) thead th {
+  color: var(--mn-deep) !important;
+  background: var(--mn-gray) !important;
+  border: 0 !important;
+  font-weight: 700 !important;
+}
+
+body.view-solicitudes_asignaciones .content-shell > section table:not(.ol-control table) thead th:first-child { border-radius: 14px 0 0 14px; }
+
+body.view-solicitudes_asignaciones .content-shell > section table:not(.ol-control table) thead th:last-child { border-radius: 0 14px 14px 0; }
+
+body.view-solicitudes_asignaciones .content-shell > section table:not(.ol-control table) tbody td {
+  color: #294c39 !important;
+  background: #fff !important;
+  border-top: 0 !important;
+  border-bottom-color: #dce4df !important;
+}
+
+body.view-solicitudes_asignaciones :where(.asigVerShell,.asigVerPanel) {
+  overflow: hidden;
+  background: #fff !important;
+  border-color: var(--mn-line) !important;
+  border-radius: 20px !important;
+}
+
+body.view-solicitudes_asignaciones .asigVerPanel { padding: 0 !important; }
+
+body.view-solicitudes_asignaciones .asigVerToolbar { padding: 22px 28px !important; }
+
+body.view-solicitudes_asignaciones .asigTableControls {
+  margin: 0 !important;
+  padding: 18px 28px !important;
+  background: #fff !important;
+  border-bottom: 1px solid #dce4df !important;
+}
+
+body.view-solicitudes_asignaciones .asigTableWrap { padding: 10px 20px 0 !important; }
+
+body.view-solicitudes_asignaciones :where(.estado-chip,.badge-estado-pendiente,.badge-estado-procesada) {
+  color: #0b6151 !important;
+  background: #dcefe8 !important;
+  border-color: #a8cfc0 !important;
+}
+
+body.view-solicitudes_asignaciones :where(.estado-chip.estado-en-aprobacion,.badge-estado-pendiente) {
+  color: #746b21 !important;
+  background: var(--mn-cream) !important;
+  border-color: var(--mn-yellow) !important;
+}
+
+body.view-solicitudes_asignaciones :where(.badge-estado-rechazada,.estado-devuelto-campo,.estado-devuelto-a-campo) {
+  color: var(--mn-red) !important;
+  background: #fde5e5 !important;
+  border-color: #efbcbc !important;
+}
+
+body.view-solicitudes_asignaciones :where(.btn-action-circle,.asig-action-view,.btn-detalle,.btn-seleccionar-rec) {
+  color: #fff !important;
+  background: var(--mn-deep) !important;
+  border-color: transparent !important;
+}
+
+body.view-solicitudes_asignaciones :where(.custom-modal-backdrop) {
+  background: rgba(6,54,34,.45) !important;
+  backdrop-filter: blur(4px);
+}
+
+body.view-solicitudes_asignaciones .custom-modal-content { overflow: hidden; background: var(--mn-gray) !important; }
+
+body.view-solicitudes_asignaciones .custom-modal-header {
+  margin: -24px -24px 20px !important;
+  padding: 20px 24px !important;
+}
+
+body.view-solicitudes_asignaciones .custom-modal-content table thead th { background: var(--mn-gray) !important; }
+
+body.view-solicitudes_asignaciones :where(.btn-close-custom,.btn-close-panel) {
+  color: var(--mn-deep) !important;
+  background: var(--mn-mint) !important;
+}
+
+body.view-solicitudes_asignaciones .dataTables_wrapper :where(.dataTables_info,.dataTables_length label,.dataTables_filter label) {
+  color: var(--mn-muted) !important;
+}
+
+body.view-solicitudes_asignaciones .dataTables_wrapper .page-link {
+  color: var(--mn-deep) !important;
+  background: #fff !important;
+  border-color: var(--mn-line) !important;
+}
+
+body.view-solicitudes_asignaciones .dataTables_wrapper .page-item.active .page-link,
+body.view-solicitudes_asignaciones .dataTables_wrapper .page-link:hover {
+  color: #fff !important;
+  background: var(--mn-deep) !important;
+  border-color: var(--mn-deep) !important;
+}

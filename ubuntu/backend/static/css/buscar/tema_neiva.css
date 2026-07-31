@@ -1,0 +1,730 @@
+/* Tema institucional de Consultar predio y sus subvistas. */
+body.view-buscar,
+body.view-buscar_predio {
+  --cp-green: #092c1c;
+  --cp-green-hover: #154b31;
+  --cp-green-soft: #dce9e1;
+  --cp-green-pale: #eef4f0;
+  --cp-accent: #80ac65;
+  --cp-gray: #ededed;
+  --cp-line: #c5d2ca;
+  --cp-muted: #74877b;
+  --cp-shadow: 0 8px 22px rgba(9, 44, 28, .10);
+}
+
+body.view-buscar :where(h1,h2,h3,h4,h5,h6,p,small,label,input,select,textarea,button,a,span,div,table,th,td),
+body.view-buscar_predio :where(h1,h2,h3,h4,h5,h6,p,small,label,input,select,textarea,button,a,span,div,table,th,td) {
+  font-family: "Poppins", sans-serif;
+}
+
+/* Vista de consulta */
+body.view-buscar .container-sistem {
+  width: 100%;
+  min-height: calc(100vh - 166px);
+  padding: 24px 26px 30px !important;
+  background: var(--cp-gray) !important;
+  border-radius: 22px;
+}
+
+body.view-buscar .container-sistem > .row:first-child { margin-bottom: 20px !important; }
+body.view-buscar .container-sistem > .row:nth-child(2) > div { width: 100%; max-width: 1180px; }
+
+body.view-buscar .title-consultar,
+body.view-buscar_predio .title-body h3 {
+  color: var(--cp-green) !important;
+  font-size: clamp(1.75rem, 2.2vw, 2.2rem) !important;
+  font-weight: 800 !important;
+}
+
+body.view-buscar .subtitulo,
+body.view-buscar_predio .parrafo-title {
+  color: var(--cp-muted) !important;
+  font-size: 1rem !important;
+}
+
+body.view-buscar .consultaWrap {
+  width: 100%;
+  padding: 24px 26px !important;
+  background: var(--cp-green) !important;
+  border: 0;
+  border-radius: 20px !important;
+  box-shadow: var(--cp-shadow);
+}
+
+body.view-buscar .consulta-label { color: #fff !important; font-weight: 600; }
+body.view-buscar .consulta-control {
+  min-height: 48px;
+  color: var(--cp-green) !important;
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+}
+body.view-buscar .consulta-control:focus {
+  border-color: var(--cp-accent) !important;
+  box-shadow: 0 0 0 3px rgba(128,172,101,.24) !important;
+}
+
+body.view-buscar .consulta-btn {
+  min-height: 44px;
+  height: 44px;
+  border-radius: 12px !important;
+  font-weight: 700;
+}
+body.view-buscar .btn-consultar {
+  color: var(--cp-green) !important;
+  background: var(--cp-accent) !important;
+}
+body.view-buscar .btn-consultar:hover,
+body.view-buscar .btn-consultar:focus { color: var(--cp-green) !important; background: #9bc57f !important; }
+body.view-buscar .btn-limpiar { color: var(--cp-green) !important; background: #fff !important; border: 1px solid #fff !important; }
+body.view-buscar .btn-limpiar:hover,
+body.view-buscar .btn-limpiar:focus { color: var(--cp-green) !important; background: var(--cp-green-pale) !important; }
+
+body.view-buscar .tabsBar {
+  width: 100%;
+  padding: 8px;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--cp-line);
+  border-radius: 16px;
+  box-shadow: var(--cp-shadow);
+}
+body.view-buscar .tabBtn {
+  padding: 11px 18px;
+  color: var(--cp-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 11px;
+  font-weight: 600;
+}
+body.view-buscar .tabBtn.active { color: #fff; background: var(--cp-green); }
+body.view-buscar .tabBtn:disabled { opacity: .55; }
+
+body.view-buscar .results { width: 100%; background: transparent !important; }
+body.view-buscar .resultados-card,
+body.view-buscar .tabView > .row .card {
+  width: 100%;
+  background: #fff !important;
+  border: 1px solid var(--cp-line) !important;
+  border-radius: 20px !important;
+  box-shadow: var(--cp-shadow) !important;
+}
+body.view-buscar .titulo-resultados,
+body.view-buscar .tabView h2,
+body.view-buscar .tabView h3 { color: var(--cp-green) !important; }
+body.view-buscar .contador-resultados,
+body.view-buscar .hint-default,
+body.view-buscar .sub,
+body.view-buscar .hint-no-results .hint-no-results-badge { color: #fff !important; background: var(--cp-green) !important; }
+body.view-buscar .linea-separacion { background: var(--cp-line) !important; }
+body.view-buscar .hint { border-radius: 15px !important; }
+body.view-buscar .hint-no-results { background: var(--cp-green-pale) !important; border: 1px solid var(--cp-line); }
+
+body.view-buscar .tabla-predios thead th,
+body.view-buscar .tabView table thead th {
+  padding: 13px 15px !important;
+  color: var(--cp-green) !important;
+  background: var(--cp-green-soft) !important;
+  border-color: var(--cp-line) !important;
+  font-weight: 700;
+}
+body.view-buscar .tabla-predios tbody td,
+body.view-buscar .tabView table tbody td { color: #173b29 !important; border-color: #e1e8e4 !important; }
+body.view-buscar .tabla-predios tbody tr:hover td,
+body.view-buscar .tabView table tbody tr:hover td { background: var(--cp-green-pale) !important; }
+body.view-buscar .lnkVer {
+  width: 38px;
+  height: 38px;
+  color: #fff !important;
+  background: var(--cp-green) !important;
+  border-radius: 11px;
+}
+body.view-buscar .dataTables_wrapper input:focus,
+body.view-buscar .dataTables_wrapper select:focus { border-color: var(--cp-green) !important; box-shadow: 0 0 0 3px rgba(9,44,28,.12) !important; }
+body.view-buscar .dataTables_wrapper .page-item.active .page-link { color: #fff !important; background: var(--cp-green) !important; border-color: var(--cp-green) !important; }
+
+/* Ficha y componentes abiertos desde el resultado */
+body.view-buscar_predio {
+  --vp-primary: var(--cp-green);
+  --vp-accent: var(--cp-accent);
+  --vp-bg-app: var(--cp-gray);
+  --vp-card-bg: #fff;
+  --vp-text-main: #173b29;
+  --vp-text-muted: var(--cp-muted);
+  --vp-border: var(--cp-line);
+  --vp-radius: 18px;
+  --vp-shadow: var(--cp-shadow);
+}
+body.view-buscar_predio .module-information-predio {
+  width: 100%;
+  min-height: calc(100vh - 166px);
+  padding: 22px 24px 28px;
+  background: var(--cp-gray);
+  border-radius: 22px;
+}
+body.view-buscar_predio .section-title,
+body.view-buscar_predio .container-content { width: 100%; max-width: none; }
+body.view-buscar_predio .text-title-header { color: var(--cp-green) !important; font-weight: 600; }
+body.view-buscar_predio .container-content > .container-fluid { margin-top: 12px !important; margin-bottom: 0 !important; }
+body.view-buscar_predio .container-content .row.g-3.align-items-stretch { margin-top: 8px !important; }
+
+body.view-buscar_predio .tarjeta-predio,
+body.view-buscar_predio .card-header,
+body.view-buscar_predio .accordion-button,
+body.view-buscar_predio .accordion-button:not(.collapsed),
+body.view-buscar_predio .offcanvas-header-one,
+body.view-buscar_predio .uc-accordion-header { color: #fff !important; background: var(--cp-green) !important; border-color: var(--cp-green) !important; }
+
+body.view-buscar_predio .tarjeta-predio,
+body.view-buscar_predio .tarjeta-levantamiento,
+body.view-buscar_predio .tarjeta-visor-predio,
+body.view-buscar_predio .tarjeta-inferior-base,
+body.view-buscar_predio .vp-acc-card,
+body.view-buscar_predio .vp-map-container,
+body.view-buscar_predio .modal-content,
+body.view-buscar_predio .offcanvas,
+body.view-buscar_predio .uc-accordion-card {
+  border: 1px solid var(--cp-line) !important;
+  border-radius: 18px !important;
+  box-shadow: var(--cp-shadow) !important;
+}
+
+body.view-buscar_predio .tarjeta-levantamiento,
+body.view-buscar_predio .tarjeta-visor-predio,
+body.view-buscar_predio .tarjeta-inferior-base,
+body.view-buscar_predio .resumen-interesado,
+body.view-buscar_predio .vp-record-card,
+body.view-buscar_predio .uc-mini-card,
+body.view-buscar_predio .tarjeta-modal-predio,
+body.view-buscar_predio .tarjeta-modal-visita { color: #173b29 !important; background: #fff !important; }
+
+body.view-buscar_predio .icons-bg,
+body.view-buscar_predio .icons-bg-menu,
+body.view-buscar_predio .table-icon-circle,
+body.view-buscar_predio .icono-usuario-panel,
+body.view-buscar_predio .icono-interesado-circle {
+  color: var(--cp-green) !important;
+  background: var(--cp-accent) !important;
+  border-color: var(--cp-accent) !important;
+  box-shadow: none !important;
+}
+body.view-buscar_predio .mostrar-id-predio,
+body.view-buscar_predio .badge-construccion-activa,
+body.view-buscar_predio .badge-uc-activa,
+body.view-buscar_predio .vp-record-badge,
+body.view-buscar_predio .panel-tipo-uc-badge span { color: var(--cp-green) !important; background: var(--cp-green-soft) !important; border-color: var(--cp-line) !important; }
+
+body.view-buscar_predio .title-part-predio,
+body.view-buscar_predio .table-item-label,
+body.view-buscar_predio .titulo-unidad-construccion,
+body.view-buscar_predio .titulo-seccion-uc,
+body.view-buscar_predio .vp-data-value,
+body.view-buscar_predio .uc-info-value,
+body.view-buscar_predio .uc-mini-card-value,
+body.view-buscar_predio .resumen-item-value { color: var(--cp-green) !important; }
+body.view-buscar_predio .table-item-text,
+body.view-buscar_predio .resumen-item-label,
+body.view-buscar_predio .vp-data-label,
+body.view-buscar_predio .uc-info-label,
+body.view-buscar_predio .subtitulo-seccion-uc,
+body.view-buscar_predio .subtitulo-offcanvas-uc { color: var(--cp-muted) !important; }
+body.view-buscar_predio .resumen-interesado { border-left-color: var(--cp-accent) !important; }
+
+body.view-buscar_predio .btn-eye-predio,
+body.view-buscar_predio .btn-toggle-detalle-uc,
+body.view-buscar_predio .btn-caracteristicas-uc,
+body.view-buscar_predio .btn-detalle-tabla,
+body.view-buscar_predio .btn-ver-detalle-uc,
+body.view-buscar_predio .btn-gunmi,
+body.view-buscar_predio .vp-map-btn { color: #fff !important; background: var(--cp-green) !important; border-color: var(--cp-green) !important; }
+body.view-buscar_predio .btn-eye-predio:hover,
+body.view-buscar_predio .btn-toggle-detalle-uc:hover,
+body.view-buscar_predio .btn-caracteristicas-uc:hover,
+body.view-buscar_predio .btn-detalle-tabla:hover,
+body.view-buscar_predio .btn-ver-detalle-uc:hover,
+body.view-buscar_predio .btn-gunmi:hover,
+body.view-buscar_predio .vp-map-btn:hover { background: var(--cp-green-hover) !important; }
+
+body.view-buscar_predio .tabla-construcciones thead th,
+body.view-buscar_predio .tabla-unidad-construccion thead th,
+body.view-buscar_predio .tabla-modal-interesados thead th,
+body.view-buscar_predio .vp-modern-table th { color: var(--cp-green) !important; background: var(--cp-green-soft) !important; border-color: var(--cp-line) !important; }
+body.view-buscar_predio .tabla-construcciones tbody tr:hover td,
+body.view-buscar_predio .tabla-unidad-construccion tbody tr:hover td,
+body.view-buscar_predio .tabla-modal-interesados tbody tr:hover td { background: var(--cp-green-pale) !important; }
+body.view-buscar_predio .fila-unidad-card-activa,
+body.view-buscar_predio .fila-unidad-card-activa td,
+body.view-buscar_predio .fila-interesado-activa td,
+body.view-buscar_predio .detalle-relacionado-activo,
+body.view-buscar_predio .unidad-relacionada-activa { color: var(--cp-green) !important; background: var(--cp-green-soft) !important; }
+
+body.view-buscar_predio .modal-header { color: #fff !important; background: var(--cp-green) !important; border-radius: 18px 18px 0 0 !important; }
+body.view-buscar_predio .modal-body,
+body.view-buscar_predio .offcanvas-body,
+body.view-buscar_predio .modal-predio-body { background: var(--cp-gray) !important; }
+body.view-buscar_predio .part-ge,
+body.view-buscar_predio .part-juy,
+body.view-buscar_predio .contenido-visita,
+body.view-buscar_predio .tarjet-row-pot,
+body.view-buscar_predio .tarjet-row-pot-visita,
+body.view-buscar_predio .uc-info-row,
+body.view-buscar_predio .uc-pair,
+body.view-buscar_predio .uc-total-card { border-color: var(--cp-line) !important; }
+body.view-buscar_predio .part-juy.part-juy-open,
+body.view-buscar_predio .vp-sub-acc-trigger,
+body.view-buscar_predio .alert-information,
+body.view-buscar_predio .mensaje-seleccion-uc { color: var(--cp-green) !important; background: var(--cp-green-pale) !important; }
+body.view-buscar_predio .vista-predio-spinner { color: var(--cp-green) !important; }
+body.view-buscar_predio .vista-predio-loader { background: rgba(237,237,237,.92) !important; }
+
+body.view-buscar_predio [style*="#6aa4d4" i],
+body.view-buscar_predio [style*="#5B9BD5" i],
+body.view-buscar_predio [style*="#002f55" i],
+body.view-buscar_predio [style*="#021f3c" i] {
+  background-color: var(--cp-green) !important;
+}
+
+body.view-buscar_predio #badgeJuridicoCountContainer {
+  color: #fff !important;
+  background: var(--cp-green) !important;
+}
+
+@media (max-width: 991.98px) {
+  body.view-buscar .container-sistem,
+  body.view-buscar_predio .module-information-predio { padding: 18px 14px 22px !important; border-radius: 16px; }
+  body.view-buscar .consultaWrap { padding: 20px 16px !important; }
+}
+/* Ajuste de contraste: verde como acento, superficies de lectura claras. */
+body.view-buscar .linea-separacion {
+  display: none !important;
+}
+
+body.view-buscar .resultados-card {
+  overflow: hidden;
+  border-radius: 22px !important;
+}
+
+body.view-buscar .resultados-card .card-body {
+  border-radius: inherit;
+}
+
+body.view-buscar .resultados-card .table-responsive,
+body.view-buscar .dataTables_scrollHead,
+body.view-buscar .dataTables_scrollBody {
+  border-radius: 14px;
+}
+
+body.view-buscar .tabla-predios thead th:first-child {
+  border-radius: 14px 0 0 14px !important;
+}
+
+body.view-buscar .tabla-predios thead th:last-child {
+  border-radius: 0 14px 14px 0 !important;
+}
+
+body.view-buscar .tabla-predios tbody tr {
+  background: #fff !important;
+}
+
+body.view-buscar .tabla-predios tbody tr + tr td {
+  border-top: 1px solid #e4ebe7 !important;
+}
+
+body.view-buscar_predio .tarjeta-predio.tarjeta-placeholder-superior {
+  color: var(--cp-green) !important;
+  background: #fff !important;
+  border: 1px solid var(--cp-line) !important;
+  border-radius: 18px !important;
+}
+
+body.view-buscar_predio .tarjeta-placeholder-superior .title-part-predio,
+body.view-buscar_predio .tarjeta-placeholder-superior .text-result-name,
+body.view-buscar_predio .tarjeta-placeholder-superior small,
+body.view-buscar_predio .tarjeta-placeholder-superior span:not(.badge) {
+  color: var(--cp-green) !important;
+}
+
+body.view-buscar_predio .icons-bg-menu,
+body.view-buscar_predio .icons-bg-menu[style],
+body.view-buscar_predio .table-icon-circle {
+  color: var(--cp-green) !important;
+  background: var(--cp-green-soft) !important;
+  box-shadow: 0 3px 8px rgba(9,44,28,.12) !important;
+}
+
+body.view-buscar_predio .icons-bg-menu i,
+body.view-buscar_predio .table-icon-circle i {
+  color: var(--cp-green) !important;
+}
+
+body.view-buscar_predio .tarjeta-placeholder-superior .btn-eye-predio,
+body.view-buscar_predio .tarjeta-inferior-base .btn-eye-predio {
+  color: #fff !important;
+  background: var(--cp-green) !important;
+}
+
+body.view-buscar_predio .tarjeta-placeholder-superior #badgeJuridicoCountContainer {
+  color: var(--cp-green) !important;
+  background: var(--cp-green-soft) !important;
+  border: 1px solid var(--cp-line) !important;
+}
+
+body.view-buscar_predio .tarjeta-placeholder-superior #badgeJuridicoCountContainer i,
+body.view-buscar_predio .tarjeta-placeholder-superior #badgeJuridicoCountContainer div {
+  color: var(--cp-green) !important;
+}
+
+body.view-buscar_predio .resumen-interesado.interesado {
+  border-left-color: #9370d8 !important;
+}
+body.view-buscar_predio .resumen-interesado.construcciones {
+  border-left-color: #cd2023 !important;
+}
+body.view-buscar_predio .resumen-interesado.u_construccion {
+  border-left-color: #00a82d !important;
+}
+
+body.view-buscar_predio .tarjeta-inferior-base,
+body.view-buscar_predio .tarjeta-levantamiento,
+body.view-buscar_predio .vp-acc-card,
+body.view-buscar_predio .uc-accordion-card {
+  color: #173b29 !important;
+  background: #fff !important;
+}
+
+body.view-buscar_predio .tarjeta-inferior-base .card-header {
+  color: var(--cp-green) !important;
+  background: #fff !important;
+  border-bottom: 1px solid var(--cp-line) !important;
+}
+
+body.view-buscar_predio .modal-content {
+  overflow: hidden;
+  background: var(--cp-gray) !important;
+  border-radius: 22px !important;
+}
+
+body.view-buscar_predio .modal-header {
+  min-height: 78px;
+  border-bottom: 0 !important;
+  border-radius: 22px 22px 0 0 !important;
+}
+
+body.view-buscar_predio .modal-header .title-part-predio,
+body.view-buscar_predio .modal-header h1,
+body.view-buscar_predio .modal-header h2,
+body.view-buscar_predio .modal-header h3 {
+  color: #fff !important;
+}
+
+body.view-buscar_predio .modal-body,
+body.view-buscar_predio .modal-predio-body {
+  padding: 22px !important;
+  background: var(--cp-gray) !important;
+}
+
+body.view-buscar_predio .part-juy {
+  color: #fff !important;
+  background: var(--cp-green) !important;
+  border: 1px solid var(--cp-green) !important;
+  border-radius: 16px !important;
+}
+
+body.view-buscar_predio .part-juy .tit-iops,
+body.view-buscar_predio .part-juy i,
+body.view-buscar_predio .part-juy svg {
+  color: #fff !important;
+}
+
+body.view-buscar_predio .part-juy.part-juy-open {
+  color: var(--cp-green) !important;
+  background: var(--cp-green-soft) !important;
+  border-color: var(--cp-line) !important;
+  border-radius: 16px 16px 0 0 !important;
+}
+
+body.view-buscar_predio .part-juy.part-juy-open .tit-iops,
+body.view-buscar_predio .part-juy.part-juy-open i,
+body.view-buscar_predio .part-juy.part-juy-open svg {
+  color: var(--cp-green) !important;
+}
+
+body.view-buscar_predio .contenido-visita {
+  color: #294c39 !important;
+  background: #f8faf9 !important;
+  border: 1px solid var(--cp-line) !important;
+  border-top: 0 !important;
+  border-radius: 0 0 16px 16px !important;
+}
+
+body.view-buscar_predio .contenido-visita .tex-num,
+body.view-buscar_predio .contenido-visita .text-start,
+body.view-buscar_predio .contenido-visita .dato_info,
+body.view-buscar_predio .contenido-visita .dato {
+  color: #294c39 !important;
+}
+
+body.view-buscar_predio .accordion-button.collapsed {
+  color: var(--cp-green) !important;
+  background: #fff !important;
+  border: 1px solid var(--cp-line) !important;
+}
+
+body.view-buscar_predio .accordion-button:not(.collapsed) {
+  color: #fff !important;
+  background: var(--cp-green) !important;
+}
+
+body.view-buscar_predio .accordion-body,
+body.view-buscar_predio .uc-accordion-body,
+body.view-buscar_predio .vp-acc-body {
+  color: #294c39 !important;
+  background: #fff !important;
+}
+/* Colorimetría Neiva: contraste por funciones y degradados controlados. */
+body.view-buscar,
+body.view-buscar_predio {
+  --cp-deep: #063622;
+  --cp-mint: #c4d5cc;
+  --cp-sage: #a5cb85;
+  --cp-pale: #d1dcd6;
+  --cp-teal: #0c706f;
+  --cp-aqua: #079f99;
+  --cp-emerald: #08a56b;
+  --cp-blue-accent: #244c89;
+  --cp-red-accent: #e60000;
+  --cp-yellow: #e4df91;
+  --cp-cream: #fffbd8;
+  --cp-lime: #a5df2d;
+  --cp-olive: #9d9964;
+  --cp-header-gradient: linear-gradient(120deg, var(--cp-deep) 0%, #07503a 58%, var(--cp-teal) 140%);
+  --cp-soft-gradient: linear-gradient(145deg, #ffffff 0%, #eef3f0 100%);
+}
+
+body.view-buscar_predio .tarjeta-predio:not(.tarjeta-placeholder-superior),
+body.view-buscar_predio .card-header,
+body.view-buscar_predio .modal-header,
+body.view-buscar_predio .accordion-button:not(.collapsed),
+body.view-buscar_predio .part-juy,
+body.view-buscar_predio .offcanvas-header-one {
+  background: var(--cp-header-gradient) !important;
+}
+
+/* Métricas con los acentos de la paleta, sin perder legibilidad. */
+body.view-buscar_predio .resumen-interesado {
+  background: var(--cp-soft-gradient) !important;
+  border-top: 1px solid rgba(6,54,34,.08) !important;
+  border-right: 1px solid rgba(6,54,34,.08) !important;
+  border-bottom: 1px solid rgba(6,54,34,.08) !important;
+}
+body.view-buscar_predio .resumen-interesado.interesado {
+  border-left: 4px solid var(--cp-blue-accent) !important;
+}
+body.view-buscar_predio .resumen-interesado.interesado .resumen-icon-circle {
+  color: var(--cp-blue-accent) !important;
+  background: #dce5f3 !important;
+}
+body.view-buscar_predio .resumen-interesado.construcciones {
+  border-left: 4px solid var(--cp-red-accent) !important;
+}
+body.view-buscar_predio .resumen-interesado.construcciones .resumen-icon-circle {
+  color: var(--cp-red-accent) !important;
+  background: #f8dada !important;
+}
+body.view-buscar_predio .resumen-interesado.u_construccion {
+  border-left: 4px solid var(--cp-emerald) !important;
+}
+body.view-buscar_predio .resumen-interesado.u_construccion .resumen-icon-circle {
+  color: var(--cp-emerald) !important;
+  background: #d7f1e5 !important;
+}
+body.view-buscar_predio .resumen-item-label,
+body.view-buscar_predio .resumen-item-value {
+  color: var(--cp-deep) !important;
+}
+
+/* Tarjetas secundarias claras y variación suave de iconos. */
+body.view-buscar_predio .tarjeta-placeholder-superior,
+body.view-buscar_predio .tarjeta-inferior-base,
+body.view-buscar_predio .tarjeta-levantamiento {
+  background: var(--cp-soft-gradient) !important;
+}
+body.view-buscar_predio .tarjeta-placeholder-superior:nth-child(odd) .icons-bg-menu,
+body.view-buscar_predio .tarjeta-inferior-base:nth-child(odd) .icons-bg-menu {
+  background: var(--cp-mint) !important;
+}
+body.view-buscar_predio .tarjeta-placeholder-superior:nth-child(even) .icons-bg-menu,
+body.view-buscar_predio .tarjeta-inferior-base:nth-child(even) .icons-bg-menu {
+  background: rgba(165,203,133,.55) !important;
+}
+body.view-buscar_predio .title-part-predio,
+body.view-buscar_predio .table-item-label,
+body.view-buscar_predio .table-item-text,
+body.view-buscar_predio .text-label-interesados,
+body.view-buscar_predio .result-npn-interesados {
+  color: var(--cp-deep) !important;
+}
+
+/* Modal alineado: un solo borde y el encabezado recortado dentro del cuerpo. */
+body.view-buscar_predio .modal-dialog {
+  padding: 0 10px;
+}
+body.view-buscar_predio .modal-content,
+body.view-buscar_predio #modalInformacionPredio .modal-predio-content,
+body.view-buscar_predio #modalInformacionMarcas .modal-content,
+body.view-buscar_predio #modalInformacionAdicional .modal-content {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden !important;
+  box-sizing: border-box;
+  background: #ecefed !important;
+  border: 1px solid var(--cp-mint) !important;
+  border-radius: 22px !important;
+}
+body.view-buscar_predio .modal-header {
+  width: 100%;
+  margin: 0 !important;
+  padding: 18px 20px !important;
+  box-sizing: border-box;
+  border: 0 !important;
+  border-radius: 20px 20px 0 0 !important;
+}
+body.view-buscar_predio .modal-body,
+body.view-buscar_predio .modal-predio-body {
+  width: 100%;
+  margin: 0 !important;
+  padding: 24px !important;
+  box-sizing: border-box;
+  background: #ecefed !important;
+  border-radius: 0 0 20px 20px !important;
+}
+body.view-buscar_predio .modal-predio-divider {
+  background: var(--cp-mint) !important;
+}
+
+/* Sustitución de textos y bloques azules del detalle. */
+body.view-buscar_predio .part-icon {
+  color: var(--cp-deep) !important;
+  background: var(--cp-mint) !important;
+}
+body.view-buscar_predio .part-ge {
+  color: #fff !important;
+  background: linear-gradient(120deg, var(--cp-teal), var(--cp-emerald)) !important;
+  border-radius: 12px !important;
+}
+body.view-buscar_predio .part-ge .tit-ge {
+  color: #fff !important;
+}
+body.view-buscar_predio .dato {
+  color: var(--cp-deep) !important;
+  background: linear-gradient(145deg, #f4f6f5, #e7ece9) !important;
+  border: 1px solid rgba(196,213,204,.72) !important;
+  border-radius: 12px !important;
+}
+body.view-buscar_predio .tex-num,
+body.view-buscar_predio .dato .tex-num,
+body.view-buscar_predio .tabla-modal-interesados .texto-tabla-interesado,
+body.view-buscar_predio .tabla-modal-interesados .info-interesado-nombre,
+body.view-buscar_predio .uc-info-label,
+body.view-buscar_predio .uc-info-label-estructure,
+body.view-buscar_predio .uc-calificacion-top-label,
+body.view-buscar_predio .uc-pair .uc-info-label {
+  color: var(--cp-deep) !important;
+}
+body.view-buscar_predio .dato_info,
+body.view-buscar_predio .dato .dato_info,
+body.view-buscar_predio .tex-num + div,
+body.view-buscar_predio .uc-info-value {
+  color: #476357 !important;
+}
+
+body.view-buscar_predio #modalInformacionPredio .accordion-item {
+  border: 1px solid var(--cp-mint) !important;
+  border-radius: 16px !important;
+  background: #fff !important;
+}
+body.view-buscar_predio #modalInformacionPredio .accordion-button,
+body.view-buscar_predio #modalInformacionPredio .accordion-button.collapsed {
+  color: #fff !important;
+  background: var(--cp-header-gradient) !important;
+  border: 0 !important;
+}
+body.view-buscar_predio #modalInformacionPredio .accordion-button i,
+body.view-buscar_predio #modalInformacionPredio .accordion-button.collapsed i {
+  color: #fff !important;
+}
+body.view-buscar_predio #modalInformacionPredio .accordion-body {
+  color: var(--cp-deep) !important;
+  background: #f7faf8 !important;
+  border-color: var(--cp-mint) !important;
+}
+
+body.view-buscar_predio .tabla-modal-interesados thead th,
+body.view-buscar_predio .tabla-construcciones thead th,
+body.view-buscar_predio .tabla-unidad-construccion thead th,
+body.view-buscar_predio .vp-modern-table th {
+  color: var(--cp-deep) !important;
+  background: linear-gradient(180deg, var(--cp-pale), var(--cp-mint)) !important;
+}
+body.view-buscar_predio .tabla-modal-interesados tr.fila-interesado-activa > td,
+body.view-buscar_predio .fila-unidad-card-activa,
+body.view-buscar_predio .fila-unidad-card-activa td {
+  color: #fff !important;
+  background: var(--cp-teal) !important;
+}
+body.view-buscar_predio .open-modal,
+body.view-buscar_predio .btn-eye-predio,
+body.view-buscar_predio .btn-detalle-tabla,
+body.view-buscar_predio .btn-ver-detalle-uc,
+body.view-buscar_predio .btn-caracteristicas-uc,
+body.view-buscar_predio .vp-map-btn {
+  color: #fff !important;
+  background: linear-gradient(135deg, var(--cp-deep), var(--cp-teal)) !important;
+  border-color: transparent !important;
+}
+
+body.view-buscar_predio .vp-record-badge,
+body.view-buscar_predio .badge-construccion-activa,
+body.view-buscar_predio .badge-uc-activa,
+body.view-buscar_predio .mostrar-id-predio {
+  color: var(--cp-deep) !important;
+  background: linear-gradient(135deg, var(--cp-mint), #e9f0ec) !important;
+  border: 1px solid rgba(6,54,34,.13) !important;
+}
+
+body.view-buscar_predio .card .table-responsive::-webkit-scrollbar-thumb,
+body.view-buscar_predio .modal-body::-webkit-scrollbar-thumb,
+body.view-buscar_predio .offcanvas-body::-webkit-scrollbar-thumb {
+  background: var(--cp-teal) !important;
+}
+/* Cobertura de etiquetas y filas expandibles que conservaban azul heredado. */
+body.view-buscar_predio .detalle-uc-label,
+body.view-buscar_predio .detalle-uc-value,
+body.view-buscar_predio .text-detalle-unidad,
+body.view-buscar_predio .tabla-modal-interesados tbody td,
+body.view-buscar_predio .info-interesado-nombre,
+body.view-buscar_predio .texto-tabla-interesado,
+body.view-buscar_predio .uc-section-title {
+  color: var(--cp-deep) !important;
+}
+
+body.view-buscar_predio .btn-toggle-detalle-uc {
+  color: var(--cp-deep) !important;
+  background: var(--cp-mint) !important;
+  border-color: transparent !important;
+}
+
+body.view-buscar_predio #tblConsCollapse tr.fila-detalle-unidad.detalle-activo td,
+body.view-buscar_predio #tblConsCollapse .detalle-unidad-contenido,
+body.view-buscar_predio .detalle-relacionado-activo,
+body.view-buscar_predio .detalle-relacionado-activo td,
+body.view-buscar_predio .unidad-relacionada-activa tbody,
+body.view-buscar_predio .unidad-relacionada-activa tbody tr,
+body.view-buscar_predio .unidad-relacionada-activa tbody td,
+body.view-buscar_predio .fila-detalle-unidad-card-activa td,
+body.view-buscar_predio .detalle-unidad-card-contenido,
+body.view-buscar_predio .uc-section-title,
+body.view-buscar_predio .blue-rounded-box {
+  background: linear-gradient(145deg, #f4f7f5, #e3ebe6) !important;
+  border-color: var(--cp-mint) !important;
+}

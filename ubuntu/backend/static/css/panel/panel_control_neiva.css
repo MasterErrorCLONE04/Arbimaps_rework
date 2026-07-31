@@ -1,0 +1,252 @@
+/* Tema Neiva exclusivo del modulo panel_control. */
+body.view-panel_control {
+  --mn-deep: #063622;
+  --mn-green: #0b5138;
+  --mn-teal: #0c706f;
+  --mn-aqua: #079f99;
+  --mn-emerald: #08a56b;
+  --mn-mint: #c4d5cc;
+  --mn-sage: #a5cb85;
+  --mn-pale: #d1dcd6;
+  --mn-gray: #ecefed;
+  --mn-soft: #f6f8f7;
+  --mn-line: #c7d4cd;
+  --mn-muted: #718379;
+  --mn-red: #d71920;
+  --mn-yellow: #e4df91;
+  --mn-cream: #fffbd8;
+  --mn-gradient: linear-gradient(120deg, #063622 0%, #0b5138 58%, #0c706f 145%);
+  --mn-soft-gradient: linear-gradient(145deg, #fff 0%, #eef3f0 100%);
+  --mn-shadow: 0 8px 22px rgba(6,54,34,.09);
+}
+
+body.view-panel_control :where(h1,h2,h3,h4,h5,h6,p,small,label,input,select,textarea,button,a,span,div,table,th,td) {
+  font-family: "Poppins", sans-serif;
+}
+
+body.view-panel_control .content-shell > section {
+  min-height: calc(100vh - 166px);
+  padding: 22px 24px 30px;
+  background: var(--mn-gray);
+  border-radius: 22px;
+}
+
+body.view-panel_control :where(.text-title-header,.title-principal,.title-body h3,.section-title h3,h2,h4,h5,h6) {
+  color: var(--mn-deep) !important;
+}
+
+body.view-panel_control :where(.parrafo-title,.text-muted,.text-secondary) {
+  color: var(--mn-muted) !important;
+}
+
+body.view-panel_control :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea,.form-control,.form-select) {
+  color: var(--mn-deep) !important;
+  background-color: #fff !important;
+  border-color: var(--mn-line) !important;
+  border-radius: 11px !important;
+  box-shadow: none !important;
+}
+
+body.view-panel_control :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea,.form-control,.form-select):focus {
+  border-color: var(--mn-teal) !important;
+  box-shadow: 0 0 0 3px rgba(12,112,111,.13) !important;
+}
+
+body.view-panel_control :where(.btn-primary,.btn-success,.bg-primary,.bg-info) {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+  border-color: transparent !important;
+}
+
+body.view-panel_control :where(.btn-outline-primary,.btn-light) {
+  color: var(--mn-deep) !important;
+  background: #fff !important;
+  border-color: var(--mn-line) !important;
+}
+
+body.view-panel_control :where(.modal-content,.offcanvas,.swal2-popup) {
+  overflow: hidden;
+  color: var(--mn-deep) !important;
+  background: var(--mn-gray) !important;
+  border: 1px solid var(--mn-mint) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 22px 48px rgba(6,54,34,.22) !important;
+}
+
+body.view-panel_control .modal-header {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+  border: 0 !important;
+}
+
+body.view-panel_control .modal-header :where(h1,h2,h3,h4,h5,h6,p,span,i) { color: #fff !important; }
+
+body.view-panel_control .content-section { padding: 0 !important; background: transparent !important; }
+
+body.view-panel_control .card-dashboard {
+  color: var(--mn-deep) !important;
+  background: #fff !important;
+  border: 1px solid var(--mn-line) !important;
+  border-radius: 18px !important;
+  box-shadow: var(--mn-shadow) !important;
+}
+
+body.view-panel_control .card-dashboard > .card-header,
+body.view-panel_control .bg-azulprincipal-500 {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+}
+
+body.view-panel_control .card-dashboard > .card-header :where(p,small,h1,h2,h3,h4,h5,h6,span,i) { color: #fff !important; }
+
+body.view-panel_control :where(
+  .bg-azulsecundario-50,.bg-azulsecundario-100,.bg-azulsecundario-200,
+  .bg-azulsecundario-300,.bg-azulsecundario-400,.bg-azulsecundario-500,
+  .bg-azulsecundario-600,.bg-azulsecundario-700,.bg-azulsecundario-800,.bg-azulsecundario-900
+) { background-color: var(--mn-mint) !important; }
+
+body.view-panel_control :where(
+  .text-azulprincipal-400,.text-azulprincipal-500,.text-azulprincipal-600,
+  .text-azulsecundario-400,.text-azulsecundario-500,.text-azulsecundario-600
+) { color: var(--mn-deep) !important; }
+
+body.view-panel_control #btnZoomProyecto,
+body.view-panel_control .coord-action-btn,
+body.view-panel_control .coord-pag-btn.activo,
+body.view-panel_control .tabla-pag-btn.activo {
+  color: #fff !important;
+  background: var(--mn-deep) !important;
+  border-color: var(--mn-deep) !important;
+}
+
+body.view-panel_control :where(.coord-avatar,.rec-avatar,.rec-avatar-small,.op-avatar,.coord-count-badge) {
+  color: var(--mn-deep) !important;
+  background: var(--mn-mint) !important;
+}
+
+body.view-panel_control :where(.coord-table,.assignment-table,.tabla-operadores) {
+  border-collapse: separate !important;
+  border-spacing: 0 6px !important;
+}
+
+body.view-panel_control :where(.coord-table,.assignment-table,.tabla-operadores) thead th {
+  color: var(--mn-deep) !important;
+  background: var(--mn-gray) !important;
+  border: 0 !important;
+}
+
+body.view-panel_control :where(.coord-table,.assignment-table,.tabla-operadores) tbody td {
+  color: #294c39 !important;
+  background: #fff !important;
+  border-bottom-color: #dce4df !important;
+}
+
+body.view-panel_control :where(.coord-table,.assignment-table,.tabla-operadores) tbody tr:hover td { background: #f3f7f5 !important; }
+
+body.view-panel_control :where(.coord-pill,.coord-role-badge,.tabla-badge) { color: var(--mn-deep) !important; background: #e2eee8 !important; border-color: var(--mn-line) !important; }
+
+body.view-panel_control .progress-donut {
+  background: conic-gradient(from -90deg, var(--mn-emerald) 0% 25%, var(--mn-teal) 25% 50%, var(--mn-pale) 50% 100%) !important;
+}
+
+body.view-panel_control :where(.dot-blue,.status-campo,.time-blue) { background: var(--mn-teal) !important; }
+
+@media (max-width: 991.98px) {
+body.view-panel_control .content-shell > section {
+    padding: 16px 14px 24px;
+    border-radius: 16px;
+  }
+
+}
+
+body.view-panel_control .content-shell > section .card {
+  border-color: var(--mn-line) !important;
+  border-radius: 18px !important;
+}
+
+body.view-panel_control .content-shell > section table:not(.ol-control table) {
+  color: var(--mn-deep) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 6px !important;
+}
+
+body.view-panel_control .content-shell > section table:not(.ol-control table) thead th {
+  color: var(--mn-deep) !important;
+  background: var(--mn-gray) !important;
+  border: 0 !important;
+  font-weight: 700 !important;
+}
+
+body.view-panel_control .content-shell > section table:not(.ol-control table) thead th:first-child { border-radius: 14px 0 0 14px; }
+
+body.view-panel_control .content-shell > section table:not(.ol-control table) thead th:last-child { border-radius: 0 14px 14px 0; }
+
+body.view-panel_control .content-shell > section table:not(.ol-control table) tbody td {
+  color: #294c39 !important;
+  background: #fff !important;
+  border-top: 0 !important;
+  border-bottom-color: #dce4df !important;
+}
+
+body.view-panel_control {
+  --azulprincipal-50: #e7eeea;
+  --azulprincipal-100: #c7d4cd;
+  --azulprincipal-200: #a9bfb4;
+  --azulprincipal-300: #718f80;
+  --azulprincipal-400: #35624f;
+  --azulprincipal-500: #063622;
+  --azulprincipal-600: #052f1e;
+  --azulprincipal-700: #042718;
+  --azulprincipal-800: #031f13;
+  --azulprincipal-900: #02170e;
+  --azulsecundario-50: #f2f6f4;
+  --azulsecundario-100: #e3eee8;
+  --azulsecundario-200: #c4d5cc;
+  --azulsecundario-300: #b0cbbd;
+  --azulsecundario-400: #9abca9;
+  --azulsecundario-500: #7fa992;
+  --azulsecundario-600: #658d78;
+  --azulsecundario-700: #4f705f;
+  --azulsecundario-800: #3c5648;
+  --azulsecundario-900: #2d4036;
+}
+
+body.view-panel_control .card-dashboard :where(p,small,h1,h2,h3,h4,h5,h6,label,span) {
+  color: var(--mn-deep) !important;
+}
+
+body.view-panel_control .card-dashboard > .card-header :where(p,small,h1,h2,h3,h4,h5,h6,label,span,i) {
+  color: #fff !important;
+}
+
+body.view-panel_control .card-dashboard .rounded-5[style*="background-color"],
+body.view-panel_control .card-dashboard .rounded-2[style*="background-color"] {
+  color: var(--mn-deep) !important;
+  background: var(--mn-mint) !important;
+}
+
+body.view-panel_control :where(.coord-header,.header_tabla_det_asigna) {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+}
+
+body.view-panel_control :where(.coord-header,.header_tabla_det_asigna) :where(p,small,h1,h2,h3,h4,h5,h6,span,i) { color: #fff !important; }
+
+body.view-panel_control :where(.coord-search,.filter-input,.filter-select,.tabla-filtro) {
+  color: var(--mn-deep) !important;
+  background: #fff !important;
+  border-color: var(--mn-line) !important;
+}
+
+body.view-panel_control :where(.coord-pag-btn,.tabla-pag-btn) {
+  color: var(--mn-deep) !important;
+  background: #fff !important;
+  border-color: var(--mn-line) !important;
+}
+
+body.view-panel_control :where(.modal-coord-content,.modal-coord-info-card,.reconocedores-panel) {
+  color: var(--mn-deep) !important;
+  background: #fff !important;
+  border-color: var(--mn-line) !important;
+  border-radius: 16px !important;
+}

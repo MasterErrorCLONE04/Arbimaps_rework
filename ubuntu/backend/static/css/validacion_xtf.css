@@ -1,0 +1,144 @@
+/* Tema Neiva exclusivo del modulo validacion_xtf. */
+body.view-validacion_xtf {
+  --mn-deep: #063622;
+  --mn-green: #0b5138;
+  --mn-teal: #0c706f;
+  --mn-aqua: #079f99;
+  --mn-emerald: #08a56b;
+  --mn-mint: #c4d5cc;
+  --mn-sage: #a5cb85;
+  --mn-pale: #d1dcd6;
+  --mn-gray: #ecefed;
+  --mn-soft: #f6f8f7;
+  --mn-line: #c7d4cd;
+  --mn-muted: #718379;
+  --mn-red: #d71920;
+  --mn-yellow: #e4df91;
+  --mn-cream: #fffbd8;
+  --mn-gradient: linear-gradient(120deg, #063622 0%, #0b5138 58%, #0c706f 145%);
+  --mn-soft-gradient: linear-gradient(145deg, #fff 0%, #eef3f0 100%);
+  --mn-shadow: 0 8px 22px rgba(6,54,34,.09);
+}
+
+body.view-validacion_xtf :where(h1,h2,h3,h4,h5,h6,p,small,label,input,select,textarea,button,a,span,div,table,th,td) {
+  font-family: "Poppins", sans-serif;
+}
+
+body.view-validacion_xtf .content-shell > section {
+  min-height: calc(100vh - 166px);
+  padding: 22px 24px 30px;
+  background: var(--mn-gray);
+  border-radius: 22px;
+}
+
+body.view-validacion_xtf :where(.text-title-header,.title-principal,.title-body h3,.section-title h3,h2,h4,h5,h6) {
+  color: var(--mn-deep) !important;
+}
+
+body.view-validacion_xtf :where(.parrafo-title,.text-muted,.text-secondary) {
+  color: var(--mn-muted) !important;
+}
+
+body.view-validacion_xtf :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea,.form-control,.form-select) {
+  color: var(--mn-deep) !important;
+  background-color: #fff !important;
+  border-color: var(--mn-line) !important;
+  border-radius: 11px !important;
+  box-shadow: none !important;
+}
+
+body.view-validacion_xtf :where(input:not([type="checkbox"]):not([type="radio"]),select,textarea,.form-control,.form-select):focus {
+  border-color: var(--mn-teal) !important;
+  box-shadow: 0 0 0 3px rgba(12,112,111,.13) !important;
+}
+
+body.view-validacion_xtf :where(.btn-primary,.btn-success,.bg-primary,.bg-info) {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+  border-color: transparent !important;
+}
+
+body.view-validacion_xtf :where(.btn-outline-primary,.btn-light) {
+  color: var(--mn-deep) !important;
+  background: #fff !important;
+  border-color: var(--mn-line) !important;
+}
+
+body.view-validacion_xtf :where(.modal-content,.offcanvas,.swal2-popup) {
+  overflow: hidden;
+  color: var(--mn-deep) !important;
+  background: var(--mn-gray) !important;
+  border: 1px solid var(--mn-mint) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 22px 48px rgba(6,54,34,.22) !important;
+}
+
+body.view-validacion_xtf .modal-header {
+  color: #fff !important;
+  background: var(--mn-gradient) !important;
+  border: 0 !important;
+}
+
+body.view-validacion_xtf .modal-header :where(h1,h2,h3,h4,h5,h6,p,span,i) { color: #fff !important; }
+
+body.view-validacion_xtf .validacion-xtf {
+  --validation-navy: var(--mn-deep);
+  --validation-navy-2: var(--mn-green);
+  --validation-blue: var(--mn-sage);
+  --validation-blue-soft: #eef4f0;
+  --validation-blue-line: var(--mn-line);
+  --validation-text: var(--mn-deep);
+  --validation-muted: var(--mn-muted);
+  --validation-border: var(--mn-line);
+  --validation-border-soft: #dde7e1;
+  --validation-success: var(--mn-emerald);
+  background: transparent !important;
+}
+
+body.view-validacion_xtf .validation-page { padding: 8px 4px 24px !important; background: transparent !important; }
+
+body.view-validacion_xtf .dropzone {
+  background: #e3eee8 !important;
+  border-color: #a9c1b5 !important;
+  border-radius: 20px !important;
+}
+
+body.view-validacion_xtf :where(.file-card,.metric-card,.component-card,.summary-card,.rules-card,.component-summary-card,.result-hero,.recommendation-box) {
+  border-color: var(--mn-line) !important;
+  border-radius: 18px !important;
+  box-shadow: var(--mn-shadow) !important;
+}
+
+body.view-validacion_xtf :where(.validation-button,.download-actions a,.download-actions button) {
+  border-radius: 11px !important;
+}
+
+body.view-validacion_xtf :where(.predio-table,.rules-table) {
+  border-collapse: separate !important;
+  border-spacing: 0 6px !important;
+}
+
+body.view-validacion_xtf :where(.predio-table,.rules-table) thead th {
+  color: var(--mn-deep) !important;
+  background: var(--mn-gray) !important;
+  border: 0 !important;
+}
+
+body.view-validacion_xtf :where(.predio-table,.rules-table) tbody td {
+  color: #294c39 !important;
+  background: #fff !important;
+  border-bottom-color: #dce4df !important;
+}
+
+@media (max-width: 991.98px) {
+body.view-validacion_xtf .content-shell > section {
+    padding: 16px 14px 24px;
+    border-radius: 16px;
+  }
+
+}
+
+body.view-validacion_xtf .content-shell > section .card {
+  border-color: var(--mn-line) !important;
+  border-radius: 18px !important;
+}
