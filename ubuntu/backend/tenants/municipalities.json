@@ -1,82 +1,13 @@
 {
   "municipalities": [
     {
-      "code": "sucre",
-      "name": "Sucre",
-      "active": true,
-      "db": {
-        "host": "db",
-        "port": 5432,
-        "db_name": "programacion",
-        "user": "postgres",
-        "password": "Arbitrium2026*",
-        "sslmode": "disable"
-      },
-      "schemas": {
-        "app": "arbimaps_app",
-        "main": "a_base_principal",
-        "work": "b_asignaciones_arb",
-        "history": "c_base_historico"
-      },
-      "wms_base_url": "https://desarrollo.arbimaps.com/geoserver/SUCRE/wms",
-      "geoserver_base_url": "https://desarrollo.arbimaps.com/geoserver",
-      "geoserver_workspace": "SUCRE",
-      "geoserver_layers": "SUCRE:Base_Principal,SUCRE:SUCRE_CARTOGRAFIA"
-    },
-    {
-      "code": "saravena",
-      "name": "Saravena",
-      "active": true,
-      "db": {
-        "host": "db",
-        "port": 5432,
-        "db_name": "programacion",
-        "user": "postgres",
-        "password": "Arbitrium2026*",
-        "sslmode": "disable"
-      },
-      "schemas": {
-        "app": "arbimaps_app",
-        "main": "a_base_principal",
-        "work": "b_asignaciones_arb",
-        "history": "c_cartografia_catastral"
-      },
-      "wms_base_url": "https://desarrollo.arbimaps.com/geoserver/SARAVENA/wms",
-      "geoserver_base_url": "https://desarrollo.arbimaps.com/geoserver",
-      "geoserver_workspace": "SARAVENA",
-      "geoserver_layers": "arb_terreno,arb_terrenohistorico,arb_construccion,arb_unidadconstruccion,SARAVENA:SARAVENA_CARTOGRAFIA"
-    },
-    {
-      "code": "almaguer",
-      "name": "Almaguer",
-      "active": true,
-      "db": {
-        "host": "db",
-        "port": 5432,
-        "db_name": "programacion",
-        "user": "postgres",
-        "password": "Arbitrium2026*",
-        "sslmode": "disable"
-      },
-      "schemas": {
-        "app": "arbimaps_app",
-        "main": "a_base_principal",
-        "work": "b_asignaciones_arb",
-        "history": "c_base_historico"
-      },
-      "wms_base_url": "https://desarrollo.arbimaps.com/geoserver/ALMAGUER/wms",
-      "geoserver_base_url": "https://desarrollo.arbimaps.com/geoserver",
-      "geoserver_workspace": "ALMAGUER",
-      "geoserver_layers": "ALMAGUER:Base_Principal,ALMAGUER:ALMAGUER_CARTOGRAFIA"
-    },
-    {
       "code": "neiva",
       "name": "Neiva",
       "active": true,
       "db": {
         "host": "db",
         "port": 5432,
-        "db_name": "programacion",
+        "db_name": "neiva",
         "user": "postgres",
         "password": "Arbitrium2026*",
         "sslmode": "disable"

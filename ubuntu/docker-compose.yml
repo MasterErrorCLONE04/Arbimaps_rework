@@ -20,7 +20,7 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 5432
-      DB_NAME: programacion
+      DB_NAME: neiva
       DB_USER: postgres
       DB_PASSWORD: Arbitrium2026*
       DB_SSLMODE: prefer
@@ -39,7 +39,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Arbitrium2026*
-      POSTGRES_DB: programacion
+      POSTGRES_DB: neiva
 
 
     ports:

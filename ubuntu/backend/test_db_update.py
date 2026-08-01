@@ -3,7 +3,7 @@ from core.db.connection import get_db_params
 
 def main():
     params = get_db_params()
-    params['dbname'] = 'programacion'
+    params['dbname'] = 'neiva'
     conn = psycopg2.connect(**params)
     try:
         with conn.cursor() as cur:

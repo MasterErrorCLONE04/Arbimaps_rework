@@ -21,7 +21,7 @@ _ARB_DIRECT_PREDIO_TABLES = (
     ("arb_novedadnumeropredialvalor", "arb_predio_novedad_numero_predial"),
     ("arb_referenciaregistralsistemaantiguovalor", "arb_predio_referencia_registral_sistema_antiguo"),
     ("arb_terrenohistorico", "predio"),
-    ("arb_tramite", "predio"),
+    ("arb_predio_tramite", "predio"),
     ("arb_puntoreferencia", "predio"),
     ("arb_terreno", "predio"),
     ("arb_derechointeresadofuente", "predio"),
@@ -41,6 +41,7 @@ _ARB_SCHEMA_PARITY_TABLES = frozenset(
         "arb_unidadconstruccion",
         "arb_caracteristicasunidadconstruccion",
         "arb_adjuntounidadconstruccionvalor",
+        "arb_tramite",
         *[name for name, _ in _ARB_DIRECT_PREDIO_TABLES],
         *[name for name, _, _ in _ARB_ATTACHMENT_SPECS],
     }
@@ -54,6 +55,7 @@ _ARB_TILI_TID_REQUIRED_TABLES = frozenset(
         "arb_puntoreferencia",
         "arb_terreno",
         "arb_derechointeresadofuente",
+        "arb_tramite",
     }
 )
 
@@ -553,6 +555,18 @@ def _prune_workspace_predios_arb(
                 DELETE FROM {_qualify(schema_work, table_name)} t
                 USING _arb_ws_unassigned_predio p
                 WHERE t.{predio_fk} = p.t_id
+                """
+            )
+
+        if has_table("arb_tramite") and has_table("arb_predio_tramite"):
+            cur.execute(
+                f"""
+                DELETE FROM {_qualify(schema_work, 'arb_tramite')} t
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM {_qualify(schema_work, 'arb_predio_tramite')} pt
+                    WHERE pt.tramite = t.t_id
+                )
                 """
             )
 
@@ -1204,6 +1218,14 @@ def _arb_validate_sync_identity_fields(conn, schema_main: str, schema_work: str,
                 SELECT COUNT(*)
                 FROM {_qualify(schema_work, table_name)} t
                 JOIN _arb_sync_predio_map pm ON pm.work_predio_t_id = t.predio
+                WHERE COALESCE(NULLIF(BTRIM(t.t_ili_tid::text), ''), '') = ''
+            """
+        elif table_name == "arb_tramite":
+            count_query = f"""
+                SELECT COUNT(*)
+                FROM {_qualify(schema_work, 'arb_tramite')} t
+                JOIN {_qualify(schema_work, 'arb_predio_tramite')} pt ON pt.tramite = t.t_id
+                JOIN _arb_sync_predio_map pm ON pm.work_predio_t_id = pt.predio
                 WHERE COALESCE(NULLIF(BTRIM(t.t_ili_tid::text), ''), '') = ''
             """
         elif table_name == "arb_unidadconstruccion":
@@ -2296,6 +2318,126 @@ def _arb_sync_construccion_stack(conn, schema_main: str, schema_work: str) -> No
         )
 
 
+def _arb_sync_tramite_stack(conn, schema_main: str, schema_work: str) -> None:
+    existing_main = _schema_table_names(conn, schema_main)
+    existing_work = _schema_table_names(conn, schema_work)
+    if "arb_tramite" not in existing_main or "arb_tramite" not in existing_work:
+        return
+    if "arb_predio_tramite" not in existing_main or "arb_predio_tramite" not in existing_work:
+        return
+
+    with conn.cursor() as cur:
+        # 1. Insert new tramites from work to main schema, matching on t_ili_tid
+        cur.execute(
+            f"""
+            INSERT INTO {_qualify(schema_main, 'arb_tramite')} (
+                t_basket, t_ili_tid, entidad, fecha_radicacion, numero_radicacion, 
+                numero_resolucion, fecha_resolucion, fecha_inscripcion, dato_rectificar, 
+                dato_complementar, fecha_tramite, fecha_aprobacion, tercero_interesado, 
+                codigos_asociados, tipo_pedido_solicitud, numero_tramite_link, asesor, 
+                tramite_asociado_padre, predios_resultantes, considerando, created_user, 
+                created_date, last_user, last_date, aplica_efectos_registrales, 
+                numero_solicitud, numero_tramite, codigo_inicial, tipo_tramite, 
+                tipo_mutacion, subtipo_mutacion, tramite, clasificacion_mutacion, 
+                resuelta, observacion
+            )
+            SELECT DISTINCT
+                bm.main_basket, w.t_ili_tid, w.entidad, w.fecha_radicacion, w.numero_radicacion, 
+                w.numero_resolucion, w.fecha_resolucion, w.fecha_inscripcion, w.dato_rectificar, 
+                w.dato_complementar, w.fecha_tramite, w.fecha_aprobacion, w.tercero_interesado, 
+                w.codigos_asociados, w.tipo_pedido_solicitud, w.numero_tramite_link, w.asesor, 
+                w.tramite_asociado_padre, w.predios_resultantes, w.considerando, w.created_user, 
+                w.created_date, w.last_user, w.last_date, w.aplica_efectos_registrales, 
+                w.numero_solicitud, w.numero_tramite, w.codigo_inicial, w.tipo_tramite, 
+                w.tipo_mutacion, w.subtipo_mutacion, w.tramite, w.clasificacion_mutacion, 
+                w.resuelta, w.observacion
+            FROM {_qualify(schema_work, 'arb_tramite')} w
+            JOIN {_qualify(schema_work, 'arb_predio_tramite')} pt ON pt.tramite = w.t_id
+            JOIN _arb_sync_predio_map pm ON pm.work_predio_t_id = pt.predio
+            LEFT JOIN _arb_sync_basket_map bm ON bm.work_basket = w.t_basket
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM {_qualify(schema_main, 'arb_tramite')} m
+                WHERE m.t_ili_tid = w.t_ili_tid
+            )
+            """
+        )
+
+        # 2. Update existing tramites in main schema
+        cur.execute(
+            f"""
+            UPDATE {_qualify(schema_main, 'arb_tramite')} m
+            SET entidad = w.entidad,
+                fecha_radicacion = w.fecha_radicacion,
+                numero_radicacion = w.numero_radicacion,
+                numero_resolucion = w.numero_resolucion,
+                fecha_resolucion = w.fecha_resolucion,
+                fecha_inscripcion = w.fecha_inscripcion,
+                dato_rectificar = w.dato_rectificar,
+                dato_complementar = w.dato_complementar,
+                fecha_tramite = w.fecha_tramite,
+                fecha_aprobacion = w.fecha_aprobacion,
+                tercero_interesado = w.tercero_interesado,
+                codigos_asociados = w.codigos_asociados,
+                tipo_pedido_solicitud = w.tipo_pedido_solicitud,
+                numero_tramite_link = w.numero_tramite_link,
+                asesor = w.asesor,
+                tramite_asociado_padre = w.tramite_asociado_padre,
+                predios_resultantes = w.predios_resultantes,
+                considerando = w.considerando,
+                last_user = w.last_user,
+                last_date = w.last_date,
+                aplica_efectos_registrales = w.aplica_efectos_registrales,
+                numero_solicitud = w.numero_solicitud,
+                numero_tramite = w.numero_tramite,
+                codigo_inicial = w.codigo_inicial,
+                tipo_tramite = w.tipo_tramite,
+                tipo_mutacion = w.tipo_mutacion,
+                subtipo_mutacion = w.subtipo_mutacion,
+                tramite = w.tramite,
+                clasificacion_mutacion = w.clasificacion_mutacion,
+                resuelta = w.resuelta,
+                observacion = w.observacion
+            FROM {_qualify(schema_work, 'arb_tramite')} w
+            JOIN {_qualify(schema_work, 'arb_predio_tramite')} pt ON pt.tramite = w.t_id
+            JOIN _arb_sync_predio_map pm ON pm.work_predio_t_id = pt.predio
+            WHERE m.t_ili_tid = w.t_ili_tid
+            """
+        )
+
+        # 3. Create temp mapping table _arb_sync_tramite_map
+        cur.execute("DROP TABLE IF EXISTS _arb_sync_tramite_map")
+        cur.execute(
+            f"""
+            CREATE TEMP TABLE _arb_sync_tramite_map AS
+            SELECT w.t_id AS work_tramite_t_id, m.t_id AS main_tramite_t_id
+            FROM {_qualify(schema_work, 'arb_tramite')} w
+            JOIN {_qualify(schema_main, 'arb_tramite')} m ON m.t_ili_tid = w.t_ili_tid
+            """
+        )
+
+        # 4. Delete existing arb_predio_tramite rows in main schema for these predios
+        cur.execute(
+            f"""
+            DELETE FROM {_qualify(schema_main, 'arb_predio_tramite')} pt
+            USING _arb_sync_predio_map pm
+            WHERE pt.predio = pm.main_predio_t_id
+            """
+        )
+
+        # 5. Insert new arb_predio_tramite rows using maps
+        cur.execute(
+            f"""
+            INSERT INTO {_qualify(schema_main, 'arb_predio_tramite')} (t_basket, predio, tramite)
+            SELECT bm.main_basket, pm.main_predio_t_id, tm.main_tramite_t_id
+            FROM {_qualify(schema_work, 'arb_predio_tramite')} pt
+            JOIN _arb_sync_predio_map pm ON pm.work_predio_t_id = pt.predio
+            JOIN _arb_sync_tramite_map tm ON tm.work_tramite_t_id = pt.tramite
+            LEFT JOIN _arb_sync_basket_map bm ON bm.work_basket = pt.t_basket
+            """
+        )
+
+
 def _sync_workspace_arb_to_main(
     conn,
     tenant: TenantContext,
@@ -2331,7 +2473,6 @@ def _sync_workspace_arb_to_main(
         ("arb_novedadnumeropredialvalor", "arb_predio_novedad_numero_predial"),
         ("arb_referenciaregistralsistemaantiguovalor", "arb_predio_referencia_registral_sistema_antiguo"),
         ("arb_terrenohistorico", "predio"),
-        ("arb_tramite", "predio"),
         ("arb_puntoreferencia", "predio"),
         ("arb_terreno", "predio"),
         ("arb_derechointeresadofuente", "predio"),
@@ -2340,6 +2481,7 @@ def _sync_workspace_arb_to_main(
         _arb_replace_direct_child_table(conn, schema_main, schema_work, table_name, predio_fk)
 
     _arb_sync_construccion_stack(conn, schema_main, schema_work)
+    _arb_sync_tramite_stack(conn, schema_main, schema_work)
 
     attachment_specs = [
         ("arb_adjuntofuenteadministrativavalor", "arb_derechointeresadofuente", "arb_derechointersdfnte_fa_adjunto"),

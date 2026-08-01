@@ -3,7 +3,7 @@ import psycopg2
 
 def list_assignments():
     p = get_db_params()
-    p['dbname'] = 'programacion' # sucre DB
+    p['dbname'] = 'neiva' # neiva DB
     conn = psycopg2.connect(**p)
     try:
         with conn.cursor() as cur:
