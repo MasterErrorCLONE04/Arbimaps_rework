@@ -79,15 +79,48 @@ def _load_script_body(*, tenant: TenantContext, schema_work: str) -> str:
     body = text[idx:]
     body = re.sub(r"(?im)^\s*(ROLLBACK|BEGIN|COMMIT)\s*;\s*$", "", body)
 
-    source_schema = _schema_name_from_qualified(main_table(tenant, "ilc_predio"))
+    # Cut off final verification selects at the end
+    idx_verif = body.find("-- 8) Verificación final")
+    if idx_verif >= 0:
+        body = body[:idx_verif]
+
+    from core.asignaciones import get_assignment_model_context
+    model_ctx = get_assignment_model_context()
+    is_arb = (model_ctx.predio_table == "arb_predio")
+
+    # If the database does not have CUC table, bypass the CUC guard block
+    body = body.replace(
+        "INTO v_fk_cal, v_fk_car, v_fk_tipc, v_fk_tipn\n  FROM _fk\n  WHERE child_table='cuc_calificacion_unidadconstruccion';\n\n  IF v_fk_cal IS NULL THEN",
+        "INTO v_fk_cal, v_fk_car, v_fk_tipc, v_fk_tipn\n  FROM _fk\n  WHERE child_table='cuc_calificacion_unidadconstruccion';\n\n  IF NOT EXISTS (\n    SELECT 1 \n    FROM information_schema.tables \n    WHERE table_schema='leiva' \n      AND table_name='cuc_calificacion_unidadconstruccion'\n  ) THEN\n    RETURN;\n  END IF;\n\n  IF v_fk_cal IS NULL THEN"
+    )
+
+    if is_arb:
+        # Exclude all enum/catalog tables from the dynamic FK graph traversal to prevent bleeding and query explosion.
+        # Catalog/enum tables in Arbimaps end with 'tipo'. We do NOT exclude 'valor' tables because they store data (like avaluos, adjuntos).
+        body = body.replace(
+            "AND tc.table_name NOT LIKE 't_ili2db_%'\n  AND ccu.table_name NOT LIKE 't_ili2db_%'",
+            "AND tc.table_name NOT LIKE 't_ili2db_%'\n  AND ccu.table_name NOT LIKE 't_ili2db_%'\n  AND tc.table_name NOT LIKE '%tipo'\n  AND ccu.table_name NOT LIKE '%tipo'"
+        )
+        # Limit recursion loop depth to 5 steps to prevent boundary/tramite mesh bleeding on large datasets
+        body = body.replace("v_iter >= 25", "v_iter >= 5")
+
+    source_schema = _schema_name_from_qualified(main_table(tenant, model_ctx.predio_table))
     target_schema = validate_identifier(schema_work, label="schema_work")
     app_schema = _schema_name_from_qualified(app_table(tenant, "asignacion"))
 
-    replacements = {
-        r"\bleiva\b": source_schema,
-        r"\bb_asignaciones\b": target_schema,
-        r"\barbimaps_app\b": app_schema,
-    }
+    replacements = {}
+    if is_arb:
+        replacements[r"\bilc_predio\b"] = "arb_predio"
+        replacements[r"\bnumero_predial_nacional\b"] = "numero_predial"
+        replacements[r"\bleiva\.ilc_derecho\b"] = f"(SELECT NULL::bigint as t_id, NULL::bigint as unidad, NULL::bigint as t_basket WHERE FALSE)"
+        replacements[r"\bleiva\.col_rrrfuente\b"] = f"(SELECT NULL::bigint as t_id, NULL::bigint as rrr, NULL::bigint as fuente_administrativa, NULL::bigint as t_basket WHERE FALSE)"
+        replacements[r"\bleiva\.col_rrrinteresado\b"] = f"(SELECT NULL::bigint as t_id, NULL::bigint as rrr, NULL::bigint as interesado_cr_agrupacioninteresados, NULL::bigint as interesado_ilc_interesado, NULL::bigint as t_basket WHERE FALSE)"
+        replacements[r"\bleiva\.col_miembros\b"] = f"(SELECT NULL::bigint as t_id, NULL::bigint as agrupacion, NULL::bigint as interesado_ilc_interesado, NULL::bigint as interesado_cr_agrupacioninteresados, NULL::bigint as t_basket WHERE FALSE)"
+
+    replacements[r"\bleiva\b"] = source_schema
+    replacements[r"\bb_asignaciones\b"] = target_schema
+    replacements[r"\barbimaps_app\b"] = app_schema
+
     for pattern, replacement in replacements.items():
         body = re.sub(pattern, replacement, body)
 
@@ -152,19 +185,46 @@ def _validate_workspace_dataset(
     asignacion_id: int,
     seed_count: int,
 ) -> dict:
+    from core.asignaciones import get_assignment_model_context
+    model_ctx = get_assignment_model_context()
+    is_arb = (model_ctx.predio_table == "arb_predio")
+
     safe_schema_work = validate_identifier(schema_work, label="schema_work")
-    predio_table = _qualify(safe_schema_work, "ilc_predio")
+    predio_table = _qualify(safe_schema_work, model_ctx.predio_table)
     basket_table = tenant_table(tenant, "t_ili2db_basket", schema_name="work")
     dataset_table = tenant_table(tenant, "t_ili2db_dataset", schema_name="work")
-    dir_table = _qualify(safe_schema_work, "extdireccion")
-    datos_table = _qualify(safe_schema_work, "ilc_datosadicionaleslevantamientocatastral")
-    derecho_table = _qualify(safe_schema_work, "ilc_derecho")
     asignacion_predio_table = app_table(tenant, "asignacion_predio")
+
+    if is_arb:
+        dir_table = _qualify(safe_schema_work, "arb_direccion")
+        dir_fk_col = "arb_predio_direccion"
+        derecho_table = _qualify(safe_schema_work, "arb_derechointeresadofuente")
+        derecho_fk_col = "predio"
+        npn_col = "numero_predial"
+        datos_subquery = "0 AS predios_datos_invalido"
+    else:
+        dir_table = _qualify(safe_schema_work, "extdireccion")
+        dir_fk_col = "ilc_predio_direccion"
+        derecho_table = _qualify(safe_schema_work, "ilc_derecho")
+        derecho_fk_col = "unidad"
+        npn_col = "numero_predial_nacional"
+        
+        datos_table = _qualify(safe_schema_work, "ilc_datosadicionaleslevantamientocatastral")
+        datos_subquery = f"""(
+                SELECT COUNT(*)
+                FROM (
+                    SELECT p.t_id, COUNT(x.*) AS n
+                    FROM predios p
+                    LEFT JOIN {datos_table} x ON x.ilc_predio = p.t_id
+                    GROUP BY p.t_id
+                    HAVING COUNT(x.*) <> 1
+                ) t
+            ) AS predios_datos_invalido"""
 
     cur.execute(
         f"""
         WITH predios AS (
-            SELECT p.t_id, p.numero_predial_nacional
+            SELECT p.t_id, p.{npn_col} AS numero_predial_nacional
             FROM {predio_table} p
             JOIN {basket_table} b ON b.t_id = p.t_basket
             JOIN {dataset_table} d ON d.t_id = b.dataset
@@ -193,27 +253,18 @@ def _validate_workspace_dataset(
                 FROM (
                     SELECT p.t_id, COUNT(d.*) AS n
                     FROM predios p
-                    LEFT JOIN {dir_table} d ON d.ilc_predio_direccion = p.t_id
+                    LEFT JOIN {dir_table} d ON d.{dir_fk_col} = p.t_id
                     GROUP BY p.t_id
                     HAVING COUNT(d.*) <> 1
                 ) t
             ) AS predios_direccion_invalida,
-            (
-                SELECT COUNT(*)
-                FROM (
-                    SELECT p.t_id, COUNT(x.*) AS n
-                    FROM predios p
-                    LEFT JOIN {datos_table} x ON x.ilc_predio = p.t_id
-                    GROUP BY p.t_id
-                    HAVING COUNT(x.*) <> 1
-                ) t
-            ) AS predios_datos_invalido,
+            {datos_subquery},
             (
                 SELECT COUNT(*)
                 FROM (
                     SELECT p.t_id, COUNT(r.*) AS n
                     FROM predios p
-                    LEFT JOIN {derecho_table} r ON r.unidad = p.t_id
+                    LEFT JOIN {derecho_table} r ON r.{derecho_fk_col} = p.t_id
                     GROUP BY p.t_id
                     HAVING COUNT(r.*) <> 1
                 ) t
@@ -240,7 +291,7 @@ def _validate_workspace_dataset(
               AND ap.activo IS DISTINCT FROM FALSE
         ),
         presentes AS (
-            SELECT DISTINCT p.numero_predial_nacional
+            SELECT DISTINCT p.{npn_col} AS numero_predial_nacional
             FROM {predio_table} p
             JOIN {basket_table} b ON b.t_id = p.t_basket
             JOIN {dataset_table} d ON d.t_id = b.dataset
@@ -340,6 +391,9 @@ def run_insertar_predios_for_asignacion(
             )
             cur.execute(sql_body)
 
+            from core.asignaciones import get_assignment_model_context
+            model_ctx = get_assignment_model_context()
+
             cur.execute(
                 """
                 SELECT count(*)
@@ -348,7 +402,7 @@ def run_insertar_predios_for_asignacion(
                 JOIN {dataset_table} d ON d.t_id = b.dataset
                 WHERE d.datasetname = %s
                 """.format(
-                    predio_table=work_table(tenant, "ilc_predio"),
+                    predio_table=work_table(tenant, model_ctx.predio_table),
                     basket_table=tenant_table(tenant, "t_ili2db_basket", schema_name="work"),
                     dataset_table=tenant_table(tenant, "t_ili2db_dataset", schema_name="work"),
                 ),

@@ -3190,6 +3190,37 @@ def build_workspace_for_assignment(
             detail="La asignacion no tiene dataset de workspace definido.",
         )
 
+    if workspace_ctx.build_strategy == "legacy_sql":
+        result = workspace_sql_service.run_insertar_predios_for_asignacion(
+            conn,
+            tenant,
+            asignacion_id,
+            dataset_name=work_datasetname,
+            schema_work=schema_work,
+        )
+        actualizar_predio_ids_desde_workspace(conn, tenant, asignacion_id)
+        conn.commit()
+
+        predios_dataset = workspace_dataset_total_predio_count(conn, tenant, work_datasetname)
+        predios_asignacion = workspace_dataset_assignment_predio_count(
+            conn,
+            tenant,
+            work_datasetname,
+            asignacion_id,
+        )
+        predios_soporte_extra = max(predios_dataset - predios_asignacion, 0)
+
+        return {
+            "dataset_name": work_datasetname,
+            "checkout_mode": "legacy_sql",
+            "expected_predios": expected_predios,
+            "predios_cargados": predios_dataset,
+            "predios_asignacion": predios_asignacion,
+            "predios_soporte_extra": predios_soporte_extra,
+            "removed_predios": 0,
+            "has_integrity_warnings": predios_soporte_extra > 0 or predios_asignacion != expected_predios,
+        }
+
     if workspace_dataset_exists(conn, tenant, work_datasetname):
         remove_workspace_dataset(conn, tenant, work_datasetname, schema_work)
         conn.commit()
@@ -3414,8 +3445,9 @@ def ensure_workspace_ready_for_export(
             )
 
         try:
-            export_service._run_validate_derecho_with_retry(conn, schema_work, dataset_sql)
-            export_service._run_validate_agrup_with_retry(conn, schema_work, dataset_sql)
+            if workspace_ctx.model_name != "arb":
+                export_service._run_validate_derecho_with_retry(conn, schema_work, dataset_sql)
+                export_service._run_validate_agrup_with_retry(conn, schema_work, dataset_sql)
         except export_service.ExportServiceError as exc:
             safe_log_event(
                 asignacion_id,

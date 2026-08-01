@@ -1,4 +1,4 @@
-﻿-- Runtime contract:
+-- Runtime contract:
 -- _cfg must already exist before this body runs, with:
 --   dataset_name text
 --   npn_list     text[]
@@ -1197,7 +1197,7 @@ SELECT
   base.mx + num.rn,
   (SELECT dataset_id FROM _ds),
   num.topic,
-  CONCAT((SELECT dataset_name FROM _cfg), '_', base.mx + num.rn),
+  md5(CONCAT((SELECT dataset_name FROM _cfg), '_', num.topic, '_', (base.mx + num.rn)::text))::uuid,
   COALESCE(num.attachmentkey, CONCAT((SELECT dataset_name FROM _cfg), '_attach_', base.mx + num.rn)),
   COALESCE(num.domains, '')
 FROM num, base;

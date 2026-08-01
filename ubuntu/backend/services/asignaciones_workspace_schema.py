@@ -71,7 +71,7 @@ def get_workspace_context(
         predio_table=base.predio_table,
         predio_numero_field=base.predio_numero_field,
         required_tables=required_tables,
-        build_strategy="ili2pg_checkout",
+        build_strategy="legacy_sql",
     )
 
 
@@ -121,6 +121,56 @@ def get_workspace_schema_status(
     )
 
 
+def _ensure_workspace_metadata_populated(conn, schema_main: str, schema_work: str) -> None:
+    with conn.cursor() as cur:
+        # Check if t_ili2db_settings exists
+        cur.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = %s
+                  AND table_name = 't_ili2db_settings'
+            )
+            """,
+            (schema_work,),
+        )
+        if not cur.fetchone()[0]:
+            return
+
+        cur.execute(f"SELECT COUNT(*) FROM {schema_work}.t_ili2db_settings;")
+        if cur.fetchone()[0] > 0:
+            return
+
+        meta_tables = [
+            "t_ili2db_attrname",
+            "t_ili2db_classname",
+            "t_ili2db_column_prop",
+            "t_ili2db_inheritance",
+            "t_ili2db_meta_attrs",
+            "t_ili2db_model",
+            "t_ili2db_settings",
+            "t_ili2db_table_prop",
+            "t_ili2db_trafo",
+        ]
+        for table in meta_tables:
+            cur.execute(
+                """
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_schema = %s AND table_name = %s
+                ) AND EXISTS (
+                    SELECT 1 FROM information_schema.tables
+                    WHERE table_schema = %s AND table_name = %s
+                )
+                """,
+                (schema_main, table, schema_work, table),
+            )
+            if cur.fetchone()[0]:
+                cur.execute(f"TRUNCATE TABLE {schema_work}.{table} CASCADE;")
+                cur.execute(f"INSERT INTO {schema_work}.{table} SELECT * FROM {schema_main}.{table};")
+
+
 def ensure_workspace_schema_ready(
     conn,
     tenant: TenantContext,
@@ -130,6 +180,7 @@ def ensure_workspace_schema_ready(
     status = get_workspace_schema_status(conn, tenant, model_context, schema_work)
     context = status.context
     if status.exists and not status.missing_tables:
+        _ensure_workspace_metadata_populated(conn, tenant.schemas.main, context.schema_work)
         return context
 
     required_tables = ", ".join(sorted(context.required_tables))
