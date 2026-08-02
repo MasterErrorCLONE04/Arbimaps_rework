@@ -321,19 +321,32 @@ def _ensure_workspace_enum_tables_populated(conn, tenant: TenantContext, schema_
                 """,
                 (schema_main,)
             )
-            tables = [row[0] for row in cur.fetchall()]
-            if not tables:
+            main_tables = set(row[0] for row in cur.fetchall())
+            if not main_tables:
                 return
 
-            for table in tables:
-                # Verificar si la tabla de destino está vacía
-                cur.execute(f"SELECT COUNT(*) FROM {schema_work}.{table}")
-                count = cur.fetchone()[0]
-                if count == 0:
-                    logger.info("Poblando tabla de enum %s.%s desde %s", schema_work, table, schema_main)
+            # Buscar todas las tablas del esquema de trabajo que terminen en 'tipo'
+            cur.execute(
+                """
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = %s AND table_name LIKE '%%tipo'
+                """,
+                (schema_work,)
+            )
+            work_tables = set(row[0] for row in cur.fetchall())
+
+            # Solo procesar tablas existentes en ambos esquemas
+            tables_to_populate = sorted(list(main_tables.intersection(work_tables)))
+
+            for table in tables_to_populate:
+                try:
+                    logger.info("Sincronizando tabla de enum %s.%s desde %s", schema_work, table, schema_main)
                     cur.execute(f"INSERT INTO {schema_work}.{table} SELECT * FROM {schema_main}.{table} ON CONFLICT DO NOTHING")
+                except Exception as table_err:
+                    logger.warning("Fallo al poblar la tabla enum individual %s.%s: %s", schema_work, table, table_err)
         except Exception as e:
-            logger.warning("Error poblando tablas de dominio en workspace: %s", e)
+            logger.warning("Error general poblando tablas de dominio en workspace: %s", e)
 
 
 def _qualify(schema: str, table: str) -> str:
@@ -3191,6 +3204,7 @@ def build_workspace_for_assignment(
         )
 
     if workspace_ctx.build_strategy == "legacy_sql":
+        _ensure_workspace_enum_tables_populated(conn, tenant, schema_main, schema_work)
         result = workspace_sql_service.run_insertar_predios_for_asignacion(
             conn,
             tenant,
@@ -3407,6 +3421,7 @@ def ensure_workspace_ready_for_export(
     # En b_asignaciones la reconstruccion debe ser completa desde predios seleccionados,
     # usando el SQL de workspace (no checkout parcial por ili2pg).
     if workspace_is_b_asig:
+        _ensure_workspace_enum_tables_populated(conn, tenant, schema_main, schema_work)
         result = workspace_sql_service.run_insertar_predios_for_asignacion(
             conn,
             tenant,
