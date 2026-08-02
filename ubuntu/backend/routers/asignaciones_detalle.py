@@ -267,13 +267,20 @@ def _validate_retorno_xtf_assignment_identity(
         )
 
     if not incoming_set.issubset(expected_set):
-        raise export_service.ExportServiceError(
-            status_code=409,
-            detail=(
-                "El XTF de retorno no corresponde a la asignacion actual. "
-                "Los baskets del archivo no coinciden con el workspace activo de la asignacion."
-            ),
-        )
+        if "arb" in schema_work:
+            logger.warning(
+                "Basket ID mismatch ignored for Arbimaps model: expected %s, got %s",
+                expected_set,
+                incoming_set,
+            )
+        else:
+            raise export_service.ExportServiceError(
+                status_code=409,
+                detail=(
+                    "El XTF de retorno no corresponde a la asignacion actual. "
+                    "Los baskets del archivo no coinciden con el workspace activo de la asignacion."
+                ),
+            )
 
     return {
         "expected_bids": sorted(expected_set),
@@ -2867,14 +2874,14 @@ def _procesar_retorno_xtf(
                     cur.execute("SELECT pg_advisory_xact_lock(%s)", (asignacion_id,))
 
                 target_dataset = retorno_dataset or work_dataset
-                if not publish_to_main:
-                    stage = "replace_workspace_dataset"
-                    workspace_service.remove_workspace_dataset(
-                        conn,
-                        tenant,
-                        work_dataset,
-                        schema_work,
-                    )
+                stage = "replace_workspace_dataset"
+                workspace_service.remove_workspace_dataset(
+                    conn,
+                    tenant,
+                    work_dataset,
+                    schema_work,
+                )
+                conn.commit()
 
                 stage = "ili2pg_import"
                 _ili2pg_import(conn, tenant, schema_work, target_dataset, tmp_path)

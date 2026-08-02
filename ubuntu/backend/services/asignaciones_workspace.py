@@ -733,7 +733,7 @@ def _arb_create_sync_basket_map(conn, schema_main: str, schema_work: str, work_d
             JOIN {_qualify(schema_work, 't_ili2db_dataset')} wd
               ON wd.t_id = wb.dataset
             JOIN {_qualify(schema_main, 't_ili2db_basket')} mb
-              ON BTRIM(mb.t_ili_tid::text) = BTRIM(wb.t_ili_tid::text)
+              ON mb.topic = wb.topic
             WHERE wd.datasetname = %s
             """,
             (work_datasetname,),
@@ -3467,7 +3467,7 @@ def ensure_workspace_ready_for_export(
 
         update_asignacion_fields(
             asignacion_id,
-            estado="EN_TRABAJO",
+            estado="EN_CAMPO" if workspace_ctx.model_name == "arb" else "EN_TRABAJO",
             error_msg=None,
             work_datasetname=dataset_sql,
             predios_soporte_extra=predios_soporte_extra,
@@ -3569,7 +3569,11 @@ def ensure_workspace_ready_for_export(
             ),
         )
 
-    update_asignacion_fields(asignacion_id, estado="EN_TRABAJO", error_msg=None)
+    update_asignacion_fields(
+        asignacion_id,
+        estado="EN_CAMPO" if workspace_ctx.model_name == "arb" else "EN_TRABAJO",
+        error_msg=None,
+    )
     safe_log_event(
         asignacion_id,
         "WORKSPACE_ON_DEMAND",

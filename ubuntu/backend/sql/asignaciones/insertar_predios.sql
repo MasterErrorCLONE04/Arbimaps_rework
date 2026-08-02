@@ -3,6 +3,7 @@
 --   dataset_name text
 --   npn_list     text[]
 
+SET session_replication_role = 'replica';
 
 -- 1) Semilla predios origen
 DROP TABLE IF EXISTS _seed_predios;
@@ -1177,6 +1178,7 @@ END $$;
 WITH topic_meta AS (
   SELECT
     sb.topic,
+    MIN(sb.t_ili_tid) AS t_ili_tid,
     MIN(sb.attachmentkey) AS attachmentkey,
     MIN(sb.domains) AS domains
   FROM _src_baskets x
@@ -1197,7 +1199,7 @@ SELECT
   base.mx + num.rn,
   (SELECT dataset_id FROM _ds),
   num.topic,
-  md5(CONCAT((SELECT dataset_name FROM _cfg), '_', num.topic, '_', (base.mx + num.rn)::text))::uuid,
+  num.t_ili_tid,
   COALESCE(num.attachmentkey, CONCAT((SELECT dataset_name FROM _cfg), '_attach_', base.mx + num.rn)),
   COALESCE(num.domains, '')
 FROM num, base;
@@ -2121,3 +2123,5 @@ JOIN b_asignaciones.t_ili2db_basket b ON b.t_id=c.t_basket
 JOIN b_asignaciones.t_ili2db_dataset d ON d.t_id=b.dataset
 WHERE d.datasetname=(SELECT dataset_name FROM _cfg)
 ORDER BY 1;
+
+SET session_replication_role = 'origin';
