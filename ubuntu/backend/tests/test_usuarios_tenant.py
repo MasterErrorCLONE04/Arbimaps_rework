@@ -13,6 +13,7 @@ from routers.usuarios import (
     listar_equipos_trabajo,
     listar_roles,
     listar_usuarios,
+    listar_asignaciones_usuario,
 )
 from tenants import TenantContext
 from tenants.models import MunicipalityDbConfig, MunicipalitySchemas
@@ -457,3 +458,114 @@ def test_actualizar_usuario_libera_reconocedores_al_demover_coordinador():
     assert any("WHERE NULLIF(TRIM(supervisor), '') = %s::text" in sql for sql in sqls)
     assert conn.commit_calls == 1
     assert conn.rollback_calls == 0
+
+
+def test_listar_usuarios_coordinador_filters_only_self_and_subordinates():
+    tenant = make_tenant(app_schema="arbimaps_app", municipality_code="sucre")
+    conn = FakeConnection(
+        [
+            {
+                "rows": [
+                    {
+                        "id_global": 7,
+                        "username": "coordinador1",
+                        "email": "coord@example.com",
+                        "rol": "coordinador",
+                    }
+                ]
+            }
+        ]
+    )
+
+    result = listar_usuarios({"role_code": "coordinador", "id_global": 7}, tenant, conn)
+
+    sql = conn.cursors[0].executed[0][0]
+    params = conn.cursors[0].executed[0][1]
+    assert result[0]["username"] == "coordinador1"
+    assert "u.id_global = %s" in sql
+    assert params == (7, 7)
+
+
+def test_listar_asignaciones_usuario_coordinador_allows_self():
+    tenant = make_tenant(app_schema="arbimaps_app", municipality_code="sucre")
+    conn = FakeConnection(
+        [
+            {
+                "row": {
+                    "id_global": 7,
+                    "username": "coordinador1",
+                    "rol": "coordinador",
+                    "supervisor": None,
+                }
+            }
+        ]
+    )
+
+    result = listar_asignaciones_usuario(7, {"role_code": "coordinador", "id_global": 7}, tenant, conn)
+    assert result["mostrar_cargas"] is False
+    assert result["pendientes"] == []
+
+
+def test_listar_asignaciones_usuario_coordinador_allows_subordinate():
+    tenant = make_tenant(app_schema="arbimaps_app", municipality_code="sucre")
+    conn = FakeConnection(
+        [
+            {
+                "row": {
+                    "id_global": 21,
+                    "username": "reco1",
+                    "rol": "reconocedor",
+                    "supervisor": "7",
+                }
+            },
+            {
+                "rows": []
+            }
+        ]
+    )
+
+    result = listar_asignaciones_usuario(21, {"role_code": "coordinador", "id_global": 7}, tenant, conn)
+    assert result["mostrar_cargas"] is True
+
+
+def test_listar_asignaciones_usuario_coordinador_denies_other_coordinator():
+    tenant = make_tenant(app_schema="arbimaps_app", municipality_code="sucre")
+    conn = FakeConnection(
+        [
+            {
+                "row": {
+                    "id_global": 8,
+                    "username": "coordinador2",
+                    "rol": "coordinador",
+                    "supervisor": None,
+                }
+            }
+        ]
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        listar_asignaciones_usuario(8, {"role_code": "coordinador", "id_global": 7}, tenant, conn)
+
+    assert exc.value.status_code == 403
+
+
+def test_listar_asignaciones_usuario_coordinador_denies_other_subordinate():
+    tenant = make_tenant(app_schema="arbimaps_app", municipality_code="sucre")
+    conn = FakeConnection(
+        [
+            {
+                "row": {
+                    "id_global": 22,
+                    "username": "reco2",
+                    "rol": "reconocedor",
+                    "supervisor": "9",
+                }
+            }
+        ]
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        listar_asignaciones_usuario(22, {"role_code": "coordinador", "id_global": 7}, tenant, conn)
+
+    assert exc.value.status_code == 403
+

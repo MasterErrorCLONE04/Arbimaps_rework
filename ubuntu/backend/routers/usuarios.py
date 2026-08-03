@@ -598,10 +598,10 @@ def listar_usuarios(
                 WHERE (
                     (LOWER(COALESCE(u.rol, '')) IN ('reconocedor', 'digitalizador')
                      AND NULLIF(TRIM(u.supervisor), '') = %s::text)
-                    OR LOWER(COALESCE(u.rol, '')) = 'coordinador'
+                    OR (LOWER(COALESCE(u.rol, '')) = 'coordinador' AND u.id_global = %s)
                 )
         """
-        params = (_current_user_id(current_user),)
+        params = (_current_user_id(current_user), _current_user_id(current_user))
     try:
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
@@ -813,12 +813,20 @@ def listar_asignaciones_usuario(
             if not usuario:
                 raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-            if (
-                role == "coordinador"
-                and _normalized_role(usuario.get("rol") or "") == "reconocedor"
-                and str(usuario.get("supervisor") or "").strip() != str(_current_user_id(current_user))
-            ):
-                raise HTTPException(status_code=403, detail="No puedes consultar asignaciones de otro equipo.")
+            if role == "coordinador":
+                target_role = _normalized_role(usuario.get("rol") or "")
+                target_supervisor = str(usuario.get("supervisor") or "").strip()
+                current_id = str(_current_user_id(current_user))
+                is_subordinate = (
+                    target_role in {"reconocedor", "digitalizador"}
+                    and target_supervisor == current_id
+                )
+                is_self = str(usuario.get("id_global")) == current_id
+                if not (is_subordinate or is_self):
+                    raise HTTPException(
+                        status_code=403,
+                        detail="No tienes permisos para ver a este usuario o sus asignaciones."
+                    )
 
             user_role = _normalized_role(usuario.get("rol") or "")
             if user_role not in {"reconocedor", "digitalizador"}:
