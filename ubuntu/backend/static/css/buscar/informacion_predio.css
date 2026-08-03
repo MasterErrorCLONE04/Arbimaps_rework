@@ -294,8 +294,8 @@
     font-size: 0.833rem;
 }
 
-.tarjeta-predio {
-    background-color: #021f3c !important;
+.tarjeta-predio1 {
+    background: linear-gradient(202deg, rgba(10, 44, 27, 1) 75%, rgba(27, 64, 1, 1) 95%) !important;
     border-color: none;
     color: white;
     border: none;
@@ -303,10 +303,10 @@
     /* box-shadow: 1px 1px 1px rgba(15, 23, 42, 0.205) !important; */
 }
 
-.icons-bg {
-    background-color: var(--vp-accent);
+.icons-bg1 {
+    background-color: #a8cf8a;
     border-radius: 50%;
-    color: #ffffff;
+    color: #0A2C1B !important;
     width: 53px;
     height: 53px;
     display: flex;
@@ -333,26 +333,26 @@
     color: #ffffff;
 }
 
-.mostrar-id-predio {
+.mostrar-id-predio1 {
     /* background-color: #002f55; */
-    background-color: var(--vp-accent);
+    background-color: #A2C985;
     border-radius: 8px;
     min-width: 200px;
     padding: 10px 18px;
     line-height: 1.1;
-    color: #ffffff;
 }
 
 .text-id-predio {
     font-size: 0.933rem;
-    font-weight: 500;
+    font-weight: 700 !important;
     /* margin-bottom: 4px; */
-    color: #002f55
+    color: #606362 !important;
 }
 
 .num-id-predio {
     font-size: 0.933rem;
     font-weight: 700;
+    color: #0A2C1B;
 }
 
 .text-label-npn {
@@ -450,18 +450,18 @@
     font-size: 0.833rem;
 }
 
-.card-header {
-    background-color: #021f3c !important;
-    border: none;
+.card-header1 {
+    background: linear-gradient(202deg, rgba(10, 44, 27, 1) 75%, rgba(27, 64, 1, 1) 95%) !important;;
+    border: none !important;
     color: white;
 
 }
 
-.tarjeta-visor-predio {
+.tarjeta-visor-predio1 {
     background-color: #F0F6FB !important;
-    border: 1px solid #002f5571 !important;
+    border: none !important;
     border-radius: 18px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.43);
+    /* box-shadow: 0 2px 4px rgba(0, 0, 0, 0.43); */
 }
 
 .resumen-interesado {
@@ -586,7 +586,7 @@
 #tblConsCollapse tbody tr.fila-detalle-unidad.detalle-activo,
 #tblConsCollapse tbody tr.fila-detalle-unidad.detalle-activo td,
 #tblConsCollapse tbody tr.fila-detalle-unidad.detalle-activo .detalle-unidad-contenido {
-    background-color: #F0F6FB !important;
+    background-color: #ffffff !important;
 }
 
 .text-detalle-unidad {
@@ -1102,13 +1102,13 @@
 
 .tex-num {
     color: #002F55;
-    font-size: 0.95rem;
+    font-size: 0.78rem !important;
     text-wrap: wrap;
     font-weight: 600;
 }
 
 .dato_info {
-    font-size: 0.82rem;
+    font-size: 0.79rem;
     margin-top: 1px;
 }
 

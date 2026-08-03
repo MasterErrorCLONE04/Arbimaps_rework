@@ -3699,7 +3699,7 @@ function renderTablaConstruccionesEdit(construcciones = []) {
               <tr class="fila-detalle-unidad">
                   <td colspan="5" class="p-0 border-0">
                       <div class="collapse collapse-detalle-cons-edit" id="${rowId}">
-                          <div class="detalle-unidad-contenido construcc px-2 pt-0 pb-4 ms-4 ">
+                          <div class="detalle-unidad-contenido construcc px-2 pt-0 pb-2 ms-4 ">
                               <div class="row g-1 justify-content-center m-2 mt-0">
 
                                   <div class="col-12 col-md-4">

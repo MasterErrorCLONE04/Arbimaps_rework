@@ -42,14 +42,12 @@ services:
       POSTGRES_PASSWORD: Arbitrium2026*
       POSTGRES_DB: neiva
 
-
     ports:
-      - "5432:5432"
-
+      - "5435:5432"
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      
+
     restart: always
 
 volumes:

@@ -2,39 +2,39 @@
 view = view if view is defined else 'visor' %} {% set limited_assignment_role =
 effective_role in ['digitalizador', 'reconocedor'] %}
 {% set role_labels = {
-  'admin': 'Administrador',
-  'soporte': 'Soporte',
-  'coordinador': 'Coordinador',
-  'reconocedor': 'Reconocedor',
-  'lider_tecnico': 'Líder técnico',
-  'consulta': 'Consulta',
-  'digitalizador': 'Digitalizador / Consolidador'
+'admin': 'Administrador',
+'soporte': 'Soporte',
+'coordinador': 'Coordinador',
+'reconocedor': 'Reconocedor',
+'lider_tecnico': 'Líder técnico',
+'consulta': 'Consulta',
+'digitalizador': 'Digitalizador / Consolidador'
 } %}
 {% set module_labels = {
-  'visor': 'Visor geográfico',
-  'buscar': 'Consulta de predios',
-  'buscar_predio': 'Detalle del predio',
-  'usuarios': 'Usuarios y cuadrillas',
-  'asignaciones': 'Asignaciones',
-  'restriccion_predios': 'Bloqueo de predios',
-  'box_explorer': 'Documentos',
-  'validacion_xtf': 'Validación XTF',
-  'sincronizacion_mergin': 'Sincronización Mergin',
-  'panel_control': 'Panel de control',
-  'solicitudes_asignaciones': 'Solicitudes de asignación',
-  'notificaciones': 'Notificaciones',
-  'edicion_asignaciones': 'Edición de asignaciones'
+'visor': 'Visor geográfico',
+'buscar': 'Consulta de predios',
+'buscar_predio': 'Detalle del predio',
+'usuarios': 'Usuarios y cuadrillas',
+'asignaciones': 'Asignaciones',
+'restriccion_predios': 'Bloqueo de predios',
+'box_explorer': 'Documentos',
+'validacion_xtf': 'Validación XTF',
+'sincronizacion_mergin': 'Sincronización Mergin',
+'panel_control': 'Panel de control',
+'solicitudes_asignaciones': 'Solicitudes de asignación',
+'notificaciones': 'Notificaciones',
+'edicion_asignaciones': 'Edición de asignaciones'
 } %}
 {% set role_display = role_labels.get(effective_role, effective_role|replace('_', ' ')|title) %}
 {% set current_module_display = module_labels.get(view, 'Panel principal') %}
 {% if view == 'asignaciones' %}
-  {% set assignment_module_labels = {
-    'cargas': 'Asignaciones · Cargas de trabajo',
-    'ver': 'Asignaciones · Ver asignaciones',
-    'detalle': 'Asignaciones · Detalle',
-    'editar_predio': 'Asignaciones · Editar predio'
-  } %}
-  {% set current_module_display = assignment_module_labels.get(asig_tab, current_module_display) %}
+{% set assignment_module_labels = {
+'cargas': 'Asignaciones · Cargas de trabajo',
+'ver': 'Asignaciones · Ver asignaciones',
+'detalle': 'Asignaciones · Detalle',
+'editar_predio': 'Asignaciones · Editar predio'
+} %}
+{% set current_module_display = assignment_module_labels.get(asig_tab, current_module_display) %}
 {% endif %}
 <!doctype html>
 <html lang="es">
@@ -49,7 +49,6 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
-
     rel="stylesheet" />
 
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
@@ -121,7 +120,8 @@ effective_role in ['digitalizador', 'reconocedor'] %}
               <img src="{{ rp }}/static/img/brand/marca-neiva.png" alt="" class="brand-watermark" aria-hidden="true" />
               <img src="{{ rp }}/static/img/brand/escudo-neiva.png" alt="Escudo de Neiva" class="brand-crest" />
               <div class="card-info-title">
-                <span class="title-arbi text-white fw-bold d-block mb-0">ARBI<span class="title-arbi-outline">Mapps</span></span>
+                <span class="title-arbi text-white fw-bold d-block mb-0">ARBI<span
+                    class="title-arbi-outline">Mapps</span><span style="font-size: 0.8rem;">Geo</span></span>
                 <span class="brand-city text-white d-block fw-bold">Neiva</span>
                 <span class="brand-description text-white d-block">Aplicativo de Gestión Catastral</span>
               </div>
@@ -138,7 +138,8 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <span>Visor geográfico</span>
               </a>
 
-              <a class="menuBtn sidebar-link {{ 'active' if view in ['buscar', 'buscar_predio'] else '' }}" href="{{ rp }}/panel/buscar">
+              <a class="menuBtn sidebar-link {{ 'active' if view in ['buscar', 'buscar_predio'] else '' }}"
+                href="{{ rp }}/panel/buscar">
                 <i class="bi bi-search"></i>
                 <span>Consultar predio</span>
               </a>
@@ -309,7 +310,9 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   </div>
                   <div class="dropdown-divider m-0"></div>
                   <div class="p-2 text-center">
-                    <a href="{{ rp }}/panel/notificaciones" class="btn btn-link btn-sm text-decoration-none py-1 w-100 fw-semibold" style="color: #0a2c1b; font-size: 0.833rem;">
+                    <a href="{{ rp }}/panel/notificaciones"
+                      class="btn btn-link btn-sm text-decoration-none py-1 w-100 fw-semibold"
+                      style="color: #0a2c1b; font-size: 0.833rem;">
                       Ver todas las notificaciones
                     </a>
                   </div>
@@ -339,7 +342,9 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                       <span>Perfil</span>
                     </button>
                   </li>
-                  <li><hr class="dropdown-divider" /></li>
+                  <li>
+                    <hr class="dropdown-divider" />
+                  </li>
                   <li>
                     <a class="dropdown-item d-flex align-items-center gap-2" href="{{ rp }}/logout-app">
                       <i class="bi bi-box-arrow-right"></i>
@@ -354,7 +359,8 @@ effective_role in ['digitalizador', 'reconocedor'] %}
           <div class="page-shell d-flex flex-column">
             <main class="main flex-grow-1">
               <div class="content-shell h-100 overflow-auto px-0 px-md-1 px-xl-2 pt-1 pb-0">
-                <div class="page-header {% if view == 'visor' or view == 'usuarios' or view == 'restriccion_predios' %}d-none{% endif %}">
+                <div
+                  class="page-header {% if view == 'visor' or view == 'usuarios' or view == 'restriccion_predios' %}d-none{% endif %}">
                   <div>
                   </div>
                 </div>
@@ -433,7 +439,8 @@ effective_role in ['digitalizador', 'reconocedor'] %}
           <span>Visor geográfico</span>
         </a>
 
-        <a class="menuBtn sidebar-link {{ 'active' if view in ['buscar', 'buscar_predio'] else '' }}" href="{{ rp }}/panel/buscar">
+        <a class="menuBtn sidebar-link {{ 'active' if view in ['buscar', 'buscar_predio'] else '' }}"
+          href="{{ rp }}/panel/buscar">
           <span>Documentos</span>
         </a>
 

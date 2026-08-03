@@ -183,7 +183,7 @@ body.view-buscar_predio .vp-map-container,
 body.view-buscar_predio .modal-content,
 body.view-buscar_predio .offcanvas,
 body.view-buscar_predio .uc-accordion-card {
-  border: 1px solid var(--cp-line) !important;
+  /* border: 1px solid var(--cp-line) !important; */
   border-radius: 18px !important;
   box-shadow: var(--cp-shadow) !important;
 }
@@ -262,7 +262,6 @@ body.view-buscar_predio .modal-body,
 body.view-buscar_predio .offcanvas-body,
 body.view-buscar_predio .modal-predio-body { background: var(--cp-gray) !important; }
 body.view-buscar_predio .part-ge,
-body.view-buscar_predio .part-juy,
 body.view-buscar_predio .contenido-visita,
 body.view-buscar_predio .tarjet-row-pot,
 body.view-buscar_predio .tarjet-row-pot-visita,
@@ -332,7 +331,7 @@ body.view-buscar .tabla-predios tbody tr + tr td {
 body.view-buscar_predio .tarjeta-predio.tarjeta-placeholder-superior {
   color: var(--cp-green) !important;
   background: #fff !important;
-  border: 1px solid var(--cp-line) !important;
+  border: 1px solid #0a2c1b1b!important;
   border-radius: 18px !important;
 }
 
@@ -359,7 +358,7 @@ body.view-buscar_predio .table-icon-circle i {
 body.view-buscar_predio .tarjeta-placeholder-superior .btn-eye-predio,
 body.view-buscar_predio .tarjeta-inferior-base .btn-eye-predio {
   color: #fff !important;
-  background: var(--cp-green) !important;
+  background: #0A2C1B !important;
 }
 
 body.view-buscar_predio .tarjeta-placeholder-superior #badgeJuridicoCountContainer {
@@ -389,6 +388,7 @@ body.view-buscar_predio .vp-acc-card,
 body.view-buscar_predio .uc-accordion-card {
   color: #173b29 !important;
   background: #fff !important;
+  border: 1px solid #0a2c1b1b!important;
 }
 
 body.view-buscar_predio .tarjeta-inferior-base .card-header {
@@ -409,11 +409,15 @@ body.view-buscar_predio .modal-header {
   border-radius: 22px 22px 0 0 !important;
 }
 
-body.view-buscar_predio .modal-header .title-part-predio,
+
 body.view-buscar_predio .modal-header h1,
 body.view-buscar_predio .modal-header h2,
 body.view-buscar_predio .modal-header h3 {
   color: #fff !important;
+}
+
+body.view-buscar_predio .modal-header .title-part-predio{
+  color: #0A2C1B !important;
 }
 
 body.view-buscar_predio .modal-body,
@@ -450,7 +454,7 @@ body.view-buscar_predio .part-juy.part-juy-open svg {
 
 body.view-buscar_predio .contenido-visita {
   color: #294c39 !important;
-  background: #f8faf9 !important;
+  background: #FFFF !important;
   border: 1px solid var(--cp-line) !important;
   border-top: 0 !important;
   border-radius: 0 0 16px 16px !important;
@@ -502,11 +506,15 @@ body.view-buscar_predio {
 
 body.view-buscar_predio .tarjeta-predio:not(.tarjeta-placeholder-superior),
 body.view-buscar_predio .card-header,
-body.view-buscar_predio .modal-header,
 body.view-buscar_predio .accordion-button:not(.collapsed),
 body.view-buscar_predio .part-juy,
 body.view-buscar_predio .offcanvas-header-one {
   background: var(--cp-header-gradient) !important;
+}
+
+body.view-buscar_predio .modal-header{
+  background: #eceeed !important;
+  color: #0A2C1B !important;
 }
 
 /* Métricas con los acentos de la paleta, sin perder legibilidad. */
@@ -543,20 +551,16 @@ body.view-buscar_predio .resumen-item-value {
 }
 
 /* Tarjetas secundarias claras y variación suave de iconos. */
-body.view-buscar_predio .tarjeta-placeholder-superior,
-body.view-buscar_predio .tarjeta-inferior-base,
-body.view-buscar_predio .tarjeta-levantamiento {
-  background: var(--cp-soft-gradient) !important;
-}
+
 body.view-buscar_predio .tarjeta-placeholder-superior:nth-child(odd) .icons-bg-menu,
 body.view-buscar_predio .tarjeta-inferior-base:nth-child(odd) .icons-bg-menu {
-  background: var(--cp-mint) !important;
+  background: #A2C985 !important;
 }
 body.view-buscar_predio .tarjeta-placeholder-superior:nth-child(even) .icons-bg-menu,
 body.view-buscar_predio .tarjeta-inferior-base:nth-child(even) .icons-bg-menu {
   background: rgba(165,203,133,.55) !important;
 }
-body.view-buscar_predio .title-part-predio,
+
 body.view-buscar_predio .table-item-label,
 body.view-buscar_predio .table-item-text,
 body.view-buscar_predio .text-label-interesados,
@@ -577,7 +581,7 @@ body.view-buscar_predio #modalInformacionAdicional .modal-content {
   padding: 0;
   overflow: hidden !important;
   box-sizing: border-box;
-  background: #ecefed !important;
+  background: #FFFFFF !important;
   border: 1px solid var(--cp-mint) !important;
   border-radius: 22px !important;
 }
@@ -595,7 +599,7 @@ body.view-buscar_predio .modal-predio-body {
   margin: 0 !important;
   padding: 24px !important;
   box-sizing: border-box;
-  background: #ecefed !important;
+  background: #ffffff !important;
   border-radius: 0 0 20px 20px !important;
 }
 body.view-buscar_predio .modal-predio-divider {
@@ -605,11 +609,11 @@ body.view-buscar_predio .modal-predio-divider {
 /* Sustitución de textos y bloques azules del detalle. */
 body.view-buscar_predio .part-icon {
   color: var(--cp-deep) !important;
-  background: var(--cp-mint) !important;
+  background: #A2C985 !important;
 }
 body.view-buscar_predio .part-ge {
   color: #fff !important;
-  background: linear-gradient(120deg, var(--cp-teal), var(--cp-emerald)) !important;
+  background: linear-gradient(202deg, rgba(10, 44, 27, 1) 75%, rgba(27, 64, 1, 1) 95%) !important;
   border-radius: 12px !important;
 }
 body.view-buscar_predio .part-ge .tit-ge {
@@ -617,8 +621,10 @@ body.view-buscar_predio .part-ge .tit-ge {
 }
 body.view-buscar_predio .dato {
   color: var(--cp-deep) !important;
-  background: linear-gradient(145deg, #f4f6f5, #e7ece9) !important;
-  border: 1px solid rgba(196,213,204,.72) !important;
+  background: #eceeed !important;
+  /* background: linear-gradient(145deg, #f4f6f5, #e7ece9) !important; */
+  /* border: 1px solid rgba(196,213,204,.72) !important; */
+  border: none !important;
   border-radius: 12px !important;
 }
 body.view-buscar_predio .tex-num,
@@ -639,14 +645,15 @@ body.view-buscar_predio .uc-info-value {
 }
 
 body.view-buscar_predio #modalInformacionPredio .accordion-item {
-  border: 1px solid var(--cp-mint) !important;
+  border: none !important;
   border-radius: 16px !important;
   background: #fff !important;
 }
+body.view-buscar_predio .part-juy,
 body.view-buscar_predio #modalInformacionPredio .accordion-button,
 body.view-buscar_predio #modalInformacionPredio .accordion-button.collapsed {
   color: #fff !important;
-  background: var(--cp-header-gradient) !important;
+  background: linear-gradient(202deg, rgba(10, 44, 27, 1) 75%, rgba(27, 64, 1, 1) 95%)!important;
   border: 0 !important;
 }
 body.view-buscar_predio #modalInformacionPredio .accordion-button i,
@@ -655,8 +662,8 @@ body.view-buscar_predio #modalInformacionPredio .accordion-button.collapsed i {
 }
 body.view-buscar_predio #modalInformacionPredio .accordion-body {
   color: var(--cp-deep) !important;
-  background: #f7faf8 !important;
-  border-color: var(--cp-mint) !important;
+  background: #FFFF !important;
+  border-color: 1px solid #0a2c1b3e !important;
 }
 
 body.view-buscar_predio .tabla-modal-interesados thead th,
@@ -679,7 +686,7 @@ body.view-buscar_predio .btn-ver-detalle-uc,
 body.view-buscar_predio .btn-caracteristicas-uc,
 body.view-buscar_predio .vp-map-btn {
   color: #fff !important;
-  background: linear-gradient(135deg, var(--cp-deep), var(--cp-teal)) !important;
+  background: #0A2C1B !important;
   border-color: transparent !important;
 }
 
@@ -716,13 +723,20 @@ body.view-buscar_predio .btn-toggle-detalle-uc {
 
 body.view-buscar_predio #tblConsCollapse tr.fila-detalle-unidad.detalle-activo td,
 body.view-buscar_predio #tblConsCollapse .detalle-unidad-contenido,
+body.view-buscar_predio #tblUnidadConstruccionCard tr.fila-detalle-unidad-card-activa td,
+body.view-buscar_predio #tblUnidadConstruccionCard .detalle-unidad-card-contenido,
+body.view-buscar_predio .fila-detalle-unidad-card-activa td,
+body.view-buscar_predio .detalle-unidad-card-contenido {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  padding-bottom: 0.5rem !important;
+}
+
 body.view-buscar_predio .detalle-relacionado-activo,
 body.view-buscar_predio .detalle-relacionado-activo td,
 body.view-buscar_predio .unidad-relacionada-activa tbody,
 body.view-buscar_predio .unidad-relacionada-activa tbody tr,
 body.view-buscar_predio .unidad-relacionada-activa tbody td,
-body.view-buscar_predio .fila-detalle-unidad-card-activa td,
-body.view-buscar_predio .detalle-unidad-card-contenido,
 body.view-buscar_predio .uc-section-title,
 body.view-buscar_predio .blue-rounded-box {
   background: linear-gradient(145deg, #f4f7f5, #e3ebe6) !important;
