@@ -66,7 +66,6 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   {% endif %} {% if view == 'buscar' or view == 'buscar_predio' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/buscar.css?v=2" />
   <link rel="stylesheet" href="{{ rp }}/static/css/buscar/informacion_predio.css?v=2" />
-  <link rel="stylesheet" href="{{ rp }}/static/css/buscar/tema_neiva.css?v=3" />
   {% endif %} {% if view == 'panel_control' %}
   <link rel="stylesheet" href="{{ rp }}/static/css/panel/panel_control.css" />
   {% endif %} {% if view == 'solicitudes_asignaciones' %}
@@ -113,8 +112,8 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   <div class="container-fluid panel-wrapper px-2 py-2">
     <div class="row g-2 vh-100">
       <aside class="col-lg-3 col-xl-2 d-none d-lg-block h-100 pb-2 pb-xl-4">
-        <div class="sidebar d-flex flex-column mt-1 h-100">
-          <div class="sidebar-top d-flex flex-column h-100">
+        <div class="sidebar d-flex flex-column mt-1 h-100 shadow-sm">
+          <div class="sidebar-top d-flex flex-column shadow-sm h-100">
             <div class="card-info mt-4">
               <span class="brand-status-dot" aria-hidden="true"></span>
               <img src="{{ rp }}/static/img/brand/marca-neiva.png" alt="" class="brand-watermark" aria-hidden="true" />

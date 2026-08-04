@@ -46,7 +46,7 @@
                             <!-- <i class=" fa-solid fa-map-location-dot"></i> -->
                             <svg xmlns="http://www.w3.org/2000/svg"
                               viewBox="0 0 640 512"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
-                              <path fill="#FFFFFF"
+                              <path fill="#0A2C1B"
                                 d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
                             </svg>
                           </div>
@@ -54,7 +54,7 @@
                         <!-- <div class="section-title-card mb-0 fw-bold">Resumen predio</div> -->
                         <!-- NPN -->
                         <div class="h-100 pe-lg-3 border-lg-end">
-                          <p class="d-block fw-bold text-label-npn text-white mb-0">Numero predial:</p>
+                          <p class="d-block fw-bold text-label-npn text-white mb-0">Número predial:</p>
                           <div id="resumenPredioNpn" class="result-npn text-white">
                             {{ npn if npn is defined else "" }}
                           </div>
@@ -143,7 +143,7 @@
 
             <!-- Tarjeta inferior 1 (Información del predio) -->
             <div class="col-6">
-              <div class="card  rounded-4 shadow-sm  h-100 tarjeta-predio tarjeta-placeholder-superior">
+              <div class="card  rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
                 <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100">
                   <div class="d-flex align-items-center gap-2">
 
@@ -172,7 +172,7 @@
             <!-- Tarjeta inferior 1.2 (Información de marcas, novedades y trámites) -->
 
             <div class="col-6">
-              <div class="card  rounded-4 shadow  h-100 tarjeta-predio tarjeta-placeholder-superior">
+              <div class="card  rounded-4 shadow-sm  h-100 tarjeta-predio tarjeta-placeholder-superior">
                 <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100">
                   <div class="d-flex align-items-center gap-2">
 
@@ -198,7 +198,7 @@
 
             <!-- Tarjeta inferior 2 -->
             <div class="col-12">
-              <div class="card rounded-4 shadow  h-100 tarjeta-predio tarjeta-placeholder-superior">
+              <div class="card rounded-4 shadow-sm  h-100 tarjeta-predio tarjeta-placeholder-superior">
                 <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100">
                   <div class="d-flex align-items-center gap-2">
 
@@ -241,7 +241,7 @@
 
         <!-- Columna derecha -->
         <div class="col-12 col-xl-4">
-          <div class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio1 h-100 d-flex flex-column">
+          <div class="rounded-4 overflow-hidden shadow border tarjeta-visor-predio1 h-100 d-flex flex-column">
             <div class="card-header1  p-0 rounded-top-4 py-2">
               <div class="d-flex align-items-start gap-2 px-3 py-2">
                 <span class="lh-1 mt-2 me-2"><i class="bi bi-crosshair"></i></span>
@@ -274,7 +274,7 @@
 
             <!-- Tarjeta: Información de construcciones -->
             <div class="col-12 col-md-6 d-flex">
-              <div class="card  border-0 shadow rounded-4  w-100 d-flex flex-column tarjeta-inferior-base h-100 ">
+              <div class="card  border-0 shadow-sm rounded-4  w-100 d-flex flex-column tarjeta-inferior-base h-100 ">
                 <div class="card-body d-flex flex-column h-100">
                   <div class="d-flex justify-content-between align-items-center mt-1  ">
                     <div class="d-flex align-items-start gap-2 flex-grow-1">
@@ -330,7 +330,7 @@
 
             <!-- Tarjeta: Unidad de construcción -->
             <div class="col-12 col-md-6 d-flex">
-              <div class="card border-0  shadow rounded-4 w-100 d-flex flex-column tarjeta-inferior-base"
+              <div class="card border-0  shadow-sm rounded-4 w-100 d-flex flex-column tarjeta-inferior-base"
                 id="cardUnidadConstruccion">
                 <div class="card-body d-flex flex-column">
                   <div class="encabezado-unidad-construccion  h-100 ">
@@ -405,13 +405,12 @@
   <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-lg-down">
     <div class="modal-content rounded-4 border-0 shadow modal-predio-content">
 
-      <div class="modal-header border-0 d-flex justify-content-between align-items-center"
-        style="background-color: #fff;">
+      <div class="modal-header border-0 d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-3">
           <div class="part-icon d-inline-flex justify-content-center align-items-center rounded-circle p-2">
             <i class="fa-solid fa-location-dot icono-predio"></i>
           </div>
-          <div class="title-part-predio mb-0">
+          <div class="title-part-predio mb-0 text-white">
             Información tabla predio
           </div>
         </div>
@@ -1142,7 +1141,7 @@
   aria-labelledby="panelDerechoPredioLabel" style="--bs-offcanvas-width: 55vw;">
 
   <!-- header -->
-  <div class="offcanvas-header-one rounded-top-4 p-4" style="border-bottom:3px solid #092c1c85 ;">
+  <div class="offcanvas-header-one rounded-top-4 p-4">
     <div class="d-flex align-items-center justify-content-between w-100 gap-3 flex-wrap">
       <button type="button" class="d-inline-flex align-items-center gap-2 border-0 px-3 py-2 text-white boton-jdk"
         data-bs-dismiss="offcanvas" aria-label="Cerrar panel lateral" style="background-color: #092c1c;">
@@ -1151,7 +1150,7 @@
       </button>
 
       <div class="d-flex align-items-center gap-3 flex-grow-1 justify-content-end">
-        <div id="panelDerechoPredioLabel" class="title-part-predio mb-0 text-center">
+        <div id="panelDerechoPredioLabel" class="title-part-predio mb-0 text-center text-white">
           Información de derechos y fuente administrativa
         </div>
       </div>
@@ -1173,7 +1172,7 @@
 
     <!-- contenido -->
     <div class="container-fluid  ">
-      <div class="row ">
+      <div class="row bg-white">
         <!-- encabezado secciones -->
         <div class="content-hearder-ops py-3 overflow-hidden mt-0">
           <div class="container-fluid px-0">
@@ -1201,28 +1200,28 @@
               <div class="row g-4">
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Fecha inicio de tenencia</div>
+                    <div class="text-start tex-num">Fecha inicio de tenencia:</div>
                     <div class="text-end dato_info" id="derechoFechaInicio">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Tipo de derecho</div>
+                    <div class="text-start tex-num">Tipo de derecho:</div>
                     <div class="text-end dato_info" id="derechoTipo">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Posesión ancestral o tradicional</div>
+                    <div class="text-start tex-num">Posesión ancestral o tradicional:</div>
                     <div class="text-end dato_info" id="derechoPosesion">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Participación</div>
+                    <div class="text-start tex-num">Participación:</div>
                     <div class="text-end dato_info" id="derechoParticipacion">----</div>
                   </div>
                 </div>
@@ -1243,76 +1242,76 @@
         </div>
 
         <!-- columna derecha -->
-        <div class="col-12 col-md-6  ">
+        <div class="col-12 col-md-6" style="border-left: 1px solid #092c1c0e;">
           <div class="card border-0 rounded-4 h-100">
             <div class="card-body">
 
               <div class="row g-4">
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Tipo de fuente administrativa</div>
+                    <div class="text-start tex-num">Tipo de fuente administrativa:</div>
                     <div class="text-end dato_info" id="fuenteTipo">----</div>
                   </div>
                 </div>
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Naturaleza Jurídica</div>
+                    <div class="text-start tex-num">Naturaleza Jurídica:</div>
                     <div class="text-end dato_info" id="fuenteNaturalezaJuridica">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Código Naturaleza Jurídica</div>
+                    <div class="text-start tex-num">Código Naturaleza Jurídica:</div>
                     <div class="text-end dato_info" id="fuenteCodigoNaturalezaJuridica">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Fecha documento fuente </div>
+                    <div class="text-start tex-num">Fecha documento fuente:</div>
                     <div class="text-end dato_info" id="fuenteFechaDocumento">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Número fuente</div>
+                    <div class="text-start tex-num">Número fuente:</div>
                     <div class="text-end dato_info" id="fuenteNumero">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Ente Emisor</div>
+                    <div class="text-start tex-num">Ente Emisor:</div>
                     <div class="text-end dato_info" id="fuenteEnteEmisor">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Oficina de origen</div>
+                    <div class="text-start tex-num">Oficina de origen:</div>
                     <div class="text-end dato_info" id="fuenteOficinaOrigen">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Nombre (Escritura)</div>
+                    <div class="text-start tex-num">Nombre (Escritura):</div>
                     <div class="text-end dato_info" id="fuenteNombre">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Ciudad de origen</div>
+                    <div class="text-start tex-num">Ciudad de origen:</div>
                     <div class="text-end dato_info" id="fuenteCiudadOrigen">----</div>
                   </div>
                 </div>
 
                 <div class="col-12">
                   <div class="d-flex justify-content-between align-items-start">
-                    <div class="text-start tex-num">Estado disponibilidad</div>
+                    <div class="text-start tex-num">Estado disponibilidad:</div>
                     <div class="text-end dato_info" id="fuenteEstadoDisponibilidad">----</div>
                   </div>
                 </div>
@@ -1453,7 +1452,7 @@
                 <div class="col-12">
                   <div class="border rounded-4 overflow-hidden bg-white">
                     <div class="text-start tex-num p-2 px-3 text-white rounded-4 rounded-bottom-0"
-                      style="background-color: #092c1c;">
+                      style="background-color: #154b31;">
                       Observaciones
                     </div>
                     <div class="d-flex justify-content-center align-items-center text-center py-4">
@@ -2378,7 +2377,7 @@
 
     interesadosModalData = interesados;
 
-    console.log(interesadosModalData);
+    //console.log(interesadosModalData);
 
     tbody.innerHTML = interesados.map((item, index) => `
     
@@ -2425,8 +2424,8 @@
         <td colspan="5" class="p-0 border-0">
           <div class="collapse" id="detalleInteresado_${index}">
             <div class="p-4 border-top detalle-interesado-contenido text-white" style="background-color:#092c1c !important; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;" >
-              <div class="tarjet-infop d-inline-block w-75 px-3 py-2 rounded-3" style="margin-left:12.5% !important">
-                <div class="text-white text-center mb-0 text-infort">Información personal</div>
+              <div class="tarjet-infop d-inline-block w-100 px-3 py-2" >
+                <div class=" text-center mb-0 text-infort fw-bold">Información personal</div>
               </div>
               <div class="row mt-4 w-100 mx-0">
                 <div class="col-12 col-md-6 pe-md-5">
@@ -2435,34 +2434,30 @@
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Razón Social</div>
-                        <div class="text-end mb-0 dato_info">${item.razonSocial || "---"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.razonSocial || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Tipo de documento</div>
-                        <div class="text-end mb-0 dato_info">${item.tipoDocumentoNombre || "---"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.tipoDocumentoNombre || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Documento de identidad</div>
-                        <div class="text-end mb-0 dato_info">${item.documentoIdentidad || "---"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.documentoIdentidad || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Grupo Étnico</div>
-                        <div class="text-end mb-0 dato_info">${item.grupoEtnicoNombre || "---"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.grupoEtnicoNombre || "---"}</div>
                       </div>
                     </div>
-
-                    
-
-                    
 
                   </div>
                 </div>
@@ -2473,36 +2468,36 @@
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Autorreconocimiento étnico</div>
-                        <div class="text-end mb-0 dato_info">${item.autorreconocimientoEtnico ? "Sí" : "No"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.autorreconocimientoEtnico ? "Sí" : "No"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Nombre de la comunidad</div>
-                        <div class="text-end mb-0 dato_info">${item.ie_nombre_comunidad || "---"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.ie_nombre_comunidad || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Nombre del pueblo</div>
-                        <div class="text-end mb-0 dato_info">${item.ie_nombre_pueblo_nombre || item.ie_nombre_pueblo || "---"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.ie_nombre_pueblo_nombre || item.ie_nombre_pueblo || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Autorreconocimiento campesino</div>
-                        <div class="text-end mb-0 dato_info">${item.autorreconocimientoCampesino ? "Sí" : "No"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.autorreconocimientoCampesino ? "Sí" : "No"}</div>
                       </div>
                     </div>
                     
                   </div>
                 </div>
               </div>
-              <div class="tarjet-infop d-inline-block w-75 px-3 py-2 rounded-3 mt-5" style="margin-left:12.5% !important">
-                <div class="text-white text-center mb-0 text-infort">Información de contacto</div>
+              <div class="tarjet-infop d-inline-block w-100 px-3 py-2 mt-4 ">
+                <div class=" text-center mb-0 fw-bold text-infort">Información de contacto</div>
               </div>
               <div class="row mt-4 w-100 mx-0">
                 <div class="col-12 col-md-6 pe-md-5">
@@ -2510,28 +2505,28 @@
                     <div class="col-12">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Departamento de residencia</div>
-                        <div class="text-end mb-0 dato_info">${item.ic_departamento || "Sin dato"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.ic_departamento || "Sin dato"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Teléfono</div>
-                        <div class="text-end mb-0 dato_info">${item.ic_telefono || "---"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.ic_telefono || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Municipio de residencia</div>
-                        <div class="text-end mb-0 dato_info">${item.ic_municipio || "---"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.ic_municipio || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Correo electrónico</div>
-                        <div class="text-end mb-0 dato_info">${item.ic_correo_electronico || "---"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.ic_correo_electronico || "---"}</div>
                       </div>
                     </div>
                   </div>
@@ -2542,21 +2537,21 @@
                     <div class="col-12">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">Domicilio de notificación</div>
-                        <div class="text-end mb-0 dato_info">${item.ic_domicilio_notificacion || "---"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.ic_domicilio_notificacion || "---"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="text-start text-lojh mb-0">¿Autoriza notificación de correo?</div>
-                        <div class="text-end mb-0 dato_info">${item.autorizaNotificacionCorreo ? "Sí" : "No"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.autorizaNotificacionCorreo ? "Sí" : "No"}</div>
                       </div>
                     </div>
 
                     <div class="col-12 mt-4">
                       <div class="d-flex justify-content-between align-items-center w-100">
                         <div class="fw-bold text-start text-lojh mb-0">Dirección de residencia</div>
-                        <div class="text-end mb-0 dato_info">${item.ic_direccion_residencia || "---"}</div>
+                        <div class="text-end mb-0 dato_info2">${item.ic_direccion_residencia || "---"}</div>
                       </div>
                     </div>
                   </div>
@@ -2808,7 +2803,7 @@
 
     const unidades = [...unidadesReales];
 
-    console.log(unidades);
+    // console.log(unidades);
 
     if (!unidades.length) {
       tbody.innerHTML = `
@@ -2914,7 +2909,7 @@
                 </div>
 
                 <div class="col-12 col-lg-4">
-                  <div class="detalle-uc-acciones d-flex justify-content-center align-items-center  py-3">
+                  <div class="detalle-uc-acciones d-flex justify-content-end align-items-center  py-3">
                     <button
                       type="button"
                       class="btn btn-caracteristicas-uc"
