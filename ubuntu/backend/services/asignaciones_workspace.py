@@ -502,6 +502,29 @@ def _prune_workspace_predios_arb(
             new_informal_sql = _arb_new_informal_predio_condition_sql(conn, schema_work, alias="p")
             keep_new_filter = f" AND NOT {new_informal_sql}"
 
+        has_matriz_table = "arb_estructuraprediomatriznpn" in existing_tables
+        has_origen_table = "arb_estructurapredioorigennpn" in existing_tables
+
+        matriz_origen_sql = ""
+        if has_matriz_table:
+            matriz_origen_sql += f"""
+                OR EXISTS (
+                    SELECT 1
+                    FROM "{schema_work}".arb_estructuraprediomatriznpn pm
+                    WHERE pm.arb_predio_estructuraprediomatriznpn = p.t_id
+                      AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(pm.numero_predial_nacional::text)
+                )
+            """
+        if has_origen_table:
+            matriz_origen_sql += f"""
+                OR EXISTS (
+                    SELECT 1
+                    FROM "{schema_work}".arb_estructurapredioorigennpn po
+                    WHERE po.arb_predio_estructurapredioorigennpn = p.t_id
+                      AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(po.numero_predial_nacional::text)
+                )
+            """
+
         cur.execute("DROP TABLE IF EXISTS _arb_ws_unassigned_predio")
         asignacion_predio_table = app_table(tenant, "asignacion_predio")
         cur.execute(
@@ -517,7 +540,10 @@ def _prune_workspace_predios_arb(
                   FROM {asignacion_predio_table} ap
                   WHERE ap.asignacion_id = %s
                     AND ap.activo IS DISTINCT FROM FALSE
-                    AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
+                    AND (
+                        BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
+                        {matriz_origen_sql}
+                    )
               )
               {keep_new_filter}
             """,
