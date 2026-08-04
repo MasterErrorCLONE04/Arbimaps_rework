@@ -511,7 +511,7 @@ def _prune_workspace_predios_arb(
                 OR EXISTS (
                     SELECT 1
                     FROM "{schema_work}".arb_estructuraprediomatriznpn pm
-                    WHERE pm.arb_predio_estructuraprediomatriznpn = p.t_id
+                    WHERE pm.predio = p.t_id
                       AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(pm.numero_predial_nacional::text)
                 )
             """
@@ -520,7 +520,7 @@ def _prune_workspace_predios_arb(
                 OR EXISTS (
                     SELECT 1
                     FROM "{schema_work}".arb_estructurapredioorigennpn po
-                    WHERE po.arb_predio_estructurapredioorigennpn = p.t_id
+                    WHERE po.predio = p.t_id
                       AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(po.numero_predial_nacional::text)
                 )
             """
