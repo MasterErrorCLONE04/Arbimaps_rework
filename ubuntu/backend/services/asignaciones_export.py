@@ -3957,6 +3957,7 @@ def ili2pg_import(
             "--dataset",
             datasetname,
             "--disableValidation",
+            "--trace",
             xtf_path,
         ],
         ili2pg_cmd=ili2pg_cmd,

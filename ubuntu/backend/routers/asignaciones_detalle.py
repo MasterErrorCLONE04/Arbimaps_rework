@@ -697,6 +697,45 @@ def _error_detail(exc: Exception) -> str:
     return str(exc) or exc.__class__.__name__
 
 
+def _reorder_xtf_predios(xml_path: str):
+    import xml.etree.ElementTree as ET
+    try:
+        ET.register_namespace('', 'http://www.interlis.ch/INTERLIS2.3')
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        
+        datasection = root.find('{http://www.interlis.ch/INTERLIS2.3}DATASECTION')
+        if datasection is None:
+            return
+            
+        for basket in datasection:
+            import uuid
+            new_bid = str(uuid.uuid4())
+            basket.set('BID', new_bid)
+            children = list(basket)
+            if not children:
+                continue
+                
+            predio_elements = []
+            other_elements = []
+            for child in children:
+                if child.tag.endswith('.ARB_Predio'):
+                    predio_elements.append(child)
+                else:
+                    other_elements.append(child)
+                    
+            if predio_elements:
+                del basket[:]
+                for elem in predio_elements:
+                    basket.append(elem)
+                for elem in other_elements:
+                    basket.append(elem)
+                    
+        tree.write(xml_path, encoding='UTF-8', xml_declaration=True)
+    except Exception as e:
+        logger.warning("Error reordering XTF predios: %s", e)
+
+
 def _build_retorno_datasetname(work_datasetname: str, version: int) -> str:
     base = (work_datasetname or "").strip()
     if not base:
@@ -2772,6 +2811,8 @@ def _procesar_retorno_xtf(
     retorno_id: Optional[int] = None
     retorno_version: Optional[int] = None
     retorno_dataset: Optional[str] = None
+    has_backup = False
+    backup_dataset = ""
     removed_predios = 0
     removed_assignment_predios = 0
     removed_assignment_preview: List[str] = []
@@ -2874,14 +2915,23 @@ def _procesar_retorno_xtf(
                     cur.execute("SELECT pg_advisory_xact_lock(%s)", (asignacion_id,))
 
                 target_dataset = retorno_dataset or work_dataset
-                stage = "replace_workspace_dataset"
-                workspace_service.remove_workspace_dataset(
-                    conn,
-                    tenant,
-                    work_dataset,
-                    schema_work,
-                )
+                stage = "backup_existing_dataset"
+                backup_dataset = f"{work_dataset}_backup_{int(time.time())}"
+                with conn.cursor() as cur:
+                    cur.execute(
+                        f"UPDATE {_qident(schema_work)}.t_ili2db_dataset SET datasetname = %s WHERE datasetname = %s",
+                        (backup_dataset, work_dataset),
+                    )
+                    if cur.rowcount > 0:
+                        has_backup = True
+                        cur.execute(
+                            f"UPDATE {_qident(schema_work)}.t_ili2db_basket SET t_ili_tid = t_ili_tid || '_backup' WHERE dataset IN (SELECT t_id FROM {_qident(schema_work)}.t_ili2db_dataset WHERE datasetname = %s)",
+                            (backup_dataset,),
+                        )
                 conn.commit()
+
+                stage = "reorder_xtf_predios"
+                _reorder_xtf_predios(tmp_path)
 
                 stage = "ili2pg_import"
                 _ili2pg_import(conn, tenant, schema_work, target_dataset, tmp_path)
@@ -3253,6 +3303,14 @@ def _procesar_retorno_xtf(
                         mensaje,
                         usuario,
                     )
+                if has_backup:
+                    stage = "remove_backup_dataset"
+                    workspace_service.remove_workspace_dataset(
+                        conn,
+                        tenant,
+                        backup_dataset,
+                        schema_work,
+                    )
                 stage = "commit_sync_pipeline"
                 conn.commit()
             except Exception:
@@ -3276,6 +3334,33 @@ def _procesar_retorno_xtf(
             },
         )
     except Exception as exc:
+        if has_backup:
+            try:
+                with connection_manager.connection(tenant) as conn_restore:
+                    conn_restore.autocommit = False
+                    try:
+                        workspace_service.remove_workspace_dataset(
+                            conn_restore,
+                            tenant,
+                            work_dataset,
+                            schema_work,
+                        )
+                        with conn_restore.cursor() as cur:
+                            cur.execute(
+                                f"UPDATE {_qident(schema_work)}.t_ili2db_basket SET t_ili_tid = REPLACE(t_ili_tid, '_backup', '') WHERE dataset IN (SELECT t_id FROM {_qident(schema_work)}.t_ili2db_dataset WHERE datasetname = %s)",
+                                (backup_dataset,),
+                            )
+                            cur.execute(
+                                f"UPDATE {_qident(schema_work)}.t_ili2db_dataset SET datasetname = %s WHERE datasetname = %s",
+                                (work_dataset, backup_dataset),
+                            )
+                        conn_restore.commit()
+                    except Exception as restore_err:
+                        conn_restore.rollback()
+                        logger.error("Failed to restore backup dataset: %s", restore_err)
+            except Exception:
+                pass
+
         try:
             with connection_manager.connection(tenant) as conn_log:
                 conn_log.autocommit = False
