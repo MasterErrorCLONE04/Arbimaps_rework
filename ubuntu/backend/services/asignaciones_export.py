@@ -3902,6 +3902,41 @@ def ili2pg_import(
         # con otras asignaciones que se procesan en paralelo.
         _arb_disable_workspace_unique_constraints(conn, tenant, safe_schema)
 
+    # Sincronizar la secuencia t_ili2db_seq con el valor máximo de t_id antes de importar con ili2pg
+    with conn.cursor() as cur:
+        cur.execute(f"""
+            DO $$
+            DECLARE
+              r record;
+              v_max_id bigint := 0;
+              v_table_max bigint;
+            BEGIN
+              FOR r IN
+                SELECT table_name
+                FROM information_schema.columns
+                WHERE table_schema = '{safe_schema}'
+                  AND column_name = 't_id'
+              LOOP
+                EXECUTE format('SELECT COALESCE(MAX(t_id), 0) FROM "{safe_schema}".%I', r.table_name) INTO v_table_max;
+                IF v_table_max > v_max_id THEN
+                  v_max_id := v_table_max;
+                END IF;
+              END LOOP;
+
+              IF v_max_id > 0 AND EXISTS (
+                SELECT 1 FROM pg_class c
+                JOIN pg_namespace n ON n.oid = c.relnamespace
+                WHERE n.nspname = '{safe_schema}' AND c.relname = 't_ili2db_seq' AND c.relkind = 'S'
+              ) THEN
+                PERFORM setval('"{safe_schema}".t_ili2db_seq', v_max_id);
+              END IF;
+            END $$;
+        """)
+
+    # Confirmar los cambios de la secuencia y desactivación de constraints
+    # para que sean visibles al proceso externo e independiente ili2pg.
+    conn.commit()
+
     db = _tenant_tool_db_params(tenant)
     run_ili2pg(
         [
@@ -3922,6 +3957,7 @@ def ili2pg_import(
             "--dataset",
             datasetname,
             "--disableValidation",
+            "--trace",
             xtf_path,
         ],
         ili2pg_cmd=ili2pg_cmd,

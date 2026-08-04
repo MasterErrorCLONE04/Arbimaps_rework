@@ -2124,4 +2124,32 @@ JOIN b_asignaciones.t_ili2db_dataset d ON d.t_id=b.dataset
 WHERE d.datasetname=(SELECT dataset_name FROM _cfg)
 ORDER BY 1;
 
+-- Sincronizar la secuencia t_ili2db_seq con el valor máximo de t_id en todo el esquema
+DO $$
+DECLARE
+  r record;
+  v_max_id bigint := 0;
+  v_table_max bigint;
+BEGIN
+  FOR r IN
+    SELECT table_name
+    FROM information_schema.columns
+    WHERE table_schema = 'b_asignaciones'
+      AND column_name = 't_id'
+  LOOP
+    EXECUTE format('SELECT COALESCE(MAX(t_id), 0) FROM b_asignaciones.%I', r.table_name) INTO v_table_max;
+    IF v_table_max > v_max_id THEN
+      v_max_id := v_table_max;
+    END IF;
+  END LOOP;
+
+  IF v_max_id > 0 AND EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'b_asignaciones' AND c.relname = 't_ili2db_seq' AND c.relkind = 'S'
+  ) THEN
+    PERFORM setval('b_asignaciones.t_ili2db_seq', v_max_id);
+  END IF;
+END $$;
+
 SET session_replication_role = 'origin';

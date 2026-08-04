@@ -202,7 +202,14 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                     temp_conn.autocommit = True
                     with temp_conn.cursor() as temp_cur:
                         # 1. Asegurar asignacion_evento
-                        for val in ["WORKSPACE_READY", "WORKSPACE_READY_WARN", "PAQUETE_JOB_CREADO", "PAQUETE_JOB_DONE", "PAQUETE_JOB_ERROR", "ERROR", "ESTADO_CAMBIADO", "REASIGNADA", "CERRADA", "ASIGNADA", "WORKSPACE_EN_COLA", "WORKSPACE_OMITIDO", "WORKSPACE_CLEANUP_ERROR"]:
+                        for val in [
+                            "WORKSPACE_READY", "WORKSPACE_READY_WARN", "PAQUETE_JOB_CREADO", "PAQUETE_JOB_DONE", 
+                            "PAQUETE_JOB_ERROR", "ERROR", "ESTADO_CAMBIADO", "REASIGNADA", "CERRADA", "ASIGNADA", 
+                            "WORKSPACE_EN_COLA", "WORKSPACE_OMITIDO", "WORKSPACE_CLEANUP_ERROR",
+                            "PUBLICACION_MAIN", "CARGA_WORKSPACE", "RETORNO_XTF_CARGADO", "RETORNO_XTF_IMPORTADO", 
+                            "RETORNO_XTF_VALIDACION_REGLAS", "RETORNO_XTF_VALIDADO", "RETORNO_PREDIOS_ELIMINADOS",
+                            "RETORNO_XTF_VALIDACION_ERROR", "SINCRONIZADO_MAIN", "EDICION_PREDIO_GUARDADA"
+                        ]:
                             temp_cur.execute(
                                 """
                                 SELECT 1 FROM pg_enum 
@@ -618,15 +625,38 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                 work_schema = getattr(tenant.schemas, "work", work_schema)
 
             for schema in [main_schema, work_schema]:
-                try:
-                    cur.execute(f"ALTER TABLE {schema}.arb_predio ADD COLUMN IF NOT EXISTS control_calidad text")
-                    cur.execute(f"ALTER TABLE {schema}.arb_predio ADD COLUMN IF NOT EXISTS valido_control_calidad boolean")
-                except Exception as e:
-                    logger.warning("Fallo agregar columnas control_calidad a %s.arb_predio: %s", schema, e)
-                try:
-                    cur.execute(f"ALTER TABLE {schema}.arb_tramite ADD COLUMN IF NOT EXISTS predio bigint REFERENCES {schema}.arb_predio(t_id) DEFERRABLE INITIALLY DEFERRED")
-                except Exception as e:
-                    logger.warning("Fallo agregar columna predio a %s.arb_tramite: %s", schema, e)
+                cur.execute(
+                    """
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_schema = %s AND table_name = 'arb_predio' AND column_name IN ('control_calidad', 'valido_control_calidad')
+                    """,
+                    (schema,),
+                )
+                existing_cols = {row[0] for row in cur.fetchall()}
+
+                if 'control_calidad' not in existing_cols or 'valido_control_calidad' not in existing_cols:
+                    try:
+                        if 'control_calidad' not in existing_cols:
+                            cur.execute(f"ALTER TABLE {schema}.arb_predio ADD COLUMN IF NOT EXISTS control_calidad text")
+                        if 'valido_control_calidad' not in existing_cols:
+                            cur.execute(f"ALTER TABLE {schema}.arb_predio ADD COLUMN IF NOT EXISTS valido_control_calidad boolean")
+                    except Exception as e:
+                        logger.warning("Fallo agregar columnas control_calidad a %s.arb_predio: %s", schema, e)
+
+                cur.execute(
+                    """
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_schema = %s AND table_name = 'arb_tramite' AND column_name = 'predio'
+                    """,
+                    (schema,),
+                )
+                if not cur.fetchone():
+                    try:
+                        cur.execute(f"ALTER TABLE {schema}.arb_tramite ADD COLUMN IF NOT EXISTS predio bigint REFERENCES {schema}.arb_predio(t_id) DEFERRABLE INITIALLY DEFERRED")
+                    except Exception as e:
+                        logger.warning("Fallo agregar columna predio a %s.arb_tramite: %s", schema, e)
 
             if in_transaction:
                 cur.execute("RELEASE SAVEPOINT ensure_asig_tables_sp")
