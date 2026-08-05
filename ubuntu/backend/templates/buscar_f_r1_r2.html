@@ -1,0 +1,270 @@
+<div class="module-information-predio p-0 mb-5" style="background-color: transparent;">
+  <!-- Loader -->
+  <div id="loaderVistaPredio" class="vista-predio-loader d-flex flex-column justify-content-center align-items-center py-5">
+    <div class="spinner-border text-success" role="status" aria-hidden="true"></div>
+    <div class="mt-2 text-muted fw-semibold">Cargando información alfanumérica...</div>
+  </div>
+
+  <div class="section-title px-2">
+    <div class="title-header">
+      <small class="text-success fw-bold">MÓDULO DE CONSULTA PREDIO > DETALLE ALFANUMÉRICO (f_r1_r2)</small>
+    </div>
+    <div class="title-body mt-2">
+      <h3 style="font-weight: 700 !important; font-size: 1.6rem !important; color: #0A2C1B;">Detalle del Predio de Migración</h3>
+      <p class="text-muted">
+        Visualización de datos alfanuméricos de los registros secuenciales R1 y R2 de Neiva.
+      </p>
+    </div>
+  </div>
+
+  <!-- Content (hidden until loaded) -->
+  <div id="contentVistaPredio" class="container-content px-2" style="display: none;">
+    <div class="row g-3">
+      <!-- Tarjeta Principal de Resumen -->
+      <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 text-white" style="background-color: #0A2C1B;">
+          <div class="card-body p-4">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 border-bottom border-success pb-3 mb-3">
+              <div>
+                <small class="text-success-light fw-bold text-uppercase d-block mb-1" style="color: #62c388;">Número Predial Nacional (NPN)</small>
+                <h4 id="npn_title" class="fw-bold mb-0"></h4>
+              </div>
+              <div class="text-end">
+                <small class="text-success-light fw-bold text-uppercase d-block mb-1" style="color: #62c388;">NPN Anterior</small>
+                <h5 id="npn_anterior" class="fw-light mb-0"></h5>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-12 col-md-8">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-geo-alt-fill fs-5 text-success-light" style="color: #62c388;"></i>
+                  <div>
+                    <small class="text-uppercase d-block" style="font-size: 0.75rem; color: #a3d9b6;">Dirección del Predio</small>
+                    <span id="direccion" class="fw-semibold"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-journal-bookmark-fill fs-5 text-success-light" style="color: #62c388;"></i>
+                  <div>
+                    <small class="text-uppercase d-block" style="font-size: 0.75rem; color: #a3d9b6;">Matrícula Inmobiliaria</small>
+                    <span id="matricula" class="fw-semibold"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Métricas Rápidas -->
+      <div class="col-12">
+        <div class="row g-2">
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center bg-light text-success p-3" style="width: 48px; height: 48px;">
+                  <i class="bi bi-person-circle fs-5"></i>
+                </div>
+                <div class="lh-sm">
+                  <small class="text-muted d-block" style="font-size: 0.75rem;">Propietario Principal</small>
+                  <span id="propietario" class="fw-bold text-dark d-inline-block text-truncate" style="max-width: 180px;"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center bg-light text-success p-3" style="width: 48px; height: 48px;">
+                  <i class="bi bi-aspect-ratio fs-5"></i>
+                </div>
+                <div class="lh-sm">
+                  <small class="text-muted d-block" style="font-size: 0.75rem;">Área Terreno</small>
+                  <span id="area_terreno" class="fw-bold text-dark"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center bg-light text-success p-3" style="width: 48px; height: 48px;">
+                  <i class="bi bi-building fs-5"></i>
+                </div>
+                <div class="lh-sm">
+                  <small class="text-muted d-block" style="font-size: 0.75rem;">Área Construida</small>
+                  <span id="area_construida" class="fw-bold text-dark"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center bg-light text-success p-3" style="width: 48px; height: 48px;">
+                  <i class="bi bi-currency-dollar fs-5"></i>
+                </div>
+                <div class="lh-sm">
+                  <small class="text-muted d-block" style="font-size: 0.75rem;">Avalúo Catastral</small>
+                  <span id="avaluo" class="fw-bold text-dark"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ficha Detallada Alfanumérica -->
+      <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-sm rounded-4 bg-white h-100">
+          <div class="card-header bg-white border-0 pt-4 px-4">
+            <h5 class="card-title fw-bold mb-0" style="color: #0A2C1B;">
+              <i class="bi bi-info-circle-fill me-2 text-success"></i>Información Jurídica y Destinación
+            </h5>
+          </div>
+          <div class="card-body px-4 pb-4">
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item d-flex justify-content-between align-items-center py-3 border-light">
+                <span class="text-muted">Documento Identidad:</span>
+                <span id="documento" class="fw-semibold text-dark"></span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center py-3 border-light">
+                <span class="text-muted">Participación:</span>
+                <span id="participacion" class="fw-semibold text-dark"></span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center py-3 border-light">
+                <span class="text-muted">Destinación Económica:</span>
+                <span id="destino" class="fw-semibold text-dark"></span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center py-3 border-light">
+                <span class="text-muted">Comuna / Corregimiento:</span>
+                <span id="comuna" class="fw-semibold text-dark"></span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center py-3 border-0">
+                <span class="text-muted">Vigencia Catastral:</span>
+                <span id="vigencia" class="fw-semibold text-dark"></span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zonas del Terreno y Calificaciones (R2) -->
+      <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-sm rounded-4 bg-white h-100">
+          <div class="card-header bg-white border-0 pt-4 px-4">
+            <h5 class="card-title fw-bold mb-0" style="color: #0A2C1B;">
+              <i class="bi bi-grid-3x3-gap-fill me-2 text-success"></i>Zonas de Terreno y Construcciones (R2)
+            </h5>
+          </div>
+          <div class="card-body px-4 pb-4">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle border-light">
+                <thead class="table-light">
+                  <tr>
+                    <th class="text-center" style="font-size: 0.85rem;">Zona</th>
+                    <th class="text-center" style="font-size: 0.85rem;">Z. Física</th>
+                    <th class="text-center" style="font-size: 0.85rem;">Z. Económica</th>
+                    <th class="text-center" style="font-size: 0.85rem;">Área Terreno</th>
+                    <th class="text-center" style="font-size: 0.85rem;">Área Construida</th>
+                  </tr>
+                </thead>
+                <tbody id="r2_zones_tbody">
+                  <!-- Se llena dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center border-top border-light pt-3 mt-3">
+              <span class="text-muted fw-bold">Área Construida Total R2:</span>
+              <span id="area_construida_total_r2" class="fw-bold text-success"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const rp = "{{ rp }}";
+    const numeroPredial = "{{ numero_predial }}";
+
+    async function loadDetails() {
+      try {
+        const res = await fetch(`${rp}/predio/buscar/f_r1_r2/${encodeURIComponent(numeroPredial)}`);
+        if (!res.ok) throw new Error("No se pudo cargar la información.");
+        const data = await res.json();
+        
+        // Asignación de datos alfanuméricos
+        document.getElementById("npn_title").textContent = data.numero_predial || "-";
+        document.getElementById("npn_anterior").textContent = data.numero_predial_anterior || "-";
+        document.getElementById("direccion").textContent = data.direccion || "-";
+        document.getElementById("matricula").textContent = data.matricula || "-";
+        document.getElementById("propietario").textContent = data.propietario || "-";
+        document.getElementById("documento").textContent = `${data.tipo_documento || ""} - ${data.documento_identidad || ""}`;
+        document.getElementById("participacion").textContent = data.participacion ? `${data.participacion}%` : "-";
+        document.getElementById("area_terreno").textContent = data.area_terreno_r1 ? `${data.area_terreno_r1} m²` : "-";
+        document.getElementById("area_construida").textContent = data.area_construida_r1 ? `${data.area_construida_r1} m²` : "-";
+        document.getElementById("avaluo").textContent = data.avaluo ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(data.avaluo) : "-";
+        document.getElementById("vigencia").textContent = data.vigencia || "-";
+        document.getElementById("comuna").textContent = data.comuna || "-";
+        document.getElementById("destino").textContent = `${data.destino_economico || ""} - ${data.descripcion_destino_economico || ""}`;
+
+        // Llenar tabla de Zonas R2
+        const r2Tbody = document.getElementById("r2_zones_tbody");
+        r2Tbody.innerHTML = "";
+        
+        let hasRows = false;
+        if (data.zona_fisica_1 || data.area_construida_1) {
+          r2Tbody.appendChild(createRow(1, data.zona_fisica_1, data.zona_economica_1, data.area_terreno_1, data.area_construida_1));
+          hasRows = true;
+        }
+        if (data.zona_fisica_2 || data.area_construida_2) {
+          r2Tbody.appendChild(createRow(2, data.zona_fisica_2, data.zona_economica_2, data.area_terreno_2, data.area_construida_2));
+          hasRows = true;
+        }
+
+        if (!hasRows) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td colspan="5" class="text-center text-muted py-3">No hay zonas físicas o de construcciones registradas</td>`;
+          r2Tbody.appendChild(tr);
+        }
+
+        document.getElementById("area_construida_total_r2").textContent = data.area_construida_total_r2 ? `${data.area_construida_total_r2} m²` : "-";
+
+        document.getElementById("loaderVistaPredio").style.display = "none";
+        document.getElementById("contentVistaPredio").style.display = "block";
+      } catch (err) {
+        console.error(err);
+        document.getElementById("loaderVistaPredio").innerHTML = `
+          <div class="alert alert-danger mx-2 text-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            Error cargando los detalles del predio R1/R2: ${err.message}
+          </div>
+        `;
+      }
+    }
+
+    function createRow(index, zf, ze, at, ac) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="text-center fw-bold text-muted">${index}</td>
+        <td class="text-center">${zf || "-"}</td>
+        <td class="text-center">${ze || "-"}</td>
+        <td class="text-center">${at ? at + " m²" : "-"}</td>
+        <td class="text-center">${ac ? ac + " m²" : "-"}</td>
+      `;
+      return tr;
+    }
+
+    // Cargar los datos inmediatamente
+    loadDetails();
+  })();
+</script>

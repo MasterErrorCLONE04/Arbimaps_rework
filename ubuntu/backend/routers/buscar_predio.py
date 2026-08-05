@@ -299,15 +299,111 @@ def predio_buscar(
             status_code=500,
         )
 
+    f_rows = []
+    try:
+        f_where = []
+        f_params = []
+        if numero_predial:
+            f_where.append("(BTRIM(numero_predial::text) = BTRIM(%s::text))")
+            f_params.append(numero_predial)
+        if matricula:
+            f_where.append("(BTRIM(matricula::text) = BTRIM(%s::text))")
+            f_params.append(matricula)
+        if direccion:
+            f_where.append("(direccion ILIKE %s)")
+            f_params.append(f"%{direccion}%")
+        if documento:
+            documento_norm = re.sub(r"[^0-9a-zA-Z]+", "", documento).lower()
+            if documento_norm:
+                f_where.append("(regexp_replace(lower(coalesce(documento_identidad::text, '')), '[^0-9a-z]+', '', 'g') LIKE %s)")
+                f_params.append(f"%{documento_norm}%")
+            else:
+                f_where.append("(documento_identidad ILIKE %s)")
+                f_params.append(f"%{documento}%")
+        if nombre:
+            palabras = [p.strip() for p in nombre.split() if p.strip()]
+            if not palabras:
+                palabras = [nombre.strip()]
+            for palabra in palabras:
+                f_where.append("(propietario ILIKE %s)")
+                f_params.append(f"%{palabra}%")
+
+        if f_where:
+            f_sql = f"""
+            SELECT DISTINCT ON (BTRIM(numero_predial::text))
+              numero_predial,
+              numero_predial_anterior,
+              direccion,
+              matricula,
+              destino_economico,
+              descripcion_destino_economico,
+              propietario,
+              tipo_documento,
+              documento_identidad,
+              participacion
+            FROM f_r1_r2.v_predios_consolidados
+            WHERE {" AND ".join(f_where) if nombre else " OR ".join(f_where)}
+            LIMIT 20
+            """
+            f_rows = _execute_fetchall(conn, f_sql, tuple(f_params))
+    except Exception as f_err:
+        logger.warning("No se pudo consultar el esquema f_r1_r2: %s", f_err)
+
     features = [
         {
             "type": "Feature",
             "geometry": None,
-            "properties": r,
+            "properties": {**r, "source_schema": "a_base_principal"},
         }
         for r in rows
     ]
-    return {"type": "FeatureCollection", "features": features}
+
+    f_features = []
+    for r in f_rows:
+        mapped_props = {
+            "t_id": r.get("numero_predial"),
+            "numero_predial": r.get("numero_predial"),
+            "numero_predial_nacional": r.get("numero_predial"),
+            "matricula_inmobiliaria": r.get("matricula"),
+            "tipo_nombre": "Alfanum\xc3\xa9rico (f_r1_r2)",
+            "condicion_predio_nombre": "Migraci\xc3\xb3n (R1/R2)",
+            "source_schema": "f_r1_r2"
+        }
+        for k, v in r.items():
+            if k not in mapped_props:
+                mapped_props[k] = v
+        f_features.append({
+            "type": "Feature",
+            "geometry": None,
+            "properties": mapped_props
+        })
+
+    combined_features = features + f_features
+    combined_features = combined_features[:30]
+    return {"type": "FeatureCollection", "features": combined_features}
+
+
+@router.get("/predio/buscar/f_r1_r2/{numero_predial}")
+def predio_buscar_f_r1_r2_detail(
+    numero_predial: str,
+    _user: dict[str, Any] = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
+    try:
+        sql = """
+        SELECT *
+        FROM f_r1_r2.v_predios_consolidados
+        WHERE BTRIM(numero_predial::text) = BTRIM(%s::text)
+        LIMIT 1
+        """
+        rows = _execute_fetchall(conn, sql, (numero_predial,))
+        if not rows:
+            raise HTTPException(status_code=404, detail="Predio alfanum\xc3\xa9rico no encontrado.")
+        return rows[0]
+    except Exception as e:
+        logger.exception("Error consultando detalle f_r1_r2 NPN=%s", numero_predial)
+        raise HTTPException(status_code=500, detail=f"Error consultando base de datos: {e}")
 
 
 @router.get("/predio/detalle")

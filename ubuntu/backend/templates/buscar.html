@@ -446,7 +446,12 @@
       if (link && predioId) {
         link.addEventListener("click", (e) => {
           e.preventDefault();
-          const url = `${rp}/panel/buscar/predio/${encodeURIComponent(predioId)}`;
+          let url;
+          if (props.source_schema === 'f_r1_r2') {
+            url = `${rp}/panel/buscar/f_r1_r2/${encodeURIComponent(props.numero_predial)}`;
+          } else {
+            url = `${rp}/panel/buscar/predio/${encodeURIComponent(predioId)}`;
+          }
           window.location.href = url;
         });
       }

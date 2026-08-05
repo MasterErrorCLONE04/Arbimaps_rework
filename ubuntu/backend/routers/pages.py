@@ -434,6 +434,25 @@ def panel_buscar_predio(request: Request, predio_id: int):
     )
 
 
+@router.get("/panel/buscar/f_r1_r2/{numero_predial}")
+def panel_buscar_f_r1_r2(request: Request, numero_predial: str):
+
+    user = get_user(request)
+
+    if not user:
+        return RedirectResponse(
+            url=with_root_path(request, "/login"),
+            status_code=302
+        )
+
+    return _render_panel(
+        request,
+        user,
+        view="buscar_f_r1_r2",
+        numero_predial=numero_predial
+    )
+
+
 # -------------------------------------------------
 # ASIGNACIONES
 # -------------------------------------------------
