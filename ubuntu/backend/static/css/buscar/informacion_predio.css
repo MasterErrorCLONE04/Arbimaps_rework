@@ -348,7 +348,7 @@
     align-items: center;
     justify-content: center;
     padding: 12px;
-    box-shadow: 1px 1px 2px #0f172a81;
+    /* box-shadow: 1px 1px 2px #0f172a81; */
 }
 
 .section-title-card {
@@ -614,7 +614,7 @@
 }
 
 .text-detalle-unidad {
-    color: #0A3B68;
+    color: var(--cp-green) !important;
     font-size: 0.833rem;
 }
 
@@ -824,7 +824,7 @@
 .detalle-uc-value {
     font-size: 0.833rem;
     font-weight: 500;
-    color: #123A63;
+    color: var(--cp-green) !important;
     line-height: 1.35;
     white-space: normal;
     word-break: break-word;
@@ -1150,6 +1150,7 @@
     background-color: #ECEEED;
     border-radius: 10px;
     height: 100% !important;
+    color: var(--cp-green) !important;
 }
 
 .tarjet-row-pot {
@@ -3064,4 +3065,66 @@ body.view-buscar_predio .blue-rounded-box {
 
 body.view-buscar_predio .uc-section-title{
     background: var(--cp-green-soft) !important;
+}
+
+/* Leyenda de convenciones del mapa */
+.vp-map-legend {
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(10, 44, 27, 0.15);
+    z-index: 100;
+    font-size: 0.72rem;
+    color: #1e293b;
+    min-width: 145px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    pointer-events: auto;
+}
+
+.vp-legend-title {
+    font-size: 0.73rem;
+    color: #092c1c;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 3px;
+    letter-spacing: 0.3px;
+}
+
+.vp-legend-item {
+    font-weight: 500;
+    line-height: 1.2;
+    font-size: 0.72rem;
+}
+
+.vp-legend-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.vp-legend-swatch.swatch-terreno {
+    background-color: rgba(59, 130, 246, 0.3);
+    border: 2px solid #3b82f6;
+}
+
+.vp-legend-swatch.swatch-construccion {
+    background-color: rgba(234, 179, 8, 0.4);
+    border: 2px solid #eab308;
+}
+
+.vp-legend-swatch.swatch-unidad {
+    background-color: rgba(22, 163, 74, 0.4);
+    border: 2px solid #16a34a;
+}
+
+.vp-legend-swatch.swatch-direccion {
+    background-color: #f97316;
+    border: 1px solid #7c2d12;
+    border-radius: 50%;
+}
+
+.vp-legend-swatch.swatch-seleccion {
+    background-color: rgba(239, 68, 68, 0.4);
+    border: 2px solid #ef4444;
 }

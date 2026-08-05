@@ -375,6 +375,7 @@ def predio_detalle(
       cpt.dispname AS tipo_planta_nombre,
       rsct.dispname AS relacion_superficie_nombre,
       ST_AsGeoJSON(uc.geometria)::json AS geom,
+      ST_AsGeoJSON(c.geometria)::json AS construccion_geom,
       c.t_id AS construccion_id,
       c.identificador AS construccion_identificador,
       c.total_mezaninis AS construccion_total_mezaninis,
@@ -553,6 +554,7 @@ def predio_detalle(
                         "observacion": row.get("construccion_observacion"),
                         "etiqueta": row.get("construccion_etiqueta"),
                         "estado_construccion_nombre": row.get("construccion_estado_construccion_nombre"),
+                        "geom": row.get("construccion_geom"),
                     }
                 if row.get("t_id") is not None:
                     unidades.append(row)

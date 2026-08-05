@@ -264,6 +264,32 @@
                   Ver proyecto
                 </button>
               </div>
+              <!-- Leyenda / Convenciones del Mapa -->
+              <div class="vp-map-legend position-absolute bottom-0 start-0 m-2 p-2 rounded-3">
+                <div class="fw-bold mb-1 vp-legend-title">Convenciones</div>
+                <div class="d-flex flex-column gap-1 vp-legend-items">
+                  <div class="d-flex align-items-center gap-2 vp-legend-item">
+                    <span class="vp-legend-swatch swatch-terreno"></span>
+                    <span>Terreno</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 vp-legend-item">
+                    <span class="vp-legend-swatch swatch-construccion"></span>
+                    <span>Construcción</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 vp-legend-item">
+                    <span class="vp-legend-swatch swatch-unidad"></span>
+                    <span>U. Construcción</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 vp-legend-item">
+                    <span class="vp-legend-swatch swatch-direccion"></span>
+                    <span>Dirección</span>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 vp-legend-item">
+                    <span class="vp-legend-swatch swatch-seleccion"></span>
+                    <span>Selección activa</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2001,6 +2027,7 @@
 
   let mapInstance;
   let highlightLayer;
+  let constructionsLayer;
   let unitsLayer;
   let currentTerrenoFeature = null;
   let addressesLayer;
@@ -2146,22 +2173,39 @@
   async function initMap() {
     highlightLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
+      zIndex: 10,
       style: new ol.style.Style({
         stroke: new ol.style.Stroke({ color: "#3b82f6", width: 3 }),
         fill: new ol.style.Fill({ color: "rgba(59, 130, 246, 0.2)" }),
       }),
     });
 
+    constructionsLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      zIndex: 20,
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: "#eab308", width: 2.5 }),
+        fill: new ol.style.Fill({ color: "rgba(234, 179, 8, 0.35)" }),
+      }),
+    });
+
     unitsLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
+      zIndex: 30,
       style: new ol.style.Style({
-        stroke: new ol.style.Stroke({ color: "#0ea5e9", width: 1.5 }),
-        fill: new ol.style.Fill({ color: "rgba(14, 165, 233, 0.15)" }),
+        stroke: new ol.style.Stroke({ color: "#16a34a", width: 2 }),
+        fill: new ol.style.Fill({ color: "rgba(22, 163, 74, 0.35)" }),
+        image: new ol.style.Circle({
+          radius: 6,
+          fill: new ol.style.Fill({ color: "#16a34a" }),
+          stroke: new ol.style.Stroke({ color: "#0f5132", width: 1.5 }),
+        }),
       }),
     });
 
     addressesLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
+      zIndex: 50,
       style: new ol.style.Style({
         image: new ol.style.Circle({
           radius: 5,
@@ -2173,6 +2217,7 @@
 
     selectedUnitLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
+      zIndex: 40,
       style: new ol.style.Style({
         stroke: new ol.style.Stroke({ color: "#ef4444", width: 2.5 }),
         fill: new ol.style.Fill({ color: "rgba(239, 68, 68, 0.18)" }),
@@ -2194,7 +2239,7 @@
 
     mapInstance = new ol.Map({
       target: "map",
-      layers: [...wmsLayers, unitsLayer, selectedUnitLayer, addressesLayer, highlightLayer],
+      layers: [...wmsLayers, highlightLayer, constructionsLayer, unitsLayer, selectedUnitLayer, addressesLayer],
       view: new ol.View({
         projection: projection,
         center: ol.extent.getCenter(projectExtent),
@@ -3878,6 +3923,7 @@
         etiqueta: construccion.etiqueta,
         estado_construccion_nombre: construccion.estado_construccion_nombre || "---",
         predio_numero_predial: numeroPredial,
+        geom: construccion.geom || construccion.construccion_geom || null,
         unidades: [],
       });
     });
@@ -3901,8 +3947,14 @@
           etiqueta: unidad.construccion_etiqueta,
           estado_construccion_nombre: unidad.construccion_estado_construccion_nombre || "---",
           predio_numero_predial: numeroPredial,
+          geom: unidad.construccion_geom || unidad.geom_construccion || null,
           unidades: [],
         });
+      } else {
+        const grupo = grupos.get(consId);
+        if (!grupo.geom && (unidad.construccion_geom || unidad.geom_construccion)) {
+          grupo.geom = unidad.construccion_geom || unidad.geom_construccion;
+        }
       }
 
       grupos.get(consId).unidades.push(unidad);
@@ -3944,11 +3996,49 @@
       if (detalleUnidadCard) {
         bootstrap.Collapse.getOrCreateInstance(detalleUnidadCard, { toggle: false }).hide();
       }
+      if (selectedUnitLayer) {
+        selectedUnitLayer.getSource().clear();
+      }
       actualizarBadgeUcDesdeTabla();
       return;
     }
 
     construccionActiva = c;
+
+    if (selectedUnitLayer) {
+      const src = selectedUnitLayer.getSource();
+      src.clear();
+
+      const cGeom = c.geom || c.construccion_geom || (c.unidades && c.unidades[0] && (c.unidades[0].construccion_geom || c.unidades[0].geom));
+      if (cGeom) {
+        try {
+          const format = new ol.format.GeoJSON();
+          const feature = format.readFeature(
+            {
+              type: "Feature",
+              geometry: cGeom,
+              properties: c,
+            },
+            {
+              dataProjection: "EPSG:9377",
+              featureProjection: "EPSG:9377",
+            }
+          );
+
+          src.addFeature(feature);
+
+          if (mapInstance && feature.getGeometry()) {
+            mapInstance.getView().fit(feature.getGeometry().getExtent(), {
+              padding: [60, 60, 60, 60],
+              maxZoom: 19,
+              duration: 600,
+            });
+          }
+        } catch (e) {
+          console.error("Error al resaltar/hacer zoom a construcción:", e);
+        }
+      }
+    }
 
     if (cardUnidadConstruccion) {
       cardUnidadConstruccion.classList.add("has-selection");
@@ -4374,6 +4464,36 @@
           padding: [50, 50, 50, 50],
           duration: 800,
         });
+      }
+
+      if (constructionsLayer) {
+        const src = constructionsLayer.getSource();
+        src.clear();
+
+        if (construcciones.length) {
+          const format = new ol.format.GeoJSON();
+
+          construcciones.forEach((c) => {
+            const cGeom = c.geom || c.construccion_geom || (c.unidades && c.unidades[0] && (c.unidades[0].construccion_geom || c.unidades[0].geom));
+            if (!cGeom) return;
+            try {
+              const f = format.readFeature(
+                {
+                  type: "Feature",
+                  geometry: cGeom,
+                  properties: c,
+                },
+                {
+                  dataProjection: "EPSG:9377",
+                  featureProjection: "EPSG:9377",
+                }
+              );
+              src.addFeature(f);
+            } catch (e) {
+              console.error("Error leyendo geometría de construcción:", e);
+            }
+          });
+        }
       }
 
       if (unitsLayer) {

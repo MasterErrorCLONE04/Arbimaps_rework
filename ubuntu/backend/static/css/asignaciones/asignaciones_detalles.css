@@ -1,3 +1,42 @@
+:root {
+    --cp-green: #0A2C1B;
+    --cp-green-hover: #154b31;
+    --cp-green-soft: #dce9e1;
+    --cp-green-pale: #eef4f0;
+    --cp-accent: #A0C882;
+    --cp-gray: #ededed;
+    --cp-line: #c5d2ca;
+    --cp-muted: #74877b;
+    --cp-shadow: 0 8px 22px rgba(9, 44, 28, .10);
+    --cp-deep: #063622;
+    --cp-mint: #c4d5cc;
+    --cp-sage: #a5cb85;
+    --cp-pale: #d1dcd6;
+    --cp-teal: #0c706f;
+    --cp-aqua: #079f99;
+    --cp-emerald: #08a56b;
+    --cp-blue-accent: #244c89;
+    --cp-red-accent: #e60000;
+    --cp-yellow: #e4df91;
+    --cp-cream: #fffbd8;
+    --cp-lime: #AEDE37;
+    --cp-olive: #9d9964;
+
+    --vp-primary: #092c1c;
+    --vp-accent: #6aa4d4;
+    --vp-bg-app: #ededed;
+    --vp-card-bg: #ffffff;
+    --vp-text-main: #1e293b;
+    --vp-text-muted: #74877b;
+    --vp-border: #c5d2ca;
+    --vp-radius: 18px;
+    --vp-shadow: 0 8px 22px rgba(9, 44, 28, .10);
+}
+
+.content-modulo-detalles {
+    background-color: #FFFFFF;
+}
+
 .asigDetailPanel {
     margin-top: 0 !important;
     background: transparent;
@@ -640,7 +679,7 @@
     padding: 1.2rem 1.1rem;
     height: 100%;
     /* box-shadow: 0 .125rem .25rem rgba(0, 0, 0, 0.04); */
-    border: 1px solid #9bb1c35c !important;
+    border: 1px solid #0a2c1b00 !important;
 }
 
 .title-hisstorial {
@@ -969,7 +1008,7 @@ table.dataTable tbody td {
     transition: transform 0.1s ease-in-out;
 }
 
-.bt-adjunto i{
+.bt-adjunto i {
     display: block;
     transition: transform 0.1s ease-in-out;
 }
@@ -979,7 +1018,7 @@ table.dataTable tbody td {
     background-color: #d5ecff;
 }
 
-.bt-adjunto:hover i{
+.bt-adjunto:hover i {
     transform: rotate(-15deg);
 }
 
@@ -1947,13 +1986,20 @@ table.dataTable tbody td {
 }
 
 #tablaPredios tbody tr.predio-row-active td {
-    background-color: #DCEAF5 !important;
-    color: #032F57 !important;
+    background-color: #9ebfdf3c !important;
+    color: var(--cp-green) !important;
     font-weight: 600;
 }
 
 #tablaPredios tbody tr.predio-row-active td:first-child {
-    box-shadow: inset 4px 0 0 #F5A800 !important;
+    border-left: 3px solid var(--cp-green) !important;
+    border-top-left-radius: 11px !important;
+    border-bottom-left-radius: 11px !important;
+}
+
+#tablaPredios tbody tr.predio-row-active td:last-child {
+    border-top-right-radius: 11px !important;
+    border-bottom-right-radius: 11px !important;
 }
 
 #tablaPredios tbody tr.predio-row-active:hover td {
@@ -2210,7 +2256,7 @@ table.dataTable tbody td {
 } */
 
 /* Center eye icons inside circular buttons */
-.btn-eye-predio-edit {
+/* .btn-eye-predio-edit {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -2223,10 +2269,10 @@ table.dataTable tbody td {
     padding: 0 !important;
     box-shadow: none !important;
     line-height: 1 !important;
-}
+} */
 
 .btn-eye-predio-edit:hover {
-    background-color: #05386732 !important;
+    background-color: #05672e32 !important;
     color: #FFFFFF !important;
 }
 
@@ -2239,7 +2285,7 @@ table.dataTable tbody td {
     margin: 0 !important;
     padding: 0 !important;
     line-height: 1 !important;
-    color: #002f55;
+    color: #0A2C1B;
 }
 
 /* Center icons in the left circles */
@@ -2535,6 +2581,10 @@ table.dataTable tbody td {
 #modalInformacionMarcasAsignacion .tit-iops {
     overflow-wrap: anywhere;
     word-break: normal;
+}
+
+.dato {
+    color: #0A2C1B !important;
 }
 
 

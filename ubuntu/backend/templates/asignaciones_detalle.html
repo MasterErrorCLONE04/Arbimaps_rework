@@ -1,8 +1,8 @@
 <link rel="stylesheet" href="{{ rp }}/static/css/buscar/informacion_predio.css" />
-<div class="content-modulo-detalles container-fluid px-0 px-md-1 px-xl-2 mb-5">
-  <div class="row g-4 align-items-start">
+<div class="content-modulo-detalles container-fluid  mb-5">
+  <div class="row g-4 ">
     <!-- IZQUIERDA -->
-    <div class="col-12 col-lg-7 col-xl-7 col-custom-izq">
+    <div class="col-12 col-lg-8 col-xl-9 h-100">
       <div class="section-title-one h-100">
         <div class="indication">
           <small class="title-detalle">
@@ -28,16 +28,15 @@
     </div>
 
     <!-- DERECHA -->
-    <div class="col-12 col-lg-5 col-xl-5 col-custom-der">
+    <div class="col-12 col-lg-5 col-xl-3">
       <input type="hidden" id="asigDetalleId" />
-      <div class="d-flex flex-column align-items-lg-end gap-3 w-100">
+      <div class="d-flex justify-content-between align-items-center">
         <!-- Botón Volver -->
         <div>
           <button id="btnResetSearch" type="button"
             class="btn rounded-3 fw-bold d-inline-flex align-items-center gap-2 border-0 px-4 py-2"
-            style="background-color: #DCE6F1; color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;"
-            onmouseover="this.style.backgroundColor='#CAD7E6'" onmouseout="this.style.backgroundColor='#DCE6F1'">
-            <i class="fa-solid fa-arrow-left"></i> Volver a asignaciones
+            style="font-size: 0.85rem; transition: background-color 0.2s ease;">
+            <i class="fa-solid fa-arrow-left"></i> Volver
           </button>
         </div>
 
@@ -47,8 +46,7 @@
             <button
               class="btn rounded-3 fw-bold text-white d-inline-flex align-items-center gap-2 border-0 px-4 py-2 dropdown-toggle"
               type="button" id="dropdownAcciones" data-bs-toggle="dropdown" aria-expanded="false"
-              style="background-color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;"
-              onmouseover="this.style.backgroundColor='#02203d'" onmouseout="this.style.backgroundColor='#032F57'">
+              style="background-color: #032F57; font-size: 0.85rem; transition: background-color 0.2s ease;">
               <span>Acciones</span>
               <i class="fa-solid fa-chevron-down ms-1" style="font-size: 0.75rem;"></i>
             </button>
@@ -192,17 +190,16 @@
   </div>
 
   <div class="container-fluid">
-    <div class="row g-4 mt-2 align-items-stretch ">
+    <div class="row g-4 mt-4 align-items-stretch ">
       <!-- COLUMNA IZQUIERDA -->
-      <div class="col-12 col-md-6 col-xl-5 col-custom-izq px-0 ">
+      <div class="col-12 col-md-6 col-xl-6 col-custom-izq px-0 ">
 
-        <div class="unified-detail-card p-4 mt-0"
-          style="background-color: #021f3c !important; border-radius: 24px !important; color: #ffffff !important;">
-          <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+        <div class="unified-detail-card p-4 mt-0 shadow">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pb-3">
             <h2 class="fw-bold mb-0 text-white" style="font-size: 1rem;">
               Asignación: <span id="d_titulo">-</span>
             </h2>
-            <div class="d-inline-flex align-items-center px-3 py-1 rounded-3" style="background-color: #6095C1; ">
+            <div class="d-inline-flex align-items-center px-3 py-1 rounded-3 badge-estado-asignacion">
               <span class="me-2 fw-bold text-white-50" style="font-size: 0.95rem;">•</span>
               <small id="d_estado" class="fw-bold mb-0 text-white text-uppercase"
                 style="font-size: 0.65rem; letter-spacing: 0.05em;">-</small>
@@ -210,14 +207,14 @@
           </div>
 
           <!-- METADATA ROW -->
-          <div class="container-fluid ">
+          <div class="container-fluid pt-2 " style="border-top: 1px solid #afde375d;">
             <div class="row g-3 align-items-center py-2">
               <!-- COL 1: COORDINADOR -->
               <div class="col-12 col-md-6 meta-col-separator">
                 <div class="d-flex align-items-center justify-content-center ">
                   <div id="d_coord_avatar_container"
                     class="me-2 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
-                    style="width: 38px; height: 38px; background-color: #6095C1;">
+                    style="width: 36px; height: 36px; ">
                     <i id="d_coord_icon" class="bi bi-person-circle text-white " style="display: block;"></i>
                   </div>
                   <div class="min-w-0">
@@ -234,9 +231,10 @@
               <!-- COL 2: FECHA DE ASIGNACION -->
               <div class="col-12 col-md-6 ">
                 <div class="d-flex align-items-center justify-content-center ">
-                  <div class="me-2 flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
-                    style="width: 38px; height: 38px; background-color: #6095C1;">
-                    <i class="bi bi-calendar-check text-white "></i>
+                  <div
+                    class="me-2 fecha-icono flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle"
+                    style="width: 36px; height: 36px;">
+                    <i class="bi bi-calendar-check-fill text-white "></i>
                   </div>
                   <div class="min-w-0">
                     <small class="d-block fw-bold text-uppercase text-white-50"
@@ -356,7 +354,7 @@
         </div>
 
         <div class="col-12 mt-3">
-          <div class="info-basic-panel h-100">
+          <div class="info-basic-panel h-100 shadow">
             <div class="d-flex align-items-start align-items-md-center justify-content-between gap-3 flex-wrap">
               <div>
                 <h4 class="title mb-1">Desglose Predios</h4>
@@ -412,22 +410,10 @@
       </div> <!-- Cierre Columna Izquierda -->
 
       <!-- COLUMNA DERECHA: VISOR -->
-      <div class="col-12 col-md-6 col-xl-7 col-custom-der d-flex flex-column pe-0">
-        <div class="rounded-4 overflow-hidden shadow-sm border tarjeta-visor-predio-edit h-100 d-flex flex-column"
-          style="background-color: #F0F6FB !important;">
-          <div class="card-header border-0 p-0 rounded-top-4 flex-shrink-0">
-            <div class="d-flex align-items-start gap-2 px-3 py-3">
-              <span class="lh-1"><i class="bi bi-crosshair fs-4" style="color: #ffffff !important;"></i></span>
-              <div class="lh-sm">
-                <div class="fw-bold mb-0 text-visor-edit fs-5 text-white" style="color: #ffffff !important;">Visor</div>
-                <div class="text-white-50 d-block text-visualizacion-edit"
-                  style="color: rgba(255, 255, 255, 0.7) !important;">
-                  Visualización espacial del predio
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="card-body p-0 m-0 position-relative rounded-bottom-4 overflow-hidden flex-grow-1"
+      <div class="col-12 col-md-6 col-xl-6 col-custom-der d-flex flex-column pe-0">
+        <div class="rounded-4 overflow-hidden shadow border-0 tarjeta-visor-predio-edit h-100 d-flex flex-column">
+
+          <div class="card-body p-0 m-0 position-relative rounded-4 overflow-hidden flex-grow-1"
             style="min-height: 400px;">
             <div id="map" class="w-100 h-100 m-0 p-0"></div>
             <div
@@ -440,22 +426,26 @@
               Ver proyecto
             </button> -->
             </div>
-            <div class="position-absolute start-0 bottom-0 ms-2 mb-2 px-2 py-1 rounded-3 bg-white border shadow-sm"
-              style="font-size:11px; line-height:1.2; z-index: 1000; opacity:0.95;">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <span
-                  style="display:inline-block;width:14px;height:10px;background:rgba(34, 197, 94, 0.14);border:2px solid #16a34a;"></span>
-                <span>Alcance asignación</span>
-              </div>
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <span
-                  style="display:inline-block;width:14px;height:10px;background:rgba(0,0,0,0);border:2px solid #ef4444;"></span>
-                <span>U. construcción</span>
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <span
-                  style="display:inline-block;width:14px;height:10px;background:rgba(37, 99, 235, 0.24);border:2px solid #2563eb;"></span>
-                <span>Predio seleccionado</span>
+            <!-- Leyenda / Convenciones del Mapa -->
+            <div class="vp-map-legend position-absolute bottom-0 start-0 m-3 p-2 rounded-3 shadow-none">
+              <div class="fw-bold mb-1 vp-legend-title">Convenciones</div>
+              <div class="d-flex flex-column gap-1 vp-legend-items">
+                <div class="d-flex align-items-center gap-2 vp-legend-item">
+                  <span class="vp-legend-swatch swatch-terreno"></span>
+                  <span>Predio / Alcance</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 vp-legend-item">
+                  <span class="vp-legend-swatch swatch-construccion"></span>
+                  <span>Construcción</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 vp-legend-item">
+                  <span class="vp-legend-swatch swatch-unidad"></span>
+                  <span>U. Construcción</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 vp-legend-item">
+                  <span class="vp-legend-swatch swatch-seleccion"></span>
+                  <span>Selección activa</span>
+                </div>
               </div>
             </div>
           </div>
@@ -467,334 +457,343 @@
   <!-- Cierre Main Row -->
 
   <!-- Tarjeta Detalle del Predio (Traída de edicion_asignaciones.html sin columna de visor) -->
-  <div class="container-content mt-5">
-    <div class="container-fluid p-0 m-0 mt-4 border rounded-4 shadow-sm bg-white overflow-hidden">
-      <div
-        class="card-header-edit rounded-bottom px-3 py-3 mb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div class="title-consultas-edit text-white mb-0 fs-5">Detalle del predio</div>
+  <div class="container-fluid mt-5 ">
+    <div class="row">
 
-        <div class="d-flex gap-2">
+      <div class="col-12 mb-3 px-0">
+        <div class="card-header shadow d-flex p-3 justify-content-between align-items-center border-0 rounded-4 "
+          style="background-color: #A0C882 !important;">
+          <div class="title-consultas-edit text-white mb-0 fs-5" style=" color: #0A2C1B !important;">Detalle del predio
+          </div>
+          <!-- <div class="d-flex gap-2">
           <button type="button"
             class="bt-adjunto border-0 rounded-3 fw-semibold px-3 py-2 d-inline-flex align-items-center gap-2"
             data-bs-toggle="modal" data-bs-target="#modalAdjuntosPredio">
             <i class="bi bi-file-earmark-richtext"></i> Ver carpeta de adjuntos
-            <!-- <i class="fa-solid fa-file-pdf" style="color: #021f3c;"></i> Ver carpeta de adjuntos -->
           </button>
+        </div> -->
         </div>
       </div>
 
-      <div class="row g-3 align-items-stretch px-3 py-3">
-        <!-- Columna izquierda: Resumen -->
-        <div class="col-12 col-lg-7">
-          <div class="card rounded-4  h-100 tarjeta-predio p-2">
-            <div class="card-body d-flex flex-column justify-content-between gap-3 h-100">
-              <div class="row g-3 align-items-start">
-                <div class="col-12 col-md">
-                  <div class="d-flex align-items-center gap-2">
-                    <!-- <div class="section-icons mb-0">
+      <!-- Columna izquierda: Resumen -->
+      <div class="col-12 col-lg-7 ps-0">
+        <div class="card rounded-4  h-100 tarjeta-predio p-2">
+          <div class="card-body d-flex flex-column justify-content-between gap-3 h-100">
+            <div class="row g-3 align-items-start">
+              <div class="col-12 col-md">
+                <div class="d-flex align-items-center gap-2">
+                  <!-- <div class="section-icons mb-0">
                       <div class="icons-bgrt">
                         <i class="fa-solid fa-map-location-dot"></i>
                       </div>
                     </div> -->
-                    <div class="icons-bg  d-flex justify-content-center align-items-center "
-                      style="width: 50px; height: 50px;">
-                      <!-- <i class=" fa-solid fa-map-location-dot"></i> -->
-                      <svg xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 640 512"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
-                        <path fill="#FFFFFF"
-                          d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
-                      </svg>
-                    </div>
-                    <div class="section-title-card-secon text-white mb-0 fw-bold">Resumen</div>
-                    <!-- NPN a nivel de bloque por encima de las métricas -->
-
+                  <div class="icons-bg1  d-flex justify-content-center align-items-center me-1">
+                    <!-- <i class=" fa-solid fa-map-location-dot"></i> -->
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 640 512"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.-->
+                      <path fill="#0A2C1B"
+                        d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
+                    </svg>
                   </div>
+                  <div class="section-title-card-secon text-white mb-0 fw-bold">Resumen</div>
+                  <!-- NPN a nivel de bloque por encima de las métricas -->
+
                 </div>
-                <div class="col-12 col-md-auto">
-                  <!-- <div class="d-inline-flex align-items-center px-3 py-2 rounded-3 text-white fw-medium"
+              </div>
+              <div class="col-12 col-md-auto">
+                <!-- <div class="d-inline-flex align-items-center px-3 py-2 rounded-3 text-white fw-medium"
                     style="background-color: #021f3c; font-size: 0.85rem; border-radius: 12px !important;">
                     <span class="me-1">ID Operación:</span>
                     <span id="resumenPredioOperacionId" class="fw-bold">-</span>
                   </div> -->
-                  <div
-                    class="mostrar-id-predio d-flex align-items-center justify-content-between text-white  text-center">
-                    <small class="text-white d-block text-id-predio fw-light mt-0 me-2">ID Operación:</small>
-                    <div id="resumenPredioOperacionId" class="num-id-predio">
+                <!-- <div
+                  class="mostrar-id-predio d-flex align-items-center justify-content-between text-white  text-center">
+                  <small class="text-white d-block text-id-predio fw-light mt-0 me-2">ID Operación:</small>
+                  <div id="resumenPredioOperacionId" class="num-id-predio">
 
+                  </div>
+                </div> -->
+
+                <div class="col-12 col-md-auto mt-0">
+                  <div
+                    class="mostrar-id-predio1 d-flex align-items-center justify-content-between text-white  text-center">
+                    <small class=" d-block text-id-predio fw-light mt-0 me-2"
+                      style="color: #0A2C1B !important; font-weight: 500;">ID Operación :</small>
+                    <div id="resumenPredioOperacionId" class="num-id-predio">
+                      {{ predio_id if predio_id is defined else "" }}
                     </div>
                   </div>
                 </div>
+
               </div>
+            </div>
 
 
-              <div class="w-100">
-                <div class="fw-bold mb-1 text-label-npn-edit" style="color: #ffffff; font-size: 0.97rem;">
-                  Número predial :
+            <div class="w-100">
+              <div class="fw-bold mb-1 text-label-npn-edit" style="color: #ffffff; font-size: 0.97rem;">
+                Número predial :
+              </div>
+              <div id="resumenPredioNumero" class="result-npn-edit"
+                style="font-family: var(--font-primary, 'Poppins'), sans-serif; font-size: 0.95rem; color: #ffffff; word-break: break-all; font-weight: 500;">
+                -
+              </div>
+              <div class="d-flex align-items-center justify-content-start gap-2">
+                <div class="d-flex align-items-center gap-1">
+                  <i class="bi bi-signpost"></i>
+                  <small class="fw-bold"> Dirección: </small>
                 </div>
-                <div id="resumenPredioNumero" class="result-npn-edit"
-                  style="font-family: var(--font-primary, 'Poppins'), sans-serif; font-size: 0.95rem; color: #ffffff; word-break: break-all; font-weight: 500;">
+                <div id="resumenPredioDireccion" class="result-npn text-white">
                   -
                 </div>
-                <div class="d-flex align-items-center justify-content-start gap-2">
-                  <div class="d-flex align-items-center gap-1">
-                    <i class="bi bi-signpost"></i>
-                    <small class="fw-bold"> Dirección: </small>
-                  </div>
-                  <div id="resumenPredioDireccion" class="result-npn text-white">
-                    -
-                  </div>
-                </div>
               </div>
-
-              <!-- Metricas horizontal row -->
-              <div class="w-100 container-fluid ">
-                <div class="row">
-                  <div class="col-12 col-sm-6 col-xl-4 px-1 mt-0">
-                    <div class="d-flex align-items-center gap-2 resumen-interesado interesado p-3 h-100">
-                      <div
-                        class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle"
-                        style="width: 38px; height: 38px;">
-                        <i class="bi bi-people-fill "></i>
-                      </div>
-                      <div class="d-flex flex-column lh-sm">
-                        <small class="resumen-item-label">Interesados</small>
-                        <div id="resumenPredioInteresados" class="resumen-item-value">0</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="col-12 col-sm-6 col-xl-4 px-1 mt-0">
-                    <div
-                      class="d-flex align-items-center gap-2 resumen-interesado construcciones flex-shrink-0 p-3 h-100">
-                      <div class="rounded-circle d-flex align-items-center justify-content-center resumen-icon-circle"
-                        style="width: 38px; height: 38px;">
-                        <i class="bi bi-houses-fill "></i>
-                      </div>
-                      <div class="d-flex flex-column lh-sm">
-                        <small class="resumen-item-label">Construcciones</small>
-                        <div id="resumenPredioConstrucciones" class="resumen-item-value">0</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="col-12 col-sm-6 col-xl-4 px-1 mt-0">
-                    <div
-                      class="d-flex align-items-center gap-2 resumen-interesado u_construccion flex-shrink-0 p-3 h-100">
-                      <div class="rounded-circle d-flex align-items-center justify-content-center resumen-icon-circle"
-                        style="width: 38px; height: 38px;">
-                        <i class="bi bi-house-fill "></i>
-                      </div>
-                      <div class="d-flex flex-column lh-sm">
-                        <small class="resumen-item-label">U. Construcción</small>
-                        <div id="resumenPredioUnidadConstruccion" class="resumen-item-value">0</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
             </div>
+
+            <!-- Metricas horizontal row -->
+            <div class="w-100 container-fluid ">
+              <div class="row">
+                <div class="col-12 col-sm-6 col-xl-4 px-1 mt-0">
+                  <div class="d-flex align-items-center gap-2 resumen-interesado interesado p-3 h-100">
+                    <div
+                      class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle"
+                      style="width: 38px; height: 38px;">
+                      <i class="bi bi-people-fill "></i>
+                    </div>
+                    <div class="d-flex flex-column lh-sm">
+                      <small class="resumen-item-label" style="color: #0A2C1B !important;">Interesados</small>
+                      <div id="resumenPredioInteresados" class="resumen-item-value">0</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-xl-4 px-1 mt-0">
+                  <div
+                    class="d-flex align-items-center gap-2 resumen-interesado construcciones flex-shrink-0 p-3 h-100">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center resumen-icon-circle"
+                      style="width: 38px; height: 38px;">
+                      <i class="bi bi-houses-fill "></i>
+                    </div>
+                    <div class="d-flex flex-column lh-sm">
+                      <small class="resumen-item-label" style="color: #0A2C1B !important;">Construcciones</small>
+                      <div id="resumenPredioConstrucciones" class="resumen-item-value">0</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 col-sm-6 col-xl-4 px-1 mt-0">
+                  <div
+                    class="d-flex align-items-center gap-2 resumen-interesado u_construccion flex-shrink-0 p-3 h-100">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center resumen-icon-circle"
+                      style="width: 38px; height: 38px;">
+                      <i class="bi bi-house-fill "></i>
+                    </div>
+                    <div class="d-flex flex-column lh-sm">
+                      <small class="resumen-item-label" style="color: #0A2C1B !important;">U. Construcción</small>
+                      <div id="resumenPredioUnidadConstruccion" class="resumen-item-value">0</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna derecha: Informacion tabla predio, juridica y marcas -->
+      <div class="col-12 col-lg-5 d-flex flex-column gap-3 justify-content-between px-0 ">
+
+        <!-- TARJETA INFERIOR 1 (Informacion tabla predio) -->
+        <div
+          class="card rounded-4 shadow-sm w-100 tarjeta-predio tarjeta-placeholder-superior flex-grow-1 d-flex align-items-center"
+          style="min-height: 60px;">
+          <div class="seccion-tabla-predio d-flex align-items-center justify-content-between w-100 h-100">
+            <div class="d-flex align-items-center gap-3">
+              <div class="section-icons mb-0">
+                <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1">
+                  <i class="fa-solid fa-location-dot fs-5"></i>
+                </div>
+              </div>
+              <div class="title-part-predio mb-0">
+                Información tabla predio
+              </div>
+            </div>
+            <button type="button"
+              class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+              data-bs-toggle="modal" data-bs-target="#modalInformacionPredio" aria-label="Ver información tabla predio">
+              <i class="fa-regular fa-eye eye-icon-predio"></i>
+            </button>
           </div>
         </div>
 
-        <!-- Columna derecha: Informacion tabla predio, juridica y marcas -->
-        <div class="col-12 col-lg-5 d-flex flex-column gap-3 justify-content-between ">
-
-          <!-- TARJETA INFERIOR 1 (Informacion tabla predio) -->
-          <div
-            class="card rounded-4 shadow w-100 tarjeta-predio tarjeta-placeholder-superior flex-grow-1 d-flex align-items-center"
-            style="min-height: 60px;">
-            <div class="seccion-tabla-predio d-flex align-items-center justify-content-between w-100 h-100">
-              <div class="d-flex align-items-center gap-3">
-                <div class="section-icons mb-0">
-                  <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
-                    style="background-color: #6aa4d4;">
-                    <i class="fa-solid fa-location-dot fs-5"></i>
-                  </div>
+        <!-- TARJETA DEL MEDIO (Informacion Juridica) -->
+        <div
+          class="card rounded-4 shadow-sm w-100 tarjeta-predio tarjeta-placeholder-superior flex-grow-1 d-flex align-items-center"
+          style="min-height: 60px;">
+          <div class="seccion-tabla-predio d-flex align-items-center justify-content-between w-100 h-100">
+            <div class="d-flex align-items-center gap-3">
+              <div class="section-icons mb-0">
+                <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+                  style="background-color: #6aa4d4;">
+                  <i class="fa-solid fa-scale-unbalanced fs-5"></i>
                 </div>
-                <div class="title-part-predio mb-0">
-                  Información tabla predio
-                </div>
+              </div>
+              <div class="title-part-predio mb-0">
+                Derecho, Interesado, Fuente
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <div id="badgeJuridicoCountContainer"
+                class="d-none badge-juridico-count-edit rounded-pill px-3 py-1 align-items-center gap-2"
+                style="color: #ffffff; font-size: 0.85rem; font-weight: 700; height: 32px; border-radius: 20px !important;">
+                <span id="badgeJuridicoCountValue">0</span>
+                <i class="fa-solid fa-user" style="font-size: 0.75rem;"></i>
               </div>
               <button type="button"
                 class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
-                data-bs-toggle="modal" data-bs-target="#modalInformacionPredio"
-                aria-label="Ver información tabla predio">
+                data-bs-toggle="modal" data-bs-target="#modalInformacionAdicional"
+                aria-label="Ver información adicional">
                 <i class="fa-regular fa-eye eye-icon-predio"></i>
               </button>
             </div>
           </div>
+        </div>
 
-          <!-- TARJETA DEL MEDIO (Informacion Juridica) -->
-          <div
-            class="card rounded-4 shadow w-100 tarjeta-predio tarjeta-placeholder-superior flex-grow-1 d-flex align-items-center"
-            style="min-height: 60px;">
-            <div class="seccion-tabla-predio d-flex align-items-center justify-content-between w-100 h-100">
-              <div class="d-flex align-items-center gap-3">
-                <div class="section-icons mb-0">
-                  <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
-                    style="background-color: #6aa4d4;">
-                    <i class="fa-solid fa-scale-unbalanced fs-5"></i>
-                  </div>
-                </div>
-                <div class="title-part-predio mb-0">
-                  Derecho, Interesado, Fuente
+        <!-- TARJETA DEL marcas (marcas, tramites y novedades) -->
+        <div
+          class="card rounded-4 shadow-sm w-100 tarjeta-predio tarjeta-placeholder-superior flex-grow-1 d-flex align-items-center"
+          style="min-height: 60px;">
+          <div class="seccion-tabla-predio d-flex align-items-center justify-content-between w-100 h-100">
+            <div class="d-flex align-items-center gap-3">
+              <div class="section-icons mb-0">
+                <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+                  style="background-color: #6aa4d4;">
+                  <i class="bi bi-flag-fill fs-5"></i>
                 </div>
               </div>
-              <div class="d-flex align-items-center gap-2">
-                <div id="badgeJuridicoCountContainer"
-                  class="d-none badge-juridico-count-edit rounded-pill px-3 py-1 align-items-center gap-2"
-                  style="background-color: #5B9BD5; color: #ffffff; font-size: 0.85rem; font-weight: 700; height: 32px; border-radius: 20px !important;">
-                  <span id="badgeJuridicoCountValue">0</span>
-                  <i class="fa-solid fa-user" style="font-size: 0.75rem;"></i>
-                </div>
-                <button type="button"
-                  class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
-                  data-bs-toggle="modal" data-bs-target="#modalInformacionAdicional"
-                  aria-label="Ver información adicional">
-                  <i class="fa-regular fa-eye eye-icon-predio"></i>
-                </button>
+              <div class="title-part-predio mb-0">
+                Marcas, novedades y trámites
               </div>
             </div>
+            <button type="button"
+              class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+              data-bs-toggle="modal" data-bs-target="#modalInformacionMarcasAsignacion"
+              aria-label="Ver marcas, novedades y trámites">
+              <i class="fa-regular fa-eye eye-icon-predio"></i>
+            </button>
           </div>
+        </div>
 
-          <!-- TARJETA DEL marcas (marcas, tramites y novedades) -->
-          <div
-            class="card rounded-4 shadow w-100 tarjeta-predio tarjeta-placeholder-superior flex-grow-1 d-flex align-items-center"
-            style="min-height: 60px;">
-            <div class="seccion-tabla-predio d-flex align-items-center justify-content-between w-100 h-100">
-              <div class="d-flex align-items-center gap-3">
-                <div class="section-icons mb-0">
-                  <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
-                    style="background-color: #6aa4d4;">
-                    <i class="bi bi-flag-fill fs-5"></i>
+      </div>
+
+      <!-- SECCION INFERIOR: Construcciones y UC -->
+      <div class="col-12 col-lg-6 mt-2 d-flex px-0">
+        <div
+          class="card rounded-4 shadow w-100 d-flex flex-column tarjeta-predio tarjeta-placeholder-superior tarjeta-inferior-base-edit">
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mt-1">
+              <div class="d-flex align-items-start gap-2 flex-grow-1">
+                <div
+                  class="icons-bg-menu d-flex align-items-center justify-content-center flex-shrink-0 ">
+                  <i class="bi bi-houses-fill fs-5"></i>
+                </div>
+                <div class="d-flex flex-column lh-sm">
+                  <div class="fw-bold table-item-label-edit mb-1">
+                    Información de construcciones
+                  </div>
+                  <div class="table-item-text-edit">
+                    Clic en ver detalle para consultar las unidades de construcción asociadas
                   </div>
                 </div>
-                <div class="title-part-predio mb-0">
-                  Marcas, novedades y trámites
-                </div>
               </div>
-              <button type="button"
-                class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
-                data-bs-toggle="modal" data-bs-target="#modalInformacionMarcasAsignacion"
-                aria-label="Ver marcas, novedades y trámites">
-                <i class="fa-regular fa-eye eye-icon-predio"></i>
+              <button
+                class="btn btn-eye-predio-edit btn-sm-edit d-inline-flex align-items-center justify-content-center border-0 bg-white  ms-2"
+                type="button" data-bs-toggle="collapse" data-bs-target="#detalleConstruccionesEdit"
+                aria-expanded="false" aria-controls="detalleConstruccionesEdit"
+                onclick="this.querySelector('i').classList.toggle('rotate-180')">
+                <i class="fa-solid fa-chevron-down transition"></i>
               </button>
             </div>
-          </div>
-
-        </div>
-
-        <!-- SECCION INFERIOR: Construcciones y UC -->
-        <div class="col-12 col-lg-6 mt-3 d-flex">
-          <div
-            class="card rounded-4 shadow w-100 d-flex flex-column tarjeta-predio tarjeta-placeholder-superior tarjeta-inferior-base-edit">
-            <div class="card-body d-flex flex-column">
-              <div class="d-flex justify-content-between align-items-center mt-1">
-                <div class="d-flex align-items-start gap-2 flex-grow-1">
-                  <div
-                    class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 table-icon-circle-edit">
-                    <i class="bi bi-houses-fill fs-5"></i>
-                  </div>
-                  <div class="d-flex flex-column lh-sm">
-                    <div class="fw-bold table-item-label-edit mb-1">
-                      Información de construcciones
-                    </div>
-                    <div class="table-item-text-edit">
-                      Clic en ver detalle para consultar las unidades de construcción asociadas
-                    </div>
-                  </div>
-                </div>
-                <button
-                  class="btn btn-eye-predio-edit btn-sm-edit d-inline-flex align-items-center justify-content-center border-0 rounded-circle ms-2"
-                  type="button" data-bs-toggle="collapse" data-bs-target="#detalleConstruccionesEdit"
-                  aria-expanded="false" aria-controls="detalleConstruccionesEdit"
-                  onclick="this.querySelector('i').classList.toggle('rotate-180')">
-                  <i class="fa-solid fa-chevron-down transition"></i>
-                </button>
-              </div>
-              <div class="collapse mt-2" id="detalleConstruccionesEdit">
-                <div class="tabla-construcciones-wrap mt-3 flex-grow-1">
-                  <div class="table-responsive">
-                    <table class="table tabla-construcciones mb-0" id="tblConsCollapse" style="display:none;">
-                      <thead>
-                        <tr>
-                          <th class="text-center">Ver</th>
-                          <th class="text-center">Identificador</th>
-                          <th class="text-center">Tipo de construcción</th>
-                          <th class="text-center">Predio</th>
-                          <th class="text-center">U.C asociada</th>
-                        </tr>
-                      </thead>
-                      <tbody id="tbodyConsCollapse"></tbody>
-                    </table>
-                    <div id="emptyConsCollapse" class="small text-muted px-4 py-3" style="display:none;">
-                      No hay construcciones asociadas.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12 col-lg-6 mt-3 d-flex">
-          <div
-            class="card rounded-4 shadow w-100 d-flex flex-column tarjeta-predio tarjeta-placeholder-superior tarjeta-inferior-base-edit"
-            id="cardUnidadConstruccion">
-            <div class="card-body d-flex flex-column">
-              <div class="encabezado-unidad-construccion-edit d-flex justify-content-between align-items-center w-100">
-                <div class="titulo-unidad-construccion-edit d-flex align-items-center gap-2">
-                  <div
-                    class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 table-icon-circle-edit">
-                    <i class="bi bi-house-fill fs-5"></i>
-                  </div>
-                  <div>
-                    <div class="fw-bold table-item-label-edit mb-0">
-                      Unidad de construcción
-                    </div>
-                  </div>
-                </div>
-                <div id="mensajeSinSeleccionUc"
-                  class="mensaje-sin-seleccion-uc-wrap-edit d-flex justify-content-end align-items-center flex-grow-1 ms-2">
-                  <div
-                    class="d-inline-flex align-items-center justify-content-center px-3 py-2 text-white text-center rounded-3 fw-medium"
-                    style="background-color: #5B9BD5; font-size: 0.82rem; border-radius: 8px !important; max-width: 100%; border: none; line-height: 1.2;">
-                    Selecciona una construcción para ver las unidades de construcción asociadas.
-                  </div>
-                </div>
-                <div id="contenedorBadgesUc" class="contenedor-badges-uc-edit d-none">
-                  <div id="badgeConstruccionActiva" class="badge-construccion-activa-edit d-none">
-                    <div class="badge-construccion-label-edit">Construcción</div>
-                    <div id="badgeConstruccionValor" class="badge-construccion-valor-edit"></div>
-                  </div>
-                  <div id="badgeUcActiva" class="badge-uc-activa-edit d-none">
-                    <div id="badgeUcValor" class="badge-uc-valor-edit"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="collapse mt-3" id="detalleUnidadConstruccionCard">
+            <div class="collapse mt-2" id="detalleConstruccionesEdit">
+              <div class="tabla-construcciones-wrap mt-3 flex-grow-1">
                 <div class="table-responsive">
-                  <table class="table table-hover mb-0 tabla-unidad-construccion align-middle"
-                    id="tblUnidadConstruccionCard">
-                    <thead class="table-light">
+                  <table class="table tabla-construcciones mb-0" id="tblConsCollapse" style="display:none;">
+                    <thead>
                       <tr>
-                        <th class="text-center" style="width: 60px;">Ver</th>
-                        <th class="text-center">Planta ubicación</th>
-                        <th class="text-center" style="width: 90px;">Altura [m]</th>
-                        <th class="text-center">Tipo de U.C</th>
-                        <th class="text-center">Identificador</th>
+                        <th class="text-center" style="border-top-left-radius: 12px; font-size: 0.72rem;">Ver</th>
+                        <th class="text-center" style="font-size: 0.72rem;">Identificador</th>
+                        <th class="text-center" style="font-size: 0.72rem;">Tipo de construcción</th>
+                        <th class="text-center" style="font-size: 0.72rem;">Predio</th>
+                        <th class="text-center" style="border-top-right-radius: 12px; font-size: 0.72rem;">U.C asociada</th>
                       </tr>
                     </thead>
-                    <tbody id="tbodyUnidadConstruccionCard">
-                      <tr class="fila-vacia-unidad">
-                        <td colspan="5" class="text-center text-muted py-3">
-                          Sin información de unidad de construcción
-                        </td>
-                      </tr>
-                    </tbody>
+                    <tbody id="tbodyConsCollapse"></tbody>
                   </table>
+                  <div id="emptyConsCollapse" class="small text-muted px-4 py-3" style="display:none;">
+                    No hay construcciones asociadas.
+                  </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-6 mt-2 d-flex pe-0">
+        <div
+          class="card rounded-4 shadow w-100 d-flex flex-column tarjeta-predio tarjeta-placeholder-superior tarjeta-inferior-base-edit"
+          id="cardUnidadConstruccion">
+          <div class="card-body d-flex flex-column">
+            <div class="encabezado-unidad-construccion-edit d-flex justify-content-between align-items-center w-100">
+              <div class="titulo-unidad-construccion-edit d-flex align-items-center gap-2">
+                <div
+                  class="icons-bg-menu d-flex align-items-center justify-content-center flex-shrink-0">
+                  <i class="bi bi-house-fill fs-5"></i>
+                </div>
+                <div>
+                  <div class="fw-bold table-item-label-edit mb-0">
+                    Unidad de construcción
+                  </div>
+                </div>
+              </div>
+              <div id="mensajeSinSeleccionUc"
+                class="mensaje-sin-seleccion-uc-wrap-edit d-flex justify-content-end align-items-center flex-grow-1 ms-2">
+                <div
+                  class="d-inline-flex align-items-center justify-content-center px-3 py-2 text-white text-center rounded-3 fw-medium"
+                  style="background-color: #5B9BD5; font-size: 0.82rem; border-radius: 8px !important; max-width: 100%; border: none; line-height: 1.2;">
+                  Selecciona una construcción para ver las unidades de construcción asociadas.
+                </div>
+              </div>
+              <div id="contenedorBadgesUc" class="contenedor-badges-uc-edit d-none">
+                <div id="badgeConstruccionActiva" class="badge-construccion-activa-edit d-none">
+                  <div class="badge-construccion-label-edit">Construcción</div>
+                  <div id="badgeConstruccionValor" class="badge-construccion-valor-edit"></div>
+                </div>
+                <div id="badgeUcActiva" class="badge-uc-activa-edit d-none">
+                  <div id="badgeUcValor" class="badge-uc-valor-edit"></div>
+                </div>
+              </div>
+            </div>
+            <div class="collapse mt-3" id="detalleUnidadConstruccionCard">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0 tabla-unidad-construccion align-middle"
+                  id="tblUnidadConstruccionCard">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="text-center" style="width: 60px;">Ver</th>
+                      <th class="text-center">Planta ubicación</th>
+                      <th class="text-center" style="width: 90px;">Altura [m]</th>
+                      <th class="text-center">Tipo de U.C</th>
+                      <th class="text-center">Identificador</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyUnidadConstruccionCard">
+                    <tr class="fila-vacia-unidad">
+                      <td colspan="5" class="text-center text-muted py-3">
+                        Sin información de unidad de construcción
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -1570,7 +1569,8 @@
                             <div class="col-12 py-1">
                               <div class="d-flex flex-column w-100 dato p-2">
                                 <div class="fw-bold text-start tex-num  ">Área de coeficiente de copropiedad (m2)</div>
-                                <div class="text-start dato_info" id="modal_ph_asoc_area_coeficiente_copropiedad">----</div>
+                                <div class="text-start dato_info" id="modal_ph_asoc_area_coeficiente_copropiedad">----
+                                </div>
                               </div>
                             </div>
 
@@ -1725,8 +1725,7 @@
       rp: "{{ rp }}",
       currentLoggedUser: "{{ user }}",
       currentLoggedRole: "{{ effective_role }}",
-      asigSchemaWork: {{ asig_schema_work | tojson }},
-      assignWmsLayerDetail: {{ asig_geoserver_layer | default('B_ASIGNACIONES_ARB:ASIGNACIONES') | tojson }}
+      assignWmsLayerDetail: {{ asig_geoserver_layer | default ('B_ASIGNACIONES_ARB:ASIGNACIONES') | tojson }}
     };
   </script>
   <script src="{{ rp }}/static/js/asignaciones/asignaciones_detalle.js?v={{ range(1000, 9999)|random }}"></script>

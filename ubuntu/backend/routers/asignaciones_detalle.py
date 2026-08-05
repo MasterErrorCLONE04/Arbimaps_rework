@@ -2260,6 +2260,8 @@ def obtener_detalle_predio_completo_asignacion(
                 cons_id = _first_non_empty(cons, "t_id")
                 if cons_id is not None:
                     construccion_by_id[str(cons_id)] = cons
+                if not cons.get("geom") and cons.get("geometria"):
+                    cons["geom"] = cons.get("geometria")
                 cons["numero_predial_nacional"] = numero_predial
                 tipo_cons_val = _first_non_empty(cons, "tipo_construccion")
                 cons["tipo_construccion_nombre"] = _resolve_domain_name(

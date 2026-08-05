@@ -2657,6 +2657,7 @@ let assignmentWmsLayerDetail = null;
 let assignmentPrediosLayerDetail = null;
 let assignmentTerrenosLayerDetail = null;
 let assignmentUcLayerDetail = null;
+let assignmentConstruccionesLayerDetail = null;
 let selectedUnitLayerDetail = null;
 let assignedScopeLayerDetail = null;
 let highlightLayerDetail = null;
@@ -2753,23 +2754,39 @@ function initMapDetail() {
     visible: !SHOULD_USE_WMS_DETAIL,
   });
 
+  assignmentConstruccionesLayerDetail = new ol.layer.Vector({
+    source: new ol.source.Vector(),
+    style: new ol.style.Style({
+      stroke: new ol.style.Stroke({ color: "#eab308", width: 2.5 }),
+      fill: new ol.style.Fill({ color: "rgba(234, 179, 8, 0.35)" }),
+    }),
+    visible: true,
+    zIndex: 25,
+  });
+
   assignmentUcLayerDetail = new ol.layer.Vector({
     source: new ol.source.Vector(),
     style: new ol.style.Style({
-      stroke: new ol.style.Stroke({ color: "#ef4444", width: 1.8 }),
-      fill: new ol.style.Fill({ color: "rgba(0, 0, 0, 0)" }),
+      stroke: new ol.style.Stroke({ color: "#16a34a", width: 2 }),
+      fill: new ol.style.Fill({ color: "rgba(22, 163, 74, 0.35)" }),
+      image: new ol.style.Circle({
+        radius: 6,
+        fill: new ol.style.Fill({ color: "#16a34a" }),
+        stroke: new ol.style.Stroke({ color: "#0f5132", width: 1.5 }),
+      }),
     }),
-    visible: !SHOULD_USE_WMS_DETAIL,
+    visible: true,
+    zIndex: 28,
   });
 
   selectedUnitLayerDetail = new ol.layer.Vector({
     source: new ol.source.Vector(),
     style: new ol.style.Style({
-      stroke: new ol.style.Stroke({ color: "#f59e0b", width: 4 }),
-      fill: new ol.style.Fill({ color: "rgba(245, 158, 11, 0.28)" }),
+      stroke: new ol.style.Stroke({ color: "#ef4444", width: 3.5 }),
+      fill: new ol.style.Fill({ color: "rgba(239, 68, 68, 0.3)" }),
     }),
     visible: true,
-    zIndex: 32,
+    zIndex: 35,
   });
 
   highlightLayerDetail = new ol.layer.Vector({
@@ -2778,6 +2795,7 @@ function initMapDetail() {
       stroke: new ol.style.Stroke({ color: "#2563eb", width: 3.5 }),
       fill: new ol.style.Fill({ color: "rgba(37, 99, 235, 0.24)" }),
     }),
+    zIndex: 30,
   });
 
   const osmLayer = new ol.layer.Tile({
@@ -2841,8 +2859,6 @@ function initMapDetail() {
     enableVectorFallbackDetail();
   }
 
-  highlightLayerDetail.setZIndex(30);
-
   mapInstanceDetail = new ol.Map({
     target: "map",
     layers: [
@@ -2850,6 +2866,7 @@ function initMapDetail() {
       assignmentWmsLayerDetail,
       assignmentTerrenosLayerDetail,
       assignmentPrediosLayerDetail,
+      assignmentConstruccionesLayerDetail,
       assignmentUcLayerDetail,
       assignedScopeLayerDetail,
       selectedUnitLayerDetail,
@@ -4334,6 +4351,41 @@ function seleccionarConstruccionEdit(index) {
 
   const unidades = obtenerListaUnidadesConstruccionEdit(construccion);
   clearSelectedUnitGeometryDetalle();
+
+  if (selectedUnitLayerDetail) {
+    const src = selectedUnitLayerDetail.getSource();
+    src.clear();
+
+    const cGeom = construccion.geom || construccion.geometria || (unidades && unidades[0] && (unidades[0].construccion_geom || unidades[0].geom));
+    if (cGeom) {
+      try {
+        const format = new ol.format.GeoJSON();
+        let feature = format.readFeature(
+          { type: "Feature", geometry: cGeom, properties: construccion },
+          { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
+        );
+        if (!feature.getGeometry()) {
+          feature = format.readFeature(
+            { type: "Feature", geometry: cGeom, properties: construccion },
+            { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" }
+          );
+        }
+
+        src.addFeature(feature);
+
+        if (mapInstanceDetail && feature.getGeometry()) {
+          mapInstanceDetail.getView().fit(feature.getGeometry().getExtent(), {
+            padding: [60, 60, 60, 60],
+            maxZoom: 19,
+            duration: 600,
+          });
+        }
+      } catch (e) {
+        console.error("Error al hacer zoom a construcción en asignación:", e);
+      }
+    }
+  }
+
   renderUnidadConstruccionCardEdit(unidades);
 }
 
@@ -4346,6 +4398,65 @@ function cargarTablasConstruccionesYUcEdit(payload = {}) {
 
   renderTablaConstruccionesEdit(construcciones);
   mostrarMensajeSinSeleccionUcEdit();
+
+  if (assignmentConstruccionesLayerDetail) {
+    const src = assignmentConstruccionesLayerDetail.getSource();
+    src.clear();
+
+    if (construcciones.length) {
+      const format = new ol.format.GeoJSON();
+      construcciones.forEach((c) => {
+        const cGeom = c.geom || c.geometria || (c.unidades && c.unidades[0] && (c.unidades[0].construccion_geom || c.unidades[0].geom));
+        if (!cGeom) return;
+        try {
+          let feature = format.readFeature(
+            { type: "Feature", geometry: cGeom, properties: c },
+            { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
+          );
+          if (!feature.getGeometry()) {
+            feature = format.readFeature(
+              { type: "Feature", geometry: cGeom, properties: c },
+              { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" }
+            );
+          }
+          src.addFeature(feature);
+        } catch (e) {
+          console.error("Error cargando geometría de construcción:", e);
+        }
+      });
+    }
+  }
+
+  if (assignmentUcLayerDetail) {
+    const src = assignmentUcLayerDetail.getSource();
+    src.clear();
+
+    if (construcciones.length) {
+      const format = new ol.format.GeoJSON();
+      construcciones.forEach((c) => {
+        const unidades = Array.isArray(c.unidades) ? c.unidades : [];
+        unidades.forEach((u) => {
+          const uGeom = u.geom || u.geometria;
+          if (!uGeom) return;
+          try {
+            let feature = format.readFeature(
+              { type: "Feature", geometry: uGeom, properties: u },
+              { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
+            );
+            if (!feature.getGeometry()) {
+              feature = format.readFeature(
+                { type: "Feature", geometry: uGeom, properties: u },
+                { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" }
+              );
+            }
+            src.addFeature(feature);
+          } catch (e) {
+            console.error("Error cargando geometría de unidad:", e);
+          }
+        });
+      });
+    }
+  }
 }
 
 function valorVacioEdit(value) {
@@ -4782,6 +4893,7 @@ function agruparConstruccionesDesdeDetalleEdit(unidades = [], numeroPredial = ""
         total_sotanos: c?.total_sotanos,
         area_total_construccion: c?.area_total_construccion,
         observacion: c?.observacion,
+        geom: c?.geom || c?.geometria || c?.construccion_geom || null,
         unidades: Array.from(unidadesMap.values()),
       };
     });
@@ -4809,6 +4921,7 @@ function agruparConstruccionesDesdeDetalleEdit(unidades = [], numeroPredial = ""
         total_sotanos: unidad?.total_sotanos,
         area_total_construccion: unidad?.area_total_construccion,
         observacion: unidad?.observacion,
+        geom: unidad?.construccion_geom || unidad?.geom || null,
         unidades: [],
       });
     }
