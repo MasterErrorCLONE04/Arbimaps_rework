@@ -22,11 +22,11 @@
     <div class="container-fluid p-0 m-0 my-4">
       <div class="row g-3 align-items-stretch mt-4 px-2">
         
-        <!-- Columna izquierda -->
-        <div class="col-12 col-xl-8">
-          <div class="row g-3 h-100">
+        <!-- Columna Única (Ancho Completo col-12, sin Visor de Mapa) -->
+        <div class="col-12">
+          <div class="row g-3">
             
-            <!-- Tarjeta superior izquierda -->
+            <!-- Tarjeta superior de Resumen -->
             <div class="col-12">
               <div class="card p-2 h-100 tarjeta-predio1">
                 <div class="card-body d-flex flex-column gap-3">
@@ -110,125 +110,106 @@
               </div>
             </div>
             
-            <!-- Tarjeta inferior 1 (Información del predio R1) -->
-            <div class="col-6">
-              <div class="card rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
-                <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100">
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="section-icons mb-0">
-                      <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1" style="background-color: #6aa4d4;">
-                        <i class="fa-solid fa-location-dot fs-5"></i>
+            <!-- Tarjetas inferiores de acceso a los modales -->
+            <div class="col-12">
+              <div class="row g-2">
+                <!-- Tarjeta R1 -->
+                <div class="col-12 col-md-6">
+                  <div class="card rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
+                    <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100" style="min-height: 60px;">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="section-icons mb-0">
+                          <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1" style="background-color: #6aa4d4;">
+                            <i class="fa-solid fa-location-dot fs-5"></i>
+                          </div>
+                        </div>
+                        <div class="title-part-predio mb-0">
+                          Información predio (R1)
+                        </div>
                       </div>
-                    </div>
-                    <div class="title-part-predio mb-0">
-                      Información predio (R1)
+                      <button type="button" class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle" data-bs-toggle="modal" data-bs-target="#modalInformacionPredio" aria-label="Ver información tabla predio">
+                        <i class="fa-regular fa-eye eye-icon-predio"></i>
+                      </button>
                     </div>
                   </div>
-                  <button type="button" class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle" data-bs-toggle="modal" data-bs-target="#modalInformacionPredio" aria-label="Ver información tabla predio">
-                    <i class="fa-regular fa-eye eye-icon-predio"></i>
-                  </button>
+                </div>
+                
+                <!-- Tarjeta Derechos -->
+                <div class="col-12 col-md-6">
+                  <div class="card rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
+                    <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100" style="min-height: 60px;">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="section-icons mb-0">
+                          <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1" style="background-color: #6aa4d4;">
+                            <i class="fa-solid fa-scale-unbalanced fs-5"></i>
+                          </div>
+                        </div>
+                        <div class="title-part-predio mb-0">
+                          Derechos e Interesados
+                        </div>
+                      </div>
+                      <button type="button" class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle" data-bs-toggle="modal" data-bs-target="#modalInformacionAdicional" aria-label="Ver información adicional">
+                        <i class="fa-regular fa-eye eye-icon-predio"></i>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <!-- Tarjeta inferior 2 (Derechos e Interesados) -->
-            <div class="col-6">
-              <div class="card rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
-                <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100">
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="section-icons mb-0">
-                      <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1" style="background-color: #6aa4d4;">
-                        <i class="fa-solid fa-scale-unbalanced fs-5"></i>
+            <!-- Ficha física del R2 -->
+            <div class="col-12 mt-2">
+              <div class="card border-0 shadow-sm rounded-4 w-100 d-flex flex-column tarjeta-inferior-base h-100">
+                <div class="card-body d-flex flex-column h-100">
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <div class="d-flex align-items-start gap-2 flex-grow-1">
+                      <div class="section-icons mb-0">
+                        <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1" style="background-color: #6aa4d4;">
+                          <i class="bi bi-houses-fill fs-5"></i>
+                        </div>
+                      </div>
+                      <div class="d-flex flex-column justify-content-center h-100">
+                        <div class="fw-bold table-item-label">Ficha Física de Zonas y Construcción (R2)</div>
+                        <div class="table-item-text">
+                          Desglose físico de áreas, habitaciones, baños, locales, pisos y calificaciones en base de datos R2.
+                        </div>
                       </div>
                     </div>
-                    <div class="title-part-predio mb-0">
-                      Derechos e Interesados
+                  </div>
+                  
+                  <div class="mt-4 flex-grow-1">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                      <table class="table table-hover align-middle border-light text-center" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                          <tr>
+                            <th class="fw-bold">Zona</th>
+                            <th>Z. Física</th>
+                            <th>Z. Económica</th>
+                            <th>Área Terreno</th>
+                            <th>Área Construida</th>
+                            <th>Habitaciones</th>
+                            <th>Baños</th>
+                            <th>Locales</th>
+                            <th>Pisos</th>
+                            <th>Tipificación / Uso</th>
+                            <th>Puntaje</th>
+                          </tr>
+                        </thead>
+                        <tbody id="r2_zones_tbody">
+                          <!-- Se llena dinámicamente -->
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center border-top border-light pt-3 mt-3">
+                      <span class="text-muted fw-bold">Área Construida Total R2:</span>
+                      <span id="area_construida_total_r2" class="fw-bold text-success fs-5"></span>
                     </div>
                   </div>
-                  <button type="button" class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle" data-bs-toggle="modal" data-bs-target="#modalInformacionAdicional" aria-label="Ver información adicional">
-                    <i class="fa-regular fa-eye eye-icon-predio"></i>
-                  </button>
+                  
                 </div>
               </div>
             </div>
             
-          </div>
-        </div>
-        
-        <!-- Columna derecha (Visor Predio - Alfanumérico) -->
-        <div class="col-12 col-xl-4">
-          <div class="rounded-4 overflow-hidden shadow border tarjeta-visor-predio1 h-100 d-flex flex-column">
-            <div class="card-header1 p-0 rounded-top-4 py-2">
-              <div class="d-flex align-items-start gap-2 px-3 py-2">
-                <span class="lh-1 mt-2 me-2" style="color: #fff;"><i class="bi bi-crosshair"></i></span>
-                <div class="lh-sm">
-                  <div class="fw-bold mb-0 text-visor">Visor predio</div>
-                  <small class="text-white-muted d-block text-visualizacion">Sin visualización espacial</small>
-                </div>
-              </div>
-            </div>
-            <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center text-center bg-light rounded-bottom-4 flex-grow-1" style="min-height: 250px;">
-              <div class="rounded-circle bg-white d-flex align-items-center justify-content-center mb-3 shadow-sm" style="width: 70px; height: 70px; color: #0A2C1B;">
-                <i class="bi bi-map-fill fs-2"></i>
-              </div>
-              <h5 class="fw-bold" style="color: #0A2C1B;">Predio Alfanumérico</h5>
-              <p class="text-muted small mb-0 px-3">
-                Este predio proviene del R1/R2 de migración catastral y no posee una geometría espacial registrada.
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Sección inferior (Ficha Física R2) -->
-        <div class="col-12 seccion-inferior-content mt-3">
-          <div class="card border-0 shadow-sm rounded-4 w-100 d-flex flex-column tarjeta-inferior-base h-100">
-            <div class="card-body d-flex flex-column h-100">
-              <div class="d-flex justify-content-between align-items-center mt-1">
-                <div class="d-flex align-items-start gap-2 flex-grow-1">
-                  <div class="section-icons mb-0">
-                    <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1" style="background-color: #6aa4d4;">
-                      <i class="bi bi-houses-fill fs-5"></i>
-                    </div>
-                  </div>
-                  <div class="d-flex flex-column justify-content-center h-100">
-                    <div class="fw-bold table-item-label">Ficha Física de Zonas y Construcción (R2)</div>
-                    <div class="table-item-text">
-                      Desglose físico de áreas, habitaciones, baños, locales, pisos y calificaciones en base de datos R2.
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="mt-4 flex-grow-1">
-                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                  <table class="table table-hover align-middle border-light text-center" style="font-size: 0.85rem;">
-                    <thead class="table-light">
-                      <tr>
-                        <th class="fw-bold">Zona</th>
-                        <th>Z. Física</th>
-                        <th>Z. Económica</th>
-                        <th>Área Terreno</th>
-                        <th>Área Construida</th>
-                        <th>Habitaciones</th>
-                        <th>Baños</th>
-                        <th>Locales</th>
-                        <th>Pisos</th>
-                        <th>Tipificación / Uso</th>
-                        <th>Puntaje</th>
-                      </tr>
-                    </thead>
-                    <tbody id="r2_zones_tbody">
-                      <!-- Se llena dinámicamente -->
-                    </tbody>
-                  </table>
-                </div>
-                <div class="d-flex justify-content-between align-items-center border-top border-light pt-3 mt-3">
-                  <span class="text-muted fw-bold">Área Construida Total R2:</span>
-                  <span id="area_construida_total_r2" class="fw-bold text-success fs-5"></span>
-                </div>
-              </div>
-              
-            </div>
           </div>
         </div>
         
