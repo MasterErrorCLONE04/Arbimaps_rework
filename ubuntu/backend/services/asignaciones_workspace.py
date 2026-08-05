@@ -858,14 +858,31 @@ def _arb_create_sync_selected_predio_scope(
     EXISTS (
         SELECT 1
         FROM {asignacion_predio_table} ap
-        WHERE ap.asignacion_id = %s
+        WHERE ap.asignacion_id = {asignacion_id}
           AND ap.activo IS DISTINCT FROM FALSE
           AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.numero_predial::text)
     )
     """
     if include_new_informal_predios:
         new_informal_sql = _arb_new_informal_predio_condition_sql(conn, schema_work, alias="wp")
-        scope_condition = f"({scope_condition} OR {new_informal_sql})"
+        main_predio_table = main_table(tenant, "arb_predio")
+        desenglobe_sql = f"""
+        (
+            NOT EXISTS (
+                SELECT 1
+                FROM {main_predio_table} main_p
+                WHERE BTRIM(main_p.numero_predial::text) = BTRIM(wp.numero_predial::text)
+            )
+            AND EXISTS (
+                SELECT 1
+                FROM {asignacion_predio_table} ap_child
+                WHERE ap_child.asignacion_id = {asignacion_id}
+                  AND ap_child.activo IS DISTINCT FROM FALSE
+                  AND LEFT(REGEXP_REPLACE(ap_child.numero_predial_nacional::text, '[^0-9]', '', 'g'), 17) = LEFT(REGEXP_REPLACE(wp.numero_predial::text, '[^0-9]', '', 'g'), 17)
+            )
+        )
+        """
+        scope_condition = f"({scope_condition} OR {new_informal_sql} OR {desenglobe_sql})"
     else:
         scope_condition = f"({scope_condition})"
 
@@ -886,7 +903,7 @@ def _arb_create_sync_selected_predio_scope(
             WHERE wd.datasetname = %s
               AND {scope_condition}
             """,
-            (work_datasetname, asignacion_id),
+            (work_datasetname,),
         )
         cur.execute("SELECT COUNT(*) FROM _arb_sync_selected_predio")
         return int((cur.fetchone() or [0])[0] or 0)
