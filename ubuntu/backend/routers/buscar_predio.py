@@ -402,7 +402,7 @@ def predio_buscar_f_r1_r2_detail(
                r2.habitaciones_1, r2.banos_1, r2.locales_1, r2.pisos_1, r2.tipificacion_1, r2.uso_1, r2.puntaje_1,
                r2.zona_fisica_2, r2.zona_economica_2, r2.area_terreno_2, r2.area_construida_2,
                r2.habitaciones_2, r2.banos_2, r2.locales_2, r2.pisos_2, r2.tipificacion_2, r2.uso_2, r2.puntaje_2,
-               r2.zona_fisica_3, r2.zona_economica_3, r2.area_terreno_3, r2.area_construida_3,
+               NULL::text AS zona_fisica_3, NULL::text AS zona_economica_3, NULL::numeric AS area_terreno_3, r2.area_construida_3,
                r2.habitaciones_3, r2.banos_3, r2.locales_3, r2.pisos_3, r2.tipificacion_3, r2.uso_3, r2.puntaje_3,
                ((COALESCE(r2.area_construida_1, 0) + COALESCE(r2.area_construida_2, 0)) + COALESCE(r2.area_construida_3, 0)) AS area_construida_total_r2
         FROM f_r1_r2.r1_predio_propietario r1
