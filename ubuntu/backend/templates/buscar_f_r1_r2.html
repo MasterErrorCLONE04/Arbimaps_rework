@@ -12,7 +12,7 @@
     <div class="title-body mt-2">
       <h3 style="font-weight: 700 !important; font-size: 1.6rem !important; color: #0A2C1B;">Detalle del Predio de Migración</h3>
       <p class="text-muted">
-        Visualización de datos alfanuméricos de los registros secuenciales R1 y R2 de Neiva.
+        Visualización completa de datos alfanuméricos de los registros secuenciales R1 y R2 de Neiva.
       </p>
     </div>
   </div>
@@ -121,11 +121,11 @@
       </div>
 
       <!-- Ficha Detallada Alfanumérica -->
-      <div class="col-12 col-xl-6">
+      <div class="col-12 col-xl-5">
         <div class="card border-0 shadow-sm rounded-4 bg-white h-100">
           <div class="card-header bg-white border-0 pt-4 px-4">
             <h5 class="card-title fw-bold mb-0" style="color: #0A2C1B;">
-              <i class="bi bi-info-circle-fill me-2 text-success"></i>Información Jurídica y Destinación
+              <i class="bi bi-info-circle-fill me-2 text-success"></i>Información Jurídica y Destinación (R1)
             </h5>
           </div>
           <div class="card-body px-4 pb-4">
@@ -137,6 +137,10 @@
               <li class="list-group-item d-flex justify-content-between align-items-center py-3 border-light">
                 <span class="text-muted">Participación:</span>
                 <span id="participacion" class="fw-semibold text-dark"></span>
+              </li>
+              <li class="list-group-item d-flex justify-content-between align-items-center py-3 border-light">
+                <span class="text-muted">Estado Civil:</span>
+                <span id="estado_civil" class="fw-semibold text-dark"></span>
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center py-3 border-light">
                 <span class="text-muted">Destinación Económica:</span>
@@ -156,23 +160,29 @@
       </div>
 
       <!-- Zonas del Terreno y Calificaciones (R2) -->
-      <div class="col-12 col-xl-6">
+      <div class="col-12 col-xl-7">
         <div class="card border-0 shadow-sm rounded-4 bg-white h-100">
           <div class="card-header bg-white border-0 pt-4 px-4">
             <h5 class="card-title fw-bold mb-0" style="color: #0A2C1B;">
-              <i class="bi bi-grid-3x3-gap-fill me-2 text-success"></i>Zonas de Terreno y Construcciones (R2)
+              <i class="bi bi-grid-3x3-gap-fill me-2 text-success"></i>Ficha Física de Zonas y Construcción (R2)
             </h5>
           </div>
           <div class="card-body px-4 pb-4">
             <div class="table-responsive">
-              <table class="table table-hover align-middle border-light">
-                <thead class="table-light">
+              <table class="table table-hover align-middle border-light" style="font-size: 0.85rem;">
+                <thead class="table-light text-center">
                   <tr>
-                    <th class="text-center" style="font-size: 0.85rem;">Zona</th>
-                    <th class="text-center" style="font-size: 0.85rem;">Z. Física</th>
-                    <th class="text-center" style="font-size: 0.85rem;">Z. Económica</th>
-                    <th class="text-center" style="font-size: 0.85rem;">Área Terreno</th>
-                    <th class="text-center" style="font-size: 0.85rem;">Área Construida</th>
+                    <th>Z.</th>
+                    <th>Z.F.</th>
+                    <th>Z.E.</th>
+                    <th>Área Ter.</th>
+                    <th>Área Cons.</th>
+                    <th>Hab.</th>
+                    <th>Baños</th>
+                    <th>Loc.</th>
+                    <th>Pis.</th>
+                    <th>Tip. / Uso</th>
+                    <th>Ptos.</th>
                   </tr>
                 </thead>
                 <tbody id="r2_zones_tbody">
@@ -210,6 +220,7 @@
         document.getElementById("propietario").textContent = data.propietario || "-";
         document.getElementById("documento").textContent = `${data.tipo_documento || ""} - ${data.documento_identidad || ""}`;
         document.getElementById("participacion").textContent = data.participacion ? `${data.participacion}%` : "-";
+        document.getElementById("estado_civil").textContent = data.estado_civil || "-";
         document.getElementById("area_terreno").textContent = data.area_terreno_r1 ? `${data.area_terreno_r1} m²` : "-";
         document.getElementById("area_construida").textContent = data.area_construida_r1 ? `${data.area_construida_r1} m²` : "-";
         document.getElementById("avaluo").textContent = data.avaluo ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(data.avaluo) : "-";
@@ -222,44 +233,72 @@
         r2Tbody.innerHTML = "";
         
         let hasRows = false;
+        // Zona 1
         if (data.zona_fisica_1 || data.area_construida_1) {
-          r2Tbody.appendChild(createRow(1, data.zona_fisica_1, data.zona_economica_1, data.area_terreno_1, data.area_construida_1));
+          r2Tbody.appendChild(createRow(1, data.zona_fisica_1, data.zona_economica_1, data.area_terreno_1, data.area_construida_1, data.habitaciones_1, data.banos_1, data.locales_1, data.pisos_1, data.tipificacion_1, data.uso_1, data.puntaje_1));
           hasRows = true;
         }
+        // Zona 2
         if (data.zona_fisica_2 || data.area_construida_2) {
-          r2Tbody.appendChild(createRow(2, data.zona_fisica_2, data.zona_economica_2, data.area_terreno_2, data.area_construida_2));
+          r2Tbody.appendChild(createRow(2, data.zona_fisica_2, data.zona_economica_2, data.area_terreno_2, data.area_construida_2, data.habitaciones_2, data.banos_2, data.locales_2, data.pisos_2, data.tipificacion_2, data.uso_2, data.puntaje_2));
+          hasRows = true;
+        }
+        // Zona 3
+        if (data.zona_fisica_3 || data.area_construida_3) {
+          r2Tbody.appendChild(createRow(3, data.zona_fisica_3, data.zona_economica_3, data.area_terreno_3, data.area_construida_3, data.habitaciones_3, data.banos_3, data.locales_3, data.pisos_3, data.tipificacion_3, data.uso_3, data.puntaje_3));
           hasRows = true;
         }
 
         if (!hasRows) {
           const tr = document.createElement("tr");
-          tr.innerHTML = `<td colspan="5" class="text-center text-muted py-3">No hay zonas físicas o de construcciones registradas</td>`;
+          tr.innerHTML = `<td colspan="11" class="text-center text-muted py-3">No hay zonas físicas o de construcciones registradas</td>`;
           r2Tbody.appendChild(tr);
         }
 
         document.getElementById("area_construida_total_r2").textContent = data.area_construida_total_r2 ? `${data.area_construida_total_r2} m²` : "-";
 
-        document.getElementById("loaderVistaPredio").style.display = "none";
-        document.getElementById("contentVistaPredio").style.display = "block";
+        // ELIMINAR loaderVistaPredio para que no se quede cargando
+        const loader = document.getElementById("loaderVistaPredio");
+        if (loader) loader.remove();
+        
+        // MOSTRAR el contenido final con !important para anular cualquier regla de display
+        const content = document.getElementById("contentVistaPredio");
+        if (content) content.style.setProperty("display", "block", "important");
       } catch (err) {
         console.error(err);
-        document.getElementById("loaderVistaPredio").innerHTML = `
-          <div class="alert alert-danger mx-2 text-center" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            Error cargando los detalles del predio R1/R2: ${err.message}
-          </div>
-        `;
+        const loader = document.getElementById("loaderVistaPredio");
+        if (loader) {
+          loader.innerHTML = `
+            <div class="alert alert-danger mx-2 text-center" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              Error cargando los detalles del predio R1/R2: ${err.message}
+            </div>
+          `;
+        }
       }
     }
 
-    function createRow(index, zf, ze, at, ac) {
+    function createRow(index, zf, ze, at, ac, hab, ban, loc, pis, tip, uso, pts) {
       const tr = document.createElement("tr");
+      tr.className = "text-center";
+      
+      let tipUsoStr = "-";
+      if (tip || uso) {
+        tipUsoStr = `${tip || ""}/${uso || ""}`;
+      }
+
       tr.innerHTML = `
-        <td class="text-center fw-bold text-muted">${index}</td>
-        <td class="text-center">${zf || "-"}</td>
-        <td class="text-center">${ze || "-"}</td>
-        <td class="text-center">${at ? at + " m²" : "-"}</td>
-        <td class="text-center">${ac ? ac + " m²" : "-"}</td>
+        <td class="fw-bold text-muted">${index}</td>
+        <td>${zf || "-"}</td>
+        <td>${ze || "-"}</td>
+        <td>${at ? at + " m²" : "-"}</td>
+        <td>${ac ? ac + " m²" : "-"}</td>
+        <td>${hab !== null && hab !== undefined ? hab : "-"}</td>
+        <td>${ban !== null && ban !== undefined ? ban : "-"}</td>
+        <td>${loc !== null && loc !== undefined ? loc : "-"}</td>
+        <td>${pis !== null && pis !== undefined ? pis : "-"}</td>
+        <td>${tipUsoStr}</td>
+        <td>${pts !== null && pts !== undefined ? pts : "-"}</td>
       `;
       return tr;
     }

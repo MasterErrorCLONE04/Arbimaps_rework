@@ -392,9 +392,23 @@ def predio_buscar_f_r1_r2_detail(
 ):
     try:
         sql = """
-        SELECT *
-        FROM f_r1_r2.v_predios_consolidados
-        WHERE BTRIM(numero_predial::text) = BTRIM(%s::text)
+        SELECT r1.*,
+               de.descripcion AS descripcion_destino_economico,
+               r1.nombre AS propietario,
+               r1.area_terreno AS area_terreno_r1,
+               r1.area_construida AS area_construida_r1,
+               r2.matricula,
+               r2.zona_fisica_1, r2.zona_economica_1, r2.area_terreno_1, r2.area_construida_1,
+               r2.habitaciones_1, r2.banos_1, r2.locales_1, r2.pisos_1, r2.tipificacion_1, r2.uso_1, r2.puntaje_1,
+               r2.zona_fisica_2, r2.zona_economica_2, r2.area_terreno_2, r2.area_construida_2,
+               r2.habitaciones_2, r2.banos_2, r2.locales_2, r2.pisos_2, r2.tipificacion_2, r2.uso_2, r2.puntaje_2,
+               r2.zona_fisica_3, r2.zona_economica_3, r2.area_terreno_3, r2.area_construida_3,
+               r2.habitaciones_3, r2.banos_3, r2.locales_3, r2.pisos_3, r2.tipificacion_3, r2.uso_3, r2.puntaje_3,
+               ((COALESCE(r2.area_construida_1, 0) + COALESCE(r2.area_construida_2, 0)) + COALESCE(r2.area_construida_3, 0)) AS area_construida_total_r2
+        FROM f_r1_r2.r1_predio_propietario r1
+        LEFT JOIN f_r1_r2.destino_economico de ON r1.destino_economico = de.codigo
+        LEFT JOIN f_r1_r2.r2_construccion_zona r2 ON r1.numero_predial = r2.numero_predial
+        WHERE BTRIM(r1.numero_predial::text) = BTRIM(%s::text)
         LIMIT 1
         """
         rows = _execute_fetchall(conn, sql, (numero_predial,))
