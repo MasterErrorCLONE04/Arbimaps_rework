@@ -550,21 +550,20 @@ def _prune_workspace_predios_arb(
             rows_p = cur.fetchall()
             print(f"Workspace predios: {[{'t_id': r[0], 'numero_predial': r[1], 'condicion_predio': r[2], 'numero_predial_anterior': r[3]} for r in rows_p]}", file=sys.stderr, flush=True)
 
-            print("=== WORKSPACE TABLES WITH DATA ===", file=sys.stderr, flush=True)
+            print("=== WORKSPACE ESTRI TABLAS ===", file=sys.stderr, flush=True)
             for table in sorted(existing_tables):
-                if table.startswith("t_ili") or table.startswith("t_key") or table == "spatial_ref_sys":
+                if not table.startswith("arb_estructura"):
                     continue
                 try:
                     cur.execute(f'SELECT COUNT(*) FROM "{schema_work}"."{table}"')
                     cnt = cur.fetchone()[0]
                     if cnt > 0:
-                        cur.execute(f'SELECT * FROM "{schema_work}"."{table}" LIMIT 5')
+                        cur.execute(f'SELECT * FROM "{schema_work}"."{table}"')
                         cols = [desc[0] for desc in cur.description]
                         rows = cur.fetchall()
                         print(f"Table: {table} (count: {cnt})", file=sys.stderr, flush=True)
                         print(f"  Columns: {cols}", file=sys.stderr, flush=True)
                         for r in rows:
-                            # format geometries nicely or convert to string
                             row_dict = {}
                             for col, val in zip(cols, r):
                                 if hasattr(val, 'desc') or isinstance(val, (bytes, bytearray)):
