@@ -108,7 +108,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
   {% endif %}
 </head>
 
-<body class="panel-body view-{{ view }}">
+<body class="panel-body view-{{ view }} {% if view == 'buscar_f_r1_r2' %}view-buscar_predio{% endif %}">
   <div class="container-fluid panel-wrapper px-2 py-2">
     <div class="row g-2 vh-100">
       <aside class="col-lg-3 col-xl-2 d-none d-lg-block h-100 pb-2 pb-xl-4">
