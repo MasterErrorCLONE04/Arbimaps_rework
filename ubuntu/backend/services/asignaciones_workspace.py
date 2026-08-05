@@ -525,6 +525,30 @@ def _prune_workspace_predios_arb(
                 )
             """
 
+        # DEBUG LOGGING FOR DESENGLOVE VALIDATION
+        logger.info("=== DEBUG DESENGLOVE SYNC ===")
+        try:
+            asignacion_predio_table = app_table(tenant, "asignacion_predio")
+            cur.execute(f"SELECT numero_predial_nacional FROM {asignacion_predio_table} WHERE asignacion_id = %s", (asignacion_id,))
+            rows_ap = cur.fetchall()
+            logger.info("Asignacion predios: %s", [r[0] for r in rows_ap])
+
+            cur.execute(f"SELECT t_id, numero_predial, condicion_predio FROM {predio_table}")
+            rows_p = cur.fetchall()
+            logger.info("Workspace predios: %s", [{'t_id': r[0], 'numero_predial': r[1], 'condicion_predio': r[2]} for r in rows_p])
+
+            if has_matriz_table:
+                cur.execute(f'SELECT predio, numero_predial_nacional FROM "{schema_work}".arb_estructuraprediomatriznpn')
+                rows_pm = cur.fetchall()
+                logger.info("Matriz table: %s", [{'predio': r[0], 'numero_predial_nacional': r[1]} for r in rows_pm])
+
+            if has_origen_table:
+                cur.execute(f'SELECT predio, numero_predial_nacional FROM "{schema_work}".arb_estructurapredioorigennpn')
+                rows_po = cur.fetchall()
+                logger.info("Origen table: %s", [{'predio': r[0], 'numero_predial_nacional': r[1]} for r in rows_po])
+        except Exception as log_err:
+            logger.error("Error logging debug info: %s", log_err)
+
         cur.execute("DROP TABLE IF EXISTS _arb_ws_unassigned_predio")
         asignacion_predio_table = app_table(tenant, "asignacion_predio")
         cur.execute(
