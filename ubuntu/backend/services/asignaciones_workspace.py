@@ -9,7 +9,7 @@ from services import asignaciones_export as export_service
 from services import asignaciones_workspace_schema as workspace_schema_service
 from services import asignaciones_workspace_sql as workspace_sql_service
 from tenants.context import TenantContext
-from tenants.sql import app_table, tenant_table, work_table
+from tenants.sql import app_table, tenant_table, work_table, main_table
 
 
 _ARB_DIRECT_PREDIO_TABLES = (
@@ -502,80 +502,31 @@ def _prune_workspace_predios_arb(
             new_informal_sql = _arb_new_informal_predio_condition_sql(conn, schema_work, alias="p")
             keep_new_filter = f" AND NOT {new_informal_sql}"
 
-        has_matriz_table = "arb_estructuraprediomatriznpn" in existing_tables
-        has_origen_table = "arb_estructurapredioorigennpn" in existing_tables
+        main_predio_table = main_table(tenant, "arb_predio")
 
-        matriz_origen_sql = ""
-        if has_matriz_table:
-            matriz_origen_sql += f"""
-                OR EXISTS (
+        # Check for desenglobe / segregados
+        # Allows keeping a predio if it is a completely new predio (does not exist in main database)
+        # AND shares the first 17 digits with any assigned parent predio of the same assignment
+        desenglobe_sql = f"""
+            OR (
+                NOT EXISTS (
                     SELECT 1
-                    FROM "{schema_work}".arb_estructuraprediomatriznpn pm
-                    JOIN "{schema_work}".arb_predio p_parent ON (
-                        REGEXP_REPLACE(pm.numero_predial_nacional::text, '[^0-9]', '', 'g') IN (
-                            REGEXP_REPLACE(p_parent.numero_predial::text, '[^0-9]', '', 'g'),
-                            REGEXP_REPLACE(p_parent.numero_predial_anterior::text, '[^0-9]', '', 'g')
-                        )
-                    )
-                    WHERE pm.predio = p.t_id
-                      AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(p_parent.numero_predial::text)
+                    FROM {main_predio_table} main_p
+                    WHERE BTRIM(main_p.numero_predial::text) = BTRIM(p.numero_predial::text)
                 )
-            """
-        if has_origen_table:
-            matriz_origen_sql += f"""
-                OR EXISTS (
+                AND EXISTS (
                     SELECT 1
-                    FROM "{schema_work}".arb_estructurapredioorigennpn po
-                    JOIN "{schema_work}".arb_predio p_parent ON (
-                        REGEXP_REPLACE(po.numero_predial_nacional::text, '[^0-9]', '', 'g') IN (
-                            REGEXP_REPLACE(p_parent.numero_predial::text, '[^0-9]', '', 'g'),
-                            REGEXP_REPLACE(p_parent.numero_predial_anterior::text, '[^0-9]', '', 'g')
-                        )
-                    )
-                    WHERE po.predio = p.t_id
-                      AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(p_parent.numero_predial::text)
+                    FROM {app_table(tenant, "asignacion_predio")} ap_child
+                    WHERE ap_child.asignacion_id = {asignacion_id}
+                      AND ap_child.activo IS DISTINCT FROM FALSE
+                      AND LEFT(REGEXP_REPLACE(ap_child.numero_predial_nacional::text, '[^0-9]', '', 'g'), 17) = LEFT(REGEXP_REPLACE(p.numero_predial::text, '[^0-9]', '', 'g'), 17)
                 )
-            """
+            )
+        """
 
         # DEBUG LOGGING FOR DESENGLOVE VALIDATION
         import sys
-        print("=== DEBUG DESENGLOVE SYNC ===", file=sys.stderr, flush=True)
-        try:
-            asignacion_predio_table = app_table(tenant, "asignacion_predio")
-            cur.execute(f"SELECT numero_predial_nacional FROM {asignacion_predio_table} WHERE asignacion_id = %s", (asignacion_id,))
-            rows_ap = cur.fetchall()
-            print(f"Asignacion predios: {[r[0] for r in rows_ap]}", file=sys.stderr, flush=True)
-
-            cur.execute(f"SELECT t_id, numero_predial, condicion_predio, numero_predial_anterior FROM {predio_table}")
-            rows_p = cur.fetchall()
-            print(f"Workspace predios: {[{'t_id': r[0], 'numero_predial': r[1], 'condicion_predio': r[2], 'numero_predial_anterior': r[3]} for r in rows_p]}", file=sys.stderr, flush=True)
-
-            print("=== WORKSPACE ESTRI TABLAS ===", file=sys.stderr, flush=True)
-            for table in sorted(existing_tables):
-                if not table.startswith("arb_estructura"):
-                    continue
-                try:
-                    cur.execute(f'SELECT COUNT(*) FROM "{schema_work}"."{table}"')
-                    cnt = cur.fetchone()[0]
-                    if cnt > 0:
-                        cur.execute(f'SELECT * FROM "{schema_work}"."{table}"')
-                        cols = [desc[0] for desc in cur.description]
-                        rows = cur.fetchall()
-                        print(f"Table: {table} (count: {cnt})", file=sys.stderr, flush=True)
-                        print(f"  Columns: {cols}", file=sys.stderr, flush=True)
-                        for r in rows:
-                            row_dict = {}
-                            for col, val in zip(cols, r):
-                                if hasattr(val, 'desc') or isinstance(val, (bytes, bytearray)):
-                                    row_dict[col] = "<geom/binary>"
-                                else:
-                                    row_dict[col] = str(val)
-                            print(f"  Row: {row_dict}", file=sys.stderr, flush=True)
-                except Exception as t_err:
-                    print(f"Error querying table {table}: {t_err}", file=sys.stderr, flush=True)
-
-        except Exception as log_err:
-            print(f"Error logging debug info: {log_err}", file=sys.stderr, flush=True)
+        print(f"=== CHECKING PRUNING FOR ASIGNACION {asignacion_id} ===", file=sys.stderr, flush=True)
 
         cur.execute("DROP TABLE IF EXISTS _arb_ws_unassigned_predio")
         asignacion_predio_table = app_table(tenant, "asignacion_predio")
@@ -594,7 +545,7 @@ def _prune_workspace_predios_arb(
                     AND ap.activo IS DISTINCT FROM FALSE
                     AND (
                         BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
-                        {matriz_origen_sql}
+                        {desenglobe_sql}
                     )
               )
               {keep_new_filter}
