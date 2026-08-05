@@ -431,10 +431,6 @@
         // Asignación de datos alfanuméricos
         document.getElementById("resumenPredioNpn").textContent = data.numero_predial || "-";
         document.getElementById("resumenPredioDireccion").textContent = data.direccion || "-";
-        document.getElementById("propietario").textContent = data.propietario || "-";
-        document.getElementById("area_terreno").textContent = data.area_terreno_r1 ? `${data.area_terreno_r1} m²` : "-";
-        document.getElementById("area_construida").textContent = data.area_construida_r1 ? `${data.area_construida_r1} m²` : "-";
-        document.getElementById("avaluo").textContent = data.avaluo ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(data.avaluo) : "-";
 
         // Llenar datos de Modales
         document.getElementById("m_npn_anterior").textContent = data.numero_predial_anterior || "-";
