@@ -511,8 +511,14 @@ def _prune_workspace_predios_arb(
                 OR EXISTS (
                     SELECT 1
                     FROM "{schema_work}".arb_estructuraprediomatriznpn pm
+                    JOIN "{schema_work}".arb_predio p_parent ON (
+                        REGEXP_REPLACE(pm.numero_predial_nacional::text, '[^0-9]', '', 'g') IN (
+                            REGEXP_REPLACE(p_parent.numero_predial::text, '[^0-9]', '', 'g'),
+                            REGEXP_REPLACE(p_parent.numero_predial_anterior::text, '[^0-9]', '', 'g')
+                        )
+                    )
                     WHERE pm.predio = p.t_id
-                      AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(pm.numero_predial_nacional::text)
+                      AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(p_parent.numero_predial::text)
                 )
             """
         if has_origen_table:
@@ -520,34 +526,41 @@ def _prune_workspace_predios_arb(
                 OR EXISTS (
                     SELECT 1
                     FROM "{schema_work}".arb_estructurapredioorigennpn po
+                    JOIN "{schema_work}".arb_predio p_parent ON (
+                        REGEXP_REPLACE(po.numero_predial_nacional::text, '[^0-9]', '', 'g') IN (
+                            REGEXP_REPLACE(p_parent.numero_predial::text, '[^0-9]', '', 'g'),
+                            REGEXP_REPLACE(p_parent.numero_predial_anterior::text, '[^0-9]', '', 'g')
+                        )
+                    )
                     WHERE po.predio = p.t_id
-                      AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(po.numero_predial_nacional::text)
+                      AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(p_parent.numero_predial::text)
                 )
             """
 
         # DEBUG LOGGING FOR DESENGLOVE VALIDATION
-        logger.info("=== DEBUG DESENGLOVE SYNC ===")
+        import sys
+        print("=== DEBUG DESENGLOVE SYNC ===", file=sys.stderr, flush=True)
         try:
             asignacion_predio_table = app_table(tenant, "asignacion_predio")
             cur.execute(f"SELECT numero_predial_nacional FROM {asignacion_predio_table} WHERE asignacion_id = %s", (asignacion_id,))
             rows_ap = cur.fetchall()
-            logger.info("Asignacion predios: %s", [r[0] for r in rows_ap])
+            print(f"Asignacion predios: {[r[0] for r in rows_ap]}", file=sys.stderr, flush=True)
 
-            cur.execute(f"SELECT t_id, numero_predial, condicion_predio FROM {predio_table}")
+            cur.execute(f"SELECT t_id, numero_predial, condicion_predio, numero_predial_anterior FROM {predio_table}")
             rows_p = cur.fetchall()
-            logger.info("Workspace predios: %s", [{'t_id': r[0], 'numero_predial': r[1], 'condicion_predio': r[2]} for r in rows_p])
+            print(f"Workspace predios: {[{'t_id': r[0], 'numero_predial': r[1], 'condicion_predio': r[2], 'numero_predial_anterior': r[3]} for r in rows_p]}", file=sys.stderr, flush=True)
 
             if has_matriz_table:
                 cur.execute(f'SELECT predio, numero_predial_nacional FROM "{schema_work}".arb_estructuraprediomatriznpn')
                 rows_pm = cur.fetchall()
-                logger.info("Matriz table: %s", [{'predio': r[0], 'numero_predial_nacional': r[1]} for r in rows_pm])
+                print(f"Matriz table: {[{'predio': r[0], 'numero_predial_nacional': r[1]} for r in rows_pm]}", file=sys.stderr, flush=True)
 
             if has_origen_table:
                 cur.execute(f'SELECT predio, numero_predial_nacional FROM "{schema_work}".arb_estructurapredioorigennpn')
                 rows_po = cur.fetchall()
-                logger.info("Origen table: %s", [{'predio': r[0], 'numero_predial_nacional': r[1]} for r in rows_po])
+                print(f"Origen table: {[{'predio': r[0], 'numero_predial_nacional': r[1]} for r in rows_po]}", file=sys.stderr, flush=True)
         except Exception as log_err:
-            logger.error("Error logging debug info: %s", log_err)
+            print(f"Error logging debug info: {log_err}", file=sys.stderr, flush=True)
 
         cur.execute("DROP TABLE IF EXISTS _arb_ws_unassigned_predio")
         asignacion_predio_table = app_table(tenant, "asignacion_predio")
