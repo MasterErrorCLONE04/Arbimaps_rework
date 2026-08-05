@@ -550,15 +550,31 @@ def _prune_workspace_predios_arb(
             rows_p = cur.fetchall()
             print(f"Workspace predios: {[{'t_id': r[0], 'numero_predial': r[1], 'condicion_predio': r[2], 'numero_predial_anterior': r[3]} for r in rows_p]}", file=sys.stderr, flush=True)
 
-            if has_matriz_table:
-                cur.execute(f'SELECT predio, numero_predial_nacional FROM "{schema_work}".arb_estructuraprediomatriznpn')
-                rows_pm = cur.fetchall()
-                print(f"Matriz table: {[{'predio': r[0], 'numero_predial_nacional': r[1]} for r in rows_pm]}", file=sys.stderr, flush=True)
+            print("=== WORKSPACE TABLES WITH DATA ===", file=sys.stderr, flush=True)
+            for table in sorted(existing_tables):
+                if table.startswith("t_ili") or table.startswith("t_key") or table == "spatial_ref_sys":
+                    continue
+                try:
+                    cur.execute(f'SELECT COUNT(*) FROM "{schema_work}"."{table}"')
+                    cnt = cur.fetchone()[0]
+                    if cnt > 0:
+                        cur.execute(f'SELECT * FROM "{schema_work}"."{table}" LIMIT 5')
+                        cols = [desc[0] for desc in cur.description]
+                        rows = cur.fetchall()
+                        print(f"Table: {table} (count: {cnt})", file=sys.stderr, flush=True)
+                        print(f"  Columns: {cols}", file=sys.stderr, flush=True)
+                        for r in rows:
+                            # format geometries nicely or convert to string
+                            row_dict = {}
+                            for col, val in zip(cols, r):
+                                if hasattr(val, 'desc') or isinstance(val, (bytes, bytearray)):
+                                    row_dict[col] = "<geom/binary>"
+                                else:
+                                    row_dict[col] = str(val)
+                            print(f"  Row: {row_dict}", file=sys.stderr, flush=True)
+                except Exception as t_err:
+                    print(f"Error querying table {table}: {t_err}", file=sys.stderr, flush=True)
 
-            if has_origen_table:
-                cur.execute(f'SELECT predio, numero_predial_nacional FROM "{schema_work}".arb_estructurapredioorigennpn')
-                rows_po = cur.fetchall()
-                print(f"Origen table: {[{'predio': r[0], 'numero_predial_nacional': r[1]} for r in rows_po]}", file=sys.stderr, flush=True)
         except Exception as log_err:
             print(f"Error logging debug info: {log_err}", file=sys.stderr, flush=True)
 
