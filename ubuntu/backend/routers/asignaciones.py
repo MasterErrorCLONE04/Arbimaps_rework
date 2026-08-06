@@ -108,6 +108,7 @@ class BuscarPrediosResponseItem(BaseModel):
     estado: Optional[str] = None
     asignado_a: Optional[str] = None
     asignado_por: Optional[str] = None
+    source_schema: Optional[str] = "a_base_principal"
 
 
 class BuscarPrediosResponse(BaseModel):
@@ -635,6 +636,7 @@ def buscar_predios(
         assigned_info = lookup.get(n) or {}
         asignado_a = assigned_info.get('asignado_a') if existe else None
         asignado_por = assigned_info.get('asignado_por') if existe else None
+        source_schema = assigned_info.get('source_schema', 'a_base_principal') if existe else None
         
         if asignado_a:
             estado = 'ASIGNADO'
@@ -650,6 +652,7 @@ def buscar_predios(
                 estado=estado,
                 asignado_a=asignado_a,
                 asignado_por=asignado_por,
+                source_schema=source_schema,
             ).dict()
         )
 
@@ -971,20 +974,54 @@ def asignar_predios(
                     _log_event(conn, tenant, asig_id, "CERRADA", cierre_msg, created_by)
         basket_set = {_maybe_int(row.get("basket_id") or row.get("t_basket")) for row in predios_info}
         basket_set.discard(None)
-        if not basket_set:
-            raise HTTPException(status_code=400, detail="No fue posible identificar el basket de los predios seleccionados.")
-        if len(basket_set) > 1:
-            raise HTTPException(status_code=400, detail="Todos los predios deben pertenecer al mismo basket.")
-        predio_basket_id = basket_set.pop()
-
+        
         dataset_ids = {_maybe_int(row.get("dataset_id")) for row in predios_info if row.get("dataset_id") is not None}
         dataset_ids.discard(None)
-        if len(dataset_ids) > 1:
-            raise HTTPException(status_code=400, detail="Los predios pertenecen a datasets distintos.")
-        dataset_id_value = next(iter(dataset_ids)) if dataset_ids else None
-
-        datasetname_db = next((row.get("datasetname_main") for row in predios_info if row.get("datasetname_main")), None)
-        datasetname_main = datasetname_db or _read_datasetname_main_default()
+        
+        datasetname_db = next((row.get("datasetname_main") for row in predios_info if row.get("datasetname_main") and row.get("datasetname_main") != "f_r1_r2"), None)
+        
+        if not basket_set:
+            # Fallback: buscar un dataset y basket válido en a_base_principal
+            with conn.cursor(cursor_factory=RealDictCursor) as cur_bk:
+                cur_bk.execute(
+                    f"""
+                    SELECT b.t_id AS basket_id, b.dataset AS dataset_id, d.datasetname AS datasetname_main
+                    FROM {tenant.schemas.main}.t_ili2db_basket b
+                    JOIN {tenant.schemas.main}.t_ili2db_dataset d ON d.t_id = b.dataset
+                    WHERE b.topic = 'LADM_COL_V3_1'
+                    LIMIT 1
+                    """
+                )
+                bk_row = cur_bk.fetchone()
+                if not bk_row:
+                    cur_bk.execute(
+                        f"""
+                        SELECT b.t_id AS basket_id, b.dataset AS dataset_id, d.datasetname AS datasetname_main
+                        FROM {tenant.schemas.main}.t_ili2db_basket b
+                        JOIN {tenant.schemas.main}.t_ili2db_dataset d ON d.t_id = b.dataset
+                        LIMIT 1
+                        """
+                    )
+                    bk_row = cur_bk.fetchone()
+                
+                if bk_row:
+                    predio_basket_id = int(bk_row["basket_id"])
+                    dataset_id_value = int(bk_row["dataset_id"])
+                    datasetname_main = bk_row["datasetname_main"]
+                else:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="No fue posible identificar un dataset o basket registrado en a_base_principal."
+                    )
+        else:
+            if len(basket_set) > 1:
+                raise HTTPException(status_code=400, detail="Todos los predios deben pertenecer al mismo basket.")
+            predio_basket_id = basket_set.pop()
+            
+            if len(dataset_ids) > 1:
+                raise HTTPException(status_code=400, detail="Los predios pertenecen a datasets distintos.")
+            dataset_id_value = next(iter(dataset_ids)) if dataset_ids else None
+            datasetname_main = datasetname_db or _read_datasetname_main_default()
 
         titulo_final = titulo or f"Asignacion manual {len(numeros)} predios"
 

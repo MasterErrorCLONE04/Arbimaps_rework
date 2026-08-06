@@ -8,6 +8,7 @@ from psycopg2.extras import RealDictCursor
 from services import asignaciones_export as export_service
 from services import asignaciones_workspace_schema as workspace_schema_service
 from services import asignaciones_workspace_sql as workspace_sql_service
+from services.asignaciones_workspace_f_r1_r2 import importar_predio_f_r1_r2_a_workspace
 from tenants.context import TenantContext
 from tenants.sql import app_table, tenant_table, work_table, main_table
 
@@ -402,6 +403,64 @@ def actualizar_predio_ids_desde_workspace(
                     f"No fue posible actualizar predio_t_id desde workspace para asignacion {asignacion_id}: {exc}"
                 ),
             ) from exc
+
+
+def _importar_predios_f_r1_r2_si_faltan(
+    conn,
+    tenant: TenantContext,
+    asignacion_id: int,
+    schema_work: str,
+    work_datasetname: str,
+) -> None:
+    with conn.cursor() as cur:
+        # 1. Obtener t_basket_id para este dataset en el workspace
+        cur.execute(
+            f"""
+            SELECT b.t_id
+            FROM {schema_work}.t_ili2db_basket b
+            JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+            WHERE d.datasetname = %s
+            LIMIT 1
+            """,
+            (work_datasetname,),
+        )
+        row = cur.fetchone()
+        if not row:
+            logger.warning("No se encontró basket para el dataset %s en %s", work_datasetname, schema_work)
+            return
+        t_basket_id = int(row[0])
+
+        # 2. Obtener la lista de NPNs activos para esta asignación
+        cur.execute(
+            f"""
+            SELECT ap.numero_predial_nacional
+            FROM {app_table(tenant, "asignacion_predio")} ap
+            WHERE ap.asignacion_id = %s
+              AND ap.activo IS DISTINCT FROM FALSE
+            ORDER BY ap.numero_predial_nacional
+            """,
+            (asignacion_id,),
+        )
+        npns = [str(r[0]).strip() for r in (cur.fetchall() or []) if r and r[0]]
+        if not npns:
+            return
+
+        # 3. Importar predios de f_r1_r2 que no existen en el workspace
+        for npn in npns:
+            # Verificar si existe en arb_predio
+            cur.execute(
+                f"""
+                SELECT 1 FROM {schema_work}.arb_predio p
+                JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
+                JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s AND p.numero_predial = %s
+                LIMIT 1
+                """,
+                (work_datasetname, npn),
+            )
+            exists = bool(cur.fetchone())
+            if not exists:
+                importar_predio_f_r1_r2_a_workspace(conn, tenant, npn, schema_work, t_basket_id)
 
 
 def prune_workspace_predios(
@@ -3258,6 +3317,7 @@ def build_workspace_for_assignment(
             dataset_name=work_datasetname,
             schema_work=schema_work,
         )
+        _importar_predios_f_r1_r2_si_faltan(conn, tenant, asignacion_id, schema_work, work_datasetname)
         actualizar_predio_ids_desde_workspace(conn, tenant, asignacion_id)
         conn.commit()
 
@@ -3336,6 +3396,7 @@ def build_workspace_for_assignment(
             timeout_sec=timeout_sec,
         )
 
+    _importar_predios_f_r1_r2_si_faltan(conn, tenant, asignacion_id, schema_work, work_datasetname)
     removed_predios = prune_workspace_predios(conn, tenant, asignacion_id, work_datasetname, schema_work)
     if workspace_ctx.model_name == "arb":
         _arb_validate_workspace_dataset_health(conn, schema_work, work_datasetname)

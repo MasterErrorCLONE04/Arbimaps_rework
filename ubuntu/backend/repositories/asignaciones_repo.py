@@ -1229,7 +1229,8 @@ def fetch_predios_metadata(
                 b.topic AS topicname,
                 NULL::text AS basketname,
                 b.dataset AS dataset_id,
-                d.datasetname AS datasetname_main
+                d.datasetname AS datasetname_main,
+                'a_base_principal'::varchar AS source_schema
             FROM {predio_table} p
             LEFT JOIN {basket_table} b ON b.t_id = p.t_basket
             LEFT JOIN {dataset_table} d ON d.t_id = b.dataset
@@ -1237,7 +1238,36 @@ def fetch_predios_metadata(
             """,
             (numeros,),
         )
-        return cur.fetchall()
+        rows = cur.fetchall() or []
+        encontrados = {r["numero_predial_nacional"] for r in rows if r.get("numero_predial_nacional")}
+        faltantes = [n for n in numeros if n not in encontrados]
+
+        if faltantes:
+            try:
+                cur.execute(
+                    """
+                    SELECT DISTINCT ON (numero_predial)
+                      numero_predial AS numero_predial_nacional,
+                      NULL::bigint AS predio_t_id,
+                      NULL::bigint AS t_basket,
+                      NULL::bigint AS basket_id,
+                      NULL::varchar AS basket_tid,
+                      'LADM_COL_V3_1'::varchar AS topicname,
+                      NULL::text AS basketname,
+                      NULL::bigint AS dataset_id,
+                      'f_r1_r2'::varchar AS datasetname_main,
+                      'f_r1_r2'::varchar AS source_schema
+                    FROM f_r1_r2.r1_predio_propietario
+                    WHERE numero_predial = ANY(%s)
+                    """,
+                    (faltantes,),
+                )
+                f_rows = cur.fetchall() or []
+                rows.extend(f_rows)
+            except Exception:
+                pass
+
+        return rows
 
 
 def fetch_predios_asignados(conn, *args, **kwargs) -> list[dict]:
@@ -1456,13 +1486,53 @@ def buscar_predios_estado(
                   AND ap2.activo IS DISTINCT FROM FALSE
                   AND a.estado IS DISTINCT FROM 'CERRADA'
                 LIMIT 1
-              ) AS asignado_por
+              ) AS asignado_por,
+              'a_base_principal'::varchar AS source_schema
             FROM {predio_table} p
             WHERE p.{numero_field} = ANY(%s)
             """,
             (numeros,),
         )
-        return cur.fetchall()
+        rows = cur.fetchall() or []
+        encontrados = {r["numero_predial_nacional"] for r in rows if r.get("numero_predial_nacional")}
+        faltantes = [n for n in numeros if n not in encontrados]
+
+        if faltantes:
+            try:
+                cur.execute(
+                    f"""
+                    SELECT DISTINCT ON (r1.numero_predial)
+                      r1.numero_predial AS numero_predial_nacional,
+                      (
+                        SELECT a.usuario_asignado
+                        FROM {app_schema}.asignacion a
+                        JOIN {app_schema}.asignacion_predio ap ON ap.asignacion_id = a.id
+                        WHERE ap.numero_predial_nacional = r1.numero_predial
+                          AND ap.activo IS DISTINCT FROM FALSE
+                          AND a.estado IS DISTINCT FROM 'CERRADA'
+                        LIMIT 1
+                      ) AS asignado_a,
+                      (
+                        SELECT a.creado_por
+                        FROM {app_schema}.asignacion a
+                        JOIN {app_schema}.asignacion_predio ap2 ON ap2.asignacion_id = a.id
+                        WHERE ap2.numero_predial_nacional = r1.numero_predial
+                          AND ap2.activo IS DISTINCT FROM FALSE
+                          AND a.estado IS DISTINCT FROM 'CERRADA'
+                        LIMIT 1
+                      ) AS asignado_por,
+                      'f_r1_r2'::varchar AS source_schema
+                    FROM f_r1_r2.r1_predio_propietario r1
+                    WHERE r1.numero_predial = ANY(%s)
+                    """,
+                    (faltantes,),
+                )
+                f_rows = cur.fetchall() or []
+                rows.extend(f_rows)
+            except Exception:
+                pass
+
+        return rows
 
 
 def fetch_datasets_baskets_predio_counts(
