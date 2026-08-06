@@ -426,9 +426,49 @@ def _importar_predios_f_r1_r2_si_faltan(
         )
         row = cur.fetchone()
         if not row:
-            logger.warning("No se encontró basket para el dataset %s en %s", work_datasetname, schema_work)
-            return
-        t_basket_id = int(row[0])
+            cur.execute(
+                f"""
+                SELECT t_id 
+                FROM {schema_work}.t_ili2db_dataset 
+                WHERE datasetname = %s
+                LIMIT 1
+                """,
+                (work_datasetname,),
+            )
+            ds_row = cur.fetchone()
+            if ds_row:
+                dataset_id = int(ds_row[0])
+            else:
+                cur.execute(
+                    f"""
+                    INSERT INTO {schema_work}.t_ili2db_dataset(t_id, datasetname)
+                    VALUES (COALESCE((SELECT max(t_id) FROM {schema_work}.t_ili2db_dataset), 0) + 1, %s)
+                    RETURNING t_id
+                    """,
+                    (work_datasetname,),
+                )
+                dataset_id = int(cur.fetchone()[0])
+
+            import uuid
+            basket_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, work_datasetname))
+            cur.execute(
+                f"""
+                INSERT INTO {schema_work}.t_ili2db_basket (t_id, dataset, topic, t_ili_tid, attachmentkey, domains)
+                VALUES (
+                    COALESCE((SELECT max(t_id) FROM {schema_work}.t_ili2db_basket), 0) + 1,
+                    %s,
+                    'Captura_ArbiMaps_V1_0.Captura_ArbiMaps',
+                    %s,
+                    %s,
+                    ''
+                )
+                RETURNING t_id
+                """,
+                (dataset_id, basket_uuid, f"{work_datasetname}_attach_1"),
+            )
+            t_basket_id = int(cur.fetchone()[0])
+        else:
+            t_basket_id = int(row[0])
 
         # 2. Obtener la lista de NPNs activos para esta asignación
         cur.execute(
@@ -486,8 +526,11 @@ def prune_workspace_predios(
         )
     predio_table = _qualify(schema_work, workspace_ctx.predio_table)
     numero_field = workspace_ctx.predio_numero_field
+    predio_cols = set(_get_table_columns(conn, schema_work, workspace_ctx.predio_table))
+    has_id_operacion = "id_operacion" in predio_cols
     with conn.cursor() as cur:
         asignacion_predio_table = app_table(tenant, "asignacion_predio")
+        id_op_match = "OR BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.id_operacion::text)" if has_id_operacion else ""
         cur.execute(
             f"""
             DELETE FROM {predio_table} wp
@@ -501,7 +544,10 @@ def prune_workspace_predios(
                   FROM {asignacion_predio_table} ap
                   WHERE ap.asignacion_id = %s
                     AND ap.activo IS DISTINCT FROM FALSE
-                    AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.{numero_field}::text)
+                    AND (
+                        BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.{numero_field}::text)
+                        {id_op_match}
+                    )
               )
             """,
             (work_datasetname, asignacion_id),
@@ -604,6 +650,7 @@ def _prune_workspace_predios_arb(
                     AND ap.activo IS DISTINCT FROM FALSE
                     AND (
                         BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
+                        OR BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.id_operacion::text)
                         {desenglobe_sql}
                     )
               )

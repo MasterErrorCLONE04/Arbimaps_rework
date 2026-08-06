@@ -112,3 +112,74 @@ def test_importar_predios_f_r1_r2_si_faltan_calls_import_when_missing(monkeypatc
     
     assert len(import_called) == 1
     assert import_called[0] == "410010001000000010017000000000"
+
+
+def test_run_insertar_predios_for_asignacion_calls_f_r1_r2_import(monkeypatch):
+    from services.asignaciones_workspace_sql import run_insertar_predios_for_asignacion
+    tenant = make_tenant()
+
+    mock_cursor = MagicMock()
+    mock_cursor.fetchone.side_effect = [
+        (123, "user1", "Manual Lot", None),  # meta (id, usuario_asignado, titulo, work_datasetname)
+        (10,),  # t_basket_id
+        None,  # exists = False
+        (1,),  # predios_cargados count(*)
+        (1, 1, 1, 0, 0, 0),  # summary row (total, filas, asig, dir_err, dat_err, der_err)
+        (0,),  # missing_count
+    ]
+    mock_cursor.fetchall.side_effect = [
+        [("410010001000000010017000000000",)],  # npn_list
+        [], # fallback
+    ]
+
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+    import_called = []
+    def mock_import(conn, tenant, npn, schema_work, t_basket_id):
+        import_called.append(npn)
+        return True
+
+    monkeypatch.setattr("services.asignaciones_workspace_sql._load_script_body", lambda *args, **kwargs: "-- sql")
+    monkeypatch.setattr("services.asignaciones_workspace_f_r1_r2.importar_predio_f_r1_r2_a_workspace", mock_import)
+
+    result = run_insertar_predios_for_asignacion(
+        mock_conn,
+        tenant,
+        123,
+        dataset_name="asig_test",
+        schema_work="b_asignaciones_arb",
+    )
+
+    assert len(import_called) == 1
+    assert import_called[0] == "410010001000000010017000000000"
+    assert result["dataset_name"] == "asig_test"
+
+
+def test_importar_predios_f_r1_r2_si_faltan_creates_basket_when_missing(monkeypatch):
+    tenant = make_tenant()
+    
+    mock_cursor = MagicMock()
+    mock_cursor.fetchone.side_effect = [
+        None,   # basket query: None
+        None,   # dataset query: None
+        (100,), # dataset insert returning t_id
+        (200,), # basket insert returning t_id
+        None,   # exists check: None (doesn't exist)
+    ]
+    mock_cursor.fetchall.return_value = [("410010001000000010017000000000",)]
+    
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+    
+    import_called = []
+    def mock_import(conn, tenant, npn, schema_work, t_basket_id):
+        import_called.append((npn, t_basket_id))
+        return True
+        
+    monkeypatch.setattr("services.asignaciones_workspace.importar_predio_f_r1_r2_a_workspace", mock_import)
+    
+    _importar_predios_f_r1_r2_si_faltan(mock_conn, tenant, 1, "b_asignaciones_arb", "asig_test")
+    
+    assert len(import_called) == 1
+    assert import_called[0] == ("410010001000000010017000000000", 200)

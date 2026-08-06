@@ -391,6 +391,79 @@ def run_insertar_predios_for_asignacion(
             )
             cur.execute(sql_body)
 
+            # Importar predios de f_r1_r2 que no existan en el workspace antes de validar
+            cur.execute(
+                f"""
+                SELECT b.t_id
+                FROM {resolved_schema_work}.t_ili2db_basket b
+                JOIN {resolved_schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+                LIMIT 1
+                """,
+                (ds_name,),
+            )
+            row = cur.fetchone()
+            if not row:
+                cur.execute(
+                    f"""
+                    SELECT t_id 
+                    FROM {resolved_schema_work}.t_ili2db_dataset 
+                    WHERE datasetname = %s
+                    LIMIT 1
+                    """,
+                    (ds_name,),
+                )
+                ds_row = cur.fetchone()
+                if ds_row:
+                    dataset_id = int(ds_row[0])
+                else:
+                    cur.execute(
+                        f"""
+                        INSERT INTO {resolved_schema_work}.t_ili2db_dataset(t_id, datasetname)
+                        VALUES (COALESCE((SELECT max(t_id) FROM {resolved_schema_work}.t_ili2db_dataset), 0) + 1, %s)
+                        RETURNING t_id
+                        """,
+                        (ds_name,),
+                    )
+                    dataset_id = int(cur.fetchone()[0])
+
+                import uuid
+                basket_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, ds_name))
+                cur.execute(
+                    f"""
+                    INSERT INTO {resolved_schema_work}.t_ili2db_basket (t_id, dataset, topic, t_ili_tid, attachmentkey, domains)
+                    VALUES (
+                        COALESCE((SELECT max(t_id) FROM {resolved_schema_work}.t_ili2db_basket), 0) + 1,
+                        %s,
+                        'Captura_ArbiMaps_V1_0.Captura_ArbiMaps',
+                        %s,
+                        %s,
+                        ''
+                    )
+                    RETURNING t_id
+                    """,
+                    (dataset_id, basket_uuid, f"{ds_name}_attach_1"),
+                )
+                t_basket_id = int(cur.fetchone()[0])
+            else:
+                t_basket_id = int(row[0])
+
+            from services.asignaciones_workspace_f_r1_r2 import importar_predio_f_r1_r2_a_workspace
+            for npn in npn_list:
+                cur.execute(
+                    f"""
+                    SELECT 1 FROM {resolved_schema_work}.arb_predio p
+                    JOIN {resolved_schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
+                    JOIN {resolved_schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                    WHERE d.datasetname = %s AND p.numero_predial = %s
+                    LIMIT 1
+                    """,
+                    (ds_name, npn),
+                )
+                exists = bool(cur.fetchone())
+                if not exists:
+                    importar_predio_f_r1_r2_a_workspace(conn, tenant, npn, resolved_schema_work, t_basket_id)
+
             from core.asignaciones import get_assignment_model_context
             model_ctx = get_assignment_model_context()
 
