@@ -12,13 +12,13 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
     
     # Geometrías Dummy estandarizadas de respaldo (EPSG:9377)
     dummy_terreno_sql = """
-        ST_GeomFromText('MULTIPOLYGON(((4746637.942 1881706.252, 4746538.701 1881681.442, 4746520.307 1881762.076, 4746610.030 1881791.271, 4746637.942 1881706.252)))', 9377)
+        ST_GeomFromText('MULTIPOLYGON(((4742898.743 1879567.779, 4742799.502 1879542.969, 4742781.108 1879623.603, 4742870.831 1879652.798, 4742898.743 1879567.779)))', 9377)
     """
     dummy_construccion_sql = """
-        ST_GeomFromText('MULTIPOLYGON(((4746533.461 1881758.974, 4746548.646 1881690.960, 4746589.926 1881701.226, 4746571.746 1881769.882, 4746533.461 1881758.974)))', 9377)
+        ST_GeomFromText('MULTIPOLYGON(((4742790.937 1879618.418, 4742806.122 1879550.404, 4742847.402 1879560.670, 4742829.222 1879629.326, 4742790.937 1879618.418)))', 9377)
     """
     dummy_direccion_sql = """
-        ST_GeomFromText('POINT(4746577.212 1881766.456)', 9377)
+        ST_GeomFromText('POINT(4742854.116 1879599.176)', 9377)
     """
 
     with conn.cursor(cursor_factory=RealDictCursor) as cur:

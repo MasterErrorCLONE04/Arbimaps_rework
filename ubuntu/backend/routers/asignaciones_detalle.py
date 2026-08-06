@@ -1996,12 +1996,34 @@ def obtener_detalle_predio_completo_asignacion(
                 )
 
         if not predio_rows and numero_predial_rel:
+            has_id_operacion = False
+            if safe_schema:
+                try:
+                    cur.execute(
+                        f"""
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_schema = %s AND table_name = 'arb_predio' AND column_name = 'id_operacion'
+                        """,
+                        (safe_schema,),
+                    )
+                    has_id_operacion = bool(cur.fetchone())
+                except Exception:
+                    pass
+
+            where_sql = (
+                f'(BTRIM(x.{_qident(predio_numero_field)}::text) = BTRIM(%s::text) OR BTRIM(x."id_operacion"::text) = BTRIM(%s::text))'
+                if has_id_operacion else
+                f'BTRIM(x.{_qident(predio_numero_field)}::text) = BTRIM(%s::text)'
+            )
+            params = (numero_predial_rel, numero_predial_rel) if has_id_operacion else (numero_predial_rel,)
+
             predio_rows = _fetch_rows(
                 cur,
                 schema=safe_schema,
                 table="arb_predio",
-                where_sql=f'BTRIM(x.{_qident(predio_numero_field)}::text) = BTRIM(%s::text)',
-                params=(numero_predial_rel,),
+                where_sql=where_sql,
+                params=params,
                 limit=1,
             )
 

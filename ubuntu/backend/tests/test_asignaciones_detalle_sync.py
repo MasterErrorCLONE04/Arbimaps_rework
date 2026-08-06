@@ -13,6 +13,7 @@ class _FakeCursor:
     def __init__(self, conn):
         self._conn = conn
         self._fetchone = [None]
+        self.rowcount = 1
 
     def __enter__(self):
         return self
@@ -389,7 +390,10 @@ def test_procesar_retorno_xtf_publish_main_interpolates_assignment_table_sql(mon
     assert result["asignacion_id"] == 136
     assert "PUBLICACION_MAIN" in logged_events
     assert imported_datasets == ["ws_asg_1_ret_2"]
-    assert removed_datasets == ["ws_asg_1", "ws_asg_1_ret_2"]
+    assert len(removed_datasets) == 3
+    assert removed_datasets[0] == "ws_asg_1"
+    assert removed_datasets[1].startswith("ws_asg_1_backup_")
+    assert removed_datasets[2] == "ws_asg_1_ret_2"
     sync_sql = "\n".join(
         sql
         for conn in manager.connections

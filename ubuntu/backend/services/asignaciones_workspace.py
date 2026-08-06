@@ -937,8 +937,14 @@ def _arb_prepare_diagnostic_predio_map(
                 mp.t_id AS main_predio_t_id,
                 sp.numero_predial_nacional
             FROM _arb_sync_selected_predio sp
+            JOIN {_qualify(schema_work, 'arb_predio')} wp ON wp.t_id = sp.work_predio_t_id
             JOIN {_qualify(schema_main, 'arb_predio')} mp
-              ON BTRIM(mp.numero_predial::text) = BTRIM(sp.numero_predial_nacional::text)
+              ON (
+                  COALESCE(NULLIF(BTRIM(mp.t_ili_tid::text), ''), '') <> ''
+                  AND BTRIM(mp.t_ili_tid::text) = BTRIM(wp.t_ili_tid::text)
+              ) OR (
+                  BTRIM(mp.numero_predial::text) = BTRIM(sp.numero_predial_nacional::text)
+              )
             """
         )
         cur.execute("SELECT COUNT(*) FROM _arb_sync_predio_map")
@@ -959,6 +965,10 @@ def _arb_create_sync_selected_predio_scope(
     *,
     include_new_informal_predios: bool = False,
 ) -> int:
+    predio_cols = set(_get_table_columns(conn, schema_work, "arb_predio"))
+    has_id_operacion = "id_operacion" in predio_cols
+    id_op_match = "OR BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.id_operacion::text)" if has_id_operacion else ""
+
     asignacion_predio_table = app_table(tenant, "asignacion_predio")
     scope_condition = f"""
     EXISTS (
@@ -966,7 +976,10 @@ def _arb_create_sync_selected_predio_scope(
         FROM {asignacion_predio_table} ap
         WHERE ap.asignacion_id = {asignacion_id}
           AND ap.activo IS DISTINCT FROM FALSE
-          AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.numero_predial::text)
+          AND (
+              BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.numero_predial::text)
+              {id_op_match}
+          )
     )
     """
     if include_new_informal_predios:
@@ -1062,9 +1075,18 @@ def _arb_validate_workspace_assignment_coverage(
         )
         expected_predios = int((cur.fetchone() or [0])[0] or 0)
 
+        predio_cols = set(_get_table_columns(conn, schema_work, "arb_predio"))
+        has_id_operacion = "id_operacion" in predio_cols
+
+        match_cond = (
+            "(ap.numero_predial_nacional = BTRIM(p.numero_predial::text) OR ap.numero_predial_nacional = BTRIM(p.id_operacion::text))"
+            if has_id_operacion else
+            "ap.numero_predial_nacional = BTRIM(p.numero_predial::text)"
+        )
+
         cur.execute(
             f"""
-            SELECT COUNT(DISTINCT BTRIM(p.numero_predial::text))
+            SELECT COUNT(DISTINCT BTRIM(ap.numero_predial_nacional::text))
             FROM {_qualify(schema_work, 'arb_predio')} p
             JOIN {_qualify(schema_work, 't_ili2db_basket')} b
               ON b.t_id = p.t_basket
@@ -1076,7 +1098,7 @@ def _arb_validate_workspace_assignment_coverage(
                 WHERE ap.asignacion_id = %s
                   AND ap.activo IS DISTINCT FROM FALSE
             ) ap
-              ON ap.numero_predial_nacional = BTRIM(p.numero_predial::text)
+              ON {match_cond}
             WHERE d.datasetname = %s
             """,
             (asignacion_id, work_datasetname),
@@ -1086,7 +1108,7 @@ def _arb_validate_workspace_assignment_coverage(
         cur.execute(
             f"""
             SELECT
-                BTRIM(p.numero_predial::text) AS numero_predial_nacional,
+                ap.numero_predial_nacional,
                 COUNT(*) AS total
             FROM {_qualify(schema_work, 'arb_predio')} p
             JOIN {_qualify(schema_work, 't_ili2db_basket')} b
@@ -1099,16 +1121,22 @@ def _arb_validate_workspace_assignment_coverage(
                 WHERE ap.asignacion_id = %s
                   AND ap.activo IS DISTINCT FROM FALSE
             ) ap
-              ON ap.numero_predial_nacional = BTRIM(p.numero_predial::text)
+              ON {match_cond}
             WHERE d.datasetname = %s
-            GROUP BY BTRIM(p.numero_predial::text)
+            GROUP BY ap.numero_predial_nacional
             HAVING COUNT(*) > 1
-            ORDER BY total DESC, numero_predial_nacional
+            ORDER BY total DESC, ap.numero_predial_nacional
             LIMIT 5
             """,
             (asignacion_id, work_datasetname),
         )
         duplicate_rows = cur.fetchall() or []
+
+        cov_match_cond = (
+            "(BTRIM(ap2.numero_predial_nacional::text) = BTRIM(p.numero_predial::text) OR BTRIM(ap2.numero_predial_nacional::text) = BTRIM(p.id_operacion::text))"
+            if has_id_operacion else
+            "BTRIM(ap2.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)"
+        )
 
         cur.execute(
             f"""
@@ -1120,14 +1148,14 @@ def _arb_validate_workspace_assignment_coverage(
                   AND ap.activo IS DISTINCT FROM FALSE
             ) ap
             LEFT JOIN (
-                SELECT DISTINCT BTRIM(p.numero_predial::text) AS numero_predial_nacional
+                SELECT DISTINCT BTRIM(ap2.numero_predial_nacional::text) AS numero_predial_nacional
                 FROM {_qualify(schema_work, 'arb_predio')} p
                 JOIN {_qualify(schema_work, 't_ili2db_basket')} b
                   ON b.t_id = p.t_basket
                 JOIN {_qualify(schema_work, 't_ili2db_dataset')} d
                   ON d.t_id = b.dataset
                 JOIN {asignacion_predio_table} ap2
-                  ON BTRIM(ap2.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
+                  ON {cov_match_cond}
                  AND ap2.asignacion_id = %s
                  AND ap2.activo IS DISTINCT FROM FALSE
                 WHERE d.datasetname = %s
@@ -1305,6 +1333,10 @@ def _arb_sync_predios_to_main(
 
     _arb_validate_sync_identity_fields(conn, schema_main, schema_work, work_datasetname)
 
+    predio_cols = set(_get_table_columns(conn, schema_work, "arb_predio"))
+    has_id_operacion = "id_operacion" in predio_cols
+    id_op_match = "OR BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.id_operacion::text)" if has_id_operacion else ""
+
     with conn.cursor() as cur:
         asignacion_predio_table = app_table(tenant, "asignacion_predio")
         cur.execute(
@@ -1312,8 +1344,13 @@ def _arb_sync_predios_to_main(
             UPDATE {asignacion_predio_table} ap
             SET predio_t_id = pm.main_predio_t_id
             FROM _arb_sync_predio_map pm
+            JOIN {_qualify(schema_work, 'arb_predio')} wp
+              ON wp.t_id = pm.work_predio_t_id
             WHERE ap.asignacion_id = %s
-              AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(pm.numero_predial_nacional::text)
+              AND (
+                  BTRIM(ap.numero_predial_nacional::text) = BTRIM(pm.numero_predial_nacional::text)
+                  {id_op_match}
+              )
             """,
             (asignacion_id,),
         )
