@@ -1,19 +1,49 @@
 <div class="module-information-predio p-0 mb-5" style="background-color: transparent;">
   <!-- Loader -->
-  <div id="loaderVistaPredio" class="vista-predio-loader d-flex flex-column justify-content-center align-items-center py-5">
+  <div id="loaderVistaPredio"
+    class="vista-predio-loader d-flex flex-column justify-content-center align-items-center py-5">
     <div class="spinner-border text-success" role="status" aria-hidden="true"></div>
     <div class="mt-2 text-muted fw-semibold">Cargando información alfanumérica...</div>
   </div>
 
-  <div class="section-title px-2">
-    <div class="title-header">
-      <small class="text-title-header">MÓDULO DE CONSULTA PREDIO > DETALLE ALFANUMÉRICO (f_r1_r2)</small>
+<style>
+  .btn-volver-predio {
+    background-color: #cbdcd0;
+    color: #0a2c1b;
+    border-radius: 10px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    transition: all 0.2s ease-in-out;
+    border: none;
+    font-size: 0.95rem;
+  }
+  .btn-volver-predio:hover {
+    background-color: #b8cebf;
+    color: #05160e;
+    transform: translateX(-2px);
+  }
+</style>
+
+  <div class="section-title px-2 d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div>
+      <div class="title-header">
+        <small class="text-title-header">MÓDULO DE CONSULTA PREDIO > DETALLE ALFANUMÉRICO</small>
+      </div>
+      <div class="title-body mt-2">
+        <h3 style="font-weight: 700 !important; font-size: 1.6rem !important; margin-bottom: 0.25rem;">Detalle de búsqueda de predio alfanumérico.</h3>
+        <p class="parrafo-title mb-0">
+          Consulta la información alfanumérica detallada de los registros de Neiva.
+        </p>
+      </div>
     </div>
-    <div class="title-body mt-2">
-      <h3 style="font-weight: 700 !important; font-size: 1.6rem !important;">Detalle de búsqueda de predio de migración.</h3>
-      <p class="parrafo-title">
-        Consulta la información alfanumérica detallada de los registros R1 y R2 de Neiva.
-      </p>
+    <div class="flex-shrink-0">
+      <a href="{{ rp }}/panel/buscar" class="btn-volver-predio">
+        <i class="bi bi-arrow-left"></i> Volver
+      </a>
     </div>
   </div>
 
@@ -21,16 +51,16 @@
   <div id="contentVistaPredio" class="container-content" style="display: none;">
     <div class="container-fluid p-0 m-0 my-4">
       <div class="row g-3 align-items-stretch mt-4 px-2">
-        
+
         <!-- Columna Única (Ancho Completo col-12, sin Visor de Mapa) -->
         <div class="col-12">
           <div class="row g-3">
-            
+
             <!-- Tarjeta superior de Resumen -->
             <div class="col-12">
               <div class="card p-2 h-100 tarjeta-predio1">
                 <div class="card-body d-flex flex-column gap-3">
-                  
+
                   <!-- Encabezado -->
                   <div class="row g-3 align-items-start border-0 pt-3 pb-2">
                     <div class="col-12 col-md mt-0 h-100 align-items-center d-flex">
@@ -38,14 +68,15 @@
                         <div class="section-icons mb-0">
                           <div class="icons-bg1 d-flex justify-content-center align-items-center me-1">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512">
-                              <path fill="#0A2C1B" d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
+                              <path fill="#0A2C1B"
+                                d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
                             </svg>
                           </div>
                         </div>
                         <div class="h-100 pe-lg-3 border-lg-end">
                           <p class="d-block fw-bold text-label-npn text-white mb-0">Número predial:</p>
                           <div id="resumenPredioNpn" class="result-npn text-white"></div>
-                          
+
                           <div class="d-flex align-items-center justify-content-start gap-3 mt-1">
                             <div class="d-flex align-items-center gap-1 text-white-50">
                               <i class="bi bi-signpost"></i>
@@ -56,21 +87,23 @@
                         </div>
                       </div>
                     </div>
-                    
+
                     <div class="col-12 col-md-auto mt-0">
-                      <div class="mostrar-id-predio1 d-flex align-items-center justify-content-between text-white text-center">
+                      <div
+                        class="mostrar-id-predio1 d-flex align-items-center justify-content-between text-white text-center">
                         <small class="text-white d-block text-id-predio fw-light mt-0 me-2">ID Operación :</small>
                         <div id="resumenPredioId" class="num-id-predio">Alfanumérico</div>
                       </div>
                     </div>
                   </div>
-                  
+
                   <!-- Métricas -->
                   <div class="col-12 col-lg-12">
                     <div class="row g-2">
                       <div class="col-12 col-sm-6 col-xl-4 px-2">
                         <div class="d-flex align-items-center gap-2 resumen-interesado interesado p-3 h-100">
-                          <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle">
+                          <div
+                            class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 resumen-icon-circle">
                             <i class="bi bi-people-fill fs-5"></i>
                           </div>
                           <div class="d-flex flex-column lh-sm">
@@ -79,10 +112,12 @@
                           </div>
                         </div>
                       </div>
-                      
+
                       <div class="col-12 col-sm-6 col-xl-4 px-2">
-                        <div class="d-flex align-items-center gap-2 resumen-interesado construcciones flex-shrink-0 p-3 h-100">
-                          <div class="rounded-circle d-flex align-items-center justify-content-center resumen-icon-circle">
+                        <div
+                          class="d-flex align-items-center gap-2 resumen-interesado construcciones flex-shrink-0 p-3 h-100">
+                          <div
+                            class="rounded-circle d-flex align-items-center justify-content-center resumen-icon-circle">
                             <i class="bi bi-houses-fill fs-5"></i>
                           </div>
                           <div class="d-flex flex-column lh-sm">
@@ -91,10 +126,12 @@
                           </div>
                         </div>
                       </div>
-                      
+
                       <div class="col-12 col-sm-6 col-xl-4 px-2">
-                        <div class="d-flex align-items-center gap-2 resumen-interesado u_construccion flex-shrink-0 p-3 h-100">
-                          <div class="rounded-circle d-flex align-items-center justify-content-center resumen-icon-circle">
+                        <div
+                          class="d-flex align-items-center gap-2 resumen-interesado u_construccion flex-shrink-0 p-3 h-100">
+                          <div
+                            class="rounded-circle d-flex align-items-center justify-content-center resumen-icon-circle">
                             <i class="bi bi-house-fill fs-5"></i>
                           </div>
                           <div class="d-flex flex-column lh-sm">
@@ -105,21 +142,23 @@
                       </div>
                     </div>
                   </div>
-                  
+
                 </div>
               </div>
             </div>
-            
+
             <!-- Tarjetas inferiores de acceso a los modales -->
             <div class="col-12">
               <div class="row g-2">
                 <!-- Tarjeta R1 -->
                 <div class="col-12 col-md-6">
                   <div class="card rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
-                    <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100" style="min-height: 60px;">
+                    <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100"
+                      style="min-height: 60px;">
                       <div class="d-flex align-items-center gap-2">
                         <div class="section-icons mb-0">
-                          <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1" style="background-color: #6aa4d4;">
+                          <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+                            style="background-color: #6aa4d4;">
                             <i class="fa-solid fa-location-dot fs-5"></i>
                           </div>
                         </div>
@@ -127,20 +166,25 @@
                           Información predio (R1)
                         </div>
                       </div>
-                      <button type="button" class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle" data-bs-toggle="modal" data-bs-target="#modalInformacionPredio" aria-label="Ver información tabla predio">
+                      <button type="button"
+                        class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+                        data-bs-toggle="modal" data-bs-target="#modalInformacionPredio"
+                        aria-label="Ver información tabla predio">
                         <i class="fa-regular fa-eye eye-icon-predio"></i>
                       </button>
                     </div>
                   </div>
                 </div>
-                
+
                 <!-- Tarjeta Derechos -->
                 <div class="col-12 col-md-6">
                   <div class="card rounded-4 shadow-sm h-100 tarjeta-predio tarjeta-placeholder-superior">
-                    <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100" style="min-height: 60px;">
+                    <div class="seccion-tabla-predio d-flex align-items-center justify-content-between ms-3 me-3 h-100"
+                      style="min-height: 60px;">
                       <div class="d-flex align-items-center gap-2">
                         <div class="section-icons mb-0">
-                          <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1" style="background-color: #6aa4d4;">
+                          <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+                            style="background-color: #6aa4d4;">
                             <i class="fa-solid fa-scale-unbalanced fs-5"></i>
                           </div>
                         </div>
@@ -148,7 +192,10 @@
                           Derechos e Interesados
                         </div>
                       </div>
-                      <button type="button" class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle" data-bs-toggle="modal" data-bs-target="#modalInformacionAdicional" aria-label="Ver información adicional">
+                      <button type="button"
+                        class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+                        data-bs-toggle="modal" data-bs-target="#modalInformacionAdicional"
+                        aria-label="Ver información adicional">
                         <i class="fa-regular fa-eye eye-icon-predio"></i>
                       </button>
                     </div>
@@ -156,7 +203,7 @@
                 </div>
               </div>
             </div>
-            
+
             <!-- Ficha física del R2 -->
             <div class="col-12 mt-2">
               <div class="card border-0 shadow-sm rounded-4 w-100 d-flex flex-column tarjeta-inferior-base h-100">
@@ -164,22 +211,25 @@
                   <div class="d-flex justify-content-between align-items-center mt-1">
                     <div class="d-flex align-items-start gap-2 flex-grow-1">
                       <div class="section-icons mb-0">
-                        <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1" style="background-color: #6aa4d4;">
+                        <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+                          style="background-color: #6aa4d4;">
                           <i class="bi bi-houses-fill fs-5"></i>
                         </div>
                       </div>
                       <div class="d-flex flex-column justify-content-center h-100">
                         <div class="fw-bold table-item-label">Ficha Física de Zonas y Construcción (R2)</div>
                         <div class="table-item-text">
-                          Desglose físico de áreas, habitaciones, baños, locales, pisos y calificaciones en base de datos R2.
+                          Desglose físico de áreas, habitaciones, baños, locales, pisos y calificaciones en base de
+                          datos R2.
                         </div>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div class="mt-4 flex-grow-1">
                     <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                      <table class="table table-hover align-middle border-light text-center" style="font-size: 0.85rem;">
+                      <table class="table table-hover align-middle border-light text-center"
+                        style="font-size: 0.85rem;">
                         <thead class="table-light">
                           <tr>
                             <th class="fw-bold">Zona</th>
@@ -205,21 +255,22 @@
                       <span id="area_construida_total_r2" class="fw-bold text-success fs-5"></span>
                     </div>
                   </div>
-                  
+
                 </div>
               </div>
             </div>
-            
+
           </div>
         </div>
-        
+
       </div>
     </div>
   </div>
 </div>
 
 <!-- Modal 1: Información Predio (R1) -->
-<div class="modal fade" id="modalInformacionPredio" tabindex="-1" aria-labelledby="modalInformacionPredioLabel" aria-hidden="true">
+<div class="modal fade" id="modalInformacionPredio" tabindex="-1" aria-labelledby="modalInformacionPredioLabel"
+  aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-lg-down">
     <div class="modal-content rounded-4 border-0 shadow modal-predio-content">
       <div class="modal-header border-0 d-flex justify-content-between align-items-center">
@@ -231,7 +282,9 @@
             Información del Predio (R1)
           </div>
         </div>
-        <button type="button" class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle" data-bs-dismiss="modal" aria-label="Cerrar">
+        <button type="button"
+          class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+          data-bs-dismiss="modal" aria-label="Cerrar">
           <i class="fa-regular fa-eye-slash eye-icon-predio"></i>
         </button>
       </div>
@@ -318,7 +371,8 @@
 </div>
 
 <!-- Modal 2: Derechos, Interesados (R1) -->
-<div class="modal fade" id="modalInformacionAdicional" tabindex="-1" aria-labelledby="modalInformacionAdicionalLabel" aria-hidden="true">
+<div class="modal fade" id="modalInformacionAdicional" tabindex="-1" aria-labelledby="modalInformacionAdicionalLabel"
+  aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-lg-down">
     <div class="modal-content rounded-4 border-0 shadow modal-predio-content">
       <div class="modal-header border-0 d-flex justify-content-between align-items-center">
@@ -330,7 +384,9 @@
             Derechos, interesados y participación
           </div>
         </div>
-        <button type="button" class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle" data-bs-dismiss="modal" aria-label="Cerrar">
+        <button type="button"
+          class="btn-eye-predio d-inline-flex align-items-center justify-content-center border-0 rounded-circle"
+          data-bs-dismiss="modal" aria-label="Cerrar">
           <i class="fa-regular fa-eye-slash eye-icon-predio"></i>
         </button>
       </div>
@@ -348,7 +404,8 @@
                     <div class="col-12">
                       <div class="d-flex flex-column w-100 dato p-2">
                         <div class="fw-bold text-start tex-num">Nombre / Razón Social</div>
-                        <div id="m_propietario" class="text-start dato_info" style="font-size: 1.1rem; font-weight: 700; color: #0A2C1B;">-</div>
+                        <div id="m_propietario" class="text-start dato_info"
+                          style="font-size: 1.1rem; font-weight: 700; color: #0A2C1B;">-</div>
                       </div>
                     </div>
                     <div class="col-12 col-md-6">
@@ -378,7 +435,8 @@
                     <div class="col-12 col-md-6">
                       <div class="d-flex flex-column w-100 dato p-2">
                         <div class="fw-bold text-start tex-num">Porcentaje de Participación</div>
-                        <div id="m_participacion" class="text-start dato_info" style="font-size: 1.2rem; font-weight: 800; color: #28a745;">-</div>
+                        <div id="m_participacion" class="text-start dato_info"
+                          style="font-size: 1.2rem; font-weight: 800; color: #28a745;">-</div>
                       </div>
                     </div>
                     <div class="col-12 col-md-6">
@@ -399,7 +457,7 @@
 </div>
 
 <script>
-  (function() {
+  (function () {
     const rp = "{{ rp }}";
     const numeroPredial = "{{ numero_predial }}";
 
@@ -408,7 +466,7 @@
         const res = await fetch(`${rp}/predio/buscar/f_r1_r2/${encodeURIComponent(numeroPredial)}`);
         if (!res.ok) throw new Error("No se pudo cargar la información.");
         const data = await res.json();
-        
+
         // Asignación de datos alfanuméricos
         document.getElementById("resumenPredioNpn").textContent = data.numero_predial || "-";
         document.getElementById("resumenPredioDireccion").textContent = data.direccion || "-";
@@ -432,10 +490,10 @@
         // Llenar tabla de Zonas R2
         const r2Tbody = document.getElementById("r2_zones_tbody");
         r2Tbody.innerHTML = "";
-        
+
         let countZonasTerreno = 0;
         let countZonasConstruccion = 0;
-        
+
         // Zona 1
         if (data.zona_fisica_1 || data.area_construida_1) {
           r2Tbody.appendChild(createRow(1, data.zona_fisica_1, data.zona_economica_1, data.area_terreno_1, data.area_construida_1, data.habitaciones_1, data.banos_1, data.locales_1, data.pisos_1, data.tipificacion_1, data.uso_1, data.puntaje_1));
@@ -468,7 +526,7 @@
         // ELIMINAR loaderVistaPredio
         const loader = document.getElementById("loaderVistaPredio");
         if (loader) loader.remove();
-        
+
         // MOSTRAR el contenido
         const content = document.getElementById("contentVistaPredio");
         if (content) content.style.setProperty("display", "block", "important");
@@ -489,7 +547,7 @@
     function createRow(index, zf, ze, at, ac, hab, ban, loc, pis, tip, uso, pts) {
       const tr = document.createElement("tr");
       tr.className = "text-center";
-      
+
       let tipUsoStr = "-";
       if (tip || uso) {
         tipUsoStr = `${tip || ""}/${uso || ""}`;
