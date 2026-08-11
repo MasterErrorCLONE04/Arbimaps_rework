@@ -6,12 +6,13 @@ from quality_rules.administrativo import (
     _rule_1_15,
     _rule_1_16,
     _rule_1_17,
+    _rule_1_19,
     _rule_1_21,
     _rule_1_22,
     _rule_1_24,
 )
 from quality_rules.dataset import InMemoryDataset
-from quality_rules.obligatorias import rule_11_1
+from quality_rules.obligatorias import rule_11_1, rule_11_13
 
 
 def test_empty_destinacion_errors_are_not_duplicated_by_table_aliases():
@@ -193,3 +194,88 @@ def test_rule_1_2_rejects_provisional_number_without_predio_nuevo_novedad():
     assert len(issues) == 1
     assert issues[0].rule_id == "1.2"
 
+
+
+
+def test_rule_1_14_does_not_require_orip_for_informal_without_matricula():
+    dataset = InMemoryDataset(
+        {
+            "ARB_Predio": [
+                {
+                    "t_id": "predio-informal",
+                    "Numero_Predial_Nacional": "41001010900000271A002200000000",
+                    "Condicion_Predio": "Informal",
+                }
+            ]
+        },
+        metadata={"municipality_code": "neiva"},
+    )
+
+    assert _rule_1_14(dataset) == []
+
+
+def test_rule_1_19_allows_informal_predio_with_one_terrain():
+    dataset = InMemoryDataset(
+        {
+            "ARB_Predio": [
+                {
+                    "t_id": "predio-informal",
+                    "Numero_Predial_Nacional": "41001010900000271A002200000000",
+                    "Condicion_Predio": "Informal",
+                }
+            ],
+            "ARB_Terreno": [
+                {
+                    "t_id": "terreno-informal",
+                    "predio": "predio-informal",
+                }
+            ],
+        }
+    )
+
+    assert _rule_1_19(dataset) == []
+
+
+
+def test_rule_11_13_requires_attendee_only_when_visit_is_successful():
+    dataset = InMemoryDataset(
+        {
+            "ARB_Predio": [
+                {
+                    "t_id": "predio-exitoso",
+                    "numero_predial": "41001010900000271A002200000000",
+                    "resultado_visita": "Exitoso",
+                    "nombres_apellidos_quien_atendio": "",
+                },
+                {
+                    "t_id": "predio-no-hay-nadie",
+                    "numero_predial": "41001010900000271A003200000000",
+                    "resultado_visita": "No_Hay_Nadie",
+                    "nombres_apellidos_quien_atendio": "",
+                },
+            ]
+        }
+    )
+
+    issues = rule_11_13(dataset)
+
+    assert len(issues) == 1
+    assert issues[0].object_ref == "predio-exitoso"
+    assert issues[0].details["resultado_visita"] == "Exitoso"
+
+
+def test_rule_11_13_allows_empty_attendee_when_visit_result_is_empty():
+    dataset = InMemoryDataset(
+        {
+            "ARB_Predio": [
+                {
+                    "t_id": "predio-sin-resultado",
+                    "numero_predial": "41001010900000271A002200000000",
+                    "resultado_visita": "",
+                    "nombres_apellidos_quien_atendio": "",
+                }
+            ]
+        }
+    )
+
+    assert rule_11_13(dataset) == []

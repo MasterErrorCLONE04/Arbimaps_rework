@@ -339,6 +339,13 @@ class ObligatoriasHelper:
 
 #------------------ reglas ------------------------------
 
+def _is_resultado_visita_exitoso(value: object) -> bool:
+    if _is_empty_value(value):
+        return False
+    token = ObligatoriasHelper._normalize_key(str(value))
+    return token in {"exitoso", "exitosa", "exito"}
+
+
 def rule_11_1(dataset: DatasetReader) -> list[RuleIssue]:
     helper = ObligatoriasHelper(dataset)
     municipality_context = get_dataset_municipality_context(dataset)
@@ -739,6 +746,13 @@ def rule_11_13(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     for table_name, predio in helper.iter_predios():
+        resultado_visita = helper.get_field_value(
+            predio,
+            ("resultado_visita",),
+        )
+        if not _is_resultado_visita_exitoso(resultado_visita):
+            continue
+
         datos_quien_atendio_visita = helper.get_field_value(
             predio,
             ("nombres_apellidos_quien_atendio",),
@@ -764,6 +778,7 @@ def rule_11_13(dataset: DatasetReader) -> list[RuleIssue]:
                         "tabla": table_name,
                         "predio_id": predio_id,
                         "numero_predial": numero_predial,
+                        "resultado_visita": resultado_visita,
                         "datos_quien_atendio_visita": datos_quien_atendio_visita,
                         "tiene_datos_quien_atendio_visita": False,
                     },

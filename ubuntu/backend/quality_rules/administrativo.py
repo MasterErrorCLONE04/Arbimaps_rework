@@ -1543,6 +1543,16 @@ def _rule_1_14(dataset: DatasetReader) -> list[RuleIssue]:
         return issues
 
     for table_name, row in helper.iter_predios():
+        condicion_match = helper._extract_field(row, helper.CONDICION_FIELDS, require_value=False)
+        condicion_raw = condicion_match[1] if condicion_match else None
+        condicion_norm = _normalize_condicion(str(condicion_raw).strip()) if condicion_raw not in (None, "") else ""
+        matricula_match = helper._extract_field(row, helper.MATRICULA_FIELDS, require_value=False)
+        matricula_raw = matricula_match[1] if matricula_match else None
+        has_matricula = str(matricula_raw or "").strip() != ""
+
+        if condicion_norm == "INFORMAL" and not has_matricula:
+            continue
+
         codigo_orip_match = helper._extract_field(
             row,
             helper.ORIP_FIELDS,
@@ -2354,7 +2364,7 @@ def _rule_1_19(dataset: DatasetReader) -> list[RuleIssue]:
 
         if condicion_norm in required_conditions:
             predios_validos[predio_id] = info
-        else:
+        elif condicion_norm != "INFORMAL":
             predios_invalidos[predio_id] = info
 
         add_predio_alias(predio_id, predio_id)
