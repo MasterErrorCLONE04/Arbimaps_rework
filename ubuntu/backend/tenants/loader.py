@@ -1,4 +1,4 @@
-import json
+﻿import json
 import os
 from pathlib import Path
 
@@ -24,6 +24,9 @@ DEFAULT_DB_NAMES = {
     "almaguer": "almaguer",
     "neiva": "neiva",
     "pitalito": "pitalito",
+}
+DEFAULT_SCHEMA_HISTORY = {
+    "neiva": "e_historico",
 }
 
 
@@ -100,7 +103,7 @@ def _load_from_env(code: str) -> MunicipalityConfig:
         app=_env_str(f"{prefix}_SCHEMA_APP", "arbimaps_app"),
         main=_env_str(f"{prefix}_SCHEMA_MAIN", "a_base_principal"),
         work=_env_str(f"{prefix}_SCHEMA_WORK", "b_asignaciones_arb"),
-        history=_env_str(f"{prefix}_SCHEMA_HISTORY", "c_base_historico"),
+        history=_env_str(f"{prefix}_SCHEMA_HISTORY", DEFAULT_SCHEMA_HISTORY.get(code, "c_base_historico")),
         workflow=_env_str(f"{prefix}_SCHEMA_WORKFLOW", "d_workflow"),
     )
     return MunicipalityConfig(
@@ -186,3 +189,4 @@ def load_municipality_configs() -> list[MunicipalityConfig]:
     if config_file is not None:
         return _load_from_file(config_file)
     return [_load_from_env(code) for code in _codes_from_env()]
+
