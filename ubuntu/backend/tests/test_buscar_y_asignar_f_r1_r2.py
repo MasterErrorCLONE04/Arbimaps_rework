@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import MagicMock
 from repositories.asignaciones_repo import buscar_predios_estado, fetch_predios_metadata
 from services.asignaciones_workspace import _importar_predios_f_r1_r2_si_faltan
+from services.asignaciones_workspace_f_r1_r2 import _document_type_ilicode, _is_nit_document_type, _split_natural_person_name
 from tenants import TenantContext
 from tenants.models import MunicipalityDbConfig, MunicipalitySchemas
 
@@ -183,3 +184,40 @@ def test_importar_predios_f_r1_r2_si_faltan_creates_basket_when_missing(monkeypa
     
     assert len(import_called) == 1
     assert import_called[0] == ("410010001000000010017000000000", 200)
+
+
+def test_r1_r2_propietario_maps_document_type_codes():
+    assert _document_type_ilicode("C") == "Cedula_Ciudadania"
+    assert _document_type_ilicode("E") == "Cedula_Extranjeria"
+    assert _document_type_ilicode("N") == "NIT"
+    assert _document_type_ilicode("P") == "Pasaporte"
+    assert _document_type_ilicode("R") == "Registro_Civil"
+    assert _document_type_ilicode("T") == "Tarjeta_Identidad"
+    assert _document_type_ilicode("X") is None
+
+
+def test_r1_r2_propietario_detects_nit_as_razon_social():
+    assert _is_nit_document_type("N") is True
+    assert _is_nit_document_type("NIT") is True
+    assert _is_nit_document_type("Cedula de Ciudadania") is False
+
+
+def test_r1_r2_propietario_splits_natural_person_name():
+    parts = _split_natural_person_name("JUAN CARLOS PEREZ GOMEZ")
+
+    assert parts == {
+        "primer_nombre": "JUAN",
+        "segundo_nombre": "CARLOS",
+        "primer_apellido": "PEREZ",
+        "segundo_apellido": "GOMEZ",
+    }
+
+def test_r1_r2_propietario_splits_three_token_natural_person_name():
+    parts = _split_natural_person_name("CARLOS ALCIDIADES GONGORA")
+
+    assert parts == {
+        "primer_nombre": "CARLOS",
+        "segundo_nombre": "ALCIDIADES",
+        "primer_apellido": "GONGORA",
+        "segundo_apellido": None,
+    }

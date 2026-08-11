@@ -1,7 +1,102 @@
 import logging
+import re
 from psycopg2.extras import RealDictCursor
 
 logger = logging.getLogger(__name__)
+
+def _normalize_text(value) -> str:
+    return re.sub(r"\s+", " ", str(value or "").strip())
+
+
+_R1_DOCUMENT_TYPE_TO_ILI_CODE = {
+    "C": "Cedula_Ciudadania",
+    "E": "Cedula_Extranjeria",
+    "N": "NIT",
+    "P": "Pasaporte",
+    "R": "Registro_Civil",
+    "T": "Tarjeta_Identidad",
+    "X": None,
+}
+
+
+def _document_type_ilicode(value) -> str | None:
+    normalized = _normalize_text(value).upper()
+    compact = re.sub(r"[^A-Z0-9]+", "", normalized)
+    if compact in _R1_DOCUMENT_TYPE_TO_ILI_CODE:
+        return _R1_DOCUMENT_TYPE_TO_ILI_CODE[compact]
+
+    aliases = {
+        "CEDULA": "Cedula_Ciudadania",
+        "CEDULADECIUDADANIA": "Cedula_Ciudadania",
+        "CC": "Cedula_Ciudadania",
+        "CEDULAEXTRANJERIA": "Cedula_Extranjeria",
+        "CE": "Cedula_Extranjeria",
+        "NIT": "NIT",
+        "NI": "NIT",
+        "31": "NIT",
+        "PASAPORTE": "Pasaporte",
+        "PA": "Pasaporte",
+        "REGISTROCIVIL": "Registro_Civil",
+        "RC": "Registro_Civil",
+        "TARJETAIDENTIDAD": "Tarjeta_Identidad",
+        "TI": "Tarjeta_Identidad",
+        "1": "Pasaporte",
+        "2": "Tarjeta_Identidad",
+        "3": "Cedula_Extranjeria",
+        "4": "Cedula_Ciudadania",
+        "5": "NIT",
+        "6": "Registro_Civil",
+    }
+    return aliases.get(compact)
+
+
+def _is_nit_document_type(value) -> bool:
+    return _document_type_ilicode(value) == "NIT"
+
+
+def _split_natural_person_name(value) -> dict[str, str | None]:
+    """
+    Best-effort split for R1 names. R1 stores a single display name, while
+    Arbimaps expects natural persons split into first/second name and surnames.
+    """
+    name = _normalize_text(value)
+    if not name:
+        return {
+            "primer_nombre": None,
+            "segundo_nombre": None,
+            "primer_apellido": None,
+            "segundo_apellido": None,
+        }
+
+    tokens = name.split(" ")
+    if len(tokens) == 1:
+        return {
+            "primer_nombre": tokens[0],
+            "segundo_nombre": None,
+            "primer_apellido": None,
+            "segundo_apellido": None,
+        }
+    if len(tokens) == 2:
+        return {
+            "primer_nombre": tokens[0],
+            "segundo_nombre": None,
+            "primer_apellido": tokens[1],
+            "segundo_apellido": None,
+        }
+    if len(tokens) == 3:
+        return {
+            "primer_nombre": tokens[0],
+            "segundo_nombre": tokens[1],
+            "primer_apellido": tokens[2],
+            "segundo_apellido": None,
+        }
+
+    return {
+        "primer_nombre": tokens[0],
+        "segundo_nombre": " ".join(tokens[1:-2]) or None,
+        "primer_apellido": tokens[-2],
+        "segundo_apellido": tokens[-1],
+    }
 
 def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str, t_basket_id: int) -> bool:
     """
@@ -215,23 +310,57 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
             cur.execute(sql_cons, (t_basket_id, id_predio, npn))
 
         # 8. Insertar propietarios (arb_derechointeresadofuente)
+        cur.execute(
+            """
+            SELECT nombre, tipo_documento, documento_identidad, participacion, direccion
+            FROM f_r1_r2.r1_predio_propietario
+            WHERE numero_predial = %s
+              AND NULLIF(BTRIM(nombre::text), '') IS NOT NULL
+            """,
+            (npn,),
+        )
+        propietarios = cur.fetchall() or []
         sql_prop = f"""
             INSERT INTO {schema_work}.arb_derechointeresadofuente (
-                t_id, t_basket, predio, nombre, i_documento_identidad, d_cuota_participacion, ic_direccion_residencia,
-                fa_tipo
+                t_id, t_basket, predio, i_tipo_documento,
+                i_primer_nombre, i_segundo_nombre,
+                i_primer_apellido, i_segundo_apellido, i_razon_social,
+                i_documento_identidad, d_cuota_participacion,
+                ic_direccion_residencia, fa_tipo
             )
-            SELECT 
+            VALUES (
                 nextval('{schema_work}.t_ili2db_seq'),
-                %s, %s, r1.nombre, r1.documento_identidad,
-                CASE WHEN r1.participacion IS NULL OR r1.participacion = 'NaN'::numeric THEN 0.0 ELSE r1.participacion END,
-                r1.direccion,
-                686
-            FROM f_r1_r2.r1_predio_propietario r1
-            WHERE r1.numero_predial = %s AND r1.nombre IS NOT NULL
+                %s, %s,
+                (SELECT t_id FROM {schema_work}.arb_interesadodocumentotipo WHERE ilicode = %s LIMIT 1),
+                %s, %s, %s, %s, %s, %s, %s, %s, 686
+            )
             ON CONFLICT DO NOTHING;
         """
-        cur.execute(sql_prop, (t_basket_id, id_predio, npn))
+        for propietario in propietarios:
+            nombre_r1 = propietario.get("nombre")
+            tipo_documento_ilicode = _document_type_ilicode(propietario.get("tipo_documento"))
+            es_nit = tipo_documento_ilicode == "NIT"
+            nombre_partes = _split_natural_person_name(nombre_r1)
+            participacion = propietario.get("participacion")
+            if participacion is None or str(participacion) == "NaN":
+                participacion = 0.0
 
+            cur.execute(
+                sql_prop,
+                (
+                    t_basket_id,
+                    id_predio,
+                    tipo_documento_ilicode,
+                    None if es_nit else nombre_partes["primer_nombre"],
+                    None if es_nit else nombre_partes["segundo_nombre"],
+                    None if es_nit else nombre_partes["primer_apellido"],
+                    None if es_nit else nombre_partes["segundo_apellido"],
+                    _normalize_text(nombre_r1) if es_nit else None,
+                    propietario.get("documento_identidad"),
+                    participacion,
+                    propietario.get("direccion"),
+                ),
+            )
         # 9. Insertar unidades de construcción y sus características
         cur.execute(f"SELECT t_id FROM {schema_work}.arb_construccion WHERE predio = %s ORDER BY t_id DESC LIMIT 1;", (id_predio,))
         cons_row = cur.fetchone()
