@@ -2744,17 +2744,36 @@ def _arb_archive_cancelled_predios_to_history(
     schema_main: str,
     schema_work: str,
 ) -> int:
-    schema_history = str(getattr(getattr(tenant, "schemas", None), "history", "") or "").strip()
-    if not schema_history or schema_history in {schema_main, schema_work}:
-        return 0
-
-    existing_history = _schema_table_names(conn, schema_history)
-    if not existing_history or "arb_predio" not in existing_history:
-        return 0
-
     cancelled_count = _arb_create_cancelled_predio_scope(conn, schema_main)
     if cancelled_count <= 0:
         return 0
+
+    schema_history = str(getattr(getattr(tenant, "schemas", None), "history", "") or "").strip()
+    if not schema_history:
+        raise export_service.ExportServiceError(
+            status_code=500,
+            detail="No se configuro tenant.schemas.history para archivar predios cancelados.",
+        )
+    if schema_history in {schema_main, schema_work}:
+        raise export_service.ExportServiceError(
+            status_code=500,
+            detail=(
+                f"El schema historico '{schema_history}' no puede ser igual al principal "
+                "ni al workspace para archivar predios cancelados."
+            ),
+        )
+
+    existing_history = _schema_table_names(conn, schema_history)
+    if not existing_history:
+        raise export_service.ExportServiceError(
+            status_code=500,
+            detail=f"El schema historico '{schema_history}' no existe o no es visible.",
+        )
+    if "arb_predio" not in existing_history:
+        raise export_service.ExportServiceError(
+            status_code=500,
+            detail=f"El schema historico '{schema_history}' no tiene la estructura Arbimaps requerida: falta arb_predio.",
+        )
 
     _arb_copy_all_ili2db_metadata_if_absent(conn, schema_main, schema_history)
 
@@ -2865,15 +2884,26 @@ def _arb_archive_cancelled_predios_to_history(
         f"{_qualify(schema_main, 'arb_predio_tramite')} m JOIN _arb_history_cancelled_predio cp ON cp.main_predio_t_id = m.predio",
     )
 
-    if copied_predios != cancelled_count:
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            SELECT COUNT(*)
+            FROM {_qualify(schema_history, 'arb_predio')} h
+            JOIN _arb_history_cancelled_predio cp
+              ON cp.main_predio_t_id = h.t_id
+            """
+        )
+        archived_predios = int((cur.fetchone() or [0])[0] or 0)
+
+    if archived_predios != cancelled_count:
         raise export_service.ExportServiceError(
             status_code=409,
             detail=(
                 f"No se archivaron todos los predios cancelados en {schema_history}: "
-                f"{copied_predios}/{cancelled_count}."
+                f"{archived_predios}/{cancelled_count}."
             ),
         )
-    return copied_predios
+    return archived_predios
 
 
 def _arb_delete_cancelled_main_geometry(conn, schema_main: str) -> None:

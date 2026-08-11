@@ -16,7 +16,7 @@
         "app": "arbimaps_app",
         "main": "a_base_principal",
         "work": "b_asignaciones_arb",
-        "history": "c_base_historico"
+        "history": "e_historico"
       }
     }
   ]
