@@ -1,4 +1,5 @@
 from quality_rules.administrativo import (
+    _rule_1_2,
     _rule_1_9,
     _rule_1_10,
     _rule_1_14,
@@ -126,3 +127,69 @@ def test_orip_rule_uses_saravena_orip_context():
     )
 
     assert _rule_1_14(dataset) == []
+
+def test_rule_1_2_allows_predio_nuevo_with_provisional_letter_at_position_18():
+    numero = "41001010900000702A900000000000"
+    dataset = InMemoryDataset(
+        {
+            "ARB_Predio": [
+                {
+                    "t_id": "predio-nuevo-1",
+                    "Numero_Predial_Nacional": numero,
+                }
+            ],
+            "ARB_NovedadNumeroPredialValor": [
+                {
+                    "t_id": "novedad-1",
+                    "tipo_novedad": "Predio_Nuevo",
+                    "numero_predial": numero,
+                    "arb_predio_novedad_numero_predial": "predio-nuevo-1",
+                }
+            ],
+        }
+    )
+
+    assert _rule_1_2(dataset) == []
+
+
+def test_rule_1_2_allows_predio_nuevo_with_provisional_letter_at_position_14():
+    numero = "4100101090000A7020900000000000"
+    dataset = InMemoryDataset(
+        {
+            "ARB_Predio": [
+                {
+                    "t_id": "predio-nuevo-2",
+                    "Numero_Predial_Nacional": numero,
+                }
+            ],
+            "ARB_NovedadNumeroPredialValor": [
+                {
+                    "t_id": "novedad-2",
+                    "tipo_novedad": "Predio nuevo",
+                    "numero_predial": numero,
+                    "arb_predio_novedad_numero_predial": "predio-nuevo-2",
+                }
+            ],
+        }
+    )
+
+    assert _rule_1_2(dataset) == []
+
+
+def test_rule_1_2_rejects_provisional_number_without_predio_nuevo_novedad():
+    dataset = InMemoryDataset(
+        {
+            "ARB_Predio": [
+                {
+                    "t_id": "predio-sin-novedad",
+                    "Numero_Predial_Nacional": "41001010900000702A900000000000",
+                }
+            ]
+        }
+    )
+
+    issues = _rule_1_2(dataset)
+
+    assert len(issues) == 1
+    assert issues[0].rule_id == "1.2"
+

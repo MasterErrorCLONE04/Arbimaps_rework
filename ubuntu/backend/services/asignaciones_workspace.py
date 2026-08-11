@@ -2640,6 +2640,300 @@ def _arb_sync_tramite_stack(conn, schema_main: str, schema_work: str) -> None:
         )
 
 
+def _arb_insert_table_rows_if_absent(
+    conn,
+    source_schema: str,
+    target_schema: str,
+    table_name: str,
+    from_sql: str,
+) -> int:
+    existing_source = _schema_table_names(conn, source_schema)
+    existing_target = _schema_table_names(conn, target_schema)
+    if table_name not in existing_source or table_name not in existing_target:
+        return 0
+
+    copy_cols = _get_common_table_columns(conn, target_schema, source_schema, table_name)
+    if not copy_cols or "t_id" not in set(copy_cols):
+        return 0
+
+    insert_cols = ", ".join(copy_cols)
+    select_cols = ", ".join(f"m.{col}" for col in copy_cols)
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            INSERT INTO {_qualify(target_schema, table_name)} ({insert_cols})
+            SELECT {select_cols}
+            FROM {from_sql}
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM {_qualify(target_schema, table_name)} h
+                WHERE h.t_id = m.t_id
+            )
+            ORDER BY m.t_id
+            """
+        )
+        return cur.rowcount or 0
+
+
+def _arb_create_cancelled_predio_scope(conn, schema_main: str) -> int:
+    existing_main = _schema_table_names(conn, schema_main)
+    if "arb_predio" not in existing_main:
+        return 0
+
+    predio_cols = set(_get_table_columns(conn, schema_main, "arb_predio"))
+    predicates: list[str] = []
+    joins = ""
+
+    if "estado" in predio_cols:
+        if "arb_estadotipo" in existing_main:
+            joins += f"\n            LEFT JOIN {_qualify(schema_main, 'arb_estadotipo')} et ON et.t_id = mp.estado"
+            predicates.append("et.ilicode = 'Cancelado'")
+        predicates.append("BTRIM(mp.estado::text) ILIKE 'Cancelado'")
+
+    if {"arb_novedadnumeropredialvalor", "arb_novedadnumeropredialtipo"}.issubset(existing_main):
+        predicates.append(
+            f"""
+            EXISTS (
+                SELECT 1
+                FROM {_qualify(schema_main, 'arb_novedadnumeropredialvalor')} nnp
+                JOIN {_qualify(schema_main, 'arb_novedadnumeropredialtipo')} nt
+                  ON nt.t_id = nnp.tipo_novedad
+                WHERE nnp.arb_predio_novedad_numero_predial = mp.t_id
+                  AND nt.ilicode IN ('Cancelacion', 'Cancelacion_por_Desenglobe', 'Cancelacion_por_Englobe')
+            )
+            """.strip()
+        )
+
+    if not predicates:
+        return 0
+
+    with conn.cursor() as cur:
+        cur.execute("DROP TABLE IF EXISTS _arb_history_cancelled_predio")
+        cur.execute(
+            f"""
+            CREATE TEMP TABLE _arb_history_cancelled_predio AS
+            SELECT DISTINCT
+                pm.main_predio_t_id,
+                BTRIM(mp.numero_predial::text) AS numero_predial
+            FROM _arb_sync_predio_map pm
+            JOIN {_qualify(schema_main, 'arb_predio')} mp
+              ON mp.t_id = pm.main_predio_t_id
+            {joins}
+            WHERE ({' OR '.join(f'({predicate})' for predicate in predicates)})
+              AND NULLIF(BTRIM(mp.numero_predial::text), '') IS NOT NULL
+            """
+        )
+        cur.execute("SELECT COUNT(*) FROM _arb_history_cancelled_predio")
+        return int((cur.fetchone() or [0])[0] or 0)
+
+
+def _arb_copy_all_ili2db_metadata_if_absent(conn, schema_main: str, schema_history: str) -> None:
+    for table_name in ("t_ili2db_dataset", "t_ili2db_basket"):
+        _arb_insert_table_rows_if_absent(
+            conn,
+            schema_main,
+            schema_history,
+            table_name,
+            f"{_qualify(schema_main, table_name)} m",
+        )
+
+
+def _arb_archive_cancelled_predios_to_history(
+    conn,
+    tenant: TenantContext,
+    schema_main: str,
+    schema_work: str,
+) -> int:
+    schema_history = str(getattr(getattr(tenant, "schemas", None), "history", "") or "").strip()
+    if not schema_history or schema_history in {schema_main, schema_work}:
+        return 0
+
+    existing_history = _schema_table_names(conn, schema_history)
+    if not existing_history or "arb_predio" not in existing_history:
+        return 0
+
+    cancelled_count = _arb_create_cancelled_predio_scope(conn, schema_main)
+    if cancelled_count <= 0:
+        return 0
+
+    _arb_copy_all_ili2db_metadata_if_absent(conn, schema_main, schema_history)
+
+    copied_predios = _arb_insert_table_rows_if_absent(
+        conn,
+        schema_main,
+        schema_history,
+        "arb_predio",
+        f"{_qualify(schema_main, 'arb_predio')} m JOIN _arb_history_cancelled_predio cp ON cp.main_predio_t_id = m.t_id",
+    )
+
+    _arb_insert_table_rows_if_absent(
+        conn,
+        schema_main,
+        schema_history,
+        "arb_tramite",
+        f"""
+        {_qualify(schema_main, 'arb_tramite')} m
+        JOIN {_qualify(schema_main, 'arb_predio_tramite')} pt
+          ON pt.tramite = m.t_id
+        JOIN _arb_history_cancelled_predio cp
+          ON cp.main_predio_t_id = pt.predio
+        """,
+    )
+
+    for table_name, predio_fk in _ARB_DIRECT_PREDIO_TABLES:
+        if table_name == "arb_predio_tramite":
+            continue
+        _arb_insert_table_rows_if_absent(
+            conn,
+            schema_main,
+            schema_history,
+            table_name,
+            f"{_qualify(schema_main, table_name)} m JOIN _arb_history_cancelled_predio cp ON cp.main_predio_t_id = m.{predio_fk}",
+        )
+
+    _arb_insert_table_rows_if_absent(
+        conn,
+        schema_main,
+        schema_history,
+        "arb_caracteristicasunidadconstruccion",
+        f"""
+        {_qualify(schema_main, 'arb_caracteristicasunidadconstruccion')} m
+        JOIN {_qualify(schema_main, 'arb_unidadconstruccion')} u
+          ON u.caracteristicasunidadconstruccion = m.t_id
+        JOIN {_qualify(schema_main, 'arb_construccion')} c
+          ON c.t_id = u.construccion
+        JOIN _arb_history_cancelled_predio cp
+          ON cp.main_predio_t_id = c.predio
+        """,
+    )
+    _arb_insert_table_rows_if_absent(
+        conn,
+        schema_main,
+        schema_history,
+        "arb_construccion",
+        f"{_qualify(schema_main, 'arb_construccion')} m JOIN _arb_history_cancelled_predio cp ON cp.main_predio_t_id = m.predio",
+    )
+    _arb_insert_table_rows_if_absent(
+        conn,
+        schema_main,
+        schema_history,
+        "arb_unidadconstruccion",
+        f"""
+        {_qualify(schema_main, 'arb_unidadconstruccion')} m
+        JOIN {_qualify(schema_main, 'arb_construccion')} c
+          ON c.t_id = m.construccion
+        JOIN _arb_history_cancelled_predio cp
+          ON cp.main_predio_t_id = c.predio
+        """,
+    )
+    _arb_insert_table_rows_if_absent(
+        conn,
+        schema_main,
+        schema_history,
+        "arb_adjuntounidadconstruccionvalor",
+        f"""
+        {_qualify(schema_main, 'arb_adjuntounidadconstruccionvalor')} m
+        JOIN {_qualify(schema_main, 'arb_unidadconstruccion')} u
+          ON u.t_id = m.arb_unidadconstruccion_adjunto
+        JOIN {_qualify(schema_main, 'arb_construccion')} c
+          ON c.t_id = u.construccion
+        JOIN _arb_history_cancelled_predio cp
+          ON cp.main_predio_t_id = c.predio
+        """,
+    )
+
+    for table_name, parent_table, attachment_fk in _ARB_ATTACHMENT_SPECS:
+        _arb_insert_table_rows_if_absent(
+            conn,
+            schema_main,
+            schema_history,
+            table_name,
+            f"""
+            {_qualify(schema_main, table_name)} m
+            JOIN {_qualify(schema_main, parent_table)} p
+              ON p.t_id = m.{attachment_fk}
+            JOIN _arb_history_cancelled_predio cp
+              ON cp.main_predio_t_id = p.predio
+            """,
+        )
+
+    _arb_insert_table_rows_if_absent(
+        conn,
+        schema_main,
+        schema_history,
+        "arb_predio_tramite",
+        f"{_qualify(schema_main, 'arb_predio_tramite')} m JOIN _arb_history_cancelled_predio cp ON cp.main_predio_t_id = m.predio",
+    )
+
+    if copied_predios != cancelled_count:
+        raise export_service.ExportServiceError(
+            status_code=409,
+            detail=(
+                f"No se archivaron todos los predios cancelados en {schema_history}: "
+                f"{copied_predios}/{cancelled_count}."
+            ),
+        )
+    return copied_predios
+
+
+def _arb_delete_cancelled_main_geometry(conn, schema_main: str) -> None:
+    existing_main = _schema_table_names(conn, schema_main)
+    if "arb_terreno" in existing_main:
+        if "arb_adjuntoterrenovalor" in existing_main:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    DELETE FROM {_qualify(schema_main, 'arb_adjuntoterrenovalor')} a
+                    USING {_qualify(schema_main, 'arb_terreno')} t,
+                          _arb_history_cancelled_predio cp
+                    WHERE a.arb_terreno_adjunto = t.t_id
+                      AND t.predio = cp.main_predio_t_id
+                    """
+                )
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                DELETE FROM {_qualify(schema_main, 'arb_terreno')} t
+                USING _arb_history_cancelled_predio cp
+                WHERE t.predio = cp.main_predio_t_id
+                """
+            )
+
+    if "arb_terrenohistorico" in existing_main:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                DELETE FROM {_qualify(schema_main, 'arb_terrenohistorico')} t
+                USING _arb_history_cancelled_predio cp
+                WHERE t.predio = cp.main_predio_t_id
+                """
+            )
+
+    if "arb_direccion" in existing_main and "localizacion" in set(_get_table_columns(conn, schema_main, "arb_direccion")):
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE {_qualify(schema_main, 'arb_direccion')} d
+                SET localizacion = NULL
+                FROM _arb_history_cancelled_predio cp
+                WHERE d.arb_predio_direccion = cp.main_predio_t_id
+                  AND d.localizacion IS NOT NULL
+                """
+            )
+
+
+def _arb_archive_cancelled_predios_and_prune_main_geometry(
+    conn,
+    tenant: TenantContext,
+    schema_main: str,
+    schema_work: str,
+) -> int:
+    archived = _arb_archive_cancelled_predios_to_history(conn, tenant, schema_main, schema_work)
+    if archived > 0:
+        _arb_delete_cancelled_main_geometry(conn, schema_main)
+    return archived
+
+
 def _sync_workspace_arb_to_main(
     conn,
     tenant: TenantContext,
@@ -2695,6 +2989,7 @@ def _sync_workspace_arb_to_main(
         _arb_replace_attachment_table(conn, schema_main, schema_work, table_name, parent_table, parent_fk)
 
     _arb_validate_post_sync_counts(conn, schema_main, schema_work)
+    _arb_archive_cancelled_predios_and_prune_main_geometry(conn, tenant, schema_main, schema_work)
     return synced_predios
 
 

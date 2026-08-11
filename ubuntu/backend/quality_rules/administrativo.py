@@ -410,6 +410,53 @@ def _is_valid_numero_predial(numero: str) -> bool:
     return len(numero) == 30 and numero.isdigit()
 
 
+def _is_predio_nuevo_tipo(value: object) -> bool:
+    if value in (None, ""):
+        return False
+    normalized = NumeroPredialHelper._normalize_key(str(value))
+    return normalized == "predionuevo"
+
+
+def _is_valid_predio_nuevo_provisional(numero: str) -> bool:
+    if len(numero) != 30 or not numero.isalnum():
+        return False
+    return numero[17].isalpha() or numero[13].isalpha()
+
+
+def _build_predio_nuevo_scope(helper: NumeroPredialHelper) -> tuple[set[str], set[str]]:
+    predio_refs: set[str] = set()
+    numeros: set[str] = set()
+    tipo_fields = ("tipo_novedad", "Tipo_Novedad", "novedad", "Novedad")
+    predio_ref_fields = (
+        "arb_predio_novedad_numero_predial",
+        "ARB_predio_novedad_numero_predial",
+        "predio",
+        "arb_predio",
+        "predio_asociado",
+        "id_predio",
+        "Id_Predio",
+        "id_operacion",
+        "Id_Operacion",
+    )
+
+    for _, novedad in helper.iter_novedades():
+        tipo_novedad = helper.get_field_value(novedad, tipo_fields)
+        if not _is_predio_nuevo_tipo(tipo_novedad):
+            continue
+
+        predio_ref = helper.get_relation_value(novedad, predio_ref_fields)
+        if predio_ref:
+            predio_refs.add(str(predio_ref).strip())
+
+        result = helper.pull_predial_number(novedad, allow_guess=True, use_novedad_fields=True)
+        if result:
+            _, numero, _ = result
+            if numero:
+                numeros.add(numero)
+
+    return predio_refs, numeros
+
+
 def _normalize_catalog_value(value: object, aliases: dict[str, str]) -> str:
     if value is None:
         return ""
@@ -604,6 +651,7 @@ def _rule_1_1(dataset: DatasetReader) -> list[RuleIssue]:
 def _rule_1_2(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
+    predio_nuevo_refs, predio_nuevo_numeros = _build_predio_nuevo_scope(helper)
 
     for table_name, row in helper.iter_predios():
         result = helper.pull_predial_number(row, allow_guess=False)
@@ -634,7 +682,12 @@ def _rule_1_2(dataset: DatasetReader) -> list[RuleIssue]:
             continue
 
         field_name, numero_str, raw_value = result
-        if not _is_valid_numero_predial(numero_str):
+        predio_ref = _get_t_id(row) or helper.identify(row) or ""
+        is_predio_nuevo_provisional = (
+            _is_valid_predio_nuevo_provisional(numero_str)
+            and (numero_str in predio_nuevo_numeros or str(predio_ref) in predio_nuevo_refs)
+        )
+        if not _is_valid_numero_predial(numero_str) and not is_predio_nuevo_provisional:
             issues.append(
                 RuleIssue(
                     rule_id="1.2",
@@ -654,7 +707,12 @@ def _rule_1_2(dataset: DatasetReader) -> list[RuleIssue]:
         if not result:
             continue
         field_name, numero_str, raw_value = result
-        if numero_str and not _is_valid_numero_predial(numero_str):
+        tipo_novedad = helper.get_field_value(row, ("tipo_novedad", "Tipo_Novedad", "novedad", "Novedad"))
+        is_predio_nuevo_provisional = (
+            _is_predio_nuevo_tipo(tipo_novedad)
+            and _is_valid_predio_nuevo_provisional(numero_str)
+        )
+        if numero_str and not _is_valid_numero_predial(numero_str) and not is_predio_nuevo_provisional:
             issues.append(
                 RuleIssue(
                     rule_id="1.2",

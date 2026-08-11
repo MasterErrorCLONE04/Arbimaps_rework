@@ -149,6 +149,24 @@ def _pos_18(value: object) -> str | None:
 
     return text[17]  # índice 17 = posición 18
 
+
+def _pos_14(value: object) -> str | None:
+    if value in (None, ""):
+        return None
+
+    text = str(value).strip()
+
+    if len(text) < 14:
+        return None
+
+    return text[13]
+
+
+def _is_predio_nuevo_provisional(value: object) -> bool:
+    pos_18 = _pos_18(value)
+    pos_14 = _pos_14(value)
+    return bool((pos_18 and pos_18.isalpha()) or (pos_14 and pos_14.isalpha()))
+
 def _is_predio_nuevo_pos_18(pos_18: str | None) -> bool:
     if pos_18 in (None, ""):
         return False
@@ -456,9 +474,10 @@ def _rule_8_11(dataset: DatasetReader) -> list[RuleIssue]:
         )
 
         pos_18_predio = _pos_18(numero_predial_predio)
+        pos_14_predio = _pos_14(numero_predial_predio)
         pos_22_novedad = _pos_22(numero_predial_novedad)
 
-        predio_es_nuevo = pos_18_predio is None or not pos_18_predio.isdigit() or not ("0" <= pos_18_predio <= "8")
+        predio_es_nuevo = _is_predio_nuevo_provisional(numero_predial_predio)
         predio_es_informal = pos_22_novedad == "2"
 
         if predio_es_nuevo or predio_es_informal:
@@ -478,6 +497,7 @@ def _rule_8_11(dataset: DatasetReader) -> list[RuleIssue]:
                         "numero_predial_predio": numero_predial_predio,
                         "numero_predial_novedad": numero_predial_novedad,
                         "pos_18_predio": pos_18_predio,
+                        "pos_14_predio": pos_14_predio,
                         "pos_22_novedad": pos_22_novedad,
                     },
                 )

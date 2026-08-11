@@ -3549,6 +3549,25 @@ def _sanitize_assignment_enums_and_coords_arb(conn, schema: str, datasetname: st
             WHERE tipo_novedad = 24
             """
         )
+        cur.execute(
+            f"""
+            UPDATE {schema}.arb_novedadnumeropredialvalor nnp
+            SET numero_predial = p.numero_predial
+            FROM {schema}.arb_predio p
+            WHERE nnp.arb_predio_novedad_numero_predial = p.t_id
+              AND nnp.tipo_novedad IN (
+                  965,
+                  (
+                      SELECT t_id
+                      FROM {schema}.arb_novedadnumeropredialtipo
+                      WHERE ilicode = 'Predio_Nuevo'
+                      LIMIT 1
+                  )
+              )
+              AND NULLIF(BTRIM(p.numero_predial::text), '') IS NOT NULL
+              AND BTRIM(COALESCE(nnp.numero_predial::text, '')) <> BTRIM(p.numero_predial::text)
+            """
+        )
 
         # 10. Corregir coordenadas fuera de rango (límite mínimo CTM12 de ISO19107_PLANAS_V3_0 es X=3980000.0, Y=1080000.0)
         cur.execute(
