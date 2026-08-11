@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 import os
 import tempfile
 from typing import Callable, List, Optional
@@ -309,7 +309,7 @@ def _ensure_workspace_enum_tables_populated(conn, tenant: TenantContext, schema_
     """
     Copia los registros de las tablas de dominio (las que terminan en 'tipo')
     desde el esquema principal (schema_main) al esquema de trabajo (schema_work)
-    si estas están vacías, para que ili2pg pueda traducir correctamente las enumeraciones.
+    si estas estÃ¡n vacÃ­as, para que ili2pg pueda traducir correctamente las enumeraciones.
     """
     with conn.cursor() as cur:
         try:
@@ -470,7 +470,7 @@ def _importar_predios_f_r1_r2_si_faltan(
         else:
             t_basket_id = int(row[0])
 
-        # 2. Obtener la lista de NPNs activos para esta asignación
+        # 2. Obtener la lista de NPNs activos para esta asignaciÃ³n
         cur.execute(
             f"""
             SELECT ap.numero_predial_nacional
@@ -1454,12 +1454,12 @@ def _arb_validate_sync_identity_fields(conn, schema_main: str, schema_work: str,
             continue
         with conn.cursor() as cur:
             cur.execute(count_query)
-            _append_issue(table_name, int((cur.fetchone() or [0])[0] or 0), "sin t_ili_tid util para sincronización")
+            _append_issue(table_name, int((cur.fetchone() or [0])[0] or 0), "sin t_ili_tid util para sincronizaciÃ³n")
 
     if issues:
         raise export_service.ExportServiceError(
             status_code=409,
-            detail="Workspace Arbimaps inválido para sincronizar: " + "; ".join(issues),
+            detail="Workspace Arbimaps invÃ¡lido para sincronizar: " + "; ".join(issues),
         )
 
 
@@ -1648,7 +1648,7 @@ def _arb_validate_post_sync_counts(conn, schema_main: str, schema_work: str) -> 
         raise export_service.ExportServiceError(
             status_code=409,
             detail=(
-                "La sincronización Arbimaps terminó con conteos inconsistentes frente al workspace: "
+                "La sincronizaciÃ³n Arbimaps terminÃ³ con conteos inconsistentes frente al workspace: "
                 + ", ".join(mismatches)
             ),
         )
@@ -1952,7 +1952,7 @@ def _arb_validate_workspace_dataset_health(conn, schema_work: str, work_datasetn
         raise export_service.ExportServiceError(
             status_code=409,
             detail=(
-                f"Workspace Arbimaps inválido en {schema_work}:{work_datasetname}. "
+                f"Workspace Arbimaps invÃ¡lido en {schema_work}:{work_datasetname}. "
                 + ", ".join(issues)
             ),
         )
@@ -2738,6 +2738,22 @@ def _arb_copy_all_ili2db_metadata_if_absent(conn, schema_main: str, schema_histo
         )
 
 
+def _arb_copy_domain_tables_if_absent(conn, schema_main: str, schema_history: str) -> None:
+    existing_main = _schema_table_names(conn, schema_main)
+    existing_history = _schema_table_names(conn, schema_history)
+    domain_tables = sorted(
+        table_name
+        for table_name in existing_main.intersection(existing_history)
+        if table_name.endswith("tipo")
+    )
+    for table_name in domain_tables:
+        _arb_insert_table_rows_if_absent(
+            conn,
+            schema_main,
+            schema_history,
+            table_name,
+            f"{_qualify(schema_main, table_name)} m",
+        )
 def _arb_archive_cancelled_predios_to_history(
     conn,
     tenant: TenantContext,
@@ -2776,6 +2792,7 @@ def _arb_archive_cancelled_predios_to_history(
         )
 
     _arb_copy_all_ili2db_metadata_if_absent(conn, schema_main, schema_history)
+    _arb_copy_domain_tables_if_absent(conn, schema_main, schema_history)
 
     copied_predios = _arb_insert_table_rows_if_absent(
         conn,
@@ -4116,3 +4133,5 @@ def ensure_workspace_ready_for_export(
         created_by,
     )
     return work_dataset
+
+
