@@ -904,6 +904,118 @@ def _xtf_validation_error_items(result: Optional[dict]) -> list[dict]:
     return merged
 
 
+_RETORNO_CANCELACION_TIPOS = {
+    "Cancelacion",
+    "Cancelacion_por_Englobe",
+    "Cancelacion_por_Desenglobe",
+}
+
+
+def _xml_local_name(tag: str) -> str:
+    clean = str(tag or "")
+    if "}" in clean:
+        clean = clean.rsplit("}", 1)[-1]
+    if "." in clean:
+        clean = clean.rsplit(".", 1)[-1]
+    return clean
+
+
+def _xml_child_text(elem: ET.Element, names: set[str]) -> str:
+    normalized = {name.lower() for name in names}
+    for child in list(elem):
+        if _xml_local_name(child.tag).lower() in normalized:
+            return str(child.text or "").strip()
+    return ""
+
+
+def _xml_ref_value(elem: ET.Element, names: set[str]) -> str:
+    normalized = {name.lower() for name in names}
+    for child in elem.iter():
+        if child is elem:
+            continue
+        if _xml_local_name(child.tag).lower() not in normalized:
+            continue
+        ref = str(child.attrib.get("REF") or child.attrib.get("ref") or "").strip()
+        if ref:
+            return ref
+        text = str(child.text or "").strip()
+        if text:
+            return text
+    return ""
+
+
+def _prepare_retorno_xtf_validation_path(xtf_path: str) -> str:
+    """
+    Build a validation-only XTF copy without terrain geometries for cancelled predios.
+
+    The original file is left untouched and is still used for ili2pg import, so cancelled
+    predios can be archived with their full geometric information before main is pruned.
+    """
+    source = Path(xtf_path)
+    try:
+        tree = ET.parse(source)
+    except (ET.ParseError, OSError):
+        return str(source)
+
+    root = tree.getroot()
+    cancelled_predios: set[str] = set()
+
+    for elem in root.iter():
+        if _xml_local_name(elem.tag) != "ARB_Predio":
+            continue
+        predio_id = str(elem.attrib.get("TID") or elem.attrib.get("tid") or elem.attrib.get("ID") or "").strip()
+        if not predio_id:
+            continue
+        estado = _xml_child_text(elem, {"Estado"})
+        if estado.lower() == "cancelado":
+            cancelled_predios.add(predio_id)
+            continue
+        for child in elem.iter():
+            if _xml_local_name(child.tag) != "ARB_NovedadNumeroPredialValor":
+                continue
+            tipo_novedad = _xml_child_text(child, {"Tipo_Novedad", "tipo_novedad"})
+            if tipo_novedad in _RETORNO_CANCELACION_TIPOS:
+                cancelled_predios.add(predio_id)
+                break
+
+    if not cancelled_predios:
+        return str(source)
+
+    removed = 0
+    removed_terrain_ids: set[str] = set()
+    terrain_names = {"ARB_Terreno", "ARB_TerrenoHistorico"}
+    predio_ref_names = {"predio", "arb_predio", "baunit", "ilc_predio", "ue_baunit"}
+    for parent in root.iter():
+        for child in list(parent):
+            if _xml_local_name(child.tag) not in terrain_names:
+                continue
+            predio_ref = _xml_ref_value(child, predio_ref_names)
+            if predio_ref in cancelled_predios:
+                terrain_id = str(child.attrib.get("TID") or child.attrib.get("tid") or child.attrib.get("ID") or "").strip()
+                if terrain_id:
+                    removed_terrain_ids.add(terrain_id)
+                parent.remove(child)
+                removed += 1
+
+    if removed_terrain_ids:
+        terrain_attachment_names = {"ARB_AdjuntoTerreno", "ARB_AdjuntoTerrenoValor"}
+        terreno_attachment_ref_names = {"arb_terreno_adjunto", "terreno", "arb_terreno"}
+        for parent in root.iter():
+            for child in list(parent):
+                if _xml_local_name(child.tag) not in terrain_attachment_names:
+                    continue
+                terrain_ref = _xml_ref_value(child, terreno_attachment_ref_names)
+                if terrain_ref in removed_terrain_ids:
+                    parent.remove(child)
+
+    if removed <= 0:
+        return str(source)
+
+    validation_path = source.with_name(f"{source.stem}.validation{source.suffix or '.xtf'}")
+    tree.write(validation_path, encoding="utf-8", xml_declaration=True)
+    return str(validation_path)
+
+
 def _history_error_message(
     stage: str,
     exc: Exception,
@@ -2925,11 +3037,20 @@ def _procesar_retorno_xtf(
                 conn.rollback()
                 raise
 
-        stage = "validate_xtf_rules"
-        xtf_validation_result = _validate_retorno_xtf_rules(
-            tmp_path,
-            municipality_code=tenant.municipality_code,
-        )
+        stage = "prepare_xtf_validation_copy"
+        validation_xtf_path = _prepare_retorno_xtf_validation_path(tmp_path)
+        try:
+            stage = "validate_xtf_rules"
+            xtf_validation_result = _validate_retorno_xtf_rules(
+                validation_xtf_path,
+                municipality_code=tenant.municipality_code,
+            )
+        finally:
+            if validation_xtf_path != tmp_path:
+                try:
+                    Path(validation_xtf_path).unlink(missing_ok=True)
+                except Exception:
+                    logger.warning("No fue posible eliminar copia temporal de validacion XTF: %s", validation_xtf_path)
 
         stage = "sync_pipeline"
         with connection_manager.connection(tenant) as conn:
