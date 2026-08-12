@@ -3443,18 +3443,34 @@ def _procesar_retorno_xtf(
                     # Auto-consolidar códigos homologados que estaban en RESERVADO para esta asignación
                     try:
                         with conn.cursor() as cur_ch:
-                            cur_ch.execute("""
+                            cur_ch.execute("SAVEPOINT sp_homologados")
+                            cur_ch.execute(
+                                f"""
                                 UPDATE arbimaps_app.codigos_homologados
                                 SET estado = 'ASIGNADO',
                                     fecha_asignacion = NOW()
                                 WHERE estado = 'RESERVADO'
-                                  AND numero_predial IN (
-                                      SELECT numero_predial 
-                                      FROM b_asignaciones_arb.asignacion_predio 
-                                      WHERE asignacion_id = %s
+                                  AND (
+                                      numero_predial IN (
+                                          SELECT numero_predial_nacional 
+                                          FROM {asignacion_predio_table} 
+                                          WHERE asignacion_id = %s
+                                      )
+                                      OR numero_predial IN (
+                                          SELECT numero_predial 
+                                          FROM {_qident(schema_main)}.arb_predio
+                                          WHERE t_ili_tid IN (
+                                              SELECT t_ili_tid 
+                                              FROM {_qident(schema_work)}.arb_predio 
+                                              WHERE dataset = (SELECT t_id FROM {_qident(schema_work)}.t_ili2db_dataset WHERE datasetname = %s LIMIT 1)
+                                          )
+                                      )
                                   );
-                            """, (asignacion_id,))
+                                """,
+                                (asignacion_id, target_dataset),
+                            )
                             ch_consolidados = cur_ch.rowcount
+                            cur_ch.execute("RELEASE SAVEPOINT sp_homologados")
                             if ch_consolidados > 0:
                                 pending_events.append(
                                     (
@@ -3468,6 +3484,11 @@ def _procesar_retorno_xtf(
                                 )
                     except Exception as e_ch:
                         logger.warning(f"[{correlation_id}] Error al auto-consolidar códigos homologados: {e_ch}")
+                        try:
+                            with conn.cursor() as cur_rb:
+                                cur_rb.execute("ROLLBACK TO SAVEPOINT sp_homologados")
+                        except Exception:
+                            pass
 
                 for evento, mensaje, usuario in pending_events:
                     asignaciones_repo.safe_log_event(
