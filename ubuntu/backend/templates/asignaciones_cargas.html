@@ -177,7 +177,10 @@
     <div class="title-header">
       <small class="text-title-header">MÓDULO DE ASIGNACIONES > CREAR CARGA DE TRABAJO</small>
     </div>
-    <div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm rounded-pill px-3 fw-semibold btn-outline-solicitudes" id="btnAbrirGeneradorNpn" type="button">
+        <i class="bi bi-magic me-1"></i> Generar Nuevos NPNs
+      </button>
       <button class="btn btn-sm rounded-pill px-3 fw-semibold btn-outline-solicitudes" id="btnListarSolicitudesAsistente" type="button">
         <i class="bi bi-list-task me-1"></i> Ver Solicitudes Pendientes
         <span class="badge bg-danger ms-2 rounded-pill d-none" id="badgeSolicitudesCount">0</span>
@@ -563,6 +566,8 @@
       </div>
     </div>
   </div>
+
+  {% include 'modales/modal_generador_npn.html' %}
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
@@ -1649,7 +1654,38 @@
       } catch (e) {
         console.error(e);
         tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Error inesperado al cargar solicitudes</td></tr>';
-      }
+        
+    // =========================================================
+    // LÓGICA DEL GENERADOR DE NPN Y CÓDIGOS HOMOLOGADOS
+    // =========================================================
+    function abrirGeneradorDesdeCargas() {
+      if (!window.abrirGeneradorNpn) return;
+      const txtBuscador = document.getElementById("txtPredios") ? document.getElementById("txtPredios").value.trim() : "";
+      const primerNpn = txtBuscador.split(/[\s,;\n]+/)[0] || "";
+      window.abrirGeneradorNpn({
+        predioMatriz: primerNpn,
+        consecutivoTramite: "",
+        tipoMutacion: "DESENGLOBE"
+      });
     }
+
+    const btnAbrirGen = document.getElementById("btnAbrirGeneradorNpn");
+    if (btnAbrirGen) {
+      btnAbrirGen.addEventListener("click", function(e) {
+        e.preventDefault();
+        abrirGeneradorDesdeCargas();
+      });
+    }
+
+    // Delegación global para botón de Cargas
+    document.addEventListener("click", function(e) {
+      const targetBtn = e.target.closest("#btnAbrirGeneradorNpn");
+      if (targetBtn) {
+        e.preventDefault();
+        abrirGeneradorDesdeCargas();
+      }
+    });
+
   });
 </script>
+<script src="{{ rp }}/static/js/asignaciones/generador_npn.js?v={{ range(1000, 9999)|random }}"></script>

@@ -32,6 +32,7 @@ from tenants import ConnectionManager, init_connection_manager, init_municipalit
 
 # importacion para el archivo de edicion del predio
 from routers.editar_predio_queries import router as editar_predio_queries_router
+from routers.predios_generador_api import router as predios_generador_router
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 logger = logging.getLogger(__name__)
@@ -158,6 +159,7 @@ def create_app() -> FastAPI:
     app.include_router(panel_control_router)
     app.include_router(restriccion_predios_router)
     app.include_router(sincronizacion_mergin_router)
+    app.include_router(predios_generador_router)
 
 
     box_router = _load_optional_router("routers.box_routes")

@@ -54,6 +54,14 @@
               style="border-radius: 6px; border: 1px solid #E4EBF2; min-width: 280px; padding: 6px 0; background-color: #FFFFFF;">
               <!-- Workflow Actions -->
               <li>
+                <button id="btnHeaderGenerarNpn" type="button"
+                  class="dropdown-item d-flex align-items-center gap-3 px-3 py-2 fw-semibold"
+                  style="font-size: 0.85rem; color: #16a34a; background: transparent; border: none; text-align: left; width: 100%;">
+                  <i class="bi bi-lightning-charge-fill fs-6" style="color: #16a34a; width: 20px; text-align: center;"></i>
+                  <span>Generar Nuevos NPNs</span>
+                </button>
+              </li>
+              <li>
                 <button id="btnHeaderSyncXtf" type="button"
                   class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
                   style="font-size: 0.85rem; color: #032F57; background: transparent; border: none; text-align: left; width: 100%;">
@@ -361,6 +369,11 @@
                 <p class="sub mb-0">
                   Consulta los predios correspondiente a esta asignación
                 </p>
+              </div>
+              <div>
+                <button class="btn btn-sm btn-outline-solicitudes d-inline-flex align-items-center gap-2 px-3 py-2 fw-bold" id="btnAbrirGeneradorDetalle" type="button" style="border-radius: 8px !important;">
+                  <i class="bi bi-lightning-charge-fill"></i> Generar Nuevos NPNs
+                </button>
               </div>
             </div>
 
@@ -1709,6 +1722,7 @@
     </div>
   </div>
 
+  {% include 'modales/modal_generador_npn.html' %}
   {% include 'modales/modal_sincronizar_xtf.html' %}
   {% include 'modales/modal_historial.html' %}
   {% include 'modales/modal_comentarios.html' %}
@@ -1728,4 +1742,49 @@
       assignWmsLayerDetail: {{ asig_geoserver_layer | default ('B_ASIGNACIONES_ARB:ASIGNACIONES') | tojson }}
     };
   </script>
+  <script src="{{ rp }}/static/js/asignaciones/generador_npn.js?v={{ range(1000, 9999)|random }}"></script>
   <script src="{{ rp }}/static/js/asignaciones/asignaciones_detalle.js?v={{ range(1000, 9999)|random }}"></script>
+  <script>
+    // Conectar botones de Detalle de Asignación con el Generador NPN
+    document.addEventListener("DOMContentLoaded", function() {
+      function abrirGeneradorDesdeDetalle() {
+        if (!window.abrirGeneradorNpn) return;
+        
+        // Obtener el predio activo de la asignación si existe
+        let predioActivo = "";
+        const elNpn = document.getElementById("resumenPredioNumero");
+        if (elNpn && elNpn.textContent && elNpn.textContent.trim().replace(/\D/g, "").length === 30) {
+          predioActivo = elNpn.textContent.trim().replace(/\D/g, "");
+        } else {
+          // Intentar obtener el primer predio de la tabla
+          const primerRow = document.querySelector("#asigDetallePrediosBody tr td:nth-child(2)");
+          if (primerRow && primerRow.textContent.trim().replace(/\D/g, "").length === 30) {
+            predioActivo = primerRow.textContent.trim().replace(/\D/g, "");
+          }
+        }
+        
+        // Obtener nombre o consecutivo del expediente
+        let tramite = "";
+        const elBreadcrumb = document.getElementById("breadcrumbAssignmentName");
+        if (elBreadcrumb && elBreadcrumb.textContent) {
+          tramite = elBreadcrumb.textContent.trim();
+        }
+
+        window.abrirGeneradorNpn({
+          predioMatriz: predioActivo,
+          consecutivoTramite: tramite,
+          tipoMutacion: "DESENGLOBE"
+        });
+      }
+
+      const btnDetalle = document.getElementById("btnAbrirGeneradorDetalle");
+      if (btnDetalle) {
+        btnDetalle.addEventListener("click", abrirGeneradorDesdeDetalle);
+      }
+
+      const btnHeaderGen = document.getElementById("btnHeaderGenerarNpn");
+      if (btnHeaderGen) {
+        btnHeaderGen.addEventListener("click", abrirGeneradorDesdeDetalle);
+      }
+    });
+  </script>

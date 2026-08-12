@@ -3439,6 +3439,36 @@ def _procesar_retorno_xtf(
                             usuario_log,
                         )
                     )
+                if publish_to_main:
+                    # Auto-consolidar códigos homologados que estaban en RESERVADO para esta asignación
+                    try:
+                        with conn.cursor() as cur_ch:
+                            cur_ch.execute("""
+                                UPDATE arbimaps_app.codigos_homologados
+                                SET estado = 'ASIGNADO',
+                                    fecha_asignacion = NOW()
+                                WHERE estado = 'RESERVADO'
+                                  AND numero_predial IN (
+                                      SELECT numero_predial 
+                                      FROM b_asignaciones_arb.asignacion_predio 
+                                      WHERE asignacion_id = %s
+                                  );
+                            """, (asignacion_id,))
+                            ch_consolidados = cur_ch.rowcount
+                            if ch_consolidados > 0:
+                                pending_events.append(
+                                    (
+                                        "HOMOLOGADOS_CONSOLIDADOS",
+                                        (
+                                            f"[{correlation_id}] Se fijaron y consolidaron automáticamente {ch_consolidados} "
+                                            "código(s) homologados a estado ASIGNADO de forma definitiva en la base de datos."
+                                        ),
+                                        usuario_log,
+                                    )
+                                )
+                    except Exception as e_ch:
+                        logger.warning(f"[{correlation_id}] Error al auto-consolidar códigos homologados: {e_ch}")
+
                 for evento, mensaje, usuario in pending_events:
                     asignaciones_repo.safe_log_event(
                         conn,

@@ -1,0 +1,335 @@
+<style>
+  #modalGeneradorNpn.custom-modal-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(3, 47, 87, 0.45) !important;
+    backdrop-filter: blur(3px) !important;
+    z-index: 99999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  #modalGeneradorNpn.d-none {
+    display: none !important;
+  }
+  #modalGeneradorNpn .custom-modal-content {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    padding: 24px !important;
+    border: 1px solid #E2ECF5 !important;
+    animation: modalSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+  @keyframes modalSlideDown {
+    from { opacity: 0; transform: translateY(-20px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  #modalGeneradorNpn .btn-outline-solicitudes {
+    color: #059669 !important;
+    border-color: #059669 !important;
+    background-color: transparent !important;
+  }
+  #modalGeneradorNpn .btn-outline-solicitudes:hover,
+  #modalGeneradorNpn .btn-outline-solicitudes.active {
+    color: #ffffff !important;
+    background-color: #059669 !important;
+    border-color: #059669 !important;
+  }
+  #modalGeneradorNpn .btn-close-custom {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  #modalGeneradorNpn .btn-close-custom:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+  }
+</style>
+
+<!-- Modal Generador de NPN y Códigos Homologados -->
+<div id="modalGeneradorNpn" class="custom-modal-backdrop d-none">
+  <div class="custom-modal-content" style="max-width: 950px; width: 95%;">
+    <div class="custom-modal-header d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-magic fs-4 text-navy"></i>
+        <div>
+          <h5 class="custom-modal-title fw-bold mb-0 text-navy">Generador Oficial de Números Prediales y Homologados</h5>
+          <small class="text-muted">Dispensador de 30 dígitos NPN y códigos oficiales para el sistema Alfa</small>
+        </div>
+      </div>
+      <button type="button" class="btn-close-custom" id="btnCloseGeneradorNpnModal">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="modal-body text-start pt-0">
+      <!-- Pestañas de Navegación -->
+      <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-solicitudes active px-3" id="btnTabGenerar" type="button" style="border-radius: 8px !important;">
+            <i class="bi bi-lightning-charge me-1"></i> Generar Nuevos NPNs
+          </button>
+          <button class="btn btn-sm btn-outline-secondary px-3" id="btnTabReservas" type="button" style="border-radius: 8px !important;">
+            <i class="bi bi-clock-history me-1"></i> Reservas Activas
+            <span class="badge bg-warning text-dark ms-1 rounded-pill" id="badgeTotalReservasCount">0</span>
+          </button>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <span class="small fw-semibold text-navy">Bolsa Neiva:</span>
+          <span class="badge bg-success rounded-pill px-2 py-1" id="badgeStockDisponibles">Consultando...</span>
+        </div>
+      </div>
+
+      <!-- PANE 1: GENERADOR -->
+      <div id="paneGenerarNpn">
+        <!-- Formulario de Parámetros -->
+        <div class="card border-0 shadow-sm p-3 mb-3" style="background-color: #F8FBFE; border: 1px solid #E2ECF5 !important; border-radius: 12px;">
+          
+          <!-- Asistente de Consecutivos Territoriales (Nueva Manzana / Vereda / Corregimiento) -->
+          <div id="boxAsistenteTerritorial" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="small fw-bold text-navy"><i class="bi bi-compass-fill text-success me-1"></i> Asistente de Consecutivos Territoriales (Manzanas, Veredas y Corregimientos):</span>
+              <button type="button" class="btn-close-custom btn-sm" id="btnCerrarAsistenteTerritorial" style="font-size: 0.7rem;"><i class="bi bi-x"></i></button>
+            </div>
+            <p class="text-muted small mb-2" style="font-size: 0.72rem;">Rastrea y sugiere correlativos exactos para no dejar vacíos tanto en el área urbana (Comunas 01 a 10) como en el área rural (80 Veredas y 8 Corregimientos).</p>
+            
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-md-4">
+                <label class="small text-muted mb-0" style="font-size: 0.72rem;">Sector / Corregimiento</label>
+                <select class="form-select form-select-sm" id="asistenteSectorSelect">
+                  <option value="01" selected>01 - Urbano (Comunas 01 a 10)</option>
+                  <option value="00">00 - Rural General</option>
+                  <option value="02">02 - Corr. Río Las Ceibas</option>
+                  <option value="03">03 - Corr. Vegalarga</option>
+                  <option value="04">04 - Corr. Fortalecillas</option>
+                  <option value="05">05 - Corr. El Caguán</option>
+                  <option value="06">06 - Corr. Guacirco</option>
+                  <option value="07">07 - Corr. San Antonio de Anaconia</option>
+                  <option value="08">08 - Corr. Chapinero / Aipecito</option>
+                  <option value="OTRO">Otro / Nuevo Sector Rural...</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-3" id="wrapComunaCorr">
+                <label class="small text-muted mb-0" style="font-size: 0.72rem;">Comuna / Zona Urbana</label>
+                <div class="input-group input-group-sm">
+                  <select class="form-select form-select-sm" id="asistenteComunaSelect">
+                    <option value="01">01 - Comuna 1 (Norte)</option>
+                    <option value="02">02 - Comuna 2 (Nororiental)</option>
+                    <option value="03">03 - Comuna 3 (Entre Ríos)</option>
+                    <option value="04">04 - Comuna 4 (Centro)</option>
+                    <option value="05">05 - Comuna 5 (Oriental)</option>
+                    <option value="06">06 - Comuna 6 (Sur / Canaima)</option>
+                    <option value="07">07 - Comuna 7 (Ipanema)</option>
+                    <option value="08">08 - Comuna 8 (Suroriental)</option>
+                    <option value="09" selected>09 - Comuna 9 (Norte / Galindo)</option>
+                    <option value="10">10 - Comuna 10 (Oriente)</option>
+                    <option value="OTRA">+ Otra / Nueva Comuna...</option>
+                  </select>
+                  <input type="text" class="form-control form-control-sm font-monospace" id="asistenteComunaInput" value="09" maxlength="2" placeholder="01" style="max-width: 55px; display: none;">
+                </div>
+              </div>
+              <div class="col-6 col-md-3" id="wrapBarrioVereda">
+                <label class="small text-muted mb-0" style="font-size: 0.72rem;">Barrio / Vereda Oficial (4d)</label>
+                <div class="input-group input-group-sm">
+                  <select class="form-select form-select-sm" id="asistenteVeredasSelect" style="display: none;">
+                    <option value="0000">0000 - Vereda General</option>
+                  </select>
+                  <input type="text" class="form-control form-control-sm font-monospace" id="asistenteBarrioInput" value="0000" maxlength="4" placeholder="0000">
+                </div>
+              </div>
+              <div class="col-12 col-md-2">
+                <button class="btn btn-sm btn-outline-secondary w-100 py-1" id="btnConsultarSiguienteManzana" type="button" style="font-size: 0.78rem; height: 31px;">
+                  <i class="bi bi-search me-1"></i> Consultar
+                </button>
+              </div>
+            </div>
+            
+            <div id="resultadoSugerenciaBox" class="alert alert-light border py-2 px-3 mt-2 mb-0 d-none d-flex justify-content-between align-items-center flex-wrap gap-2" style="font-size: 0.78rem; background-color: #F8FBFE;">
+              <div id="textoResultadoSugerencia">
+                <!-- Info dinámica -->
+              </div>
+              <button class="btn btn-sm btn-outline-solicitudes py-1 px-3 fw-semibold" id="btnAplicarSugerenciaManzana" type="button" style="font-size: 0.75rem; border-radius: 6px;">
+                <i class="bi bi-check2-circle me-1"></i> Usar esta Manzana / Base
+              </button>
+            </div>
+          </div>
+
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-5">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small fw-bold text-navy mb-0">
+                  Predio Matriz / Base (30 dígitos) <span class="text-danger">*</span>
+                </label>
+                <button type="button" class="btn btn-link p-0 text-decoration-none small fw-semibold" id="btnToggleAsistenteTerritorial" style="font-size: 0.72rem;">
+                  <i class="bi bi-compass me-1"></i> ¿Nueva Manzana / Zona?
+                </button>
+              </div>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white"><i class="bi bi-geo-alt"></i></span>
+                <input type="text" class="form-control font-monospace" id="genPredioMatrizInput" placeholder="Ej: 410010106000000970154913020004" maxlength="30">
+              </div>
+              <small class="text-muted d-block mt-1" style="font-size: 0.72rem;" id="genMatrizHelp">
+                Dígitos ingresados: <span id="genDigitosCount" class="fw-bold">0</span>/30
+              </small>
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label class="form-label small fw-bold text-navy mb-1">Tipo de Trámite</label>
+              <select class="form-select form-select-sm" id="genTipoMutacionSelect">
+                <option value="DESENGLOBE" selected>Desenglobe / Subdivisión</option>
+                <option value="MANZANA_NUEVA">Incorporación Manzana Nueva</option>
+                <option value="PH">Propiedad Horizontal (PH)</option>
+                <option value="SEGREGACION">Segregación</option>
+                <option value="MEJORA">Mejora en Terreno Ajeno</option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-4">
+              <label class="form-label small fw-bold text-navy mb-1">Condición del Predio (Posición 22)</label>
+              <select class="form-select form-select-sm" id="genCondicionSelect">
+                <option value="0" selected>0 - No Propiedad Horizontal (NPH)</option>
+                <option value="9">9 - Predios en Propiedad Horizontal (PH)</option>
+                <option value="5">5 - Mejoras / PH no reglamentaria</option>
+                <option value="8">8 - Predio en Condominio</option>
+                <option value="7">7 - Parque Cementerios</option>
+                <option value="4">4 - Vías</option>
+                <option value="3">3 - Bienes de uso público diferentes a vías</option>
+                <option value="2">2 - Informal</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-2 mt-2 align-items-end" id="rowPhParams" style="display: none;">
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold text-navy mb-1">Edificio / Torre (Pos 23-24)</label>
+              <input type="text" class="form-control form-control-sm font-monospace" id="genEdificioInput" placeholder="00" maxlength="2" value="00">
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small fw-bold text-navy mb-1">Piso / Nivel (Pos 25-26)</label>
+              <input type="text" class="form-control form-control-sm font-monospace" id="genPisoInput" placeholder="00" maxlength="2" value="00">
+            </div>
+            <div class="col-12 col-md-6">
+              <small class="text-muted d-block mt-3" style="font-size: 0.73rem;">
+                <i class="bi bi-info-circle me-1"></i> Las unidades (Pos 27-30) se generarán consecutivamente (ej: 0001, 0002...).
+              </small>
+            </div>
+          </div>
+
+          <div class="row g-2 mt-2 align-items-end">
+            <div class="col-6 col-md-2">
+              <label class="form-label small fw-bold text-navy mb-1">Cantidad <span class="text-danger">*</span></label>
+              <input type="number" class="form-control form-control-sm" id="genCantidadInput" value="1" min="1" max="100">
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label small fw-bold text-navy mb-1">Consecutivo Trámite</label>
+              <input type="text" class="form-control form-control-sm" id="genTramiteInput" placeholder="Ej: MUT-2026-001 (Opcional)">
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label small fw-bold text-navy mb-1">Notas / Observaciones</label>
+              <input type="text" class="form-control form-control-sm" id="genObservacionesInput" placeholder="Notas adicionales (Opcional)">
+            </div>
+            <div class="col-12 col-md-2">
+              <button class="btn btn-sm btn-outline-solicitudes w-100 fw-bold d-flex align-items-center justify-content-center gap-1" id="btnEjecutarGeneradorNpn" type="button" style="height: 31px; border-radius: 8px !important;">
+                <i class="bi bi-lightning-charge-fill"></i> Generar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Resultados Generados -->
+        <div id="wrapResultadosGenerador" class="d-none">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0 text-navy small">
+              <i class="bi bi-check2-circle text-success me-1"></i> Predios Nuevos Generados y Reservados (<span id="lblCantGenerada">0</span>):
+            </h6>
+            <div class="d-flex gap-2">
+              <button class="btn btn-xs btn-outline-solicitudes py-1 px-2" id="btnCopiarTodoGenerador" style="font-size: 0.75rem; border-radius: 8px !important;">
+                <i class="bi bi-clipboard-check me-1"></i> Copiar Todo para Alfa
+              </button>
+              <button class="btn btn-xs btn-outline-secondary py-1 px-2" id="btnDescargarCsvGenerador" style="font-size: 0.75rem; border-radius: 8px !important;">
+                <i class="bi bi-filetype-csv me-1"></i> Descargar CSV
+              </button>
+            </div>
+          </div>
+
+          <div class="table-responsive border rounded-3 mb-3" style="max-height: 280px; overflow-y: auto;">
+            <table class="table table-sm table-hover mb-0" id="tblResultadosGenerador" style="font-size: 0.82rem;">
+              <thead class="table-light text-navy sticky-top">
+                <tr>
+                  <th class="text-center" style="width: 40px;">#</th>
+                  <th>Número Predial Nacional (30 Dígitos)</th>
+                  <th>Código Homologado</th>
+                  <th class="text-center">Estado</th>
+                  <th class="text-center" style="width: 130px;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyResultadosGenerador">
+                <!-- Se llena dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANE 2: GESTIÓN DE RESERVAS ACTIVAS -->
+      <div id="paneReservasActivas" class="d-none">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <span class="fw-bold text-navy small">Listado de Homologados en Reserva:</span>
+            <small class="text-muted d-block" style="font-size: 0.72rem;">
+              Códigos reservados temporalmente. Si un trámite no se consolida en Alfa, puedes liberarlo para que regrese a la bolsa.
+            </small>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-xs btn-outline-success py-1 px-2" id="btnConsolidarSeleccionados" style="font-size: 0.75rem; border-radius: 8px !important;">
+              <i class="bi bi-check2-all me-1"></i> Fijar / Consolidar Seleccionados
+            </button>
+            <button class="btn btn-xs btn-outline-danger py-1 px-2" id="btnLiberarSeleccionados" style="font-size: 0.75rem; border-radius: 8px !important;">
+              <i class="bi bi-trash3 me-1"></i> Liberar Seleccionados
+            </button>
+            <button class="btn btn-xs btn-outline-secondary py-1 px-2" id="btnRefrescarReservas" style="font-size: 0.75rem; border-radius: 8px !important;">
+              <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive border rounded-3 mb-3" style="max-height: 350px; overflow-y: auto;">
+          <table class="table table-sm table-hover mb-0" id="tblReservasActivas" style="font-size: 0.82rem;">
+            <thead class="table-light text-navy sticky-top">
+              <tr>
+                <th class="text-center" style="width: 35px;">
+                  <input type="checkbox" id="chkTodosReservas" class="form-check-input">
+                </th>
+                <th>Código Homologado</th>
+                <th>NPN Asignado (30d)</th>
+                <th>Usuario / Trámite</th>
+                <th>Fecha Reserva</th>
+                <th class="text-center" style="width: 140px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyReservasActivas">
+              <!-- Se llena dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="custom-modal-footer d-flex justify-content-end gap-2 pt-2 border-top">
+      <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="btnCerrarModalGenBottom" style="border-radius: 8px !important;">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
