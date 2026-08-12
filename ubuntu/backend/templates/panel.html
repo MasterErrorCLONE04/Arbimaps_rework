@@ -222,11 +222,13 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <span>Validación XTF</span>
               </a>
               {% if effective_role in ['lider_tecnico', 'soporte'] %}
+              <!--
               <a class="menuBtn sidebar-link {{ 'active' if view == 'sincronizacion_mergin' else '' }}"
                 href="{{ rp }}/panel/sincronizacion-mergin">
                 <i class="bi bi-arrow-repeat"></i>
                 <span>Sincronizacion Mergin</span>
               </a>
+              -->
               {% endif %}
               {% if effective_role in ['admin', 'soporte'] %}
               <div class="px-3">
@@ -443,7 +445,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
           href="{{ rp }}/panel/buscar">
           <span>Documentos</span>
         </a>
-
+        <!--
         {% if effective_role in ['lider_tecnico', 'soporte'] %}
         <a class="menuBtn sidebar-link {{ 'active' if view == 'sincronizacion_mergin' else '' }}"
           href="{{ rp }}/panel/sincronizacion-mergin">
@@ -451,7 +453,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
           <span>Sincronizacion Mergin</span>
         </a>
         {% endif %}
-
+        -->
         {# {% if not limited_assignment_role %}
         <a class="menuBtn sidebar-link">
           <i class="bi bi-arrow-down-up"></i>
