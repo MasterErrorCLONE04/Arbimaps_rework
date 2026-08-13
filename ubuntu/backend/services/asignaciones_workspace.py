@@ -1,4 +1,4 @@
-﻿import logging
+import logging
 import os
 import tempfile
 from typing import Callable, List, Optional
@@ -3052,7 +3052,7 @@ def sync_workspace_predios_to_main(
         return 0
     workspace_ctx = workspace_schema_service.get_workspace_context(schema_work)
     if workspace_ctx.model_name == "arb":
-        return _sync_workspace_arb_to_main(
+        synced_count = _sync_workspace_arb_to_main(
             conn,
             tenant,
             asignacion_id,
@@ -3060,45 +3060,67 @@ def sync_workspace_predios_to_main(
             schema_main,
             schema_work,
         )
-    update_cols = _get_predio_updatable_columns(conn, schema_main)
-    if not update_cols:
-        return 0
+    else:
+        update_cols = _get_predio_updatable_columns(conn, schema_main)
+        if not update_cols:
+            return 0
 
-    set_clause = sql.SQL(", ").join(
-        [
-            sql.SQL("{col} = src.{col}").format(col=sql.Identifier(col))
-            for col in update_cols
-        ]
-    )
-    query = sql.SQL(
-        """
-        UPDATE {main_predio} AS mp
-        SET {set_clause}
-        FROM (
-            SELECT wp.*
-            FROM {work_predio} wp
-            JOIN {work_basket} wb ON wb.t_id = wp.t_basket
-            JOIN {work_dataset} wd ON wd.t_id = wb.dataset
-            JOIN {asignacion_predio} ap
-              ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.numero_predial_nacional::text)
-            WHERE ap.asignacion_id = %s
-              AND ap.activo IS DISTINCT FROM FALSE
-              AND wd.datasetname = %s
-        ) AS src
-        WHERE BTRIM(mp.numero_predial_nacional::text) = BTRIM(src.numero_predial_nacional::text)
-        """
-    ).format(
-        main_predio=sql.Identifier(schema_main, "ilc_predio"),
-        work_predio=sql.Identifier(schema_work, "ilc_predio"),
-        work_basket=sql.Identifier(schema_work, "t_ili2db_basket"),
-        work_dataset=sql.Identifier(schema_work, "t_ili2db_dataset"),
-        asignacion_predio=sql.SQL(app_table(tenant, "asignacion_predio")),
-        set_clause=set_clause,
-    )
+        set_clause = sql.SQL(", ").join(
+            [
+                sql.SQL("{col} = src.{col}").format(col=sql.Identifier(col))
+                for col in update_cols
+            ]
+        )
+        query = sql.SQL(
+            """
+            UPDATE {main_predio} AS mp
+            SET {set_clause}
+            FROM (
+                SELECT wp.*
+                FROM {work_predio} wp
+                JOIN {work_basket} wb ON wb.t_id = wp.t_basket
+                JOIN {work_dataset} wd ON wd.t_id = wb.dataset
+                JOIN {asignacion_predio} ap
+                  ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.numero_predial_nacional::text)
+                WHERE ap.asignacion_id = %s
+                  AND ap.activo IS DISTINCT FROM FALSE
+                  AND wd.datasetname = %s
+            ) AS src
+            WHERE BTRIM(mp.numero_predial_nacional::text) = BTRIM(src.numero_predial_nacional::text)
+            """
+        ).format(
+            main_predio=sql.Identifier(schema_main, "ilc_predio"),
+            work_predio=sql.Identifier(schema_work, "ilc_predio"),
+            work_basket=sql.Identifier(schema_work, "t_ili2db_basket"),
+            work_dataset=sql.Identifier(schema_work, "t_ili2db_dataset"),
+            asignacion_predio=sql.SQL(app_table(tenant, "asignacion_predio")),
+            set_clause=set_clause,
+        )
 
-    with conn.cursor() as cur:
-        cur.execute(query, (asignacion_id, work_datasetname))
-        return cur.rowcount or 0
+        with conn.cursor() as cur:
+            cur.execute(query, (asignacion_id, work_datasetname))
+            synced_count = cur.rowcount or 0
+
+    # Ejecución de Reverse ETL hacia f_r1_r2
+    try:
+        from services.asignaciones_workspace_f_r1_r2_reverse import sincronizar_predios_a_f_r1_r2
+        asig_predio_tbl = app_table(tenant, "asignacion_predio")
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT numero_predial_nacional
+                FROM {asig_predio_tbl}
+                WHERE asignacion_id = %s AND activo IS DISTINCT FROM FALSE;
+                """,
+                (asignacion_id,),
+            )
+            npns = [str(r[0]).strip() for r in (cur.fetchall() or []) if r and r[0]]
+        if npns:
+            sincronizar_predios_a_f_r1_r2(conn, tenant, npns, schema_main)
+    except Exception as e:
+        logger.warning("Error durante Reverse ETL a f_r1_r2 en sync_workspace_predios_to_main: %s", e)
+
+    return synced_count
 
 
 def workspace_dataset_exists(
