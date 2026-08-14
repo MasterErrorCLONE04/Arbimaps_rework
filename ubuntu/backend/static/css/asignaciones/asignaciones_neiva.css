@@ -224,7 +224,7 @@ body.view-asignaciones #tblListarSolicitudesAsistenteTable tbody td {
 
 body.view-asignaciones .table-resultados tbody tr:hover td,
 body.view-asignaciones #tblListarSolicitudesAsistenteTable tbody tr:hover td {
-  background: #f0f6f2 !important;
+  background: #ffffff !important;
 }
 
 body.view-asignaciones #tblResultados_wrapper tr.row-seleccionado td {
@@ -624,53 +624,70 @@ body.view-asignaciones .sync-modal-content {
 
 body.view-asignaciones .modal-header,
 body.view-asignaciones .sync-modal-header {
-  color: #fff !important;
-  background: var(--asg-gradient) !important;
-  border: 0 !important;
+  background: #ECEEED !important;
+  min-height: 78px;
+  border-bottom: 0 !important;
+  border-radius: 22px 22px 0 0 !important;
+  color: var(--asg-deep) !important;
 }
 
-body.view-asignaciones .modal-header .title-part-predio,
+
 body.view-asignaciones .modal-header .modal-title,
 body.view-asignaciones .sync-modal-title,
 body.view-asignaciones .sync-modal-subtitle {
   color: #fff !important;
 }
 
-body.view-asignaciones .modal-body,
+
 body.view-asignaciones .modal-predio-body-edit,
 body.view-asignaciones .sync-modal-body {
   background: var(--asg-gray) !important;
 }
 
-body.view-asignaciones .tarjeta-modal-predio-edit,
-body.view-asignaciones .tarjeta-modal-visita-edit,
+body.view-asignaciones .tarjeta-modal-predio-edit {
+  background-color: white !important;
+}
+
+/* body.view-asignaciones .tarjeta-modal-visita-edit, */
 body.view-asignaciones .tarjeta-modal-predio-juridico-edit {
   color: var(--asg-deep) !important;
   background: #fff !important;
-  border: 1px solid var(--asg-line) !important;
+  border: none !important;
   border-radius: 16px !important;
 }
 
-body.view-asignaciones .part-ge-edit,
+
+
+body.view-asignaciones .part-ge-edit {
+  background: linear-gradient(202deg, rgba(10, 44, 27, 1) 75%, rgba(27, 64, 1, 1) 95%);
+  border-radius: 10px;
+}
+
 body.view-asignaciones .part-juy-edit {
   color: #fff !important;
   background: var(--asg-gradient) !important;
 }
 
 body.view-asignaciones .dato-edit
+
 /* body.view-asignaciones .dato */
- {
+  {
   color: var(--asg-deep) !important;
   background: linear-gradient(145deg, #f5f7f6, #e5ece8) !important;
   border: 1px solid var(--asg-line) !important;
   border-radius: 11px !important;
 }
 
-body.view-asignaciones .tex-num,
+body.view-asignaciones .modal-predio-body-edit,
+body.view-asignaciones .sync-modal-body {
+  background-color: white !important;
+}
+
+/* body.view-asignaciones .tex-num,
 body.view-asignaciones .dato_info,
 body.view-asignaciones .modal-body .text-start {
   color: var(--asg-deep) !important;
-}
+} */
 
 body.view-asignaciones .modal-predio-divider,
 body.view-asignaciones .modal-predio-divider-edit {
@@ -768,7 +785,13 @@ body.view-asignaciones .custom-modal-header {
   margin: -28px -28px 20px !important;
 }
 
-body.view-asignaciones .part-juy,
+body.view-asignaciones .part-juy {
+  color: #fff !important;
+  background: var(--cp-green) !important;
+  border: 1px solid var(--cp-green) !important;
+  border-radius: 16px !important;
+}
+
 body.view-asignaciones .part-juy-edit {
   color: #fff !important;
   background: var(--asg-gradient) !important;
@@ -1206,6 +1229,14 @@ body.view-asignaciones .content-modulo-detalles :where(.icons-bg, .icons-bg-menu
   fill: currentColor !important;
 } */
 
+.icons-bg-menu-2 {
+  background-color: var(--asg-deep) !important;
+  color: var(--cp-lime);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
 .icons-bg-menu {
   background-color: var(--asg-accent) !important;
   border-radius: 50%;
@@ -1269,7 +1300,8 @@ body.view-asignaciones .content-modulo-detalles .resumen-interesado.u_construcci
 body.view-asignaciones .content-modulo-detalles .resumen-interesado :where(.resumen-item-label, .resumen-item-value) {
   color: var(--asg-deep) !important;
 }
-.resumen-item-label{
+
+.resumen-item-label {
   color: var(--asg-deep) !important;
 }
 
@@ -1295,7 +1327,7 @@ body.view-asignaciones .content-modulo-detalles .badge-uc-activa-edit {
   border: 1px solid var(--asg-line) !important;
 }
 
-#badgeJuridicoCountContainer{
+#badgeJuridicoCountContainer {
   background: var(--asg-lime) !important;
 }
 
@@ -1365,18 +1397,47 @@ body.view-asignaciones .content-modulo-detalles :where(.asigDetailTable,
   color: #294c39 !important;
   background: #fff !important;
   border-top: 0 !important;
-  border-bottom: 1px solid var(--asg-table-rule) !important;
+  transition: background-color 0.2s ease, color 0.2s ease !important;
 }
 
 body.view-asignaciones .content-modulo-detalles :where(.asigDetailTable,
   .tabla-construcciones,
   .tabla-unidad-construccion,
-  .tabla-modal-juridica-edit) tbody tr:hover td {
-  background: #f3f7f5 !important;
+  .tabla-modal-juridica-edit) tbody tr:not(.fila-detalle-unidad) {
+  cursor: pointer !important;
+}
+
+body.view-asignaciones .content-modulo-detalles :where(.asigDetailTable,
+  .tabla-construcciones,
+  .tabla-unidad-construccion,
+  .tabla-modal-juridica-edit) tbody tr:not(.fila-detalle-unidad):hover td {
+  background: #eaf3ee !important;
+  color: #0A2C1B !important;
+  cursor: pointer !important;
+}
+
+body.view-asignaciones .content-modulo-detalles .btn-toggle-detalle-uc {
+  cursor: pointer !important;
+  transition: transform 0.2s ease, color 0.2s ease !important;
+}
+
+body.view-asignaciones .content-modulo-detalles .btn-toggle-detalle-uc:hover {
+  transform: scale(1.18);
+  color: #0A2C1B !important;
+}
+
+body.view-asignaciones .content-modulo-detalles .btn-eye-predio-edit {
+  cursor: pointer !important;
+  transition: transform 0.2s ease, background-color 0.2s ease !important;
+}
+
+body.view-asignaciones .content-modulo-detalles .btn-eye-predio-edit:hover {
+  background-color: var(--cp-green) !important;
+  transform: scale(1.06) !important;
 }
 
 /* Anular padding, borde y fondo en filas de detalle colapsadas para eliminar espacio en blanco y linea inferior */
-body.view-asignaciones .content-modulo-detalles :where(.tabla-construcciones, .tabla-unidad-construccion) tbody tr.fila-detalle-unidad > td {
+body.view-asignaciones .content-modulo-detalles :where(.tabla-construcciones, .tabla-unidad-construccion) tbody tr.fila-detalle-unidad>td {
   padding: 0 !important;
   border: 0 !important;
   background: transparent !important;
@@ -1384,7 +1445,7 @@ body.view-asignaciones .content-modulo-detalles :where(.tabla-construcciones, .t
   height: auto !important;
 }
 
-.text-detalle-unidad{
+.text-detalle-unidad {
   color: var(--asg-deep) !important;
 }
 
@@ -1407,6 +1468,12 @@ body.view-asignaciones .content-modulo-detalles .btn-eye-predio-edit {
   padding: 0 !important;
   box-shadow: none !important;
   transition: transform 0.2s ease, background-color 0.2s ease !important;
+}
+
+body.view-asignaciones .content-modulo-detalles .btn-eye-predio-edit {
+  background-color: var(--asg-deep) !important;
+  height: 40px !important;
+  width: 38px !important;
 }
 
 body.view-asignaciones .content-modulo-detalles .btn-eye-predio-edit i {

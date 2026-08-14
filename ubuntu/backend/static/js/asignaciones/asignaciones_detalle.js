@@ -1793,7 +1793,7 @@ document.getElementById("btnConfirmAssignDigitalizador")?.addEventListener("clic
     if (!response.ok) {
       const rawText = await response.text();
       let data = {};
-      try { data = JSON.parse(rawText); } catch (e) {}
+      try { data = JSON.parse(rawText); } catch (e) { }
       throw new Error(data?.detail || rawText || "Error al asignar digitalizador.");
     }
 
@@ -1878,7 +1878,7 @@ document.getElementById("btnConfirmSubmitToLider")?.addEventListener("click", as
     if (!response.ok) {
       const rawText = await response.text();
       let data = {};
-      try { data = JSON.parse(rawText); } catch (e) {}
+      try { data = JSON.parse(rawText); } catch (e) { }
       throw new Error(data?.detail || rawText || "Error al enviar al Líder Técnico.");
     }
 
@@ -5198,15 +5198,15 @@ function renderInteresadosModalEdit(interesadosRaw) {
                     </div>
                 </td>
 
-                <td class="columna-con-linea-edit">
+                <td class="columna-con-linea-edit text-center">
                     <span class="texto-tabla-interesado-edit fw-semibold">${item.sexo || "---"}</span>
                 </td>
 
-                <td>
+                <td class="text-center">
                     <span class="badge-cuota-participacion-edit">${item.cuotaTexto || "---"}</span>
                 </td>
 
-                <td>
+                <td class="text-center">
                     <span class="texto-tabla-interesado-edit">${item.tipoPersona || "---"}</span>
                 </td>
 
@@ -5228,8 +5228,8 @@ function renderInteresadosModalEdit(interesadosRaw) {
                 <td colspan="5" class="p-0 border-0">
                     <div class="collapse" id="detalleInteresadoEdit_${index}">
                         <div class="detalle-interesado-contenido-edit">
-                            <div class="tarjet-infop-edit d-inline-block w-50 px-3 py-2 rounded-3">
-                                <div class="text-center mb-0 text-infort-edit">Información personal</div>
+                            <div class="tarjet-infop-edit w-100 d-inline-block px-3 py-2 ">
+                                <div class="text-center mb-0 text-infort-edit" >Información personal</div>
                             </div>
 
                             <div class="row mt-4 w-100 mx-0">
@@ -5238,28 +5238,28 @@ function renderInteresadosModalEdit(interesadosRaw) {
                                         <div class="col-12">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Tipo de documento</div>
-                                                <div class="text-end mb-0">${item.tipo_documento_nombre || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.tipo_documento_nombre || "---"}</div>
                                             </div>
                                         </div>
 
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Documento de identidad</div>
-                                                <div class="text-end mb-0">${item.documento_identidad || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.documento_identidad || "---"}</div>
                                             </div>
                                         </div>
 
                                         <div class="col-12">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Grupo étnico</div>
-                                                <div class="text-end mb-0">${item.grupo_etnico_nombre || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.grupo_etnico_nombre || "---"}</div>
                                             </div>
                                         </div>
 
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Razón social</div>
-                                                <div class="text-end mb-0">${item.razon_social || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.razon_social || "---"}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -5270,35 +5270,35 @@ function renderInteresadosModalEdit(interesadosRaw) {
                                         <div class="col-12">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Naturaleza jurídica</div>
-                                                <div class="text-end mb-0">${item.naturaleza_juridica_nombre || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.naturaleza_juridica_nombre || "---"}</div>
                                             </div>
                                         </div>
 
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Autorreconocimiento étnico</div>
-                                                <div class="text-end mb-0">${etnicoTexto}</div>
+                                                <div class="text-end mb-0 style="font-size:0.79rem; color:#dce9e1"">${etnicoTexto}</div>
                                             </div>
                                         </div>
 
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Código naturaleza jurídica</div>
-                                                <div class="text-end mb-0">${item.codigo_naturaleza_juridica || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.codigo_naturaleza_juridica || "---"}</div>
                                             </div>
                                         </div>
 
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Autorreconocimiento campesino</div>
-                                                <div class="text-end mb-0">${campesinoTexto}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${campesinoTexto}</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="tarjet-infop-edit d-inline-block w-50 px-3 py-2 rounded-3 mt-4">
+                            <div class="tarjet-infop-edit d-inline-block w-100 px-3 py-2  mt-4">
                                 <div class="text-center mb-0 text-infort-edit">Información de contacto</div>
                             </div>
 
@@ -5308,28 +5308,28 @@ function renderInteresadosModalEdit(interesadosRaw) {
                                         <div class="col-12">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Departamento</div>
-                                                <div class="text-end mb-0">${item.departamento_nombre || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.departamento_nombre || "---"}</div>
                                             </div>
                                         </div>
 
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Teléfono</div>
-                                                <div class="text-end mb-0">${item.telefono || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.telefono || "---"}</div>
                                             </div>
                                         </div>
 
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Municipio</div>
-                                                <div class="text-end mb-0">${item.municipio_nombre || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.municipio_nombre || "---"}</div>
                                             </div>
                                         </div>
 
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Correo electrónico</div>
-                                                <div class="text-end mb-0">${item.correo_electronico || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.correo_electronico || "---"}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -5340,21 +5340,21 @@ function renderInteresadosModalEdit(interesadosRaw) {
                                         <div class="col-12">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Domicilio de notificación</div>
-                                                <div class="text-end mb-0">${item.domicilio_notificacion || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.domicilio_notificacion || "---"}</div>
                                             </div>
                                         </div>
 
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Autoriza notificacin por correo?</div>
-                                                <div class="text-end mb-0">${autorizaNotif}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${autorizaNotif}</div>
                                             </div>
                                         </div>
 
                                         <div class="col-12 mt-4">
                                             <div class="d-flex justify-content-between align-items-center w-100">
                                                 <div class="text-start text-lojh-edit mb-0">Dirección de residencia</div>
-                                                <div class="text-end mb-0">${item.direccion_residencia || "---"}</div>
+                                                <div class="text-end mb-0" style="font-size:0.79rem; color:#dce9e1">${item.direccion_residencia || "---"}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -5364,7 +5364,7 @@ function renderInteresadosModalEdit(interesadosRaw) {
                             <div class="d-flex justify-content-end mt-4">
                                 <button
                                     type="button"
-                                    class="btn-gunmi-edit d-inline-flex align-items-center gap-2"
+                                    class="btn-gunmi-edit d-inline-flex align-items-center gap-2 p-2 px-3"
                                     onclick="verInformacionCompletaInteresadoEdit(${index})"
                                 >
                                     <i class="fa-solid fa-arrow-right"></i>

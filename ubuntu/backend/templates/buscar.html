@@ -1,4 +1,4 @@
-<div class="container-fluid py-4 px-2 px-md-3 px-xl-4 container-sistem">
+<div class="container-fluid  container-sistem">
   <div class="row justify-content-center mb-4">
     <div class="col-12 text-center">
       <div class="title">
@@ -85,7 +85,7 @@
     <section class="results">
       <div class="row justify-content-center">
         <div class="col-12 col-xl-12">
-          <div class="card border-0 shadow-sm rounded-4 resultados-card">
+          <div class="card border-0 rounded-4 resultados-card border">
             <div class="card-body p-4 p-md-4 p-lg-4">
               <div id="resultadosHeader"
                 class="d-none align-items-center justify-content-between flex-column flex-md-row gap-3 mb-3">
@@ -117,6 +117,7 @@
                       <th style="text-align: center;">Matrícula Inmobiliaria</th>
                       <th style="text-align: center;">Tipo</th>
                       <th style="text-align: center;">Condición</th>
+                      <th style="text-align: center;">Base</th>
                     </tr>
                   </thead>
                   <tbody id="tbody"></tbody>
@@ -367,7 +368,7 @@
     tablaResultados = $("#tbl").DataTable({
       responsive: false,
       autoWidth: false,
-      scrollX: true,
+      scrollX: false,
       scrollCollapse: false,
       pageLength: 8,
       lengthMenu: [8, 15, 25, 50],
@@ -428,6 +429,23 @@
       const props = f.properties || {};
       const predioId = props.t_id ?? props.predio_id;
 
+      function cleanText(val) {
+        if (!val) return "";
+        try {
+          return decodeURIComponent(escape(val));
+        } catch (_e) {
+          return String(val).replace(/Ã©/g, "é").replace(/Ã³/g, "ó").replace(/Ã³/g, "ó").replace(/Ã¡/g, "á").replace(/Ã­/g, "í").replace(/Ãº/g, "ú").replace(/Ã±/g, "ñ");
+        }
+      }
+
+      const tipoText = cleanText(props.tipo_nombre ?? props.tipo ?? "");
+      const condicionText = cleanText(props.condicion_predio_nombre ?? props.condicion_predio ?? "");
+
+      const isAlfanumerica = props.source_schema === "f_r1_r2";
+      const origenBadge = isAlfanumerica
+        ? `<span class="badge badge-origen badge-origen-alfa px-3 p-2">Alfanumérica</span>`
+        : `<span class="badge badge-origen badge-origen-geo">Geográfica</span>`;
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td class="text-center">
@@ -437,8 +455,9 @@
         </td>
         <td class="text-center">${props.numero_predial_nacional ?? ""}</td>
         <td class="text-center">${props.matricula_inmobiliaria ?? ""}</td>
-        <td class="text-center">${props.tipo_nombre ?? props.tipo ?? ""}</td>
-        <td class="text-center">${props.condicion_predio_nombre ?? props.condicion_predio ?? ""}</td>
+        <td class="text-center">${tipoText}</td>
+        <td class="text-center">${condicionText}</td>
+        <td class="text-center">${origenBadge}</td>
       `;
 
       const link = tr.querySelector(".lnkVer");

@@ -1625,7 +1625,7 @@
 }
 
 .uc-accordion-header {
-    background-color: #d9dde2;
+    background: linear-gradient(202deg, rgba(10, 44, 27, 1) 75%, rgba(27, 64, 1, 1) 95%);
     padding: 1.1rem 1.4rem;
     box-shadow: none;
 }
@@ -1705,8 +1705,8 @@
 }
 
 .uc-section-title {
-    background-color: #F0F6FB;
-    color: #0b3b68;
+    background-color: #dce9e1;
+    color: #0A2C1B;
     font-size: 0.95rem;
     font-weight: 700;
     padding: 0.8rem 1rem;
@@ -1741,7 +1741,7 @@
 .uc-pair .uc-info-value {
     font-size: 0.82rem;
     font-weight: 700;
-    color: #0b3b68;
+    color: #0A2C1B;
     text-align: right;
     line-height: 1.35;
     margin-left: auto;
@@ -2345,9 +2345,10 @@ body.view-buscar_predio :where(h1, h2, h3, h4, h5, h6, p, small, label, input, s
 body.view-buscar .container-sistem {
     width: 100%;
     min-height: calc(100vh - 166px);
-    padding: 24px 26px 30px !important;
-    background: var(--cp-gray) !important;
-    border-radius: 22px;
+    background-color: transparent;
+    /* padding: 24px 26px 30px !important; */
+    /* background: var(--cp-gray) !important; */
+    /* border-radius: 22px; */
 }
 
 body.view-buscar .container-sistem>.row:first-child {
@@ -2375,7 +2376,7 @@ body.view-buscar_predio .parrafo-title {
 body.view-buscar .consultaWrap {
     width: 100%;
     padding: 24px 26px !important;
-    background: var(--cp-green) !important;
+    background: linear-gradient(202deg, rgba(10, 44, 27, 1) 75%, rgba(27, 64, 1, 1) 95%);
     border: 0;
     border-radius: 20px !important;
     box-shadow: var(--cp-shadow);
@@ -2461,7 +2462,12 @@ body.view-buscar .results {
     background: transparent !important;
 }
 
-body.view-buscar .resultados-card,
+body.view-buscar .resultados-card {
+    background-color: #fff;
+    box-shadow: none !important;
+    border: 1px solid #092c1c27 !important;
+}
+
 body.view-buscar .tabView>.row .card {
     width: 100%;
     background: #fff !important;
@@ -2481,7 +2487,7 @@ body.view-buscar .hint-default,
 body.view-buscar .sub,
 body.view-buscar .hint-no-results .hint-no-results-badge {
     color: #fff !important;
-    background: var(--cp-green) !important;
+    background: linear-gradient(202deg, rgba(10, 44, 27, 1) 75%, rgba(27, 64, 1, 1) 95%);
 }
 
 body.view-buscar .linea-separacion {
@@ -2493,23 +2499,72 @@ body.view-buscar .hint {
 }
 
 body.view-buscar .hint-no-results {
-    background: var(--cp-green-pale) !important;
-    border: 1px solid var(--cp-line);
+    background: white !important;
+    border: none !important;
 }
 
+body.view-buscar .dataTables_scrollBody thead,
+body.view-buscar .dataTables_scrollBody thead tr,
+body.view-buscar .dataTables_scrollBody thead th {
+    padding: 0 !important;
+    margin: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    visibility: hidden !important;
+}
+
+body.view-buscar .dataTables_scrollHead thead th,
 body.view-buscar .tabla-predios thead th,
 body.view-buscar .tabView table thead th {
     padding: 13px 15px !important;
     color: var(--cp-green) !important;
-    background: var(--cp-green-soft) !important;
+    background: #A0C882 !important;
     border-color: var(--cp-line) !important;
     font-weight: 700;
+    font-size: 0.9rem !important;
+}
+
+body.view-buscar .tabla-predios {
+    border-collapse: separate !important;
+    border-spacing: 0 6px !important;
 }
 
 body.view-buscar .tabla-predios tbody td,
 body.view-buscar .tabView table tbody td {
     color: #173b29 !important;
     border-color: #e1e8e4 !important;
+    padding: 14px 16px !important;
+    background: #fff !important;
+}
+
+body.view-buscar .tabla-predios tbody tr td:first-child {
+    border-top-left-radius: 10px !important;
+    border-bottom-left-radius: 10px !important;
+}
+
+body.view-buscar .tabla-predios tbody tr td:last-child {
+    border-top-right-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+}
+
+body.view-buscar .badge-origen {
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+}
+
+body.view-buscar .badge-origen-geo {
+    background-color: #0a2c1b1c !important;
+    color: #0A2C1B !important;
+    /* border: 1px solid #0a2c1b22 !important; */
+}
+
+body.view-buscar .badge-origen-alfa {
+    background-color: #f07b2233 !important;
+    color: #f07b22 !important;
+    /* border: 1px solid #e5b73c !important; */
 }
 
 body.view-buscar .tabla-predios tbody tr:hover td,
@@ -2583,7 +2638,6 @@ body.view-buscar_predio .card-header,
 body.view-buscar_predio .accordion-button,
 body.view-buscar_predio .accordion-button:not(.collapsed),
 body.view-buscar_predio .offcanvas-header,
-body.view-buscar_predio .offcanvas-header-one,
 body.view-buscar_predio .uc-accordion-header {
     color: #fff !important;
     /* background: var(--cp-green) !important; */
@@ -2592,6 +2646,11 @@ body.view-buscar_predio .uc-accordion-header {
     border-top-left-radius: 18px !important;
     border-top-right-radius: 18px !important;
     border-bottom: none !important;
+}
+
+body.view-buscar_predio .offcanvas-header-one {
+    background-color: #ECEEED !important;
+    color: #0A2C1B !important;
 }
 
 body.view-buscar_predio .offcanvas-header-one {
@@ -3063,7 +3122,7 @@ body.view-buscar_predio .blue-rounded-box {
     border-color: var(--cp-mint) !important;
 }
 
-body.view-buscar_predio .uc-section-title{
+body.view-buscar_predio .uc-section-title {
     background: var(--cp-green-soft) !important;
 }
 

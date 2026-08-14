@@ -1,7 +1,8 @@
-﻿<div class="container-fluid page-wrapper page-wrapper-visor">
-  {% set municipality_label = current_municipality_name|default(current_municipality, true)|default('Municipio actual', true) %}
+﻿<div class="container-fluid page-wrapper page-wrapper-visor  ">
+  {% set municipality_label = current_municipality_name|default(current_municipality, true)|default('Municipio actual',
+  true) %}
 
-  <div class="visor-map-stage panel-card rounded-3 visor-card">
+  <div class="visor-map-stage panel-card rounded-3 visor-card shadow ">
     <div class="map-panel-body vm-map-shell">
       <div class="visor-map-search">
         <div class="input-group">
@@ -96,944 +97,995 @@
               </div>
             </div>
           </div>
-          <button id="vmSidebarDetailsBtn" class="btn visor-detail-btn" type="button" disabled>Ver ficha predial</button>
+          <button id="vmSidebarDetailsBtn" class="btn visor-detail-btn" type="button" disabled>Ver ficha
+            predial</button>
         </div>
       </div>
-          <div id="vmLayerPanel" class="vm-layer-panel hidden">
-            <div class="vm-layer-panel-head">
-              <strong>Capas</strong>
-              <button id="vmCloseLayerPanel" class="vm-panel-close" type="button" title="Ocultar panel">
-                x
-              </button>
-            </div>
+      <div id="vmLayerPanel" class="vm-layer-panel hidden">
+        <div class="vm-layer-panel-head">
+          <strong>Capas</strong>
+          <button id="vmCloseLayerPanel" class="vm-panel-close" type="button" title="Ocultar panel">
+            x
+          </button>
+        </div>
 
-            <div class="vm-layer-panel-body">
-              <div class="vm-layer-block">
-                <div class="vm-layer-block-title">Capas visibles</div>
-                <div id="vmLayerList" class="vm-layer-list"></div>
-              </div>
-            </div>
-          </div>
-
-          <div id="vmBasemapPanel" class="vm-layer-panel vm-layer-panel-basemap hidden">
-            <div class="vm-layer-panel-head">
-              <strong>Mapabase</strong>
-              <button id="vmCloseBasemapPanel" class="vm-panel-close" type="button" title="Ocultar panel">
-                x
-              </button>
-            </div>
-
-            <div class="vm-layer-panel-body">
-              <div class="vm-layer-block">
-                <div class="vm-layer-block-title">Seleccionar</div>
-                <select id="vmBasemapSelect" class="vm-select">
-                  <option value="osm">OpenStreetMap</option>
-                  <option value="sat">Satelite</option>
-                  <option value="none">Sin mapabase</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div class="vm-legend-card is-collapsed" aria-live="polite">
-            <div class="vm-layer-panel-head">
-              <strong>Convenciones</strong>
-              <button id="vmCloseLegendCard" class="vm-panel-close" type="button" title="Ocultar convenciones">
-                x
-              </button>
-            </div>
-            <div class="vm-layer-panel-body">
-              <div class="vm-legend-list">
-                <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-terreno"></span><span>Terreno</span></div>
-                <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-historico"></span><span>Terreno historico</span></div>
-                <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-construccion"></span><span>Construcciones</span></div>
-                <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-unidad"></span><span>Unidades de construccion</span></div>
-                <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-direccion"></span><span>Direcciones</span></div>
-              </div>
-            </div>
-          </div>
-
-          <div id="vmInfoPopup" class="vm-info-popup hidden" aria-live="polite">
-            <button id="vmInfoPopupClose" class="vm-info-popup-close" type="button" title="Cerrar">
-              x
-            </button>
-            <div class="vm-info-popup-title">Predio seleccionado</div>
-            <div class="vm-info-popup-grid">
-              <div class="vm-info-popup-row">
-                <span class="vm-info-popup-label">Numero predial</span>
-                <span id="vmInfoNumeroPredial" class="vm-info-popup-value">Sin dato</span>
-              </div>
-              <div class="vm-info-popup-row">
-                <span class="vm-info-popup-label">Area</span>
-                <span id="vmInfoArea" class="vm-info-popup-value">Sin dato</span>
-              </div>
-            </div>
-          </div>
-
-          <div id="map"></div>
-          <div id="vmSnapMarker" class="vm-snap-marker hidden" aria-hidden="true"></div>
-          <div class="vm-map-statusbar" aria-live="polite">
-            <span class="vm-map-status-item">X <strong id="vmCoordX">--</strong></span>
-            <span class="vm-map-status-item">Y <strong id="vmCoordY">--</strong></span>
-            <span class="vm-map-status-item">EPSG <strong>9377</strong></span>
-            <span class="vm-map-status-item">Escala <strong id="vmScaleText">--</strong></span>
-          </div>
-          {# <div class="vm-north-indicator" aria-label="Norte">
-            <div class="vm-north-arrow"></div>
-            <div class="vm-north-label">N</div>
-          </div> #}
-          <div id="vmMeasurePanel" class="vm-measure-panel hidden" aria-live="polite">
-            <div class="vm-measure-title">Medición</div>
-            <div id="vmMeasureStatus" class="vm-measure-status">Activa una herramienta para medir.</div>
-            <div id="vmMeasureValue" class="vm-measure-value">0 m</div>
-            <button id="vmMeasureClearBtn" class="vm-measure-clear" type="button">Limpiar</button>
-          </div>
-          <div class="vm-zoom-stack" aria-label="Controles de zoom">
-            <button id="vmZoomInBtn" class="vm-zoom-btn" type="button" title="Acercar">
-              +
-            </button>
-            <button id="vmZoomOutBtn" class="vm-zoom-btn" type="button" title="Alejar">
-              -
-            </button>
-            <button id="vmZoomProjectStackBtn" class="vm-zoom-btn" type="button" title="Extension completa">
-              <i class="bi bi-arrows-fullscreen"></i>
-            </button>
-            <span class="vm-zoom-separator" aria-hidden="true"></span>
-            <button id="vmSelectModeBtn" class="vm-zoom-btn is-active" type="button" title="Seleccionar">
-              <i class="bi bi-cursor"></i>
-            </button>
-            <button id="vmMeasureBtn" class="vm-zoom-btn" type="button" title="Medir distancia">
-              <i class="bi bi-rulers"></i>
-            </button>
-            <button id="vmMeasureAreaBtn" class="vm-zoom-btn" type="button" title="Medir Area">
-              <i class="bi bi-bounding-box"></i>
-            </button>
-            <span class="vm-zoom-separator" aria-hidden="true"></span>
-            <button id="vmStackLayerPanelBtn" class="vm-zoom-btn" type="button" title="Capas">
-              <i class="bi bi-layers"></i>
-            </button>
-            <button id="vmStackLegendBtn" class="vm-zoom-btn" type="button" title="Convenciones">
-              <i class="bi bi-card-list"></i>
-            </button>
-            <button id="vmStackBasemapPanelBtn" class="vm-zoom-btn" type="button" title="Mapabase">
-              <i class="bi bi-map"></i>
-            </button>
-            <button id="vmStackPrintBtn" class="vm-zoom-btn" type="button" title="Imprimir mapa">
-              <i class="bi bi-printer"></i>
-            </button>
+        <div class="vm-layer-panel-body">
+          <div class="vm-layer-block">
+            <div class="vm-layer-block-title">Capas visibles</div>
+            <div id="vmLayerList" class="vm-layer-list"></div>
           </div>
         </div>
       </div>
 
-      <div class="visor-kpi-strip visor-kpi-strip-bottom">
-        <div class="visor-kpi-card visor-kpi-card-primary carta-total-predio">
-          <div class="visor-kpi-icon visor-kpi-icon-solid">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icono-map" viewBox="0 0 640 512">
-              <path fill="rgb(255, 255, 255)"
-                d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
-            </svg>
-          </div>
-          <div class="visor-kpi-body">
-            <div class="visor-kpi-meta">Cobertura catastral</div>
-            <div class="visor-kpi-value" id="totalPrediosH1">---</div>
-            <div class="visor-kpi-label">Total predios</div>
-          </div>
+      <div id="vmBasemapPanel" class="vm-layer-panel vm-layer-panel-basemap hidden">
+        <div class="vm-layer-panel-head">
+          <strong>Mapabase</strong>
+          <button id="vmCloseBasemapPanel" class="vm-panel-close" type="button" title="Ocultar panel">
+            x
+          </button>
         </div>
 
-        <div class="visor-kpi-card">
-          <div class="visor-kpi-icon">
-            <i class="bi bi-bounding-box-circles"></i>
-          </div>
-          <div class="visor-kpi-body">
-            <div class="visor-kpi-meta">Geometría base</div>
-            <div class="visor-kpi-value" id="visorTerrenosCount">---</div>
-            <div class="visor-kpi-label">Terrenos</div>
+        <div class="vm-layer-panel-body">
+          <div class="vm-layer-block">
+            <div class="vm-layer-block-title">Seleccionar</div>
+            <select id="vmBasemapSelect" class="vm-select">
+              <option value="osm">OpenStreetMap</option>
+              <option value="sat">Satelite</option>
+              <option value="none">Sin mapabase</option>
+            </select>
           </div>
         </div>
+      </div>
 
-        <div class="visor-kpi-card">
-          <div class="visor-kpi-icon">
-            <i class="bi bi-building"></i>
-          </div>
-          <div class="visor-kpi-body">
-            <div class="visor-kpi-meta">Inventario físico</div>
-            <div class="visor-kpi-value" id="visorConstruccionesCount">---</div>
-            <div class="visor-kpi-label">Construcciones</div>
+      <div id="vmLegendCard" class="vm-layer-panel hidden" aria-live="polite">
+        <div class="vm-layer-panel-head">
+          <strong>Convenciones</strong>
+          <button id="vmCloseLegendCard" class="vm-panel-close" type="button" title="Ocultar convenciones">
+            x
+          </button>
+        </div>
+        <div class="vm-layer-panel-body">
+          <div class="vm-legend-list">
+            <div class="vm-legend-item"><span
+                class="vm-legend-swatch vm-legend-swatch-terreno"></span><span>Terreno</span></div>
+            <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-historico"></span><span>Terreno
+                historico</span></div>
+            <div class="vm-legend-item"><span
+                class="vm-legend-swatch vm-legend-swatch-construccion"></span><span>Construcciones</span></div>
+            <div class="vm-legend-item"><span class="vm-legend-swatch vm-legend-swatch-unidad"></span><span>Unidades de
+                construccion</span></div>
+            <div class="vm-legend-item"><span
+                class="vm-legend-swatch vm-legend-swatch-direccion"></span><span>Direcciones</span></div>
           </div>
         </div>
+      </div>
 
-        <div class="visor-kpi-card">
-          <div class="visor-kpi-icon">
-            <i class="bi bi-grid-3x3-gap"></i>
+      <div id="vmInfoPopup" class="vm-info-popup hidden" aria-live="polite">
+        <button id="vmInfoPopupClose" class="vm-info-popup-close" type="button" title="Cerrar">
+          x
+        </button>
+        <div class="vm-info-popup-title">Predio seleccionado</div>
+        <div class="vm-info-popup-grid">
+          <div class="vm-info-popup-row">
+            <span class="vm-info-popup-label">Numero predial</span>
+            <span id="vmInfoNumeroPredial" class="vm-info-popup-value">Sin dato</span>
           </div>
-          <div class="visor-kpi-body">
-            <div class="visor-kpi-meta">Detalle constructivo</div>
-            <div class="visor-kpi-value" id="visorUnidadesCount">---</div>
-            <div class="visor-kpi-label">Unidades</div>
+          <div class="vm-info-popup-row">
+            <span class="vm-info-popup-label">Area</span>
+            <span id="vmInfoArea" class="vm-info-popup-value">Sin dato</span>
           </div>
         </div>
+      </div>
+
+      <div id="map"></div>
+      <div id="vmSnapMarker" class="vm-snap-marker hidden" aria-hidden="true"></div>
+      <div class="vm-map-statusbar ms-auto" aria-live="polite">
+        <span class="vm-map-status-item">X <strong id="vmCoordX">--</strong></span>
+        <span class="vm-map-status-item">Y <strong id="vmCoordY">--</strong></span>
+        <span class="vm-map-status-item">EPSG <strong>9377</strong></span>
+        <span class="vm-map-status-item">Escala <strong id="vmScaleText">--</strong></span>
+      </div>
+      {# <div class="vm-north-indicator" aria-label="Norte">
+        <div class="vm-north-arrow"></div>
+        <div class="vm-north-label">N</div>
+      </div> #}
+      <div id="vmMeasurePanel" class="vm-layer-panel hidden" aria-live="polite">
+        <div class="vm-layer-panel-head">
+          <strong>Medición</strong>
+          <button id="vmCloseMeasurePanel" class="vm-panel-close" type="button" title="Ocultar panel">
+            x
+          </button>
+        </div>
+        <div class="vm-layer-panel-body">
+          <div id="vmMeasureStatus" class="vm-measure-status">Activa una herramienta para medir.</div>
+          <div id="vmMeasureValue" class="vm-measure-value">0 m</div>
+          <button id="vmMeasureClearBtn" class="vm-measure-clear mt-2 w-100" type="button">Limpiar</button>
+        </div>
+      </div>
+      <div class="vm-zoom-stack" aria-label="Controles de zoom">
+        <button id="vmZoomInBtn" class="vm-zoom-btn" type="button" title="Acercar">
+          +
+        </button>
+        <button id="vmZoomOutBtn" class="vm-zoom-btn" type="button" title="Alejar">
+          -
+        </button>
+        <button id="vmZoomProjectStackBtn" class="vm-zoom-btn" type="button" title="Extension completa">
+          <i class="bi bi-arrows-fullscreen"></i>
+        </button>
+        <span class="vm-zoom-separator" aria-hidden="true"></span>
+        <button id="vmSelectModeBtn" class="vm-zoom-btn is-active" type="button" title="Seleccionar">
+          <i class="bi bi-cursor"></i>
+        </button>
+        <button id="vmMeasureBtn" class="vm-zoom-btn" type="button" title="Medir distancia">
+          <i class="bi bi-rulers"></i>
+        </button>
+        <button id="vmMeasureAreaBtn" class="vm-zoom-btn" type="button" title="Medir Area">
+          <i class="bi bi-bounding-box"></i>
+        </button>
+        <span class="vm-zoom-separator" aria-hidden="true"></span>
+        <button id="vmStackLayerPanelBtn" class="vm-zoom-btn" type="button" title="Capas">
+          <i class="bi bi-layers"></i>
+        </button>
+        <button id="vmStackLegendBtn" class="vm-zoom-btn" type="button" title="Convenciones">
+          <i class="bi bi-card-list"></i>
+        </button>
+        <button id="vmStackBasemapPanelBtn" class="vm-zoom-btn" type="button" title="Mapabase">
+          <i class="bi bi-map"></i>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="visor-kpi-strip visor-kpi-strip-bottom">
+    <div class="visor-kpi-card visor-kpi-card-primary carta-total-predio">
+      <div class="visor-kpi-icon visor-kpi-icon-solid">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icono-map" viewBox="0 0 640 512">
+          <path fill="rgb(255, 255, 255)"
+            d="M576 48c0-11.1-5.7-21.4-15.2-27.2s-21.2-6.4-31.1-1.4L413.5 77.5 234.1 17.6c-8.1-2.7-16.8-2.1-24.4 1.7l-128 64C70.8 88.8 64 99.9 64 112l0 352c0 11.1 5.7 21.4 15.2 27.2s21.2 6.4 31.1 1.4l116.1-58.1 173.3 57.8c-4.3-6.4-8.5-13.1-12.6-19.9-11-18.3-21.9-39.3-30-61.8l-101.2-33.7 0-284.5 128 42.7 0 99.3c31-35.8 77-58.4 128-58.4 22.6 0 44.2 4.4 64 12.5L576 48zM512 224c-66.3 0-120 52.8-120 117.9 0 68.9 64.1 150.4 98.6 189.3 11.6 13 31.3 13 42.9 0 34.5-38.9 98.6-120.4 98.6-189.3 0-65.1-53.7-117.9-120-117.9zM472 344a40 40 0 1 1 80 0 40 40 0 1 1 -80 0z" />
+        </svg>
+      </div>
+      <div class="visor-kpi-body">
+        <div class="visor-kpi-meta">Cobertura catastral</div>
+        <div class="visor-kpi-value" id="totalPrediosH1">---</div>
+        <div class="visor-kpi-label">Total predios</div>
       </div>
     </div>
 
-    <style>
-      .visor-map-stage {
-        min-height: 500px;
-        height: calc(100vh - 196px);
-        display: flex;
-        flex-direction: column;
-      }
-
-      .vm-map-shell,
-      .map-panel-body {
-        min-height: 0;
-        height: 100%;
-        flex: 1 1 auto;
-      }
-
-      #map {
-        width: 100%;
-        height: 100%;
-        min-height: 100%;
-        display: block;
-      }
-
-      .vm-map-shell {
-        position: relative;
-      }
-
-      .vm-toolbar-btn {
-        border: 0;
-        background: #032f57;
-        color: #ffffff;
-        border-radius: 999px;
-        padding: 8px 14px;
-        font-size: 12px;
-        font-weight: 700;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
-      }
-
-      .vm-toolbar-btn-light {
-        background: #ffffff;
-        color: #163c62;
-        border: 1px solid rgba(15, 23, 42, 0.16);
-      }
-
-
-      .visor-map-topbar {
-        display: none;
-      }
-
-      .vm-zoom-separator {
-        width: 24px;
-        height: 1px;
-        margin: 1px auto;
-        background: rgba(15, 23, 42, 0.18);
-        display: block;
-      }
-
-      .vm-map-statusbar {
-        position: absolute;
-        left: 64px;
-        right: 16px;
-        bottom: 14px;
-        z-index: 24;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        flex-wrap: wrap;
-        padding: 8px 12px;
-        border-radius: 12px;
-        background: rgba(255, 255, 255, 0.94);
-        border: 1px solid rgba(15, 23, 42, 0.1);
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-        backdrop-filter: blur(8px);
-      }
-
-      .vm-map-status-item {
-        font-size: 11px;
-        font-weight: 700;
-        color: #5b6b7c;
-      }
-
-      .vm-map-status-item strong {
-        color: #163c62;
-      }
-
-      .vm-legend-panel-block {
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px solid rgba(15, 23, 42, 0.08);
-      }
-
-      .vm-legend-list-panel {
-        gap: 8px;
-      }
-
-      .vm-info-popup {
-        min-width: 220px;
-        max-width: 250px;
-        padding: 10px 12px;
-      }
-
-      .vm-info-popup-grid {
-        gap: 6px;
-      }
-
-      .vm-info-popup-link {
-        width: 100%;
-        margin-top: 10px;
-        border: 1px solid rgba(15, 23, 42, 0.12);
-        background: #ffffff;
-        color: #163c62;
-        border-radius: 999px;
-        padding: 7px 10px;
-        font-size: 11px;
-        font-weight: 700;
-      }
-
-      .vm-info-popup-link[disabled] {
-        opacity: 0.65;
-      }
-
-      .vm-layer-panel {
-        position: absolute;
-        top: 16px;
-        left: 78px;
-        right: auto;
-        z-index: 31;
-        width: 290px;
-        max-width: min(320px, calc(100% - 110px));
-        background: rgba(255, 255, 255, 0.96);
-        border: 1px solid rgba(15, 23, 42, 0.14);
-        border-radius: 16px;
-        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
-        overflow: hidden;
-        max-height: min(82vh, 760px);
-        transition:
-          transform 0.2s ease,
-          opacity 0.2s ease;
-      }
-
-      .vm-layer-panel.hidden {
-        transform: translateY(-8px);
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      .vm-layer-panel-basemap {
-        top: 66px;
-        width: 210px;
-      }
-
-      .vm-layer-panel-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 12px;
-        border-bottom: 1px solid rgba(15, 23, 42, 0.1);
-      }
-
-      .vm-layer-panel-head strong {
-        font-size: 13px;
-        color: #163c62;
-      }
-
-      .vm-panel-close {
-        border: 0;
-        background: transparent;
-        color: #6b7280;
-        font-size: 20px;
-        line-height: 1;
-        padding: 0 4px;
-      }
-
-      .vm-layer-panel-body {
-        padding: 10px 10px 18px;
-        max-height: calc(min(82vh, 760px) - 58px);
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        scrollbar-gutter: stable;
-      }
-
-      .vm-layer-block+.vm-layer-block {
-        margin-top: 8px;
-      }
-
-      .vm-layer-block-title {
-        margin-bottom: 6px;
-        font-size: 11px;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
-        font-weight: 800;
-        color: #6b7280;
-      }
-
-      .vm-select {
-        width: 100%;
-        border: 1px solid rgba(15, 23, 42, 0.14);
-        border-radius: 10px;
-        background: #f4f6f8;
-        color: #1f2937;
-        padding: 8px 10px;
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .vm-layer-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .vm-layer-group {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .vm-layer-group-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        width: 100%;
-        border: 1px solid rgba(15, 23, 42, 0.1);
-        border-radius: 12px;
-        background: #f8fafc;
-        padding: 8px 10px;
-        color: #163c62;
-        cursor: pointer;
-      }
-
-      .vm-layer-group-title {
-        font-size: 12px;
-        font-weight: 800;
-        line-height: 1.2;
-      }
-
-      .vm-layer-group-meta {
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 0.03em;
-        text-transform: uppercase;
-        color: #64748b;
-      }
-
-      .vm-layer-group-icon {
-        font-size: 12px;
-        font-weight: 900;
-        color: #2563eb;
-      }
-
-      .vm-layer-group-body {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding-left: 8px;
-      }
-
-      .vm-layer-group-body.hidden {
-        display: none;
-      }
-
-      .vm-layer-empty {
-        border: 1px dashed rgba(15, 23, 42, 0.2);
-        border-radius: 10px;
-        padding: 8px 10px;
-        font-size: 11px;
-        color: #6b7280;
-        background: #f8fafc;
-      }
-
-      .vm-layer-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        border: 1px solid rgba(15, 23, 42, 0.1);
-        border-radius: 12px;
-        background: #f4f6f8;
-        padding: 8px 10px;
-        cursor: pointer;
-      }
-
-      .vm-layer-item.is-on {
-        border-color: rgba(37, 99, 235, 0.5);
-        background: #eef5ff;
-      }
-
-      .vm-layer-label {
-        font-size: 12px;
-        font-weight: 700;
-        color: #1f2937;
-        line-height: 1.2;
-      }
-
-      .vm-layer-label-wrap {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-        min-width: 0;
-        flex: 1 1 auto;
-      }
-
-      .vm-layer-toggle {
-        min-width: 48px;
-        height: 24px;
-        border-radius: 999px;
-        border: 1px solid rgba(15, 23, 42, 0.2);
-        background: #ffffff;
-        color: #374151;
-        font-size: 10px;
-        font-weight: 800;
-        letter-spacing: 0.02em;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0 8px;
-      }
-
-      .vm-layer-toggle.is-on {
-        border-color: #2563eb;
-        background: #2563eb;
-        color: #ffffff;
-      }
-
-      .vm-layer-actions {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        margin-top: 10px;
-      }
-
-      .vm-btn {
-        border: 1px solid rgba(15, 23, 42, 0.14);
-        background: #ffffff;
-        color: #1f2937;
-        border-radius: 10px;
-        padding: 8px 10px;
-        font-size: 12px;
-        font-weight: 700;
-      }
-
-      .vm-btn-primary {
-        background: #2563eb;
-        border-color: transparent;
-        color: #fff;
-      }
-
-      .vm-zoom-stack {
-        position: absolute !important;
-        left: 16px !important;
-        top: 110px !important;
-        bottom: auto !important;
-        z-index: 34;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        padding: 10px 8px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.96);
-        border: 1px solid rgba(15, 23, 42, 0.12);
-        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
-      }
-
-      .vm-zoom-btn {
-        width: 38px;
-        height: 38px;
-        border-radius: 10px;
-        border: 1px solid rgba(15, 23, 42, 0.14);
-        background: rgba(255, 255, 255, 0.96);
-        color: #1f2937;
-        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.15);
-        font-size: 20px;
-        font-weight: 700;
-        line-height: 1;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .vm-legend-card {
-        position: absolute;
-        left: 16px;
-        bottom: 84px;
-        z-index: 20;
-        min-width: 210px;
-        max-width: 236px;
-        padding: 10px 12px;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.96);
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
-        backdrop-filter: blur(8px);
-      }
-
-      .vm-legend-title {
-        margin-bottom: 10px;
-        font-size: 13px;
-        font-weight: 800;
-        color: #163c62;
-      }
-
-      .vm-legend-list {
-        display: flex;
-        flex-direction: column;
-        gap: 7px;
-      }
-
-      .vm-legend-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 11px;
-        font-weight: 600;
-        color: #243b53;
-        line-height: 1.2;
-      }
-
-      .vm-legend-swatch {
-        display: inline-flex;
-        width: 16px;
-        height: 11px;
-        flex: 0 0 auto;
-        border-radius: 3px;
-      }
-
-      .vm-legend-swatch-terreno {
-        background: rgba(166, 206, 227, 0.75);
-        border: 1px solid rgba(16, 81, 2, 0.65);
-      }
-
-      .vm-legend-swatch-historico {
-        background: transparent;
-        border: 1.5px solid #cb7e1f;
-      }
-
-      .vm-legend-swatch-construccion {
-        border: 1px solid #111827;
-        background:
-          repeating-linear-gradient(
-            135deg,
-            #111827 0,
-            #111827 2px,
-            transparent 2px,
-            transparent 6px
-          );
-      }
-
-      .vm-legend-swatch-unidad {
-        border: 1px solid #111827;
-        background:
-          repeating-linear-gradient(
-            45deg,
-            #111827 0,
-            #111827 2px,
-            transparent 2px,
-            transparent 6px
-          );
-      }
-
-      .vm-legend-swatch-direccion {
-        width: 18px;
-        height: 3px;
-        border-radius: 999px;
-        background: #2563eb;
-      }
-
-      .vm-info-popup {
-        position: absolute;
-        min-width: 240px;
-        max-width: 300px;
-        padding: 12px 14px;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.98);
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
-        z-index: 40;
-      }
-
-      .vm-info-popup.hidden {
-        display: none;
-      }
-
-      .vm-info-popup-title {
-        margin-bottom: 8px;
-        padding-right: 18px;
-        font-size: 13px;
-        font-weight: 800;
-        color: #163c62;
-      }
-
-      .vm-info-popup-grid {
-        display: grid;
-        gap: 8px;
-      }
-
-      .vm-info-popup-row {
-        display: grid;
-        gap: 2px;
-      }
-
-      .vm-info-popup-label {
-        font-size: 11px;
-        font-weight: 700;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-      }
-
-      .vm-info-popup-value {
-        font-size: 13px;
-        font-weight: 700;
-        color: #0f172a;
-        word-break: break-word;
-      }
-
-      .vm-info-popup-close {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        border: 0;
-        background: transparent;
-        color: #64748b;
-        font-size: 14px;
-        font-weight: 700;
-        line-height: 1;
-        cursor: pointer;
-      }
-
-      .vm-map-shell .vm-scale-line,
-      #map .vm-scale-line {
-        position: absolute;
-        right: 16px;
-        left: auto;
-        bottom: 62px;
-        background: rgba(255, 255, 255, 0.96);
-        border: 1px solid rgba(15, 23, 42, 0.12);
-        border-radius: 10px;
-        padding: 6px 10px 4px;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-        color: #163c62;
-        font-size: 11px;
-        font-weight: 700;
-      }
-
-      .vm-map-shell .vm-scale-line-inner,
-      #map .vm-scale-line-inner {
-        border-color: #163c62;
-        border-top: 0;
-        color: #163c62;
-        font-size: 11px;
-        font-weight: 700;
-        margin: 0;
-      }
-
-      .vm-snap-marker {
-        position: absolute;
-        width: 18px;
-        height: 18px;
-        margin-left: -9px;
-        margin-top: -9px;
-        border-radius: 999px;
-        border: 2px solid #10b981;
-        background: rgba(16, 185, 129, 0.14);
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
-        z-index: 26;
-        pointer-events: none;
-      }
-
-      .vm-snap-marker::before,
-      .vm-snap-marker::after {
-        content: "";
-        position: absolute;
-        background: #059669;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-      }
-
-      .vm-snap-marker::before {
-        width: 2px;
-        height: 22px;
-      }
-
-      .vm-snap-marker::after {
-        width: 22px;
-        height: 2px;
-      }
-
-      .vm-snap-marker.hidden {
-        display: none;
-      }
-
-      .vm-measure-panel {
-        position: absolute;
-        left: 72px;
-        right: auto;
-        bottom: 62px;
-        z-index: 27;
-        width: 220px;
-        padding: 12px 14px;
-        border-radius: 16px;
-        background: rgba(255, 255, 255, 0.97);
-        border: 1px solid rgba(15, 23, 42, 0.1);
-        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
-      }
-
-      .vm-measure-panel.hidden {
-        display: none;
-      }
-
-      .vm-measure-title {
-        font-size: 13px;
-        font-weight: 800;
-        color: #163c62;
-      }
-
-      .vm-measure-status {
-        margin-top: 4px;
-        font-size: 11px;
-        color: #64748b;
-      }
-
-      .vm-measure-value {
-        margin-top: 8px;
-        font-size: 22px;
-        font-weight: 800;
-        line-height: 1.1;
-        color: #0f172a;
-      }
-
-      .vm-measure-clear {
-        margin-top: 10px;
-        border: 1px solid rgba(15, 23, 42, 0.14);
-        background: #fff;
-        color: #163c62;
-        border-radius: 999px;
-        padding: 6px 10px;
-        font-size: 11px;
-        font-weight: 700;
-      }
-
-      .vm-zoom-btn.is-active {
-        background: #032f57;
-        color: #fff;
-        border-color: transparent;
-      }
-
-      .vm-north-indicator {
-        position: absolute !important;
-        left: 16px !important;
-        top: 52px !important;
-        bottom: auto !important;
-        z-index: 22;
-        width: 42px;
-        padding: 8px 6px 6px;
-        border-radius: 14px;
-        background: rgba(255, 255, 255, 0.96);
-        border: 1px solid rgba(15, 23, 42, 0.12);
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-      }
-
-      .vm-north-arrow {
-        width: 0;
-        height: 0;
-        border-left: 9px solid transparent;
-        border-right: 9px solid transparent;
-        border-bottom: 16px solid #163c62;
-        filter: drop-shadow(0 3px 4px rgba(15, 23, 42, 0.16));
-      }
-
-      .vm-north-label {
-        font-size: 11px;
-        font-weight: 800;
-        line-height: 1;
-        color: #163c62;
-        letter-spacing: 0.08em;
-      }
-
-      /* Oculta el zoom nativo de OL para usar solo los botones personalizados */
-      .vm-map-shell .ol-zoom {
-        display: none !important;
-      }
-
-      #map .ol-zoom {
-        display: none !important;
-      }
-
-      .vm-map-shell .ol-attribution,
-      #map .ol-attribution {
-        display: none !important;
-      }
-
-      @media (max-width: 991.98px) {
-        .vm-layer-panel {
-          top: 10px;
-          left: 10px;
-          right: 10px;
-          max-width: none;
-          width: auto;
-        }
-
-        .vm-layer-panel-basemap {
-          top: 62px;
-        }
-
-        .vm-zoom-stack {
-          left: 10px !important;
-          top: 92px !important;
-          bottom: auto !important;
-        }
-
-        .vm-legend-card {
-          left: 10px;
-          bottom: 72px;
-          min-width: 0;
-          max-width: min(220px, calc(100% - 20px));
-        }
-
-        .vm-info-popup {
-          min-width: 220px;
-          max-width: calc(100% - 20px);
-        }
-
-        .vm-map-statusbar {
-          left: 10px;
-          right: 10px;
-          bottom: 10px;
-          gap: 10px;
-        }
-
-        .vm-map-shell .vm-scale-line,
-        #map .vm-scale-line {
-          right: 10px;
-          bottom: 10px;
-        }
-
-        .vm-measure-panel {
-          left: 10px;
-          right: auto;
-          bottom: 108px;
-          width: min(200px, calc(100% - 20px));
-        }
-
-        .vm-north-indicator {
-          left: 10px !important;
-          top: 100px !important;
-          bottom: auto !important;
-        }
-
-      }
-    </style>
+    <div class="visor-kpi-card">
+      <div class="visor-kpi-icon">
+        <i class="bi bi-bounding-box-circles"></i>
+      </div>
+      <div class="visor-kpi-body">
+        <div class="visor-kpi-meta">Geometría base</div>
+        <div class="visor-kpi-value" id="visorTerrenosCount">---</div>
+        <div class="visor-kpi-label">Terrenos</div>
+      </div>
+    </div>
+
+    <div class="visor-kpi-card">
+      <div class="visor-kpi-icon">
+        <i class="bi bi-building"></i>
+      </div>
+      <div class="visor-kpi-body">
+        <div class="visor-kpi-meta">Inventario físico</div>
+        <div class="visor-kpi-value" id="visorConstruccionesCount">---</div>
+        <div class="visor-kpi-label">Construcciones</div>
+      </div>
+    </div>
+
+    <div class="visor-kpi-card">
+      <div class="visor-kpi-icon">
+        <i class="bi bi-grid-3x3-gap"></i>
+      </div>
+      <div class="visor-kpi-body">
+        <div class="visor-kpi-meta">Detalle constructivo</div>
+        <div class="visor-kpi-value" id="visorUnidadesCount">---</div>
+        <div class="visor-kpi-label">Unidades</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .visor-map-stage {
+    min-height: 500px;
+    height: calc(100vh - 196px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .vm-map-shell,
+  .map-panel-body {
+    min-height: 0;
+    height: 100%;
+    flex: 1 1 auto;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    display: block;
+  }
+
+  .vm-map-shell {
+    position: relative;
+  }
+
+  .vm-toolbar-btn {
+    border: 0;
+    background: #032f57;
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .vm-toolbar-btn-light {
+    background: #ffffff;
+    color: #163c62;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+  }
+
+
+  .visor-map-topbar {
+    display: none;
+  }
+
+  .vm-zoom-separator {
+    width: 20px;
+    height: 1px;
+    flex-shrink: 0;
+    margin: 2px auto;
+    background: rgba(15, 23, 42, 0.18);
+    display: block;
+  }
+
+  .vm-map-statusbar {
+    width: 40%;
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 14px;
+    z-index: 24;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.94);
+    /* border: 1px solid rgba(15, 23, 42, 0.1); */
+    /* box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12); */
+    backdrop-filter: blur(8px);
+  }
+
+  .vm-map-status-item {
+    font-size: 11px;
+    font-weight: 700;
+    color: #5b6b7c;
+  }
+
+  .vm-map-status-item strong {
+    color: #163c62;
+  }
+
+  .vm-legend-panel-block {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .vm-legend-list-panel {
+    gap: 8px;
+  }
+
+  .vm-info-popup {
+    min-width: 220px;
+    max-width: 250px;
+    padding: 10px 12px;
+  }
+
+  .vm-info-popup-grid {
+    gap: 6px;
+  }
+
+  .vm-info-popup-link {
+    width: 100%;
+    margin-top: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: #ffffff;
+    color: #163c62;
+    border-radius: 999px;
+    padding: 7px 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .vm-info-popup-link[disabled] {
+    opacity: 0.65;
+  }
+
+  .vm-layer-panel {
+    position: absolute;
+    top: 16px;
+    left: 78px;
+    right: auto;
+    z-index: 31;
+    width: 290px;
+    max-width: min(320px, calc(100% - 110px));
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    border-radius: 16px;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
+    overflow: hidden;
+    max-height: min(82vh, 760px);
+    transition:
+      transform 0.2s ease,
+      opacity 0.2s ease;
+  }
+
+  .vm-layer-panel.hidden {
+    transform: translateY(-8px);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .vm-layer-panel-basemap {
+    top: 66px;
+    width: 210px;
+  }
+
+  .vm-layer-panel-head {
+    display: flex;
+    background-color: #eceeedac;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+  }
+
+  .vm-layer-panel-head strong {
+    font-size: 13px;
+    color: #163c62;
+  }
+
+  .vm-panel-close {
+    border: 0;
+    background: transparent;
+    color: #6b7280;
+    font-size: 20px;
+    line-height: 1;
+    padding: 0 4px;
+  }
+
+  .vm-layer-panel-body {
+    padding: 13px;
+    max-height: calc(min(82vh, 760px) - 58px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* scrollbar-gutter: stable; */
+  }
+
+  .vm-layer-block+.vm-layer-block {
+    margin-top: 8px;
+  }
+
+  .vm-layer-block-title {
+    margin-bottom: 6px;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: #6b7280;
+  }
+
+  .vm-select {
+    width: 100%;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    border-radius: 10px;
+    background: #f4f6f8;
+    color: #1f2937;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .vm-layer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .vm-layer-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .vm-layer-group-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 12px;
+    background: #f8fafc;
+    padding: 8px 10px;
+    color: #163c62;
+    cursor: pointer;
+  }
+
+  .vm-layer-group-title {
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .vm-layer-group-meta {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .vm-layer-group-icon {
+    font-size: 12px;
+    font-weight: 900;
+    color: #2563eb;
+  }
+
+  .vm-layer-group-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: 8px;
+  }
+
+  .vm-layer-group-body.hidden {
+    display: none;
+  }
+
+  .vm-layer-empty {
+    border: 1px dashed rgba(15, 23, 42, 0.2);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 11px;
+    color: #6b7280;
+    background: #f8fafc;
+  }
+
+  .vm-layer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    /* border: 1px solid rgba(15, 23, 42, 0.1); */
+    border-radius: 12px;
+    background: #f4f6f8;
+    padding: 8px 10px;
+    cursor: pointer;
+  }
+
+  .vm-layer-item.is-on {
+    border-color: rgba(37, 99, 235, 0.5);
+    background: #eef5ff;
+  }
+
+  .vm-layer-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1.2;
+  }
+
+  .vm-layer-label-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .vm-layer-toggle {
+    min-width: 48px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.2);
+    background: #ffffff;
+    color: #374151;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 8px;
+  }
+
+  .vm-layer-toggle.is-on {
+    border-color: #2563eb;
+    background: #2563eb;
+    color: #ffffff;
+  }
+
+  .vm-layer-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .vm-btn {
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    background: #ffffff;
+    color: #1f2937;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .vm-btn-primary {
+    background: #2563eb;
+    border-color: transparent;
+    color: #fff;
+  }
+
+  .vm-zoom-stack {
+    position: absolute !important;
+    left: 16px !important;
+    bottom: 15px !important;
+    top: auto !important;
+    height: fit-content !important;
+    max-height: calc(100% - 85px);
+    z-index: 34;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    overflow-y: auto;
+    overflow-x: hidden;
+    gap: 8px;
+    padding: 12px 8px;
+    margin: 0 !important;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.96);
+    /* border: 1px solid rgba(15, 23, 42, 0.12); */
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(15, 23, 42, 0.2) transparent;
+  }
+
+  .vm-zoom-stack::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  .vm-zoom-stack::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.2);
+    border-radius: 4px;
+  }
+
+  .vm-zoom-btn {
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
+    flex-shrink: 0;
+    border-radius: 9px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    background: rgba(255, 255, 255, 0.96);
+    color: #1f2937;
+    /* box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12); */
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .vm-legend-card {
+    position: absolute;
+    left: 80px;
+    bottom: 34px;
+    z-index: 20;
+    min-width: 210px;
+    max-width: 236px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+    backdrop-filter: blur(8px);
+  }
+
+  .vm-legend-title {
+    margin-bottom: 10px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #163c62;
+  }
+
+  .vm-legend-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .vm-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #243b53;
+    line-height: 1.2;
+  }
+
+  .vm-legend-swatch {
+    display: inline-flex;
+    width: 16px;
+    height: 11px;
+    flex: 0 0 auto;
+    border-radius: 3px;
+  }
+
+  .vm-legend-swatch-terreno {
+    background: rgba(166, 206, 227, 0.75);
+    border: 1px solid rgba(16, 81, 2, 0.65);
+  }
+
+  .vm-legend-swatch-historico {
+    background: transparent;
+    border: 1.5px solid #cb7e1f;
+  }
+
+  .vm-legend-swatch-construccion {
+    border: 1px solid #111827;
+    background:
+      repeating-linear-gradient(135deg,
+        #111827 0,
+        #111827 2px,
+        transparent 2px,
+        transparent 6px);
+  }
+
+  .vm-legend-swatch-unidad {
+    border: 1px solid #111827;
+    background:
+      repeating-linear-gradient(45deg,
+        #111827 0,
+        #111827 2px,
+        transparent 2px,
+        transparent 6px);
+  }
+
+  .vm-legend-swatch-direccion {
+    width: 18px;
+    height: 3px;
+    border-radius: 999px;
+    background: #2563eb;
+  }
+
+  .vm-info-popup {
+    position: absolute;
+    min-width: 240px;
+    max-width: 300px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+    z-index: 40;
+  }
+
+  .vm-info-popup.hidden {
+    display: none;
+  }
+
+  .vm-info-popup-title {
+    margin-bottom: 8px;
+    padding-right: 18px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #163c62;
+  }
+
+  .vm-info-popup-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .vm-info-popup-row {
+    display: grid;
+    gap: 2px;
+  }
+
+  .vm-info-popup-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .vm-info-popup-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    word-break: break-word;
+  }
+
+  .vm-info-popup-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    border: 0;
+    background: transparent;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .vm-map-shell .vm-scale-line,
+  #map .vm-scale-line {
+    position: absolute;
+    right: 16px;
+    left: auto;
+    bottom: 62px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 10px;
+    padding: 6px 10px 4px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    color: #163c62;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .vm-map-shell .vm-scale-line-inner,
+  #map .vm-scale-line-inner {
+    border-color: #163c62;
+    border-top: 0;
+    color: #163c62;
+    font-size: 11px;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .vm-snap-marker {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    margin-top: -9px;
+    border-radius: 999px;
+    border: 2px solid #10b981;
+    background: rgba(16, 185, 129, 0.14);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
+    z-index: 26;
+    pointer-events: none;
+  }
+
+  .vm-snap-marker::before,
+  .vm-snap-marker::after {
+    content: "";
+    position: absolute;
+    background: #059669;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .vm-snap-marker::before {
+    width: 2px;
+    height: 22px;
+  }
+
+  .vm-snap-marker::after {
+    width: 22px;
+    height: 2px;
+  }
+
+  .vm-snap-marker.hidden {
+    display: none;
+  }
+
+  .vm-measure-panel {
+    position: absolute;
+    left: 72px;
+    right: auto;
+    bottom: 62px;
+    z-index: 27;
+    width: 220px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14);
+  }
+
+  .vm-measure-panel.hidden {
+    display: none;
+  }
+
+  .vm-measure-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #163c62;
+  }
+
+  .vm-measure-status {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #64748b;
+  }
+
+  .vm-measure-value {
+    margin-top: 8px;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #0f172a;
+  }
+
+  .vm-measure-clear {
+    margin-top: 10px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    background: #fff;
+    color: #163c62;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .vm-zoom-btn.is-active {
+    background: #032f57;
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .vm-north-indicator {
+    position: absolute !important;
+    left: 16px !important;
+    top: 52px !important;
+    bottom: auto !important;
+    z-index: 22;
+    width: 42px;
+    padding: 8px 6px 6px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .vm-north-arrow {
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-bottom: 16px solid #163c62;
+    filter: drop-shadow(0 3px 4px rgba(15, 23, 42, 0.16));
+  }
+
+  .vm-north-label {
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+    color: #163c62;
+    letter-spacing: 0.08em;
+  }
+
+  /* Oculta el zoom nativo de OL para usar solo los botones personalizados */
+  .vm-map-shell .ol-zoom {
+    display: none !important;
+  }
+
+  #map .ol-zoom {
+    display: none !important;
+  }
+
+  .vm-map-shell .ol-attribution,
+  #map .ol-attribution {
+    display: none !important;
+  }
+
+  @media (max-width: 991.98px) {
+    .vm-layer-panel {
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      max-width: none;
+      width: auto;
+    }
+
+    .vm-layer-panel-basemap {
+      top: 62px;
+    }
+
+    .vm-zoom-stack {
+      left: 10px !important;
+      top: 50px !important;
+      bottom: auto !important;
+      max-height: calc(100% - 65px);
+      gap: 4px;
+      padding: 5px 4px;
+    }
+
+    .vm-legend-card {
+      left: 10px;
+      bottom: 72px;
+      min-width: 0;
+      max-width: min(220px, calc(100% - 20px));
+    }
+
+    .vm-info-popup {
+      min-width: 220px;
+      max-width: calc(100% - 20px);
+    }
+
+    .vm-map-statusbar {
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      gap: 10px;
+    }
+
+    .vm-map-shell .vm-scale-line,
+    #map .vm-scale-line {
+      right: 10px;
+      bottom: 10px;
+    }
+
+    .vm-measure-panel {
+      left: 10px;
+      right: auto;
+      bottom: 108px;
+      width: min(200px, calc(100% - 20px));
+    }
+
+    .vm-north-indicator {
+      left: 10px !important;
+      top: 100px !important;
+      bottom: auto !important;
+    }
+
+  }
+
+  @media (max-height: 720px) {
+    .vm-zoom-stack {
+      top: 40px !important;
+      max-height: calc(100% - 55px);
+      gap: 3px;
+      padding: 4px 3px;
+    }
+
+    .vm-zoom-btn {
+      width: 30px;
+      height: 30px;
+      min-height: 30px;
+      font-size: 14px;
+      border-radius: 7px;
+    }
+  }
+</style>
 
 </div>
 
@@ -1114,7 +1166,7 @@
 
     if (mapInstance) {
       mapInstance.getView().fit(extent9377, {
-        padding: [20, 20, 20, 20],
+        padding: [120, 120, 120, 120],
         duration,
       });
     }
@@ -1123,37 +1175,37 @@
 
   function layerTitleFromName(layerName) {
     const raw = String(layerName || "").split(":").pop() || String(layerName || "");
-      const knownLabels = {
-        arb_terreno: "Terreno",
-        arb_terrenohistorico: "Terreno historico",
-        arb_construccion: "Construccion",
-        arb_unidadconstruccion: "Unidad construccion",
-        arb_direccion: "Direccion",
-        sucre_cartografia: "Cartografia catastral",
-        saravena_cartografia: "Cartografia catastral",
-        almaguer_cartografia: "Cartografia catastral",
-        cc_barrio: "(CC) Barrio",
-        cc_centropoblado: "(CC) Centro poblado",
-        cc_corregimiento: "(CC) Corregimiento",
-        cc_limitemunicipio: "(CC) Limite municipio",
-        cc_localidadcomuna: "(CC) Localidad comuna",
-        cc_manzana: "(CC) Manzana",
-        cc_nomenclaturavial: "(CC) Nomenclatura vial",
-        cc_nomenclaturavial_tipo_via: "(CC) Tipo via",
-        cc_perimetrourbano: "(CC) Perimetro urbano",
-        cc_sectorrural: "(CC) Sector rural",
-        cc_sectorurbano: "(CC) Sector urbano",
-        cc_vereda: "(CC) Vereda",
-        manzana: "(CC) Manzana",
-        "nomenclatura vial": "(CC) Nomenclatura vial",
-        perimetro_urbano: "(CC) Perimetro urbano",
-        "perimetro urbano": "(CC) Perimetro urbano",
-        sector_rural: "(CC) Sector rural",
-        "sector rural": "(CC) Sector rural",
-        sector_urbano: "(CC) Sector urbano",
-        "sector urbano": "(CC) Sector urbano",
-        vereda: "(CC) Vereda",
-      };
+    const knownLabels = {
+      arb_terreno: "Terreno",
+      arb_terrenohistorico: "Terreno historico",
+      arb_construccion: "Construccion",
+      arb_unidadconstruccion: "Unidad construccion",
+      arb_direccion: "Direccion",
+      sucre_cartografia: "Cartografia catastral",
+      saravena_cartografia: "Cartografia catastral",
+      almaguer_cartografia: "Cartografia catastral",
+      cc_barrio: "(CC) Barrio",
+      cc_centropoblado: "(CC) Centro poblado",
+      cc_corregimiento: "(CC) Corregimiento",
+      cc_limitemunicipio: "(CC) Limite municipio",
+      cc_localidadcomuna: "(CC) Localidad comuna",
+      cc_manzana: "(CC) Manzana",
+      cc_nomenclaturavial: "(CC) Nomenclatura vial",
+      cc_nomenclaturavial_tipo_via: "(CC) Tipo via",
+      cc_perimetrourbano: "(CC) Perimetro urbano",
+      cc_sectorrural: "(CC) Sector rural",
+      cc_sectorurbano: "(CC) Sector urbano",
+      cc_vereda: "(CC) Vereda",
+      manzana: "(CC) Manzana",
+      "nomenclatura vial": "(CC) Nomenclatura vial",
+      perimetro_urbano: "(CC) Perimetro urbano",
+      "perimetro urbano": "(CC) Perimetro urbano",
+      sector_rural: "(CC) Sector rural",
+      "sector rural": "(CC) Sector rural",
+      sector_urbano: "(CC) Sector urbano",
+      "sector urbano": "(CC) Sector urbano",
+      vereda: "(CC) Vereda",
+    };
     if (knownLabels[raw]) return knownLabels[raw];
     return raw
       .replace(/_/g, " ")
@@ -1734,11 +1786,27 @@
       openBasemapBtn?.setAttribute("aria-expanded", basemapOpen ? "true" : "false");
     };
 
-    const closeAllPanels = () => {
-      layerPanel?.classList.add("hidden");
-      basemapPanel?.classList.add("hidden");
-      setExpanded(false, false);
+    const closeAllPanels = (except = null, forceCloseMeasure = false) => {
+      const layerPanel = document.getElementById("vmLayerPanel");
+      const basemapPanel = document.getElementById("vmBasemapPanel");
+      const legendCard = document.getElementById("vmLegendCard");
+      const measurePanel = document.getElementById("vmMeasurePanel");
+      const infoPopup = document.getElementById("vmInfoPopup");
+
+      if (except !== layerPanel) layerPanel?.classList.add("hidden");
+      if (except !== basemapPanel) basemapPanel?.classList.add("hidden");
+      if (except !== legendCard) legendCard?.classList.add("hidden");
+      if (except !== measurePanel && (!measureMode || forceCloseMeasure)) {
+        measurePanel?.classList.add("hidden");
+      }
+      if (except !== infoPopup) infoPopup?.classList.add("hidden");
+
+      setExpanded(
+        Boolean(layerPanel && !layerPanel.classList.contains("hidden")),
+        Boolean(basemapPanel && !basemapPanel.classList.contains("hidden")),
+      );
     };
+    window.vmCloseAllPanels = closeAllPanels;
 
     const togglePanel = (target) => {
       if (!target) return;
@@ -1777,6 +1845,33 @@
       togglePanel(basemapPanel);
     });
 
+    const stackLegendBtn = document.getElementById("vmStackLegendBtn");
+    const legendCard = document.getElementById("vmLegendCard");
+    stackLegendBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      togglePanel(legendCard);
+    });
+
+    const closeLegendBtn = document.getElementById("vmCloseLegendCard");
+    closeLegendBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeAllPanels();
+    });
+
+    const closeMeasureBtn = document.getElementById("vmCloseMeasurePanel");
+    closeMeasureBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      disableMeasureTool();
+      closeAllPanels(null, true);
+    });
+
+    const measurePanel = document.getElementById("vmMeasurePanel");
+    const infoPopup = document.getElementById("vmInfoPopup");
+    legendCard?.addEventListener("click", (e) => e.stopPropagation());
+    measurePanel?.addEventListener("click", (e) => e.stopPropagation());
+    infoPopup?.addEventListener("click", (e) => e.stopPropagation());
+
     closeLayerBtn?.addEventListener("click", (e) => {
       e.preventDefault();
       closeAllPanels();
@@ -1790,7 +1885,17 @@
     layerPanel?.addEventListener("click", (e) => e.stopPropagation());
     basemapPanel?.addEventListener("click", (e) => e.stopPropagation());
 
-    document.addEventListener("click", () => {
+    document.addEventListener("click", (e) => {
+      if (
+        e?.target?.closest?.("#map") ||
+        e?.target?.closest?.(".vm-layer-panel") ||
+        e?.target?.closest?.(".visor-floating-card") ||
+        e?.target?.closest?.(".vm-zoom-stack") ||
+        e?.target?.closest?.(".visor-map-topbar") ||
+        e?.target?.closest?.(".visor-map-search")
+      ) {
+        return;
+      }
       closeAllPanels();
     });
 
@@ -1817,7 +1922,7 @@
     zoomBtn?.addEventListener("click", () => {
       if (!mapInstance) return;
       mapInstance.getView().fit(extent9377, {
-        padding: [20, 20, 20, 20],
+        padding: [120, 120, 120, 120],
         duration: 300,
       });
       closeAllPanels();
@@ -1850,7 +1955,11 @@
     });
 
     zoomProjectBtn?.addEventListener("click", () => {
-      document.getElementById("vmZoomProject")?.click();
+      if (!mapInstance || !extent9377) return;
+      mapInstance.getView().fit(extent9377, {
+        padding: [120, 120, 120, 120],
+        duration: 300,
+      });
     });
 
     selectModeBtn?.addEventListener("click", () => {
@@ -1908,7 +2017,16 @@
     const distanceButton = document.getElementById("vmMeasureBtn");
     const areaButton = document.getElementById("vmMeasureAreaBtn");
     const selectButton = document.getElementById("vmSelectModeBtn");
-    if (panel) panel.classList.toggle("hidden", !visible);
+    if (panel) {
+      if (visible) {
+        if (typeof window.vmCloseAllPanels === "function") {
+          window.vmCloseAllPanels(panel);
+        }
+        panel.classList.remove("hidden");
+      } else {
+        panel.classList.add("hidden");
+      }
+    }
     if (statusNode) statusNode.textContent = status;
     if (valueNode) valueNode.textContent = value;
     if (distanceButton) distanceButton.classList.toggle("is-active", measureMode === "distance");
@@ -2126,18 +2244,22 @@
     const measureAreaBtn = document.getElementById("vmMeasureAreaBtn");
     const clearBtn = document.getElementById("vmMeasureClearBtn");
 
-    measureBtn?.addEventListener("click", async () => {
+    measureBtn?.addEventListener("click", async (e) => {
+      e?.stopPropagation();
       if (measureMode === "distance") {
         disableMeasureTool();
+        if (typeof window.vmCloseAllPanels === "function") window.vmCloseAllPanels(null, true);
       } else {
         disableMeasureTool();
         await enableMeasureTool("distance");
       }
     });
 
-    measureAreaBtn?.addEventListener("click", async () => {
+    measureAreaBtn?.addEventListener("click", async (e) => {
+      e?.stopPropagation();
       if (measureMode === "area") {
         disableMeasureTool();
+        if (typeof window.vmCloseAllPanels === "function") window.vmCloseAllPanels(null, true);
       } else {
         disableMeasureTool();
         await enableMeasureTool("area");
@@ -2499,9 +2621,7 @@
       event.stopPropagation();
     });
 
-    document.getElementById("vmStackPrintBtn")?.addEventListener("click", () => {
-      window.print();
-    });
+
   }
 
   async function handleTerrainInfoClick(evt) {
@@ -2732,10 +2852,13 @@
         );
       });
 
+      const rawName = String(layerName || "").toLowerCase();
+      const isTerreno = rawName.includes("terreno") && !rawName.includes("historico");
+
       return {
         name: layerName,
         title: layerMeta?.title || layerTitleFromName(layerName),
-        layer: new ol.layer.Tile({ source, visible: true }),
+        layer: new ol.layer.Tile({ source, visible: isTerreno }),
       };
     });
 
@@ -2833,7 +2956,7 @@
     }
 
     setBasemap(activeBasemap);
-    mapInstance.getView().fit(extent9377, { padding: [20, 20, 20, 20] });
+    mapInstance.getView().fit(extent9377, { padding: [120, 120, 120, 120] });
     renderLayerControls();
     bindLayerPanelControls();
     bindCustomZoomButtons();

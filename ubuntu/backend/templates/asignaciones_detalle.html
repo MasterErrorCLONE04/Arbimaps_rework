@@ -1,5 +1,5 @@
 <link rel="stylesheet" href="{{ rp }}/static/css/buscar/informacion_predio.css" />
-<div class="content-modulo-detalles container-fluid  mb-5">
+<div class="content-modulo-detalles container-fluid px-0 mb-5">
   <div class="row g-4 ">
     <!-- IZQUIERDA -->
     <div class="col-12 col-lg-8 col-xl-9 h-100">
@@ -52,15 +52,7 @@
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dropdownAcciones"
               style="border-radius: 6px; border: 1px solid #E4EBF2; min-width: 280px; padding: 6px 0; background-color: #FFFFFF;">
-              <!-- Workflow Actions -->
-              <li>
-                <button id="btnHeaderGenerarNpn" type="button"
-                  class="dropdown-item d-flex align-items-center gap-3 px-3 py-2 fw-semibold"
-                  style="font-size: 0.85rem; color: #16a34a; background: transparent; border: none; text-align: left; width: 100%;">
-                  <i class="bi bi-lightning-charge-fill fs-6" style="color: #16a34a; width: 20px; text-align: center;"></i>
-                  <span>Generar Nuevos NPNs</span>
-                </button>
-              </li>
+
               <li>
                 <button id="btnHeaderSyncXtf" type="button"
                   class="dropdown-item d-none align-items-center gap-3 px-3 py-2 fw-semibold"
@@ -370,11 +362,7 @@
                   Consulta los predios correspondiente a esta asignación
                 </p>
               </div>
-              <div>
-                <button class="btn btn-sm btn-outline-solicitudes d-inline-flex align-items-center gap-2 px-3 py-2 fw-bold" id="btnAbrirGeneradorDetalle" type="button" style="border-radius: 8px !important;">
-                  <i class="bi bi-lightning-charge-fill"></i> Generar Nuevos NPNs
-                </button>
-              </div>
+
             </div>
 
             <hr class="info-basic-divider my-3 mb-4">
@@ -705,8 +693,7 @@
           <div class="card-body d-flex flex-column">
             <div class="d-flex justify-content-between align-items-center mt-1">
               <div class="d-flex align-items-start gap-2 flex-grow-1">
-                <div
-                  class="icons-bg-menu d-flex align-items-center justify-content-center flex-shrink-0 ">
+                <div class="icons-bg-menu d-flex align-items-center justify-content-center flex-shrink-0 ">
                   <i class="bi bi-houses-fill fs-5"></i>
                 </div>
                 <div class="d-flex flex-column lh-sm">
@@ -736,7 +723,8 @@
                         <th class="text-center" style="font-size: 0.72rem;">Identificador</th>
                         <th class="text-center" style="font-size: 0.72rem;">Tipo de construcción</th>
                         <th class="text-center" style="font-size: 0.72rem;">Predio</th>
-                        <th class="text-center" style="border-top-right-radius: 12px; font-size: 0.72rem;">U.C asociada</th>
+                        <th class="text-center" style="border-top-right-radius: 12px; font-size: 0.72rem;">U.C asociada
+                        </th>
                       </tr>
                     </thead>
                     <tbody id="tbodyConsCollapse"></tbody>
@@ -758,8 +746,7 @@
           <div class="card-body d-flex flex-column">
             <div class="encabezado-unidad-construccion-edit d-flex justify-content-between align-items-center w-100">
               <div class="titulo-unidad-construccion-edit d-flex align-items-center gap-2">
-                <div
-                  class="icons-bg-menu d-flex align-items-center justify-content-center flex-shrink-0">
+                <div class="icons-bg-menu d-flex align-items-center justify-content-center flex-shrink-0">
                   <i class="bi bi-house-fill fs-5"></i>
                 </div>
                 <div>
@@ -934,10 +921,10 @@
     aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-lg-down">
       <div class="modal-content rounded-4 border-0 shadow modal-predio-content-edit">
-        <div class="modal-header border-0 d-flex justify-content-between align-items-center bg-white">
+        <div class="modal-header border-0 d-flex justify-content-between align-items-center">
           <div class="d-flex align-items-center gap-3">
             <div class="section-icons mb-0">
-              <div class="icons-bg-menu d-flex justify-content-center align-items-center me-1"
+              <div class="icons-bg-menu-2 d-flex justify-content-center align-items-center me-1"
                 style="background-color: #6aa4d4;">
                 <i class="fa-solid fa-location-dot fs-5"></i>
               </div>
@@ -952,8 +939,8 @@
             <i class="fa-regular fa-eye-slash eye-icon-predio-edit"></i>
           </button>
         </div>
-        <div class="modal-body modal-predio-body-edit">
-          <div class="container-fluid p-0">
+        <div class="modal-body modal-predio-body-edit p-4">
+          <div class="container-fluid p-0 bg">
             <div class="row g-3 g-xl-0 align-items-stretch modal-predio-row-edit">
               <div class="col-12 col-xl">
                 <div class="card border-0 rounded-4 shadow-none h-100 tarjeta-modal-predio-edit">
@@ -964,95 +951,6 @@
                       </div>
                     </div>
                     <div class="row g-1 justify-content-center m-2">
-
-                      <!-- <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Número predial anterior</div>
-                          <div class="text-start" id="modal_numero_predial_anterior">----</div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Código Orip</div>
-                          <div class="text-start" id="modal_codigo_orip">----</div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Matrícula Inmobiliaria</div>
-                          <div class="text-start" id="modal_matricula_inmobiliaria">----</div>
-                        </div>
-                      </div> -->
-
-                      <!-- <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Estado de FMI</div>
-                          <div class="text-start" id="modal_estado_fmi">----</div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Fecha de apertura de FMI</div>
-                          <div class="text-start" id="modal_fecha_apertura_fmi">----</div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Fecha de inscripción catastral</div>
-                          <div class="text-start" id="modal_fecha_inscripcion_catastral">----</div>
-                        </div>
-                      </div>
-
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Vigencia de actualización</div>
-                          <div class="text-start" id="modal_vigencia_actualizacion">----</div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Área registral (m2)</div>
-                          <div class="text-start" id="modal_area_registral">----</div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Área catastral de terreno (m2)</div>
-                          <div class="text-start" id="modal_area_catastral_terreno">----</div>
-                        </div>
-                      </div>
-
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Coeficiente de copropiedad</div>
-                          <div class="text-start" id="modal_coeficiente_copropiedad">----</div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Área de coeficiente de copropiedad</div>
-                          <div class="text-start" id="modal_area_coeficiente_copropiedad">----</div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Condición del predio</div>
-                          <div class="text-start" id="modal_condicion_predio">----</div>
-                        </div>
-                      </div>
-
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Tipo de predio</div>
-                          <div class="text-start" id="modal_tipo_predio">----</div>
-                        </div>
-                      </div>
-                      <div class="col-12 col-md-4">
-                        <div class="d-flex flex-column">
-                          <div class="fw-bold text-start tex-num-edit">Destinación económica</div>
-                          <div class="text-start" id="modal_destinacion_economica">----</div>
-                        </div>
-                      </div> -->
 
                       <!-- ========================  actializado ================================================= -->
 
@@ -1321,7 +1219,7 @@
                       </button>
                     </h2>
                     <div id="ResultadoVisita" class="accordion-collapse collapse " data-bs-parent="#accordionExample">
-                      <div class="accordion-body">
+                      <div class="accordion-body bg-white">
                         <div class="p-1">
                           <div class="row g-1  justify-content-center m-2">
                             <div class="col-12 col-md-6">
@@ -1410,7 +1308,7 @@
                       </button>
                     </h2>
                     <div id="ContenidoJuridico" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
-                      <div class="accordion-body">
+                      <div class="accordion-body bg-white">
                         <div class=" p-1">
 
                           <div class="row g-1  justify-content-center m-2">
@@ -1636,10 +1534,10 @@
                   <table class="table align-middle mb-0 tabla-modal-juridica-edit">
                     <thead>
                       <tr>
-                        <th>Interesado</th>
-                        <th>Sexo</th>
-                        <th>Cuota participación</th>
-                        <th>Tipo de persona</th>
+                        <th class="text-center">Interesado</th>
+                        <th class="text-center">Sexo</th>
+                        <th class="text-center">Cuota participación</th>
+                        <th class="text-center">Tipo de persona</th>
                         <th class="text-center">Ver detalles</th>
                       </tr>
                     </thead>
@@ -1722,7 +1620,7 @@
     </div>
   </div>
 
-  {% include 'modales/modal_generador_npn.html' %}
+
   {% include 'modales/modal_sincronizar_xtf.html' %}
   {% include 'modales/modal_historial.html' %}
   {% include 'modales/modal_comentarios.html' %}
@@ -1742,49 +1640,4 @@
       assignWmsLayerDetail: {{ asig_geoserver_layer | default ('B_ASIGNACIONES_ARB:ASIGNACIONES') | tojson }}
     };
   </script>
-  <script src="{{ rp }}/static/js/asignaciones/generador_npn.js?v={{ range(1000, 9999)|random }}"></script>
   <script src="{{ rp }}/static/js/asignaciones/asignaciones_detalle.js?v={{ range(1000, 9999)|random }}"></script>
-  <script>
-    // Conectar botones de Detalle de Asignación con el Generador NPN
-    document.addEventListener("DOMContentLoaded", function() {
-      function abrirGeneradorDesdeDetalle() {
-        if (!window.abrirGeneradorNpn) return;
-        
-        // Obtener el predio activo de la asignación si existe
-        let predioActivo = "";
-        const elNpn = document.getElementById("resumenPredioNumero");
-        if (elNpn && elNpn.textContent && elNpn.textContent.trim().replace(/\D/g, "").length === 30) {
-          predioActivo = elNpn.textContent.trim().replace(/\D/g, "");
-        } else {
-          // Intentar obtener el primer predio de la tabla
-          const primerRow = document.querySelector("#asigDetallePrediosBody tr td:nth-child(2)");
-          if (primerRow && primerRow.textContent.trim().replace(/\D/g, "").length === 30) {
-            predioActivo = primerRow.textContent.trim().replace(/\D/g, "");
-          }
-        }
-        
-        // Obtener nombre o consecutivo del expediente
-        let tramite = "";
-        const elBreadcrumb = document.getElementById("breadcrumbAssignmentName");
-        if (elBreadcrumb && elBreadcrumb.textContent) {
-          tramite = elBreadcrumb.textContent.trim();
-        }
-
-        window.abrirGeneradorNpn({
-          predioMatriz: predioActivo,
-          consecutivoTramite: tramite,
-          tipoMutacion: "DESENGLOBE"
-        });
-      }
-
-      const btnDetalle = document.getElementById("btnAbrirGeneradorDetalle");
-      if (btnDetalle) {
-        btnDetalle.addEventListener("click", abrirGeneradorDesdeDetalle);
-      }
-
-      const btnHeaderGen = document.getElementById("btnHeaderGenerarNpn");
-      if (btnHeaderGen) {
-        btnHeaderGen.addEventListener("click", abrirGeneradorDesdeDetalle);
-      }
-    });
-  </script>

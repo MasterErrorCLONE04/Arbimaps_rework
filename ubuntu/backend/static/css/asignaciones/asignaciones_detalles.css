@@ -855,6 +855,7 @@
 .dataTables_wrapper .dataTables_paginate .paginate_button {
     background-image: none !important;
     box-shadow: none !important;
+
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button.current,
@@ -2045,7 +2046,7 @@ table.dataTable tbody td {
 
 #tablaPredios_wrapper .dataTables_paginate .page-link {
     background-color: #fafdff !important;
-    color: #002f55 !important;
+    color: var(--cp-green) !important;
     border: 1px solid #002f5563 !important;
     border-radius: 6px !important;
     min-width: 32px;
@@ -2061,20 +2062,22 @@ table.dataTable tbody td {
 }
 
 #tablaPredios_wrapper .dataTables_paginate .page-item.active .page-link {
-    background-color: #021f3c !important;
+    background-color: var(--cp-green) !important;
     color: #ffffff !important;
     font-weight: 700;
+    border-radius: 15px !important;
 }
 
 #tablaPredios_wrapper .dataTables_paginate .page-item:not(.disabled) .page-link:hover {
-    background-color: #083e6b !important;
+    background-color: var(--cp-green) !important;
     color: #ffffff !important;
     transform: translateY(-1px);
+
 }
 
 #tablaPredios_wrapper .dataTables_paginate .page-item.disabled .page-link {
     background-color: #f4faff !important;
-    color: #002f55 !important;
+    color: var(--cp-green) !important;
     border: 1px solid #002f5563 !important;
     opacity: 0.4 !important;
     box-shadow: none !important;
@@ -2276,7 +2279,7 @@ table.dataTable tbody td {
     color: #FFFFFF !important;
 }
 
-.btn-eye-predio-edit i {
+/* .btn-eye-predio-edit i {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -2285,8 +2288,8 @@ table.dataTable tbody td {
     margin: 0 !important;
     padding: 0 !important;
     line-height: 1 !important;
-    color: #0A2C1B;
-}
+    color: #00ff80;
+} */
 
 /* Center icons in the left circles */
 .part-icon-edit {
@@ -2316,7 +2319,7 @@ table.dataTable tbody td {
 /* Center text titles vertically */
 .title-part-predio-edit {
     font-size: 1rem !important;
-    color: #123A63 !important;
+    color: #0A2C1B !important;
     font-weight: 700 !important;
     margin: 0 !important;
     line-height: 1.2 !important;
@@ -2563,6 +2566,7 @@ table.dataTable tbody td {
 #modalInformacionMarcasAsignacion .tarjeta-modal-visita-edit {
     border-radius: 16px !important;
     overflow: hidden;
+    background-color: white !important;
 }
 
 #modalInformacionMarcasAsignacion .contenido-visita {

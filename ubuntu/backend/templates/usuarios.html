@@ -284,7 +284,7 @@
 </style>
 <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_neiva.css?v=1" />
 
-<div class="container-fluid usuarios-saas">
+<div class="container-fluid usuarios-saas ">
   <!-- Header -->
   <div class="usuarios-header  py-3">
     <div class="title">
@@ -450,8 +450,7 @@
             </div>
 
             <button class="btn-add-user-custom" data-bs-toggle="modal" data-bs-target="#modalUsuario" id="btnAddNewUser"
-              {% if effective_role not in ['admin', 'soporte', 'coordinador']
-              %}style="display: none;" {% endif %}>
+              {% if effective_role not in ['admin', 'soporte' , 'coordinador' ] %}style="display: none;" {% endif %}>
               <i class="bi bi-plus-lg"></i> <span id="btnAddNewUserText">Agregar nuevo usuario</span>
             </button>
           </div>

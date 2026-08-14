@@ -323,7 +323,7 @@ body,
 #tbl_wrapper .dataTables_paginate,
 #tbl_wrapper .dataTables_paginate .paginate_button,
 #tbl_wrapper .dataTables_paginate .page-link {
-    font-size: 1rem !important;
+    font-size: 0.9rem !important;
     color: #092c1c !important;
 }
 

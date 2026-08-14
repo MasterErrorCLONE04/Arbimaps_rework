@@ -160,7 +160,7 @@ body.panel-body {
     height: 100%;
 }
 
-.card-info {
+/* .card-info {
     margin-left: 13px;
     margin-top: 10px;
     margin-bottom: 12px;
@@ -168,15 +168,15 @@ body.panel-body {
     align-items: center;
     justify-content: flex-start;
     gap: 3px;
-}
+} */
 
-.card-info-img {
+/* .card-info-img {
     display: flex;
     align-items: center;
     justify-content: flex-start;
     width: auto;
     flex: 0 0 auto;
-}
+} */
 
 .logo-sidebar {
     width: 43px;
@@ -1088,6 +1088,7 @@ body.panel-body::-webkit-scrollbar {
         text-align: center;
     }
 }
+
 /* Tema Neiva: capa visual tomada del index.php de referencia. */
 .panel-topbar {
     background: #eceeed;
@@ -1132,10 +1133,10 @@ body.panel-body::-webkit-scrollbar {
 }
 
 .card-info {
-    margin: 16px 14px 12px;
-    min-height: 95px;
+    display: flex;
+    min-height: 85px;
     padding: 18px 16px;
-    border-radius: 35px;
+    border-radius: 31px;
     background: linear-gradient(202deg, #0a2c1b 75%, #1b4001 95%);
 }
 
@@ -1219,11 +1220,12 @@ body.panel-body::-webkit-scrollbar {
         color: #0a2c1b;
     }
 }
+
 /* Identidad y jerarquía del menú lateral. */
 .card-info {
     position: relative;
     isolation: isolate;
-    min-height: 224px;
+    min-height: 204px;
     padding: 24px 22px 20px;
     flex-direction: column;
     align-items: flex-start !important;
@@ -1357,15 +1359,16 @@ body.panel-body::-webkit-scrollbar {
 .mobile-offcanvas-sidebar .logo-sidebar {
     object-fit: contain;
 }
+
 /* Proporciones del layout y selector de usuario según la referencia. */
 @media (min-width: 1200px) {
-    .panel-wrapper > .row > aside.col-xl-2 {
+    .panel-wrapper>.row>aside.col-xl-2 {
         flex: 0 0 310px;
         width: 350px;
         max-width: 350px;
     }
 
-    .panel-wrapper > .row > .col-xl-10 {
+    .panel-wrapper>.row>.col-xl-10 {
         flex: 1 1 0;
         width: calc(100% - 310px);
         max-width: calc(100% - 310px);
@@ -1453,6 +1456,7 @@ body.panel-body::-webkit-scrollbar {
         font-size: 0.9rem;
     }
 }
+
 /* Dimensiones internas, perfil contextual y encaje del visor. */
 .menu {
     margin-left: 18px;
@@ -1537,6 +1541,7 @@ body.view-visor .footer-simple {
 }
 
 @media (max-width: 767.98px) {
+
     .sidebar-link,
     .sidebar-toggle-custom,
     .menuBtn {
@@ -1552,8 +1557,9 @@ body.view-visor .footer-simple {
         min-height: 430px;
     }
 }
+
 /* Ajuste fino de separación del perfil y respiración vertical del visor. */
-.panel-topbar > .d-flex.align-items-center:last-child {
+.panel-topbar>.d-flex.align-items-center:last-child {
     gap: 28px !important;
 }
 
@@ -1603,7 +1609,7 @@ body.view-visor .visor-map-stage {
 }
 
 @media (max-width: 767.98px) {
-    .panel-topbar > .d-flex.align-items-center:last-child {
+    .panel-topbar>.d-flex.align-items-center:last-child {
         gap: 10px !important;
     }
 
@@ -1620,6 +1626,7 @@ body.view-visor .visor-map-stage {
         border: 0 !important;
     }
 }
+
 /* Tipografía de la referencia y perfil sin espacio reservado. */
 html,
 body,

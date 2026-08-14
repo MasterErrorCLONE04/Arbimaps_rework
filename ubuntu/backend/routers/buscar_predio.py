@@ -330,22 +330,43 @@ def predio_buscar(
 
         if f_where:
             f_sql = f"""
-            SELECT DISTINCT ON (BTRIM(numero_predial::text))
-              numero_predial,
-              numero_predial_anterior,
-              direccion,
-              matricula,
-              destino_economico,
-              descripcion_destino_economico,
-              propietario,
-              tipo_documento,
-              documento_identidad,
-              participacion
-            FROM f_r1_r2.v_predios_consolidados
+            SELECT DISTINCT ON (BTRIM(p.numero_predial::text))
+              p.numero_predial,
+              p.numero_predial_anterior,
+              p.direccion,
+              r2.matricula,
+              p.destino_economico,
+              de.descripcion AS descripcion_destino_economico,
+              p.nombre AS propietario,
+              p.tipo_documento,
+              p.documento_identidad,
+              p.participacion
+            FROM f_r1_r2.r1_predio_propietario p
+            LEFT JOIN f_r1_r2.destino_economico de ON p.destino_economico = de.codigo
+            LEFT JOIN f_r1_r2.r2_construccion_zona r2 ON p.numero_predial = r2.numero_predial
             WHERE {" AND ".join(f_where) if nombre else " OR ".join(f_where)}
             LIMIT 20
             """
-            f_rows = _execute_fetchall(conn, f_sql, tuple(f_params))
+            try:
+                f_rows = _execute_fetchall(conn, f_sql, tuple(f_params))
+            except Exception:
+                f_sql_fallback = f"""
+                SELECT DISTINCT ON (BTRIM(numero_predial::text))
+                  numero_predial,
+                  numero_predial_anterior,
+                  direccion,
+                  matricula,
+                  destino_economico,
+                  descripcion_destino_economico,
+                  propietario,
+                  tipo_documento,
+                  documento_identidad,
+                  participacion
+                FROM f_r1_r2.v_predios_consolidados
+                WHERE {" AND ".join(f_where) if nombre else " OR ".join(f_where)}
+                LIMIT 20
+                """
+                f_rows = _execute_fetchall(conn, f_sql_fallback, tuple(f_params))
     except Exception as f_err:
         logger.warning("No se pudo consultar el esquema f_r1_r2: %s", f_err)
 
@@ -364,9 +385,11 @@ def predio_buscar(
             "t_id": r.get("numero_predial"),
             "numero_predial": r.get("numero_predial"),
             "numero_predial_nacional": r.get("numero_predial"),
-            "matricula_inmobiliaria": r.get("matricula"),
-            "tipo_nombre": "Alfanum\xc3\xa9rico (f_r1_r2)",
-            "condicion_predio_nombre": "Migraci\xc3\xb3n (R1/R2)",
+            "matricula_inmobiliaria": r.get("matricula") or "---",
+            "tipo_nombre": "---",
+            "tipo": "---",
+            "condicion_predio_nombre": "---",
+            "condicion_predio": "---",
             "source_schema": "f_r1_r2"
         }
         for k, v in r.items():
