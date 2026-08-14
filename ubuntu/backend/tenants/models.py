@@ -43,11 +43,12 @@ class MunicipalitySchemas:
     app: str = "arbimaps_app"
     main: str = "a_base_principal"
     work: str = "b_asignaciones_arb"
+    work_history: str = "b_asignaciones_his"
     history: str = "c_base_historico"
     workflow: str = "d_workflow"
 
     def __post_init__(self) -> None:
-        for field_name in ("app", "main", "work", "history", "workflow"):
+        for field_name in ("app", "main", "work", "work_history", "history", "workflow"):
             if not _clean_name(getattr(self, field_name)):
                 raise MunicipalityConfigError(
                     f"Schema '{field_name}' es obligatorio para el municipio."

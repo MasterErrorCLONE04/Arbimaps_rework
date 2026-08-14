@@ -1,3 +1,111 @@
+from __future__ import annotations
+import logging
+import os
+import re
+import tempfile
+from typing import Optional
+
+from tenants.context import TenantContext
+from tenants.sql import app_table
+
+
+def _clonar_dataset_a_historial(
+    conn,
+    tenant: TenantContext,
+    work_datasetname: str,
+    schema_work: str,
+    schema_history: str = "b_asignaciones_his"
+) -> None:
+    """
+    Clona la totalidad de los datos del dataset recién creado desde schema_work
+    (b_asignaciones_arb) hacia schema_history (b_asignaciones_his) para conservar
+    la fotografía inicial inmutable.
+    """
+    if not schema_history or schema_history == schema_work:
+        return
+    
+    _ensure_work_history_schema_exists(conn, schema_work, schema_history)
+    
+    with conn.cursor() as cur:
+        # 1. Copiar t_ili2db_dataset
+        cur.execute(
+            f"""
+            INSERT INTO {schema_history}.t_ili2db_dataset (t_id, datasetname)
+            SELECT t_id, datasetname FROM {schema_work}.t_ili2db_dataset
+            WHERE datasetname = %s
+            ON CONFLICT (t_id) DO NOTHING;
+            """,
+            (work_datasetname,)
+        )
+        
+        # 2. Copiar t_ili2db_basket
+        cur.execute(
+            f"""
+            INSERT INTO {schema_history}.t_ili2db_basket
+            SELECT b.* FROM {schema_work}.t_ili2db_basket b
+            JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+            WHERE d.datasetname = %s
+            ON CONFLICT (t_id) DO NOTHING;
+            """,
+            (work_datasetname,)
+        )
+        
+        # 3. Obtener tablas con t_basket
+        cur.execute(
+            """
+            SELECT table_name 
+            FROM information_schema.columns 
+            WHERE table_schema = %s AND column_name = 't_basket'
+            GROUP BY table_name;
+            """,
+            (schema_work,)
+        )
+        tables_with_basket = [r[0] for r in (cur.fetchall() or []) if r and r[0]]
+        
+        # 4. Copiar filas de cada tabla
+        for tbl in tables_with_basket:
+            cur.execute(
+                f"""
+                INSERT INTO {schema_history}.{tbl}
+                SELECT t.* FROM {schema_work}.{tbl} t
+                WHERE t.t_basket IN (
+                    SELECT b.t_id FROM {schema_work}.t_ili2db_basket b
+                    JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                    WHERE d.datasetname = %s
+                )
+                ON CONFLICT (t_id) DO NOTHING;
+                """,
+                (work_datasetname,)
+            )
+
+
+def _ensure_work_history_schema_exists(conn, schema_work: str, schema_history: str = "b_asignaciones_his") -> None:
+    """
+    Garantiza la existencia del esquema de historial b_asignaciones_his y
+    clona la estructura DDL de b_asignaciones_arb si no existen las tablas.
+    """
+    if not schema_history or schema_history == schema_work:
+        return
+    with conn.cursor() as cur:
+        cur.execute(f"CREATE SCHEMA IF NOT EXISTS {schema_history};")
+        cur.execute(
+            "SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace "
+            "WHERE n.nspname = %s AND c.relname = 't_ili2db_seq';",
+            (schema_history,),
+        )
+        if not cur.fetchone():
+            cur.execute(f"CREATE SEQUENCE {schema_history}.t_ili2db_seq START WITH 1 INCREMENT BY 1;")
+
+        cur.execute(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = %s AND table_type = 'BASE TABLE';",
+            (schema_work,),
+        )
+        tables = [r[0] for r in (cur.fetchall() or []) if r and r[0]]
+        for table_name in tables:
+            cur.execute(
+                f"CREATE TABLE IF NOT EXISTS {schema_history}.{table_name} (LIKE {schema_work}.{table_name} INCLUDING ALL);"
+            )
+
 import logging
 import os
 import tempfile
@@ -405,20 +513,19 @@ def actualizar_predio_ids_desde_workspace(
             ) from exc
 
 
-def _importar_predios_f_r1_r2_si_faltan(
+def _importar_predios_f_r1_r2_si_faltan_esquema(
     conn,
     tenant: TenantContext,
     asignacion_id: int,
-    schema_work: str,
+    target_schema: str,
     work_datasetname: str,
 ) -> None:
     with conn.cursor() as cur:
-        # 1. Obtener t_basket_id para este dataset en el workspace
         cur.execute(
             f"""
             SELECT b.t_id
-            FROM {schema_work}.t_ili2db_basket b
-            JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+            FROM {target_schema}.t_ili2db_basket b
+            JOIN {target_schema}.t_ili2db_dataset d ON d.t_id = b.dataset
             WHERE d.datasetname = %s
             LIMIT 1
             """,
@@ -429,7 +536,7 @@ def _importar_predios_f_r1_r2_si_faltan(
             cur.execute(
                 f"""
                 SELECT t_id 
-                FROM {schema_work}.t_ili2db_dataset 
+                FROM {target_schema}.t_ili2db_dataset 
                 WHERE datasetname = %s
                 LIMIT 1
                 """,
@@ -441,8 +548,8 @@ def _importar_predios_f_r1_r2_si_faltan(
             else:
                 cur.execute(
                     f"""
-                    INSERT INTO {schema_work}.t_ili2db_dataset(t_id, datasetname)
-                    VALUES (COALESCE((SELECT max(t_id) FROM {schema_work}.t_ili2db_dataset), 0) + 1, %s)
+                    INSERT INTO {target_schema}.t_ili2db_dataset(t_id, datasetname)
+                    VALUES (COALESCE((SELECT max(t_id) FROM {target_schema}.t_ili2db_dataset), 0) + 1, %s)
                     RETURNING t_id
                     """,
                     (work_datasetname,),
@@ -453,9 +560,9 @@ def _importar_predios_f_r1_r2_si_faltan(
             basket_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, work_datasetname))
             cur.execute(
                 f"""
-                INSERT INTO {schema_work}.t_ili2db_basket (t_id, dataset, topic, t_ili_tid, attachmentkey, domains)
+                INSERT INTO {target_schema}.t_ili2db_basket (t_id, dataset, topic, t_ili_tid, attachmentkey, domains)
                 VALUES (
-                    COALESCE((SELECT max(t_id) FROM {schema_work}.t_ili2db_basket), 0) + 1,
+                    COALESCE((SELECT max(t_id) FROM {target_schema}.t_ili2db_basket), 0) + 1,
                     %s,
                     'Captura_ArbiMaps_V1_0.Captura_ArbiMaps',
                     %s,
@@ -470,7 +577,6 @@ def _importar_predios_f_r1_r2_si_faltan(
         else:
             t_basket_id = int(row[0])
 
-        # 2. Obtener la lista de NPNs activos para esta asignaciÃ³n
         cur.execute(
             f"""
             SELECT ap.numero_predial_nacional
@@ -485,14 +591,12 @@ def _importar_predios_f_r1_r2_si_faltan(
         if not npns:
             return
 
-        # 3. Importar predios de f_r1_r2 que no existen en el workspace
         for npn in npns:
-            # Verificar si existe en arb_predio
             cur.execute(
                 f"""
-                SELECT 1 FROM {schema_work}.arb_predio p
-                JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
-                JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                SELECT 1 FROM {target_schema}.arb_predio p
+                JOIN {target_schema}.t_ili2db_basket b ON b.t_id = p.t_basket
+                JOIN {target_schema}.t_ili2db_dataset d ON d.t_id = b.dataset
                 WHERE d.datasetname = %s AND p.numero_predial = %s
                 LIMIT 1
                 """,
@@ -500,7 +604,25 @@ def _importar_predios_f_r1_r2_si_faltan(
             )
             exists = bool(cur.fetchone())
             if not exists:
-                importar_predio_f_r1_r2_a_workspace(conn, tenant, npn, schema_work, t_basket_id)
+                importar_predio_f_r1_r2_a_workspace(conn, tenant, npn, target_schema, t_basket_id)
+
+
+def _importar_predios_f_r1_r2_si_faltan(
+    conn,
+    tenant: TenantContext,
+    asignacion_id: int,
+    schema_work: str,
+    work_datasetname: str,
+) -> None:
+    _importar_predios_f_r1_r2_si_faltan_esquema(conn, tenant, asignacion_id, schema_work, work_datasetname)
+    schema_history = getattr(getattr(tenant, "schemas", None), "work_history", "b_asignaciones_his")
+    if schema_history and schema_history != schema_work:
+        try:
+            _ensure_work_history_schema_exists(conn, schema_work, schema_history)
+            _importar_predios_f_r1_r2_si_faltan_esquema(conn, tenant, asignacion_id, schema_history, work_datasetname)
+        except Exception as err:
+            logger.warning("No fue posible duplicar predios en esquema de historial %s: %s", schema_history, err)
+
 
 
 def prune_workspace_predios(
@@ -3564,6 +3686,9 @@ def remove_workspace_dataset(
     datasetname: str,
     schema_work: str,
 ) -> dict:
+    schema_history = getattr(getattr(tenant, "schemas", None), "work_history", "b_asignaciones_his")
+    if schema_work in (schema_history, "b_asignaciones_his", "c_base_historico"):
+        raise ValueError(f"Operación denegada: El esquema histórico {schema_work} es inmutable y no permite eliminación de datasets.")
     """
     Delete all rows tied to a workspace dataset via t_basket, then remove baskets and dataset.
     This keeps b_asignaciones free of stale rows that block re-assignment by t_id.
@@ -3850,6 +3975,13 @@ def build_workspace_for_assignment(
         _arb_validate_workspace_dataset_health(conn, schema_work, work_datasetname)
     actualizar_predio_ids_desde_workspace(conn, tenant, asignacion_id)
     conn.commit()
+
+    schema_history = getattr(getattr(tenant, "schemas", None), "work_history", "b_asignaciones_his")
+    if schema_history and schema_history != schema_work:
+        try:
+            _clonar_dataset_a_historial(conn, tenant, work_datasetname, schema_work, schema_history)
+        except Exception as err:
+            logger.warning("No fue posible clonar dataset completo a historial %s: %s", schema_history, err)
 
     predios_dataset = workspace_dataset_total_predio_count(conn, tenant, work_datasetname)
     predios_asignacion = workspace_dataset_assignment_predio_count(

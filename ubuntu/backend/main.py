@@ -24,6 +24,7 @@ from routers.visor_tortas import router as resumenp_router
 from routers.auth import require_user, get_user_role
 from routers.sync_routes import router as sync_router
 from routers.asignaciones_workflow import router as asignaciones_workflow_router
+from routers.asignaciones_historial import router as asignaciones_historial_router
 from routers.panel_control import router as panel_control_router
 from routers.restriccion_predios import router as restriccion_predios_router
 from routers.sincronizacion_mergin import router as sincronizacion_mergin_router
@@ -156,6 +157,7 @@ def create_app() -> FastAPI:
     app.include_router(sync_router, prefix="/api")
     app.include_router(predios_edit_router, prefix="/api")
     app.include_router(asignaciones_workflow_router)
+    app.include_router(asignaciones_historial_router)
     app.include_router(panel_control_router)
     app.include_router(restriccion_predios_router)
     app.include_router(sincronizacion_mergin_router)
