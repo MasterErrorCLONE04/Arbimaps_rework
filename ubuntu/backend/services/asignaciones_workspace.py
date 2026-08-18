@@ -604,7 +604,17 @@ def _importar_predios_f_r1_r2_si_faltan_esquema(
             )
             exists = bool(cur.fetchone())
             if not exists:
-                importar_predio_f_r1_r2_a_workspace(conn, tenant, npn, target_schema, t_basket_id)
+                sp_name = f"sp_imp_predio_{abs(hash(npn)) % 10000000}"
+                try:
+                    cur.execute(f"SAVEPOINT {sp_name};")
+                    importar_predio_f_r1_r2_a_workspace(conn, tenant, npn, target_schema, t_basket_id)
+                    cur.execute(f"RELEASE SAVEPOINT {sp_name};")
+                except Exception as imp_err:
+                    try:
+                        cur.execute(f"ROLLBACK TO SAVEPOINT {sp_name};")
+                    except Exception:
+                        pass
+                    logger.warning("Error importando predio %s a %s: %s", npn, target_schema, imp_err)
 
 
 def _importar_predios_f_r1_r2_si_faltan(
@@ -4176,6 +4186,8 @@ def ensure_workspace_ready_for_export(
             predios_soporte_extra=predios_soporte_extra,
         )
         safe_log_event(
+            conn,
+            tenant,
             asignacion_id,
             "WORKSPACE_ON_DEMAND_SQL",
             (

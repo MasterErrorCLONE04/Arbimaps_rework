@@ -311,10 +311,31 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
               AND (COALESCE(r2.area_construida_1, 0) + COALESCE(r2.area_construida_2, 0) + COALESCE(r2.area_construida_3, 0)) > 0
             ON CONFLICT DO NOTHING;
         """
-        if geom_construccion == "%s":
-            cur.execute(sql_cons, (t_basket_id, id_predio, npn, geom_cons_val))
-        else:
-            cur.execute(sql_cons, (t_basket_id, id_predio, npn))
+        sp_cons = f"sp_cons_{abs(hash(npn)) % 10000000}"
+        try:
+            cur.execute(f"SAVEPOINT {sp_cons};")
+            if geom_construccion == "%s":
+                cur.execute(sql_cons, (t_basket_id, id_predio, npn, geom_cons_val))
+            else:
+                cur.execute(sql_cons, (t_basket_id, id_predio, npn))
+            cur.execute(f"RELEASE SAVEPOINT {sp_cons};")
+        except Exception as cons_err:
+            try:
+                cur.execute(f"ROLLBACK TO SAVEPOINT {sp_cons};")
+            except Exception:
+                pass
+            logger.warning("Geometria invalida para %s: %s. Reintentando con dummy_construccion_sql.", npn, cons_err)
+            try:
+                sp_dummy = f"sp_cons_dummy_{abs(hash(npn)) % 10000000}"
+                cur.execute(f"SAVEPOINT {sp_dummy};")
+                cur.execute(sql_cons.replace(geom_construccion, dummy_construccion_sql), (t_basket_id, id_predio, npn))
+                cur.execute(f"RELEASE SAVEPOINT {sp_dummy};")
+            except Exception as dummy_err:
+                try:
+                    cur.execute(f"ROLLBACK TO SAVEPOINT {sp_dummy};")
+                except Exception:
+                    pass
+                logger.error("Error al insertar arb_construccion para predio %s: %s", npn, dummy_err)
 
         # 8. Insertar propietarios (arb_derechointeresadofuente)
         cur.execute(
