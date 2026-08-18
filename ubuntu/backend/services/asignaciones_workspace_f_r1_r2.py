@@ -240,7 +240,17 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
             WHERE r1.numero_predial = %s
             ON CONFLICT DO NOTHING;
         """
-        cur.execute(sql_predio, (t_basket_id, npn))
+        sp_pred = f"sp_pred_{abs(hash(npn)) % 10000000}"
+        try:
+            cur.execute(f"SAVEPOINT {sp_pred};")
+            cur.execute(sql_predio, (t_basket_id, npn))
+            cur.execute(f"RELEASE SAVEPOINT {sp_pred};")
+        except Exception as pred_err:
+            try:
+                cur.execute(f"ROLLBACK TO SAVEPOINT {sp_pred};")
+            except Exception:
+                pass
+            logger.info("El predio %s ya existia o tuvo conflicto al insertar en arb_predio: %s", npn, pred_err)
 
         # Obtener t_id de predio
         cur.execute(f"SELECT t_id, area_catastral_terreno FROM {schema_work}.arb_predio WHERE numero_predial = %s ORDER BY t_id DESC LIMIT 1;", (npn,))
