@@ -35,7 +35,7 @@ def test_run_insertar_predios_for_asignacion_empty():
     assert res == {"inserted": 0, "errors": []}
 
 
-@patch("services.asignaciones_workspace_sql.get_db_connection")
+@patch("services.asignaciones_workspace_sql.db_conn")
 @patch("services.asignaciones_workspace_sql.importar_predios_f_r1_r2_a_workspace")
 def test_run_insertar_predios_for_asignacion_bulk_success(mock_bulk, mock_get_conn):
     mock_conn = MagicMock()
@@ -49,7 +49,7 @@ def test_run_insertar_predios_for_asignacion_bulk_success(mock_bulk, mock_get_co
     mock_bulk.assert_called_once()
 
 
-@patch("services.asignaciones_workspace_sql.get_db_connection")
+@patch("services.asignaciones_workspace_sql.db_conn")
 @patch("services.asignaciones_workspace_sql.importar_predios_f_r1_r2_a_workspace")
 @patch("services.asignaciones_workspace_sql.importar_predio_f_r1_r2_a_workspace")
 def test_run_insertar_predios_for_asignacion_partial_error(mock_import, mock_bulk, mock_get_conn):
