@@ -3890,6 +3890,7 @@ def build_workspace_for_assignment(
             dataset_name=work_datasetname,
             schema_work=schema_work,
         )
+        _clonar_dataset_a_historial(conn, tenant, work_datasetname, schema_work=schema_work, schema_history="b_asignaciones_his")
         _importar_predios_f_r1_r2_si_faltan(conn, tenant, asignacion_id, schema_work, work_datasetname)
         actualizar_predio_ids_desde_workspace(conn, tenant, asignacion_id)
         conn.commit()

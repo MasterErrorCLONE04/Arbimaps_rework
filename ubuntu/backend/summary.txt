@@ -1,0 +1,139 @@
+=== BUILD WORKSPACE FOR ASSIGNMENT ===
+def build_workspace_for_assignment(
+    conn,
+    tenant: TenantContext,
+    asignacion_id: int,
+    *,
+    schema_main: str,
+    schema_work: str,
+    datasetname_main: str,
+    work_datasetname: str,
+    ili2pg_cmd: str,
+    timeout_sec: int,
+    basket_tids_to_use: Optional[List[str]] = None,
+    export_main_by_dataset: bool = False,
+) -> dict:
+    workspace_ctx = workspace_schema_service.ensure_workspace_schema_ready(
+        conn,
+        tenant,
+        schema_work=schema_work,
+    )
+    expected_predios = assignment_active_predio_count(conn, tenant, asignacion_id)
+    if expected_predios <= 0:
+        raise export_service.ExportServiceError(
+            status_code=400,
+            detail=f"La asignacion {asignacion_id} no tiene predios activos para construir workspace.",
+        )
+
+    datasetname_main = (datasetname_main or "").strip()
+    work_datasetname = (work_datasetname or "").strip()
+    if not datasetname_main:
+        raise export_service.ExportServiceError(
+            status_code=400,
+            detail="La asignacion no tiene dataset origen para construir workspace.",
+        )
+    if not work_datasetname:
+        raise export_service.ExportServiceError(
+            status_code=400,
+            detail="La asignacion no tiene dataset de workspace definido.",
+        )
+
+    if workspace_ctx.build_strategy == "legacy_sql":
+        _ensure_workspace_enum_tables_populated(conn, tenant, schema_main, schema_work)
+        result = workspace_sql_service.run_insertar_predios_for_asignacion(
+            conn,
+            tenant,
+            asignacion_id,
+            dataset_name=work_datasetname,
+            schema_work=schema_work,
+        )
+        _importar_predios_f_r1_r2_si_faltan(conn, tenant, asignacion_id, schema_work, work_datasetname)
+        actualizar_predio_ids_desde_workspace(conn, tenant, asignacion_id)
+        conn.commit()
+
+        predios_dataset = workspace_dataset_total_predio_count(conn, tenant, work_datasetname)
+        predios_asignacion = workspace_dataset_assignment_predio_count(
+            conn,
+            tenant,
+            work_datasetname,
+            asignacion_id,
+        )
+        predios_soporte_extra = max(predios_dataset - predios_asignacion, 0)
+
+        return {
+            "dataset_name": work_datasetname,
+            "checkout_mode": "legacy_sql",
+            "expected_predios": expected_predios,
+            "predios_cargados": predios_dataset,
+            "predios_asignacion": predios_asignacion,
+       
+
+=== CLONAR DATASET A HISTORIAL ===
+def _clonar_dataset_a_historial(
+    conn,
+    tenant: TenantContext,
+    work_datasetname: str,
+    schema_work: str,
+    schema_history: str = "b_asignaciones_his"
+) -> None:
+    """
+    Clona la totalidad de los datos del dataset recién creado desde schema_work
+    (b_asignaciones_arb) hacia schema_history (b_asignaciones_his) para conservar
+    la fotografía inicial inmutable.
+    """
+    if not schema_history or schema_history == schema_work:
+        return
+    
+    _ensure_work_history_schema_exists(conn, schema_work, schema_history)
+    
+    with conn.cursor() as cur:
+        # 1. Copiar t_ili2db_dataset
+        cur.execute(
+            f"""
+            INSERT INTO {schema_history}.t_ili2db_dataset (t_id, datasetname)
+            SELECT t_id, datasetname FROM {schema_work}.t_ili2db_dataset
+            WHERE datasetname = %s
+            ON CONFLICT (t_id) DO NOTHING;
+            """,
+            (work_datasetname,)
+        )
+        
+        # 2. Copiar t_ili2db_basket
+        cur.execute(
+            f"""
+            INSERT INTO {schema_history}.t_ili2db_basket
+            SELECT b.* FROM {schema_work}.t_ili2db_basket b
+            JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+            WHERE d.datasetname = %s
+            ON CONFLICT (t_id) DO NOTHING;
+            """,
+            (work_datasetname,)
+        )
+        
+        # 3. Obtener tablas con t_basket
+        cur.execute(
+            """
+            SELECT table_name 
+            FROM information_schema.columns 
+            WHERE table_schema = %s AND column_name = 't_basket'
+            GROUP BY table_name;
+            """,
+            (schema_work,)
+        )
+        tables_with_basket = [r[0] for r in (cur.fetchall() or []) if r and r[0]]
+        
+        # 4. Copiar filas de cada tabla
+        for tbl in tables_with_basket:
+            cur.execute(
+                f"""
+                INSERT INTO {schema_history}.{tbl}
+                SELECT t.* FROM {schema_work}.{tbl} t
+                WHERE t.t_basket IN (
+                    SELECT b.t_id FROM {schema_work}.t_ili2db_basket b
+                    JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                    WHERE d.datasetname = %s
+                )
+                ON CONFLICT (t_id) DO NOTHING;
+                """,
+                (work_datasetname,)
+            )
