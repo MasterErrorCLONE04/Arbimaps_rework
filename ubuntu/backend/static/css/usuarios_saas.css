@@ -255,7 +255,7 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: var(--shadow);
+  /* box-shadow: var(--shadow); */
   transition: width 0.3s ease;
 }
 
@@ -411,7 +411,7 @@ body {
   text-align: center;
   background-color: #fff;
   border: 1.5px solid var(--border);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08); */
   color: var(--text-dark);
   white-space: nowrap;
   transition: all 0.2s ease;
@@ -1279,7 +1279,7 @@ hr.drawer-divider {
   background-color: #fff;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  /* box-shadow: var(--shadow); */
   padding: 24px;
   display: flex;
   flex-direction: column;

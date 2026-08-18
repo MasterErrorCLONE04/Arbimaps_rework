@@ -453,17 +453,20 @@
     border-radius: 18px;
 }
 
-.accordion-button {
+.container-sistem .accordion-button,
+.modal-body .accordion-button {
     background-color: #092c1c;
     color: white;
     border-radius: 18px;
 }
 
-.accordion-button:focus {
+.container-sistem .accordion-button:focus,
+.modal-body .accordion-button:focus {
     border: none !important;
 }
 
-.accordion-button:not(.collapsed) {
+.container-sistem .accordion-button:not(.collapsed),
+.modal-body .accordion-button:not(.collapsed) {
     background-color: #002F55 !important;
     color: white;
     border: none;
@@ -2635,8 +2638,8 @@ body.view-buscar_predio .container-content .row.g-3.align-items-stretch {
 
 body.view-buscar_predio .tarjeta-predio,
 body.view-buscar_predio .card-header,
-body.view-buscar_predio .accordion-button,
-body.view-buscar_predio .accordion-button:not(.collapsed),
+body.view-buscar_predio .container-sistem .accordion-button,
+body.view-buscar_predio .container-sistem .accordion-button:not(.collapsed),
 body.view-buscar_predio .offcanvas-header,
 body.view-buscar_predio .uc-accordion-header {
     color: #fff !important;
@@ -3018,13 +3021,13 @@ body.view-buscar_predio .contenido-visita .dato {
     color: #294c39 !important;
 }
 
-body.view-buscar_predio .accordion-button.collapsed {
+body.view-buscar_predio .container-sistem .accordion-button.collapsed {
     color: var(--cp-green) !important;
     background: #fff !important;
     border: 1px solid var(--cp-line) !important;
 }
 
-body.view-buscar_predio .accordion-button:not(.collapsed) {
+body.view-buscar_predio .container-sistem .accordion-button:not(.collapsed) {
     color: #fff !important;
     background: var(--cp-green) !important;
 }

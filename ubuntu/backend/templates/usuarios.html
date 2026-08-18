@@ -1,287 +1,6 @@
 <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_saas.css?v=16" />
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<style>
-  .status-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-    line-height: 1;
-    white-space: nowrap;
-    text-transform: uppercase;
-  }
 
-  .status-badge.pendiente {
-    background-color: #fef3c7;
-    color: #d97706;
-    border: 1px solid #fde68a;
-  }
-
-  .status-badge.aprobada {
-    background-color: #d1fae5;
-    color: #059669;
-    border: 1px solid #a7f3d0;
-  }
-
-  .status-badge.rechazada {
-    background-color: #fee2e2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
-  }
-
-  .solicitudes-section {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  /* ==========================================
-     CUSTOM PREMIUM USER TABLE STYLES
-     ========================================== */
-  .table-card {
-    background: #ffffff !important;
-    border-radius: 20px !important;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
-    overflow: hidden !important;
-  }
-
-  .table-card .table-header-custom {
-    background-color: #002f55 !important;
-    color: #ffffff !important;
-    padding: 24px !important;
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    border-bottom: none !important;
-    flex-wrap: wrap !important;
-    gap: 16px !important;
-  }
-
-  .table-card .table-header-custom h2 {
-    color: #ffffff !important;
-    font-size: 1.35rem !important;
-    font-weight: 700 !important;
-    margin: 0 !important;
-  }
-
-  .table-card .table-header-custom p {
-    color: rgba(255, 255, 255, 0.75) !important;
-    font-size: 0.875rem !important;
-    margin: 4px 0 0 0 !important;
-  }
-
-  .search-box-custom {
-    position: relative !important;
-    display: flex !important;
-    align-items: center !important;
-    width: 280px !important;
-    max-width: 100% !important;
-  }
-
-  .search-box-custom .search-icon-custom {
-    position: absolute !important;
-    left: 14px !important;
-    color: #94a3b8 !important;
-    font-size: 1.05rem !important;
-    pointer-events: none !important;
-    z-index: 5 !important;
-  }
-
-  .search-box-custom input {
-    width: 100% !important;
-    padding: 10px 16px 10px 42px !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 12px !important;
-    background-color: #ffffff !important;
-    color: #334155 !important;
-    font-size: 0.9rem !important;
-    outline: none !important;
-    transition: all 0.2s ease !important;
-  }
-
-  .search-box-custom input::placeholder {
-    color: #94a3b8 !important;
-  }
-
-  .search-box-custom input:focus {
-    border-color: #ffffff !important;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25) !important;
-  }
-
-  .btn-add-user-custom {
-    background-color: #ffffff !important;
-    color: #002f55 !important;
-    border: none !important;
-    border-radius: 12px !important;
-    padding: 10px 20px !important;
-    font-size: 0.88rem !important;
-    font-weight: 600 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-    transition: all 0.2s ease !important;
-    cursor: pointer !important;
-    white-space: nowrap !important;
-  }
-
-  .btn-add-user-custom:hover {
-    background-color: #f1f5f9 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-  }
-
-  .custom-table {
-    border-collapse: separate !important;
-    border-spacing: 0 !important;
-    width: 100% !important;
-    background-color: #ffffff !important;
-  }
-
-  .custom-table th {
-    padding: 16px 20px !important;
-    font-size: 0.85rem !important;
-    font-weight: 700 !important;
-    color: #475569 !important;
-    border-bottom: 1px solid #cbd5e1 !important;
-    background-color: #ffffff !important;
-    text-align: left !important;
-    white-space: nowrap !important;
-  }
-
-  .custom-table th:last-child {
-    text-align: center !important;
-  }
-
-  .custom-table td {
-    padding: 16px 20px !important;
-    font-size: 0.88rem !important;
-    color: #1e293b !important;
-    border-bottom: 1px solid #f1f5f9 !important;
-    background-color: #ffffff !important;
-    vertical-align: middle !important;
-    text-align: left !important;
-    white-space: nowrap !important;
-  }
-
-  .custom-table td:last-child {
-    text-align: center !important;
-  }
-
-  .table-user-avatar {
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 50% !important;
-    color: #ffffff !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-weight: 700 !important;
-    font-size: 0.88rem !important;
-    flex-shrink: 0 !important;
-  }
-
-  .table-user-info-wrap {
-    display: flex !important;
-    align-items: center !important;
-    gap: 12px !important;
-  }
-
-  .table-username-text {
-    font-weight: 700 !important;
-    color: #002f55 !important;
-    font-size: 0.9rem !important;
-    display: block !important;
-  }
-
-  .table-fullname-text {
-    color: #64748b !important;
-    font-size: 0.78rem !important;
-    display: block !important;
-    font-weight: 400 !important;
-  }
-
-  .role-badge {
-    color: #002f55 !important;
-  }
-
-  .status-text {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    font-weight: 600 !important;
-    color: #1e293b !important;
-  }
-
-  .status-text::before {
-    content: "" !important;
-    width: 8px !important;
-    height: 8px !important;
-    background-color: #22c55e !important;
-    border-radius: 50% !important;
-    display: inline-block !important;
-  }
-
-  .status-text.inactive {
-    color: #64748b !important;
-  }
-
-  .status-text.inactive::before {
-    background-color: #cbd5e1 !important;
-  }
-
-  .actions-cell {
-    display: flex !important;
-    gap: 8px !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .pagination-controls {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-  }
-
-  .pagination-controls .page-btn {
-    width: 32px !important;
-    height: 32px !important;
-    border-radius: 8px !important;
-    border: 1px solid #e2e8f0 !important;
-    background-color: #ffffff !important;
-    color: #475569 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 0.85rem !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    padding: 0 !important;
-  }
-
-  .pagination-controls .page-btn:hover:not(.disabled) {
-    background-color: #f1f5f9 !important;
-    border-color: #cbd5e1 !important;
-  }
-
-  .pagination-controls .page-btn.active {
-    background-color: #002f55 !important;
-    color: #ffffff !important;
-    border-color: #002f55 !important;
-  }
-
-  .pagination-controls .page-btn.disabled {
-    opacity: 0.45 !important;
-    cursor: not-allowed !important;
-    background-color: #f8fafc !important;
-  }
-</style>
 <link rel="stylesheet" href="{{ rp }}/static/css/usuarios_neiva.css?v=1" />
 
 <div class="container-fluid usuarios-saas ">
@@ -308,10 +27,10 @@
       <i class="bi bi-people fs-5"></i> Cuadrillas <span class="tab-badge" id="tabBadgeCuadrillas">0</span>
     </button>
     {% if effective_role in ['admin', 'soporte', 'coordinador', 'lider_tecnico'] %}
-    <button class="tab-btn" id="tabSolicitudes">
+    <!-- <button class="tab-btn" id="tabSolicitudes">
       <i class="bi bi-file-earmark-person fs-5"></i> Solicitudes <span class="tab-badge"
         id="tabBadgeSolicitudes">0</span>
-    </button>
+    </button> -->
     {% endif %}
   </div>
 
@@ -355,7 +74,7 @@
               <i class="bi bi-person-circle"></i>
             </div>
             <div class="stat-info">
-              <span class="label">Lider de reco.</span>
+              <span class="label">Líder Técnico</span>
               <span class="value" id="cntLider">0</span>
             </div>
           </div>
@@ -436,7 +155,7 @@
     <!-- Contenedor Principal (Tabla y Drawer) -->
     <div class="usuarios-table-container ">
       <!-- Tabla -->
-      <div class="table-card ">
+      <div class="table-card">
         <div class="table-header-custom">
           <div>
             <h2 id="totalUsersTitle">Gestión de Usuarios</h2>
@@ -526,8 +245,7 @@
             </div>
 
             <div class="container-fluid p-2 align-items-center  ">
-              <div class=" row  p-3 align-items-center"
-                style="background-color: #F3F8FC; border-radius: 20px; border: 2px solid #E0EDF7;">
+              <div class=" row  p-3 align-items-center" style="background-color: #eceeed; border-radius: 20px; ">
                 <div
                   class="col-12 reconocedores-header d-flex align-items-center justify-content-between  p-2 mb-3 px-3">
                   <div class="px-0 drawer-section-title text-center ">Información contractual</div>
@@ -786,10 +504,11 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header-detalle-cuadrilla d-flex justify-content-between">
-        <h5 class="modal-title" id="modalCuadrillaDetailLabel">Detalle de la Cuadrilla</h5>
+        <h5 class="modal-title d-flex align-items-center " id="modalCuadrillaDetailLabel">Detalle de la Cuadrilla
+        </h5>
         <span class="mb-1 badge-modal-cuadrilla " id="detCuaNombre">Cuadrilla X</span>
       </div>
-      <div class="modal-body py-0 pb-3">
+      <div class="modal-body p-3">
         <div class="d-flex align-items-center gap-3 mb-4 py-3 px-2"
           style="border-radius: 10px; background-color: #F0F6FB;">
           <div class="cuadrilla-avatar-modal">
@@ -996,6 +715,8 @@
       "coordinador": "coordinador",
       "reconocedor": "reconocedor",
       "lider_tecnico": "lider_tecnico",
+      "lider_reconocimiento": "lider_tecnico",
+      "lider": "lider_tecnico",
       "consulta": "consulta",
       "digitalizador": "digitalizador",
     };
@@ -2591,7 +2312,7 @@
         text: cDelete ? `Se respaldará el equipo "${cDelete.nombre}" antes de borrarlo.` : "Se respaldará la información antes de eliminarla.",
         icon: "warning",
         showCancelButton: true,
-        confirmButtonColor: "#CD2023",
+        confirmButtonColor: "#E60000",
         cancelButtonColor: "#64748b",
         confirmButtonText: "Sí, eliminar",
         cancelButtonText: "Cancelar",

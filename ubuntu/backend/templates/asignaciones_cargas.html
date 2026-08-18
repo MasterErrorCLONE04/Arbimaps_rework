@@ -1,187 +1,16 @@
-<style>
-  .btn-outline-solicitudes {
-      background: linear-gradient(135deg, #032F57 0%, #084c8a 100%) !important;
-      color: #ffffff !important;
-      border: none !important;
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 8px 18px;
-      box-shadow: 0 4px 12px rgba(3, 47, 87, 0.15) !important;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-  }
-
-  .btn-outline-solicitudes:hover {
-      background: linear-gradient(135deg, #084c8a 0%, #0b67bb 100%) !important;
-      color: #ffffff !important;
-      transform: translateY(-2px) scale(1.02) !important;
-      box-shadow: 0 6px 16px rgba(3, 47, 87, 0.25) !important;
-  }
-
-  .btn-outline-solicitudes:active {
-      transform: translateY(0) scale(0.98) !important;
-  }
-
-  #badgeSolicitudesCount {
-      background-color: #ff3b30 !important;
-      color: #ffffff !important;
-      font-size: 0.72rem !important;
-      font-weight: 700 !important;
-      padding: 3px 8px !important;
-      border: 1.5px solid #ffffff !important;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
-      animation: pulseBadge 2s infinite !important;
-  }
-
-  @keyframes pulseBadge {
-      0% {
-          transform: scale(1);
-      }
-      50% {
-          transform: scale(1.1);
-      }
-      100% {
-          transform: scale(1);
-      }
-  }
-
-  /* Modal personalizado */
-  .custom-modal-backdrop {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(3, 47, 87, 0.45) !important;
-      backdrop-filter: blur(4px) !important;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 2500 !important; /* Extremely high z-index to overlay everything */
-  }
-
-  @keyframes modalFadeIn {
-      from {
-          opacity: 0;
-          transform: scale(0.95) translateY(-20px);
-      }
-      to {
-          opacity: 1;
-          transform: scale(1) translateY(0);
-      }
-  }
-
-  .custom-modal-content {
-      background: #ffffff !important;
-      border-radius: 20px !important;
-      padding: 28px !important;
-      box-shadow: 0 15px 35px rgba(3, 47, 87, 0.25) !important;
-      position: relative;
-      animation: modalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      border: 1px solid rgba(3, 47, 87, 0.1) !important;
-  }
-
-  .btn-close-custom {
-      background: none !important;
-      border: none !important;
-      outline: none !important;
-      box-shadow: none !important;
-      color: #032F57 !important;
-      font-size: 1.1rem !important;
-      cursor: pointer !important;
-      width: 36px !important;
-      height: 36px !important;
-      border-radius: 50% !important;
-      background-color: #F0F6FB !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-      padding: 0 !important;
-  }
-
-  .btn-close-custom:hover {
-      background-color: #E2EEF8 !important;
-      color: #dc3545 !important;
-      transform: rotate(90deg) scale(1.05) !important;
-  }
-
-  /* Table styling within modal */
-  #tblListarSolicitudesAsistenteTable {
-      border-collapse: separate !important;
-      border-spacing: 0 8px !important;
-      width: 100% !important;
-  }
-
-  #tblListarSolicitudesAsistenteTable thead th {
-      background-color: #E2EEF8 !important;
-      color: #032F57 !important;
-      font-weight: 600 !important;
-      padding: 12px 16px !important;
-      border: none !important;
-  }
-
-  #tblListarSolicitudesAsistenteTable tbody tr {
-      background-color: #F8FBFE !important;
-      transition: all 0.2s ease !important;
-  }
-
-  #tblListarSolicitudesAsistenteTable tbody tr:hover {
-      background-color: #EEF5FC !important;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(3, 47, 87, 0.05) !important;
-  }
-
-  #tblListarSolicitudesAsistenteTable tbody td {
-      padding: 14px 16px !important;
-      border: none !important;
-      vertical-align: middle !important;
-  }
-  
-  /* Badges inside table */
-  .badge-estado-pendiente {
-      background-color: #FFF3CD !important;
-      color: #856404 !important;
-      padding: 5px 12px !important;
-      border-radius: 20px !important;
-      font-weight: 600 !important;
-      font-size: 0.78rem !important;
-      display: inline-block;
-  }
-  
-  .badge-estado-procesada {
-      background-color: #D4EDDA !important;
-      color: #155724 !important;
-      padding: 5px 12px !important;
-      border-radius: 20px !important;
-      font-weight: 600 !important;
-      font-size: 0.78rem !important;
-      display: inline-block;
-  }
-
-  .badge-estado-rechazada {
-      background-color: #F8D7DA !important;
-      color: #721C24 !important;
-      padding: 5px 12px !important;
-      border-radius: 20px !important;
-      font-weight: 600 !important;
-      font-size: 0.78rem !important;
-      display: inline-block;
-  }
-</style>
-
-<div class="content-section container-fluid px-2 px-md-3 pb-5">
-  <div class="section-title w-100 ms-0 d-flex justify-content-between align-items-center flex-wrap gap-2" style="width: 100% !important; max-width: 100% !important;">
+<div class="content-section container-fluid p-0 ">
+  <div class="section-title w-100 ms-0 d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3"
+    style="width: 100% !important; max-width: 100% !important;">
     <div class="title-header">
       <small class="text-title-header">MÓDULO DE ASIGNACIONES > CREAR CARGA DE TRABAJO</small>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-sm rounded-pill px-3 fw-semibold btn-outline-solicitudes" id="btnAbrirGeneradorNpn" type="button">
+      <button class="btn btn-sm rounded-pill px-4 p-3 fw-semibold shadow-sm btn-outline-solicitudes"
+        id="btnAbrirGeneradorNpn" type="button">
         <i class="bi bi-magic me-1"></i> Generar Nuevos NPNs
       </button>
-      <button class="btn btn-sm rounded-pill px-3 fw-semibold btn-outline-solicitudes" id="btnListarSolicitudesAsistente" type="button">
+      <button class="btn btn-sm rounded-pill px-3 fw-semibold shadow-sm btn-outline-solicitudes-2"
+        id="btnListarSolicitudesAsistente" type="button">
         <i class="bi bi-list-task me-1"></i> Ver Solicitudes Pendientes
         <span class="badge bg-danger ms-2 rounded-pill d-none" id="badgeSolicitudesCount">0</span>
       </button>
@@ -223,20 +52,14 @@
 
             <div class="buscador-ai-actions  d-flex pt-3 justify-content-end align-items-center gap-3">
               {% if effective_role != 'coordinador' %}
-              <div class="reconocedores-pill" title="Coordinadores disponibles para asignación">
-                <span class="reconocedores-pill-icon"><i class="bi bi-person-badge-fill"></i></span>
+              <div class="reconocedores-pill ms-3 " title="Coordinadores disponibles para asignación">
+                <span class="reconocedores-pill-icon shadow-sm"><i class="bi bi-person-circle"></i></span>
                 <span>Coord. Disponibles:</span>
                 <strong id="contadorCoordinadoresDisponibles">0</strong>
               </div>
               {% endif %}
 
               <div class=" d-flex justify-content-center align-items-center gap-4 px-3 ">
-                <div class="consultaButtons d-flex justify-content-end">
-                  <button class="btn buscar" id="btnBuscar" type="button">
-                    <i class="bi bi-search me-2 icono-buscar"></i>
-                    <span class="texto-buscar">Buscar predios</span>
-                  </button>
-                </div>
 
                 <div class="consultaButtons d-flex justify-content-center align-items-center  ">
                   <button class="btn limpiar" id="btnLimpiar" type="button">
@@ -249,6 +72,14 @@
                     <span class="texto-buscar">Limpiar</span>
                   </button>
                 </div>
+
+                <div class="consultaButtons d-flex justify-content-end">
+                  <button class="btn buscar" id="btnBuscar" type="button">
+                    <i class="bi bi-search me-2 icono-buscar"></i>
+                    <span class="texto-buscar ">Buscar predios</span>
+                  </button>
+                </div>
+
               </div>
 
             </div>
@@ -290,7 +121,7 @@
           </div>
         </div>
 
-        <div id="cardResultados" class="card card-panel border-0 p-2  d-none" style="max-height: 100%;">
+        <div id="cardResultados" class="card card-panel shadow-sm border-0 p-2  d-none" style="max-height: 100%;">
           <div class="card-body p-3 p-md-3">
             <div class="card-resultados-header">
               <div>
@@ -303,7 +134,7 @@
                 </p>
               </div>
 
-              <div id="asgMsg" class="contador-resultados-badge d-none">
+              <div id="asgMsg" class="contador-resultados-badge shadow-sm d-none">
                 <i class="bi bi-crosshair"></i>
                 <span id="asgMsgText">0 Resultados</span>
               </div>
@@ -387,28 +218,31 @@
       </div>
 
       <div id="panelConfiguracionAsignacion" class="col-12 col-xl-4 d-none">
-        
+
         <!-- Card de Asistente de Solicitud -->
-        <div id="cardAsistenteSolicitud" class="card card-panel border-0 mb-3 bg-white d-none" style="box-shadow: 0 4px 12px rgba(3, 47, 87, 0.1) !important;">
+        <div id="cardAsistenteSolicitud" class="card card-panel border-0 mb-3 bg-white d-none"
+          style="box-shadow: 0 4px 12px rgba(3, 47, 87, 0.1) !important;">
           <div class="card-body p-3">
-             <div class="d-flex align-items-center gap-2 pb-2 mb-2 border-bottom">
-               <i class="bi bi-magic text-primary fs-5"></i>
-               <h6 class="fw-bold mb-0 text-navy">Asistente de Solicitud</h6>
-             </div>
-             <div class="mb-2" style="font-size: 0.85rem; text-align: left;">
-               <strong>Solicitud:</strong> <span id="asistenteNombre">-</span><br/>
-               <strong>Coordinador:</strong> <span id="asistenteCoordinador">-</span><br/>
-               <strong>Observaciones:</strong> <span id="asistenteObservaciones" class="text-muted"></span>
-             </div>
-             <hr class="my-2"/>
-             <span class="fw-semibold text-navy d-block mb-2" style="font-size: 0.85rem; text-align: left;">Lotes a procesar:</span>
-             <div id="asistenteDesgloseLista" class="d-flex flex-column gap-2" style="max-height: 200px; overflow-y: auto;">
-               <!-- Lotes del desglose populated dynamically -->
-             </div>
+            <div class="d-flex align-items-center gap-2 pb-2 mb-2 border-bottom">
+              <i class="bi bi-magic text-primary fs-5"></i>
+              <h6 class="fw-bold mb-0 text-navy">Asistente de Solicitud</h6>
+            </div>
+            <div class="mb-2" style="font-size: 0.85rem; text-align: left;">
+              <strong>Solicitud:</strong> <span id="asistenteNombre">-</span><br />
+              <strong>Coordinador:</strong> <span id="asistenteCoordinador">-</span><br />
+              <strong>Observaciones:</strong> <span id="asistenteObservaciones" class="text-muted"></span>
+            </div>
+            <hr class="my-2" />
+            <span class="fw-semibold text-navy d-block mb-2" style="font-size: 0.85rem; text-align: left;">Lotes a
+              procesar:</span>
+            <div id="asistenteDesgloseLista" class="d-flex flex-column gap-2"
+              style="max-height: 200px; overflow-y: auto;">
+              <!-- Lotes del desglose populated dynamically -->
+            </div>
           </div>
         </div>
 
-        <div class="card card-panel card-panel-asignacion border-0">
+        <div class="card card-panel card-panel-asignacion shadow-sm border-0">
 
           <!-- <div class="reconocedores-pill mt-3" title="Reconocedores disponibles para el coordinador seleccionado">
             <span class="reconocedores-pill-icon"><i class="bi bi-person-fill"></i></span>
@@ -420,7 +254,7 @@
             <div class="for-title mt-2 mt-md-3 d-flex align-items-center gap-2 pb-3"
               style=" box-shadow: 0 1px 0 0 #002f5524;">
               <i class="bi bi-sliders me-2 fs-5"></i>
-              <small class="for-panel-title border-bottom" style="font-size: 1.2rem;">Configuración de Asignación
+              <small class="for-panel-title " style="font-size: 1.2rem;">Configuración de Asignación
               </small>
             </div>
 
@@ -440,7 +274,7 @@
               <option value="" disabled selected>Selecciona un coordinador...</option>
             </select>
 
-            <label class="consultaLabel label-asignacion mt-4 fw-bold " for="inpUsuarioDestino">
+            <label class="consultaLabel label-asignacion mt-4 fw-bold  " for="inpUsuarioDestino">
               Selecciona usuario de destino
             </label>
 
@@ -449,7 +283,7 @@
               <option value="" disabled selected>Selecciona un reconocedor...</option>
             </select>
 
-            <label class="consultaLabel label-asignacion mt-4 fw-bold" for="inpFechaFinal">
+            <label class="consultaLabel label-asignacion mt-4 fw-bold " for="inpFechaFinal">
               Fecha de entrega propuesta
             </label>
 
@@ -466,7 +300,7 @@
             </div>
 
             <div class="consultaButtons consultaButtons-asignacion mt-4 d-flex justify-content-end">
-              <button class="btn crear-asignacion " id="btnAsignar" type="button">
+              <button class="crear-asignacion " id="btnAsignar" type="button">
                 <i class="bi bi-journals me-2"></i>
                 Crear asignación
               </button>
@@ -533,41 +367,44 @@
   </div>
 </div>
 
-  <!-- Modal Listar Solicitudes -->
-  <div id="modalListarSolicitudes" class="custom-modal-backdrop d-none">
-    <div class="custom-modal-content" style="max-width: 800px; width: 90%;">
-      <div class="custom-modal-header d-flex justify-content-between align-items-center mb-3">
-        <h5 class="custom-modal-title fw-bold mb-0 text-navy">Solicitudes de Cargas de Trabajo</h5>
-        <button type="button" class="btn-close-custom" id="btnCloseListarSolicitudesModal">
-          <i class="bi bi-x-lg"></i>
-        </button>
-      </div>
-      <div class="modal-body text-start">
-        <p class="text-muted small mb-3">Selecciona una solicitud para procesarla y asignar los lotes correspondientes.</p>
-        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-          <table class="table table-resultados w-100" id="tblListarSolicitudesAsistenteTable" style="font-size: 0.88rem; width: 100%;">
-            <thead>
-              <tr>
-                <th class="text-center" style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">ID</th>
-                <th>Coordinador</th>
-                <th>Nombre</th>
-                <th class="text-center">Lotes</th>
-                <th class="text-center">Estado</th>
-                <th class="text-center" style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;">Acción</th>
-              </tr>
-            </thead>
-            <tbody id="tbodyListarSolicitudesAsistente">
-              <tr>
-                <td colspan="6" class="text-center py-3">Cargando solicitudes...</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+<!-- Modal Listar Solicitudes -->
+<div id="modalListarSolicitudes" class="custom-modal-backdrop d-none">
+  <div class="custom-modal-content" style="max-width: 800px; width: 90%;">
+    <div class="custom-modal-header d-flex justify-content-between align-items-center mb-3">
+      <h5 class="custom-modal-title fw-bold mb-0 text-navy">Solicitudes de Cargas de Trabajo</h5>
+      <button type="button" class="btn-close-custom" id="btnCloseListarSolicitudesModal">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="modal-body text-start">
+      <p class="text-muted small mb-3">Selecciona una solicitud para procesarla y asignar los lotes correspondientes.
+      </p>
+      <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+        <table class="table table-resultados w-100" id="tblListarSolicitudesAsistenteTable"
+          style="font-size: 0.88rem; width: 100%;">
+          <thead>
+            <tr>
+              <th class="text-center" style="border-top-left-radius: 10px; border-bottom-left-radius: 10px;">ID</th>
+              <th>Coordinador</th>
+              <th>Nombre</th>
+              <th class="text-center">Lotes</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center" style="border-top-right-radius: 10px; border-bottom-right-radius: 10px;">Acción
+              </th>
+            </tr>
+          </thead>
+          <tbody id="tbodyListarSolicitudesAsistente">
+            <tr>
+              <td colspan="6" class="text-center py-3">Cargando solicitudes...</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
+</div>
 
-  {% include 'modales/modal_generador_npn.html' %}
+{% include 'modales/modal_generador_npn.html' %}
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
@@ -605,11 +442,11 @@
       document.getElementById("asistenteNombre").textContent = activeSolicitud.nombre;
       document.getElementById("asistenteCoordinador").textContent = activeSolicitud.creado_por;
       document.getElementById("asistenteObservaciones").textContent = activeSolicitud.observaciones || "Sin observaciones";
-      
+
       document.getElementById("cardAsistenteSolicitud").classList.remove("d-none");
-      
+
       renderAsistenteDesglose();
-      
+
       // Auto-load first pending batch
       const primerPendienteIdx = activeSolicitud.datos_desglose.findIndex(item => !item.completado);
       if (primerPendienteIdx !== -1) {
@@ -665,7 +502,7 @@
     });
   }
 
-  window.cargarLoteAsistente = function(idx) {
+  window.cargarLoteAsistente = function (idx) {
     if (!activeSolicitud) return;
     const item = activeSolicitud.datos_desglose[idx];
     if (!item || item.completado) return;
@@ -676,14 +513,14 @@
     // Populate form fields
     document.getElementById("txtPredios").value = item.predios.join(", ");
     document.getElementById("inpNombreLote").value = `${activeSolicitud.nombre} - ${item.username_reconocedor}`;
-    
+
     // Select the coordinator
     const selectCoord = document.getElementById("inpCoordinador");
     if (selectCoord) {
       selectCoord.value = activeSolicitud.coordinador_id;
       const event = new Event('change');
       selectCoord.dispatchEvent(event);
-      
+
       // Wait for users to load then select user destination
       setTimeout(() => {
         const selectDest = document.getElementById("inpUsuarioDestino");
@@ -1623,7 +1460,7 @@
 
         data.forEach(sol => {
           const tr = document.createElement("tr");
-          
+
           let estadoBadge = "";
           const est = (sol.estado || "").toLowerCase();
           if (est === "pendiente") {
@@ -1673,14 +1510,14 @@
 
     const btnAbrirGen = document.getElementById("btnAbrirGeneradorNpn");
     if (btnAbrirGen) {
-      btnAbrirGen.addEventListener("click", function(e) {
+      btnAbrirGen.addEventListener("click", function (e) {
         e.preventDefault();
         abrirGeneradorDesdeCargas();
       });
     }
 
     // Delegación global para botón de Cargas
-    document.addEventListener("click", function(e) {
+    document.addEventListener("click", function (e) {
       const targetBtn = e.target.closest("#btnAbrirGeneradorNpn");
       if (targetBtn) {
         e.preventDefault();

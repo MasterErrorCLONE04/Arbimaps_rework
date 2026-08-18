@@ -264,8 +264,16 @@
     font-size: 0.833rem;
 }
 
-#inpNombreLote.consultaInput::placeholder{
-    color:#002f5538 !important;
+#inpNombreLote,
+#inpCoordinador,
+#inpUsuarioDestino,
+#inpUsuarioDestino,
+#inpFechaFinal {
+    border: 1px solid #0a2c1b32 !important;
+}
+
+#inpNombreLote.consultaInput::placeholder {
+    color: #002f5538 !important;
 }
 
 textarea.consultaInput,
@@ -344,7 +352,7 @@ textarea.textarea-predios {
     border-radius: 20px !important;
     overflow: hidden;
     background-color: #ffffff !important;
-    box-shadow: 1px 1px 6px rgba(3, 46, 87, 0.303) !important;
+    /* box-shadow: 1px 1px 6px rgba(3, 46, 87, 0.303) !important; */
 }
 
 .card-panel-asignacion {
@@ -412,13 +420,13 @@ textarea.textarea-predios {
 
 .crear-asignacion {
     /* background-color: #6AA4D4 !important; */
-    background-color: #002f55 !important;
+    background: linear-gradient(180deg, #0a2c1b 75%, #1b4001 95%) !important;
     color: #fff !important;
     min-height: 40px;
     width: 270px;
-    border-radius: 10px !important;
     font-size: 1rem;
     border: none !important;
+    border-radius: 15px !important;
 }
 
 .crear-asignacion:hover {
@@ -495,41 +503,7 @@ textarea.textarea-predios {
     flex-wrap: wrap;
 }
 
-.contador-resultados-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    background-color: #032F57;
-    color: #fff;
-    border-radius: 14px;
-    padding: 8px 16px;
-    font-size: 0.833rem;
-    font-weight: 700;
-    line-height: 1;
-    white-space: nowrap;
-    min-height: 38px;
-    box-shadow: 0 4px 12px rgba(3, 47, 87, 0.18);
-}
 
-.contador-resultados-badge i {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.82rem;
-    line-height: 1;
-    margin: 0;
-}
-
-.contador-resultados-badge span {
-    display: inline-flex;
-    align-items: center;
-    font-size: 0.733rem;
-    font-weight: 600;
-    line-height: 1;
-    color: #fff;
-    margin: 0;
-}
 
 .badge-contador-estado {
     display: inline-flex;
@@ -560,7 +534,7 @@ textarea.textarea-predios {
 
 .badge-contador-disponibles {
     background-color: #20903c;
-    font-size: 0.733rem;
+    font-size: 0.833rem;
 }
 
 .parrafo-contador-card {
@@ -803,7 +777,7 @@ textarea.textarea-predios {
 #tblResultados_wrapper table.dataTable tbody td {
     background-color: #FFFFFF !important;
     box-shadow: none !important;
-    border-top: 1px solid rgba(176, 191, 202, 0.45) !important;
+    /* border-top: 1px solid rgba(176, 191, 202, 0.45) !important; */
     max-width: 1px;
     overflow: hidden;
     text-overflow: ellipsis;
