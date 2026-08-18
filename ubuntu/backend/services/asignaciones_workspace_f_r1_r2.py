@@ -119,9 +119,16 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         # 1. Asegurar longitud de columnas identificadoras y quitar NOT NULL
         for tbl in ['arb_unidadconstruccion', 'arb_caracteristicasunidadconstruccion']:
+            sp_name = f"sp_alter_{tbl}"
             try:
+                cur.execute(f"SAVEPOINT {sp_name};")
                 cur.execute(f'ALTER TABLE {schema_work}.{tbl} ALTER COLUMN identificador TYPE varchar(60);')
+                cur.execute(f"RELEASE SAVEPOINT {sp_name};")
             except Exception as e:
+                try:
+                    cur.execute(f"ROLLBACK TO SAVEPOINT {sp_name};")
+                except Exception:
+                    pass
                 logger.debug("Bypass ALTER COLUMN en %s: %s", tbl, e)
 
         # Quitar restricciones NOT NULL en campos opcionales del LADM
@@ -406,3 +413,70 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
 
     logger.info("Importación de predio %s completada con éxito en el workspace.", npn)
     return True
+
+
+def importar_predios_f_r1_r2_a_workspace(conn, tenant_id: str, npns: list[str], schema_work: str, t_basket_id: int) -> int:
+    """
+    Importa de forma masiva (bulk/set-based) la información de una lista de predios 
+    desde las tablas del tenant (formato_f, formato_r1, formato_r2) hacia las tablas 
+    del workspace (formato_f, formato_r1, formato_r2).
+    """
+    if not npns:
+        return 0
+
+    with conn.cursor() as cur:
+        # 1. Copiar formato_f
+        sql_predio = f"""
+            INSERT INTO {schema_work}.formato_f (
+                t_basket_id, npn, codigo_orip, matricula_inmobiliaria, numero_predial_anterior,
+                tipo_predio, tipo_documento, numero_documento, primer_nombre, segundo_nombre,
+                primer_apellido, segundo_apellido, razon_social, porcentaje_derecho,
+                departamento, municipio, direccion, condicion_predio, area_terreno, area_construida
+            )
+            SELECT 
+                %s, npn, codigo_orip, matricula_inmobiliaria, numero_predial_anterior,
+                tipo_predio, tipo_documento, numero_documento, primer_nombre, segundo_nombre,
+                primer_apellido, segundo_apellido, razon_social, porcentaje_derecho,
+                departamento, municipio, direccion, condicion_predio, area_terreno, area_construida
+            FROM public.formato_f
+            WHERE tenant_id = %s AND npn = ANY(%s)
+            ON CONFLICT (t_basket_id, npn) DO NOTHING;
+        """
+        cur.execute(sql_predio, (t_basket_id, tenant_id, list(npns)))
+        inserted_count = cur.rowcount if cur.rowcount >= 0 else len(npns)
+
+        # 2. Copiar formato_r1
+        sql_r1 = f"""
+            INSERT INTO {schema_work}.formato_r1 (
+                t_basket_id, npn, numero_anotacion, fecha_anotacion, codigo_especificacion,
+                especificacion, cuen, tipo_documento_publico, numero_documento_publico,
+                fecha_documento_publico, oficina_origen, ciudad_oficina_origen
+            )
+            SELECT 
+                %s, npn, numero_anotacion, fecha_anotacion, codigo_especificacion,
+                especificacion, cuen, tipo_documento_publico, numero_documento_publico,
+                fecha_documento_publico, oficina_origen, ciudad_oficina_origen
+            FROM public.formato_r1
+            WHERE tenant_id = %s AND npn = ANY(%s)
+            ON CONFLICT DO NOTHING;
+        """
+        cur.execute(sql_r1, (t_basket_id, tenant_id, list(npns)))
+
+        # 3. Copiar formato_r2
+        sql_r2 = f"""
+            INSERT INTO {schema_work}.formato_r2 (
+                t_basket_id, npn, numero_anotacion, primer_nombre, segundo_nombre,
+                primer_apellido, segundo_apellido, razon_social, tipo_documento,
+                numero_documento, porcentaje_derecho, rol_persona
+            )
+            SELECT 
+                %s, npn, numero_anotacion, primer_nombre, segundo_nombre,
+                primer_apellido, segundo_apellido, razon_social, tipo_documento,
+                numero_documento, porcentaje_derecho, rol_persona
+            FROM public.formato_r2
+            WHERE tenant_id = %s AND npn = ANY(%s)
+            ON CONFLICT DO NOTHING;
+        """
+        cur.execute(sql_r2, (t_basket_id, tenant_id, list(npns)))
+
+    return inserted_count
