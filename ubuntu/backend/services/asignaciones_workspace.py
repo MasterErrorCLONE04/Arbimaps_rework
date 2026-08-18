@@ -4186,8 +4186,6 @@ def ensure_workspace_ready_for_export(
             predios_soporte_extra=predios_soporte_extra,
         )
         safe_log_event(
-            conn,
-            tenant,
             asignacion_id,
             "WORKSPACE_ON_DEMAND_SQL",
             (
