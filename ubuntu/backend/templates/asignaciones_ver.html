@@ -415,7 +415,8 @@
       </button>
     `;
 
-    const exportButtons = asigSupportsPackageExport && !isHistorical
+    const canExportPackages = currentLoggedRole !== "reconocedor";
+    const exportButtons = (canExportPackages && asigSupportsPackageExport && !isHistorical)
       ? `
         <div class="d-flex justify-content-center align-items-center gap-2 flex-nowrap">
           <button
@@ -431,7 +432,9 @@
       `
       : isHistorical
         ? `<span class="text-muted small">Histórico</span>`
-        : `
+        : !canExportPackages
+          ? `<span class="text-muted small">-</span>`
+          : `
         <div class="d-flex justify-content-center align-items-center gap-2 flex-nowrap">
           <button type="button" class="btn btn-export-mini btn-export-dark" disabled title="No disponible para el modelo ${esc(asigModelName)}">XTF</button>
           <button type="button" class="btn btn-export-mini btn-export-mid" disabled title="No disponible para el modelo ${esc(asigModelName)}">GDB</button>
@@ -913,6 +916,10 @@
       }
 
       if (action === "descargar") {
+        if (currentLoggedRole === "reconocedor") {
+          await swalAlert({ title: "Acceso denegado", text: "Tu rol no tiene permisos para exportar paquetes XTF.", icon: "warning" });
+          return;
+        }
         const confirmar = await swalConfirm({
           title: "Exportar XTF",
           text: "La exportacion XTF se ejecutara en segundo plano y puede tardar varios minutos. ¿Deseas continuar?",
