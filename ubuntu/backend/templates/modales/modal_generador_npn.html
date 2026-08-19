@@ -1,39 +1,59 @@
 <style>
-  #modalGeneradorNpn.custom-modal-backdrop {
+  /* =========================================================
+     VARIABLES Y BASE DEL MODAL
+     ========================================================= */
+
+  #modalGeneradorNpn {
+    --npn-green: #0A2C1B;
+    --npn-green-dark: #071f13;
+    --npn-green-hover: #123D27;
+    --npn-green-medium: #315D46;
+    --npn-green-soft: #E8F0EC;
+    --npn-green-soft-2: #F3F7F5;
+    --npn-green-border: #C7D8CF;
+    --npn-border: #DFE7E3;
+    --npn-muted: #6C757D;
+    --npn-body-bg: #F6F8F7;
+    --npn-white: #FFFFFF;
+  }
+
+  #modalGeneradorNpn.npn-modal-overlay {
     position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
+    inset: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
-    background-color: rgba(3, 47, 87, 0.45) !important;
-    backdrop-filter: blur(3px) !important;
-    z-index: 99999 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    padding: 24px !important;
+    background: rgba(3, 47, 87, 0.48) !important;
+    backdrop-filter: blur(4px);
+    z-index: 99999 !important;
   }
 
   #modalGeneradorNpn.d-none {
     display: none !important;
   }
 
-  #modalGeneradorNpn .custom-modal-content {
-    background: #ffffff !important;
-    border-radius: 16px !important;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
-    max-height: 90vh !important;
-    max-width: 1200px !important;
-    width: 92% !important;
-    overflow-y: auto !important;
-    padding: 24px !important;
-    /* border: 1px solid #E2ECF5 !important; */
-    animation: modalSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  #modalGeneradorNpn .npn-modal-dialog {
+    width: 100%;
+    max-width: 1180px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--npn-white);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow:
+      0 25px 60px rgba(15, 23, 42, 0.25),
+      0 8px 24px rgba(15, 23, 42, 0.12);
+    animation: npnModalEntrada 0.22s ease-out;
   }
 
-  @keyframes modalSlideDown {
+  @keyframes npnModalEntrada {
     from {
       opacity: 0;
-      transform: translateY(-20px) scale(0.98);
+      transform: translateY(-18px) scale(0.98);
     }
 
     to {
@@ -42,342 +62,1233 @@
     }
   }
 
-  #modalGeneradorNpn .btn-outline-solicitudes {
-    color: #059669 !important;
-    border-color: #059669 !important;
-    background-color: transparent !important;
+  /* =========================================================
+     ENCABEZADO
+     ========================================================= */
+
+  #modalGeneradorNpn .npn-modal-header {
+    background: linear-gradient(202deg, var(--npn-green) 75%, #1B4001 95%);
   }
 
-  #modalGeneradorNpn .btn-outline-solicitudes:hover,
-  #modalGeneradorNpn .btn-outline-solicitudes.active {
-    color: #ffffff !important;
-    background-color: #059669 !important;
-    border-color: #059669 !important;
+  #modalGeneradorNpn .npn-modal-subtitle {
+    color: rgba(255, 255, 255, 0.68);
   }
 
-  #modalGeneradorNpn .btn-close-custom {
-    background: transparent;
-    border: none;
-    font-size: 1.2rem;
-    color: #64748b;
+  #modalGeneradorNpn .npn-close-btn {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--npn-green);
+    background-color: #C4D5CC;
+    border: 0;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  #modalGeneradorNpn .npn-close-btn i {
+    display: inline-block;
+    transition: transform 0.35s ease;
+  }
+
+  #modalGeneradorNpn .npn-close-btn:hover {
+    color: var(--npn-green);
+    background-color: #C4D5CC;
+    transform: scale(1.08);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.18);
+  }
+
+  #modalGeneradorNpn .npn-close-btn:hover i {
+    transform: rotate(90deg);
+  }
+
+  #modalGeneradorNpn .npn-close-btn:active {
+    transform: scale(0.96);
+  }
+
+  /* =========================================================
+     CUERPO Y SCROLL
+     ========================================================= */
+
+  #modalGeneradorNpn .npn-modal-body {
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: var(--npn-body-bg);
+  }
+
+  #modalGeneradorNpn .npn-section {
+    background-color: transparent;
+  }
+
+  /* =========================================================
+     PESTANAS
+     ========================================================= */
+
+  #modalGeneradorNpn .npn-toolbar {
+    position: relative;
+    flex-shrink: 0;
+    background-color: var(--npn-green-soft);
+    border-bottom: 1px solid var(--npn-green-border);
+  }
+
+  #modalGeneradorNpn .npn-tabs-bar {
+    position: relative;
+    min-height: 62px;
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    padding: 13px 18px 0;
+  }
+
+  #modalGeneradorNpn .npn-main-tab {
+    position: relative;
+    z-index: 1;
+    min-height: 49px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 27px;
+    border: 0 !important;
+    outline: 0 !important;
+    color: #476052;
+    background-color: #C7D8CF;
+    border-radius: 15px 15px 0 0;
+    font-size: 0.83rem;
+    white-space: nowrap;
     cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 6px;
-    transition: all 0.15s;
+    box-shadow: none;
+    transition:
+      color 0.35s ease,
+      background-color 0.35s ease,
+      transform 0.3s ease,
+      box-shadow 0.35s ease;
   }
 
-  #modalGeneradorNpn .btn-close-custom:hover {
-    color: #0f172a;
-    background: #f1f5f9;
+  #modalGeneradorNpn .npn-main-tab:not(.npn-main-tab-active):hover {
+    color: var(--npn-green);
+    background-color: #B5CCBF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(10, 44, 27, 0.08);
+  }
+
+  #modalGeneradorNpn .npn-main-tab i {
+    color: #476052;
+    transition: color 0.35s ease, transform 0.35s ease;
+  }
+
+  #modalGeneradorNpn .npn-main-tab:not(.npn-main-tab-active):hover i {
+    color: var(--npn-green);
+    transform: scale(1.1);
+  }
+
+  #modalGeneradorNpn .npn-main-tab-active {
+    z-index: 5;
+    color: var(--npn-white);
+    background-color: var(--npn-green);
+    transform: translateY(0);
+    box-shadow:
+      0 -4px 10px rgba(10, 44, 27, 0.14),
+      4px 0 8px rgba(10, 44, 27, 0.08),
+      -4px 0 8px rgba(10, 44, 27, 0.08);
+  }
+
+  #modalGeneradorNpn .npn-main-tab-active i {
+    color: var(--npn-white);
+  }
+
+  #modalGeneradorNpn .npn-main-tab-active:hover {
+    color: var(--npn-white);
+    background-color: var(--npn-green-hover);
+  }
+
+  #modalGeneradorNpn .npn-main-tab:focus,
+  #modalGeneradorNpn .npn-main-tab:focus-visible {
+    outline: none !important;
+  }
+
+  #modalGeneradorNpn #badgeTotalReservasCount {
+    min-width: 22px;
+    font-size: 0.68rem;
+    transition: transform 0.3s ease;
+  }
+
+  #modalGeneradorNpn #btnTabReservas.npn-main-tab-active #badgeTotalReservasCount {
+    transform: scale(1.08);
+  }
+
+  #modalGeneradorNpn .npn-text-primary {
+    color: var(--npn-green) !important;
+  }
+
+  #modalGeneradorNpn .npn-bg-primary {
+    background-color: var(--npn-green) !important;
+  }
+
+  /* =========================================================
+     TARJETAS Y ESTRUCTURA DE FORMULARIOS
+     Inspiradas en la vista de resolucion: encabezados verdes,
+     campos con iconos, sombras suaves y distribucion Bootstrap.
+     ========================================================= */
+
+  #modalGeneradorNpn #paneGenerarNpn,
+  #modalGeneradorNpn #paneReservasActivas {
+    background-color: var(--npn-body-bg);
+  }
+
+  #modalGeneradorNpn .npn-form-card,
+  #modalGeneradorNpn .npn-results-card,
+  #modalGeneradorNpn .npn-reservas-card {
+    border: 1px solid var(--npn-border) !important;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--npn-white);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  #modalGeneradorNpn .npn-form-card:hover,
+  #modalGeneradorNpn .npn-results-card:hover,
+  #modalGeneradorNpn .npn-reservas-card:hover {
+    border-color: #CEDAD4 !important;
+    box-shadow: 0 0.75rem 1.5rem rgba(10, 44, 27, 0.07) !important;
+  }
+
+  #modalGeneradorNpn .npn-form-card-header,
+  #modalGeneradorNpn .npn-results-card-header,
+  #modalGeneradorNpn .npn-reservas-card-header {
+    background: linear-gradient(135deg, var(--npn-green) 0%, #12442D 100%);
+    border: 0;
+    color: var(--npn-white);
+  }
+
+  #modalGeneradorNpn .npn-results-header-icon,
+  #modalGeneradorNpn .npn-reservas-header-icon {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 12px;
+    color: var(--npn-white);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    font-size: 1.18rem;
+  }
+
+  #modalGeneradorNpn .npn-form-card-title,
+  #modalGeneradorNpn .npn-results-card-title,
+  #modalGeneradorNpn .npn-reservas-card-title {
+    color: var(--npn-white);
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+  }
+
+  #modalGeneradorNpn .npn-form-card-subtitle,
+  #modalGeneradorNpn .npn-results-card-subtitle,
+  #modalGeneradorNpn .npn-reservas-card-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.78rem;
+  }
+
+  #modalGeneradorNpn .npn-stock-badge {
+    color: var(--npn-white);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    font-weight: 700;
+  }
+
+  #modalGeneradorNpn .npn-field {
+    height: 100%;
+  }
+
+  #modalGeneradorNpn .npn-form-label {
+    color: #27342E;
+    font-size: 0.79rem;
+    font-weight: 700;
+    margin-bottom: 0.38rem;
+  }
+
+  #modalGeneradorNpn .npn-required {
+    color: #C0392B;
+  }
+
+  #modalGeneradorNpn .npn-input-group {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0.18rem 0.55rem rgba(10, 44, 27, 0.07);
+  }
+
+  #modalGeneradorNpn .npn-input-group .input-group-text {
+    min-width: 42px;
+    justify-content: center;
+    color: var(--npn-green-medium);
+    background-color: #F0F4F2;
+    border-color: #DDE5E1;
+  }
+
+  #modalGeneradorNpn .npn-input-group .form-control,
+  #modalGeneradorNpn .npn-input-group .form-select {
+    min-height: 38px;
+    color: #36433D;
+    background-color: var(--npn-white);
+    border-color: #DDE5E1;
+    font-size: 0.82rem;
+  }
+
+  #modalGeneradorNpn .npn-input-group .form-control::placeholder {
+    color: #9AA5A0;
+  }
+
+  #modalGeneradorNpn .npn-input-group:focus-within {
+    box-shadow: 0 0 0 0.2rem rgba(10, 44, 27, 0.1);
+  }
+
+  #modalGeneradorNpn .npn-input-group:focus-within .input-group-text,
+  #modalGeneradorNpn .npn-input-group:focus-within .form-control,
+  #modalGeneradorNpn .npn-input-group:focus-within .form-select {
+    border-color: rgba(10, 44, 27, 0.5);
+  }
+
+  #modalGeneradorNpn .form-control:focus,
+  #modalGeneradorNpn .form-select:focus {
+    border-color: rgba(10, 44, 27, 0.5);
+    box-shadow: none;
+  }
+
+  #modalGeneradorNpn .npn-field-help {
+    color: #7A8780;
+    font-size: 0.71rem;
+  }
+
+  #modalGeneradorNpn .npn-link-action {
+    color: var(--npn-green-medium);
+    font-size: 0.72rem;
+    border-radius: 7px;
+    transition: color 0.2s ease, background-color 0.2s ease;
+  }
+
+  #modalGeneradorNpn .npn-link-action:hover {
+    color: var(--npn-green);
+    background-color: var(--npn-green-soft);
+  }
+
+  /* =========================================================
+     ASISTENTE TERRITORIAL
+     ========================================================= */
+
+  #modalGeneradorNpn .npn-assistant-card {
+    border: 1px solid #CBDAD2 !important;
+    border-radius: 15px;
+    overflow: hidden;
+    background: var(--npn-white);
+  }
+
+  #modalGeneradorNpn .npn-assistant-header {
+    color: var(--npn-white);
+    background: linear-gradient(135deg, #315D46 0%, var(--npn-green) 100%);
+  }
+
+  #modalGeneradorNpn .npn-assistant-header-icon {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 11px;
+    color: var(--npn-white);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  #modalGeneradorNpn .npn-assistant-description {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.75rem;
+  }
+
+  #modalGeneradorNpn .npn-assistant-close {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--npn-white);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+  }
+
+  #modalGeneradorNpn .npn-assistant-close:hover {
+    color: var(--npn-white);
+    background: rgba(255, 255, 255, 0.18);
+    transform: scale(1.06);
+  }
+
+  #modalGeneradorNpn .npn-suggestion-box {
+    color: #3D4D45;
+    background-color: #F4F8F6;
+    border-color: #D8E4DE !important;
+    border-radius: 11px;
+  }
+
+  /* =========================================================
+     PARAMETROS PH E INFORMACION
+     ========================================================= */
+
+  #modalGeneradorNpn .npn-ph-panel {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 1rem;
+    background: #F4F8F6;
+    border: 1px solid #D8E4DE;
+    border-radius: 12px;
+  }
+
+  #modalGeneradorNpn .npn-info-box {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    color: #5D6C64;
+    background: var(--npn-white);
+    border: 1px solid #DDE5E1;
+    border-radius: 10px;
+    font-size: 0.75rem;
+  }
+
+  /* =========================================================
+     BOTONES DEL FORMULARIO
+     ========================================================= */
+
+  #modalGeneradorNpn .npn-btn-primary {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    color: var(--npn-white) !important;
+    background-color: var(--npn-green) !important;
+    border: 1px solid var(--npn-green) !important;
+    border-radius: 9px;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    box-shadow: 0 0.35rem 0.8rem rgba(10, 44, 27, 0.12);
+    transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  #modalGeneradorNpn .npn-btn-primary:hover,
+  #modalGeneradorNpn .npn-btn-primary:focus {
+    color: var(--npn-white) !important;
+    background-color: var(--npn-green-hover) !important;
+    border-color: var(--npn-green-hover) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 0.55rem 1rem rgba(10, 44, 27, 0.16);
+  }
+
+  #modalGeneradorNpn .npn-btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  #modalGeneradorNpn .npn-btn-outline-primary {
+    color: var(--npn-green) !important;
+    background-color: var(--npn-white) !important;
+    border-color: var(--npn-green) !important;
+    transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+  }
+
+  #modalGeneradorNpn .npn-btn-outline-primary:hover,
+  #modalGeneradorNpn .npn-btn-outline-primary:focus {
+    color: var(--npn-white) !important;
+    background-color: var(--npn-green) !important;
+    border-color: var(--npn-green) !important;
+    transform: translateY(-1px);
+  }
+
+  #modalGeneradorNpn .npn-generate-action {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  /* =========================================================
+     RESULTADOS Y TABLAS
+     ========================================================= */
+
+  #modalGeneradorNpn .npn-results-card-header,
+  #modalGeneradorNpn .npn-reservas-card-header {
+    background: linear-gradient(135deg, var(--npn-green) 0%, #12442D 100%);
+  }
+
+  #modalGeneradorNpn .npn-table-wrapper {
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  #modalGeneradorNpn .npn-table-wrapper-lg {
+    max-height: 380px;
+    overflow-y: auto;
+  }
+
+  #modalGeneradorNpn .npn-table-header th {
+    color: var(--npn-green);
+    background-color: #F0F4F2;
+    border-bottom-color: #DDE5E1;
+    white-space: nowrap;
+    font-size: 0.76rem;
+  }
+
+  #modalGeneradorNpn .npn-table-wrapper .table,
+  #modalGeneradorNpn .npn-table-wrapper-lg .table {
+    font-size: 0.8rem;
+  }
+
+  #modalGeneradorNpn .npn-reservas-actions .btn {
+    min-height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* =========================================================
+     ANIMACION DEL CONTENIDO
+     ========================================================= */
+
+  #modalGeneradorNpn #paneGenerarNpn:not(.d-none),
+  #modalGeneradorNpn #paneReservasActivas:not(.d-none) {
+    animation: npnContenidoEntrada 0.35s ease;
+  }
+
+  @keyframes npnContenidoEntrada {
+    from {
+      opacity: 0;
+      transform: translateY(5px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* =========================================================
+     FOOTER
+     ========================================================= */
+
+  #modalGeneradorNpn .npn-modal-footer {
+    flex-shrink: 0;
+    background-color: var(--npn-white);
+  }
+
+  /* =========================================================
+     RESPONSIVE
+     ========================================================= */
+
+  @media (max-width: 767.98px) {
+    #modalGeneradorNpn.npn-modal-overlay {
+      padding: 10px !important;
+    }
+
+    #modalGeneradorNpn .npn-modal-dialog {
+      max-height: 96vh;
+      border-radius: 14px;
+    }
+
+    #modalGeneradorNpn .npn-header-title {
+      font-size: 1rem;
+    }
+
+    #modalGeneradorNpn .npn-modal-subtitle {
+      font-size: 0.72rem;
+    }
+
+    #modalGeneradorNpn .npn-tabs-bar {
+      padding-left: 8px;
+      padding-right: 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    #modalGeneradorNpn .npn-main-tab {
+      min-width: max-content;
+      padding-left: 18px;
+      padding-right: 18px;
+    }
+
+    #modalGeneradorNpn #paneGenerarNpn,
+    #modalGeneradorNpn #paneReservasActivas {
+      padding-left: 0.75rem !important;
+      padding-right: 0.75rem !important;
+    }
+
+    #modalGeneradorNpn .npn-form-card,
+    #modalGeneradorNpn .npn-results-card,
+    #modalGeneradorNpn .npn-reservas-card,
+    #modalGeneradorNpn .npn-assistant-card {
+      border-radius: 12px;
+    }
+
+    #modalGeneradorNpn .npn-form-card-title,
+    #modalGeneradorNpn .npn-results-card-title,
+    #modalGeneradorNpn .npn-reservas-card-title {
+      font-size: 0.86rem;
+    }
+
+    #modalGeneradorNpn .npn-form-card-subtitle,
+    #modalGeneradorNpn .npn-results-card-subtitle,
+    #modalGeneradorNpn .npn-reservas-card-subtitle {
+      font-size: 0.72rem;
+    }
   }
 </style>
 
-<!-- Modal Generador de NPN y Códigos Homologados -->
-<div id="modalGeneradorNpn" class="custom-modal-backdrop d-none">
-  <div class="custom-modal-content" style="max-width: 950px; width: 95%;">
-    <div class="custom-modal-header d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-magic fs-4 text-navy"></i>
+<div id="modalGeneradorNpn" class="npn-modal-overlay d-none">
+  <div class="npn-modal-dialog">
+
+    <!-- ENCABEZADO -->
+    <div class="npn-modal-header px-4 py-3">
+      <div class="d-flex align-items-center justify-content-between gap-3">
         <div>
-          <h5 class="custom-modal-title fw-bold mb-0 text-navy">Generador Oficial de Números Prediales y Homologados
+          <h5 class="npn-header-title fw-bold text-white mb-1">
+            Generador Oficial de Números Prediales y Homologados
           </h5>
-          <small style="color: rgb(255 255 255 / 65%);">Dispensador de 30 dígitos NPN y códigos oficiales para el
-            sistema Alfa</small>
+          <div class="npn-modal-subtitle small">
+            Dispensador de 30 dígitos NPN y códigos oficiales para el sistema Alfa
+          </div>
         </div>
+
+        <button
+          type="button"
+          class="npn-close-btn rounded-circle flex-shrink-0"
+          id="btnCloseGeneradorNpnModal"
+          title="Cerrar">
+          <i class="bi bi-x-lg fs-5"></i>
+        </button>
       </div>
-      <button type="button" class="btn-close-custom" id="btnCloseGeneradorNpnModal">
-        <i class="bi bi-x-lg"></i>
-      </button>
     </div>
 
-    <div class="modal-body text-start pt-0">
-      <!-- Pestañas de Navegación -->
-      <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
-        <div class="d-flex gap-2">
-          <button class="btn btn-sm btn-outline-solicitudes active px-3" id="btnTabGenerar" type="button"
-            style="border-radius: 8px !important;">
-            <i class="bi bi-lightning-charge me-1"></i> Generar Nuevos NPNs
-          </button>
-          <button class="btn btn-sm btn-outline-secondary px-3" id="btnTabReservas" type="button"
-            style="border-radius: 8px !important;">
-            <i class="bi bi-clock-history me-1"></i> Reservas Activas
-            <span class="badge bg-warning text-dark ms-1 rounded-pill" id="badgeTotalReservasCount">0</span>
-          </button>
-        </div>
+    <!-- CUERPO -->
+    <div class="npn-modal-body">
 
-        <div class="d-flex align-items-center gap-2">
-          <span class="small fw-semibold text-navy">Bolsa Neiva:</span>
-          <span class="badge bg-success rounded-pill px-2 py-1" id="badgeStockDisponibles">Consultando...</span>
+      <!-- PESTANAS -->
+      <div class="npn-toolbar">
+        <div class="npn-tabs-bar" role="tablist" aria-label="Secciones del generador NPN">
+          <button
+            type="button"
+            class="npn-main-tab npn-main-tab-active"
+            id="btnTabGenerar"
+            role="tab"
+            aria-controls="paneGenerarNpn"
+            aria-selected="true">
+            <span class="d-flex align-items-center gap-2">
+              <i class="bi bi-lightning-charge-fill"></i>
+              <span class="fw-semibold">Generar Nuevos NPNs</span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="npn-main-tab"
+            id="btnTabReservas"
+            role="tab"
+            aria-controls="paneReservasActivas"
+            aria-selected="false">
+            <span class="d-flex align-items-center gap-2">
+              <i class="bi bi-clock-history"></i>
+              <span class="fw-semibold">Reservas Activas</span>
+              <span
+                class="badge bg-warning text-dark rounded-pill"
+                id="badgeTotalReservasCount">0</span>
+            </span>
+          </button>
         </div>
       </div>
 
-      <!-- PANE 1: GENERADOR -->
-      <div id="paneGenerarNpn">
-        <!-- Formulario de Parámetros -->
-        <div class="card border-0 p-3 px-0 mb-3" style="border-radius: 12px;">
+      <!-- PANEL GENERAR -->
+      <div id="paneGenerarNpn" class="px-4 py-4" role="tabpanel" aria-labelledby="btnTabGenerar">
 
-          <!-- Asistente de Consecutivos Territoriales (Nueva Manzana / Vereda / Corregimiento) -->
-          <div id="boxAsistenteTerritorial" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="display: none;">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="small fw-bold text-navy"><i class="bi bi-compass-fill text-success me-1"></i> Asistente de
-                Consecutivos Territoriales (Manzanas, Veredas y Corregimientos):</span>
-              <button type="button" class="btn-close-custom btn-sm" id="btnCerrarAsistenteTerritorial"
-                style="font-size: 0.7rem;"><i class="bi bi-x"></i></button>
-            </div>
-            <p class="text-muted small mb-2" style="font-size: 0.72rem;">Rastrea y sugiere correlativos exactos para no
-              dejar vacíos tanto en el área urbana (Comunas 01 a 10) como en el área rural (80 Veredas y 8
-              Corregimientos).</p>
+        <!-- ASISTENTE TERRITORIAL -->
+        <div
+          id="boxAsistenteTerritorial"
+          class="card border-0 shadow-sm npn-assistant-card mb-4"
+          style="display: none;">
 
-            <div class="row g-2 align-items-end">
-              <div class="col-12 col-md-4">
-                <label class="small text-muted mb-0" style="font-size: 0.72rem;">Sector / Corregimiento</label>
-                <select class="form-select form-select-sm" id="asistenteSectorSelect">
-                  <option value="01" selected>01 - Urbano (Comunas 01 a 10)</option>
-                  <option value="00">00 - Rural General</option>
-                  <option value="02">02 - Corr. Río Las Ceibas</option>
-                  <option value="03">03 - Corr. Vegalarga</option>
-                  <option value="04">04 - Corr. Fortalecillas</option>
-                  <option value="05">05 - Corr. El Caguán</option>
-                  <option value="06">06 - Corr. Guacirco</option>
-                  <option value="07">07 - Corr. San Antonio de Anaconia</option>
-                  <option value="08">08 - Corr. Chapinero / Aipecito</option>
-                  <option value="OTRO">Otro / Nuevo Sector Rural...</option>
-                </select>
-              </div>
-              <div class="col-6 col-md-3" id="wrapComunaCorr">
-                <label class="small text-muted mb-0" style="font-size: 0.72rem;">Comuna / Zona Urbana</label>
-                <div class="input-group input-group-sm">
-                  <select class="form-select form-select-sm" id="asistenteComunaSelect">
-                    <option value="01">01 - Comuna 1 (Norte)</option>
-                    <option value="02">02 - Comuna 2 (Nororiental)</option>
-                    <option value="03">03 - Comuna 3 (Entre Ríos)</option>
-                    <option value="04">04 - Comuna 4 (Centro)</option>
-                    <option value="05">05 - Comuna 5 (Oriental)</option>
-                    <option value="06">06 - Comuna 6 (Sur / Canaima)</option>
-                    <option value="07">07 - Comuna 7 (Ipanema)</option>
-                    <option value="08">08 - Comuna 8 (Suroriental)</option>
-                    <option value="09" selected>09 - Comuna 9 (Norte / Galindo)</option>
-                    <option value="10">10 - Comuna 10 (Oriente)</option>
-                    <option value="OTRA">+ Otra / Nueva Comuna...</option>
-                  </select>
-                  <input type="text" class="form-control form-control-sm font-monospace" id="asistenteComunaInput"
-                    value="09" maxlength="2" placeholder="01" style="max-width: 55px; display: none;">
+          <div class="card-header npn-assistant-header border-0 px-3 px-md-4 py-3">
+            <div class="d-flex align-items-start justify-content-between gap-3">
+              <div class="d-flex align-items-start gap-3">
+                <div class="npn-assistant-header-icon">
+                  <i class="bi bi-compass-fill"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-1">Asistente de Consecutivos Territoriales</h6>
+                  <p class="npn-assistant-description mb-0">
+                    Rastrea y sugiere correlativos exactos para manzanas, veredas y corregimientos.
+                  </p>
                 </div>
               </div>
-              <div class="col-6 col-md-3" id="wrapBarrioVereda">
-                <label class="small text-muted mb-0" style="font-size: 0.72rem;">Barrio / Vereda Oficial (4d)</label>
-                <div class="input-group input-group-sm">
-                  <select class="form-select form-select-sm" id="asistenteVeredasSelect" style="display: none;">
-                    <option value="0000">0000 - Vereda General</option>
-                  </select>
-                  <input type="text" class="form-control form-control-sm font-monospace" id="asistenteBarrioInput"
-                    value="0000" maxlength="4" placeholder="0000">
-                </div>
-              </div>
-              <div class="col-12 col-md-2">
-                <button class="btn btn-sm btn-outline-secondary w-100 py-1" id="btnConsultarSiguienteManzana"
-                  type="button" style="font-size: 0.78rem; height: 31px;">
-                  <i class="bi bi-search me-1"></i> Consultar
-                </button>
-              </div>
-            </div>
 
-            <div id="resultadoSugerenciaBox"
-              class="alert alert-light border py-2 px-3 mt-2 mb-0 d-none d-flex justify-content-between align-items-center flex-wrap gap-2"
-              style="font-size: 0.78rem; background-color: #F8FBFE;">
-              <div id="textoResultadoSugerencia">
-                <!-- Info dinámica -->
-              </div>
-              <button class="btn btn-sm btn-outline-solicitudes py-1 px-3 fw-semibold" id="btnAplicarSugerenciaManzana"
-                type="button" style="font-size: 0.75rem; border-radius: 6px;">
-                <i class="bi bi-check2-circle me-1"></i> Usar esta Manzana / Base
-              </button>
-            </div>
-          </div>
-
-          <div class="row ">
-            <div class="col-12 col-md-5 px-2">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <label class="form-label small fw-bold text-navy mb-0">
-                  Predio Matriz / Base (30 dígitos) <span class="text-danger">*</span>
-                </label>
-                <button type="button" class="btn btn-link p-0 text-decoration-none small fw-semibold"
-                  id="btnToggleAsistenteTerritorial" style="font-size: 0.72rem;">
-                  <i class="bi bi-compass me-1"></i> ¿Nueva Manzana / Zona?
-                </button>
-              </div>
-              <div class="input-group input-group-sm">
-                <span class="input-group-text bg-white"><i class="bi bi-geo-alt"></i></span>
-                <input type="text" class="form-control font-monospace" id="genPredioMatrizInput"
-                  placeholder="Ej: 410010106000000970154913020004" maxlength="30">
-              </div>
-              <small class="text-muted d-block mt-1" style="font-size: 0.72rem;" id="genMatrizHelp">
-                Dígitos ingresados: <span id="genDigitosCount" class="fw-bold">0</span>/30
-              </small>
-            </div>
-
-            <div class="col-12 col-md-3 px-2">
-              <label class="form-label small fw-bold text-navy mb-1">Tipo de Trámite</label>
-              <select class="form-select form-select-sm" id="genTipoMutacionSelect">
-                <option value="DESENGLOBE" selected>Desenglobe / Subdivisión</option>
-                <option value="MANZANA_NUEVA">Incorporación Manzana Nueva</option>
-                <option value="PH">Propiedad Horizontal (PH)</option>
-                <option value="SEGREGACION">Segregación</option>
-                <option value="MEJORA">Mejora en Terreno Ajeno</option>
-              </select>
-            </div>
-
-            <div class="col-12 col-md-4">
-              <label class="form-label small fw-bold text-navy mb-1">Condición del Predio (Posición 22)</label>
-              <select class="form-select form-select-sm" id="genCondicionSelect">
-                <option value="0" selected>0 - No Propiedad Horizontal (NPH)</option>
-                <option value="9">9 - Predios en Propiedad Horizontal (PH)</option>
-                <option value="5">5 - Mejoras / PH no reglamentaria</option>
-                <option value="8">8 - Predio en Condominio</option>
-                <option value="7">7 - Parque Cementerios</option>
-                <option value="4">4 - Vías</option>
-                <option value="3">3 - Bienes de uso público diferentes a vías</option>
-                <option value="2">2 - Informal</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="row g-2 mt-2 align-items-end" id="rowPhParams" style="display: none;">
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold text-navy mb-1">Edificio / Torre (Pos 23-24)</label>
-              <input type="text" class="form-control form-control-sm font-monospace" id="genEdificioInput"
-                placeholder="00" maxlength="2" value="00">
-            </div>
-            <div class="col-6 col-md-3">
-              <label class="form-label small fw-bold text-navy mb-1">Piso / Nivel (Pos 25-26)</label>
-              <input type="text" class="form-control form-control-sm font-monospace" id="genPisoInput" placeholder="00"
-                maxlength="2" value="00">
-            </div>
-            <div class="col-12 col-md-6">
-              <small class="text-muted d-block mt-3" style="font-size: 0.73rem;">
-                <i class="bi bi-info-circle me-1"></i> Las unidades (Pos 27-30) se generarán consecutivamente (ej: 0001,
-                0002...).
-              </small>
-            </div>
-          </div>
-
-          <div class="row g-2 mt-2 align-items-end">
-            <div class="col-6 col-md-2">
-              <label class="form-label small fw-bold text-navy mb-1">Cantidad <span class="text-danger">*</span></label>
-              <input type="number" class="form-control form-control-sm" id="genCantidadInput" value="1" min="1"
-                max="100">
-            </div>
-            <div class="col-12 col-md-4">
-              <label class="form-label small fw-bold text-navy mb-1">Consecutivo Trámite</label>
-              <input type="text" class="form-control form-control-sm" id="genTramiteInput"
-                placeholder="Ej: MUT-2026-001 (Opcional)">
-            </div>
-            <div class="col-12 col-md-4">
-              <label class="form-label small fw-bold text-navy mb-1">Notas / Observaciones</label>
-              <input type="text" class="form-control form-control-sm" id="genObservacionesInput"
-                placeholder="Notas adicionales (Opcional)">
-            </div>
-            <div class="col-12 col-md-2">
               <button
-                class="btn btn-sm btn-outline-solicitudes w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
-                id="btnEjecutarGeneradorNpn" type="button" style="height: 31px; border-radius: 8px !important;">
-                <i class="bi bi-lightning-charge-fill"></i> Generar
+                type="button"
+                class="npn-assistant-close rounded-circle flex-shrink-0"
+                id="btnCerrarAsistenteTerritorial"
+                title="Cerrar asistente">
+                <i class="bi bi-x-lg"></i>
               </button>
+            </div>
+          </div>
+
+          <div class="card-body p-3 p-lg-4">
+            <div class="row g-3 align-items-end">
+
+              <div class="col-12 col-md-4">
+                <div class="npn-field">
+                  <label for="asistenteSectorSelect" class="form-label npn-form-label">
+                    Sector / Corregimiento
+                  </label>
+                  <div class="input-group input-group-sm npn-input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-map-fill"></i>
+                    </span>
+                    <select class="form-select" id="asistenteSectorSelect">
+                      <option value="01" selected>01 - Urbano (Comunas 01 a 10)</option>
+                      <option value="00">00 - Rural General</option>
+                      <option value="02">02 - Corr. Río Las Ceibas</option>
+                      <option value="03">03 - Corr. Vegalarga</option>
+                      <option value="04">04 - Corr. Fortalecillas</option>
+                      <option value="05">05 - Corr. El Caguán</option>
+                      <option value="06">06 - Corr. Guacirco</option>
+                      <option value="07">07 - Corr. San Antonio de Anaconia</option>
+                      <option value="08">08 - Corr. Chapinero / Aipecito</option>
+                      <option value="OTRO">Otro / Nuevo Sector Rural...</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-3" id="wrapComunaCorr">
+                <div class="npn-field">
+                  <label for="asistenteComunaSelect" class="form-label npn-form-label">
+                    Comuna / Zona Urbana
+                  </label>
+                  <div class="input-group input-group-sm npn-input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-grid-3x3-gap-fill"></i>
+                    </span>
+                    <select class="form-select" id="asistenteComunaSelect">
+                      <option value="01">01 - Comuna 1 (Norte)</option>
+                      <option value="02">02 - Comuna 2 (Nororiental)</option>
+                      <option value="03">03 - Comuna 3 (Entre Ríos)</option>
+                      <option value="04">04 - Comuna 4 (Centro)</option>
+                      <option value="05">05 - Comuna 5 (Oriental)</option>
+                      <option value="06">06 - Comuna 6 (Sur / Canaima)</option>
+                      <option value="07">07 - Comuna 7 (Ipanema)</option>
+                      <option value="08">08 - Comuna 8 (Suroriental)</option>
+                      <option value="09" selected>09 - Comuna 9 (Norte / Galindo)</option>
+                      <option value="10">10 - Comuna 10 (Oriente)</option>
+                      <option value="OTRA">+ Otra / Nueva Comuna...</option>
+                    </select>
+                    <input
+                      type="text"
+                      class="form-control font-monospace"
+                      id="asistenteComunaInput"
+                      value="09"
+                      maxlength="2"
+                      placeholder="01"
+                      style="max-width: 60px; display: none;">
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-3" id="wrapBarrioVereda">
+                <div class="npn-field">
+                  <label for="asistenteBarrioInput" class="form-label npn-form-label">
+                    Barrio / Vereda Oficial (4d)
+                  </label>
+                  <div class="input-group input-group-sm npn-input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-signpost-split-fill"></i>
+                    </span>
+                    <select
+                      class="form-select"
+                      id="asistenteVeredasSelect"
+                      style="display: none;">
+                      <option value="0000">0000 - Vereda General</option>
+                    </select>
+                    <input
+                      type="text"
+                      class="form-control font-monospace"
+                      id="asistenteBarrioInput"
+                      value="0000"
+                      maxlength="4"
+                      placeholder="0000">
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-2">
+                <div class="d-grid">
+                  <button
+                    class="btn btn-sm npn-btn-outline-primary rounded-3 py-2"
+                    id="btnConsultarSiguienteManzana"
+                    type="button">
+                    <i class="bi bi-search me-1"></i>
+                    Consultar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              id="resultadoSugerenciaBox"
+              class="alert npn-suggestion-box border mt-3 mb-0 d-none">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div id="textoResultadoSugerencia" class="small"></div>
+                <button
+                  class="btn btn-sm npn-btn-outline-primary fw-semibold rounded-3"
+                  id="btnAplicarSugerenciaManzana"
+                  type="button">
+                  <i class="bi bi-check2-circle me-1"></i>
+                  Usar esta Manzana / Base
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Tabla de Resultados Generados -->
-        <div id="wrapResultadosGenerador" class="d-none">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="fw-bold mb-0 text-navy small">
-              <i class="bi bi-check2-circle text-success me-1"></i> Predios Nuevos Generados y Reservados (<span
-                id="lblCantGenerada">0</span>):
-            </h6>
-            <div class="d-flex gap-2">
-              <button class="btn btn-xs btn-outline-solicitudes py-1 px-2" id="btnCopiarTodoGenerador"
-                style="font-size: 0.75rem; border-radius: 8px !important;">
-                <i class="bi bi-clipboard-check me-1"></i> Copiar Todo para Alfa
-              </button>
-              <button class="btn btn-xs btn-outline-secondary py-1 px-2" id="btnDescargarCsvGenerador"
-                style="font-size: 0.75rem; border-radius: 8px !important;">
-                <i class="bi bi-filetype-csv me-1"></i> Descargar CSV
-              </button>
+        <!-- DATOS BASE DEL PREDIO -->
+        <div class="card border-0 shadow-sm npn-form-card mb-4">
+          <div class="card-header npn-form-card-header px-3 px-md-4 py-3">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+              <div class="d-flex align-items-center gap-3">
+                <div>
+                  <h6 class="npn-form-card-title fw-bold mb-1">DATOS BASE DEL PREDIO</h6>
+                  <p class="npn-form-card-subtitle mb-0">
+                    Ingresa el NPN matriz y define el tipo y la condición del predio.
+                  </p>
+                </div>
+              </div>
+
+              <span class="badge npn-stock-badge px-3 py-2 align-self-start align-self-md-center">
+                <i class="bi bi-database-check me-1"></i>
+                Bolsa Neiva:
+                <span id="badgeStockDisponibles" class="ms-1" aria-live="polite">Consultando...</span>
+              </span>
             </div>
           </div>
 
-          <div class="table-responsive border rounded-3 mb-3" style="max-height: 280px; overflow-y: auto;">
-            <table class="table table-sm table-hover mb-0" id="tblResultadosGenerador" style="font-size: 0.82rem;">
-              <thead class="table-light text-navy sticky-top">
-                <tr>
-                  <th class="text-center" style="width: 40px;">#</th>
-                  <th>Número Predial Nacional (30 Dígitos)</th>
-                  <th>Código Homologado</th>
-                  <th class="text-center">Estado</th>
-                  <th class="text-center" style="width: 130px;">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyResultadosGenerador">
-                <!-- Se llena dinámicamente -->
-              </tbody>
-            </table>
+          <div class="card-body p-3 p-lg-4">
+            <div class="row g-3">
+
+              <div class="col-12 col-xl-5">
+                <div class="npn-field">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <label for="genPredioMatrizInput" class="form-label npn-form-label mb-1">
+                      Predio Matriz / Base (30 dígitos)
+                      <span class="npn-required">*</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      class="btn btn-sm npn-link-action p-1 text-decoration-none fw-semibold"
+                      id="btnToggleAsistenteTerritorial">
+                      <i class="bi bi-compass me-1"></i>
+                      &iquest;Nueva Manzana / Zona?
+                    </button>
+                  </div>
+
+                  <div class="input-group input-group-sm npn-input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-geo-alt-fill"></i>
+                    </span>
+                    <input
+                      type="text"
+                      class="form-control font-monospace"
+                      id="genPredioMatrizInput"
+                      placeholder="Ej: 410010106000000970154913020004"
+                      maxlength="30">
+                  </div>
+
+                  <small class="npn-field-help d-block mt-2" id="genMatrizHelp">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Dígitos ingresados:
+                    <span id="genDigitosCount" class="fw-bold">0</span>/30
+                  </small>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6 col-xl-3">
+                <div class="npn-field">
+                  <label for="genTipoMutacionSelect" class="form-label npn-form-label">
+                    Tipo de Trámite
+                  </label>
+                  <div class="input-group input-group-sm npn-input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-diagram-3-fill"></i>
+                    </span>
+                    <select class="form-select" id="genTipoMutacionSelect">
+                      <option value="DESENGLOBE" selected>Desenglobe / Subdivisión</option>
+                      <option value="MANZANA_NUEVA">Incorporación Manzana Nueva</option>
+                      <option value="PH">Propiedad Horizontal (PH)</option>
+                      <option value="SEGREGACION">Segregación</option>
+                      <option value="MEJORA">Mejora en Terreno Ajeno</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6 col-xl-4">
+                <div class="npn-field">
+                  <label for="genCondicionSelect" class="form-label npn-form-label">
+                    Condición del Predio (Posición 22)
+                  </label>
+                  <div class="input-group input-group-sm npn-input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-building-check"></i>
+                    </span>
+                    <select class="form-select" id="genCondicionSelect">
+                      <option value="0" selected>0 - No Propiedad Horizontal (NPH)</option>
+                      <option value="9">9 - Predios en Propiedad Horizontal (PH)</option>
+                      <option value="5">5 - Mejoras / PH no reglamentaria</option>
+                      <option value="8">8 - Predio en Condominio</option>
+                      <option value="7">7 - Parque Cementerios</option>
+                      <option value="4">4 - Vías</option>
+                      <option value="3">3 - Bienes de uso público diferentes a vías</option>
+                      <option value="2">2 - Informal</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PARAMETROS PH: se conserva el ID y el display controlado por el JS existente -->
+            <div
+              class="row g-3 mt-3 npn-ph-panel align-items-end"
+              id="rowPhParams"
+              style="display: none;">
+
+              <div class="col-12 mb-1">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-buildings-fill npn-text-primary"></i>
+                  <span class="small fw-bold npn-text-primary">Configuración de Propiedad Horizontal</span>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-3">
+                <div class="npn-field">
+                  <label for="genEdificioInput" class="form-label npn-form-label">
+                    Edificio / Torre (Pos 23-24)
+                  </label>
+                  <div class="input-group input-group-sm npn-input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-buildings-fill"></i>
+                    </span>
+                    <input
+                      type="text"
+                      class="form-control font-monospace"
+                      id="genEdificioInput"
+                      placeholder="00"
+                      maxlength="2"
+                      value="00">
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-6 col-md-3">
+                <div class="npn-field">
+                  <label for="genPisoInput" class="form-label npn-form-label">
+                    Piso / Nivel (Pos 25-26)
+                  </label>
+                  <div class="input-group input-group-sm npn-input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-layers-fill"></i>
+                    </span>
+                    <input
+                      type="text"
+                      class="form-control font-monospace"
+                      id="genPisoInput"
+                      placeholder="00"
+                      maxlength="2"
+                      value="00">
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <div class="npn-info-box px-3 py-2">
+                  <i class="bi bi-info-circle-fill npn-text-primary me-2"></i>
+                  Las unidades (Pos 27-30) se generarán consecutivamente (ej: 0001, 0002...).
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONFIGURACION DE GENERACION -->
+        <div class="card border-0 shadow-sm npn-form-card mb-4">
+          <div class="card-header npn-form-card-header px-3 px-md-4 py-3">
+            <div class="d-flex align-items-center gap-3">
+              <div>
+                <h6 class="npn-form-card-title fw-bold mb-1">CONFIGURACIÓN DE GENERACIÓN</h6>
+                <p class="npn-form-card-subtitle mb-0">
+                  Define la cantidad, relaciona el trámite y registra observaciones opcionales.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body p-3 p-lg-4">
+            <div class="row g-3 align-items-end">
+
+              <div class="col-12 col-sm-4 col-lg-2">
+                <div class="npn-field">
+                  <label for="genCantidadInput" class="form-label npn-form-label">
+                    Cantidad <span class="npn-required">*</span>
+                  </label>
+                  <div class="input-group input-group-sm npn-input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-123"></i>
+                    </span>
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="genCantidadInput"
+                      value="1"
+                      min="1"
+                      max="100">
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-sm-8 col-lg-4">
+                <div class="npn-field">
+                  <label for="genTramiteInput" class="form-label npn-form-label">
+                    Consecutivo Trámite
+                  </label>
+                  <div class="input-group input-group-sm npn-input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-hash"></i>
+                    </span>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="genTramiteInput"
+                      placeholder="Ej: MUT-2026-001 (Opcional)">
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-4">
+                <div class="npn-field">
+                  <label for="genObservacionesInput" class="form-label npn-form-label">
+                    Notas / Observaciones
+                  </label>
+                  <div class="input-group input-group-sm npn-input-group">
+                    <span class="input-group-text">
+                      <i class="bi bi-chat-left-text-fill"></i>
+                    </span>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="genObservacionesInput"
+                      placeholder="Notas adicionales (Opcional)">
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-lg-2">
+                <div class="npn-generate-action">
+                  <span class="form-label npn-form-label d-none d-lg-block">Acción</span>
+                  <button
+                    class="btn npn-btn-primary w-100"
+                    id="btnEjecutarGeneradorNpn"
+                    type="button">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    Generar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RESULTADOS -->
+        <div id="wrapResultadosGenerador" class="d-none">
+          <div class="card border-0 shadow-sm npn-results-card">
+            <div class="card-header npn-results-card-header px-3 px-md-4 py-3">
+              <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="npn-results-header-icon">
+                    <i class="bi bi-check2-circle"></i>
+                  </div>
+                  <div>
+                    <h6 class="npn-results-card-title fw-bold mb-1">
+                      PREDIOS NUEVOS GENERADOS Y RESERVADOS
+                      (<span id="lblCantGenerada">0</span>)
+                    </h6>
+                    <p class="npn-results-card-subtitle mb-0">
+                      Números prediales y códigos homologados disponibles para Alfa.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                  <button
+                    class="btn btn-sm btn-light fw-semibold rounded-3"
+                    id="btnCopiarTodoGenerador"
+                    type="button">
+                    <i class="bi bi-clipboard-check me-1"></i>
+                    Copiar Todo para Alfa
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-light fw-semibold rounded-3"
+                    id="btnDescargarCsvGenerador"
+                    type="button">
+                    <i class="bi bi-filetype-csv me-1"></i>
+                    Descargar CSV
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-body p-3 p-lg-4">
+              <div class="npn-table-wrapper table-responsive border rounded-3">
+                <table class="table table-sm table-hover align-middle mb-0" id="tblResultadosGenerador">
+                  <thead class="npn-table-header sticky-top">
+                    <tr>
+                      <th class="text-center px-3 py-2" style="width: 55px;">#</th>
+                      <th class="px-3 py-2">Número Predial Nacional (30 Dígitos)</th>
+                      <th class="px-3 py-2">Código Homologado</th>
+                      <th class="text-center px-3 py-2">Estado</th>
+                      <th class="text-center px-3 py-2" style="width: 150px;">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyResultadosGenerador"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- PANE 2: GESTIÓN DE RESERVAS ACTIVAS -->
-      <div id="paneReservasActivas" class="d-none">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <div>
-            <span class="fw-bold text-navy small">Listado de Homologados en Reserva:</span>
-            <small class="text-muted d-block" style="font-size: 0.72rem;">
-              Códigos reservados temporalmente. Si un trámite no se consolida en Alfa, puedes liberarlo para que regrese
-              a la bolsa.
-            </small>
-          </div>
-          <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-xs btn-outline-success py-1 px-2" id="btnConsolidarSeleccionados"
-              style="font-size: 0.75rem; border-radius: 8px !important;">
-              <i class="bi bi-check2-all me-1"></i> Fijar / Consolidar Seleccionados
-            </button>
-            <button class="btn btn-xs btn-outline-danger py-1 px-2" id="btnLiberarSeleccionados"
-              style="font-size: 0.75rem; border-radius: 8px !important;">
-              <i class="bi bi-trash3 me-1"></i> Liberar Seleccionados
-            </button>
-            <button class="btn btn-xs btn-outline-secondary py-1 px-2" id="btnRefrescarReservas"
-              style="font-size: 0.75rem; border-radius: 8px !important;">
-              <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
-            </button>
-          </div>
-        </div>
+      <!-- PANEL RESERVAS -->
+      <div
+        id="paneReservasActivas"
+        class="d-none px-4 py-4"
+        role="tabpanel"
+        aria-labelledby="btnTabReservas">
 
-        <div class="table-responsive border rounded-3 mb-3" style="max-height: 350px; overflow-y: auto;">
-          <table class="table table-sm table-hover mb-0" id="tblReservasActivas" style="font-size: 0.82rem;">
-            <thead class="table-light text-navy sticky-top">
-              <tr>
-                <th class="text-center" style="width: 35px;">
-                  <input type="checkbox" id="chkTodosReservas" class="form-check-input">
-                </th>
-                <th>Código Homologado</th>
-                <th>NPN Asignado (30d)</th>
-                <th>Usuario / Trámite</th>
-                <th>Fecha Reserva</th>
-                <th class="text-center" style="width: 140px;">Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tbodyReservasActivas">
-              <!-- Se llena dinámicamente -->
-            </tbody>
-          </table>
+        <div class="card border-0 shadow-sm npn-reservas-card">
+          <div class="card-header npn-reservas-card-header px-3 px-md-4 py-3">
+            <div class="d-flex flex-column flex-xl-row align-items-xl-center justify-content-between gap-3">
+              <div class="d-flex align-items-center gap-3">
+                <div>
+                  <h6 class="npn-reservas-card-title fw-bold mb-1">LISTADO DE HOMOLOGADOS EN RESERVA</h6>
+                  <p class="npn-reservas-card-subtitle mb-0">
+                    Consolida los códigos utilizados o libera los que deban regresar a la bolsa.
+                  </p>
+                </div>
+              </div>
+
+              <div class="npn-reservas-actions d-flex flex-wrap gap-2">
+                <button
+                  class="btn btn-sm btn-light text-success rounded-3"
+                  id="btnConsolidarSeleccionados"
+                  type="button">
+                  <i class="bi bi-check2-all me-1"></i>
+                  Fijar / Consolidar
+                </button>
+
+                <button
+                  class="btn btn-sm btn-light text-danger rounded-3"
+                  id="btnLiberarSeleccionados"
+                  type="button">
+                  <i class="bi bi-trash3 me-1"></i>
+                  Liberar
+                </button>
+
+                <button
+                  class="btn btn-sm btn-outline-light rounded-3"
+                  id="btnRefrescarReservas"
+                  type="button">
+                  <i class="bi bi-arrow-clockwise me-1"></i>
+                  Actualizar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-body p-3 p-lg-4">
+            <div class="alert alert-light border d-flex align-items-start gap-2 py-2 px-3 mb-3 small text-muted">
+              <i class="bi bi-info-circle-fill npn-text-primary mt-1"></i>
+              <span>
+                Los códigos permanecen reservados temporalmente. Si el trámite no se consolida en Alfa,
+                puedes liberarlos para que regresen a la bolsa disponible.
+              </span>
+            </div>
+
+            <div class="npn-table-wrapper-lg table-responsive border rounded-3">
+              <table class="table table-sm table-hover align-middle mb-0" id="tblReservasActivas">
+                <thead class="npn-table-header sticky-top">
+                  <tr>
+                    <th class="text-center px-3 py-2" style="width: 45px;">
+                      <input type="checkbox" id="chkTodosReservas" class="form-check-input">
+                    </th>
+                    <th class="px-3 py-2">Código Homologado</th>
+                    <th class="px-3 py-2">NPN Asignado (30d)</th>
+                    <th class="px-3 py-2">Usuario / Trámite</th>
+                    <th class="px-3 py-2">Fecha Reserva</th>
+                    <th class="text-center px-3 py-2" style="width: 150px;">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyReservasActivas"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="custom-modal-footer d-flex justify-content-end gap-2 pt-2 border-top">
-      <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="btnCerrarModalGenBottom"
-        style="border-radius: 8px !important;">
-        Cerrar
-      </button>
+    <!-- FOOTER -->
+    <div class="npn-modal-footer border-top px-4 py-3">
+      <div class="d-flex justify-content-end">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary px-4 rounded-3"
+          id="btnCerrarModalGenBottom">
+          <i class="bi bi-x-circle me-1"></i>
+          Cerrar
+        </button>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- SOLO CONTROLA LA APARIENCIA ACTIVA/INACTIVA DE LAS PESTANAS -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const btnTabGenerar = document.getElementById('btnTabGenerar');
+    const btnTabReservas = document.getElementById('btnTabReservas');
+
+    if (!btnTabGenerar || !btnTabReservas) {
+      return;
+    }
+
+    function cambiarPestanaVisual(activa, inactiva) {
+      activa.classList.add('npn-main-tab-active');
+      inactiva.classList.remove('npn-main-tab-active');
+      activa.setAttribute('aria-selected', 'true');
+      inactiva.setAttribute('aria-selected', 'false');
+    }
+
+    btnTabGenerar.addEventListener('click', function () {
+      cambiarPestanaVisual(btnTabGenerar, btnTabReservas);
+    });
+
+    btnTabReservas.addEventListener('click', function () {
+      cambiarPestanaVisual(btnTabReservas, btnTabGenerar);
+    });
+  });
+</script>

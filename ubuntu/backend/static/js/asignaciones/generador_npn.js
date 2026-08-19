@@ -392,15 +392,11 @@
 
     if (btnTabGen && btnTabRes) {
       btnTabGen.addEventListener("click", () => {
-        btnTabGen.className = "btn btn-sm btn-outline-solicitudes active px-3";
-        btnTabRes.className = "btn btn-sm btn-outline-secondary px-3";
         paneGen.classList.remove("d-none");
         paneRes.classList.add("d-none");
       });
 
       btnTabRes.addEventListener("click", () => {
-        btnTabRes.className = "btn btn-sm btn-outline-solicitudes active px-3";
-        btnTabGen.className = "btn btn-sm btn-outline-secondary px-3";
         paneRes.classList.remove("d-none");
         paneGen.classList.add("d-none");
         cargarReservasActivas();

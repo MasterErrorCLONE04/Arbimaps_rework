@@ -67,7 +67,8 @@
             </div>
 
             <div class="row g-3 align-items-center mb-4 asigTableControls">
-              <div class="col-12 col-md-auto d-flex justify-content-start align-items-center gap-2 mt-0 asigControlGroup">
+              <div
+                class="col-12 col-md-auto d-flex justify-content-start align-items-center gap-2 mt-0 asigControlGroup">
                 <label for="asigRowsPerPage" class="form-label asigControlLabel mb-0">
                   Mostrar registros
                 </label>
@@ -80,7 +81,8 @@
                 </select>
               </div>
 
-              <div class="col-12 col-lg d-flex flex-column flex-md-row justify-content-lg-end align-items-stretch align-items-md-center gap-3 mt-0 asigFilterActions">
+              <div
+                class="col-12 col-lg d-flex flex-column flex-md-row justify-content-lg-end align-items-stretch align-items-md-center gap-3 mt-0 asigFilterActions">
                 <div class="d-flex align-items-center gap-2 mt-0 asigSearchGroup">
                   <label for="asigSearchInput" class="form-label asigControlLabel mb-0">
                     Buscar
@@ -342,7 +344,6 @@
       destroy: true,
       autoWidth: false,
       responsive: false,
-      scrollX: true,
       searching: true,
       paging: true,
       info: true,
@@ -353,13 +354,20 @@
       stripeClasses: [],
       dom: "rt",
       language: {
-        emptyTable: "No hay asignaciones creadas todavÃ­a.",
-        zeroRecords: "No se encontraron resultados para la bÃºsqueda realizada.",
+        emptyTable: "No hay asignaciones creadas todavía.",
+        zeroRecords: "No se encontraron resultados para la búsqueda realizada.",
         processing: "Procesando..."
       },
       columnDefs: [
-        { targets: [7, 8], orderable: false, searchable: false },
-        { targets: "_all", className: "align-middle" }
+        {
+          targets: [7, 8],
+          orderable: false,
+          searchable: false
+        },
+        {
+          targets: "_all",
+          className: "align-middle"
+        }
       ],
       drawCallback: sincronizarInfoDataTable
     });
