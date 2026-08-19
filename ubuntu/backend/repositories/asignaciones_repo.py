@@ -1464,11 +1464,15 @@ def buscar_predios_estado(
     if schema_main and not isinstance(schema_main, str) and hasattr(schema_main, "schemas"):
         app_schema = schema_main.schemas.app
 
+    pt_table = _qualify(schema_main, "arb_predio_tramite") if not isinstance(schema_main, str) else f"{schema_main}.arb_predio_tramite"
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
             f"""
             SELECT
               p.{numero_field} AS numero_predial_nacional,
+              p.t_id AS predio_t_id,
+              pt.tramite AS tramite_id,
+              (SELECT COUNT(*) FROM a_base_principal.arb_predio_tramite pt2 WHERE pt2.tramite = pt.tramite) AS total_predios_tramite,
               (
                 SELECT a.usuario_asignado
                 FROM {app_schema}.asignacion a
@@ -1489,6 +1493,7 @@ def buscar_predios_estado(
               ) AS asignado_por,
               'a_base_principal'::varchar AS source_schema
             FROM {predio_table} p
+            LEFT JOIN a_base_principal.arb_predio_tramite pt ON pt.predio = p.t_id
             WHERE p.{numero_field} = ANY(%s)
             """,
             (numeros,),
@@ -2213,3 +2218,50 @@ def insert_asignacion_comentario(
             ),
         )
 
+
+
+
+def obtener_predios_tramite(
+    conn,
+    schema_main: str,
+    tramite_id: int,
+    *,
+    model_context: Optional[AssignmentModelContext] = None,
+) -> list[dict]:
+    predio_table, numero_field = _resolve_predio_source(schema_main, model_context)
+    app_schema = "arbimaps_app"
+    if schema_main and not isinstance(schema_main, str) and hasattr(schema_main, "schemas"):
+        app_schema = schema_main.schemas.app
+
+    pt_table = _qualify(schema_main, "arb_predio_tramite")
+    dir_table = _qualify(schema_main, "arb_direccion")
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            f"""
+            SELECT
+              p.t_id AS predio_t_id,
+              p.{numero_field} AS numero_predial_nacional,
+              (
+                SELECT a.usuario_asignado
+                FROM {app_schema}.asignacion a
+                JOIN {app_schema}.asignacion_predio ap ON ap.asignacion_id = a.id
+                WHERE (ap.predio_t_id = p.t_id OR ap.numero_predial_nacional = p.{numero_field})
+                  AND ap.activo IS DISTINCT FROM FALSE
+                  AND a.estado IS DISTINCT FROM 'CERRADA'
+                LIMIT 1
+              ) AS asignado_a,
+              (
+                SELECT d.complemento
+                FROM {dir_table} d
+                WHERE d.arb_predio_direccion = p.t_id
+                LIMIT 1
+              ) AS complemento_direccion
+            FROM {pt_table} pt
+            JOIN {predio_table} p ON p.t_id = pt.predio
+            WHERE pt.tramite = %s
+            ORDER BY p.{numero_field}
+            LIMIT 1000
+            """,
+            (tramite_id,),
+        )
+        return [dict(r) for r in (cur.fetchall() or [])]

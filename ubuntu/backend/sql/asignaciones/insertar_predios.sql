@@ -1,17 +1,23 @@
 -- Runtime contract:
 -- _cfg must already exist before this body runs, with:
---   dataset_name text
---   npn_list     text[]
+--   dataset_name   text
+--   npn_list       text[]
+--   predio_id_list bigint[]
 
 SET session_replication_role = 'replica';
 
--- 1) Semilla predios origen
+-- 1) Semilla predios origen (Prioriza t_id relacional sobre NPN en texto)
 DROP TABLE IF EXISTS _seed_predios;
 CREATE TEMP TABLE _seed_predios AS
 SELECT p.t_id, p.numero_predial_nacional, p.t_basket
 FROM leiva.ilc_predio p
-JOIN unnest((SELECT npn_list FROM _cfg)) AS x(npn)
-  ON x.npn = p.numero_predial_nacional;
+WHERE (
+  COALESCE(array_length((SELECT predio_id_list FROM _cfg), 1), 0) > 0 
+  AND p.t_id IN (SELECT unnest(predio_id_list) FROM _cfg)
+) OR (
+  COALESCE(array_length((SELECT predio_id_list FROM _cfg), 1), 0) = 0 
+  AND p.numero_predial_nacional IN (SELECT unnest(npn_list) FROM _cfg)
+);
 -- validar semilla
 SELECT count(*) AS seed_predios FROM _seed_predios;
 
@@ -274,20 +280,27 @@ BEGIN
   WHILE v_added > 0 LOOP
     v_added := 0;
     FOR r IN SELECT child_table, child_fk_col, parent_table FROM _fk LOOP
-      EXECUTE format(
-        'INSERT INTO _sel(table_name,id)
-         SELECT %L, c.%I
-         FROM leiva.%I c
-         JOIN _sel s ON s.table_name=%L AND s.id=c.t_id
-         WHERE c.%I IS NOT NULL
-         ON CONFLICT DO NOTHING',
-        r.parent_table, r.child_fk_col, r.child_table, r.child_table, r.child_fk_col
-      );
-      GET DIAGNOSTICS v_step = ROW_COUNT;
-      v_added := v_added + COALESCE(v_step,0);
+      IF r.parent_table <> 'ilc_predio' AND r.parent_table <> 'arb_predio' THEN
+        EXECUTE format(
+          'INSERT INTO _sel(table_name,id)
+           SELECT %L, c.%I
+           FROM leiva.%I c
+           JOIN _sel s ON s.table_name=%L AND s.id=c.t_id
+           WHERE c.%I IS NOT NULL
+           ON CONFLICT DO NOTHING',
+          r.parent_table, r.child_fk_col, r.child_table, r.child_table, r.child_fk_col
+        );
+        GET DIAGNOSTICS v_step = ROW_COUNT;
+        v_added := v_added + COALESCE(v_step,0);
+      END IF;
     END LOOP;
   END LOOP;
 END $$;
+
+-- Garantizar que NUNCA se cuelen predios no sembrados despues del cierre ascendente
+DELETE FROM _sel
+WHERE table_name IN ('ilc_predio', 'arb_predio')
+  AND id NOT IN (SELECT t_id FROM _seed_predios);
 
 -- Refuerzo cadena de construccion/CUC desde predios seleccionados:
 -- ilc_predio -> col_uebaunit -> cr_unidadconstruccion
@@ -745,20 +758,27 @@ BEGIN
   WHILE v_added > 0 LOOP
     v_added := 0;
     FOR r IN SELECT child_table, child_fk_col, parent_table FROM _fk LOOP
-      EXECUTE format(
-        'INSERT INTO _sel(table_name,id)
-         SELECT %L, c.%I
-         FROM leiva.%I c
-         JOIN _sel s ON s.table_name=%L AND s.id=c.t_id
-         WHERE c.%I IS NOT NULL
-         ON CONFLICT DO NOTHING',
-        r.parent_table, r.child_fk_col, r.child_table, r.child_table, r.child_fk_col
-      );
-      GET DIAGNOSTICS v_step = ROW_COUNT;
-      v_added := v_added + COALESCE(v_step,0);
+      IF r.parent_table <> 'ilc_predio' AND r.parent_table <> 'arb_predio' THEN
+        EXECUTE format(
+          'INSERT INTO _sel(table_name,id)
+           SELECT %L, c.%I
+           FROM leiva.%I c
+           JOIN _sel s ON s.table_name=%L AND s.id=c.t_id
+           WHERE c.%I IS NOT NULL
+           ON CONFLICT DO NOTHING',
+          r.parent_table, r.child_fk_col, r.child_table, r.child_table, r.child_fk_col
+        );
+        GET DIAGNOSTICS v_step = ROW_COUNT;
+        v_added := v_added + COALESCE(v_step,0);
+      END IF;
     END LOOP;
   END LOOP;
 END $$;
+
+-- Garantizar que NUNCA se cuelen predios no sembrados despues de la segunda pasada
+DELETE FROM _sel
+WHERE table_name IN ('ilc_predio', 'arb_predio')
+  AND id NOT IN (SELECT t_id FROM _seed_predios);
 
 -- Guard FK: conservar solo derechos cuyo predio (unidad) está seleccionado.
 DELETE FROM _sel s

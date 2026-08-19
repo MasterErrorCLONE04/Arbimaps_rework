@@ -43,6 +43,8 @@ AsignacionEstado = Literal[
     "DEVUELTO_A_DIGITALIZACION",
     "EN_SINCRONIZACION",
     "SINCRONIZADO",
+    "APROBADO_DIGITALIZACION",
+    "APROBADO_SINCRONIZACION",
 ]
 
 
@@ -109,6 +111,11 @@ class BuscarPrediosResponseItem(BaseModel):
     asignado_a: Optional[str] = None
     asignado_por: Optional[str] = None
     source_schema: Optional[str] = "a_base_principal"
+    predio_t_id: Optional[int] = None
+    tramite_id: Optional[int] = None
+    total_predios_tramite: Optional[int] = None
+    buscado_inicialmente: Optional[bool] = True
+    complemento_direccion: Optional[str] = None
 
 
 class BuscarPrediosResponse(BaseModel):
@@ -631,6 +638,9 @@ def buscar_predios(
     lookup = {r.get('numero_predial_nacional'): r for r in rows}
 
     items: List[dict] = []
+    seen_npns = set()
+    tramite_ids = set()
+
     for n in numeros:
         existe = n in existentes
         assigned_info = lookup.get(n) or {}
@@ -645,16 +655,54 @@ def buscar_predios(
         else:
             estado = None
 
-        items.append(
-            BuscarPrediosResponseItem(
+        predio_t_id = assigned_info.get('predio_t_id') if existe else None
+        tramite_id = assigned_info.get('tramite_id') if existe else None
+        total_predios_tramite = assigned_info.get('total_predios_tramite') if existe else None
+
+        if tramite_id and total_predios_tramite and total_predios_tramite > 1:
+            tramite_ids.add(tramite_id)
+
+        if n not in seen_npns:
+            seen_npns.add(n)
+            item_obj = BuscarPrediosResponseItem(
                 numero_predial_nacional=n,
                 existe=existe,
                 estado=estado,
                 asignado_a=asignado_a,
                 asignado_por=asignado_por,
                 source_schema=source_schema,
-            ).dict()
-        )
+                predio_t_id=predio_t_id,
+                tramite_id=tramite_id,
+                total_predios_tramite=total_predios_tramite,
+                buscado_inicialmente=True,
+            )
+            items.append(item_obj.dict())
+
+    # Expandir predios hermanos del mismo trámite
+    for tid in tramite_ids:
+        try:
+            brothers = asignaciones_repo.obtener_predios_tramite(conn, tenant, tid)
+            for b in brothers:
+                npn_b = b.get("numero_predial_nacional")
+                if npn_b and npn_b not in seen_npns:
+                    seen_npns.add(npn_b)
+                    asig_a = b.get("asignado_a")
+                    b_estado = "ASIGNADO" if asig_a else None
+                    item_b = BuscarPrediosResponseItem(
+                        numero_predial_nacional=npn_b,
+                        existe=True,
+                        estado=b_estado,
+                        asignado_a=asig_a,
+                        source_schema="a_base_principal",
+                        predio_t_id=b.get("predio_t_id"),
+                        tramite_id=tid,
+                        total_predios_tramite=None,
+                        buscado_inicialmente=False,
+                        complemento_direccion=b.get("complemento_direccion"),
+                    )
+                    items.append(item_b.dict())
+        except Exception as e:
+            logger.warning(f"Error expandiendo predios hermanos del tramite {tid}: {e}")
 
     total = len(numeros)
     existen = sum(1 for it in items if it['existe'])
@@ -1163,10 +1211,17 @@ def asignar_predios(
                 f"INSERT INTO {asignacion_predio_table}"
                 " (asignacion_id, numero_predial_nacional, predio_t_id, activo, creado_por)"
                 " VALUES (%s, %s, %s, TRUE, %s)"
+                " ON CONFLICT DO NOTHING"
             )
-            for num in numeros:
-                meta = lookup.get(num) or {}
-                cur.execute(insert_sql, (asignacion_id, num, meta.get("predio_t_id"), created_by))
+            inserted_tids = set()
+            for meta in predios_info:
+                pid = meta.get("predio_t_id")
+                npn = meta.get("numero_predial_nacional")
+                if pid and pid in inserted_tids:
+                    continue
+                if pid:
+                    inserted_tids.add(pid)
+                cur.execute(insert_sql, (asignacion_id, npn, pid, created_by))
 
             _log_event(
                 conn,
@@ -1704,3 +1759,29 @@ def obtener_solicitud(
     if row.get("creado_en"):
         row["creado_en"] = row["creado_en"].isoformat()
     return row
+
+
+
+class BuscarPrediosTramiteBody(BaseModel):
+    tramite_id: int
+
+
+@router.post("/predios_tramite")
+def obtener_predios_tramite(
+    body: BuscarPrediosTramiteBody,
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
+    _require_assignment_access(user, "admin", "coordinador")
+    if not body.tramite_id:
+        raise HTTPException(status_code=400, detail="Debes enviar un tramite_id valido.")
+    try:
+        predios = asignaciones_repo.obtener_predios_tramite(conn, tenant, body.tramite_id)
+        return {
+            "tramite_id": body.tramite_id,
+            "total": len(predios),
+            "items": predios,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error consultando predios del tramite: {e}")

@@ -163,6 +163,34 @@ def _get_active_npns(cur, tenant: TenantContext, asignacion_id: int) -> list[str
     return [str(r[0]).strip() for r in (cur.fetchall() or []) if r and r[0]]
 
 
+def _get_active_predio_ids(cur, tenant: TenantContext, asignacion_id: int) -> list[int]:
+    asignacion_predio_table = app_table(tenant, "asignacion_predio")
+    cur.execute(
+        f"""
+        UPDATE {asignacion_predio_table} ap
+        SET predio_t_id = p.t_id
+        FROM {tenant.schemas.main}.arb_predio p
+        WHERE ap.asignacion_id = %s
+          AND ap.predio_t_id IS NULL
+          AND ap.numero_predial_nacional IS NOT NULL
+          AND BTRIM(p.numero_predial::text) = BTRIM(ap.numero_predial_nacional::text)
+        """,
+        (asignacion_id,),
+    )
+    cur.execute(
+        f"""
+        SELECT ap.predio_t_id
+        FROM {asignacion_predio_table} ap
+        WHERE ap.asignacion_id = %s
+          AND ap.activo IS DISTINCT FROM FALSE
+          AND ap.predio_t_id IS NOT NULL
+        ORDER BY ap.predio_t_id
+        """,
+        (asignacion_id,),
+    )
+    return [int(r[0]) for r in (cur.fetchall() or []) if r and r[0] is not None]
+
+
 def _resolve_dataset_name(meta: dict, dataset_name_override: Optional[str]) -> str:
     if dataset_name_override and str(dataset_name_override).strip():
         return _sanitize_dataset_name(str(dataset_name_override))
@@ -373,7 +401,8 @@ def run_insertar_predios_for_asignacion(
             _set_workspace_session_guards(cur, asignacion_id)
             meta = _get_asignacion_meta(cur, tenant, asignacion_id)
             npn_list = _get_active_npns(cur, tenant, asignacion_id)
-            if not npn_list:
+            predio_id_list = _get_active_predio_ids(cur, tenant, asignacion_id)
+            if not npn_list and not predio_id_list:
                 raise ExportServiceError(
                     status_code=400,
                     detail=f"La asignacion {asignacion_id} no tiene predios activos.",
@@ -385,9 +414,9 @@ def run_insertar_predios_for_asignacion(
             cur.execute(
                 """
                 CREATE TEMP TABLE _cfg AS
-                SELECT %s::text AS dataset_name, %s::text[] AS npn_list
+                SELECT %s::text AS dataset_name, %s::text[] AS npn_list, %s::bigint[] AS predio_id_list
                 """,
-                (ds_name, npn_list),
+                (ds_name, npn_list, predio_id_list),
             )
             cur.execute(sql_body)
 
