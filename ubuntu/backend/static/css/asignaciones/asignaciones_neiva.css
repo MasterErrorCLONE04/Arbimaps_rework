@@ -150,8 +150,7 @@ body.view-asignaciones .btn-outline-solicitudes {
 }
 
 body.view-asignaciones .btn-confirmar-asignacion,
-body.view-asignaciones .btn-primary,
-body.view-asignaciones .btn-success {
+body.view-asignaciones .btn-primary {
   color: #fff !important;
   background: var(--asg-gradient) !important;
   border-color: transparent !important;
@@ -159,6 +158,15 @@ body.view-asignaciones .btn-success {
   box-shadow: 0 5px 13px rgba(6, 54, 34, .16) !important;
   font-weight: 600 !important;
 }
+
+body.view-asignaciones .btn-success {
+  color: #fff !important;
+  background: var(--asg-deep) !important;
+  font-weight: 500 !important;
+  border-radius: 12px !important;
+  border: none !important;
+}
+
 
 body.view-asignaciones .buscar:hover,
 body.view-asignaciones .crear-asignacion:hover,
@@ -233,8 +241,8 @@ body.view-asignaciones #asignacionNoti {
 
 body.view-asignaciones .badge-seleccionados-tabla,
 body.view-asignaciones .contador-resultados-badge {
-  color: var(--asg-deep) !important;
-  background: var(--asg-mint) !important;
+  color: #0A2C1B !important;
+  background: #A0C882 !important;
 }
 
 body.view-asignaciones .table-resultados {
@@ -245,7 +253,7 @@ body.view-asignaciones .table-resultados {
 body.view-asignaciones .table-resultados thead th,
 body.view-asignaciones #tblListarSolicitudesAsistenteTable thead th {
   color: var(--asg-deep) !important;
-  background: linear-gradient(180deg, var(--asg-pale), var(--asg-mint)) !important;
+  background: var(--asg-accent) !important;
   border-color: var(--asg-line) !important;
 }
 
@@ -268,8 +276,8 @@ body.view-asignaciones #tblResultados_wrapper tr.row-seleccionado td {
 body.view-asignaciones .select-all-checkbox:checked,
 body.view-asignaciones .row-select-chk:checked,
 body.view-asignaciones .form-check-input:checked {
-  background-color: var(--asg-teal) !important;
-  border-color: var(--asg-teal) !important;
+  background-color: var(--asg-deep) !important;
+  border-color: var(--asg-deep) !important;
 }
 
 /* Confirmación y solicitudes pendientes */
@@ -283,8 +291,8 @@ body.view-asignaciones .confirm-asignacion-card,
 body.view-asignaciones .custom-modal-content {
   overflow: hidden;
   color: var(--asg-deep) !important;
-  background: var(--asg-gray) !important;
-  border: 1px solid var(--asg-mint) !important;
+  background: white !important;
+  border: none !important;
   border-radius: 22px !important;
   box-shadow: 0 22px 48px rgba(6, 54, 34, .22) !important;
 }
@@ -292,7 +300,7 @@ body.view-asignaciones .custom-modal-content {
 body.view-asignaciones .confirm-asignacion-heading,
 body.view-asignaciones .custom-modal-header {
   color: #fff !important;
-  background: var(--asg-gradient) !important;
+  background: linear-gradient(202deg, rgba(10, 44, 27, 1) 75%, rgba(27, 64, 1, 1) 95%) !important;
   margin: -28px -28px 20px !important;
   padding: 20px 24px !important;
 }
@@ -956,7 +964,7 @@ body.view-asignaciones #cardResultados {
   overflow: hidden;
   padding: 0 !important;
   background: #fff !important;
-  border: 1px solid var(--asg-line) !important;
+  border: 1px solid #dfdfdf !important;
   border-radius: 20px !important;
   /* box-shadow: 0 8px 22px rgba(6, 54, 34, .08) !important; */
 }
@@ -1029,7 +1037,8 @@ body.view-asignaciones #tblResultados_wrapper table.dataTable tbody td {
   color: #294c39 !important;
   background: #fff !important;
   border-top: 0 !important;
-  /* border-bottom: 1px solid var(--asg-table-rule) !important; */
+  border-bottom: none !important;
+  box-shadow: none !important;
 }
 
 body.view-asignaciones #tblResultados_wrapper table.dataTable tbody tr:hover td {
@@ -1106,13 +1115,13 @@ body.view-asignaciones .badge-contador-disponibles {
 }
 
 body.view-asignaciones .estado-badge-disponible {
-  color: #075a3c !important;
-  background: #d9f0e4 !important;
-  border-color: #86bda1 !important;
+  color: #0A2C1B !important;
+  background: #A0C882 !important;
+  border-color: #A0C882 !important;
 }
 
 body.view-asignaciones .estado-badge-disponible .estado-badge-dot {
-  background: #078653 !important;
+  background: #0A2C1B !important;
 }
 
 body.view-asignaciones .estado-badge-asignado {
@@ -1777,7 +1786,7 @@ body.view-asignaciones .content-modulo-detalles .vp-map-btn-edit:hover {
 .custom-modal-content {
   background: #ffffff !important;
   border-radius: 20px !important;
-  padding: 28px !important;
+  padding: 28px 21px !important;
   box-shadow: 0 15px 35px rgba(3, 47, 87, 0.25) !important;
   position: relative;
   animation: modalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -1870,4 +1879,84 @@ body.view-asignaciones .content-modulo-detalles .vp-map-btn-edit:hover {
   font-weight: 600 !important;
   font-size: 0.78rem !important;
   display: inline-block;
+}
+
+/* Scroll vertical para tabla de resultados de asignaciones */
+body.view-asignaciones #tblResultados_wrapper .dataTables_scrollBody {
+  max-height: 400px !important;
+  overflow-y: auto !important;
+  border-radius: 0 0 12px 12px !important;
+  scrollbar-color: #9eb5aa #edf2ef !important;
+}
+
+body.view-asignaciones #tblResultados_wrapper .dataTables_scrollBody::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body.view-asignaciones #tblResultados_wrapper .dataTables_scrollBody::-webkit-scrollbar-thumb {
+  background: #9eb5aa !important;
+  border-radius: 4px;
+}
+
+body.view-asignaciones #tblResultados_wrapper .dataTables_scrollHead {
+  border-radius: 12px 12px 0 0 !important;
+  background: var(--asg-table-head) !important;
+}
+
+/* Columna de checkbox compacta para maximizar espacio de datos */
+body.view-asignaciones #tblResultados_wrapper table.dataTable thead th:first-child,
+body.view-asignaciones #tblResultados_wrapper table.dataTable tbody td:first-child {
+  width: 30px !important;
+  max-width: 30px !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+  text-align: center !important;
+}
+
+/* Fijar la fila de titulos (tr) en la tabla del modal de solicitudes */
+body.view-asignaciones #tblListarSolicitudesAsistenteTable thead tr,
+body.view-asignaciones #tblListarSolicitudesAsistenteTable thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: var(--asg-accent) !important;
+  /* box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important; */
+}
+
+/* Estilos para inputs y selects dentro del modalGeneradorNpn inspirados en asignaciones_cargas */
+#modalGeneradorNpn .form-control,
+#modalGeneradorNpn .form-select,
+#modalGeneradorNpn .consultaInput {
+  color: var(--asg-deep) !important;
+  background-color: #ffffff !important;
+  border: 1px solid var(--asg-line) !important;
+  border-radius: 12px !important;
+  font-size: 0.85rem !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+#modalGeneradorNpn .input-group .form-control {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+#modalGeneradorNpn .input-group-text {
+  background-color: #ffffff !important;
+  border: 1px solid var(--asg-line) !important;
+  border-right: none !important;
+  border-top-left-radius: 12px !important;
+  border-bottom-left-radius: 12px !important;
+  color: var(--asg-deep) !important;
+}
+
+#modalGeneradorNpn .form-control:focus,
+#modalGeneradorNpn .form-select:focus,
+#modalGeneradorNpn .consultaInput:focus {
+  border-color: var(--asg-teal) !important;
+  box-shadow: 0 0 0 3px rgba(12, 112, 111, 0.14) !important;
+}
+
+#modalGeneradorNpn .input-group:focus-within .input-group-text {
+  border-color: var(--asg-teal) !important;
 }

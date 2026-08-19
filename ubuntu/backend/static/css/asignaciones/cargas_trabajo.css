@@ -1110,7 +1110,7 @@ body.modal-confirmacion-open {
 .icono-sin-resultados {
     width: 20px;
     height: 20px;
-    background-color: #032F57;
+    background-color: #0A2C1B;
     color: #fff;
     border-radius: 3px;
     flex: 0 0 20px;
@@ -1119,7 +1119,7 @@ body.modal-confirmacion-open {
 }
 
 .texto-sin-resultados {
-    color: #032F57;
+    color: #0A2C1B;
     font-size: 0.95rem;
     font-weight: 700;
     line-height: 1.4;

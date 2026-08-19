@@ -12,34 +12,49 @@
     align-items: center !important;
     justify-content: center !important;
   }
+
   #modalGeneradorNpn.d-none {
     display: none !important;
   }
+
   #modalGeneradorNpn .custom-modal-content {
     background: #ffffff !important;
     border-radius: 16px !important;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
     max-height: 90vh !important;
+    max-width: 1200px !important;
+    width: 92% !important;
     overflow-y: auto !important;
     padding: 24px !important;
-    border: 1px solid #E2ECF5 !important;
+    /* border: 1px solid #E2ECF5 !important; */
     animation: modalSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
+
   @keyframes modalSlideDown {
-    from { opacity: 0; transform: translateY(-20px) scale(0.98); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+      opacity: 0;
+      transform: translateY(-20px) scale(0.98);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
+
   #modalGeneradorNpn .btn-outline-solicitudes {
     color: #059669 !important;
     border-color: #059669 !important;
     background-color: transparent !important;
   }
+
   #modalGeneradorNpn .btn-outline-solicitudes:hover,
   #modalGeneradorNpn .btn-outline-solicitudes.active {
     color: #ffffff !important;
     background-color: #059669 !important;
     border-color: #059669 !important;
   }
+
   #modalGeneradorNpn .btn-close-custom {
     background: transparent;
     border: none;
@@ -50,6 +65,7 @@
     border-radius: 6px;
     transition: all 0.15s;
   }
+
   #modalGeneradorNpn .btn-close-custom:hover {
     color: #0f172a;
     background: #f1f5f9;
@@ -63,8 +79,10 @@
       <div class="d-flex align-items-center gap-2">
         <i class="bi bi-magic fs-4 text-navy"></i>
         <div>
-          <h5 class="custom-modal-title fw-bold mb-0 text-navy">Generador Oficial de Números Prediales y Homologados</h5>
-          <small class="text-muted">Dispensador de 30 dígitos NPN y códigos oficiales para el sistema Alfa</small>
+          <h5 class="custom-modal-title fw-bold mb-0 text-navy">Generador Oficial de Números Prediales y Homologados
+          </h5>
+          <small style="color: rgb(255 255 255 / 65%);">Dispensador de 30 dígitos NPN y códigos oficiales para el
+            sistema Alfa</small>
         </div>
       </div>
       <button type="button" class="btn-close-custom" id="btnCloseGeneradorNpnModal">
@@ -76,10 +94,12 @@
       <!-- Pestañas de Navegación -->
       <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
         <div class="d-flex gap-2">
-          <button class="btn btn-sm btn-outline-solicitudes active px-3" id="btnTabGenerar" type="button" style="border-radius: 8px !important;">
+          <button class="btn btn-sm btn-outline-solicitudes active px-3" id="btnTabGenerar" type="button"
+            style="border-radius: 8px !important;">
             <i class="bi bi-lightning-charge me-1"></i> Generar Nuevos NPNs
           </button>
-          <button class="btn btn-sm btn-outline-secondary px-3" id="btnTabReservas" type="button" style="border-radius: 8px !important;">
+          <button class="btn btn-sm btn-outline-secondary px-3" id="btnTabReservas" type="button"
+            style="border-radius: 8px !important;">
             <i class="bi bi-clock-history me-1"></i> Reservas Activas
             <span class="badge bg-warning text-dark ms-1 rounded-pill" id="badgeTotalReservasCount">0</span>
           </button>
@@ -94,16 +114,20 @@
       <!-- PANE 1: GENERADOR -->
       <div id="paneGenerarNpn">
         <!-- Formulario de Parámetros -->
-        <div class="card border-0 shadow-sm p-3 mb-3" style="background-color: #F8FBFE; border: 1px solid #E2ECF5 !important; border-radius: 12px;">
-          
+        <div class="card border-0 p-3 px-0 mb-3" style="border-radius: 12px;">
+
           <!-- Asistente de Consecutivos Territoriales (Nueva Manzana / Vereda / Corregimiento) -->
           <div id="boxAsistenteTerritorial" class="p-3 mb-3 rounded-3 border bg-white shadow-sm" style="display: none;">
             <div class="d-flex justify-content-between align-items-center mb-1">
-              <span class="small fw-bold text-navy"><i class="bi bi-compass-fill text-success me-1"></i> Asistente de Consecutivos Territoriales (Manzanas, Veredas y Corregimientos):</span>
-              <button type="button" class="btn-close-custom btn-sm" id="btnCerrarAsistenteTerritorial" style="font-size: 0.7rem;"><i class="bi bi-x"></i></button>
+              <span class="small fw-bold text-navy"><i class="bi bi-compass-fill text-success me-1"></i> Asistente de
+                Consecutivos Territoriales (Manzanas, Veredas y Corregimientos):</span>
+              <button type="button" class="btn-close-custom btn-sm" id="btnCerrarAsistenteTerritorial"
+                style="font-size: 0.7rem;"><i class="bi bi-x"></i></button>
             </div>
-            <p class="text-muted small mb-2" style="font-size: 0.72rem;">Rastrea y sugiere correlativos exactos para no dejar vacíos tanto en el área urbana (Comunas 01 a 10) como en el área rural (80 Veredas y 8 Corregimientos).</p>
-            
+            <p class="text-muted small mb-2" style="font-size: 0.72rem;">Rastrea y sugiere correlativos exactos para no
+              dejar vacíos tanto en el área urbana (Comunas 01 a 10) como en el área rural (80 Veredas y 8
+              Corregimientos).</p>
+
             <div class="row g-2 align-items-end">
               <div class="col-12 col-md-4">
                 <label class="small text-muted mb-0" style="font-size: 0.72rem;">Sector / Corregimiento</label>
@@ -136,7 +160,8 @@
                     <option value="10">10 - Comuna 10 (Oriente)</option>
                     <option value="OTRA">+ Otra / Nueva Comuna...</option>
                   </select>
-                  <input type="text" class="form-control form-control-sm font-monospace" id="asistenteComunaInput" value="09" maxlength="2" placeholder="01" style="max-width: 55px; display: none;">
+                  <input type="text" class="form-control form-control-sm font-monospace" id="asistenteComunaInput"
+                    value="09" maxlength="2" placeholder="01" style="max-width: 55px; display: none;">
                 </div>
               </div>
               <div class="col-6 col-md-3" id="wrapBarrioVereda">
@@ -145,46 +170,53 @@
                   <select class="form-select form-select-sm" id="asistenteVeredasSelect" style="display: none;">
                     <option value="0000">0000 - Vereda General</option>
                   </select>
-                  <input type="text" class="form-control form-control-sm font-monospace" id="asistenteBarrioInput" value="0000" maxlength="4" placeholder="0000">
+                  <input type="text" class="form-control form-control-sm font-monospace" id="asistenteBarrioInput"
+                    value="0000" maxlength="4" placeholder="0000">
                 </div>
               </div>
               <div class="col-12 col-md-2">
-                <button class="btn btn-sm btn-outline-secondary w-100 py-1" id="btnConsultarSiguienteManzana" type="button" style="font-size: 0.78rem; height: 31px;">
+                <button class="btn btn-sm btn-outline-secondary w-100 py-1" id="btnConsultarSiguienteManzana"
+                  type="button" style="font-size: 0.78rem; height: 31px;">
                   <i class="bi bi-search me-1"></i> Consultar
                 </button>
               </div>
             </div>
-            
-            <div id="resultadoSugerenciaBox" class="alert alert-light border py-2 px-3 mt-2 mb-0 d-none d-flex justify-content-between align-items-center flex-wrap gap-2" style="font-size: 0.78rem; background-color: #F8FBFE;">
+
+            <div id="resultadoSugerenciaBox"
+              class="alert alert-light border py-2 px-3 mt-2 mb-0 d-none d-flex justify-content-between align-items-center flex-wrap gap-2"
+              style="font-size: 0.78rem; background-color: #F8FBFE;">
               <div id="textoResultadoSugerencia">
                 <!-- Info dinámica -->
               </div>
-              <button class="btn btn-sm btn-outline-solicitudes py-1 px-3 fw-semibold" id="btnAplicarSugerenciaManzana" type="button" style="font-size: 0.75rem; border-radius: 6px;">
+              <button class="btn btn-sm btn-outline-solicitudes py-1 px-3 fw-semibold" id="btnAplicarSugerenciaManzana"
+                type="button" style="font-size: 0.75rem; border-radius: 6px;">
                 <i class="bi bi-check2-circle me-1"></i> Usar esta Manzana / Base
               </button>
             </div>
           </div>
 
-          <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-5">
+          <div class="row ">
+            <div class="col-12 col-md-5 px-2">
               <div class="d-flex justify-content-between align-items-center mb-1">
                 <label class="form-label small fw-bold text-navy mb-0">
                   Predio Matriz / Base (30 dígitos) <span class="text-danger">*</span>
                 </label>
-                <button type="button" class="btn btn-link p-0 text-decoration-none small fw-semibold" id="btnToggleAsistenteTerritorial" style="font-size: 0.72rem;">
+                <button type="button" class="btn btn-link p-0 text-decoration-none small fw-semibold"
+                  id="btnToggleAsistenteTerritorial" style="font-size: 0.72rem;">
                   <i class="bi bi-compass me-1"></i> ¿Nueva Manzana / Zona?
                 </button>
               </div>
               <div class="input-group input-group-sm">
                 <span class="input-group-text bg-white"><i class="bi bi-geo-alt"></i></span>
-                <input type="text" class="form-control font-monospace" id="genPredioMatrizInput" placeholder="Ej: 410010106000000970154913020004" maxlength="30">
+                <input type="text" class="form-control font-monospace" id="genPredioMatrizInput"
+                  placeholder="Ej: 410010106000000970154913020004" maxlength="30">
               </div>
               <small class="text-muted d-block mt-1" style="font-size: 0.72rem;" id="genMatrizHelp">
                 Dígitos ingresados: <span id="genDigitosCount" class="fw-bold">0</span>/30
               </small>
             </div>
 
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-3 px-2">
               <label class="form-label small fw-bold text-navy mb-1">Tipo de Trámite</label>
               <select class="form-select form-select-sm" id="genTipoMutacionSelect">
                 <option value="DESENGLOBE" selected>Desenglobe / Subdivisión</option>
@@ -213,15 +245,18 @@
           <div class="row g-2 mt-2 align-items-end" id="rowPhParams" style="display: none;">
             <div class="col-6 col-md-3">
               <label class="form-label small fw-bold text-navy mb-1">Edificio / Torre (Pos 23-24)</label>
-              <input type="text" class="form-control form-control-sm font-monospace" id="genEdificioInput" placeholder="00" maxlength="2" value="00">
+              <input type="text" class="form-control form-control-sm font-monospace" id="genEdificioInput"
+                placeholder="00" maxlength="2" value="00">
             </div>
             <div class="col-6 col-md-3">
               <label class="form-label small fw-bold text-navy mb-1">Piso / Nivel (Pos 25-26)</label>
-              <input type="text" class="form-control form-control-sm font-monospace" id="genPisoInput" placeholder="00" maxlength="2" value="00">
+              <input type="text" class="form-control form-control-sm font-monospace" id="genPisoInput" placeholder="00"
+                maxlength="2" value="00">
             </div>
             <div class="col-12 col-md-6">
               <small class="text-muted d-block mt-3" style="font-size: 0.73rem;">
-                <i class="bi bi-info-circle me-1"></i> Las unidades (Pos 27-30) se generarán consecutivamente (ej: 0001, 0002...).
+                <i class="bi bi-info-circle me-1"></i> Las unidades (Pos 27-30) se generarán consecutivamente (ej: 0001,
+                0002...).
               </small>
             </div>
           </div>
@@ -229,18 +264,23 @@
           <div class="row g-2 mt-2 align-items-end">
             <div class="col-6 col-md-2">
               <label class="form-label small fw-bold text-navy mb-1">Cantidad <span class="text-danger">*</span></label>
-              <input type="number" class="form-control form-control-sm" id="genCantidadInput" value="1" min="1" max="100">
+              <input type="number" class="form-control form-control-sm" id="genCantidadInput" value="1" min="1"
+                max="100">
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label small fw-bold text-navy mb-1">Consecutivo Trámite</label>
-              <input type="text" class="form-control form-control-sm" id="genTramiteInput" placeholder="Ej: MUT-2026-001 (Opcional)">
+              <input type="text" class="form-control form-control-sm" id="genTramiteInput"
+                placeholder="Ej: MUT-2026-001 (Opcional)">
             </div>
             <div class="col-12 col-md-4">
               <label class="form-label small fw-bold text-navy mb-1">Notas / Observaciones</label>
-              <input type="text" class="form-control form-control-sm" id="genObservacionesInput" placeholder="Notas adicionales (Opcional)">
+              <input type="text" class="form-control form-control-sm" id="genObservacionesInput"
+                placeholder="Notas adicionales (Opcional)">
             </div>
             <div class="col-12 col-md-2">
-              <button class="btn btn-sm btn-outline-solicitudes w-100 fw-bold d-flex align-items-center justify-content-center gap-1" id="btnEjecutarGeneradorNpn" type="button" style="height: 31px; border-radius: 8px !important;">
+              <button
+                class="btn btn-sm btn-outline-solicitudes w-100 fw-bold d-flex align-items-center justify-content-center gap-1"
+                id="btnEjecutarGeneradorNpn" type="button" style="height: 31px; border-radius: 8px !important;">
                 <i class="bi bi-lightning-charge-fill"></i> Generar
               </button>
             </div>
@@ -251,13 +291,16 @@
         <div id="wrapResultadosGenerador" class="d-none">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h6 class="fw-bold mb-0 text-navy small">
-              <i class="bi bi-check2-circle text-success me-1"></i> Predios Nuevos Generados y Reservados (<span id="lblCantGenerada">0</span>):
+              <i class="bi bi-check2-circle text-success me-1"></i> Predios Nuevos Generados y Reservados (<span
+                id="lblCantGenerada">0</span>):
             </h6>
             <div class="d-flex gap-2">
-              <button class="btn btn-xs btn-outline-solicitudes py-1 px-2" id="btnCopiarTodoGenerador" style="font-size: 0.75rem; border-radius: 8px !important;">
+              <button class="btn btn-xs btn-outline-solicitudes py-1 px-2" id="btnCopiarTodoGenerador"
+                style="font-size: 0.75rem; border-radius: 8px !important;">
                 <i class="bi bi-clipboard-check me-1"></i> Copiar Todo para Alfa
               </button>
-              <button class="btn btn-xs btn-outline-secondary py-1 px-2" id="btnDescargarCsvGenerador" style="font-size: 0.75rem; border-radius: 8px !important;">
+              <button class="btn btn-xs btn-outline-secondary py-1 px-2" id="btnDescargarCsvGenerador"
+                style="font-size: 0.75rem; border-radius: 8px !important;">
                 <i class="bi bi-filetype-csv me-1"></i> Descargar CSV
               </button>
             </div>
@@ -288,17 +331,21 @@
           <div>
             <span class="fw-bold text-navy small">Listado de Homologados en Reserva:</span>
             <small class="text-muted d-block" style="font-size: 0.72rem;">
-              Códigos reservados temporalmente. Si un trámite no se consolida en Alfa, puedes liberarlo para que regrese a la bolsa.
+              Códigos reservados temporalmente. Si un trámite no se consolida en Alfa, puedes liberarlo para que regrese
+              a la bolsa.
             </small>
           </div>
           <div class="d-flex gap-2 flex-wrap">
-            <button class="btn btn-xs btn-outline-success py-1 px-2" id="btnConsolidarSeleccionados" style="font-size: 0.75rem; border-radius: 8px !important;">
+            <button class="btn btn-xs btn-outline-success py-1 px-2" id="btnConsolidarSeleccionados"
+              style="font-size: 0.75rem; border-radius: 8px !important;">
               <i class="bi bi-check2-all me-1"></i> Fijar / Consolidar Seleccionados
             </button>
-            <button class="btn btn-xs btn-outline-danger py-1 px-2" id="btnLiberarSeleccionados" style="font-size: 0.75rem; border-radius: 8px !important;">
+            <button class="btn btn-xs btn-outline-danger py-1 px-2" id="btnLiberarSeleccionados"
+              style="font-size: 0.75rem; border-radius: 8px !important;">
               <i class="bi bi-trash3 me-1"></i> Liberar Seleccionados
             </button>
-            <button class="btn btn-xs btn-outline-secondary py-1 px-2" id="btnRefrescarReservas" style="font-size: 0.75rem; border-radius: 8px !important;">
+            <button class="btn btn-xs btn-outline-secondary py-1 px-2" id="btnRefrescarReservas"
+              style="font-size: 0.75rem; border-radius: 8px !important;">
               <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
             </button>
           </div>
@@ -327,7 +374,8 @@
     </div>
 
     <div class="custom-modal-footer d-flex justify-content-end gap-2 pt-2 border-top">
-      <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="btnCerrarModalGenBottom" style="border-radius: 8px !important;">
+      <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="btnCerrarModalGenBottom"
+        style="border-radius: 8px !important;">
         Cerrar
       </button>
     </div>
