@@ -274,8 +274,18 @@
               <option value="" disabled selected>Selecciona un coordinador...</option>
             </select>
 
-            <label class="consultaLabel label-asignacion mt-4 fw-bold  " for="inpUsuarioDestino">
-              Selecciona usuario de destino
+            <label class="consultaLabel label-asignacion mt-4 fw-bold" for="inpTipoDestino">
+              Selecciona tipo de usuario destino
+            </label>
+
+            <select id="inpTipoDestino" class="form-select consultaInput w-100 mt-2"
+              style="padding-right: 45px !important;">
+              <option value="reconocedor" selected>Reconocedor</option>
+              <option value="digitalizador">Digitalizador</option>
+            </select>
+
+            <label id="lblUsuarioDestino" class="consultaLabel label-asignacion mt-4 fw-bold" for="inpUsuarioDestino">
+              Selecciona reconocedor de destino
             </label>
 
             <select id="inpUsuarioDestino" class="form-select consultaInput w-100 mt-2"
@@ -373,9 +383,11 @@
     <div class="custom-modal-header d-flex justify-content-between align-items-center mb-3">
       <div>
         <h5 class="custom-modal-title fw-bold mb-0 text-navy">
-          <i class="bi bi-diagram-3-fill text-warning me-2"></i>Predios Asociados al Trámite <span id="tramiteModalTitleId">#0</span>
+          <i class="bi bi-diagram-3-fill text-warning me-2"></i>Predios Asociados al Trámite <span
+            id="tramiteModalTitleId">#0</span>
         </h5>
-        <small class="text-muted" id="tramiteModalSubtitle">Selecciona opcionalmente los predios del trámite/proyecto que deseas asignar.</small>
+        <small class="text-muted" id="tramiteModalSubtitle">Selecciona opcionalmente los predios del trámite/proyecto
+          que deseas asignar.</small>
       </div>
       <button type="button" class="btn-close-custom" id="btnCloseTramiteModal">
         <i class="bi bi-x-lg"></i>
@@ -1142,6 +1154,7 @@
   async function asignarPredios(options = {}) {
     const txt = document.getElementById("txtPredios");
     const selectCoord = document.getElementById("inpCoordinador");
+    const selectTipoDestino = document.getElementById("inpTipoDestino");
     const userDest = document.getElementById("inpUsuarioDestino");
     const tituloInput = document.getElementById("inpNombreLote");
     const fechaFinalInput = document.getElementById("inpFechaFinal");
@@ -1153,6 +1166,7 @@
     const fechaFinAsignada = (fechaFinalInput?.value || "").trim();
     const username_destino = (userDest.value || "").trim();
     const coordinador_id = selectCoord ? parseInt(selectCoord.value) : null;
+    const tipo_destino = (selectTipoDestino?.value || "reconocedor").toLowerCase();
 
     if (!numeros.length) {
       mostrarAlertaAsignacion(
@@ -1199,6 +1213,7 @@
           numeros,
           username_destino,
           coordinador_id,
+          tipo_destino,
           titulo: tituloAsignacion,
           fecha_fin_asignada: fechaFinAsignada,
           forzar_reasignacion: forceReassign,
@@ -1401,23 +1416,45 @@
           selectCoord.appendChild(opt);
         });
 
-        // Filtrar reconocedores dinámicamente al cambiar de coordinador
-        selectCoord.addEventListener("change", () => {
+        const selectTipoDestino = document.getElementById("inpTipoDestino");
+        const lblUsuarioDestino = document.getElementById("lblUsuarioDestino");
+
+        function actualizarUsuariosDestino() {
           const selectedCoordId = selectCoord.value;
-          selectDest.innerHTML = '<option value="" disabled selected>Selecciona un reconocedor...</option>';
+          const tipoDestino = (selectTipoDestino?.value || "reconocedor").toLowerCase();
+          const esDigitalizador = tipoDestino === "digitalizador";
+
+          if (lblUsuarioDestino) {
+            lblUsuarioDestino.textContent = esDigitalizador
+              ? "Selecciona digitalizador de destino"
+              : "Selecciona reconocedor de destino";
+          }
+
+          selectDest.innerHTML = esDigitalizador
+            ? '<option value="" disabled selected>Selecciona un digitalizador...</option>'
+            : '<option value="" disabled selected>Selecciona un reconocedor...</option>';
+
           selectDest.disabled = true;
           toggleNotificacionAsignacion(false);
 
-          const reconocedores = users.filter(u =>
-            u.rol &&
-            u.rol.toLowerCase() === "reconocedor" &&
-            String(u.supervisor || "").trim() === String(selectedCoordId)
-          );
-          actualizarContadoresUsuariosDisponibles(coordinadores.length, reconocedores.length);
+          if (!selectedCoordId) return;
 
-          console.log(reconocedores.length, "reconocedores encontrados para coordinador ID", selectedCoordId);
+          const usuariosFiltrados = users.filter(u => {
+            if (!u.rol) return false;
+            const uRol = u.rol.toLowerCase();
+            if (uRol !== tipoDestino) return false;
+            if (esDigitalizador) {
+              // Digitalizadores supervisados por el coordinador o asignados al tenant
+              const sup = String(u.supervisor || "").trim();
+              return !sup || sup === String(selectedCoordId);
+            } else {
+              return String(u.supervisor || "").trim() === String(selectedCoordId);
+            }
+          });
 
-          reconocedores.forEach(u => {
+          actualizarContadoresUsuariosDisponibles(coordinadores.length, usuariosFiltrados.length);
+
+          usuariosFiltrados.forEach(u => {
             const opt = document.createElement("option");
             opt.value = u.username;
             opt.textContent = u.first_name && u.last_name
@@ -1428,7 +1465,12 @@
 
           selectDest.disabled = false;
           toggleNotificacionAsignacion(false);
-        });
+        }
+
+        selectCoord.addEventListener("change", actualizarUsuariosDestino);
+        if (selectTipoDestino) {
+          selectTipoDestino.addEventListener("change", actualizarUsuariosDestino);
+        }
 
         // Si es coordinador, auto-seleccionar y deshabilitar
         if (effectiveRole === "coordinador" && coordinadores.length > 0) {
@@ -1604,7 +1646,7 @@
   let ultimoTramiteIdCargado = null;
   let npnsTramiteSeleccionados = new Set();
 
-  window.abrirModalTramite = async function(tramiteId, npnBuscado) {
+  window.abrirModalTramite = async function (tramiteId, npnBuscado) {
     ultimoTramiteIdCargado = tramiteId;
     npnsTramiteSeleccionados.clear();
 
@@ -1645,7 +1687,7 @@
         const chk = esDispon
           ? `<input type="checkbox" class="form-check-input chk-tramite-row" data-npn="${npn}">`
           : `<input type="checkbox" class="form-check-input chk-tramite-row" disabled data-npn="${npn}">`;
-        
+
         const estadoBadge = esDispon
           ? `<span class="badge bg-success-subtle text-success border border-success-subtle">Disponible</span>`
           : `<span class="badge bg-secondary">Asignado a ${p.asignado_a}</span>`;
@@ -1674,7 +1716,7 @@
     }
   }
 
-  document.addEventListener("change", function(e) {
+  document.addEventListener("change", function (e) {
     if (e.target && e.target.classList.contains("chk-tramite-row")) {
       actualizarContadorModalTramite();
     }

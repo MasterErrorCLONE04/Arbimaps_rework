@@ -141,6 +141,7 @@ class SolicitudCrearBody(BaseModel):
 class AsignarBody(BaseModel):
     numeros: List[str]
     username_destino: str
+    tipo_destino: Optional[str] = "reconocedor"
     titulo: Optional[str] = None
     fecha_fin_asignada: date
     observaciones: Optional[str] = None
@@ -495,6 +496,7 @@ def _procesar_workspace_asignacion(
     datasetname_main: str,
     basket_tids_to_use: List[str],
     export_main_by_dataset: bool,
+    tipo_destino: str = "reconocedor",
 ) -> None:
     try:
         schema_work = tenant.schemas.work
@@ -518,12 +520,13 @@ def _procesar_workspace_asignacion(
                 export_main_by_dataset=export_main_by_dataset,
             )
         predios_soporte_extra = _maybe_int(result.get("predios_soporte_extra")) or 0
+        estado_final_workspace = "EN_DIGITALIZACION" if (tipo_destino or "").strip().lower() == "digitalizador" else "EN_CAMPO"
         with connection_manager.connection(tenant) as conn:
             _update_asignacion_fields(
                 conn,
                 tenant,
                 asignacion_id,
-                estado="EN_CAMPO",
+                estado=estado_final_workspace,
                 error_msg=None,
                 work_datasetname=result.get("dataset_name") or work_datasetname,
                 predios_soporte_extra=predios_soporte_extra,
@@ -804,10 +807,14 @@ def asignar_predios(
             )
 
         usuario_destino_rol = (dest_row.get("rol") or "").strip().lower()
-        if usuario_destino_rol != "reconocedor":
+        tipo_destino = (body.tipo_destino or "reconocedor").strip().lower()
+        if tipo_destino not in ("reconocedor", "digitalizador"):
+            tipo_destino = "reconocedor"
+
+        if usuario_destino_rol != tipo_destino:
             raise HTTPException(
                 status_code=400,
-                detail="Solo se permite asignar trabajos a usuarios con el rol de Reconocedor.",
+                detail=f"El usuario destino seleccionado debe tener el rol de {tipo_destino.capitalize()}.",
             )
 
         usuario_destino_id = int(dest_row["id_global"])
@@ -835,7 +842,7 @@ def asignar_predios(
             )
             active_count = cur_active.fetchone()[0]
 
-        if active_count >= 2:
+        if tipo_destino == "reconocedor" and active_count >= 2:
             raise HTTPException(
                 status_code=400,
                 detail=f"El reconocedor '{username_destino}' ya tiene {active_count} asignaciones activas. No se le pueden asignar más de 2 cargas de trabajo simultáneas hasta que termine o cierre una de las existentes.",
@@ -867,10 +874,10 @@ def asignar_predios(
 
         # Validación de seguridad: el reconocedor debe pertenecer al coordinador seleccionado
         dest_supervisor = (dest_row.get("supervisor") or "").strip()
-        if dest_supervisor != str(coordinador_id):
+        if dest_supervisor and dest_supervisor != str(coordinador_id):
             raise HTTPException(
                 status_code=400,
-                detail="El reconocedor seleccionado no pertenece al coordinador elegido."
+                detail="El usuario seleccionado no pertenece al coordinador elegido."
             )
 
         # Si no tenemos id numerico del creador, usamos el de destino solo
@@ -1303,8 +1310,9 @@ def asignar_predios(
     basket_tids_to_use = basket_tids_for_export or []
     export_main_by_dataset = bool(missing_basket_tids) or not basket_tids_to_use
 
+    estado_inicial_post = "EN_DIGITALIZACION" if tipo_destino == "digitalizador" else "EN_CAMPO"
     if ASIG_SKIP_WORKSPACE:
-        _update_asignacion_fields(conn, tenant, asignacion_id, estado="EN_CAMPO", error_msg=None)
+        _update_asignacion_fields(conn, tenant, asignacion_id, estado=estado_inicial_post, error_msg=None)
         _safe_log_event(
             conn,
             tenant,
@@ -1335,6 +1343,7 @@ def asignar_predios(
         datasetname_main,
         basket_tids_to_use,
         export_main_by_dataset,
+        tipo_destino,
     )
     _safe_log_event(
         conn,
