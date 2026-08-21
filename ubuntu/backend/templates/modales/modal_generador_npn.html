@@ -1,8 +1,4 @@
 <style>
-  /* =========================================================
-     VARIABLES Y BASE DEL MODAL
-     ========================================================= */
-
   #modalGeneradorNpn {
     --npn-green: #0A2C1B;
     --npn-green-dark: #071f13;
@@ -44,9 +40,7 @@
     background: var(--npn-white);
     border-radius: 18px;
     overflow: hidden;
-    box-shadow:
-      0 25px 60px rgba(15, 23, 42, 0.25),
-      0 8px 24px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.25), 0 8px 24px rgba(15, 23, 42, 0.12);
     animation: npnModalEntrada 0.22s ease-out;
   }
 
@@ -61,10 +55,6 @@
       transform: translateY(0) scale(1);
     }
   }
-
-  /* =========================================================
-     ENCABEZADO
-     ========================================================= */
 
   #modalGeneradorNpn .npn-modal-header {
     background: linear-gradient(202deg, var(--npn-green) 75%, #1B4001 95%);
@@ -106,10 +96,6 @@
     transform: scale(0.96);
   }
 
-  /* =========================================================
-     CUERPO Y SCROLL
-     ========================================================= */
-
   #modalGeneradorNpn .npn-modal-body {
     overflow-y: auto;
     overflow-x: hidden;
@@ -119,10 +105,6 @@
   #modalGeneradorNpn .npn-section {
     background-color: transparent;
   }
-
-  /* =========================================================
-     PESTANAS
-     ========================================================= */
 
   #modalGeneradorNpn .npn-toolbar {
     position: relative;
@@ -157,11 +139,7 @@
     white-space: nowrap;
     cursor: pointer;
     box-shadow: none;
-    transition:
-      color 0.35s ease,
-      background-color 0.35s ease,
-      transform 0.3s ease,
-      box-shadow 0.35s ease;
+    transition: color 0.35s ease, background-color 0.35s ease, transform 0.3s ease, box-shadow 0.35s ease;
   }
 
   #modalGeneradorNpn .npn-main-tab:not(.npn-main-tab-active):hover {
@@ -186,10 +164,7 @@
     color: var(--npn-white);
     background-color: var(--npn-green);
     transform: translateY(0);
-    box-shadow:
-      0 -4px 10px rgba(10, 44, 27, 0.14),
-      4px 0 8px rgba(10, 44, 27, 0.08),
-      -4px 0 8px rgba(10, 44, 27, 0.08);
+    box-shadow: 0 -4px 10px rgba(10, 44, 27, 0.14), 4px 0 8px rgba(10, 44, 27, 0.08), -4px 0 8px rgba(10, 44, 27, 0.08);
   }
 
   #modalGeneradorNpn .npn-main-tab-active i {
@@ -224,78 +199,104 @@
     background-color: var(--npn-green) !important;
   }
 
-  /* =========================================================
-     TARJETAS Y ESTRUCTURA DE FORMULARIOS
-     Inspiradas en la vista de resolucion: encabezados verdes,
-     campos con iconos, sombras suaves y distribucion Bootstrap.
-     ========================================================= */
-
   #modalGeneradorNpn #paneGenerarNpn,
   #modalGeneradorNpn #paneReservasActivas {
     background-color: var(--npn-body-bg);
   }
 
-  #modalGeneradorNpn .npn-form-card,
-  #modalGeneradorNpn .npn-results-card,
-  #modalGeneradorNpn .npn-reservas-card {
+  #modalGeneradorNpn .npn-unified-form {
+    position: relative;
+    background: var(--npn-white);
     border: 1px solid var(--npn-border) !important;
     border-radius: 16px;
     overflow: hidden;
-    background: var(--npn-white);
+    box-shadow: 0 0.35rem 1rem rgba(10, 44, 27, 0.06);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
-  #modalGeneradorNpn .npn-form-card:hover,
-  #modalGeneradorNpn .npn-results-card:hover,
-  #modalGeneradorNpn .npn-reservas-card:hover {
+  #modalGeneradorNpn .npn-unified-form:hover {
     border-color: #CEDAD4 !important;
-    box-shadow: 0 0.75rem 1.5rem rgba(10, 44, 27, 0.07) !important;
+    box-shadow: 0 0.7rem 1.5rem rgba(10, 44, 27, 0.075);
   }
 
-  #modalGeneradorNpn .npn-form-card-header,
-  #modalGeneradorNpn .npn-results-card-header,
-  #modalGeneradorNpn .npn-reservas-card-header {
-    background: linear-gradient(135deg, var(--npn-green) 0%, #12442D 100%);
-    border: 0;
-    color: var(--npn-white);
+  #modalGeneradorNpn .npn-unified-section {
+    position: relative;
   }
 
-  #modalGeneradorNpn .npn-results-header-icon,
-  #modalGeneradorNpn .npn-reservas-header-icon {
-    width: 44px;
-    height: 44px;
+  #modalGeneradorNpn .npn-unified-section+.npn-unified-section {
+    margin-top: 2.3rem;
+  }
+
+  #modalGeneradorNpn .npn-section-heading {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.7rem;
+  }
+
+  #modalGeneradorNpn .npn-section-heading::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #DCE6E1 10%, #DCE6E1 90%, transparent 100%);
+    transform: translateY(-50%);
+  }
+
+  #modalGeneradorNpn .npn-section-bubble {
+    position: relative;
+    z-index: 2;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    border-radius: 12px;
+    gap: 0.55rem;
+    padding: 0.58rem 1.4rem;
     color: var(--npn-white);
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    font-size: 1.18rem;
+    background: linear-gradient(135deg, var(--npn-green) 0%, var(--npn-green-hover) 100%);
+    border: 1px solid rgba(10, 44, 27, 0.08);
+    border-radius: 50rem;
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+    box-shadow: 0 0.35rem 0.8rem rgba(10, 44, 27, 0.14);
   }
 
-  #modalGeneradorNpn .npn-form-card-title,
-  #modalGeneradorNpn .npn-results-card-title,
-  #modalGeneradorNpn .npn-reservas-card-title {
+  #modalGeneradorNpn .npn-section-bubble i {
     color: var(--npn-white);
-    font-size: 0.95rem;
-    letter-spacing: 0.01em;
+    font-size: 0.88rem;
   }
 
-  #modalGeneradorNpn .npn-form-card-subtitle,
-  #modalGeneradorNpn .npn-results-card-subtitle,
-  #modalGeneradorNpn .npn-reservas-card-subtitle {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.78rem;
+  #modalGeneradorNpn .npn-section-description {
+    max-width: 690px;
+    margin: -0.95rem auto 1.45rem;
+    padding: 0 1rem;
+    color: #7A8780;
+    text-align: center;
+    font-size: 0.73rem;
+    line-height: 1.5;
+  }
+
+  #modalGeneradorNpn .npn-stock-inline {
+    display: flex;
+    justify-content: center;
+    margin: -0.5rem 0 1.5rem;
   }
 
   #modalGeneradorNpn .npn-stock-badge {
-    color: var(--npn-white);
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    color: var(--npn-green);
+    background: var(--npn-green-soft);
+    border: 1px solid var(--npn-green-border);
+    border-radius: 50rem;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.71rem;
     font-weight: 700;
+    box-shadow: 0 0.2rem 0.5rem rgba(10, 44, 27, 0.05);
   }
 
   #modalGeneradorNpn .npn-field {
@@ -321,6 +322,7 @@
 
   #modalGeneradorNpn .npn-input-group .input-group-text {
     min-width: 42px;
+    display: flex;
     justify-content: center;
     color: var(--npn-green-medium);
     background-color: #F0F4F2;
@@ -372,10 +374,6 @@
     color: var(--npn-green);
     background-color: var(--npn-green-soft);
   }
-
-  /* =========================================================
-     ASISTENTE TERRITORIAL
-     ========================================================= */
 
   #modalGeneradorNpn .npn-assistant-card {
     border: 1px solid #CBDAD2 !important;
@@ -432,10 +430,6 @@
     border-radius: 11px;
   }
 
-  /* =========================================================
-     PARAMETROS PH E INFORMACION
-     ========================================================= */
-
   #modalGeneradorNpn .npn-ph-panel {
     margin-left: 0;
     margin-right: 0;
@@ -455,10 +449,6 @@
     border-radius: 10px;
     font-size: 0.75rem;
   }
-
-  /* =========================================================
-     BOTONES DEL FORMULARIO
-     ========================================================= */
 
   #modalGeneradorNpn .npn-btn-primary {
     min-height: 40px;
@@ -512,13 +502,47 @@
     justify-content: flex-end;
   }
 
-  /* =========================================================
-     RESULTADOS Y TABLAS
-     ========================================================= */
+  #modalGeneradorNpn .npn-results-card,
+  #modalGeneradorNpn .npn-reservas-card {
+    border: 1px solid var(--npn-border) !important;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--npn-white);
+  }
 
   #modalGeneradorNpn .npn-results-card-header,
   #modalGeneradorNpn .npn-reservas-card-header {
+    color: var(--npn-white);
     background: linear-gradient(135deg, var(--npn-green) 0%, #12442D 100%);
+    border: 0;
+  }
+
+  #modalGeneradorNpn .npn-results-header-icon,
+  #modalGeneradorNpn .npn-reservas-header-icon {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 12px;
+    color: var(--npn-white);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    font-size: 1.18rem;
+  }
+
+  #modalGeneradorNpn .npn-results-card-title,
+  #modalGeneradorNpn .npn-reservas-card-title {
+    color: var(--npn-white);
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+  }
+
+  #modalGeneradorNpn .npn-results-card-subtitle,
+  #modalGeneradorNpn .npn-reservas-card-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.78rem;
   }
 
   #modalGeneradorNpn .npn-table-wrapper {
@@ -553,10 +577,6 @@
     font-weight: 600;
   }
 
-  /* =========================================================
-     ANIMACION DEL CONTENIDO
-     ========================================================= */
-
   #modalGeneradorNpn #paneGenerarNpn:not(.d-none),
   #modalGeneradorNpn #paneReservasActivas:not(.d-none) {
     animation: npnContenidoEntrada 0.35s ease;
@@ -574,18 +594,10 @@
     }
   }
 
-  /* =========================================================
-     FOOTER
-     ========================================================= */
-
   #modalGeneradorNpn .npn-modal-footer {
     flex-shrink: 0;
     background-color: var(--npn-white);
   }
-
-  /* =========================================================
-     RESPONSIVE
-     ========================================================= */
 
   @media (max-width: 767.98px) {
     #modalGeneradorNpn.npn-modal-overlay {
@@ -624,98 +636,135 @@
       padding-right: 0.75rem !important;
     }
 
-    #modalGeneradorNpn .npn-form-card,
+    #modalGeneradorNpn .npn-unified-form,
     #modalGeneradorNpn .npn-results-card,
     #modalGeneradorNpn .npn-reservas-card,
     #modalGeneradorNpn .npn-assistant-card {
       border-radius: 12px;
     }
 
-    #modalGeneradorNpn .npn-form-card-title,
-    #modalGeneradorNpn .npn-results-card-title,
-    #modalGeneradorNpn .npn-reservas-card-title {
-      font-size: 0.86rem;
+    #modalGeneradorNpn .npn-section-bubble {
+      padding: 0.52rem 1rem;
+      font-size: 0.68rem;
+      text-align: center;
     }
 
-    #modalGeneradorNpn .npn-form-card-subtitle,
-    #modalGeneradorNpn .npn-results-card-subtitle,
-    #modalGeneradorNpn .npn-reservas-card-subtitle {
-      font-size: 0.72rem;
+    #modalGeneradorNpn .npn-section-heading {
+      margin-bottom: 1.45rem;
+    }
+
+    #modalGeneradorNpn .npn-section-description {
+      padding: 0 0.5rem;
+      font-size: 0.7rem;
     }
   }
-</style>
 
+  #modalGeneradorNpn .btn-sm-cerrar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+
+    color: #FFFFFF;
+    background-color: #0A2C1B;
+
+    border: 1px solid #0A2C1B;
+
+    min-height: 38px;
+    padding: 0.45rem 1.2rem;
+
+    font-size: 0.78rem;
+    font-weight: 600;
+
+    box-shadow: 0 0.25rem 0.6rem rgba(10, 44, 27, 0.15);
+
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  #modalGeneradorNpn .btn-sm-cerrar:hover {
+    color: #FFFFFF;
+    background-color: #123D27;
+    border-color: #123D27;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 0.45rem 0.9rem rgba(10, 44, 27, 0.22);
+  }
+
+  #modalGeneradorNpn .btn-sm-cerrar:focus {
+    color: #FFFFFF;
+    background-color: #0A2C1B;
+    border-color: #0A2C1B;
+
+    box-shadow: 0 0 0 0.2rem rgba(10, 44, 27, 0.18);
+  }
+
+  #modalGeneradorNpn .btn-sm-cerrar:active {
+    color: #FFFFFF;
+    background-color: #071F13;
+    border-color: #071F13;
+
+    transform: scale(0.97);
+  }
+
+  #modalGeneradorNpn .btn-sm-cerrar i {
+    font-size: 0.9rem;
+    transition: transform 0.25s ease;
+  }
+
+  #modalGeneradorNpn .btn-sm-cerrar:hover i {
+    transform: rotate(90deg);
+  }
+</style>
 <div id="modalGeneradorNpn" class="npn-modal-overlay d-none">
   <div class="npn-modal-dialog">
-
     <!-- ENCABEZADO -->
     <div class="npn-modal-header px-4 py-3">
       <div class="d-flex align-items-center justify-content-between gap-3">
         <div>
-          <h5 class="npn-header-title fw-bold text-white mb-1">
-            Generador Oficial de Números Prediales y Homologados
-          </h5>
-          <div class="npn-modal-subtitle small">
-            Dispensador de 30 dígitos NPN y códigos oficiales para el sistema Alfa
-          </div>
+          <h5 class="npn-header-title fw-bold text-white mb-1">Generador Oficial de Números Prediales y Homologados</h5>
+          <div class="npn-modal-subtitle small">Dispensador de 30 dígitos NPN y códigos oficiales
+            para el sistema Alfa</div>
         </div>
-
-        <button
-          type="button"
-          class="npn-close-btn rounded-circle flex-shrink-0"
-          id="btnCloseGeneradorNpnModal"
+        <button type="button" class="npn-close-btn rounded-circle flex-shrink-0" id="btnCloseGeneradorNpnModal"
           title="Cerrar">
           <i class="bi bi-x-lg fs-5"></i>
         </button>
       </div>
     </div>
-
     <!-- CUERPO -->
     <div class="npn-modal-body">
-
-      <!-- PESTANAS -->
+      <!-- PESTAÑAS -->
       <div class="npn-toolbar">
         <div class="npn-tabs-bar" role="tablist" aria-label="Secciones del generador NPN">
-          <button
-            type="button"
-            class="npn-main-tab npn-main-tab-active"
-            id="btnTabGenerar"
-            role="tab"
-            aria-controls="paneGenerarNpn"
-            aria-selected="true">
+          <!-- GENERAR -->
+          <button type="button" class="npn-main-tab npn-main-tab-active" id="btnTabGenerar" role="tab"
+            aria-controls="paneGenerarNpn" aria-selected="true">
             <span class="d-flex align-items-center gap-2">
               <i class="bi bi-lightning-charge-fill"></i>
               <span class="fw-semibold">Generar Nuevos NPNs</span>
             </span>
           </button>
-
-          <button
-            type="button"
-            class="npn-main-tab"
-            id="btnTabReservas"
-            role="tab"
-            aria-controls="paneReservasActivas"
+          <!-- RESERVAS -->
+          <button type="button" class="npn-main-tab" id="btnTabReservas" role="tab" aria-controls="paneReservasActivas"
             aria-selected="false">
             <span class="d-flex align-items-center gap-2">
               <i class="bi bi-clock-history"></i>
               <span class="fw-semibold">Reservas Activas</span>
-              <span
-                class="badge bg-warning text-dark rounded-pill"
-                id="badgeTotalReservasCount">0</span>
+              <span class="badge bg-warning text-dark rounded-pill" id="badgeTotalReservasCount">0</span>
             </span>
           </button>
         </div>
       </div>
-
       <!-- PANEL GENERAR -->
       <div id="paneGenerarNpn" class="px-4 py-4" role="tabpanel" aria-labelledby="btnTabGenerar">
-
         <!-- ASISTENTE TERRITORIAL -->
-        <div
-          id="boxAsistenteTerritorial"
-          class="card border-0 shadow-sm npn-assistant-card mb-4"
+        <div id="boxAsistenteTerritorial" class="card border-0 shadow-sm npn-assistant-card mb-4"
           style="display: none;">
-
           <div class="card-header npn-assistant-header border-0 px-3 px-md-4 py-3">
             <div class="d-flex align-items-start justify-content-between gap-3">
               <div class="d-flex align-items-start gap-3">
@@ -724,30 +773,22 @@
                 </div>
                 <div>
                   <h6 class="fw-bold mb-1">Asistente de Consecutivos Territoriales</h6>
-                  <p class="npn-assistant-description mb-0">
-                    Rastrea y sugiere correlativos exactos para manzanas, veredas y corregimientos.
-                  </p>
+                  <p class="npn-assistant-description mb-0">Rastrea y sugiere correlativos exactos para
+                    manzanas, veredas y corregimientos.</p>
                 </div>
               </div>
-
-              <button
-                type="button"
-                class="npn-assistant-close rounded-circle flex-shrink-0"
-                id="btnCerrarAsistenteTerritorial"
-                title="Cerrar asistente">
+              <button type="button" class="npn-assistant-close rounded-circle flex-shrink-0"
+                id="btnCerrarAsistenteTerritorial" title="Cerrar asistente">
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
           </div>
-
           <div class="card-body p-3 p-lg-4">
             <div class="row g-3 align-items-end">
-
+              <!-- SECTOR -->
               <div class="col-12 col-md-4">
                 <div class="npn-field">
-                  <label for="asistenteSectorSelect" class="form-label npn-form-label">
-                    Sector / Corregimiento
-                  </label>
+                  <label for="asistenteSectorSelect" class="form-label npn-form-label">Sector / Corregimiento</label>
                   <div class="input-group input-group-sm npn-input-group">
                     <span class="input-group-text">
                       <i class="bi bi-map-fill"></i>
@@ -767,12 +808,10 @@
                   </div>
                 </div>
               </div>
-
+              <!-- COMUNA -->
               <div class="col-12 col-md-3" id="wrapComunaCorr">
                 <div class="npn-field">
-                  <label for="asistenteComunaSelect" class="form-label npn-form-label">
-                    Comuna / Zona Urbana
-                  </label>
+                  <label for="asistenteComunaSelect" class="form-label npn-form-label">Comuna / Zona Urbana</label>
                   <div class="input-group input-group-sm npn-input-group">
                     <span class="input-group-text">
                       <i class="bi bi-grid-3x3-gap-fill"></i>
@@ -790,330 +829,251 @@
                       <option value="10">10 - Comuna 10 (Oriente)</option>
                       <option value="OTRA">+ Otra / Nueva Comuna...</option>
                     </select>
-                    <input
-                      type="text"
-                      class="form-control font-monospace"
-                      id="asistenteComunaInput"
-                      value="09"
-                      maxlength="2"
-                      placeholder="01"
-                      style="max-width: 60px; display: none;">
+                    <input type="text" class="form-control font-monospace" id="asistenteComunaInput" value="09"
+                      maxlength="2" placeholder="01" style="max-width: 60px; display: none;">
                   </div>
                 </div>
               </div>
-
+              <!-- BARRIO / VEREDA -->
               <div class="col-12 col-md-3" id="wrapBarrioVereda">
                 <div class="npn-field">
-                  <label for="asistenteBarrioInput" class="form-label npn-form-label">
-                    Barrio / Vereda Oficial (4d)
-                  </label>
+                  <label for="asistenteBarrioInput" class="form-label npn-form-label">Barrio / Vereda Oficial
+                    (4d)</label>
                   <div class="input-group input-group-sm npn-input-group">
                     <span class="input-group-text">
                       <i class="bi bi-signpost-split-fill"></i>
                     </span>
-                    <select
-                      class="form-select"
-                      id="asistenteVeredasSelect"
-                      style="display: none;">
+                    <select class="form-select" id="asistenteVeredasSelect" style="display: none;">
                       <option value="0000">0000 - Vereda General</option>
                     </select>
-                    <input
-                      type="text"
-                      class="form-control font-monospace"
-                      id="asistenteBarrioInput"
-                      value="0000"
-                      maxlength="4"
-                      placeholder="0000">
+                    <input type="text" class="form-control font-monospace" id="asistenteBarrioInput" value="0000"
+                      maxlength="4" placeholder="0000">
                   </div>
                 </div>
               </div>
-
+              <!-- CONSULTAR -->
               <div class="col-12 col-md-2">
                 <div class="d-grid">
-                  <button
-                    class="btn btn-sm npn-btn-outline-primary rounded-3 py-2"
-                    id="btnConsultarSiguienteManzana"
+                  <button class="btn btn-sm npn-btn-outline-primary rounded-3 py-2" id="btnConsultarSiguienteManzana"
                     type="button">
-                    <i class="bi bi-search me-1"></i>
-                    Consultar
-                  </button>
+                    <i class="bi bi-search me-1"></i>Consultar</button>
                 </div>
               </div>
             </div>
-
-            <div
-              id="resultadoSugerenciaBox"
-              class="alert npn-suggestion-box border mt-3 mb-0 d-none">
+            <!-- SUGERENCIA -->
+            <div id="resultadoSugerenciaBox" class="alert npn-suggestion-box border mt-3 mb-0 d-none">
               <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div id="textoResultadoSugerencia" class="small"></div>
-                <button
-                  class="btn btn-sm npn-btn-outline-primary fw-semibold rounded-3"
-                  id="btnAplicarSugerenciaManzana"
-                  type="button">
-                  <i class="bi bi-check2-circle me-1"></i>
-                  Usar esta Manzana / Base
-                </button>
+                <div id="textoResultadoSugerencia" class="small">
+                </div>
+                <button class="btn btn-sm npn-btn-outline-primary fw-semibold rounded-3"
+                  id="btnAplicarSugerenciaManzana" type="button">
+                  <i class="bi bi-check2-circle me-1"></i>Usar esta Manzana / Base</button>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- DATOS BASE DEL PREDIO -->
-        <div class="card border-0 shadow-sm npn-form-card mb-4">
-          <div class="card-header npn-form-card-header px-3 px-md-4 py-3">
-            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-              <div class="d-flex align-items-center gap-3">
-                <div>
-                  <h6 class="npn-form-card-title fw-bold mb-1">DATOS BASE DEL PREDIO</h6>
-                  <p class="npn-form-card-subtitle mb-0">
-                    Ingresa el NPN matriz y define el tipo y la condición del predio.
-                  </p>
+        <!-- FORMULARIO PRINCIPAL UNIFICADO -->
+        <div class="card border-0 npn-unified-form mb-4">
+          <div class="card-body p-3 p-md-4 p-lg-4">
+            <!-- SECCIÓN 1 DATOS BASE DEL PREDIO -->
+            <section class="npn-unified-section">
+              <!-- BURBUJA -->
+              <div class="npn-section-heading">
+                <div class="npn-section-bubble">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  <span>Datos Base del Predio</span>
                 </div>
               </div>
-
-              <span class="badge npn-stock-badge px-3 py-2 align-self-start align-self-md-center">
-                <i class="bi bi-database-check me-1"></i>
-                Bolsa Neiva:
-                <span id="badgeStockDisponibles" class="ms-1" aria-live="polite">Consultando...</span>
-              </span>
-            </div>
-          </div>
-
-          <div class="card-body p-3 p-lg-4">
-            <div class="row g-3">
-
-              <div class="col-12 col-xl-5">
-                <div class="npn-field">
-                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <label for="genPredioMatrizInput" class="form-label npn-form-label mb-1">
-                      Predio Matriz / Base (30 dígitos)
+              <p class="npn-section-description">Ingresa el NPN matriz y define el tipo de trámite
+                y la condición correspondiente al predio.</p>
+              <!-- BOLSA -->
+              <div class="npn-stock-inline">
+                <span class="npn-stock-badge">
+                  <i class="bi bi-database-check me-1"></i>
+                  Bolsa Neiva:
+                  <span id="badgeStockDisponibles" class="ms-1 fw-bold" aria-live="polite">Consultando...</span>
+                </span>
+              </div>
+              <!-- CAMPOS PRINCIPALES -->
+              <div class="row g-3">
+                <!-- PREDIO MATRIZ -->
+                <div class="col-12 col-xl-5">
+                  <div class="npn-field">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                      <label for="genPredioMatrizInput" class="form-label npn-form-label mb-1">
+                        Predio Matriz / Base (30 dígitos)
+                        <span class="npn-required">*</span>
+                      </label>
+                      <button type="button" class="btn btn-sm npn-link-action p-1 text-decoration-none fw-semibold"
+                        id="btnToggleAsistenteTerritorial">
+                        <i class="bi bi-compass me-1"></i>¿Nueva Manzana / Zona?</button>
+                    </div>
+                    <div class="input-group input-group-sm npn-input-group">
+                      <span class="input-group-text">
+                        <i class="bi bi-geo-alt-fill"></i>
+                      </span>
+                      <input type="text" class="form-control font-monospace" id="genPredioMatrizInput"
+                        placeholder="Ej: 410010106000000970154913020004" maxlength="30">
+                    </div>
+                    <small class="npn-field-help d-block mt-2" id="genMatrizHelp">
+                      <i class="bi bi-info-circle me-1"></i>
+                      Dígitos ingresados:
+                      <span id="genDigitosCount" class="fw-bold">0</span>/30
+                    </small>
+                  </div>
+                </div>
+                <!-- TIPO TRÁMITE -->
+                <div class="col-12 col-md-6 col-xl-3">
+                  <div class="npn-field">
+                    <label for="genTipoMutacionSelect" class="form-label npn-form-label">Tipo de Trámite</label>
+                    <div class="input-group input-group-sm npn-input-group">
+                      <span class="input-group-text">
+                        <i class="bi bi-diagram-3-fill"></i>
+                      </span>
+                      <select class="form-select" id="genTipoMutacionSelect">
+                        <option value="DESENGLOBE" selected>Desenglobe / Subdivisión</option>
+                        <option value="MANZANA_NUEVA">Incorporación Manzana Nueva</option>
+                        <option value="PH">Propiedad Horizontal (PH)</option>
+                        <option value="SEGREGACION">Segregación</option>
+                        <option value="MEJORA">Mejora en Terreno Ajeno</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <!-- CONDICIÓN -->
+                <div class="col-12 col-md-6 col-xl-4">
+                  <div class="npn-field">
+                    <label for="genCondicionSelect" class="form-label npn-form-label">Condición del Predio (Posición
+                      22)</label>
+                    <div class="input-group input-group-sm npn-input-group">
+                      <span class="input-group-text">
+                        <i class="bi bi-building-check"></i>
+                      </span>
+                      <select class="form-select" id="genCondicionSelect">
+                        <option value="0" selected>0 - No Propiedad Horizontal (NPH)</option>
+                        <option value="9">9 - Predios en Propiedad Horizontal (PH)</option>
+                        <option value="5">5 - Mejoras / PH no reglamentaria</option>
+                        <option value="8">8 - Predio en Condominio</option>
+                        <option value="7">7 - Parque Cementerios</option>
+                        <option value="4">4 - Vías</option>
+                        <option value="3">3 - Bienes de uso público diferentes a vías</option>
+                        <option value="2">2 - Informal</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- PARÁMETROS PH -->
+              <div class="row g-3 mt-3 npn-ph-panel align-items-end" id="rowPhParams" style="display: none;">
+                <div class="col-12 mb-1">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-buildings-fill npn-text-primary">
+                    </i>
+                    <span class="small fw-bold npn-text-primary">Configuración de Propiedad Horizontal</span>
+                  </div>
+                </div>
+                <!-- EDIFICIO -->
+                <div class="col-12 col-sm-6 col-md-3">
+                  <div class="npn-field">
+                    <label for="genEdificioInput" class="form-label npn-form-label">Edificio / Torre (Pos 23-24)</label>
+                    <div class="input-group input-group-sm npn-input-group">
+                      <span class="input-group-text">
+                        <i class="bi bi-buildings-fill"></i>
+                      </span>
+                      <input type="text" class="form-control font-monospace" id="genEdificioInput" placeholder="00"
+                        maxlength="2" value="00">
+                    </div>
+                  </div>
+                </div>
+                <!-- PISO -->
+                <div class="col-12 col-sm-6 col-md-3">
+                  <div class="npn-field">
+                    <label for="genPisoInput" class="form-label npn-form-label">Piso / Nivel (Pos 25-26)</label>
+                    <div class="input-group input-group-sm npn-input-group">
+                      <span class="input-group-text">
+                        <i class="bi bi-layers-fill"></i>
+                      </span>
+                      <input type="text" class="form-control font-monospace" id="genPisoInput" placeholder="00"
+                        maxlength="2" value="00">
+                    </div>
+                  </div>
+                </div>
+                <!-- INFORMACIÓN -->
+                <div class="col-12 col-md-6">
+                  <div class="npn-info-box px-3 py-2">
+                    <i class="bi bi-info-circle-fill npn-text-primary me-2">
+                    </i>Las unidades (Pos 27-30) se generarán
+                    consecutivamente (ej: 0001, 0002...).
+                  </div>
+                </div>
+              </div>
+            </section>
+            <!-- SECCIÓN 2 CONFIGURACIÓN GENERACIÓN -->
+            <section class="npn-unified-section">
+              <!-- BURBUJA -->
+              <div class="npn-section-heading">
+                <div class="npn-section-bubble">
+                  <i class="bi bi-sliders"></i>
+                  <span>Configuración de Generación</span>
+                </div>
+              </div>
+              <p class="npn-section-description">Define la cantidad de números a generar,
+                relaciona el trámite y registra las observaciones
+                adicionales que necesites.</p>
+              <div class="row g-3 align-items-end">
+                <!-- CANTIDAD -->
+                <div class="col-12 col-sm-4 col-lg-2">
+                  <div class="npn-field">
+                    <label for="genCantidadInput" class="form-label npn-form-label">
+                      Cantidad
                       <span class="npn-required">*</span>
                     </label>
-
-                    <button
-                      type="button"
-                      class="btn btn-sm npn-link-action p-1 text-decoration-none fw-semibold"
-                      id="btnToggleAsistenteTerritorial">
-                      <i class="bi bi-compass me-1"></i>
-                      &iquest;Nueva Manzana / Zona?
-                    </button>
+                    <div class="input-group input-group-sm npn-input-group">
+                      <span class="input-group-text">
+                        <i class="bi bi-123"></i>
+                      </span>
+                      <input type="number" class="form-control" id="genCantidadInput" value="1" min="1" max="100">
+                    </div>
                   </div>
-
-                  <div class="input-group input-group-sm npn-input-group">
-                    <span class="input-group-text">
-                      <i class="bi bi-geo-alt-fill"></i>
-                    </span>
-                    <input
-                      type="text"
-                      class="form-control font-monospace"
-                      id="genPredioMatrizInput"
-                      placeholder="Ej: 410010106000000970154913020004"
-                      maxlength="30">
-                  </div>
-
-                  <small class="npn-field-help d-block mt-2" id="genMatrizHelp">
-                    <i class="bi bi-info-circle me-1"></i>
-                    Dígitos ingresados:
-                    <span id="genDigitosCount" class="fw-bold">0</span>/30
-                  </small>
                 </div>
-              </div>
-
-              <div class="col-12 col-md-6 col-xl-3">
-                <div class="npn-field">
-                  <label for="genTipoMutacionSelect" class="form-label npn-form-label">
-                    Tipo de Trámite
-                  </label>
-                  <div class="input-group input-group-sm npn-input-group">
-                    <span class="input-group-text">
-                      <i class="bi bi-diagram-3-fill"></i>
-                    </span>
-                    <select class="form-select" id="genTipoMutacionSelect">
-                      <option value="DESENGLOBE" selected>Desenglobe / Subdivisión</option>
-                      <option value="MANZANA_NUEVA">Incorporación Manzana Nueva</option>
-                      <option value="PH">Propiedad Horizontal (PH)</option>
-                      <option value="SEGREGACION">Segregación</option>
-                      <option value="MEJORA">Mejora en Terreno Ajeno</option>
-                    </select>
+                <!-- CONSECUTIVO -->
+                <div class="col-12 col-sm-8 col-lg-4">
+                  <div class="npn-field">
+                    <label for="genTramiteInput" class="form-label npn-form-label">Consecutivo Trámite</label>
+                    <div class="input-group input-group-sm npn-input-group">
+                      <span class="input-group-text">
+                        <i class="bi bi-hash"></i>
+                      </span>
+                      <input type="text" class="form-control" id="genTramiteInput"
+                        placeholder="Ej: MUT-2026-001 (Opcional)">
+                    </div>
+                  </div>
+                </div>
+                <!-- OBSERVACIONES -->
+                <div class="col-12 col-lg-4">
+                  <div class="npn-field">
+                    <label for="genObservacionesInput" class="form-label npn-form-label">Notas / Observaciones</label>
+                    <div class="input-group input-group-sm npn-input-group">
+                      <span class="input-group-text">
+                        <i class="bi bi-chat-left-text-fill"></i>
+                      </span>
+                      <input type="text" class="form-control" id="genObservacionesInput"
+                        placeholder="Notas adicionales (Opcional)">
+                    </div>
+                  </div>
+                </div>
+                <!-- GENERAR -->
+                <div class="col-12 col-lg-2">
+                  <div class="npn-generate-action">
+                    <label class="form-label npn-form-label d-none d-lg-block">Acción</label>
+                    <button class="btn npn-btn-primary w-100" id="btnEjecutarGeneradorNpn" type="button">
+                      <i class="bi bi-lightning-charge-fill"></i>Generar</button>
                   </div>
                 </div>
               </div>
-
-              <div class="col-12 col-md-6 col-xl-4">
-                <div class="npn-field">
-                  <label for="genCondicionSelect" class="form-label npn-form-label">
-                    Condición del Predio (Posición 22)
-                  </label>
-                  <div class="input-group input-group-sm npn-input-group">
-                    <span class="input-group-text">
-                      <i class="bi bi-building-check"></i>
-                    </span>
-                    <select class="form-select" id="genCondicionSelect">
-                      <option value="0" selected>0 - No Propiedad Horizontal (NPH)</option>
-                      <option value="9">9 - Predios en Propiedad Horizontal (PH)</option>
-                      <option value="5">5 - Mejoras / PH no reglamentaria</option>
-                      <option value="8">8 - Predio en Condominio</option>
-                      <option value="7">7 - Parque Cementerios</option>
-                      <option value="4">4 - Vías</option>
-                      <option value="3">3 - Bienes de uso público diferentes a vías</option>
-                      <option value="2">2 - Informal</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- PARAMETROS PH: se conserva el ID y el display controlado por el JS existente -->
-            <div
-              class="row g-3 mt-3 npn-ph-panel align-items-end"
-              id="rowPhParams"
-              style="display: none;">
-
-              <div class="col-12 mb-1">
-                <div class="d-flex align-items-center gap-2">
-                  <i class="bi bi-buildings-fill npn-text-primary"></i>
-                  <span class="small fw-bold npn-text-primary">Configuración de Propiedad Horizontal</span>
-                </div>
-              </div>
-
-              <div class="col-12 col-sm-6 col-md-3">
-                <div class="npn-field">
-                  <label for="genEdificioInput" class="form-label npn-form-label">
-                    Edificio / Torre (Pos 23-24)
-                  </label>
-                  <div class="input-group input-group-sm npn-input-group">
-                    <span class="input-group-text">
-                      <i class="bi bi-buildings-fill"></i>
-                    </span>
-                    <input
-                      type="text"
-                      class="form-control font-monospace"
-                      id="genEdificioInput"
-                      placeholder="00"
-                      maxlength="2"
-                      value="00">
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-12 col-sm-6 col-md-3">
-                <div class="npn-field">
-                  <label for="genPisoInput" class="form-label npn-form-label">
-                    Piso / Nivel (Pos 25-26)
-                  </label>
-                  <div class="input-group input-group-sm npn-input-group">
-                    <span class="input-group-text">
-                      <i class="bi bi-layers-fill"></i>
-                    </span>
-                    <input
-                      type="text"
-                      class="form-control font-monospace"
-                      id="genPisoInput"
-                      placeholder="00"
-                      maxlength="2"
-                      value="00">
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-12 col-md-6">
-                <div class="npn-info-box px-3 py-2">
-                  <i class="bi bi-info-circle-fill npn-text-primary me-2"></i>
-                  Las unidades (Pos 27-30) se generarán consecutivamente (ej: 0001, 0002...).
-                </div>
-              </div>
-            </div>
+            </section>
           </div>
         </div>
-
-        <!-- CONFIGURACION DE GENERACION -->
-        <div class="card border-0 shadow-sm npn-form-card mb-4">
-          <div class="card-header npn-form-card-header px-3 px-md-4 py-3">
-            <div class="d-flex align-items-center gap-3">
-              <div>
-                <h6 class="npn-form-card-title fw-bold mb-1">CONFIGURACIÓN DE GENERACIÓN</h6>
-                <p class="npn-form-card-subtitle mb-0">
-                  Define la cantidad, relaciona el trámite y registra observaciones opcionales.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div class="card-body p-3 p-lg-4">
-            <div class="row g-3 align-items-end">
-
-              <div class="col-12 col-sm-4 col-lg-2">
-                <div class="npn-field">
-                  <label for="genCantidadInput" class="form-label npn-form-label">
-                    Cantidad <span class="npn-required">*</span>
-                  </label>
-                  <div class="input-group input-group-sm npn-input-group">
-                    <span class="input-group-text">
-                      <i class="bi bi-123"></i>
-                    </span>
-                    <input
-                      type="number"
-                      class="form-control"
-                      id="genCantidadInput"
-                      value="1"
-                      min="1"
-                      max="100">
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-12 col-sm-8 col-lg-4">
-                <div class="npn-field">
-                  <label for="genTramiteInput" class="form-label npn-form-label">
-                    Consecutivo Trámite
-                  </label>
-                  <div class="input-group input-group-sm npn-input-group">
-                    <span class="input-group-text">
-                      <i class="bi bi-hash"></i>
-                    </span>
-                    <input
-                      type="text"
-                      class="form-control"
-                      id="genTramiteInput"
-                      placeholder="Ej: MUT-2026-001 (Opcional)">
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-12 col-lg-4">
-                <div class="npn-field">
-                  <label for="genObservacionesInput" class="form-label npn-form-label">
-                    Notas / Observaciones
-                  </label>
-                  <div class="input-group input-group-sm npn-input-group">
-                    <span class="input-group-text">
-                      <i class="bi bi-chat-left-text-fill"></i>
-                    </span>
-                    <input
-                      type="text"
-                      class="form-control"
-                      id="genObservacionesInput"
-                      placeholder="Notas adicionales (Opcional)">
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-12 col-lg-2">
-                <div class="npn-generate-action">
-                  <span class="form-label npn-form-label d-none d-lg-block">Acción</span>
-                  <button
-                    class="btn npn-btn-primary w-100"
-                    id="btnEjecutarGeneradorNpn"
-                    type="button">
-                    <i class="bi bi-lightning-charge-fill"></i>
-                    Generar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- RESULTADOS -->
         <div id="wrapResultadosGenerador" class="d-none">
           <div class="card border-0 shadow-sm npn-results-card">
@@ -1128,167 +1088,119 @@
                       PREDIOS NUEVOS GENERADOS Y RESERVADOS
                       (<span id="lblCantGenerada">0</span>)
                     </h6>
-                    <p class="npn-results-card-subtitle mb-0">
-                      Números prediales y códigos homologados disponibles para Alfa.
-                    </p>
+                    <p class="npn-results-card-subtitle mb-0">Números prediales y códigos homologados
+                      disponibles para Alfa.</p>
                   </div>
                 </div>
-
                 <div class="d-flex flex-wrap gap-2">
-                  <button
-                    class="btn btn-sm btn-light fw-semibold rounded-3"
-                    id="btnCopiarTodoGenerador"
+                  <button class="btn btn-sm btn-light fw-semibold rounded-3" id="btnCopiarTodoGenerador" type="button">
+                    <i class="bi bi-clipboard-check me-1"></i>Copiar Todo para Alfa</button>
+                  <button class="btn btn-sm btn-outline-light fw-semibold rounded-3" id="btnDescargarCsvGenerador"
                     type="button">
-                    <i class="bi bi-clipboard-check me-1"></i>
-                    Copiar Todo para Alfa
-                  </button>
-                  <button
-                    class="btn btn-sm btn-outline-light fw-semibold rounded-3"
-                    id="btnDescargarCsvGenerador"
-                    type="button">
-                    <i class="bi bi-filetype-csv me-1"></i>
-                    Descargar CSV
-                  </button>
+                    <i class="bi bi-filetype-csv me-1"></i>Descargar CSV</button>
                 </div>
               </div>
             </div>
-
             <div class="card-body p-3 p-lg-4">
               <div class="npn-table-wrapper table-responsive border rounded-3">
                 <table class="table table-sm table-hover align-middle mb-0" id="tblResultadosGenerador">
                   <thead class="npn-table-header sticky-top">
                     <tr>
-                      <th class="text-center px-3 py-2" style="width: 55px;">#</th>
+                      <th class="text-center px-3 py-2" style="width:55px;">#</th>
                       <th class="px-3 py-2">Número Predial Nacional (30 Dígitos)</th>
                       <th class="px-3 py-2">Código Homologado</th>
                       <th class="text-center px-3 py-2">Estado</th>
-                      <th class="text-center px-3 py-2" style="width: 150px;">Acciones</th>
+                      <th class="text-center px-3 py-2" style="width:150px;">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody id="tbodyResultadosGenerador"></tbody>
+                  <tbody id="tbodyResultadosGenerador">
+                  </tbody>
                 </table>
               </div>
             </div>
           </div>
         </div>
       </div>
-
       <!-- PANEL RESERVAS -->
-      <div
-        id="paneReservasActivas"
-        class="d-none px-4 py-4"
-        role="tabpanel"
-        aria-labelledby="btnTabReservas">
-
+      <div id="paneReservasActivas" class="d-none px-4 py-4" role="tabpanel" aria-labelledby="btnTabReservas">
         <div class="card border-0 shadow-sm npn-reservas-card">
           <div class="card-header npn-reservas-card-header px-3 px-md-4 py-3">
             <div class="d-flex flex-column flex-xl-row align-items-xl-center justify-content-between gap-3">
               <div class="d-flex align-items-center gap-3">
+                <div class="npn-reservas-header-icon">
+                  <i class="bi bi-clock-history"></i>
+                </div>
                 <div>
                   <h6 class="npn-reservas-card-title fw-bold mb-1">LISTADO DE HOMOLOGADOS EN RESERVA</h6>
-                  <p class="npn-reservas-card-subtitle mb-0">
-                    Consolida los códigos utilizados o libera los que deban regresar a la bolsa.
-                  </p>
+                  <p class="npn-reservas-card-subtitle mb-0">Consolida los códigos utilizados o libera
+                    los que deban regresar a la bolsa.</p>
                 </div>
               </div>
-
               <div class="npn-reservas-actions d-flex flex-wrap gap-2">
-                <button
-                  class="btn btn-sm btn-light text-success rounded-3"
-                  id="btnConsolidarSeleccionados"
+                <button class="btn btn-sm btn-light text-success rounded-3" id="btnConsolidarSeleccionados"
                   type="button">
-                  <i class="bi bi-check2-all me-1"></i>
-                  Fijar / Consolidar
-                </button>
-
-                <button
-                  class="btn btn-sm btn-light text-danger rounded-3"
-                  id="btnLiberarSeleccionados"
-                  type="button">
-                  <i class="bi bi-trash3 me-1"></i>
-                  Liberar
-                </button>
-
-                <button
-                  class="btn btn-sm btn-outline-light rounded-3"
-                  id="btnRefrescarReservas"
-                  type="button">
-                  <i class="bi bi-arrow-clockwise me-1"></i>
-                  Actualizar
-                </button>
+                  <i class="bi bi-check2-all me-1"></i>Fijar / Consolidar</button>
+                <button class="btn btn-sm btn-light text-danger rounded-3" id="btnLiberarSeleccionados" type="button">
+                  <i class="bi bi-trash3 me-1"></i>Liberar</button>
+                <button class="btn btn-sm btn-outline-light rounded-3" id="btnRefrescarReservas" type="button">
+                  <i class="bi bi-arrow-clockwise me-1"></i>Actualizar</button>
               </div>
             </div>
           </div>
-
           <div class="card-body p-3 p-lg-4">
             <div class="alert alert-light border d-flex align-items-start gap-2 py-2 px-3 mb-3 small text-muted">
-              <i class="bi bi-info-circle-fill npn-text-primary mt-1"></i>
-              <span>
-                Los códigos permanecen reservados temporalmente. Si el trámite no se consolida en Alfa,
-                puedes liberarlos para que regresen a la bolsa disponible.
-              </span>
+              <i class="bi bi-info-circle-fill npn-text-primary mt-1">
+              </i>
+              <span>Los códigos permanecen reservados temporalmente.
+                Si el trámite no se consolida en Alfa, puedes
+                liberarlos para que regresen a la bolsa disponible.</span>
             </div>
-
             <div class="npn-table-wrapper-lg table-responsive border rounded-3">
               <table class="table table-sm table-hover align-middle mb-0" id="tblReservasActivas">
                 <thead class="npn-table-header sticky-top">
                   <tr>
-                    <th class="text-center px-3 py-2" style="width: 45px;">
+                    <th class="text-center px-3 py-2" style="width:45px;">
                       <input type="checkbox" id="chkTodosReservas" class="form-check-input">
                     </th>
                     <th class="px-3 py-2">Código Homologado</th>
                     <th class="px-3 py-2">NPN Asignado (30d)</th>
                     <th class="px-3 py-2">Usuario / Trámite</th>
                     <th class="px-3 py-2">Fecha Reserva</th>
-                    <th class="text-center px-3 py-2" style="width: 150px;">Acciones</th>
+                    <th class="text-center px-3 py-2" style="width:150px;">Acciones</th>
                   </tr>
                 </thead>
-                <tbody id="tbodyReservasActivas"></tbody>
+                <tbody id="tbodyReservasActivas">
+                </tbody>
               </table>
             </div>
           </div>
         </div>
       </div>
     </div>
-
     <!-- FOOTER -->
     <div class="npn-modal-footer border-top px-4 py-3">
       <div class="d-flex justify-content-end">
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary px-4 rounded-3"
-          id="btnCerrarModalGenBottom">
-          <i class="bi bi-x-circle me-1"></i>
-          Cerrar
-        </button>
+        <button type="button" class="btn btn-sm-cerrar px-4 rounded-3" id="btnCerrarModalGenBottom">
+          <i class="bi bi-x-circle me-1"></i>Cerrar</button>
       </div>
     </div>
   </div>
 </div>
-
-<!-- SOLO CONTROLA LA APARIENCIA ACTIVA/INACTIVA DE LAS PESTANAS -->
+<!-- CONTROL VISUAL DE PESTAÑAS -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const btnTabGenerar = document.getElementById('btnTabGenerar');
     const btnTabReservas = document.getElementById('btnTabReservas');
-
     if (!btnTabGenerar || !btnTabReservas) {
       return;
     }
-
     function cambiarPestanaVisual(activa, inactiva) {
       activa.classList.add('npn-main-tab-active');
       inactiva.classList.remove('npn-main-tab-active');
       activa.setAttribute('aria-selected', 'true');
       inactiva.setAttribute('aria-selected', 'false');
     }
-
-    btnTabGenerar.addEventListener('click', function () {
-      cambiarPestanaVisual(btnTabGenerar, btnTabReservas);
-    });
-
-    btnTabReservas.addEventListener('click', function () {
-      cambiarPestanaVisual(btnTabReservas, btnTabGenerar);
-    });
+    btnTabGenerar.addEventListener('click', function () { cambiarPestanaVisual(btnTabGenerar, btnTabReservas); });
+    btnTabReservas.addEventListener('click', function () { cambiarPestanaVisual(btnTabReservas, btnTabGenerar); });
   });
 </script>
