@@ -1372,7 +1372,8 @@ def update_asignacion_fields(*args, **kwargs) -> None:
     if not sets:
         return
     params.append(asignacion_id)
-    sql = f"UPDATE {app_schema}.asignacion SET {', '.join(sets)} WHERE id=%s"
+    safe_schema = _safe_ident(app_schema, fallback="b_asignaciones_arb")
+    sql = f"UPDATE {safe_schema}.asignacion SET {', '.join(sets)} WHERE id=%s"
 
     if has_conn:
         with conn.cursor() as cur:

@@ -1,3 +1,5 @@
+import logging
+log = logging.getLogger(__name__)
 from contextlib import contextmanager
 from threading import RLock
 from typing import Any

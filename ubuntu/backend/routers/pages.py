@@ -654,7 +654,7 @@ def panel_sincronizacion_mergin(request: Request):
 
 
 @router.post("/panel/validacion-xtf")
-async def panel_validacion_xtf_upload(
+def panel_validacion_xtf_upload(
     request: Request,
     file: UploadFile = File(...),
 ):
@@ -679,7 +679,7 @@ async def panel_validacion_xtf_upload(
         status_code = 400
     else:
         try:
-            result = await xtf_service.save_xtf(
+            result = xtf_service.save_xtf(
                 file,
                 municipality_code=user.get("municipality_code"),
             )

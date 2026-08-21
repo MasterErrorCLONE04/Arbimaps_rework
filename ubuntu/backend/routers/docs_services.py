@@ -45,7 +45,7 @@ def validate():
 # UPLOAD (QGIS)
 # ===============================
 @router.post("/upload")
-async def upload_qgis(file: UploadFile = File(...)):
+def upload_qgis(file: UploadFile = File(...)):
 
     client = get_client()
 

@@ -63,7 +63,7 @@ class XTFValidationService:
         extra_args = os.getenv("ILIVALIDATOR_EXTRA_ARGS", "")
         self.extra_args = shlex.split(extra_args) if extra_args else []
 
-    async def save_xtf(
+    def save_xtf(
         self,
         uploaded_file,
         *,
@@ -76,8 +76,7 @@ class XTFValidationService:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(uploaded_file.file, buffer)
 
-        validation = await asyncio.to_thread(
-            self._validate_xtf,
+        validation = self._validate_xtf(
             job_id,
             file_path,
             municipality_code,

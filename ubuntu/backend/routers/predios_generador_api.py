@@ -261,8 +261,8 @@ def obtener_catalogo_territorial(
                     "codigo_4d": cod_4d,
                     "nombre": r["nombre"]
                 })
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Excepcion en predios_generador_api: %s", exc)
 
         # Si no hay en c_cartografia_catastral, consultar las veredas con predios existentes
         if not veredas:

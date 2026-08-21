@@ -1,3 +1,3 @@
-﻿from .connection import LocalPostgresConnectionService
+from .connection import LocalPostgresConnectionService
 
 __all__ = ["LocalPostgresConnectionService"]

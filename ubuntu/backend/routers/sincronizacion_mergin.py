@@ -63,9 +63,9 @@ def list_schemas(payload: ConnectionPayload):
 
 
 @router.post("/detect-local-connections")
-async def detect_local_connections(payload: DetectionPayload):
+def detect_local_connections(payload: DetectionPayload):
     try:
-        results = await connection_service.detect_open_ports(payload.hosts, payload.ports)
+        results = connection_service.detect_open_ports_sync(payload.hosts, payload.ports)
         return {"ok": True, "results": results}
     except Exception:
         log.exception("Error durante la deteccion de puertos")
@@ -73,16 +73,16 @@ async def detect_local_connections(payload: DetectionPayload):
 
 
 @router.post("/analyze-zip")
-async def analyze_zip(file: UploadFile = File(...)):
+def analyze_zip(file: UploadFile = File(...)):
     try:
-        return await zip_analyzer.analyze_uploaded_zip(file)
+        return zip_analyzer.analyze_uploaded_zip(file)
     except Exception as exc:
         log.exception("Error real en analyze-zip")
         return JSONResponse(status_code=400, content={"ok": False, "error_type": type(exc).__name__, "message": str(exc), "detail": {"repr": repr(exc), "pgerror": getattr(exc, "pgerror", None)}})
 
 
 @router.post("/import-staging")
-async def import_staging(
+def import_staging(
     zip_file: UploadFile = File(...),
     host: str = Form(...),
     port: int = Form(...),
@@ -95,7 +95,7 @@ async def import_staging(
     replace: bool = Form(False),
 ):
     try:
-        return await staging_importer.import_uploaded_zip_to_staging(zip_file=zip_file, host=host, port=port, user=user, password=password, database=database, target_schema=target_schema, staging_schema=staging_schema, mode=mode, replace=replace)
+        return staging_importer.import_uploaded_zip_to_staging(zip_file=zip_file, host=host, port=port, user=user, password=password, database=database, target_schema=target_schema, staging_schema=staging_schema, mode=mode, replace=replace)
     except Exception as exc:
         log.exception("Error real en import-staging")
         return JSONResponse(status_code=400, content={"ok": False, "error_type": type(exc).__name__, "message": str(exc), "detail": {"repr": repr(exc), "pgerror": getattr(exc, "pgerror", None)}})

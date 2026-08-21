@@ -63,7 +63,7 @@ TARGET_TABLE_ALIASES = {
 }
 
 
-async def import_uploaded_zip_to_staging(
+def import_uploaded_zip_to_staging(
     *,
     zip_file,
     host: str,
@@ -101,7 +101,7 @@ async def import_uploaded_zip_to_staging(
         with TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             zip_path = temp_path / filename
-            zip_path.write_bytes(await zip_file.read())
+            zip_path.write_bytes(zip_file.file.read())
 
             extract_dir = temp_path / "extracted"
             extract_dir.mkdir(parents=True, exist_ok=True)
@@ -212,7 +212,7 @@ async def import_uploaded_zip_to_staging(
                 imported_records=imported_records,
             )
     finally:
-        await zip_file.close()
+        zip_file.file.close()
 
 
 def _validate_schema_name(value: str, *, field_name: str) -> str:

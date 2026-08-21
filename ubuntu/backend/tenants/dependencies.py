@@ -1,3 +1,5 @@
+import logging
+log = logging.getLogger(__name__)
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Query, Request, status

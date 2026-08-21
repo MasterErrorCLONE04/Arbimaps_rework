@@ -82,7 +82,7 @@ def _safe_log_update_event(
 
 
 @router.put("/{predio_t_id}")
-async def guardar_edicion_predio(
+def guardar_edicion_predio(
     predio_t_id: int,
     payload: EdicionPredioPayload,
     request: Request,

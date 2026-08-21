@@ -1,3 +1,5 @@
+import logging
+log = logging.getLogger(__name__)
 from boxsdk import JWTAuth, Client, OAuth2
 from boxsdk.exception import BoxAPIException
 from dotenv import load_dotenv

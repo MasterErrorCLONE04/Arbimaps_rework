@@ -42,7 +42,7 @@ def list_files(folder_id: str = ""):
 # SUBIR ARCHIVO
 # ===============================
 @router.post("/upload")
-async def upload_file(
+def upload_file(
     file: UploadFile = File(...),
     folder_id: str = Form("")
 ):
@@ -72,7 +72,7 @@ async def upload_file(
 # SUBIR ARCHIVO DESDE QGIS
 # ===============================
 @router.post("/upload_qgis")
-async def upload_qgis(file: UploadFile = File(None)):
+def upload_qgis(file: UploadFile = File(None)):
     client = get_client()
 
     try:

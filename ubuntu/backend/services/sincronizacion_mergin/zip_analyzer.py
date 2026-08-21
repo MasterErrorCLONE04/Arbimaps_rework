@@ -91,7 +91,7 @@ NORMALIZED_BASE_LAYER_NAMES = {
 }
 
 
-async def analyze_uploaded_zip(upload_file):
+def analyze_uploaded_zip(upload_file):
     filename = (upload_file.filename or "").strip() or "proyecto.zip"
     if not filename.lower().endswith(".zip"):
         raise ValueError("El archivo cargado debe ser un ZIP.")
@@ -101,7 +101,7 @@ async def analyze_uploaded_zip(upload_file):
             temp_path = Path(temp_dir)
             zip_path = temp_path / filename
 
-            zip_bytes = await upload_file.read()
+            zip_bytes = upload_file.file.read()
             zip_path.write_bytes(zip_bytes)
 
             extract_dir = temp_path / "extracted"
@@ -132,7 +132,7 @@ async def analyze_uploaded_zip(upload_file):
                 "missing_required_layers": analysis["missing_required_layers"],
             }
     finally:
-        await upload_file.close()
+        upload_file.file.close()
 
 
 def _extract_zip_safely(zip_path: Path, extract_dir: Path):

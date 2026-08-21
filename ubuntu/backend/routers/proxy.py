@@ -5,6 +5,7 @@ from threading import Lock
 
 from fastapi import APIRouter, HTTPException, Request, Response
 import requests
+import httpx
 
 from core.env_loader import load_env_file_if_present
 from services.session_auth import get_current_tenant_from_session
@@ -241,15 +242,14 @@ async def proxy_geoserver(path: str, request: Request) -> Response:
             return Response(content=content, status_code=status_code, headers=headers)
 
     try:
-        resp = requests.request(
-            method=method,
-            url=target_url,
-            params=params,
-            data=body,
-            headers={k: v for k, v in request.headers.items() if k.lower() not in ("host", "content-length")},
-            timeout=30,
-            allow_redirects=True,
-        )
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+            resp = await client.request(
+                method=method,
+                url=target_url,
+                params=params,
+                content=body,
+                headers={k: v for k, v in request.headers.items() if k.lower() not in ("host", "content-length")},
+            )
         content_type = resp.headers.get("Content-Type", "image/png")
         status_code = resp.status_code
         headers = {

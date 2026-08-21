@@ -29,7 +29,7 @@ def _get_xtf_service() -> XTFValidationService:
 
 
 @router.get("/xtf", response_class=HTMLResponse)
-async def vista_validacion_xtf(request: Request):
+def vista_validacion_xtf(request: Request):
     return templates.TemplateResponse(
         "validacion_xtf.html",
         {
@@ -42,7 +42,7 @@ async def vista_validacion_xtf(request: Request):
 
 
 @router.post("/xtf/subir", response_class=HTMLResponse)
-async def subir_xtf(
+def subir_xtf(
     request: Request,
     file: UploadFile = File(...),
 ):
@@ -63,7 +63,7 @@ async def subir_xtf(
             )
 
         user = get_user(request) or {}
-        result = await _get_xtf_service().save_xtf(
+        result = _get_xtf_service().save_xtf(
             file,
             municipality_code=user.get("municipality_code"),
         )
