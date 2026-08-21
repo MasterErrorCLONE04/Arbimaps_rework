@@ -19,7 +19,7 @@ body.view-asignaciones {
   --asg-olive: #9d9964;
   --asg-line: #c7d4cd;
   --asg-muted: #718379;
-  --asg-gradient: linear-gradient(120deg, var(--asg-deep) 0%, var(--asg-green) 58%, var(--asg-teal) 145%);
+  --asg-gradient: linear-gradient(202deg, rgba(10, 44, 27, 1) 75%, rgba(27, 64, 1, 1) 95%);
   --asg-soft-gradient: linear-gradient(145deg, #fff 0%, #eef3f0 100%);
   --asg-shadow: 0 8px 22px rgba(6, 54, 34, .10);
 }
