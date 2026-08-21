@@ -455,41 +455,110 @@ def _area_terreno(terreno: dict[str, object], helper: FisicoHelper) -> float | N
 # -------------------- Reglas --------------------
 
 def _rule_3_1(dataset: DatasetReader) -> list[RuleIssue]:
+    """PH.Unidad_Predial debe tener al menos una UnidadConstruccion asociada.
+
+    La relación del XTF es Predio -> Construccion -> UnidadConstruccion.
+    Se exceptúan parqueaderos o garajes descubiertos identificables de forma
+    objetiva por la dirección asociada (PQ/Parqueadero o GA/Garaje) cuando no
+    existe UnidadConstruccion. Las unidades PH no construidas solo se excluyen
+    si el modelo aporta un atributo objetivo que permita identificarlas.
+    """
+    import re
+
     helper = FisicoHelper(dataset)
     issues: list[RuleIssue] = []
 
+    construccion_a_predio: dict[str, str] = {}
     predios_con_unidad: set[str] = set()
+    predios_parqueadero_garaje: set[str] = set()
 
-    for _, row in helper.iter_unidades_construccion():
-        predio_ref = helper.get_field_value(row, ("predio",))
+    # 1) Construccion -> Predio
+    for _, construccion in helper._iter_table_rows(("ARB_Construccion", "arb_construccion")):
+        construccion_id = helper.get_field_value(construccion, ("TID", "t_id", "id"))
+        predio_ref = helper.get_field_value(
+            construccion,
+            ("predio", "arb_predio", "id_predio", "Id_Predio"),
+        )
+        if construccion_id and predio_ref:
+            construccion_a_predio[str(construccion_id)] = str(predio_ref)
+
+    # 2) UnidadConstruccion -> Construccion -> Predio
+    for _, unidad in helper.iter_unidades_construccion():
+        construccion_ref = helper.get_field_value(
+            unidad,
+            ("construccion", "arb_construccion", "id_construccion", "Id_Construccion"),
+        )
+        if not construccion_ref:
+            continue
+        predio_ref = construccion_a_predio.get(str(construccion_ref))
         if predio_ref:
-            predios_con_unidad.add(str(predio_ref))
+            predios_con_unidad.add(predio_ref)
 
+    # 3) Identificar de forma objetiva parqueaderos/garajes por la direccion.
+    # PQ = Parqueadero y GA = Garaje (abreviaturas usadas por el propio modelo).
+    patron_excepcion = re.compile(r"(?:^|[^A-Z0-9])(PQ|PARQUEADERO|GA|GARAJE)(?:[^A-Z0-9]|$)", re.IGNORECASE)
+    for _, direccion in helper._iter_table_rows(("ARB_Direccion", "arb_direccion", "ARB_Dirección", "arb_dirección")):
+        predio_ref = helper.get_field_value(
+            direccion,
+            (
+                "predio", "arb_predio", "arb_predio_direccion",
+                "predio_asociado", "id_predio", "Id_Predio",
+            ),
+        )
+        if not predio_ref:
+            continue
+
+        texto_direccion = helper.get_field_value(
+            direccion,
+            (
+                "complemento", "Complemento",
+                "nombre_predio", "Nombre_Predio",
+                "direccion", "Direccion",
+            ),
+        )
+        if texto_direccion and patron_excepcion.search(str(texto_direccion).upper()):
+            predios_parqueadero_garaje.add(str(predio_ref))
+
+    # 4) Evaluar únicamente PH.Unidad_Predial
     for table_name, row in helper.iter_predios():
         predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        numero_predial = helper.get_field_value(row, ("numero_predial", "Numero_Predial"))
+        numero_predial = helper.get_field_value(
+            row,
+            ("numero_predial", "Numero_Predial", "Numero_Predial_Nacional"),
+        )
         condicion_predio = helper.get_field_value(row, ("condicion_predio", "Condicion_Predio"))
         condicion_predio_str = _condicion_predio_ilicode(condicion_predio)
 
-        if condicion_predio_str == "PH.Unidad_Predial":
-            if predio_id and str(predio_id) not in predios_con_unidad:
-                issues.append(
-                    helper.make_issue(
-                        row,
-                        rule_id="3.1",
-                        message=(
-                            "El predio con condición de PH unidad predial debe asociar "
-                            "una unidad de construcción."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            "numero_predial": numero_predial,
-                            "condicion_predio": condicion_predio,
-                            "condicion_predio_ilicode": condicion_predio_str,
-                            "predio_id": predio_id,
-                        },
-                    )
-                )
+        if condicion_predio_str != "PH.Unidad_Predial" or not predio_id:
+            continue
+
+        predio_id_str = str(predio_id)
+        if predio_id_str in predios_con_unidad:
+            continue
+
+        # Excepción explícita de la regla: parqueadero/garaje descubierto.
+        # Si no hay UnidadConstruccion y la dirección lo identifica como PQ/GA,
+        # no se reporta como incumplimiento de 3.1.
+        if predio_id_str in predios_parqueadero_garaje:
+            continue
+
+        issues.append(
+            helper.make_issue(
+                row,
+                rule_id="3.1",
+                message=(
+                    "El predio con condición PH.Unidad_Predial debe tener asociada "
+                    "al menos una unidad de construcción."
+                ),
+                details={
+                    "tabla": table_name,
+                    "numero_predial": numero_predial,
+                    "condicion_predio": condicion_predio,
+                    "condicion_predio_ilicode": condicion_predio_str,
+                    "predio_id": predio_id,
+                },
+            )
+        )
 
     return issues
 

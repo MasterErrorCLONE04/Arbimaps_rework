@@ -1564,6 +1564,31 @@ def _rule_5_7(dataset: DatasetReader) -> list[RuleIssue]:
 
     terrenos_por_predio = _terrenos_por_predio(helper, alias_index)
 
+    def contiene_estrictamente(geom_terreno, geom_direccion) -> bool:
+        """5.7 exige que la dirección esté dentro, no sobre el borde."""
+        try:
+            if bool(geom_terreno.contains(geom_direccion)):
+                return True
+        except Exception:
+            pass
+
+        # Si alguna geometría es inválida, se intenta reparar sin introducir
+        # tolerancias. Se conserva la semántica estricta de ``contains``.
+        try:
+            terreno_fixed = (
+                geom_terreno.buffer(0)
+                if hasattr(geom_terreno, "buffer")
+                else geom_terreno
+            )
+            direccion_fixed = (
+                geom_direccion.buffer(0)
+                if hasattr(geom_direccion, "buffer")
+                else geom_direccion
+            )
+            return bool(terreno_fixed.contains(direccion_fixed))
+        except Exception:
+            return False
+
     for table_name, row in helper.iter_direccion():
         predio_refs = helper.all_keys(row, _direccion_predio_ref_fields())
         predio_refs = _canonical_predio_refs(predio_refs, alias_index)
@@ -1574,30 +1599,49 @@ def _rule_5_7(dataset: DatasetReader) -> list[RuleIssue]:
         if geom_dir is None:
             continue
 
+        # Una dirección puede quedar asociada a más de un terreno por las
+        # relaciones del predio. Es válida si está estrictamente dentro de al
+        # menos uno. Si no, se reporta una sola vez por dirección.
+        terrenos_asociados: dict[str, dict[str, object]] = {}
         for predio_ref in predio_refs:
             for terreno in terrenos_por_predio.get(str(predio_ref), []):
-                if not _geom_contains(terreno["geom"], geom_dir):
-                    id_direccion = _display_id(helper.identify(row))
-                    id_terreno = _display_id(terreno["tid"])
-                    pair_id = _pair_ref(helper.identify(row), terreno["tid"])
-                    issues.append(
-                        helper.make_issue(
-                            row,
-                            rule_id="5.7",
-                            message=(
-                                f"La dirección con ID {id_direccion} no está completamente "
-                                f"contenida dentro del terreno asociado con ID {id_terreno}."
-                            ),
-                            details={
-                                "tabla": table_name,
-                                "identificador_terreno": terreno["tid"],
-                                "identificador_direccion": helper.identify(row),
-                                "predio": predio_ref,
-                                "par_validacion": pair_id,
-                                "object_ref": pair_id,
-                            },
-                        )
-                    )
+                key = str(terreno.get("tid") or id(terreno))
+                terrenos_asociados.setdefault(key, terreno)
+
+        if not terrenos_asociados:
+            continue
+
+        if any(
+            contiene_estrictamente(terreno["geom"], geom_dir)
+            for terreno in terrenos_asociados.values()
+        ):
+            continue
+
+        id_direccion = _display_id(helper.identify(row))
+        terreno_ids = [terreno.get("tid") for terreno in terrenos_asociados.values()]
+        terreno_ids_texto = ", ".join(
+            str(tid).strip() for tid in terreno_ids if _is_not_empty(tid)
+        ) or "sin_id_terreno"
+        pair_id = _pair_ref(helper.identify(row), terreno_ids_texto)
+
+        issues.append(
+            helper.make_issue(
+                row,
+                rule_id="5.7",
+                message=(
+                    f"La dirección con ID {id_direccion} no está completamente "
+                    f"contenida dentro del terreno asociado con ID {terreno_ids_texto}."
+                ),
+                details={
+                    "tabla": table_name,
+                    "identificador_terreno": terreno_ids,
+                    "identificador_direccion": helper.identify(row),
+                    "predio": sorted(predio_refs),
+                    "par_validacion": pair_id,
+                    "object_ref": pair_id,
+                },
+            )
+        )
 
     return issues
 

@@ -821,10 +821,13 @@ def _rule_2_1(dataset: DatasetReader) -> list[RuleIssue]:
 
         message = None
 
+        # La regla 2.1 valida la coherencia de una fecha cuando está diligenciada.
+        # La ausencia de Fecha_Inicio_Tenencia se reporta por la regla obligatoria 11.46,
+        # evitando duplicar el mismo hallazgo en dos reglas distintas.
         if fecha_inicio is None:
-            message = "La fecha de inicio de tenencia no puede ser nula."
+            continue
 
-        elif fecha_inicio < min_valid_date:
+        if fecha_inicio < min_valid_date:
             message = "La fecha de inicio de tenencia no puede ser inferior a 1900-01-01."
 
         elif fecha_visita and fecha_inicio > fecha_visita:

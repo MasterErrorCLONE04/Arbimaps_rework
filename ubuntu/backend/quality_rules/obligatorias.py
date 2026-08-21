@@ -271,6 +271,18 @@ class ObligatoriasHelper:
 
         return None
 
+    def has_field(self, row: dict[str, object], candidates: tuple[str, ...]) -> bool:
+        """Indica si el atributo existe realmente en el registro, aunque venga vacío.
+
+        Esto permite diferenciar un atributo obligatorio vacío de un atributo que no
+        pertenece a la versión/modelo XTF cargado.
+        """
+        normalized_candidates = {self._normalize_key(candidate) for candidate in candidates}
+        return any(
+            self._normalize_key(str(key)) in normalized_candidates
+            for key in row.keys()
+        )
+
     def is_calificacion_convencional(self, row: dict[str, object]) -> bool:
         value = self._get_raw_field_value(row, ("tipo_calificacion", "Tipo de calificación", "Tipo de calificacion"))
 
@@ -631,7 +643,11 @@ def rule_11_10(dataset: DatasetReader) -> list[RuleIssue]:
     helper = ObligatoriasHelper(dataset)
     issues: list[RuleIssue] = []
 
-    for table_name, predio in helper.iter_predios():
+    predios = list(helper.iter_predios())
+    if not any(helper.has_field(predio, ("resultado_visita",)) for _, predio in predios):
+        return issues
+
+    for table_name, predio in predios:
         resultado_visita = helper.get_field_value(
             predio,
             ("resultado_visita",),
@@ -669,7 +685,11 @@ def rule_11_11(dataset: DatasetReader) -> list[RuleIssue]:
     helper = ObligatoriasHelper(dataset)
     issues: list[RuleIssue] = []
 
-    for table_name, predio in helper.iter_predios():
+    predios = list(helper.iter_predios())
+    if not any(helper.has_field(predio, ("comodato",)) for _, predio in predios):
+        return issues
+
+    for table_name, predio in predios:
         comadato = helper.get_field_value(
             predio,
             ("comodato",),
@@ -707,7 +727,11 @@ def rule_11_12(dataset: DatasetReader) -> list[RuleIssue]:
     helper = ObligatoriasHelper(dataset)
     issues: list[RuleIssue] = []
 
-    for table_name, predio in helper.iter_predios():
+    predios = list(helper.iter_predios())
+    if not any(helper.has_field(predio, ("beneficio_comunidades_indigenas",)) for _, predio in predios):
+        return issues
+
+    for table_name, predio in predios:
         comunidades_indegenas = helper.get_field_value(
             predio,
             ("beneficio_comunidades_indigenas",),
@@ -791,7 +815,11 @@ def rule_11_14(dataset: DatasetReader) -> list[RuleIssue]:
     helper = ObligatoriasHelper(dataset)
     issues: list[RuleIssue] = []
 
-    for table_name, predio in helper.iter_predios():
+    predios = list(helper.iter_predios())
+    if not any(helper.has_field(predio, ("autoriza_notificaciones",)) for _, predio in predios):
+        return issues
+
+    for table_name, predio in predios:
         autoriza_notificaciones = helper.get_field_value(
             predio,
             ("autoriza_notificaciones",),

@@ -194,6 +194,11 @@ def run_quality_checks(
     xtf_path: Path,
     *,
     municipality_code: str | None = None,
+    department_code: str | None = None,
+    dane_municipality_code: str | None = None,
+    orip_code: str | None = None,
+    department_name: str | None = None,
+    municipality_name: str | None = None,
 ) -> dict[str, Any]:
     try:
         tables = parse_xtf_tables(xtf_path, TARGET_CLASSES)
@@ -225,7 +230,14 @@ def run_quality_checks(
 
     dataset = InMemoryDataset(
         tables,
-        metadata={"municipality_code": municipality_code},
+        metadata={
+            "municipality_code": municipality_code,
+            "department_code": department_code,
+            "dane_municipality_code": dane_municipality_code,
+            "orip_code": orip_code,
+            "department_name": department_name,
+            "municipality_name": municipality_name,
+        },
     )
     component_results = run_all_components(dataset)
     available_rule_ids = _load_available_rule_ids()

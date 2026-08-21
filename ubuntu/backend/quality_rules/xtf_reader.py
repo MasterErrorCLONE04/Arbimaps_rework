@@ -32,6 +32,7 @@ TARGET_CLASSES = {
     "ARB_NovedadNumeroPredialValor",
     "ARB_NovedadFMIValor",
     "ARB_InformacionPH",
+    "ARB_Informalidad",
     "ARB_DerechoInteresadoFuente",
     "ARB_DerechoTipo",
     "ARB_CaracteristicasUnidadConstruccion",
@@ -84,6 +85,7 @@ TARGET_CLASSES = {
     "arb_novedadnumeropredialvalor",
     "arb_novedadfmivalor",
     "arb_informacionph",
+    "arb_informalidad",
     "arb_derechointeresadofuente",
     "arb_derechotipo",
     "arb_caracteristicasunidadconstruccion",
@@ -142,6 +144,7 @@ ALIASES_BY_NORMALIZED = {
     "arbnovedadnumeropredialvalor": "ARB_NovedadNumeroPredialValor",
     "arbnovedadfmivalor": "ARB_NovedadFMIValor",
     "arbinformacionph": "ARB_InformacionPH",
+    "arbinformalidad": "ARB_Informalidad",
     "arbderechointeresadofuente": "ARB_DerechoInteresadoFuente",
     "derechointeresadofuente": "ARB_DerechoInteresadoFuente",
     "arbderechotipo": "ARB_DerechoTipo",
@@ -299,6 +302,14 @@ def parse_xtf_tables(
         if not canonical_class_name:
             continue
 
+        # Los nodos de relación como <ARB_Predio REF="..."/> no son
+        # instancias nuevas de la clase. Son únicamente referencias a un
+        # objeto ya materializado en otra parte del XTF. Si se agregan como
+        # filas, generan registros fantasma y falsos positivos en reglas de
+        # obligatoriedad, longitud, dominio, etc.
+        if _is_reference_only_node(element):
+            continue
+
         record: dict[str, str] = {}
 
         # atributos del nodo principal
@@ -355,6 +366,34 @@ def parse_xtf_tables(
         tables.setdefault(canonical_class_name, []).append(record)
 
     return {name: rows for name, rows in tables.items() if rows}
+
+
+def _is_reference_only_node(node: ET.Element) -> bool:
+    """
+    Indica si ``node`` representa únicamente una referencia XTF.
+
+    Ejemplo que debe ignorarse como registro::
+
+        <ARB_Predio REF="uuid-del-predio"/>
+
+    Una instancia real normalmente tiene TID/id y/o contenido hijo. Se
+    mantiene una condición conservadora para no descartar objetos válidos.
+    """
+    ref = node.attrib.get("REF") or node.attrib.get("ref")
+    if not ref:
+        return False
+
+    identity_keys = {"TID", "tid", "t_id", "T_Id", "T_ID", "id"}
+    if any(node.attrib.get(key) for key in identity_keys):
+        return False
+
+    if (node.text or "").strip():
+        return False
+
+    if len(node):
+        return False
+
+    return True
 
 def _is_geometry_node(node: ET.Element) -> bool:
     key = _normalize_key(_clean_tag(node.tag))
