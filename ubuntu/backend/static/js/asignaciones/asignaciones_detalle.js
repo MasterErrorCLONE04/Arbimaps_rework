@@ -3,82 +3,88 @@ const config = window.asignacionesConfig || {};
 const rp = config.rp || "";
 const currentLoggedUser = config.currentLoggedUser || "";
 const currentLoggedRole = config.currentLoggedRole || "";
-const asigSchemaWork = typeof config.asigSchemaWork === "string"
-  ? config.asigSchemaWork.trim()
-  : "";
-const ASSIGN_WMS_LAYER_DETAIL = config.assignWmsLayerDetail || "B_ASIGNACIONES_ARB:ASIGNACIONES";
+const asigSchemaWork =
+  typeof config.asigSchemaWork === "string" ? config.asigSchemaWork.trim() : "";
+const ASSIGN_WMS_LAYER_DETAIL =
+  config.assignWmsLayerDetail || "B_ASIGNACIONES_ARB:ASIGNACIONES";
 
 let currentAssignmentData = null;
 
 // Helper wrapper functions for SweetAlert2 styled alerts
-function showAlert(title, text, icon = 'info') {
+function showAlert(title, text, icon = "info") {
   Swal.fire({
     title: title,
     text: text,
     icon: icon,
-    confirmButtonColor: '#032F57',
-    confirmButtonText: 'Aceptar',
+    confirmButtonColor: "#032F57",
+    confirmButtonText: "Aceptar",
     customClass: {
-      popup: 'rounded-4'
-    }
+      popup: "rounded-4",
+    },
   });
 }
 
 function showSuccess(text) {
-  showAlert('¡Éxito!', text, 'success');
+  showAlert("¡Éxito!", text, "success");
 }
 
 function showError(text) {
-  showAlert('Error', text, 'error');
+  showAlert("Error", text, "error");
 }
 
 function showWarning(text) {
-  showAlert('Atención', text, 'warning');
+  showAlert("Atención", text, "warning");
 }
 
-function showConfirm(title, text, confirmButtonText = 'Sí, continuar') {
+function showConfirm(title, text, confirmButtonText = "Sí, continuar") {
   return Swal.fire({
     title: title,
     text: text,
-    icon: 'question',
+    icon: "question",
     showCancelButton: true,
-    confirmButtonColor: '#22c55e',
-    cancelButtonColor: '#94a3b8',
+    confirmButtonColor: "#22c55e",
+    cancelButtonColor: "#94a3b8",
     confirmButtonText: confirmButtonText,
-    cancelButtonText: 'Cancelar',
+    cancelButtonText: "Cancelar",
     customClass: {
-      popup: 'rounded-4'
-    }
+      popup: "rounded-4",
+    },
   });
 }
 
 window.copyToClipboard = function (text) {
-  navigator.clipboard.writeText(text).then(() => {
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon: 'success',
-      title: 'Copiado al portapapeles',
-      showConfirmButton: false,
-      timer: 2000
+  navigator.clipboard
+    .writeText(text)
+    .then(() => {
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Copiado al portapapeles",
+        showConfirmButton: false,
+        timer: 2000,
+      });
+    })
+    .catch((err) => {
+      showAlert("Error", "No se pudo copiar el enlace.", "error");
     });
-  }).catch(err => {
-    showAlert('Error', 'No se pudo copiar el enlace.', 'error');
-  });
 };
 
 window.triggerSoporteLinkWorkflowModal = function () {
-  $('#modalEnlacesAsignacion').modal('hide');
-  $('#modalViewSoporteLink').modal('show');
+  $("#modalEnlacesAsignacion").modal("hide");
+  $("#modalViewSoporteLink").modal("show");
 };
 
 $(document).ready(function () {
   $.fn.DataTable.ext.pager.numbers_length = 3;
 
-  tablaPrediosDT = $('#tablaPredios').DataTable({
+  tablaPrediosDT = $("#tablaPredios").DataTable({
     pageLength: 5,
     lengthChange: true,
-    lengthMenu: [[5, 7], [5, 7]],
+    lengthMenu: [
+      [5, 7],
+      [5, 7],
+    ],
     ordering: true,
     order: [[0, "asc"]],
     searching: true,
@@ -99,14 +105,14 @@ $(document).ready(function () {
       emptyTable: "Sin datos.",
       paginate: {
         next: "›",
-        previous: "‹"
-      }
-    }
+        previous: "‹",
+      },
+    },
   });
 
   tablaPrediosDT.on("draw", syncPredioSelectionUI);
 
-  tablaHistorialDT = $('#tablaHistorial').DataTable({
+  tablaHistorialDT = $("#tablaHistorial").DataTable({
     ordering: true,
     searching: false,
     info: false,
@@ -116,11 +122,11 @@ $(document).ready(function () {
     scrollX: true,
     language: {
       zeroRecords: "No se encontraron resultados",
-      emptyTable: "Sin datos."
-    }
+      emptyTable: "Sin datos.",
+    },
   });
 
-  $('#modalHistorial').on('shown.bs.modal', function () {
+  $("#modalHistorial").on("shown.bs.modal", function () {
     if (tablaHistorialDT) {
       tablaHistorialDT.columns.adjust().draw();
     }
@@ -137,7 +143,7 @@ const fechaFmt = new Intl.DateTimeFormat("es-CO", {
   month: "2-digit",
   day: "2-digit",
   hour: "2-digit",
-  minute: "2-digit"
+  minute: "2-digit",
 });
 
 const elId = document.getElementById("asigDetalleId");
@@ -156,7 +162,9 @@ const btnImportarRetorno = document.getElementById("btnImportarRetorno");
 const btnVerValidadores = document.getElementById("btnVerValidadores");
 const modalValidadoresXtf = document.getElementById("modalValidadoresXtf");
 const validadoresXtfBody = document.getElementById("validadoresXtfBody");
-const btnRecargarValidadoresXtf = document.getElementById("btnRecargarValidadoresXtf");
+const btnRecargarValidadoresXtf = document.getElementById(
+  "btnRecargarValidadoresXtf",
+);
 let retornoEnCurso = false;
 let validadoresCargados = false;
 
@@ -178,8 +186,9 @@ function setText(id, value) {
 function syncPredioSelectionUI() {
   document.querySelectorAll("#asigDetallePrediosBody tr").forEach((row) => {
     const rowTId = row.getAttribute("data-predio-t-id");
-    const isSelected = predioSeleccionadoTId !== null
-      && String(rowTId) === String(predioSeleccionadoTId);
+    const isSelected =
+      predioSeleccionadoTId !== null &&
+      String(rowTId) === String(predioSeleccionadoTId);
     row.classList.toggle("predio-row-active", isSelected);
     row.setAttribute("aria-selected", isSelected ? "true" : "false");
   });
@@ -223,7 +232,8 @@ function renderXtfPreview(file) {
 }
 
 function setXtfSyncState(state, detail = "") {
-  if (!xtfPreviewBox || !xtfPreviewCheck || !xtfPreviewIcon || !xtfFileMeta) return;
+  if (!xtfPreviewBox || !xtfPreviewCheck || !xtfPreviewIcon || !xtfFileMeta)
+    return;
 
   const base = xtfPreviewBox.dataset.fileSize || "0 KB";
   const suffix = detail ? ` | ${detail}` : "";
@@ -279,7 +289,9 @@ function formatBackendDetail(detail) {
 function renderValidadoresXtf(data) {
   if (!validadoresXtfBody) return;
   const pipeline = Array.isArray(data?.pipeline) ? data.pipeline : [];
-  const qualityRules = Array.isArray(data?.quality_rules) ? data.quality_rules : [];
+  const qualityRules = Array.isArray(data?.quality_rules)
+    ? data.quality_rules
+    : [];
   const ili = data?.ili2_validator || {};
 
   const pipelineHtml = pipeline.length
@@ -287,18 +299,20 @@ function renderValidadoresXtf(data) {
     : `<p class="mb-3 text-muted">No hay pipeline configurado.</p>`;
 
   const qualityHtml = qualityRules.length
-    ? qualityRules.map((item) => {
-      const rules = Array.isArray(item?.rules) ? item.rules : [];
-      const rulesHtml = rules.length
-        ? `<ul class="mb-2">${rules.map((r) => `<li><strong>${esc(r.rule_id || "-")}:</strong> ${esc(r.description || "-")}</li>`).join("")}</ul>`
-        : `<p class="mb-2 text-muted">Sin reglas declaradas.</p>`;
-      return `
+    ? qualityRules
+        .map((item) => {
+          const rules = Array.isArray(item?.rules) ? item.rules : [];
+          const rulesHtml = rules.length
+            ? `<ul class="mb-2">${rules.map((r) => `<li><strong>${esc(r.rule_id || "-")}:</strong> ${esc(r.description || "-")}</li>`).join("")}</ul>`
+            : `<p class="mb-2 text-muted">Sin reglas declaradas.</p>`;
+          return `
           <div class="mb-3">
             <div><strong>${esc(item.component || "-")}</strong> (${Number(item.total_rules || 0)} reglas)</div>
             ${rulesHtml}
           </div>
         `;
-    }).join("")
+        })
+        .join("")
     : `<p class="mb-0 text-muted">No hay reglas internas configuradas.</p>`;
 
   validadoresXtfBody.innerHTML = `
@@ -329,7 +343,7 @@ async function cargarValidadoresXtf(force = false) {
   validadoresXtfBody.innerHTML = `<span class="text-muted">Cargando validadores...</span>`;
   const resp = await fetch(`${rp}/asignaciones/validadores-xtf`, {
     credentials: "same-origin",
-    headers: { "Accept": "application/json" }
+    headers: { Accept: "application/json" },
   });
 
   let data = {};
@@ -340,7 +354,10 @@ async function cargarValidadoresXtf(force = false) {
   }
 
   if (!resp.ok) {
-    throw new Error(formatBackendDetail(data?.detail) || "No se pudieron cargar los validadores XTF.");
+    throw new Error(
+      formatBackendDetail(data?.detail) ||
+        "No se pudieron cargar los validadores XTF.",
+    );
   }
 
   validadoresCargados = true;
@@ -378,16 +395,22 @@ async function cargarDetalle() {
 
   try {
     const [respDet, respEvt] = await Promise.all([
-      fetch(`${rp}/asignaciones/${encodeURIComponent(id)}/detalle`, { credentials: "same-origin" }),
-      fetch(`${rp}/asignaciones/${encodeURIComponent(id)}/eventos`, { credentials: "same-origin" })
+      fetch(`${rp}/asignaciones/${encodeURIComponent(id)}/detalle`, {
+        credentials: "same-origin",
+      }),
+      fetch(`${rp}/asignaciones/${encodeURIComponent(id)}/eventos`, {
+        credentials: "same-origin",
+      }),
     ]);
 
     const dataDet = await respDet.json().catch(() => ({}));
-    const dataEvt = await respEvt.json().catch(() => ([]));
+    const dataEvt = await respEvt.json().catch(() => []);
     currentAssignmentData = dataDet;
 
-    if (!respDet.ok) throw new Error(dataDet?.detail || "No se pudo cargar el detalle.");
-    if (!respEvt.ok) throw new Error(dataEvt?.detail || "No se pudieron cargar los eventos.");
+    if (!respDet.ok)
+      throw new Error(dataDet?.detail || "No se pudo cargar el detalle.");
+    if (!respEvt.ok)
+      throw new Error(dataEvt?.detail || "No se pudieron cargar los eventos.");
 
     setText("d_id", dataDet.id);
     setText("d_estado", dataDet.estado || "-");
@@ -431,7 +454,8 @@ async function cargarDetalle() {
     if (btnSubmitQA) {
       const isReconocedor = currentLoggedRole === "reconocedor";
       const isOwner = dataDet.usuario_asignado_username === currentLoggedUser;
-      const isEnCampo = dataDet.estado === "EN_CAMPO" || dataDet.estado === "DEVUELTO_CAMPO";
+      const isEnCampo =
+        dataDet.estado === "EN_CAMPO" || dataDet.estado === "DEVUELTO_CAMPO";
 
       if (isReconocedor && isOwner && isEnCampo) {
         btnSubmitQA.classList.remove("d-none");
@@ -445,7 +469,10 @@ async function cargarDetalle() {
     // 1.1 Mostrar/Ocultar botón de Revisar Control de Calidad (para Coordinador/Admin)
     const btnQCReview = document.getElementById("btnHeaderQCReview");
     if (btnQCReview) {
-      const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
+      const isReviewerRole =
+        currentLoggedRole === "coordinador" ||
+        currentLoggedRole === "admin" ||
+        currentLoggedRole === "lider_reconocimiento";
       const isUnderReview = dataDet.estado === "CONTROL_CALIDAD_1";
 
       if (isReviewerRole && isUnderReview) {
@@ -458,9 +485,12 @@ async function cargarDetalle() {
     }
 
     // 1.2 Mostrar/Ocultar botón de Enviar Enlace a Coordinador (para Soporte/Admin)
-    const btnSubmitSoporteLink = document.getElementById("btnHeaderSubmitSoporteLink");
+    const btnSubmitSoporteLink = document.getElementById(
+      "btnHeaderSubmitSoporteLink",
+    );
     if (btnSubmitSoporteLink) {
-      const isSoporteOrAdmin = currentLoggedRole === "soporte" || currentLoggedRole === "admin";
+      const isSoporteOrAdmin =
+        currentLoggedRole === "soporte" || currentLoggedRole === "admin";
       const isGeneracionXtf = dataDet.estado === "GENERACION_XTF_CAMPO";
       const hasNoSoporteLink = !dataDet.enlace_soporte;
 
@@ -474,9 +504,15 @@ async function cargarDetalle() {
     }
 
     // 1.2b Mostrar/Ocultar botón de Asignar Digitalizador (para Coordinador/Lider/Admin)
-    const btnAssignDigitalizador = document.getElementById("btnHeaderAssignDigitalizador");
+    const btnAssignDigitalizador = document.getElementById(
+      "btnHeaderAssignDigitalizador",
+    );
     if (btnAssignDigitalizador) {
-      const isCoordinatorOrAdmin = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_tecnico" || currentLoggedRole === "lider_reconocimiento";
+      const isCoordinatorOrAdmin =
+        currentLoggedRole === "coordinador" ||
+        currentLoggedRole === "admin" ||
+        currentLoggedRole === "lider_tecnico" ||
+        currentLoggedRole === "lider_reconocimiento";
       const isGeneracionXtf = dataDet.estado === "GENERACION_XTF_CAMPO";
 
       if (isCoordinatorOrAdmin && isGeneracionXtf) {
@@ -490,19 +526,30 @@ async function cargarDetalle() {
 
     // 1.3 Mostrar/Ocultar botón de Ver Enlace de Soporte (para Coordinador/Admin/Lider/Asignado)
     let canViewSoporte = false;
-    const btnViewSoporteLink = document.getElementById("btnHeaderViewSoporteLink");
+    const btnViewSoporteLink = document.getElementById(
+      "btnHeaderViewSoporteLink",
+    );
     if (btnViewSoporteLink) {
-      const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
-      const isAssignee = currentLoggedRole === "digitalizador" || currentLoggedRole === "reconocedor";
+      const isReviewerRole =
+        currentLoggedRole === "coordinador" ||
+        currentLoggedRole === "admin" ||
+        currentLoggedRole === "lider_reconocimiento";
+      const isAssignee =
+        currentLoggedRole === "digitalizador" ||
+        currentLoggedRole === "reconocedor";
       const isOwner = dataDet.usuario_asignado_username === currentLoggedUser;
 
       const hasSoporteLink = !!dataDet.enlace_soporte;
-      const isAllowedState = dataDet.estado === "GENERACION_XTF_CAMPO" ||
+      const isAllowedState =
+        dataDet.estado === "GENERACION_XTF_CAMPO" ||
         dataDet.estado === "EN_DIGITALIZACION" ||
         dataDet.estado === "DEVUELTO_DIGITALIZACION" ||
         dataDet.estado === "DEVUELTO_A_DIGITALIZACION";
 
-      canViewSoporte = hasSoporteLink && isAllowedState && (isReviewerRole || (isAssignee && isOwner));
+      canViewSoporte =
+        hasSoporteLink &&
+        isAllowedState &&
+        (isReviewerRole || (isAssignee && isOwner));
 
       if (canViewSoporte) {
         btnViewSoporteLink.classList.remove("d-none");
@@ -516,9 +563,12 @@ async function cargarDetalle() {
     // 1.4 Mostrar/Ocultar botón de Enviar a Control de Calidad 2 (para digitalizador/reconocedor dueño)
     const btnSubmitQA2 = document.getElementById("btnHeaderSubmitQA2");
     if (btnSubmitQA2) {
-      const isAssignee = currentLoggedRole === "digitalizador" || currentLoggedRole === "reconocedor";
+      const isAssignee =
+        currentLoggedRole === "digitalizador" ||
+        currentLoggedRole === "reconocedor";
       const isOwner = dataDet.usuario_asignado_username === currentLoggedUser;
-      const isEnDigitalizacion = dataDet.estado === "EN_DIGITALIZACION" ||
+      const isEnDigitalizacion =
+        dataDet.estado === "EN_DIGITALIZACION" ||
         dataDet.estado === "DEVUELTO_DIGITALIZACION" ||
         dataDet.estado === "DEVUELTO_A_DIGITALIZACION";
 
@@ -534,7 +584,8 @@ async function cargarDetalle() {
     // 1.5 Mostrar/Ocultar botón de Revisar Control de Calidad 2 (para Coordinador/Admin)
     const btnQCReview2 = document.getElementById("btnHeaderQCReview2");
     if (btnQCReview2) {
-      const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin";
+      const isReviewerRole =
+        currentLoggedRole === "coordinador" || currentLoggedRole === "admin";
       const isUnderReview2 = dataDet.estado === "CONTROL_CALIDAD_2";
 
       if (isReviewerRole && isUnderReview2) {
@@ -549,7 +600,8 @@ async function cargarDetalle() {
     // 1.5b Mostrar/Ocultar botón de Enviar a Líder Técnico (para Coordinador/Admin)
     const btnSubmitToLider = document.getElementById("btnHeaderSubmitToLider");
     if (btnSubmitToLider) {
-      const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin";
+      const isReviewerRole =
+        currentLoggedRole === "coordinador" || currentLoggedRole === "admin";
       const isAprobadoDig = dataDet.estado === "APROBADO_DIGITALIZACION";
 
       if (isReviewerRole && isAprobadoDig) {
@@ -564,7 +616,9 @@ async function cargarDetalle() {
     // 1.6 Mostrar/Ocultar botón de Revisión de Líder (para Lider de Reconocimiento/Admin)
     const btnLiderReview = document.getElementById("btnHeaderLiderReview");
     if (btnLiderReview) {
-      const isLiderOrAdmin = currentLoggedRole === "lider_reconocimiento" || currentLoggedRole === "admin";
+      const isLiderOrAdmin =
+        currentLoggedRole === "lider_reconocimiento" ||
+        currentLoggedRole === "admin";
       const isAprobacion = dataDet.estado === "EN_APROBACION";
 
       if (isLiderOrAdmin && isAprobacion) {
@@ -577,13 +631,22 @@ async function cargarDetalle() {
     }
     // 1.7 Mostrar/Ocultar botón de Ver Enlace de Digitalización (para Soporte/Coordinador/Admin/Lider)
     let canViewDigitalizacion = false;
-    const btnViewDigitalizacionLink = document.getElementById("btnHeaderViewDigitalizacionLink");
+    const btnViewDigitalizacionLink = document.getElementById(
+      "btnHeaderViewDigitalizacionLink",
+    );
     if (btnViewDigitalizacionLink) {
-      const isAllowedRole = currentLoggedRole === "soporte" || currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
+      const isAllowedRole =
+        currentLoggedRole === "soporte" ||
+        currentLoggedRole === "coordinador" ||
+        currentLoggedRole === "admin" ||
+        currentLoggedRole === "lider_reconocimiento";
       const hasDigitalizacionLink = !!dataDet.enlace_digitalizacion;
-      const isSyncState = dataDet.estado === "EN_SINCRONIZACION" || dataDet.estado === "SINCRONIZADO";
+      const isSyncState =
+        dataDet.estado === "EN_SINCRONIZACION" ||
+        dataDet.estado === "SINCRONIZADO";
 
-      canViewDigitalizacion = isAllowedRole && hasDigitalizacionLink && isSyncState;
+      canViewDigitalizacion =
+        isAllowedRole && hasDigitalizacionLink && isSyncState;
 
       if (canViewDigitalizacion) {
         btnViewDigitalizacionLink.classList.remove("d-none");
@@ -597,8 +660,14 @@ async function cargarDetalle() {
     // 1.8 Mostrar/Ocultar botón de Sincronizar XTF (para Soporte/Admin)
     const btnSyncXtf = document.getElementById("btnHeaderSyncXtf");
     if (btnSyncXtf) {
-      const isAllowedSyncRole = currentLoggedRole === "soporte" || currentLoggedRole === "admin" || currentLoggedRole === "lider_tecnico" || currentLoggedRole === "lider_reconocimiento";
-      const isSyncState = dataDet.estado === "EN_SINCRONIZACION" || dataDet.estado === "EN_APROBACION";
+      const isAllowedSyncRole =
+        currentLoggedRole === "soporte" ||
+        currentLoggedRole === "admin" ||
+        currentLoggedRole === "lider_tecnico" ||
+        currentLoggedRole === "lider_reconocimiento";
+      const isSyncState =
+        dataDet.estado === "EN_SINCRONIZACION" ||
+        dataDet.estado === "EN_APROBACION";
 
       if (isAllowedSyncRole && isSyncState) {
         btnSyncXtf.classList.remove("d-none");
@@ -611,18 +680,27 @@ async function cargarDetalle() {
 
     // Manage visibility of the divider in the dropdown menu
     const workflowButtons = [
-      "btnHeaderSyncXtf", "btnHeaderSubmitQA", "btnHeaderQCReview",
-      "btnHeaderSubmitSoporteLink", "btnHeaderAssignDigitalizador", "btnHeaderViewSoporteLink", "btnHeaderSubmitQA2",
-      "btnHeaderQCReview2", "btnHeaderLiderReview", "btnHeaderViewDigitalizacionLink"
+      "btnHeaderSyncXtf",
+      "btnHeaderSubmitQA",
+      "btnHeaderQCReview",
+      "btnHeaderSubmitSoporteLink",
+      "btnHeaderAssignDigitalizador",
+      "btnHeaderViewSoporteLink",
+      "btnHeaderSubmitQA2",
+      "btnHeaderQCReview2",
+      "btnHeaderLiderReview",
+      "btnHeaderViewDigitalizacionLink",
     ];
     let anyWorkflowVisible = false;
-    workflowButtons.forEach(id => {
+    workflowButtons.forEach((id) => {
       const btn = document.getElementById(id);
       if (btn && !btn.classList.contains("d-none")) {
         anyWorkflowVisible = true;
       }
     });
-    const dropdownDivider = document.querySelector(".dropdown-divider-workflow");
+    const dropdownDivider = document.querySelector(
+      ".dropdown-divider-workflow",
+    );
     if (dropdownDivider) {
       dropdownDivider.style.display = anyWorkflowVisible ? "block" : "none";
     }
@@ -641,13 +719,13 @@ async function cargarDetalle() {
 
     const eventos = Array.isArray(dataEvt) ? dataEvt : [];
     let lastSyncDate = "-";
-    const syncEvents = eventos.filter(e =>
-      e && (
-        e.evento === "PUBLICACION_MAIN" ||
-        e.evento === "CARGA_WORKSPACE" ||
-        String(e.mensaje || "").startsWith("[PUBLICACION_MAIN]") ||
-        String(e.mensaje || "").startsWith("[CARGA_WORKSPACE]")
-      )
+    const syncEvents = eventos.filter(
+      (e) =>
+        e &&
+        (e.evento === "PUBLICACION_MAIN" ||
+          e.evento === "CARGA_WORKSPACE" ||
+          String(e.mensaje || "").startsWith("[PUBLICACION_MAIN]") ||
+          String(e.mensaje || "").startsWith("[CARGA_WORKSPACE]")),
     );
     if (syncEvents.length > 0) {
       lastSyncDate = fmtDate(syncEvents[syncEvents.length - 1].creado_en);
@@ -659,16 +737,21 @@ async function cargarDetalle() {
     tablaPrediosDT.clear();
 
     if (predios.length) {
-      predios.forEach(p => {
-        const rowNode = tablaPrediosDT.row.add([
-          esc(p.predio_t_id ?? "-"),
-          esc(p.numero_predial_nacional || ""),
-          `<span class="chip ${p.activo ? "ok" : "off"}">${p.activo ? "Activo" : "Inactivo"}</span>`
-        ]).node();
+      predios.forEach((p) => {
+        const rowNode = tablaPrediosDT.row
+          .add([
+            esc(p.predio_t_id ?? "-"),
+            esc(p.numero_predial_nacional || ""),
+            `<span class="chip ${p.activo ? "ok" : "off"}">${p.activo ? "Activo" : "Inactivo"}</span>`,
+          ])
+          .node();
         if (rowNode) {
           $(rowNode).attr("data-predio-id", p.id ?? "");
           $(rowNode).attr("data-predio-t-id", p.predio_t_id ?? "");
-          $(rowNode).attr("data-numero-predial", p.numero_predial_nacional || "");
+          $(rowNode).attr(
+            "data-numero-predial",
+            p.numero_predial_nacional || "",
+          );
           $(rowNode).css("cursor", "pointer");
         }
       });
@@ -684,20 +767,27 @@ async function cargarDetalle() {
     if (predios.length > 0) {
       const firstPredio = predios[0];
       setTimeout(() => {
-        seleccionarPredioDetalle(firstPredio.id, firstPredio.predio_t_id, firstPredio.numero_predial_nacional);
+        seleccionarPredioDetalle(
+          firstPredio.id,
+          firstPredio.predio_t_id,
+          firstPredio.numero_predial_nacional,
+        );
       }, 100);
     }
 
     tablaHistorialDT.clear();
 
     if (eventos.length) {
-      eventos.slice().reverse().forEach(e => {
-        tablaHistorialDT.row.add([
-          esc(fmtDate(e.creado_en)),
-          esc(e.evento || "-"),
-          esc(e.mensaje || "-")
-        ]);
-      });
+      eventos
+        .slice()
+        .reverse()
+        .forEach((e) => {
+          tablaHistorialDT.row.add([
+            esc(fmtDate(e.creado_en)),
+            esc(e.evento || "-"),
+            esc(e.mensaje || "-"),
+          ]);
+        });
     }
 
     tablaHistorialDT.draw();
@@ -706,13 +796,13 @@ async function cargarDetalle() {
     function formatRoleName(role) {
       if (!role) return "";
       const rolesMap = {
-        "admin": "Administrador",
-        "coordinador": "Coordinador",
-        "reconocedor": "Reconocedor",
-        "digitalizador": "Digitalizador",
-        "soporte": "Soporte",
-        "consolidador": "Consolidador",
-        "lider_reconocimiento": "Líder de Reconocimiento"
+        admin: "Administrador",
+        coordinador: "Coordinador",
+        reconocedor: "Reconocedor",
+        digitalizador: "Digitalizador",
+        soporte: "Soporte",
+        consolidador: "Consolidador",
+        lider_reconocimiento: "Líder de Reconocimiento",
       };
       return rolesMap[role.toLowerCase()] || role;
     }
@@ -723,7 +813,7 @@ async function cargarDetalle() {
         .replace(/_/g, " ")
         .toLowerCase()
         .split(" ")
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
     }
 
@@ -733,26 +823,34 @@ async function cargarDetalle() {
 
       // 1. Search in comments enlace field
       for (const c of comentarios) {
-        if (c && c.enlace && String(c.enlace).trim().toLowerCase() === normUrl) {
+        if (
+          c &&
+          c.enlace &&
+          String(c.enlace).trim().toLowerCase() === normUrl
+        ) {
           return {
             usuario: c.usuario,
             rol: c.rol,
             fecha: c.creado_en,
             orig: c.estado_origen,
-            dest: c.estado_destino
+            dest: c.estado_destino,
           };
         }
       }
 
       // 2. Search in comments text (comentario)
       for (const c of comentarios) {
-        if (c && c.comentario && String(c.comentario).toLowerCase().includes(normUrl)) {
+        if (
+          c &&
+          c.comentario &&
+          String(c.comentario).toLowerCase().includes(normUrl)
+        ) {
           return {
             usuario: c.usuario,
             rol: c.rol,
             fecha: c.creado_en,
             orig: c.estado_origen,
-            dest: c.estado_destino
+            dest: c.estado_destino,
           };
         }
       }
@@ -761,7 +859,11 @@ async function cargarDetalle() {
       const eventos = Array.isArray(dataEvt) ? dataEvt : [];
       for (let i = eventos.length - 1; i >= 0; i--) {
         const e = eventos[i];
-        if (e && e.mensaje && String(e.mensaje).toLowerCase().includes(normUrl)) {
+        if (
+          e &&
+          e.mensaje &&
+          String(e.mensaje).toLowerCase().includes(normUrl)
+        ) {
           let orig = null;
           let dest = null;
           const msg = e.mensaje;
@@ -775,7 +877,10 @@ async function cargarDetalle() {
           } else if (msg.includes("GENERACION_XTF_CAMPO")) {
             orig = "CONTROL_CALIDAD_1";
             dest = "GENERACION_XTF_CAMPO";
-          } else if (msg.includes("devuelto a campo") || msg.includes("DEVUELTO_CAMPO")) {
+          } else if (
+            msg.includes("devuelto a campo") ||
+            msg.includes("DEVUELTO_CAMPO")
+          ) {
             orig = "CONTROL_CALIDAD_1";
             dest = "DEVUELTO_CAMPO";
           } else if (msg.includes("devuelto a soporte")) {
@@ -794,13 +899,17 @@ async function cargarDetalle() {
             rol: "",
             fecha: e.creado_en,
             orig: orig,
-            dest: dest
+            dest: dest,
           };
         }
       }
 
       // Fallback if not found and it is the Quality Control link (since it's set on creation)
-      if (dataDet && dataDet.enlace_control_calidad && String(dataDet.enlace_control_calidad).trim().toLowerCase() === normUrl) {
+      if (
+        dataDet &&
+        dataDet.enlace_control_calidad &&
+        String(dataDet.enlace_control_calidad).trim().toLowerCase() === normUrl
+      ) {
         const coordStr = dataDet.coordinador || "";
         const match = coordStr.match(/\(([^)]+)\)/);
         const username = match ? match[1] : coordStr;
@@ -809,14 +918,22 @@ async function cargarDetalle() {
           rol: "coordinador",
           fecha: dataDet.fecha_creacion,
           orig: null,
-          dest: null
+          dest: null,
         };
       }
 
       return null;
     }
 
-    function buildLinkItemHtml(title, linkUrl, iconClass, iconBg, iconColor, customDet = null, isComment = false) {
+    function buildLinkItemHtml(
+      title,
+      linkUrl,
+      iconClass,
+      iconBg,
+      iconColor,
+      customDet = null,
+      isComment = false,
+    ) {
       const det = customDet || findLinkDetails(linkUrl);
       let metaHtml = "";
       let transHtml = "";
@@ -896,13 +1013,17 @@ async function cargarDetalle() {
     }
 
     // Render comments
-    const comentarios = Array.isArray(dataDet.comentarios) ? dataDet.comentarios : [];
-    const badgeComentariosCount = document.getElementById("badgeComentariosCount");
+    const comentarios = Array.isArray(dataDet.comentarios)
+      ? dataDet.comentarios
+      : [];
+    const badgeComentariosCount = document.getElementById(
+      "badgeComentariosCount",
+    );
     const comentariosList = document.getElementById("comentariosList");
     const noComentariosMsg = document.getElementById("noComentariosMsg");
 
     if (badgeComentariosCount) {
-      if (comentarios.length > 0) {
+      if (comentarios.length) {
         badgeComentariosCount.textContent = comentarios.length;
         badgeComentariosCount.classList.remove("d-none");
       } else {
@@ -913,122 +1034,109 @@ async function cargarDetalle() {
 
     if (comentariosList) {
       comentariosList.innerHTML = "";
-      if (comentarios.length > 0) {
+      if (comentarios.length) {
         if (noComentariosMsg) noComentariosMsg.style.display = "none";
-        comentarios.forEach(c => {
-          const dateStr = fmtDate(c.creado_en);
-          const userEsc = esc(c.usuario || "Usuario");
-          const roleFmt = formatRoleName(c.rol);
-          const commentEsc = esc(c.comentario || "").replace(/\n/g, "<br>");
 
-          let transitionHtml = "";
-          if (c.estado_origen || c.estado_destino) {
-            const orig = formatStateName(c.estado_origen);
-            const dest = formatStateName(c.estado_destino);
-            if (orig && dest && orig !== dest) {
-              transitionHtml = `
-                    <div class="mt-2 d-flex align-items-center gap-1 flex-wrap" style="font-size: 0.75rem;">
-                      <span class="badge text-secondary border border-secondary bg-transparent px-2 py-1">${orig}</span>
-                      <i class="fa-solid fa-arrow-right-long text-muted mx-1"></i>
-                      <span class="badge bg-secondary text-white px-2 py-1">${dest}</span>
-                    </div>
-                  `;
-            } else if (dest) {
-              transitionHtml = `
-                    <div class="mt-2" style="font-size: 0.75rem;">
-                      <span class="badge bg-secondary text-white px-2 py-1">${dest}</span>
-                    </div>
-                  `;
+        comentarios
+          .slice()
+          .reverse()
+          .forEach((c) => {
+            const dateStr = fmtDate(c.creado_en);
+            const userEsc = esc(c.usuario || "Usuario");
+            const roleFmt = formatRoleName(c.rol);
+            const commentEsc = esc(c.comentario || "").replace(/\n/g, "<br>");
+            const lowerRole = (c.rol || "").toLowerCase();
+
+            let avatarIcon = '<i class="fa-solid fa-user"></i>';
+            let roleStyle =
+              "background:#EEF3F0;color:#496056;border:1px solid #D2DED7;";
+
+            if (lowerRole === "admin") {
+              avatarIcon = '<i class="fa-solid fa-user-shield"></i>';
+              roleStyle =
+                "background:#FDECEC;color:#A72F3A;border:1px solid #F4C5C9;";
+            } else if (lowerRole === "coordinador") {
+              avatarIcon = '<i class="fa-solid fa-user-tie"></i>';
+              roleStyle =
+                "background:#E7EFFA;color:#285A8E;border:1px solid #C5D8EE;";
+            } else if (lowerRole === "lider_reconocimiento") {
+              avatarIcon = '<i class="fa-solid fa-user-check"></i>';
+              roleStyle =
+                "background:#FFF5D9;color:#806000;border:1px solid #F2DB93;";
+            } else if (lowerRole === "reconocedor") {
+              avatarIcon = '<i class="fa-solid fa-compass"></i>';
+              roleStyle =
+                "background:#E4F6F8;color:#28727A;border:1px solid #BDE2E7;";
+            } else if (lowerRole === "digitalizador") {
+              avatarIcon = '<i class="fa-solid fa-laptop-code"></i>';
+              roleStyle =
+                "background:#E5F3EA;color:#24603D;border:1px solid #C1DEC9;";
+            } else if (lowerRole === "soporte") {
+              avatarIcon = '<i class="fa-solid fa-headset"></i>';
+              roleStyle =
+                "background:#EEEAF8;color:#58468A;border:1px solid #D6CEEB;";
             }
-          }
 
-          // Determine icon and color based on role
-          let roleBadgeClass = "bg-light text-dark border";
-          let avatarBg = "rgba(100, 116, 139, 0.1)";
-          let avatarIcon = '<i class="fa-solid fa-user text-secondary"></i>';
+            let transitionHtml = "";
+            if (c.estado_origen || c.estado_destino) {
+              const orig = formatStateName(c.estado_origen);
+              const dest = formatStateName(c.estado_destino);
 
-          const lowerRole = (c.rol || "").toLowerCase();
-          if (lowerRole === "admin") {
-            roleBadgeClass = "bg-danger text-white";
-            avatarBg = "rgba(220, 53, 69, 0.1)";
-            avatarIcon = '<i class="fa-solid fa-user-shield text-danger"></i>';
-          } else if (lowerRole === "coordinador") {
-            roleBadgeClass = "bg-primary text-white";
-            avatarBg = "rgba(13, 110, 253, 0.1)";
-            avatarIcon = '<i class="fa-solid fa-user-tie text-primary"></i>';
-          } else if (lowerRole === "lider_reconocimiento") {
-            roleBadgeClass = "bg-warning text-dark";
-            avatarBg = "rgba(255, 193, 7, 0.15)";
-            avatarIcon = '<i class="fa-solid fa-user-check text-warning-emphasis"></i>';
-          } else if (lowerRole === "reconocedor") {
-            roleBadgeClass = "bg-info text-dark";
-            avatarBg = "rgba(13, 202, 240, 0.1)";
-            avatarIcon = '<i class="fa-solid fa-compass text-info-emphasis"></i>';
-          } else if (lowerRole === "digitalizador") {
-            roleBadgeClass = "bg-success text-white";
-            avatarBg = "rgba(25, 135, 84, 0.1)";
-            avatarIcon = '<i class="fa-solid fa-laptop-code text-success"></i>';
-          }
+              if (orig && dest && orig !== dest) {
+                transitionHtml = `<div class="comentario-transicion">
+            <span class="text-muted"><i class="bi bi-arrow-left-right me-1"></i>Transición</span>
+            <span class="comentario-estado">${esc(orig)}</span>
+            <i class="fa-solid fa-arrow-right-long text-muted"></i>
+            <span class="comentario-estado comentario-estado-destino">${esc(dest)}</span>
+          </div>`;
+              } else if (dest) {
+                transitionHtml = `<div class="comentario-transicion">
+            <span class="text-muted"><i class="bi bi-flag me-1"></i>Estado</span>
+            <span class="comentario-estado comentario-estado-destino">${esc(dest)}</span>
+          </div>`;
+              }
+            }
 
-          let attachmentHtml = "";
-          if (c.enlace) {
-            const linkEsc = esc(c.enlace);
-            attachmentHtml = `
-                  <div class="mt-2">
-                    <a href="${linkEsc}" target="_blank" class="btn-attachment-link">
-                      <i class="fa-solid fa-link"></i>
-                      <span class="text-truncate" style="max-width: 250px;">${linkEsc}</span>
-                      <i class="fa-solid fa-arrow-up-right-from-square ms-1" style="font-size: 0.75rem;"></i>
-                    </a>
-                  </div>
-                `;
-          }
+            let attachmentHtml = "";
+            if (c.enlace) {
+              const linkEsc = esc(c.enlace);
+              attachmentHtml = `<a href="${linkEsc}" target="_blank" rel="noopener" class="comentario-enlace">
+          <i class="fa-solid fa-link"></i>
+          <span class="text-truncate flex-grow-1">${linkEsc}</span>
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        </a>`;
+            }
 
-          const commentItem = document.createElement("div");
-          commentItem.className = "card border-0 rounded-4 shadow-sm p-3 position-relative hover-lift";
-          commentItem.style.backgroundColor = "#ffffff";
-          commentItem.style.border = "1px solid #e2e8f0";
-          commentItem.style.transition = "transform 0.2s ease, box-shadow 0.2s ease";
+            const commentItem = document.createElement("div");
+            commentItem.className = "comentario-item";
+            commentItem.innerHTML = `<span class="comentario-punto"></span>
+        <div class="d-flex align-items-start gap-3">
+          <div class="comentario-avatar">${avatarIcon}</div>
+          <div class="flex-grow-1 min-w-0">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="comentario-usuario">${userEsc}</span>
+                <span class="comentario-rol" style="${roleStyle}">${esc(roleFmt || "Usuario")}</span>
+              </div>
+              <span class="comentario-fecha"><i class="bi bi-clock me-1"></i>${dateStr}</span>
+            </div>
+            ${commentEsc ? `<div class="comentario-texto">${commentEsc}</div>` : ""}
+            ${attachmentHtml}
+            ${transitionHtml}
+          </div>
+        </div>`;
 
-          commentItem.innerHTML = `
-                <div class="d-flex align-items-start gap-3">
-                  <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" 
-                       style="width: 40px; height: 40px; background-color: ${avatarBg}; font-size: 1.1rem;">
-                    ${avatarIcon}
-                  </div>
-                  <div class="flex-grow-1 min-w-0">
-                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-1">
-                      <div class="d-flex align-items-center gap-2">
-                        <span class="fw-bold text-dark" style="font-size: 0.95rem;">${userEsc}</span>
-                        <span class="badge ${roleBadgeClass}" style="font-size: 0.7rem; font-weight: 600;">${roleFmt}</span>
-                      </div>
-                      <span class="text-muted" style="font-size: 0.75rem;">${dateStr}</span>
-                    </div>
-                    <div class="text-secondary" style="font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word;">${commentEsc}</div>
-                    ${attachmentHtml}
-                    ${transitionHtml}
-                  </div>
-                </div>
-              `;
-
-          commentItem.addEventListener("mouseenter", () => {
-            commentItem.style.transform = "translateY(-2px)";
-            commentItem.style.boxShadow = "0 8px 16px rgba(0,0,0,0.08)";
+            comentariosList.appendChild(commentItem);
           });
-          commentItem.addEventListener("mouseleave", () => {
-            commentItem.style.transform = "none";
-            commentItem.style.boxShadow = "0 2px 4px rgba(0,0,0,0.04)";
-          });
-
-          comentariosList.appendChild(commentItem);
-        });
       } else {
         if (noComentariosMsg) noComentariosMsg.style.display = "block";
       }
     }
 
     // Build consolidated links modal contents dynamically
-    const workflowContainer = document.getElementById("modalWorkflowLinksContainer");
+    const workflowContainer = document.getElementById(
+      "modalWorkflowLinksContainer",
+    );
     if (workflowContainer) {
       workflowContainer.innerHTML = "";
       let hasWorkflowLinks = false;
@@ -1036,35 +1144,65 @@ async function cargarDetalle() {
       // 1. QA Link
       if (dataDet.enlace_control_calidad) {
         hasWorkflowLinks = true;
-        const qaCardHtml = buildLinkItemHtml("Control de Calidad (Campo)", dataDet.enlace_control_calidad, "fa-solid fa-clipboard-check", "rgba(34, 197, 94, 0.1)", "#22c55e");
+        const qaCardHtml = buildLinkItemHtml(
+          "Control de Calidad (Campo)",
+          dataDet.enlace_control_calidad,
+          "fa-solid fa-clipboard-check",
+          "rgba(34, 197, 94, 0.1)",
+          "#22c55e",
+        );
         workflowContainer.insertAdjacentHTML("beforeend", qaCardHtml);
       }
 
       // 2. Devolution Link
       if (dataDet.enlace_devolucion) {
         hasWorkflowLinks = true;
-        const devCardHtml = buildLinkItemHtml("Evidencia de Devolución", dataDet.enlace_devolucion, "fa-solid fa-triangle-exclamation", "rgba(239, 68, 68, 0.1)", "#ef4444");
+        const devCardHtml = buildLinkItemHtml(
+          "Evidencia de Devolución",
+          dataDet.enlace_devolucion,
+          "fa-solid fa-triangle-exclamation",
+          "rgba(239, 68, 68, 0.1)",
+          "#ef4444",
+        );
         workflowContainer.insertAdjacentHTML("beforeend", devCardHtml);
       }
 
       // 3. Support Link
       if (dataDet.enlace_soporte) {
         hasWorkflowLinks = true;
-        const sopCardHtml = buildLinkItemHtml("Enlace de Soporte", dataDet.enlace_soporte, "fa-solid fa-link", "rgba(6, 182, 212, 0.1)", "#06b6d4");
+        const sopCardHtml = buildLinkItemHtml(
+          "Enlace de Soporte",
+          dataDet.enlace_soporte,
+          "fa-solid fa-link",
+          "rgba(6, 182, 212, 0.1)",
+          "#06b6d4",
+        );
         workflowContainer.insertAdjacentHTML("beforeend", sopCardHtml);
       }
 
       // 4. Digitalization Link
       if (dataDet.enlace_digitalizacion) {
         hasWorkflowLinks = true;
-        const digCardHtml = buildLinkItemHtml("Enlace de Digitalización", dataDet.enlace_digitalizacion, "fa-solid fa-link", "rgba(99, 102, 241, 0.1)", "#6366f1");
+        const digCardHtml = buildLinkItemHtml(
+          "Enlace de Digitalización",
+          dataDet.enlace_digitalizacion,
+          "fa-solid fa-link",
+          "rgba(99, 102, 241, 0.1)",
+          "#6366f1",
+        );
         workflowContainer.insertAdjacentHTML("beforeend", digCardHtml);
       }
 
       // 5. Coordinator Link
       if (dataDet.enlace_coordinador) {
         hasWorkflowLinks = true;
-        const coordCardHtml = buildLinkItemHtml("Enlace de Revisión (Coordinador)", dataDet.enlace_coordinador, "fa-solid fa-link", "rgba(249, 115, 22, 0.1)", "#f97316");
+        const coordCardHtml = buildLinkItemHtml(
+          "Enlace de Revisión (Coordinador)",
+          dataDet.enlace_coordinador,
+          "fa-solid fa-link",
+          "rgba(249, 115, 22, 0.1)",
+          "#f97316",
+        );
         workflowContainer.insertAdjacentHTML("beforeend", coordCardHtml);
       }
 
@@ -1074,13 +1212,15 @@ async function cargarDetalle() {
     }
 
     // Build comment links inside modal
-    const commentsContainer = document.getElementById("modalCommentLinksContainer");
+    const commentsContainer = document.getElementById(
+      "modalCommentLinksContainer",
+    );
     const commentsSection = document.getElementById("modalCommentLinksSection");
     let hasCommentLinks = false;
     if (commentsContainer && commentsSection) {
       commentsContainer.innerHTML = "";
       if (comentarios.length > 0) {
-        comentarios.forEach(c => {
+        comentarios.forEach((c) => {
           if (c && c.enlace) {
             hasCommentLinks = true;
             const userEsc = esc(c.usuario || "Usuario");
@@ -1092,7 +1232,7 @@ async function cargarDetalle() {
               rol: c.rol,
               fecha: c.creado_en,
               orig: c.estado_origen,
-              dest: c.estado_destino
+              dest: c.estado_destino,
             };
 
             const commentCardHtml = buildLinkItemHtml(
@@ -1102,7 +1242,7 @@ async function cargarDetalle() {
               "rgba(100, 116, 139, 0.1)",
               "#64748b",
               customDet,
-              true
+              true,
             );
 
             commentsContainer.insertAdjacentHTML("beforeend", commentCardHtml);
@@ -1118,7 +1258,8 @@ async function cargarDetalle() {
     }
 
     // Toggle unified Ver Enlaces button visibility
-    const hasAnyLink = !!dataDet.enlace_control_calidad ||
+    const hasAnyLink =
+      !!dataDet.enlace_control_calidad ||
       !!dataDet.enlace_devolucion ||
       !!dataDet.enlace_soporte ||
       !!dataDet.enlace_digitalizacion ||
@@ -1146,8 +1287,10 @@ async function cargarDetalle() {
     msg.textContent = "";
   } catch (err) {
     msg.textContent = err?.message || "Error cargando detalle.";
-    prediosBody.innerHTML = '<tr><td colspan="4">Error cargando predios.</td></tr>';
-    eventosBody.innerHTML = '<tr><td colspan="3">Error cargando eventos.</td></tr>';
+    prediosBody.innerHTML =
+      '<tr><td colspan="4">Error cargando predios.</td></tr>';
+    eventosBody.innerHTML =
+      '<tr><td colspan="3">Error cargando eventos.</td></tr>';
     const breadcrumbName = document.getElementById("breadcrumbAssignmentName");
     if (breadcrumbName) breadcrumbName.textContent = "";
   }
@@ -1175,12 +1318,15 @@ async function importarRetorno() {
   retornoEnCurso = true;
 
   try {
-    const resp = await fetch(`${rp}/asignaciones/${encodeURIComponent(id)}/retorno-xtf`, {
-      method: "POST",
-      body: form,
-      credentials: "same-origin",
-      headers: { "Accept": "application/json" }
-    });
+    const resp = await fetch(
+      `${rp}/asignaciones/${encodeURIComponent(id)}/retorno-xtf`,
+      {
+        method: "POST",
+        body: form,
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      },
+    );
 
     const rawText = await resp.text().catch(() => "");
     let data = {};
@@ -1202,10 +1348,14 @@ async function importarRetorno() {
       throw error;
     }
 
-    const rulesWithIssues = Array.isArray(data?.validation_summary?.rules_with_issues)
+    const rulesWithIssues = Array.isArray(
+      data?.validation_summary?.rules_with_issues,
+    )
       ? data.validation_summary.rules_with_issues
       : [];
-    const successSuffix = rulesWithIssues.length ? ` | reglas: ${rulesWithIssues.join(", ")}` : "";
+    const successSuffix = rulesWithIssues.length
+      ? ` | reglas: ${rulesWithIssues.join(", ")}`
+      : "";
     setXtfSyncState("success", successSuffix);
     msg.textContent = data?.message || "Retorno XTF importado.";
     invalidarCachesDetalleAsignacion();
@@ -1218,7 +1368,7 @@ async function importarRetorno() {
       status: err?.status,
       detail: err?.detail || err?.message,
       data: err?.data,
-      rawText: err?.rawText || ""
+      rawText: err?.rawText || "",
     });
   } finally {
     retornoEnCurso = false;
@@ -1258,7 +1408,8 @@ btnVerValidadores?.addEventListener("click", async () => {
       window.bootstrap.Modal.getOrCreateInstance(modalValidadoresXtf).show();
     }
   } catch (err) {
-    msg.textContent = err?.message || "No se pudieron cargar los validadores XTF.";
+    msg.textContent =
+      err?.message || "No se pudieron cargar los validadores XTF.";
   }
 });
 
@@ -1272,8 +1423,6 @@ btnRecargarValidadoresXtf?.addEventListener("click", async () => {
     }
   }
 });
-
-
 
 $(document).on("click", ".btn-editar-predio", function (e) {
   e.preventDefault();
@@ -1303,9 +1452,9 @@ $(document).on("click", ".btn-editar-predio", function (e) {
   window.location.href = `${rp}/panel/asignaciones/edicion?${query.toString()}#asig-open`;
 });
 
-
-
-document.getElementById("btnCargarDetalle")?.addEventListener("click", cargarDetalle);
+document
+  .getElementById("btnCargarDetalle")
+  ?.addEventListener("click", cargarDetalle);
 
 // Submit QA button click opens the modal
 document.getElementById("btnHeaderSubmitQA")?.addEventListener("click", () => {
@@ -1323,73 +1472,92 @@ document.getElementById("btnHeaderSubmitQA")?.addEventListener("click", () => {
 });
 
 // Confirm button inside modal
-document.getElementById("btnConfirmSubmitQA")?.addEventListener("click", async () => {
-  const idActual = Number(elId?.value || idFromUrl);
-  if (!idActual || idActual < 1) {
-    showWarning("Debes cargar primero una asignación.");
-    return;
-  }
-
-  const inpLink = document.getElementById("inpQALink");
-  const errEl = document.getElementById("qaLinkError");
-  const linkVal = inpLink?.value?.trim() || "";
-  const commentVal = document.getElementById("txtQAComment")?.value?.trim() || "";
-
-  if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
-    if (errEl) {
-      errEl.textContent = "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
-      errEl.classList.remove("d-none");
+document
+  .getElementById("btnConfirmSubmitQA")
+  ?.addEventListener("click", async () => {
+    const idActual = Number(elId?.value || idFromUrl);
+    if (!idActual || idActual < 1) {
+      showWarning("Debes cargar primero una asignación.");
+      return;
     }
-    return;
-  }
 
-  if (errEl) errEl.classList.add("d-none");
+    const inpLink = document.getElementById("inpQALink");
+    const errEl = document.getElementById("qaLinkError");
+    const linkVal = inpLink?.value?.trim() || "";
+    const commentVal =
+      document.getElementById("txtQAComment")?.value?.trim() || "";
 
-  const btnConfirm = document.getElementById("btnConfirmSubmitQA");
-  const btnCancel = document.querySelector("#modalSubmitQA .btn-close, #modalSubmitQA [data-bs-dismiss='modal']");
-  if (btnConfirm) btnConfirm.disabled = true;
-  if (btnCancel) btnCancel.disabled = true;
-
-  try {
-    const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/submit-for-qa`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({ enlace_control_calidad: linkVal, comentario: commentVal || null }),
-      credentials: "same-origin"
-    });
-
-    const rawText = await response.text();
-    let data = {};
-    if (rawText) {
-      try {
-        data = JSON.parse(rawText);
-      } catch (e) {
-        data = {};
+    if (
+      !linkVal ||
+      (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))
+    ) {
+      if (errEl) {
+        errEl.textContent =
+          "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
+        errEl.classList.remove("d-none");
       }
+      return;
     }
 
-    if (!response.ok) {
-      throw new Error(data?.detail || rawText || "Error al enviar a control de calidad.");
-    }
+    if (errEl) errEl.classList.add("d-none");
 
-    const modalEl = document.getElementById("modalSubmitQA");
-    if (modalEl && window.bootstrap) {
-      window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-    }
+    const btnConfirm = document.getElementById("btnConfirmSubmitQA");
+    const btnCancel = document.querySelector(
+      "#modalSubmitQA .btn-close, #modalSubmitQA [data-bs-dismiss='modal']",
+    );
+    if (btnConfirm) btnConfirm.disabled = true;
+    if (btnCancel) btnCancel.disabled = true;
 
-    showSuccess("El trabajo ha sido enviado exitosamente a control de calidad.");
-    invalidarCachesDetalleAsignacion();
-    await cargarDetalle();
-  } catch (err) {
-    showError(err.message);
-  } finally {
-    if (btnConfirm) btnConfirm.disabled = false;
-    if (btnCancel) btnCancel.disabled = false;
-  }
-});
+    try {
+      const response = await fetch(
+        `${rp}/api/workflow/asignaciones/${idActual}/submit-for-qa`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            enlace_control_calidad: linkVal,
+            comentario: commentVal || null,
+          }),
+          credentials: "same-origin",
+        },
+      );
+
+      const rawText = await response.text();
+      let data = {};
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {
+          data = {};
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || rawText || "Error al enviar a control de calidad.",
+        );
+      }
+
+      const modalEl = document.getElementById("modalSubmitQA");
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+      }
+
+      showSuccess(
+        "El trabajo ha sido enviado exitosamente a control de calidad.",
+      );
+      invalidarCachesDetalleAsignacion();
+      await cargarDetalle();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      if (btnConfirm) btnConfirm.disabled = false;
+      if (btnCancel) btnCancel.disabled = false;
+    }
+  });
 
 // QC Review button click opens the review modal
 document.getElementById("btnHeaderQCReview")?.addEventListener("click", () => {
@@ -1431,7 +1599,9 @@ function openDevolucionModal(targetAction, parentModalId, confirmMessage) {
   if (txtLink) txtLink.value = "";
 
   // Update modal title
-  const labelEl = document.getElementById("modalConfirmarDevolucionLabel")?.querySelector("span");
+  const labelEl = document
+    .getElementById("modalConfirmarDevolucionLabel")
+    ?.querySelector("span");
   if (labelEl) {
     labelEl.textContent = confirmMessage || "Confirmar Devolución";
   }
@@ -1443,95 +1613,111 @@ function openDevolucionModal(targetAction, parentModalId, confirmMessage) {
 }
 
 // Reopen parent modal on cancel/dismiss
-document.getElementById("modalConfirmarDevolucion")?.addEventListener("hidden.bs.modal", () => {
-  if (devolucionTargetAction && devolucionParentModalId) {
-    const parentModalEl = document.getElementById(devolucionParentModalId);
-    if (parentModalEl && window.bootstrap) {
-      window.bootstrap.Modal.getOrCreateInstance(parentModalEl).show();
+document
+  .getElementById("modalConfirmarDevolucion")
+  ?.addEventListener("hidden.bs.modal", () => {
+    if (devolucionTargetAction && devolucionParentModalId) {
+      const parentModalEl = document.getElementById(devolucionParentModalId);
+      if (parentModalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(parentModalEl).show();
+      }
     }
-  }
-  devolucionTargetAction = "";
-  devolucionParentModalId = "";
-});
-
-// Confirm Devolucion button click handler
-document.getElementById("btnConfirmDevolucion")?.addEventListener("click", async () => {
-  const idActual = Number(elId?.value || idFromUrl);
-  if (!idActual || idActual < 1) {
-    showWarning("Debes cargar primero una asignación.");
-    return;
-  }
-
-  const commentVal = document.getElementById("txtDevolucionComment")?.value?.trim() || "";
-  if (!commentVal) {
-    document.getElementById("devolucionCommentError")?.classList.remove("d-none");
-    document.getElementById("txtDevolucionComment")?.focus();
-    return;
-  } else {
-    document.getElementById("devolucionCommentError")?.classList.add("d-none");
-  }
-
-  const linkVal = document.getElementById("txtDevolucionLink")?.value?.trim() || "";
-
-  const btnConfirm = document.getElementById("btnConfirmDevolucion");
-  if (btnConfirm) btnConfirm.disabled = true;
-
-  let url = "";
-  let successMsg = "";
-
-  if (devolucionTargetAction === "devolver-campo") {
-    url = `${rp}/api/workflow/asignaciones/${idActual}/return-to-field`;
-    successMsg = "La asignación ha sido devuelta exitosamente a campo.";
-  } else if (devolucionTargetAction === "devolver-soporte") {
-    url = `${rp}/api/workflow/asignaciones/${idActual}/return-to-support`;
-    successMsg = "La asignación ha sido devuelta exitosamente a soporte.";
-  } else if (devolucionTargetAction === "devolver-digitalizacion") {
-    url = `${rp}/api/workflow/asignaciones/${idActual}/return-to-digitalization`;
-    successMsg = "La asignación ha sido devuelta exitosamente a digitalización.";
-  } else if (devolucionTargetAction === "devolver-digitalizacion-lider") {
-    url = `${rp}/api/workflow/asignaciones/${idActual}/lider-reject`;
-    successMsg = "La asignación ha sido devuelta exitosamente a digitalización por el líder.";
-  } else {
-    showError("Acción de devolución no válida.");
-    if (btnConfirm) btnConfirm.disabled = false;
-    return;
-  }
-
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({ comentario: commentVal, enlace: linkVal }),
-      credentials: "same-origin"
-    });
-
-    if (!response.ok) {
-      const rawText = await response.text();
-      let data = {};
-      try { data = JSON.parse(rawText); } catch (e) { }
-      throw new Error(data?.detail || rawText || "Error al realizar la devolucin.");
-    }
-
     devolucionTargetAction = "";
     devolucionParentModalId = "";
+  });
 
-    const modalEl = document.getElementById("modalConfirmarDevolucion");
-    if (modalEl && window.bootstrap) {
-      window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+// Confirm Devolucion button click handler
+document
+  .getElementById("btnConfirmDevolucion")
+  ?.addEventListener("click", async () => {
+    const idActual = Number(elId?.value || idFromUrl);
+    if (!idActual || idActual < 1) {
+      showWarning("Debes cargar primero una asignación.");
+      return;
     }
 
-    showSuccess(successMsg);
-    invalidarCachesDetalleAsignacion();
-    await cargarDetalle();
-  } catch (err) {
-    showError(err.message);
-  } finally {
-    if (btnConfirm) btnConfirm.disabled = false;
-  }
-});
+    const commentVal =
+      document.getElementById("txtDevolucionComment")?.value?.trim() || "";
+    if (!commentVal) {
+      document
+        .getElementById("devolucionCommentError")
+        ?.classList.remove("d-none");
+      document.getElementById("txtDevolucionComment")?.focus();
+      return;
+    } else {
+      document
+        .getElementById("devolucionCommentError")
+        ?.classList.add("d-none");
+    }
+
+    const linkVal =
+      document.getElementById("txtDevolucionLink")?.value?.trim() || "";
+
+    const btnConfirm = document.getElementById("btnConfirmDevolucion");
+    if (btnConfirm) btnConfirm.disabled = true;
+
+    let url = "";
+    let successMsg = "";
+
+    if (devolucionTargetAction === "devolver-campo") {
+      url = `${rp}/api/workflow/asignaciones/${idActual}/return-to-field`;
+      successMsg = "La asignación ha sido devuelta exitosamente a campo.";
+    } else if (devolucionTargetAction === "devolver-soporte") {
+      url = `${rp}/api/workflow/asignaciones/${idActual}/return-to-support`;
+      successMsg = "La asignación ha sido devuelta exitosamente a soporte.";
+    } else if (devolucionTargetAction === "devolver-digitalizacion") {
+      url = `${rp}/api/workflow/asignaciones/${idActual}/return-to-digitalization`;
+      successMsg =
+        "La asignación ha sido devuelta exitosamente a digitalización.";
+    } else if (devolucionTargetAction === "devolver-digitalizacion-lider") {
+      url = `${rp}/api/workflow/asignaciones/${idActual}/lider-reject`;
+      successMsg =
+        "La asignación ha sido devuelta exitosamente a digitalización por el líder.";
+    } else {
+      showError("Acción de devolución no válida.");
+      if (btnConfirm) btnConfirm.disabled = false;
+      return;
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ comentario: commentVal, enlace: linkVal }),
+        credentials: "same-origin",
+      });
+
+      if (!response.ok) {
+        const rawText = await response.text();
+        let data = {};
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {}
+        throw new Error(
+          data?.detail || rawText || "Error al realizar la devolucin.",
+        );
+      }
+
+      devolucionTargetAction = "";
+      devolucionParentModalId = "";
+
+      const modalEl = document.getElementById("modalConfirmarDevolucion");
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+      }
+
+      showSuccess(successMsg);
+      invalidarCachesDetalleAsignacion();
+      await cargarDetalle();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      if (btnConfirm) btnConfirm.disabled = false;
+    }
+  });
 
 // Confirm Return to Field (Reject) button click inside coordinator modal
 document.getElementById("btnQCReject")?.addEventListener("click", () => {
@@ -1549,27 +1735,32 @@ document.getElementById("btnQCApprove")?.addEventListener("click", () => {
   showConfirm(
     "Confirmar Aprobacin?",
     "Ests seguro de que deseas aprobar este trabajo y enviarlo a generacin XTF?",
-    "Sí, aprobar"
+    "Sí, aprobar",
   ).then(async (result) => {
     if (!result.isConfirmed) return;
 
     const btnReject = document.getElementById("btnQCReject");
     const btnApprove = document.getElementById("btnQCApprove");
-    const btnCancel = document.querySelector("#modalQCReview .btn-close, #modalQCReview [data-bs-dismiss='modal']");
+    const btnCancel = document.querySelector(
+      "#modalQCReview .btn-close, #modalQCReview [data-bs-dismiss='modal']",
+    );
     if (btnReject) btnReject.disabled = true;
     if (btnApprove) btnApprove.disabled = true;
     if (btnCancel) btnCancel.disabled = true;
 
     try {
-      const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/approve`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+      const response = await fetch(
+        `${rp}/api/workflow/asignaciones/${idActual}/approve`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ comentario: null }),
+          credentials: "same-origin",
         },
-        body: JSON.stringify({ comentario: null }),
-        credentials: "same-origin"
-      });
+      );
 
       const rawText = await response.text();
       let data = {};
@@ -1582,7 +1773,9 @@ document.getElementById("btnQCApprove")?.addEventListener("click", () => {
       }
 
       if (!response.ok) {
-        throw new Error(data?.detail || rawText || "Error al aprobar la asignacin.");
+        throw new Error(
+          data?.detail || rawText || "Error al aprobar la asignacin.",
+        );
       }
 
       const modalEl = document.getElementById("modalQCReview");
@@ -1590,7 +1783,9 @@ document.getElementById("btnQCApprove")?.addEventListener("click", () => {
         window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
       }
 
-      showSuccess("El trabajo ha sido aprobado exitosamente y enviado a generación XTF.");
+      showSuccess(
+        "El trabajo ha sido aprobado exitosamente y enviado a generación XTF.",
+      );
       invalidarCachesDetalleAsignacion();
       await cargarDetalle();
     } catch (err) {
@@ -1604,485 +1799,566 @@ document.getElementById("btnQCApprove")?.addEventListener("click", () => {
 });
 
 // Submit Soporte Link button click opens the submit modal
-document.getElementById("btnHeaderSubmitSoporteLink")?.addEventListener("click", () => {
-  const inpLink = document.getElementById("inpSoporteLink");
-  const errEl = document.getElementById("soporteLinkError");
-  const commentEl = document.getElementById("txtSoporteLinkComment");
-  if (inpLink) inpLink.value = "";
-  if (errEl) errEl.classList.add("d-none");
-  if (commentEl) commentEl.value = "";
-
-  const modalEl = document.getElementById("modalSubmitSoporteLink");
-  if (modalEl && window.bootstrap) {
-    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
-  }
-});
-
-// Confirm button inside Submit Soporte Link modal
-document.getElementById("btnConfirmSubmitSoporteLink")?.addEventListener("click", async () => {
-  const idActual = Number(elId?.value || idFromUrl);
-  if (!idActual || idActual < 1) {
-    showWarning("Debes cargar primero una asignación.");
-    return;
-  }
-
-  const inpLink = document.getElementById("inpSoporteLink");
-  const errEl = document.getElementById("soporteLinkError");
-  const linkVal = inpLink?.value?.trim() || "";
-  const commentVal = document.getElementById("txtSoporteLinkComment")?.value?.trim() || "";
-
-  if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
-    if (errEl) {
-      errEl.textContent = "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
-      errEl.classList.remove("d-none");
-    }
-    return;
-  }
-
-  if (errEl) errEl.classList.add("d-none");
-
-  const btnConfirm = document.getElementById("btnConfirmSubmitSoporteLink");
-  const btnCancel = document.querySelector("#modalSubmitSoporteLink .btn-close, #modalSubmitSoporteLink [data-bs-dismiss='modal']");
-  if (btnConfirm) btnConfirm.disabled = true;
-  if (btnCancel) btnCancel.disabled = true;
-
-  try {
-    const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/submit-soporte-link`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({ enlace_soporte: linkVal, comentario: commentVal || null }),
-      credentials: "same-origin"
-    });
-
-    const rawText = await response.text();
-    let data = {};
-    if (rawText) {
-      try {
-        data = JSON.parse(rawText);
-      } catch (e) {
-        data = {};
-      }
-    }
-
-    if (!response.ok) {
-      throw new Error(data?.detail || rawText || "Error al enviar el enlace de soporte.");
-    }
+document
+  .getElementById("btnHeaderSubmitSoporteLink")
+  ?.addEventListener("click", () => {
+    const inpLink = document.getElementById("inpSoporteLink");
+    const errEl = document.getElementById("soporteLinkError");
+    const commentEl = document.getElementById("txtSoporteLinkComment");
+    if (inpLink) inpLink.value = "";
+    if (errEl) errEl.classList.add("d-none");
+    if (commentEl) commentEl.value = "";
 
     const modalEl = document.getElementById("modalSubmitSoporteLink");
     if (modalEl && window.bootstrap) {
-      window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+      window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+  });
+
+// Confirm button inside Submit Soporte Link modal
+document
+  .getElementById("btnConfirmSubmitSoporteLink")
+  ?.addEventListener("click", async () => {
+    const idActual = Number(elId?.value || idFromUrl);
+    if (!idActual || idActual < 1) {
+      showWarning("Debes cargar primero una asignación.");
+      return;
     }
 
-    showSuccess("El enlace de soporte ha sido enviado exitosamente al coordinador.");
-    invalidarCachesDetalleAsignacion();
-    await cargarDetalle();
-  } catch (err) {
-    showError(err.message);
-  } finally {
-    if (btnConfirm) btnConfirm.disabled = false;
-    if (btnCancel) btnCancel.disabled = false;
-  }
-});
+    const inpLink = document.getElementById("inpSoporteLink");
+    const errEl = document.getElementById("soporteLinkError");
+    const linkVal = inpLink?.value?.trim() || "";
+    const commentVal =
+      document.getElementById("txtSoporteLinkComment")?.value?.trim() || "";
 
-// Assign Digitalizador button click opens the assign modal and loads digitalizadores
-document.getElementById("btnHeaderAssignDigitalizador")?.addEventListener("click", async () => {
-  const inpLink = document.getElementById("inpAssignDigitalizadorLink");
-  const errEl = document.getElementById("assignDigitalizadorLinkError");
-  const selectEl = document.getElementById("selectAssignDigitalizador");
-  const selectErr = document.getElementById("assignDigitalizadorSelectError");
-  const commentEl = document.getElementById("txtAssignDigitalizadorComment");
-
-  // Set the Box link field to empty by default
-  if (inpLink) {
-    inpLink.value = "";
-  }
-  if (errEl) errEl.classList.add("d-none");
-  if (selectErr) selectErr.classList.add("d-none");
-  if (commentEl) commentEl.value = "";
-
-  if (selectEl) {
-    selectEl.innerHTML = '<option value="" disabled selected>Cargando digitalizadores...</option>';
-    try {
-      const response = await fetch(`${rp}/asignaciones/usuarios-disponibles`, { credentials: "same-origin" });
-      const users = await response.json().catch(() => []);
-      if (response.ok && Array.isArray(users)) {
-        const digitalizadores = users.filter(u => u.rol && u.rol.toLowerCase() === "digitalizador");
-        selectEl.innerHTML = '<option value="" disabled selected>Selecciona un digitalizador...</option>';
-        digitalizadores.forEach(u => {
-          const opt = document.createElement("option");
-          opt.value = String(u.id_global);
-          opt.textContent = `${u.first_name || ""} ${u.last_name || ""} (${u.username})`;
-          selectEl.appendChild(opt);
-        });
-      } else {
-        selectEl.innerHTML = '<option value="" disabled selected>Error al cargar digitalizadores</option>';
+    if (
+      !linkVal ||
+      (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))
+    ) {
+      if (errEl) {
+        errEl.textContent =
+          "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
+        errEl.classList.remove("d-none");
       }
-    } catch (err) {
-      selectEl.innerHTML = '<option value="" disabled selected>Error al cargar digitalizadores</option>';
+      return;
     }
-  }
 
-  const modalEl = document.getElementById("modalAssignDigitalizador");
-  if (modalEl && window.bootstrap) {
-    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
-  }
-});
-
-// Confirm Digitalizador assignment from modal
-document.getElementById("btnConfirmAssignDigitalizador")?.addEventListener("click", async () => {
-  const idActual = Number(elId?.value || idFromUrl);
-  if (!idActual || idActual < 1) {
-    showWarning("Debes cargar primero una asignación.");
-    return;
-  }
-
-  const inpLink = document.getElementById("inpAssignDigitalizadorLink");
-  const errEl = document.getElementById("assignDigitalizadorLinkError");
-  const linkVal = inpLink?.value?.trim() || "";
-
-  const selectEl = document.getElementById("selectAssignDigitalizador");
-  const selectedId = selectEl?.value;
-  const selectErr = document.getElementById("assignDigitalizadorSelectError");
-
-  let hasError = false;
-
-  if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
-    if (errEl) {
-      errEl.textContent = "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
-      errEl.classList.remove("d-none");
-    }
-    hasError = true;
-  } else {
     if (errEl) errEl.classList.add("d-none");
-  }
 
-  if (!selectedId) {
-    if (selectErr) selectErr.classList.remove("d-none");
-    hasError = true;
-  } else {
-    if (selectErr) selectErr.classList.add("d-none");
-  }
+    const btnConfirm = document.getElementById("btnConfirmSubmitSoporteLink");
+    const btnCancel = document.querySelector(
+      "#modalSubmitSoporteLink .btn-close, #modalSubmitSoporteLink [data-bs-dismiss='modal']",
+    );
+    if (btnConfirm) btnConfirm.disabled = true;
+    if (btnCancel) btnCancel.disabled = true;
 
-  if (hasError) return;
+    try {
+      const response = await fetch(
+        `${rp}/api/workflow/asignaciones/${idActual}/submit-soporte-link`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            enlace_soporte: linkVal,
+            comentario: commentVal || null,
+          }),
+          credentials: "same-origin",
+        },
+      );
 
-  const commentVal = document.getElementById("txtAssignDigitalizadorComment")?.value?.trim() || "";
-
-  const btnConfirm = document.getElementById("btnConfirmAssignDigitalizador");
-  const btnCancel = document.querySelector("#modalAssignDigitalizador [data-bs-dismiss='modal']");
-  if (btnConfirm) btnConfirm.disabled = true;
-  if (btnCancel) btnCancel.disabled = true;
-
-  try {
-    const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/assign-digitalizador`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({
-        digitalizador_id: selectedId,
-        enlace_soporte: linkVal,
-        comentario: commentVal || null
-      }),
-      credentials: "same-origin"
-    });
-
-    if (!response.ok) {
       const rawText = await response.text();
       let data = {};
-      try { data = JSON.parse(rawText); } catch (e) { }
-      throw new Error(data?.detail || rawText || "Error al asignar digitalizador.");
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {
+          data = {};
+        }
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail || rawText || "Error al enviar el enlace de soporte.",
+        );
+      }
+
+      const modalEl = document.getElementById("modalSubmitSoporteLink");
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+      }
+
+      showSuccess(
+        "El enlace de soporte ha sido enviado exitosamente al coordinador.",
+      );
+      invalidarCachesDetalleAsignacion();
+      await cargarDetalle();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      if (btnConfirm) btnConfirm.disabled = false;
+      if (btnCancel) btnCancel.disabled = false;
+    }
+  });
+
+// Assign Digitalizador button click opens the assign modal and loads digitalizadores
+document
+  .getElementById("btnHeaderAssignDigitalizador")
+  ?.addEventListener("click", async () => {
+    const inpLink = document.getElementById("inpAssignDigitalizadorLink");
+    const errEl = document.getElementById("assignDigitalizadorLinkError");
+    const selectEl = document.getElementById("selectAssignDigitalizador");
+    const selectErr = document.getElementById("assignDigitalizadorSelectError");
+    const commentEl = document.getElementById("txtAssignDigitalizadorComment");
+
+    // Set the Box link field to empty by default
+    if (inpLink) {
+      inpLink.value = "";
+    }
+    if (errEl) errEl.classList.add("d-none");
+    if (selectErr) selectErr.classList.add("d-none");
+    if (commentEl) commentEl.value = "";
+
+    if (selectEl) {
+      selectEl.innerHTML =
+        '<option value="" disabled selected>Cargando digitalizadores...</option>';
+      try {
+        const response = await fetch(
+          `${rp}/asignaciones/usuarios-disponibles`,
+          { credentials: "same-origin" },
+        );
+        const users = await response.json().catch(() => []);
+        if (response.ok && Array.isArray(users)) {
+          const digitalizadores = users.filter(
+            (u) => u.rol && u.rol.toLowerCase() === "digitalizador",
+          );
+          selectEl.innerHTML =
+            '<option value="" disabled selected>Selecciona un digitalizador...</option>';
+          digitalizadores.forEach((u) => {
+            const opt = document.createElement("option");
+            opt.value = String(u.id_global);
+            opt.textContent = `${u.first_name || ""} ${u.last_name || ""} (${u.username})`;
+            selectEl.appendChild(opt);
+          });
+        } else {
+          selectEl.innerHTML =
+            '<option value="" disabled selected>Error al cargar digitalizadores</option>';
+        }
+      } catch (err) {
+        selectEl.innerHTML =
+          '<option value="" disabled selected>Error al cargar digitalizadores</option>';
+      }
     }
 
     const modalEl = document.getElementById("modalAssignDigitalizador");
     if (modalEl && window.bootstrap) {
-      window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+      window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+  });
+
+// Confirm Digitalizador assignment from modal
+document
+  .getElementById("btnConfirmAssignDigitalizador")
+  ?.addEventListener("click", async () => {
+    const idActual = Number(elId?.value || idFromUrl);
+    if (!idActual || idActual < 1) {
+      showWarning("Debes cargar primero una asignación.");
+      return;
     }
 
-    showSuccess("Se ha asignado el digitalizador y enviado el enlace exitosamente.");
-    invalidarCachesDetalleAsignacion();
-    await cargarDetalle();
-  } catch (err) {
-    showError(err.message);
-  } finally {
-    if (btnConfirm) btnConfirm.disabled = false;
-    if (btnCancel) btnCancel.disabled = false;
-  }
-});
+    const inpLink = document.getElementById("inpAssignDigitalizadorLink");
+    const errEl = document.getElementById("assignDigitalizadorLinkError");
+    const linkVal = inpLink?.value?.trim() || "";
 
-// Submit to Lider button click opens the modal
-document.getElementById("btnHeaderSubmitToLider")?.addEventListener("click", () => {
-  const inpLink = document.getElementById("inpSubmitToLiderLink");
-  const errEl = document.getElementById("submitToLiderLinkError");
-  const commentEl = document.getElementById("txtSubmitToLiderComment");
+    const selectEl = document.getElementById("selectAssignDigitalizador");
+    const selectedId = selectEl?.value;
+    const selectErr = document.getElementById("assignDigitalizadorSelectError");
 
-  // Set the Box link field to empty by default
-  if (inpLink) {
-    inpLink.value = "";
-  }
-  if (errEl) errEl.classList.add("d-none");
-  if (commentEl) commentEl.value = "";
+    let hasError = false;
 
-  const modalEl = document.getElementById("modalSubmitToLider");
-  if (modalEl && window.bootstrap) {
-    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
-  }
-});
-
-// Confirm Submit to Lider from modal
-document.getElementById("btnConfirmSubmitToLider")?.addEventListener("click", async () => {
-  const idActual = Number(elId?.value || idFromUrl);
-  if (!idActual || idActual < 1) {
-    showWarning("Debes cargar primero una asignación.");
-    return;
-  }
-
-  const inpLink = document.getElementById("inpSubmitToLiderLink");
-  const errEl = document.getElementById("submitToLiderLinkError");
-  const linkVal = inpLink?.value?.trim() || "";
-
-  if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
-    if (errEl) {
-      errEl.textContent = "Por favor ingresa un enlace de entregable válido (debe iniciar con http:// o https://).";
-      errEl.classList.remove("d-none");
-    }
-    return;
-  }
-
-  if (errEl) errEl.classList.add("d-none");
-
-  const commentVal = document.getElementById("txtSubmitToLiderComment")?.value?.trim() || "";
-
-  const btnConfirm = document.getElementById("btnConfirmSubmitToLider");
-  const btnCancel = document.querySelector("#modalSubmitToLider [data-bs-dismiss='modal']");
-  if (btnConfirm) btnConfirm.disabled = true;
-  if (btnCancel) btnCancel.disabled = true;
-
-  try {
-    const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/submit-to-lider`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({
-        enlace_digitalizacion: linkVal,
-        comentario: commentVal || null
-      }),
-      credentials: "same-origin"
-    });
-
-    if (!response.ok) {
-      const rawText = await response.text();
-      let data = {};
-      try { data = JSON.parse(rawText); } catch (e) { }
-      throw new Error(data?.detail || rawText || "Error al enviar al Líder Técnico.");
-    }
-
-    const modalEl = document.getElementById("modalSubmitToLider");
-    if (modalEl && window.bootstrap) {
-      window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-    }
-
-    showSuccess("Se ha enviado el trabajo al Líder Técnico exitosamente.");
-    invalidarCachesDetalleAsignacion();
-    await cargarDetalle();
-  } catch (err) {
-    showError(err.message);
-  } finally {
-    if (btnConfirm) btnConfirm.disabled = false;
-    if (btnCancel) btnCancel.disabled = false;
-  }
-});
-
-// View Soporte Link button click opens the view modal and resets its subviews
-document.getElementById("btnHeaderViewSoporteLink")?.addEventListener("click", () => {
-  const modalEl = document.getElementById("modalViewSoporteLink");
-  const linkEl = document.getElementById("viewSoporteEvidenceLink");
-  const commentEl = document.getElementById("txtSoporteComment");
-  if (commentEl) commentEl.value = "";
-
-  const currentLink = currentAssignmentData?.enlace_soporte || "";
-  if (linkEl) {
-    linkEl.href = currentLink;
-    linkEl.textContent = currentLink || "Sin enlace";
-  }
-
-  // Reset internal modal subviews to default state
-  document.getElementById("selectDigitalizadorContainer")?.classList.add("d-none");
-  document.getElementById("viewSoporteMainContent")?.classList.remove("d-none");
-  document.getElementById("viewSoporteDefaultFooter")?.classList.remove("d-none");
-  document.getElementById("viewSoporteSelectorFooter")?.classList.add("d-none");
-  document.getElementById("digitalizadorSelectError")?.classList.add("d-none");
-
-  // Show/Hide coordinator action buttons inside the footer
-  const isReviewerRole = currentLoggedRole === "coordinador" || currentLoggedRole === "admin" || currentLoggedRole === "lider_reconocimiento";
-  const isGeneracionXtfState = currentAssignmentData?.estado === "GENERACION_XTF_CAMPO";
-  const coordActions = document.getElementById("viewSoporteCoordinatorActions");
-  if (coordActions) {
-    if (isReviewerRole && isGeneracionXtfState) {
-      coordActions.classList.remove("d-none");
-      coordActions.classList.add("d-flex");
-    } else {
-      coordActions.classList.add("d-none");
-      coordActions.classList.remove("d-flex");
-    }
-  }
-
-  const selectEl = document.getElementById("selectDigitalizador");
-  if (selectEl) {
-    selectEl.innerHTML = '<option value="" disabled selected>Selecciona un digitalizador...</option>';
-  }
-
-  if (modalEl && window.bootstrap) {
-    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
-  }
-});
-
-// Devolver a Soporte action inside View Soporte modal
-document.getElementById("btnViewSoporteDevolver")?.addEventListener("click", () => {
-  openDevolucionModal("devolver-soporte", "modalViewSoporteLink", "Devolver a Soporte");
-});
-
-// Integrar Digitalizador triggers subview inside View Soporte modal
-document.getElementById("btnViewSoporteIntegrarDigit")?.addEventListener("click", async () => {
-  document.getElementById("viewSoporteMainContent")?.classList.add("d-none");
-  document.getElementById("viewSoporteDefaultFooter")?.classList.add("d-none");
-  document.getElementById("selectDigitalizadorContainer")?.classList.remove("d-none");
-  document.getElementById("viewSoporteSelectorFooter")?.classList.remove("d-none");
-  document.getElementById("digitalizadorSelectError")?.classList.add("d-none");
-
-  const selectEl = document.getElementById("selectDigitalizador");
-  if (selectEl) {
-    selectEl.innerHTML = '<option value="" disabled selected>Cargando digitalizadores...</option>';
-    try {
-      const response = await fetch(`${rp}/asignaciones/usuarios-disponibles`, { credentials: "same-origin" });
-      const users = await response.json().catch(() => []);
-      if (response.ok && Array.isArray(users)) {
-        const digitalizadores = users.filter(u => u.rol && u.rol.toLowerCase() === "digitalizador");
-        selectEl.innerHTML = '<option value="" disabled selected>Selecciona un digitalizador...</option>';
-        digitalizadores.forEach(u => {
-          const opt = document.createElement("option");
-          opt.value = String(u.id_global);
-          opt.textContent = `${u.first_name || ""} ${u.last_name || ""} (${u.username})`;
-          selectEl.appendChild(opt);
-        });
-      } else {
-        selectEl.innerHTML = '<option value="" disabled selected>Error al cargar digitalizadores</option>';
+    if (
+      !linkVal ||
+      (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))
+    ) {
+      if (errEl) {
+        errEl.textContent =
+          "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
+        errEl.classList.remove("d-none");
       }
-    } catch (err) {
-      selectEl.innerHTML = '<option value="" disabled selected>Error al cargar digitalizadores</option>';
-    }
-  }
-});
-
-// Volver inside selector view
-document.getElementById("btnCancelIntegrarDigit")?.addEventListener("click", () => {
-  document.getElementById("selectDigitalizadorContainer")?.classList.add("d-none");
-  document.getElementById("viewSoporteSelectorFooter")?.classList.add("d-none");
-  document.getElementById("viewSoporteMainContent")?.classList.remove("d-none");
-  document.getElementById("viewSoporteDefaultFooter")?.classList.remove("d-none");
-  document.getElementById("digitalizadorSelectError")?.classList.add("d-none");
-});
-
-// Confirm digitalizador assignment
-document.getElementById("btnConfirmIntegrarDigit")?.addEventListener("click", async () => {
-  const idActual = Number(elId?.value || idFromUrl);
-  if (!idActual || idActual < 1) {
-    showWarning("Debes cargar primero una asignación.");
-    return;
-  }
-
-  const selectEl = document.getElementById("selectDigitalizador");
-  const selectedId = selectEl?.value;
-  const errEl = document.getElementById("digitalizadorSelectError");
-
-  if (!selectedId) {
-    if (errEl) errEl.classList.remove("d-none");
-    return;
-  }
-  if (errEl) errEl.classList.add("d-none");
-
-  const btnConfirm = document.getElementById("btnConfirmIntegrarDigit");
-  const btnCancel = document.getElementById("btnCancelIntegrarDigit");
-  if (btnConfirm) btnConfirm.disabled = true;
-  if (btnCancel) btnCancel.disabled = true;
-
-  try {
-    const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/assign-digitalizador`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({ digitalizador_id: selectedId, comentario: null }),
-      credentials: "same-origin"
-    });
-
-    if (!response.ok) {
-      const rawText = await response.text();
-      let data = {};
-      try { data = JSON.parse(rawText); } catch (e) { }
-      throw new Error(data?.detail || rawText || "Error al asignar digitalizador.");
+      hasError = true;
+    } else {
+      if (errEl) errEl.classList.add("d-none");
     }
 
-    const modalEl = document.getElementById("modalViewSoporteLink");
-    if (modalEl && window.bootstrap) {
-      window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+    if (!selectedId) {
+      if (selectErr) selectErr.classList.remove("d-none");
+      hasError = true;
+    } else {
+      if (selectErr) selectErr.classList.add("d-none");
     }
 
-    showSuccess("Se ha integrado el digitalizador al trabajo exitosamente.");
-    invalidarCachesDetalleAsignacion();
-    await cargarDetalle();
-  } catch (err) {
-    showError(err.message);
-  } finally {
-    if (btnConfirm) btnConfirm.disabled = false;
-    if (btnCancel) btnCancel.disabled = false;
-  }
-});
+    if (hasError) return;
 
-// Continuar con Reconocedor action inside View Soporte modal
-document.getElementById("btnViewSoporteContinuarRecon")?.addEventListener("click", () => {
-  const idActual = Number(elId?.value || idFromUrl);
-  if (!idActual || idActual < 1) {
-    showWarning("Debes cargar primero una asignación.");
-    return;
-  }
+    const commentVal =
+      document.getElementById("txtAssignDigitalizadorComment")?.value?.trim() ||
+      "";
 
-  showConfirm(
-    "Continuar con Reconocedor?",
-    "Ests seguro de que deseas continuar con el mismo reconocedor para digitalizacin?",
-    "Sí, continuar"
-  ).then(async (result) => {
-    if (!result.isConfirmed) return;
-
-    const btnDevolver = document.getElementById("btnViewSoporteDevolver");
-    const btnIntegrar = document.getElementById("btnViewSoporteIntegrarDigit");
-    const btnContinuar = document.getElementById("btnViewSoporteContinuarRecon");
-    if (btnDevolver) btnDevolver.disabled = true;
-    if (btnIntegrar) btnIntegrar.disabled = true;
-    if (btnContinuar) btnContinuar.disabled = true;
+    const btnConfirm = document.getElementById("btnConfirmAssignDigitalizador");
+    const btnCancel = document.querySelector(
+      "#modalAssignDigitalizador [data-bs-dismiss='modal']",
+    );
+    if (btnConfirm) btnConfirm.disabled = true;
+    if (btnCancel) btnCancel.disabled = true;
 
     try {
-      const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/continue-with-reconocedor`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+      const response = await fetch(
+        `${rp}/api/workflow/asignaciones/${idActual}/assign-digitalizador`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            digitalizador_id: selectedId,
+            enlace_soporte: linkVal,
+            comentario: commentVal || null,
+          }),
+          credentials: "same-origin",
         },
-        body: JSON.stringify({ comentario: null }),
-        credentials: "same-origin"
-      });
+      );
 
       if (!response.ok) {
         const rawText = await response.text();
         let data = {};
-        try { data = JSON.parse(rawText); } catch (e) { }
-        throw new Error(data?.detail || rawText || "Error al continuar con reconocedor.");
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {}
+        throw new Error(
+          data?.detail || rawText || "Error al asignar digitalizador.",
+        );
+      }
+
+      const modalEl = document.getElementById("modalAssignDigitalizador");
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+      }
+
+      showSuccess(
+        "Se ha asignado el digitalizador y enviado el enlace exitosamente.",
+      );
+      invalidarCachesDetalleAsignacion();
+      await cargarDetalle();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      if (btnConfirm) btnConfirm.disabled = false;
+      if (btnCancel) btnCancel.disabled = false;
+    }
+  });
+
+// Submit to Lider button click opens the modal
+document
+  .getElementById("btnHeaderSubmitToLider")
+  ?.addEventListener("click", () => {
+    const inpLink = document.getElementById("inpSubmitToLiderLink");
+    const errEl = document.getElementById("submitToLiderLinkError");
+    const commentEl = document.getElementById("txtSubmitToLiderComment");
+
+    // Set the Box link field to empty by default
+    if (inpLink) {
+      inpLink.value = "";
+    }
+    if (errEl) errEl.classList.add("d-none");
+    if (commentEl) commentEl.value = "";
+
+    const modalEl = document.getElementById("modalSubmitToLider");
+    if (modalEl && window.bootstrap) {
+      window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+  });
+
+// Confirm Submit to Lider from modal
+document
+  .getElementById("btnConfirmSubmitToLider")
+  ?.addEventListener("click", async () => {
+    const idActual = Number(elId?.value || idFromUrl);
+    if (!idActual || idActual < 1) {
+      showWarning("Debes cargar primero una asignación.");
+      return;
+    }
+
+    const inpLink = document.getElementById("inpSubmitToLiderLink");
+    const errEl = document.getElementById("submitToLiderLinkError");
+    const linkVal = inpLink?.value?.trim() || "";
+
+    if (
+      !linkVal ||
+      (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))
+    ) {
+      if (errEl) {
+        errEl.textContent =
+          "Por favor ingresa un enlace de entregable válido (debe iniciar con http:// o https://).";
+        errEl.classList.remove("d-none");
+      }
+      return;
+    }
+
+    if (errEl) errEl.classList.add("d-none");
+
+    const commentVal =
+      document.getElementById("txtSubmitToLiderComment")?.value?.trim() || "";
+
+    const btnConfirm = document.getElementById("btnConfirmSubmitToLider");
+    const btnCancel = document.querySelector(
+      "#modalSubmitToLider [data-bs-dismiss='modal']",
+    );
+    if (btnConfirm) btnConfirm.disabled = true;
+    if (btnCancel) btnCancel.disabled = true;
+
+    try {
+      const response = await fetch(
+        `${rp}/api/workflow/asignaciones/${idActual}/submit-to-lider`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            enlace_digitalizacion: linkVal,
+            comentario: commentVal || null,
+          }),
+          credentials: "same-origin",
+        },
+      );
+
+      if (!response.ok) {
+        const rawText = await response.text();
+        let data = {};
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {}
+        throw new Error(
+          data?.detail || rawText || "Error al enviar al Líder Técnico.",
+        );
+      }
+
+      const modalEl = document.getElementById("modalSubmitToLider");
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+      }
+
+      showSuccess("Se ha enviado el trabajo al Líder Técnico exitosamente.");
+      invalidarCachesDetalleAsignacion();
+      await cargarDetalle();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      if (btnConfirm) btnConfirm.disabled = false;
+      if (btnCancel) btnCancel.disabled = false;
+    }
+  });
+
+// View Soporte Link button click opens the view modal and resets its subviews
+document
+  .getElementById("btnHeaderViewSoporteLink")
+  ?.addEventListener("click", () => {
+    const modalEl = document.getElementById("modalViewSoporteLink");
+    const linkEl = document.getElementById("viewSoporteEvidenceLink");
+    const commentEl = document.getElementById("txtSoporteComment");
+    if (commentEl) commentEl.value = "";
+
+    const currentLink = currentAssignmentData?.enlace_soporte || "";
+    if (linkEl) {
+      linkEl.href = currentLink;
+      linkEl.textContent = currentLink || "Sin enlace";
+    }
+
+    // Reset internal modal subviews to default state
+    document
+      .getElementById("selectDigitalizadorContainer")
+      ?.classList.add("d-none");
+    document
+      .getElementById("viewSoporteMainContent")
+      ?.classList.remove("d-none");
+    document
+      .getElementById("viewSoporteDefaultFooter")
+      ?.classList.remove("d-none");
+    document
+      .getElementById("viewSoporteSelectorFooter")
+      ?.classList.add("d-none");
+    document
+      .getElementById("digitalizadorSelectError")
+      ?.classList.add("d-none");
+
+    // Show/Hide coordinator action buttons inside the footer
+    const isReviewerRole =
+      currentLoggedRole === "coordinador" ||
+      currentLoggedRole === "admin" ||
+      currentLoggedRole === "lider_reconocimiento";
+    const isGeneracionXtfState =
+      currentAssignmentData?.estado === "GENERACION_XTF_CAMPO";
+    const coordActions = document.getElementById(
+      "viewSoporteCoordinatorActions",
+    );
+    if (coordActions) {
+      if (isReviewerRole && isGeneracionXtfState) {
+        coordActions.classList.remove("d-none");
+        coordActions.classList.add("d-flex");
+      } else {
+        coordActions.classList.add("d-none");
+        coordActions.classList.remove("d-flex");
+      }
+    }
+
+    const selectEl = document.getElementById("selectDigitalizador");
+    if (selectEl) {
+      selectEl.innerHTML =
+        '<option value="" disabled selected>Selecciona un digitalizador...</option>';
+    }
+
+    if (modalEl && window.bootstrap) {
+      window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+  });
+
+// Devolver a Soporte action inside View Soporte modal
+document
+  .getElementById("btnViewSoporteDevolver")
+  ?.addEventListener("click", () => {
+    openDevolucionModal(
+      "devolver-soporte",
+      "modalViewSoporteLink",
+      "Devolver a Soporte",
+    );
+  });
+
+// Integrar Digitalizador triggers subview inside View Soporte modal
+document
+  .getElementById("btnViewSoporteIntegrarDigit")
+  ?.addEventListener("click", async () => {
+    document.getElementById("viewSoporteMainContent")?.classList.add("d-none");
+    document
+      .getElementById("viewSoporteDefaultFooter")
+      ?.classList.add("d-none");
+    document
+      .getElementById("selectDigitalizadorContainer")
+      ?.classList.remove("d-none");
+    document
+      .getElementById("viewSoporteSelectorFooter")
+      ?.classList.remove("d-none");
+    document
+      .getElementById("digitalizadorSelectError")
+      ?.classList.add("d-none");
+
+    const selectEl = document.getElementById("selectDigitalizador");
+    if (selectEl) {
+      selectEl.innerHTML =
+        '<option value="" disabled selected>Cargando digitalizadores...</option>';
+      try {
+        const response = await fetch(
+          `${rp}/asignaciones/usuarios-disponibles`,
+          { credentials: "same-origin" },
+        );
+        const users = await response.json().catch(() => []);
+        if (response.ok && Array.isArray(users)) {
+          const digitalizadores = users.filter(
+            (u) => u.rol && u.rol.toLowerCase() === "digitalizador",
+          );
+          selectEl.innerHTML =
+            '<option value="" disabled selected>Selecciona un digitalizador...</option>';
+          digitalizadores.forEach((u) => {
+            const opt = document.createElement("option");
+            opt.value = String(u.id_global);
+            opt.textContent = `${u.first_name || ""} ${u.last_name || ""} (${u.username})`;
+            selectEl.appendChild(opt);
+          });
+        } else {
+          selectEl.innerHTML =
+            '<option value="" disabled selected>Error al cargar digitalizadores</option>';
+        }
+      } catch (err) {
+        selectEl.innerHTML =
+          '<option value="" disabled selected>Error al cargar digitalizadores</option>';
+      }
+    }
+  });
+
+// Volver inside selector view
+document
+  .getElementById("btnCancelIntegrarDigit")
+  ?.addEventListener("click", () => {
+    document
+      .getElementById("selectDigitalizadorContainer")
+      ?.classList.add("d-none");
+    document
+      .getElementById("viewSoporteSelectorFooter")
+      ?.classList.add("d-none");
+    document
+      .getElementById("viewSoporteMainContent")
+      ?.classList.remove("d-none");
+    document
+      .getElementById("viewSoporteDefaultFooter")
+      ?.classList.remove("d-none");
+    document
+      .getElementById("digitalizadorSelectError")
+      ?.classList.add("d-none");
+  });
+
+// Confirm digitalizador assignment
+document
+  .getElementById("btnConfirmIntegrarDigit")
+  ?.addEventListener("click", async () => {
+    const idActual = Number(elId?.value || idFromUrl);
+    if (!idActual || idActual < 1) {
+      showWarning("Debes cargar primero una asignación.");
+      return;
+    }
+
+    const selectEl = document.getElementById("selectDigitalizador");
+    const selectedId = selectEl?.value;
+    const errEl = document.getElementById("digitalizadorSelectError");
+
+    if (!selectedId) {
+      if (errEl) errEl.classList.remove("d-none");
+      return;
+    }
+    if (errEl) errEl.classList.add("d-none");
+
+    const btnConfirm = document.getElementById("btnConfirmIntegrarDigit");
+    const btnCancel = document.getElementById("btnCancelIntegrarDigit");
+    if (btnConfirm) btnConfirm.disabled = true;
+    if (btnCancel) btnCancel.disabled = true;
+
+    try {
+      const response = await fetch(
+        `${rp}/api/workflow/asignaciones/${idActual}/assign-digitalizador`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            digitalizador_id: selectedId,
+            comentario: null,
+          }),
+          credentials: "same-origin",
+        },
+      );
+
+      if (!response.ok) {
+        const rawText = await response.text();
+        let data = {};
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {}
+        throw new Error(
+          data?.detail || rawText || "Error al asignar digitalizador.",
+        );
       }
 
       const modalEl = document.getElementById("modalViewSoporteLink");
@@ -2090,18 +2366,89 @@ document.getElementById("btnViewSoporteContinuarRecon")?.addEventListener("click
         window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
       }
 
-      showSuccess("Se ha continuado el trabajo con el reconocedor exitosamente.");
+      showSuccess("Se ha integrado el digitalizador al trabajo exitosamente.");
       invalidarCachesDetalleAsignacion();
       await cargarDetalle();
     } catch (err) {
       showError(err.message);
     } finally {
-      if (btnDevolver) btnDevolver.disabled = false;
-      if (btnIntegrar) btnIntegrar.disabled = false;
-      if (btnContinuar) btnContinuar.disabled = false;
+      if (btnConfirm) btnConfirm.disabled = false;
+      if (btnCancel) btnCancel.disabled = false;
     }
   });
-});
+
+// Continuar con Reconocedor action inside View Soporte modal
+document
+  .getElementById("btnViewSoporteContinuarRecon")
+  ?.addEventListener("click", () => {
+    const idActual = Number(elId?.value || idFromUrl);
+    if (!idActual || idActual < 1) {
+      showWarning("Debes cargar primero una asignación.");
+      return;
+    }
+
+    showConfirm(
+      "Continuar con Reconocedor?",
+      "Ests seguro de que deseas continuar con el mismo reconocedor para digitalizacin?",
+      "Sí, continuar",
+    ).then(async (result) => {
+      if (!result.isConfirmed) return;
+
+      const btnDevolver = document.getElementById("btnViewSoporteDevolver");
+      const btnIntegrar = document.getElementById(
+        "btnViewSoporteIntegrarDigit",
+      );
+      const btnContinuar = document.getElementById(
+        "btnViewSoporteContinuarRecon",
+      );
+      if (btnDevolver) btnDevolver.disabled = true;
+      if (btnIntegrar) btnIntegrar.disabled = true;
+      if (btnContinuar) btnContinuar.disabled = true;
+
+      try {
+        const response = await fetch(
+          `${rp}/api/workflow/asignaciones/${idActual}/continue-with-reconocedor`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+            },
+            body: JSON.stringify({ comentario: null }),
+            credentials: "same-origin",
+          },
+        );
+
+        if (!response.ok) {
+          const rawText = await response.text();
+          let data = {};
+          try {
+            data = JSON.parse(rawText);
+          } catch (e) {}
+          throw new Error(
+            data?.detail || rawText || "Error al continuar con reconocedor.",
+          );
+        }
+
+        const modalEl = document.getElementById("modalViewSoporteLink");
+        if (modalEl && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+        }
+
+        showSuccess(
+          "Se ha continuado el trabajo con el reconocedor exitosamente.",
+        );
+        invalidarCachesDetalleAsignacion();
+        await cargarDetalle();
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        if (btnDevolver) btnDevolver.disabled = false;
+        if (btnIntegrar) btnIntegrar.disabled = false;
+        if (btnContinuar) btnContinuar.disabled = false;
+      }
+    });
+  });
 
 // Submit QA2 button click opens the submit QA2 modal
 document.getElementById("btnHeaderSubmitQA2")?.addEventListener("click", () => {
@@ -2132,66 +2479,87 @@ document.getElementById("btnHeaderSubmitQA2")?.addEventListener("click", () => {
 });
 
 // Confirm button inside Submit QA2 modal
-document.getElementById("btnConfirmSubmitQA2")?.addEventListener("click", async () => {
-  const idActual = Number(elId?.value || idFromUrl);
-  if (!idActual || idActual < 1) {
-    showWarning("Debes cargar primero una asignación.");
-    return;
-  }
-
-  const inpLink = document.getElementById("inpQA2Link");
-  const errEl = document.getElementById("qa2LinkError");
-  const linkVal = inpLink?.value?.trim() || "";
-  const commentVal = document.getElementById("txtQA2Comment")?.value?.trim() || "";
-
-  if (!linkVal || (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))) {
-    if (errEl) {
-      errEl.textContent = "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
-      errEl.classList.remove("d-none");
-    }
-    return;
-  }
-
-  if (errEl) errEl.classList.add("d-none");
-
-  const btnConfirm = document.getElementById("btnConfirmSubmitQA2");
-  const btnCancel = document.querySelector("#modalSubmitQA2 .btn-close, #modalSubmitQA2 [data-bs-dismiss='modal']");
-  if (btnConfirm) btnConfirm.disabled = true;
-  if (btnCancel) btnCancel.disabled = true;
-
-  try {
-    const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/submit-for-qa2`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({ enlace_digitalizacion: linkVal, comentario: commentVal || null }),
-      credentials: "same-origin"
-    });
-
-    if (!response.ok) {
-      const rawText = await response.text();
-      let data = {};
-      try { data = JSON.parse(rawText); } catch (e) { }
-      throw new Error(data?.detail || rawText || "Error al enviar a control de calidad 2.");
+document
+  .getElementById("btnConfirmSubmitQA2")
+  ?.addEventListener("click", async () => {
+    const idActual = Number(elId?.value || idFromUrl);
+    if (!idActual || idActual < 1) {
+      showWarning("Debes cargar primero una asignación.");
+      return;
     }
 
-    const modalEl = document.getElementById("modalSubmitQA2");
-    if (modalEl && window.bootstrap) {
-      window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+    const inpLink = document.getElementById("inpQA2Link");
+    const errEl = document.getElementById("qa2LinkError");
+    const linkVal = inpLink?.value?.trim() || "";
+    const commentVal =
+      document.getElementById("txtQA2Comment")?.value?.trim() || "";
+
+    if (
+      !linkVal ||
+      (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))
+    ) {
+      if (errEl) {
+        errEl.textContent =
+          "Por favor ingresa un enlace válido (debe iniciar con http:// o https://).";
+        errEl.classList.remove("d-none");
+      }
+      return;
     }
 
-    showSuccess("El trabajo de digitalización ha sido enviado exitosamente a control de calidad 2.");
-    invalidarCachesDetalleAsignacion();
-    await cargarDetalle();
-  } catch (err) {
-    showError(err.message);
-  } finally {
-    if (btnConfirm) btnConfirm.disabled = false;
-    if (btnCancel) btnCancel.disabled = false;
-  }
-});
+    if (errEl) errEl.classList.add("d-none");
+
+    const btnConfirm = document.getElementById("btnConfirmSubmitQA2");
+    const btnCancel = document.querySelector(
+      "#modalSubmitQA2 .btn-close, #modalSubmitQA2 [data-bs-dismiss='modal']",
+    );
+    if (btnConfirm) btnConfirm.disabled = true;
+    if (btnCancel) btnCancel.disabled = true;
+
+    try {
+      const response = await fetch(
+        `${rp}/api/workflow/asignaciones/${idActual}/submit-for-qa2`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            enlace_digitalizacion: linkVal,
+            comentario: commentVal || null,
+          }),
+          credentials: "same-origin",
+        },
+      );
+
+      if (!response.ok) {
+        const rawText = await response.text();
+        let data = {};
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {}
+        throw new Error(
+          data?.detail || rawText || "Error al enviar a control de calidad 2.",
+        );
+      }
+
+      const modalEl = document.getElementById("modalSubmitQA2");
+      if (modalEl && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+      }
+
+      showSuccess(
+        "El trabajo de digitalización ha sido enviado exitosamente a control de calidad 2.",
+      );
+      invalidarCachesDetalleAsignacion();
+      await cargarDetalle();
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      if (btnConfirm) btnConfirm.disabled = false;
+      if (btnCancel) btnCancel.disabled = false;
+    }
+  });
 
 // QC Review 2 button click opens the review modal
 document.getElementById("btnHeaderQCReview2")?.addEventListener("click", () => {
@@ -2213,7 +2581,11 @@ document.getElementById("btnHeaderQCReview2")?.addEventListener("click", () => {
 
 // Confirm Return to Digitalization (Reject) button click inside coordinator modal
 document.getElementById("btnQC2Reject")?.addEventListener("click", () => {
-  openDevolucionModal("devolver-digitalizacion", "modalQCReview2", "Devolver a Digitalización");
+  openDevolucionModal(
+    "devolver-digitalizacion",
+    "modalQCReview2",
+    "Devolver a Digitalización",
+  );
 });
 
 // Confirm Approve Digitalization button click inside coordinator modal
@@ -2227,33 +2599,42 @@ document.getElementById("btnQC2Approve")?.addEventListener("click", () => {
   showConfirm(
     "Confirmar Aprobacin?",
     "Ests seguro de que deseas aprobar este trabajo de digitalizacin?",
-    "Sí, aprobar"
+    "Sí, aprobar",
   ).then(async (result) => {
     if (!result.isConfirmed) return;
 
     const btnReject = document.getElementById("btnQC2Reject");
     const btnApprove = document.getElementById("btnQC2Approve");
-    const btnCancel = document.querySelector("#modalQCReview2 .btn-close, #modalQCReview2 [data-bs-dismiss='modal']");
+    const btnCancel = document.querySelector(
+      "#modalQCReview2 .btn-close, #modalQCReview2 [data-bs-dismiss='modal']",
+    );
     if (btnReject) btnReject.disabled = true;
     if (btnApprove) btnApprove.disabled = true;
     if (btnCancel) btnCancel.disabled = true;
 
     try {
-      const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/approve-digitalization`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+      const response = await fetch(
+        `${rp}/api/workflow/asignaciones/${idActual}/approve-digitalization`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ comentario: null }),
+          credentials: "same-origin",
         },
-        body: JSON.stringify({ comentario: null }),
-        credentials: "same-origin"
-      });
+      );
 
       if (!response.ok) {
         const rawText = await response.text();
         let data = {};
-        try { data = JSON.parse(rawText); } catch (e) { }
-        throw new Error(data?.detail || rawText || "Error al aprobar digitalizacin.");
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {}
+        throw new Error(
+          data?.detail || rawText || "Error al aprobar digitalizacin.",
+        );
       }
 
       const modalEl = document.getElementById("modalQCReview2");
@@ -2261,7 +2642,9 @@ document.getElementById("btnQC2Approve")?.addEventListener("click", () => {
         window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
       }
 
-      showSuccess("El trabajo de digitalización ha sido aprobado exitosamente.");
+      showSuccess(
+        "El trabajo de digitalización ha sido aprobado exitosamente.",
+      );
       invalidarCachesDetalleAsignacion();
       await cargarDetalle();
     } catch (err) {
@@ -2275,42 +2658,53 @@ document.getElementById("btnQC2Approve")?.addEventListener("click", () => {
 });
 
 // Leader Review button click opens the review modal
-document.getElementById("btnHeaderLiderReview")?.addEventListener("click", () => {
-  const modalEl = document.getElementById("modalLiderReview");
-  const qcLinkEl = document.getElementById("liderReviewEvidenceLink");
-  const commentEl = document.getElementById("txtLiderReviewComment");
-  if (commentEl) commentEl.value = "";
+document
+  .getElementById("btnHeaderLiderReview")
+  ?.addEventListener("click", () => {
+    const modalEl = document.getElementById("modalLiderReview");
+    const qcLinkEl = document.getElementById("liderReviewEvidenceLink");
+    const commentEl = document.getElementById("txtLiderReviewComment");
+    if (commentEl) commentEl.value = "";
 
-  const currentLink = currentAssignmentData?.enlace_coordinador || currentAssignmentData?.enlace_digitalizacion || "";
-  if (qcLinkEl) {
-    qcLinkEl.href = currentLink;
-    qcLinkEl.textContent = currentLink || "Sin enlace de evidencia";
-  }
+    const currentLink =
+      currentAssignmentData?.enlace_coordinador ||
+      currentAssignmentData?.enlace_digitalizacion ||
+      "";
+    if (qcLinkEl) {
+      qcLinkEl.href = currentLink;
+      qcLinkEl.textContent = currentLink || "Sin enlace de evidencia";
+    }
 
-  if (modalEl && window.bootstrap) {
-    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
-  }
-});
+    if (modalEl && window.bootstrap) {
+      window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+  });
 
 // View Digitalizacion Link button click opens the view modal
-document.getElementById("btnHeaderViewDigitalizacionLink")?.addEventListener("click", () => {
-  const modalEl = document.getElementById("modalViewDigitalizacionLink");
-  const linkEl = document.getElementById("viewDigitalizacionEvidenceLink");
+document
+  .getElementById("btnHeaderViewDigitalizacionLink")
+  ?.addEventListener("click", () => {
+    const modalEl = document.getElementById("modalViewDigitalizacionLink");
+    const linkEl = document.getElementById("viewDigitalizacionEvidenceLink");
 
-  const currentLink = currentAssignmentData?.enlace_digitalizacion || "";
-  if (linkEl) {
-    linkEl.href = currentLink;
-    linkEl.textContent = currentLink || "Sin enlace de digitalización";
-  }
+    const currentLink = currentAssignmentData?.enlace_digitalizacion || "";
+    if (linkEl) {
+      linkEl.href = currentLink;
+      linkEl.textContent = currentLink || "Sin enlace de digitalización";
+    }
 
-  if (modalEl && window.bootstrap) {
-    window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
-  }
-});
+    if (modalEl && window.bootstrap) {
+      window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+  });
 
 // Confirm Return to Digitalization (Reject) button click inside leader modal
 document.getElementById("btnLiderReject")?.addEventListener("click", () => {
-  openDevolucionModal("devolver-digitalizacion-lider", "modalLiderReview", "Devolver a Digitalización");
+  openDevolucionModal(
+    "devolver-digitalizacion-lider",
+    "modalLiderReview",
+    "Devolver a Digitalización",
+  );
 });
 
 // Confirm Approve Digitalization button click inside leader modal
@@ -2324,33 +2718,42 @@ document.getElementById("btnLiderApprove")?.addEventListener("click", () => {
   showConfirm(
     "Confirmar Aprobacin?",
     "Ests seguro de que deseas aprobar este trabajo de digitalizacin y comenzar la sincronizacin?",
-    "Sí, aprobar y sincronizar"
+    "Sí, aprobar y sincronizar",
   ).then(async (result) => {
     if (!result.isConfirmed) return;
 
     const btnReject = document.getElementById("btnLiderReject");
     const btnApprove = document.getElementById("btnLiderApprove");
-    const btnCancel = document.querySelector("#modalLiderReview .btn-close, #modalLiderReview [data-bs-dismiss='modal']");
+    const btnCancel = document.querySelector(
+      "#modalLiderReview .btn-close, #modalLiderReview [data-bs-dismiss='modal']",
+    );
     if (btnReject) btnReject.disabled = true;
     if (btnApprove) btnApprove.disabled = true;
     if (btnCancel) btnCancel.disabled = true;
 
     try {
-      const response = await fetch(`${rp}/api/workflow/asignaciones/${idActual}/lider-approve`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+      const response = await fetch(
+        `${rp}/api/workflow/asignaciones/${idActual}/lider-approve`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ comentario: null }),
+          credentials: "same-origin",
         },
-        body: JSON.stringify({ comentario: null }),
-        credentials: "same-origin"
-      });
+      );
 
       if (!response.ok) {
         const rawText = await response.text();
         let data = {};
-        try { data = JSON.parse(rawText); } catch (e) { }
-        throw new Error(data?.detail || rawText || "Error al aprobar digitalizacin.");
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {}
+        throw new Error(
+          data?.detail || rawText || "Error al aprobar digitalizacin.",
+        );
       }
 
       const modalEl = document.getElementById("modalLiderReview");
@@ -2358,7 +2761,9 @@ document.getElementById("btnLiderApprove")?.addEventListener("click", () => {
         window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
       }
 
-      showSuccess("El trabajo de digitalización ha sido aprobado exitosamente y pasará a sincronización.");
+      showSuccess(
+        "El trabajo de digitalización ha sido aprobado exitosamente y pasará a sincronización.",
+      );
       invalidarCachesDetalleAsignacion();
       await cargarDetalle();
     } catch (err) {
@@ -2400,7 +2805,9 @@ const syncStep1Content = document.getElementById("syncStep1Content");
 const syncStep2Content = document.getElementById("syncStep2Content");
 const syncStep3Content = document.getElementById("syncStep3Content");
 
-const syncResultSuccessState = document.getElementById("syncResultSuccessState");
+const syncResultSuccessState = document.getElementById(
+  "syncResultSuccessState",
+);
 const syncResultErrorState = document.getElementById("syncResultErrorState");
 const syncSuccessMessage = document.getElementById("syncSuccessMessage");
 const syncErrorMessage = document.getElementById("syncErrorMessage");
@@ -2449,7 +2856,8 @@ function displayModalFilePreview(file) {
   }
 
   if (modalXtfFileName) modalXtfFileName.textContent = file.name;
-  if (modalXtfFileMeta) modalXtfFileMeta.textContent = formatFileSize(file.size);
+  if (modalXtfFileMeta)
+    modalXtfFileMeta.textContent = formatFileSize(file.size);
 
   modalXtfPreviewBox?.classList.remove("d-none");
   btnSubmitSyncModal?.classList.remove("d-none");
@@ -2481,12 +2889,15 @@ async function submitSyncModalFile() {
   form.append("archivo", selectedModalFile);
 
   try {
-    const resp = await fetch(`${rp}/asignaciones/${encodeURIComponent(id)}/retorno-xtf`, {
-      method: "POST",
-      body: form,
-      credentials: "same-origin",
-      headers: { "Accept": "application/json" }
-    });
+    const resp = await fetch(
+      `${rp}/asignaciones/${encodeURIComponent(id)}/retorno-xtf`,
+      {
+        method: "POST",
+        body: form,
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      },
+    );
 
     const rawText = await resp.text().catch(() => "");
     let data = {};
@@ -2517,22 +2928,29 @@ async function submitSyncModalFile() {
     // Show Success State
     syncResultSuccessState?.classList.remove("d-none");
     if (syncSuccessMessage) {
-      const rulesWithIssues = Array.isArray(data?.validation_summary?.rules_with_issues)
+      const rulesWithIssues = Array.isArray(
+        data?.validation_summary?.rules_with_issues,
+      )
         ? data.validation_summary.rules_with_issues
         : [];
-      const successSuffix = rulesWithIssues.length ? ` (Reglas con observaciones: ${rulesWithIssues.join(", ")})` : "";
-      syncSuccessMessage.textContent = (data?.message || "El archivo XTF se ha sincronizado correctamente.") + successSuffix;
+      const successSuffix = rulesWithIssues.length
+        ? ` (Reglas con observaciones: ${rulesWithIssues.join(", ")})`
+        : "";
+      syncSuccessMessage.textContent =
+        (data?.message || "El archivo XTF se ha sincronizado correctamente.") +
+        successSuffix;
     }
 
     // Reload parent detail page
     invalidarCachesDetalleAsignacion();
     await cargarDetalle();
-
   } catch (err) {
     // Show Error State
     syncResultErrorState?.classList.remove("d-none");
     if (syncErrorMessage) {
-      syncErrorMessage.textContent = formatBackendDetail(err?.message || "Error al procesar el archivo XTF.");
+      syncErrorMessage.textContent = formatBackendDetail(
+        err?.message || "Error al procesar el archivo XTF.",
+      );
     }
     if (btnCancelSyncModal) {
       btnCancelSyncModal.textContent = "Cerrar";
@@ -2620,7 +3038,6 @@ document.getElementById("btnHeaderSyncXtf")?.addEventListener("click", () => {
   }
 });
 
-
 $(document).ready(function () {
   if (idFromUrl && /^\d+$/.test(idFromUrl)) {
     if (elId) elId.value = idFromUrl;
@@ -2632,7 +3049,7 @@ $(document).ready(function () {
 
 // Attach row click listeners for the breakdown table to select predio
 $(document).on("click", "#tablaPredios tbody tr", function (e) {
-  if ($(e.target).closest('.btn-editar-predio').length) {
+  if ($(e.target).closest(".btn-editar-predio").length) {
     return; // Do not intercept clicks on the edit button
   }
   const predioTId = $(this).attr("data-predio-t-id");
@@ -2648,8 +3065,11 @@ $(document).on("click", "#tablaPredios tbody tr", function (e) {
 const ASSIGN_WMS_URL_DETAIL = `${rp}/geoserver/B_ASIGNACIONES_ARB/wms`;
 const ASSIGN_WFS_URL_DETAIL = `${rp}/geoserver/B_ASIGNACIONES_ARB/wfs`;
 const USE_GEOSERVER_STYLES_DETAIL = false;
-const SHOULD_USE_WMS_DETAIL = USE_GEOSERVER_STYLES_DETAIL && Boolean(ASSIGN_WMS_LAYER_DETAIL);
-const DEFAULT_PROJECT_EXTENT_DETAIL = [4508003.5, 1760960.25, 4532217.0, 1793534.0];
+const SHOULD_USE_WMS_DETAIL =
+  USE_GEOSERVER_STYLES_DETAIL && Boolean(ASSIGN_WMS_LAYER_DETAIL);
+const DEFAULT_PROJECT_EXTENT_DETAIL = [
+  4508003.5, 1760960.25, 4532217.0, 1793534.0,
+];
 let projectExtentDetail = [...DEFAULT_PROJECT_EXTENT_DETAIL];
 let assignmentExtentDetail = null;
 let mapInstanceDetail = null;
@@ -2688,7 +3108,7 @@ function setWmsScopeModeDetail() {
 if (window.proj4 && window.ol) {
   proj4.defs(
     "EPSG:9377",
-    "+proj=tmerc +lat_0=4 +lon_0=-73 +k=0.9992 +x_0=5000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
+    "+proj=tmerc +lat_0=4 +lon_0=-73 +k=0.9992 +x_0=5000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
   );
   ol.proj.proj4.register(proj4);
 }
@@ -2705,7 +3125,9 @@ function isValidExtentDetail(extent) {
 
 async function loadProjectExtentDetail() {
   try {
-    const r = await fetch(`${rp}/visor/project-extent`, { credentials: "same-origin" });
+    const r = await fetch(`${rp}/visor/project-extent`, {
+      credentials: "same-origin",
+    });
     if (!r.ok) return;
     const data = await r.json().catch(() => ({}));
     if (!isValidExtentDetail(data?.extent)) return;
@@ -2713,10 +3135,10 @@ async function loadProjectExtentDetail() {
     if (mapInstanceDetail) {
       mapInstanceDetail.getView().fit(projectExtentDetail, {
         padding: [40, 40, 40, 40],
-        duration: 300
+        duration: 300,
       });
     }
-  } catch (_err) { }
+  } catch (_err) {}
 }
 
 function initMapDetail() {
@@ -2807,12 +3229,12 @@ function initMapDetail() {
     source: new ol.source.TileWMS({
       url: ASSIGN_WMS_URL_DETAIL,
       params: {
-        "LAYERS": ASSIGN_WMS_LAYER_DETAIL,
-        "TILED": true,
-        "VERSION": "1.1.0",
-        "FORMAT": "image/png",
-        "TRANSPARENT": true,
-        "SRS": "EPSG:9377",
+        LAYERS: ASSIGN_WMS_LAYER_DETAIL,
+        TILED: true,
+        VERSION: "1.1.0",
+        FORMAT: "image/png",
+        TRANSPARENT: true,
+        SRS: "EPSG:9377",
       },
       serverType: "geoserver",
       crossOrigin: "anonymous",
@@ -2832,13 +3254,18 @@ function initMapDetail() {
 
   const applyWmsFilterByIndexDetail = (idx) => {
     if (!assignmentWmsLayerDetail?.getSource) return false;
-    if (!Array.isArray(pendingWmsFiltersDetail) || idx < 0 || idx >= pendingWmsFiltersDetail.length) return false;
+    if (
+      !Array.isArray(pendingWmsFiltersDetail) ||
+      idx < 0 ||
+      idx >= pendingWmsFiltersDetail.length
+    )
+      return false;
     const cql = pendingWmsFiltersDetail[idx];
     activeWmsFilterIdxDetail = idx;
     console.info("[asignaciones_detalle] Aplicando CQL_FILTER:", cql);
     assignmentWmsLayerDetail.getSource().updateParams({
-      "CQL_FILTER": cql,
-      "STYLES": "",
+      CQL_FILTER: cql,
+      STYLES: "",
     });
     setWmsScopeModeDetail();
     return true;
@@ -2848,11 +3275,18 @@ function initMapDetail() {
     const wmsSource = assignmentWmsLayerDetail.getSource();
     wmsSource?.on?.("tileloaderror", () => {
       const nextIdx = activeWmsFilterIdxDetail + 1;
-      if (Array.isArray(pendingWmsFiltersDetail) && nextIdx < pendingWmsFiltersDetail.length) {
-        console.warn("[asignaciones_detalle] CQL_FILTER no válido, probando siguiente candidato.");
+      if (
+        Array.isArray(pendingWmsFiltersDetail) &&
+        nextIdx < pendingWmsFiltersDetail.length
+      ) {
+        console.warn(
+          "[asignaciones_detalle] CQL_FILTER no válido, probando siguiente candidato.",
+        );
         if (applyWmsFilterByIndexDetail(nextIdx)) return;
       }
-      console.warn("[asignaciones_detalle] WMS no disponible o filtro inválido; activando fallback.");
+      console.warn(
+        "[asignaciones_detalle] WMS no disponible o filtro inválido; activando fallback.",
+      );
       enableVectorFallbackDetail();
     });
   } else {
@@ -2889,8 +3323,8 @@ function clearAssignmentScopeGeometryDetail() {
   assignedScopeLayerDetail?.getSource?.().clear();
   if (assignmentWmsLayerDetail?.getSource) {
     assignmentWmsLayerDetail.getSource().updateParams({
-      "CQL_FILTER": null,
-      "STYLES": "",
+      CQL_FILTER: null,
+      STYLES: "",
     });
     setVectorScopeModeDetail();
   }
@@ -2900,7 +3334,8 @@ function clearAssignmentScopeGeometryDetail() {
 }
 
 function _applyScopedWmsFilterDetail(scopePayload = {}) {
-  if (!SHOULD_USE_WMS_DETAIL || !assignmentWmsLayerDetail?.getSource) return false;
+  if (!SHOULD_USE_WMS_DETAIL || !assignmentWmsLayerDetail?.getSource)
+    return false;
   const asigId = Number(scopePayload?.asignacion_id);
   const workDataset = String(scopePayload?.work_datasetname ?? "").trim();
   if (!workDataset) return false;
@@ -2919,9 +3354,17 @@ function _applyScopedWmsFilterDetail(scopePayload = {}) {
     scopePayload.basket_ids.forEach(pushBasket);
   }
 
-  const predioFeatures = Array.isArray(scopePayload?.predios?.features) ? scopePayload.predios.features : [];
-  const terrenoFeatures = Array.isArray(scopePayload?.terrenos?.features) ? scopePayload.terrenos.features : [];
-  const ucFeatures = Array.isArray(scopePayload?.unidades_construccion?.features) ? scopePayload.unidades_construccion.features : [];
+  const predioFeatures = Array.isArray(scopePayload?.predios?.features)
+    ? scopePayload.predios.features
+    : [];
+  const terrenoFeatures = Array.isArray(scopePayload?.terrenos?.features)
+    ? scopePayload.terrenos.features
+    : [];
+  const ucFeatures = Array.isArray(
+    scopePayload?.unidades_construccion?.features,
+  )
+    ? scopePayload.unidades_construccion.features
+    : [];
   predioFeatures.forEach((f) => {
     pushBasket(f?.properties?.basket_id);
     pushPredial(f?.properties?.numero_predial_nacional);
@@ -2948,10 +3391,13 @@ function _applyScopedWmsFilterDetail(scopePayload = {}) {
     }
     return null;
   };
-  const fNumPredial = pickField("numero_predial", "numero_predial_nacional", "predio_numero_predial")
-    || "numero_predial";
-  const fBasket = pickField("t_basket", "basket", "t_basket_id")
-    || "t_basket";
+  const fNumPredial =
+    pickField(
+      "numero_predial",
+      "numero_predial_nacional",
+      "predio_numero_predial",
+    ) || "numero_predial";
+  const fBasket = pickField("t_basket", "basket", "t_basket_id") || "t_basket";
   const fAsigId = pickField("asignacion_id", "id_asignacion", "asignacion");
   const fDataset = pickField("work_datasetname", "datasetname", "dataset_name");
 
@@ -2962,13 +3408,21 @@ function _applyScopedWmsFilterDetail(scopePayload = {}) {
     const dsQuoted = workDataset.replace(/'/g, "''");
     filters.push(`${fDataset} = '${dsQuoted}'`);
   }
-  if (Number.isInteger(asigId) && asigId > 0 && fAsigId && workDataset && fDataset) {
+  if (
+    Number.isInteger(asigId) &&
+    asigId > 0 &&
+    fAsigId &&
+    workDataset &&
+    fDataset
+  ) {
     const dsQuoted = workDataset.replace(/'/g, "''");
     filters.push(`${fAsigId} = ${asigId} AND ${fDataset} = '${dsQuoted}'`);
   }
 
   if (prediales.length) {
-    const quotedVals = prediales.map((v) => `'${v.replace(/'/g, "''")}'`).join(",");
+    const quotedVals = prediales
+      .map((v) => `'${v.replace(/'/g, "''")}'`)
+      .join(",");
     filters.push(`${fNumPredial} IN (${quotedVals})`);
     if (fNumPredial !== "numero_predial_nacional") {
       filters.push(`numero_predial_nacional IN (${quotedVals})`);
@@ -2989,8 +3443,8 @@ function _applyScopedWmsFilterDetail(scopePayload = {}) {
   activeWmsFilterIdxDetail = -1;
   const cql = pendingWmsFiltersDetail[0];
   assignmentWmsLayerDetail.getSource().updateParams({
-    "CQL_FILTER": cql,
-    "STYLES": "",
+    CQL_FILTER: cql,
+    STYLES: "",
   });
   console.info("[asignaciones_detalle] Aplicando CQL_FILTER:", cql);
   setWmsScopeModeDetail();
@@ -3001,7 +3455,8 @@ function _applyScopedWmsFilterDetail(scopePayload = {}) {
 
 async function _loadWmsFieldNamesDetail() {
   if (!SHOULD_USE_WMS_DETAIL) return [];
-  if (Array.isArray(wmsFieldNamesDetail) && wmsFieldNamesDetail.length) return wmsFieldNamesDetail;
+  if (Array.isArray(wmsFieldNamesDetail) && wmsFieldNamesDetail.length)
+    return wmsFieldNamesDetail;
   try {
     const u = new URL(ASSIGN_WFS_URL_DETAIL, window.location.origin);
     u.searchParams.set("service", "WFS");
@@ -3026,9 +3481,10 @@ async function _loadWmsFieldNamesDetail() {
 }
 
 function _readFeaturesSmartDetail(collection) {
-  const fc = collection && collection.type === "FeatureCollection"
-    ? collection
-    : { type: "FeatureCollection", features: [] };
+  const fc =
+    collection && collection.type === "FeatureCollection"
+      ? collection
+      : { type: "FeatureCollection", features: [] };
   const format = new ol.format.GeoJSON();
   try {
     return format.readFeatures(fc, {
@@ -3057,10 +3513,13 @@ async function loadAssignmentScopeDetalle(asignacionId) {
   if (!idNum || idNum < 1) return;
 
   try {
-    const resp = await fetch(`${rp}/asignaciones/${encodeURIComponent(idNum)}/scope-geojson`, {
-      credentials: "same-origin",
-      headers: { "Accept": "application/json" }
-    });
+    const resp = await fetch(
+      `${rp}/asignaciones/${encodeURIComponent(idNum)}/scope-geojson`,
+      {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      },
+    );
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok) return;
 
@@ -3073,7 +3532,9 @@ async function loadAssignmentScopeDetalle(asignacionId) {
     assignmentUcLayerDetail?.getSource?.().addFeatures(ucFeatures);
     const assignedFeatures = terrenoFeatures.length
       ? terrenoFeatures
-      : (ucFeatures.length ? ucFeatures : predioFeatures);
+      : ucFeatures.length
+        ? ucFeatures
+        : predioFeatures;
     assignedScopeLayerDetail?.getSource?.().addFeatures(assignedFeatures);
 
     if (!_applyScopedWmsFilterDetail(data)) {
@@ -3107,7 +3568,7 @@ async function loadAssignmentScopeDetalle(asignacionId) {
         maxZoom: 19,
       });
     }
-  } catch (_err) { }
+  } catch (_err) {}
 }
 
 function clearSelectedUnitGeometryDetalle() {
@@ -3118,32 +3579,36 @@ function findUnidadFeatureDetalle(unitId) {
   const id = String(unitId ?? "").trim();
   if (!id || !assignmentUcLayerDetail?.getSource) return null;
   const features = assignmentUcLayerDetail.getSource().getFeatures() || [];
-  return features.find((feature) => {
-    const props = feature?.getProperties?.() || {};
-    const candidates = [
-      props.unidad_construccion_t_id,
-      props.unidad_id,
-      props.t_id,
-      feature?.get?.("unidad_construccion_t_id"),
-    ];
-    return candidates.some((value) => String(value ?? "").trim() === id);
-  }) || null;
+  return (
+    features.find((feature) => {
+      const props = feature?.getProperties?.() || {};
+      const candidates = [
+        props.unidad_construccion_t_id,
+        props.unidad_id,
+        props.t_id,
+        feature?.get?.("unidad_construccion_t_id"),
+      ];
+      return candidates.some((value) => String(value ?? "").trim() === id);
+    }) || null
+  );
 }
 
 function buildUnidadFeatureFromGeomDetalle(unidad = {}) {
-  const geometryObj = _parseGeometryCandidateDetalle(unidad?.geom || unidad?.geometry || unidad?.geometria);
+  const geometryObj = _parseGeometryCandidateDetalle(
+    unidad?.geom || unidad?.geometry || unidad?.geometria,
+  );
   if (!geometryObj || !window.ol) return null;
   const format = new ol.format.GeoJSON();
   try {
     return format.readFeature(
       { type: "Feature", geometry: geometryObj },
-      { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
+      { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" },
     );
   } catch (_e) {
     try {
       return format.readFeature(
         { type: "Feature", geometry: geometryObj },
-        { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" }
+        { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" },
       );
     } catch (_e2) {
       return null;
@@ -3177,7 +3642,9 @@ function highlightUnidadOnMapDetalle(unitId, unidad = {}) {
 }
 function zoomToProjectDetalle() {
   if (!mapInstanceDetail) return;
-  const targetExtent = isValidExtentDetail(assignmentExtentDetail) ? assignmentExtentDetail : projectExtentDetail;
+  const targetExtent = isValidExtentDetail(assignmentExtentDetail)
+    ? assignmentExtentDetail
+    : projectExtentDetail;
   mapInstanceDetail.getView().fit(targetExtent, {
     padding: [40, 40, 40, 40],
     duration: 450,
@@ -3186,11 +3653,13 @@ function zoomToProjectDetalle() {
 
 function zoomToPredioDetalle() {
   if (!mapInstanceDetail || !currentPredioFeatureDetail) return;
-  mapInstanceDetail.getView().fit(currentPredioFeatureDetail.getGeometry().getExtent(), {
-    padding: [40, 40, 40, 40],
-    duration: 450,
-    maxZoom: 20,
-  });
+  mapInstanceDetail
+    .getView()
+    .fit(currentPredioFeatureDetail.getGeometry().getExtent(), {
+      padding: [40, 40, 40, 40],
+      duration: 450,
+      maxZoom: 20,
+    });
 }
 
 function clearPredioGeometryDetalle() {
@@ -3256,14 +3725,14 @@ function updateMapWithPredioDetalle(detalle = {}, numeroPredial = "") {
         dataProjection: "EPSG:9377",
         featureProjection: "EPSG:9377",
       });
-    } catch (_e) { }
+    } catch (_e) {}
     if (!geometry) {
       try {
         geometry = format.readGeometry(geometryObj, {
           dataProjection: "EPSG:4326",
           featureProjection: "EPSG:9377",
         });
-      } catch (_e) { }
+      } catch (_e) {}
     }
   }
   if (!geometry) {
@@ -3290,13 +3759,15 @@ async function fetchDetallePredioDetalle(asignacionId, predioTId) {
   const resp = await fetch(
     `${rp}/asignaciones/${encodeURIComponent(asigKey)}/predios/${encodeURIComponent(predioKey)}/detalle-completo`,
     {
-      credentials: "same-origin"
-    }
+      credentials: "same-origin",
+    },
   );
   const data = await resp.json().catch(() => ({}));
 
   if (!resp.ok) {
-    throw new Error(data?.detail || data?.error || "No se pudo cargar el detalle del predio.");
+    throw new Error(
+      data?.detail || data?.error || "No se pudo cargar el detalle del predio.",
+    );
   }
 
   detallePredioCacheDetail.set(key, data);
@@ -3329,7 +3800,11 @@ async function seleccionarPredioDetalle(predioId, predioTId, numeroPredial) {
     if (String(predioSeleccionadoTId) !== String(predioTId)) return;
 
     updateMapWithPredioDetalle(detalle, numeroPredial);
-    const predioObj = { id: predioId, predio_t_id: predioTId, numero_predial_nacional: numeroPredial };
+    const predioObj = {
+      id: predioId,
+      predio_t_id: predioTId,
+      numero_predial_nacional: numeroPredial,
+    };
     aplicarDetallePredioSeleccionadoEdit(predioObj, detalle);
   } catch (err) {
     if (requestSeq !== detallePredioRequestSeqDetail) return;
@@ -3339,13 +3814,14 @@ async function seleccionarPredioDetalle(predioId, predioTId, numeroPredial) {
   }
 }
 
-
 function adjuntosPredioSetStatus(text) {
   const el = document.getElementById("adjuntosPredioStatus");
   if (el) el.textContent = text || "";
 }
 
-function adjuntosPredioResetPreview(message = "Selecciona un archivo para abrir una previsualizacion de Box.") {
+function adjuntosPredioResetPreview(
+  message = "Selecciona un archivo para abrir una previsualizacion de Box.",
+) {
   const preview = document.getElementById("adjuntosPredioPreview");
   if (!preview) return;
   preview.innerHTML = `
@@ -3359,15 +3835,21 @@ function adjuntosPredioIconClass(item) {
   if (item?.type === "folder") return "adjunto-icon-folder bi-folder-fill";
   const name = String(item?.name || "").toLowerCase();
   if (name.endsWith(".pdf")) return "adjunto-icon-pdf bi-file-earmark-pdf-fill";
-  if (/\.(jpg|jpeg|png|tif|tiff|webp)$/i.test(name)) return "adjunto-icon-image bi-image-fill";
-  if (/\.(zip|rar|7z)$/i.test(name)) return "adjunto-icon-zip bi-file-earmark-zip-fill";
+  if (/\.(jpg|jpeg|png|tif|tiff|webp)$/i.test(name))
+    return "adjunto-icon-image bi-image-fill";
+  if (/\.(zip|rar|7z)$/i.test(name))
+    return "adjunto-icon-zip bi-file-earmark-zip-fill";
   return "adjunto-icon-doc bi-file-earmark-text-fill";
 }
 
 function adjuntosPredioFlatten(items = [], depth = 0, rows = []) {
   items.forEach((item) => {
     rows.push({ item, depth });
-    if (item?.type === "folder" && Array.isArray(item.items) && item.items.length) {
+    if (
+      item?.type === "folder" &&
+      Array.isArray(item.items) &&
+      item.items.length
+    ) {
       adjuntosPredioFlatten(item.items, depth + 1, rows);
     }
   });
@@ -3394,10 +3876,14 @@ function adjuntosPredioRender(items = [], filter = "") {
   const list = document.getElementById("adjuntosPredioList");
   if (!list) return;
 
-  const query = String(filter || "").trim().toLowerCase();
+  const query = String(filter || "")
+    .trim()
+    .toLowerCase();
   const rows = adjuntosPredioFlatten(items).filter(({ item }) => {
     if (!query) return true;
-    return String(item?.name || "").toLowerCase().includes(query);
+    return String(item?.name || "")
+      .toLowerCase()
+      .includes(query);
   });
 
   if (!rows.length) {
@@ -3405,17 +3891,18 @@ function adjuntosPredioRender(items = [], filter = "") {
     return;
   }
 
-  list.innerHTML = rows.map(({ item, depth }) => {
-    const iconClass = adjuntosPredioIconClass(item);
-    const isFolder = item?.type === "folder";
-    const meta = isFolder
-      ? `Carpeta${Array.isArray(item.items) ? ` - ${item.items.length} elemento(s)` : ""}`
-      : `Archivo${item.size ? ` - ${formatFileSize(Number(item.size))}` : ""}`;
-    const actionButtons = isFolder
-      ? `<span class="adjunto-action" aria-hidden="true"><i class="bi bi-folder2-open"></i></span>`
-      : `<button type="button" class="adjunto-action" data-box-preview-id="${esc(item.id)}" data-box-preview-type="file" aria-label="Ver archivo"><i class="bi bi-eye"></i></button>`;
+  list.innerHTML = rows
+    .map(({ item, depth }) => {
+      const iconClass = adjuntosPredioIconClass(item);
+      const isFolder = item?.type === "folder";
+      const meta = isFolder
+        ? `Carpeta${Array.isArray(item.items) ? ` - ${item.items.length} elemento(s)` : ""}`
+        : `Archivo${item.size ? ` - ${formatFileSize(Number(item.size))}` : ""}`;
+      const actionButtons = isFolder
+        ? `<span class="adjunto-action" aria-hidden="true"><i class="bi bi-folder2-open"></i></span>`
+        : `<button type="button" class="adjunto-action" data-box-preview-id="${esc(item.id)}" data-box-preview-type="file" aria-label="Ver archivo"><i class="bi bi-eye"></i></button>`;
 
-    return `
+      return `
       <div class="adjunto-row d-flex align-items-center gap-3" style="margin-left:${depth * 14}px" data-box-item-name="${esc(item.name)}">
         <div class="adjunto-icon ${iconClass.split(" ")[0]}"><i class="bi ${iconClass.split(" ")[1]}"></i></div>
         <div class="min-w-0 flex-grow-1">
@@ -3425,7 +3912,8 @@ function adjuntosPredioRender(items = [], filter = "") {
         <div class="d-flex align-items-center gap-2">${actionButtons}</div>
       </div>
     `;
-  }).join("");
+    })
+    .join("");
 }
 
 async function adjuntosPredioOpenFile(fileId) {
@@ -3435,10 +3923,19 @@ async function adjuntosPredioOpenFile(fileId) {
   preview.innerHTML = `<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div>`;
 
   try {
-    const params = new URLSearchParams({ item_type: "file", item_id: String(fileId) });
-    const resp = await fetch(`${rp}/api/box/open?${params.toString()}`, { credentials: "same-origin" });
+    const params = new URLSearchParams({
+      item_type: "file",
+      item_id: String(fileId),
+    });
+    const resp = await fetch(`${rp}/api/box/open?${params.toString()}`, {
+      credentials: "same-origin",
+    });
     const data = await resp.json().catch(() => ({}));
-    if (!resp.ok) throw new Error(formatBackendDetail(data?.detail) || "No se pudo abrir el archivo en Box.");
+    if (!resp.ok)
+      throw new Error(
+        formatBackendDetail(data?.detail) ||
+          "No se pudo abrir el archivo en Box.",
+      );
 
     preview.innerHTML = `
       <iframe src="${esc(data.preview_url || data.url || "")}" title="${esc(data.name || "Vista previa Box")}" style="width:100%;height:330px;border:0;border-radius:12px;background:#fff;"></iframe>
@@ -3463,27 +3960,37 @@ async function cargarAdjuntosPredioBox() {
   adjuntosPredioResetPreview();
 
   if (!asignacionId || !npn) {
-    adjuntosPredioSetStatus("Selecciona un predio para consultar su carpeta Box.");
-    if (list) list.innerHTML = `<div class="adjuntos-empty text-center text-muted py-4">Selecciona un predio para consultar su carpeta Box.</div>`;
+    adjuntosPredioSetStatus(
+      "Selecciona un predio para consultar su carpeta Box.",
+    );
+    if (list)
+      list.innerHTML = `<div class="adjuntos-empty text-center text-muted py-4">Selecciona un predio para consultar su carpeta Box.</div>`;
     return;
   }
 
   adjuntosPredioSetStatus(`Consultando carpeta Box del NPN ${npn}...`);
-  if (list) list.innerHTML = `<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2"></div>Cargando carpeta Box...</div>`;
+  if (list)
+    list.innerHTML = `<div class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm me-2"></div>Cargando carpeta Box...</div>`;
 
   try {
     const resp = await fetch(
       `${rp}/asignaciones/${encodeURIComponent(asignacionId)}/predios/${encodeURIComponent(npn)}/box-folder`,
-      { credentials: "same-origin" }
+      { credentials: "same-origin" },
     );
     const data = await resp.json().catch(() => ({}));
-    if (!resp.ok) throw new Error(formatBackendDetail(data?.detail) || "No se encontro la carpeta Box del predio.");
+    if (!resp.ok)
+      throw new Error(
+        formatBackendDetail(data?.detail) ||
+          "No se encontro la carpeta Box del predio.",
+      );
 
     const items = Array.isArray(data.items) ? data.items : [];
     const counts = adjuntosPredioCount(items);
     if (fileCount) fileCount.textContent = String(counts.files);
     if (folderCount) folderCount.textContent = String(counts.folders);
-    adjuntosPredioSetStatus(`${data.assignment_folder?.name || "Asignacion"} / ${data.predio_folder?.name || npn}`);
+    adjuntosPredioSetStatus(
+      `${data.assignment_folder?.name || "Asignacion"} / ${data.predio_folder?.name || npn}`,
+    );
     adjuntosPredioRender(items);
 
     if (search) {
@@ -3491,21 +3998,30 @@ async function cargarAdjuntosPredioBox() {
     }
   } catch (err) {
     adjuntosPredioSetStatus("No se pudo cargar la carpeta Box del predio.");
-    if (list) list.innerHTML = `<div class="adjuntos-empty text-center text-muted py-4">${esc(err.message || "No se pudo cargar la carpeta Box del predio.")}</div>`;
+    if (list)
+      list.innerHTML = `<div class="adjuntos-empty text-center text-muted py-4">${esc(err.message || "No se pudo cargar la carpeta Box del predio.")}</div>`;
   }
 }
 
-document.getElementById("modalAdjuntosPredio")?.addEventListener("shown.bs.modal", cargarAdjuntosPredioBox);
-document.getElementById("adjuntosPredioList")?.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-box-preview-id]");
-  if (!button) return;
-  adjuntosPredioOpenFile(button.getAttribute("data-box-preview-id"));
-});
+document
+  .getElementById("modalAdjuntosPredio")
+  ?.addEventListener("shown.bs.modal", cargarAdjuntosPredioBox);
+document
+  .getElementById("adjuntosPredioList")
+  ?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-box-preview-id]");
+    if (!button) return;
+    adjuntosPredioOpenFile(button.getAttribute("data-box-preview-id"));
+  });
 document.addEventListener("DOMContentLoaded", () => {
   initMapDetail();
   loadProjectExtentDetail();
-  document.getElementById("btnZoomPredio")?.addEventListener("click", zoomToPredioDetalle);
-  document.getElementById("btnZoomProyecto")?.addEventListener("click", zoomToProjectDetalle);
+  document
+    .getElementById("btnZoomPredio")
+    ?.addEventListener("click", zoomToPredioDetalle);
+  document
+    .getElementById("btnZoomProyecto")
+    ?.addEventListener("click", zoomToProjectDetalle);
 });
 
 // =========================================================================
@@ -3528,10 +4044,13 @@ function normalizarTextoEdit(valor) {
 }
 
 function contarUcAsociadasEdit(item) {
-  if (Array.isArray(item.unidades_construccion)) return item.unidades_construccion.length;
+  if (Array.isArray(item.unidades_construccion))
+    return item.unidades_construccion.length;
   if (Array.isArray(item.unidades)) return item.unidades.length;
-  if (item.total_unidades !== undefined && item.total_unidades !== null) return Number(item.total_unidades) || 0;
-  if (item.uc_asociadas !== undefined && item.uc_asociadas !== null) return Number(item.uc_asociadas) || 0;
+  if (item.total_unidades !== undefined && item.total_unidades !== null)
+    return Number(item.total_unidades) || 0;
+  if (item.uc_asociadas !== undefined && item.uc_asociadas !== null)
+    return Number(item.uc_asociadas) || 0;
   return 0;
 }
 
@@ -3556,15 +4075,13 @@ function obtenerIdentificadorConstruccionEdit(item, index = 0) {
 
 function obtenerPredioConstruccionEdit(item) {
   return (
-    item.predio_numero_predial ||
-    item.numero_predial ||
-    item.predio ||
-    "---"
+    item.predio_numero_predial || item.numero_predial || item.predio || "---"
   );
 }
 
 function obtenerListaUnidadesConstruccionEdit(item) {
-  if (Array.isArray(item.unidades_construccion)) return item.unidades_construccion;
+  if (Array.isArray(item.unidades_construccion))
+    return item.unidades_construccion;
   if (Array.isArray(item.unidades)) return item.unidades;
   return [];
 }
@@ -3579,7 +4096,10 @@ function actualizarBadgeUcDesdeTablaEdit() {
   const filas = tbody.querySelectorAll(".fila-unidad-card-principal");
   const cantidad = filas.length;
 
-  if (!cantidad || (cantidad === 1 && tbody.querySelector(".fila-vacia-unidad"))) {
+  if (
+    !cantidad ||
+    (cantidad === 1 && tbody.querySelector(".fila-vacia-unidad"))
+  ) {
     badgeUcActiva.classList.add("d-none");
     badgeUcValor.textContent = "";
     return;
@@ -3610,10 +4130,16 @@ function actualizarResumenConstruccionesEdit(construcciones = []) {
 
 function mostrarMensajeSinSeleccionUcEdit() {
   const card = document.getElementById("cardUnidadConstruccion");
-  const detalleUnidadConstruccionCard = document.getElementById("detalleUnidadConstruccionCard");
+  const detalleUnidadConstruccionCard = document.getElementById(
+    "detalleUnidadConstruccionCard",
+  );
   const tbody = document.getElementById("tbodyUnidadConstruccionCard");
-  const badgeConstruccionActiva = document.getElementById("badgeConstruccionActiva");
-  const badgeConstruccionValor = document.getElementById("badgeConstruccionValor");
+  const badgeConstruccionActiva = document.getElementById(
+    "badgeConstruccionActiva",
+  );
+  const badgeConstruccionValor = document.getElementById(
+    "badgeConstruccionValor",
+  );
   const badgeUcActiva = document.getElementById("badgeUcActiva");
   const badgeUcValor = document.getElementById("badgeUcValor");
 
@@ -3639,21 +4165,29 @@ function mostrarMensajeSinSeleccionUcEdit() {
   }
 
   if (detalleUnidadConstruccionCard) {
-    const instance = bootstrap.Collapse.getOrCreateInstance(detalleUnidadConstruccionCard, { toggle: false });
+    const instance = bootstrap.Collapse.getOrCreateInstance(
+      detalleUnidadConstruccionCard,
+      { toggle: false },
+    );
     instance.hide();
   }
 }
 
 function actualizarBadgeConstruccionActivaEdit(construccion) {
   const card = document.getElementById("cardUnidadConstruccion");
-  const badgeConstruccionActiva = document.getElementById("badgeConstruccionActiva");
-  const badgeConstruccionValor = document.getElementById("badgeConstruccionValor");
+  const badgeConstruccionActiva = document.getElementById(
+    "badgeConstruccionActiva",
+  );
+  const badgeConstruccionValor = document.getElementById(
+    "badgeConstruccionValor",
+  );
 
   if (!card || !badgeConstruccionActiva || !badgeConstruccionValor) return;
 
   card.classList.add("has-selection");
   badgeConstruccionActiva.classList.remove("d-none");
-  badgeConstruccionValor.textContent = obtenerIdentificadorConstruccionEdit(construccion);
+  badgeConstruccionValor.textContent =
+    obtenerIdentificadorConstruccionEdit(construccion);
 }
 
 function renderTablaConstruccionesEdit(construcciones = []) {
@@ -3677,24 +4211,33 @@ function renderTablaConstruccionesEdit(construcciones = []) {
   tabla.style.display = "";
   empty.style.display = "none";
 
-  tbody.innerHTML = construccionesDataEdit.map((item, index) => {
-    const rowId = `detalleConstruccionEdit_${index}`;
-    const identificador = normalizarTextoEdit(obtenerIdentificadorConstruccionEdit(item, index));
-    const tipo = normalizarTextoEdit(obtenerTipoConstruccionEdit(item));
-    const predio = normalizarTextoEdit(obtenerPredioConstruccionEdit(item));
-    const totalUc = contarUcAsociadasEdit(item);
+  tbody.innerHTML = construccionesDataEdit
+    .map((item, index) => {
+      const rowId = `detalleConstruccionEdit_${index}`;
+      const identificador = normalizarTextoEdit(
+        obtenerIdentificadorConstruccionEdit(item, index),
+      );
+      const tipo = normalizarTextoEdit(obtenerTipoConstruccionEdit(item));
+      const predio = normalizarTextoEdit(obtenerPredioConstruccionEdit(item));
+      const totalUc = contarUcAsociadasEdit(item);
 
-    const tipoDominio = normalizarTextoEdit(item?.tipo_dominio_nombre ?? item?.tipo_dominio);
-    const totalMezaninis = normalizarTextoEdit(item?.total_mezaninis);
-    const etiqueta = normalizarTextoEdit(item?.etiqueta);
-    const totalPisos = normalizarTextoEdit(item?.total_pisos);
-    const totalSemisotanos = normalizarTextoEdit(item?.total_semisotanos);
-    const estadoConstruccion = normalizarTextoEdit(item?.estado_construccion_nombre);
-    const totalSotanos = normalizarTextoEdit(item?.total_sotanos);
-    const areaTotalConstruccion = normalizarTextoEdit(item?.area_total_construccion);
-    const observacion = normalizarTextoEdit(item?.observacion);
+      const tipoDominio = normalizarTextoEdit(
+        item?.tipo_dominio_nombre ?? item?.tipo_dominio,
+      );
+      const totalMezaninis = normalizarTextoEdit(item?.total_mezaninis);
+      const etiqueta = normalizarTextoEdit(item?.etiqueta);
+      const totalPisos = normalizarTextoEdit(item?.total_pisos);
+      const totalSemisotanos = normalizarTextoEdit(item?.total_semisotanos);
+      const estadoConstruccion = normalizarTextoEdit(
+        item?.estado_construccion_nombre,
+      );
+      const totalSotanos = normalizarTextoEdit(item?.total_sotanos);
+      const areaTotalConstruccion = normalizarTextoEdit(
+        item?.area_total_construccion,
+      );
+      const observacion = normalizarTextoEdit(item?.observacion);
 
-    return `
+      return `
               <tr class="fila-unidad-collapse" data-index="${index}">
                   <td class="text-center">
                       <button
@@ -3788,7 +4331,8 @@ function renderTablaConstruccionesEdit(construcciones = []) {
                   </td>
               </tr>
           `;
-  }).join("");
+    })
+    .join("");
 
   tbody.querySelectorAll(".fila-unidad-collapse").forEach((row) => {
     row.addEventListener("click", (event) => {
@@ -3797,10 +4341,14 @@ function renderTablaConstruccionesEdit(construcciones = []) {
       const index = Number(row.dataset.index);
       seleccionarConstruccionEdit(index);
 
-      const collapseEl = document.getElementById(`detalleConstruccionEdit_${index}`);
+      const collapseEl = document.getElementById(
+        `detalleConstruccionEdit_${index}`,
+      );
       if (!collapseEl) return;
 
-      const instance = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+      const instance = bootstrap.Collapse.getOrCreateInstance(collapseEl, {
+        toggle: false,
+      });
       if (collapseEl.classList.contains("show")) {
         instance.hide();
       } else {
@@ -3809,82 +4357,81 @@ function renderTablaConstruccionesEdit(construcciones = []) {
     });
   });
 
-  tbody.querySelectorAll(".collapse-detalle-cons-edit").forEach((collapseEl) => {
-    collapseEl.addEventListener("show.bs.collapse", () => {
-      tbody.querySelectorAll(".collapse-detalle-cons-edit.show").forEach((openEl) => {
-        if (openEl.id !== collapseEl.id) {
-          bootstrap.Collapse.getOrCreateInstance(openEl, { toggle: false }).hide();
+  tbody
+    .querySelectorAll(".collapse-detalle-cons-edit")
+    .forEach((collapseEl) => {
+      collapseEl.addEventListener("show.bs.collapse", () => {
+        tbody
+          .querySelectorAll(".collapse-detalle-cons-edit.show")
+          .forEach((openEl) => {
+            if (openEl.id !== collapseEl.id) {
+              bootstrap.Collapse.getOrCreateInstance(openEl, {
+                toggle: false,
+              }).hide();
+            }
+          });
+
+        tbody.querySelectorAll(".fila-unidad-collapse").forEach((row) => {
+          row.classList.remove("detalle-activo");
+          const icon = row.querySelector(".icon-toggle-uc");
+          if (icon) {
+            icon.classList.remove("fa-chevron-up");
+            icon.classList.add("fa-chevron-down");
+          }
+        });
+
+        tbody.querySelectorAll(".fila-detalle-unidad").forEach((row) => {
+          row.classList.remove("detalle-activo");
+        });
+
+        const detailRow = collapseEl.closest(".fila-detalle-unidad");
+        const principalRow = detailRow?.previousElementSibling;
+
+        if (principalRow) {
+          principalRow.classList.add("detalle-activo");
+          const icon = principalRow.querySelector(".icon-toggle-uc");
+          if (icon) {
+            icon.classList.remove("fa-chevron-down");
+            icon.classList.add("fa-chevron-up");
+          }
+        }
+
+        if (detailRow) {
+          detailRow.classList.add("detalle-activo");
         }
       });
 
-      tbody.querySelectorAll(".fila-unidad-collapse").forEach((row) => {
-        row.classList.remove("detalle-activo");
-        const icon = row.querySelector(".icon-toggle-uc");
-        if (icon) {
-          icon.classList.remove("fa-chevron-up");
-          icon.classList.add("fa-chevron-down");
+      collapseEl.addEventListener("hide.bs.collapse", () => {
+        const detailRow = collapseEl.closest(".fila-detalle-unidad");
+        const principalRow = detailRow?.previousElementSibling;
+
+        if (principalRow) {
+          principalRow.classList.remove("detalle-activo");
+          const icon = principalRow.querySelector(".icon-toggle-uc");
+          if (icon) {
+            icon.classList.remove("fa-chevron-up");
+            icon.classList.add("fa-chevron-down");
+          }
+        }
+
+        if (detailRow) {
+          detailRow.classList.remove("detalle-activo");
         }
       });
-
-      tbody.querySelectorAll(".fila-detalle-unidad").forEach((row) => {
-        row.classList.remove("detalle-activo");
-      });
-
-      const detailRow = collapseEl.closest(".fila-detalle-unidad");
-      const principalRow = detailRow?.previousElementSibling;
-
-      if (principalRow) {
-        principalRow.classList.add("detalle-activo");
-        const icon = principalRow.querySelector(".icon-toggle-uc");
-        if (icon) {
-          icon.classList.remove("fa-chevron-down");
-          icon.classList.add("fa-chevron-up");
-        }
-      }
-
-      if (detailRow) {
-        detailRow.classList.add("detalle-activo");
-      }
     });
-
-    collapseEl.addEventListener("hide.bs.collapse", () => {
-      const detailRow = collapseEl.closest(".fila-detalle-unidad");
-      const principalRow = detailRow?.previousElementSibling;
-
-      if (principalRow) {
-        principalRow.classList.remove("detalle-activo");
-        const icon = principalRow.querySelector(".icon-toggle-uc");
-        if (icon) {
-          icon.classList.remove("fa-chevron-up");
-          icon.classList.add("fa-chevron-down");
-        }
-      }
-
-      if (detailRow) {
-        detailRow.classList.remove("detalle-activo");
-      }
-    });
-  });
 
   actualizarResumenConstruccionesEdit(construccionesDataEdit);
 }
 
 function resolverEtiquetaUnidadEdit(item = {}) {
   const etiquetaDirecta =
-    item.etiqueta ??
-    item.etiqueta_uc ??
-    item.nombre ??
-    item.nombre_uc;
+    item.etiqueta ?? item.etiqueta_uc ?? item.nombre ?? item.nombre_uc;
 
   if (etiquetaDirecta && String(etiquetaDirecta).trim() !== "") {
     return etiquetaDirecta;
   }
 
-  const identificador =
-    item.identificador ??
-    item.codigo ??
-    item.t_id ??
-    "";
+  const identificador = item.identificador ?? item.codigo ?? item.t_id ?? "";
 
   const tipoUc =
     item.tipo_unidad_construccion_nombre ||
@@ -3901,7 +4448,9 @@ function resolverEtiquetaUnidadEdit(item = {}) {
 
 function renderUnidadConstruccionCardEdit(unidades = []) {
   const tbody = document.getElementById("tbodyUnidadConstruccionCard");
-  const detalleUnidadConstruccionCard = document.getElementById("detalleUnidadConstruccionCard");
+  const detalleUnidadConstruccionCard = document.getElementById(
+    "detalleUnidadConstruccionCard",
+  );
 
   if (!tbody || !detalleUnidadConstruccionCard) return;
 
@@ -3919,22 +4468,35 @@ function renderUnidadConstruccionCardEdit(unidades = []) {
     return;
   }
 
-  tbody.innerHTML = unidadesDataEdit.map((item, index) => {
-    const rowId = `detalleFilaUnidadCardEdit_${item?.t_id ?? item?.unidad_id ?? index}`;
-    const unitId = item?.t_id ?? item?.unidad_id ?? index;
-    const plantaUbicacion = normalizarTextoEdit(item?.planta_ubicacion);
-    const altura = normalizarTextoEdit(item?.altura);
-    const etiqueta = normalizarTextoEdit(resolverEtiquetaUnidadEdit(item));
-    const identificador = normalizarTextoEdit(item?.identificador ?? item?.codigo ?? item?.t_id ?? "---");
-    const tipoPlanta = normalizarTextoEdit(item?.tipo_planta_nombre);
-    const relacionSuperficie = normalizarTextoEdit(item?.relacion_superficie_nombre);
-    const estadoUnidad = normalizarTextoEdit(item?.estado_unidad_construccion_nombre ?? item?.estado_construccion ?? "Vigente");
-    const observaciones = normalizarTextoEdit(item?.observaciones);
-    const tipoCalificacionModal = item?.tipo_calificacion_modal ?? null;
-    const unidadId = item?.t_id ?? item?.unidad_id ?? item?.id ?? null;
-    const tipoUcNombre = normalizarTextoEdit(item?.tipo_unidad_construccion_nombre || item?.tipo_uc_nombre || item?.tipo_uc);
+  tbody.innerHTML = unidadesDataEdit
+    .map((item, index) => {
+      const rowId = `detalleFilaUnidadCardEdit_${item?.t_id ?? item?.unidad_id ?? index}`;
+      const unitId = item?.t_id ?? item?.unidad_id ?? index;
+      const plantaUbicacion = normalizarTextoEdit(item?.planta_ubicacion);
+      const altura = normalizarTextoEdit(item?.altura);
+      const etiqueta = normalizarTextoEdit(resolverEtiquetaUnidadEdit(item));
+      const identificador = normalizarTextoEdit(
+        item?.identificador ?? item?.codigo ?? item?.t_id ?? "---",
+      );
+      const tipoPlanta = normalizarTextoEdit(item?.tipo_planta_nombre);
+      const relacionSuperficie = normalizarTextoEdit(
+        item?.relacion_superficie_nombre,
+      );
+      const estadoUnidad = normalizarTextoEdit(
+        item?.estado_unidad_construccion_nombre ??
+          item?.estado_construccion ??
+          "Vigente",
+      );
+      const observaciones = normalizarTextoEdit(item?.observaciones);
+      const tipoCalificacionModal = item?.tipo_calificacion_modal ?? null;
+      const unidadId = item?.t_id ?? item?.unidad_id ?? item?.id ?? null;
+      const tipoUcNombre = normalizarTextoEdit(
+        item?.tipo_unidad_construccion_nombre ||
+          item?.tipo_uc_nombre ||
+          item?.tipo_uc,
+      );
 
-    return `
+      return `
               <tr class="fila-registro-unidad fila-unidad-card-principal" data-row-id="${rowId}" data-unit-id="${unitId}">
                   <td class="text-center align-middle">
                       <button
@@ -4001,8 +4563,8 @@ function renderUnidadConstruccionCardEdit(unidades = []) {
                                       type="button"
                                       class="btn btn-caracteristicas-uc ms-auto"
                                       data-identificador="${identificador}"
-                                      data-tipo="${tipoCalificacionModal ?? ''}"
-                                      data-unidad-id="${unidadId ?? ''}"
+                                      data-tipo="${tipoCalificacionModal ?? ""}"
+                                      data-unidad-id="${unidadId ?? ""}"
                                     >
                                       Ver características
                                     </button>
@@ -4014,7 +4576,8 @@ function renderUnidadConstruccionCardEdit(unidades = []) {
                   </td>
               </tr>
           `;
-  }).join("");
+    })
+    .join("");
 
   tbody.querySelectorAll(".fila-unidad-card-principal").forEach((row) => {
     row.addEventListener("click", (event) => {
@@ -4023,13 +4586,18 @@ function renderUnidadConstruccionCardEdit(unidades = []) {
       const rowId = row.dataset.rowId;
       const unitId = row.dataset.unitId;
 
-      const unidad = unidadesDataEdit.find((u) => String(u?.t_id ?? u?.unidad_id ?? u?.id ?? '') === String(unitId));
+      const unidad = unidadesDataEdit.find(
+        (u) =>
+          String(u?.t_id ?? u?.unidad_id ?? u?.id ?? "") === String(unitId),
+      );
       seleccionarUnidadEdit(unitId, unidad);
 
       const collapseEl = document.getElementById(rowId);
       if (!collapseEl) return;
 
-      const instance = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+      const instance = bootstrap.Collapse.getOrCreateInstance(collapseEl, {
+        toggle: false,
+      });
       if (collapseEl.classList.contains("show")) {
         instance.hide();
       } else {
@@ -4038,72 +4606,86 @@ function renderUnidadConstruccionCardEdit(unidades = []) {
     });
   });
 
-  tbody.querySelectorAll(".collapse-detalle-uc-card-edit").forEach((collapseEl) => {
-    collapseEl.addEventListener("show.bs.collapse", () => {
-      tbody.querySelectorAll(".collapse-detalle-uc-card-edit.show").forEach((openEl) => {
-        if (openEl.id !== collapseEl.id) {
-          bootstrap.Collapse.getOrCreateInstance(openEl, { toggle: false }).hide();
+  tbody
+    .querySelectorAll(".collapse-detalle-uc-card-edit")
+    .forEach((collapseEl) => {
+      collapseEl.addEventListener("show.bs.collapse", () => {
+        tbody
+          .querySelectorAll(".collapse-detalle-uc-card-edit.show")
+          .forEach((openEl) => {
+            if (openEl.id !== collapseEl.id) {
+              bootstrap.Collapse.getOrCreateInstance(openEl, {
+                toggle: false,
+              }).hide();
+            }
+          });
+
+        tbody.querySelectorAll(".fila-unidad-card-principal").forEach((row) => {
+          row.classList.remove("fila-unidad-card-activa");
+          const icon = row.querySelector(".icon-toggle-uc");
+          if (icon) {
+            icon.classList.remove("fa-chevron-up");
+            icon.classList.add("fa-chevron-down");
+          }
+        });
+
+        tbody.querySelectorAll(".fila-detalle-unidad-card").forEach((row) => {
+          row.classList.remove("fila-detalle-unidad-card-activa");
+        });
+
+        const detailRow = collapseEl.closest(".fila-detalle-unidad-card");
+        const principalRow = detailRow?.previousElementSibling;
+
+        if (principalRow) {
+          const unitId = principalRow.dataset.unitId;
+          const unidad = unidadesDataEdit.find(
+            (u) =>
+              String(u?.t_id ?? u?.unidad_id ?? u?.id ?? "") === String(unitId),
+          );
+          seleccionarUnidadEdit(unitId, unidad);
+          principalRow.classList.add("fila-unidad-card-activa");
+          const icon = principalRow.querySelector(".icon-toggle-uc");
+          if (icon) {
+            icon.classList.remove("fa-chevron-down");
+            icon.classList.add("fa-chevron-up");
+          }
+        }
+
+        if (detailRow) {
+          detailRow.classList.add("fila-detalle-unidad-card-activa");
         }
       });
 
-      tbody.querySelectorAll(".fila-unidad-card-principal").forEach((row) => {
-        row.classList.remove("fila-unidad-card-activa");
-        const icon = row.querySelector(".icon-toggle-uc");
-        if (icon) {
-          icon.classList.remove("fa-chevron-up");
-          icon.classList.add("fa-chevron-down");
+      collapseEl.addEventListener("hide.bs.collapse", () => {
+        const detailRow = collapseEl.closest(".fila-detalle-unidad-card");
+        const principalRow = detailRow?.previousElementSibling;
+
+        if (principalRow) {
+          if (
+            String(unidadActivaEdit ?? "") ===
+            String(principalRow.dataset.unitId ?? "")
+          ) {
+            unidadActivaEdit = null;
+            clearSelectedUnitGeometryDetalle();
+          }
+          principalRow.classList.remove("fila-unidad-card-activa");
+          const icon = principalRow.querySelector(".icon-toggle-uc");
+          if (icon) {
+            icon.classList.remove("fa-chevron-up");
+            icon.classList.add("fa-chevron-down");
+          }
+        }
+
+        if (detailRow) {
+          detailRow.classList.remove("fila-detalle-unidad-card-activa");
         }
       });
-
-      tbody.querySelectorAll(".fila-detalle-unidad-card").forEach((row) => {
-        row.classList.remove("fila-detalle-unidad-card-activa");
-      });
-
-      const detailRow = collapseEl.closest(".fila-detalle-unidad-card");
-      const principalRow = detailRow?.previousElementSibling;
-
-      if (principalRow) {
-        const unitId = principalRow.dataset.unitId;
-        const unidad = unidadesDataEdit.find((u) => String(u?.t_id ?? u?.unidad_id ?? u?.id ?? "") === String(unitId));
-        seleccionarUnidadEdit(unitId, unidad);
-        principalRow.classList.add("fila-unidad-card-activa");
-        const icon = principalRow.querySelector(".icon-toggle-uc");
-        if (icon) {
-          icon.classList.remove("fa-chevron-down");
-          icon.classList.add("fa-chevron-up");
-        }
-      }
-
-      if (detailRow) {
-        detailRow.classList.add("fila-detalle-unidad-card-activa");
-      }
     });
-
-    collapseEl.addEventListener("hide.bs.collapse", () => {
-      const detailRow = collapseEl.closest(".fila-detalle-unidad-card");
-      const principalRow = detailRow?.previousElementSibling;
-
-      if (principalRow) {
-        if (String(unidadActivaEdit ?? "") === String(principalRow.dataset.unitId ?? "")) {
-          unidadActivaEdit = null;
-          clearSelectedUnitGeometryDetalle();
-        }
-        principalRow.classList.remove("fila-unidad-card-activa");
-        const icon = principalRow.querySelector(".icon-toggle-uc");
-        if (icon) {
-          icon.classList.remove("fa-chevron-up");
-          icon.classList.add("fa-chevron-down");
-        }
-      }
-
-      if (detailRow) {
-        detailRow.classList.remove("fila-detalle-unidad-card-activa");
-      }
-    });
-  });
 
   if (!detalleUnidadConstruccionCard.classList.contains("show")) {
-    bootstrap.Collapse.getOrCreateInstance(detalleUnidadConstruccionCard, { toggle: false }).show();
+    bootstrap.Collapse.getOrCreateInstance(detalleUnidadConstruccionCard, {
+      toggle: false,
+    }).show();
   }
 
   tbody.querySelectorAll(".btn-caracteristicas-uc").forEach((btn) => {
@@ -4113,11 +4695,20 @@ function renderUnidadConstruccionCardEdit(unidades = []) {
       const tipo = btn.dataset.tipo || null;
       const unidadId = btn.dataset.unidadId || null;
 
-      console.log("[btn-caracteristicas-uc] Clicked button:", { identificador, tipo, unidadId });
+      console.log("[btn-caracteristicas-uc] Clicked button:", {
+        identificador,
+        tipo,
+        unidadId,
+      });
 
       if (!unidadId) {
-        console.warn("[btn-caracteristicas-uc] Clicked but unidadId is missing in button dataset:", btn.dataset);
-        showWarning("No se pudo obtener el identificador (unidadId) de esta unidad de construcción.");
+        console.warn(
+          "[btn-caracteristicas-uc] Clicked but unidadId is missing in button dataset:",
+          btn.dataset,
+        );
+        showWarning(
+          "No se pudo obtener el identificador (unidadId) de esta unidad de construcción.",
+        );
         return;
       }
 
@@ -4127,23 +4718,40 @@ function renderUnidadConstruccionCardEdit(unidades = []) {
       try {
         let detalle = unidadDetalleCacheEdit.get(String(unidadId));
         if (!detalle) {
-          console.log("[btn-caracteristicas-uc] Cache miss. Fetching details for unitId:", unidadId);
+          console.log(
+            "[btn-caracteristicas-uc] Cache miss. Fetching details for unitId:",
+            unidadId,
+          );
           detalle = await loadUnidadExtraEdit(unidadId);
         }
         if (detalle) {
-          console.log("[btn-caracteristicas-uc] Opening offcanvas for unitId:", unidadId, "with data:", detalle);
+          console.log(
+            "[btn-caracteristicas-uc] Opening offcanvas for unitId:",
+            unidadId,
+            "with data:",
+            detalle,
+          );
           abrirModalSegunTipoUcEdit({
             identificador,
             tipo: tipo || detalle?.unidad?.tipo_calificacion_modal || null,
-            detalle
+            detalle,
           });
         } else {
-          console.error("[btn-caracteristicas-uc] Failed to load detail for unitId:", unidadId);
-          showError("No se pudo cargar la información de la unidad de construcción " + identificador);
+          console.error(
+            "[btn-caracteristicas-uc] Failed to load detail for unitId:",
+            unidadId,
+          );
+          showError(
+            "No se pudo cargar la información de la unidad de construcción " +
+              identificador,
+          );
         }
       } catch (err) {
         console.error("[btn-caracteristicas-uc] Error in click handler:", err);
-        showError("Ocurrió un error al intentar abrir el panel de características: " + err.message);
+        showError(
+          "Ocurrió un error al intentar abrir el panel de características: " +
+            err.message,
+        );
       } finally {
         btn.style.cursor = "";
         btn.disabled = false;
@@ -4185,9 +4793,12 @@ async function loadUnidadExtraEdit(unitId) {
       params.set("schema", asigSchemaWork);
     }
 
-    const resp = await fetch(`${rp}/asignaciones/unidad_detalle?${params.toString()}`, {
-      credentials: "same-origin"
-    });
+    const resp = await fetch(
+      `${rp}/asignaciones/unidad_detalle?${params.toString()}`,
+      {
+        credentials: "same-origin",
+      },
+    );
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok) {
       const detail = data?.detail || data?.error || `Error HTTP ${resp.status}`;
@@ -4209,12 +4820,24 @@ function abrirModalSegunTipoUcEdit(data = {}) {
   poblarOffcanvasNoConvencionalEdit(detalle);
   poblarOffcanvasTipologiaEdit(detalle);
 
-  const offcanvasConvencional = document.getElementById("offcanvasUcConvencional");
-  const offcanvasNoConvencional = document.getElementById("offcanvasUcNoConvencional");
+  const offcanvasConvencional = document.getElementById(
+    "offcanvasUcConvencional",
+  );
+  const offcanvasNoConvencional = document.getElementById(
+    "offcanvasUcNoConvencional",
+  );
   const offcanvasTipologia = document.getElementById("offcanvasUcTipologia");
-  const tipoNormalizado = String(tipo || detalle?.unidad?.tipo_calificacion_modal || "").trim().toLowerCase();
+  const tipoNormalizado = String(
+    tipo || detalle?.unidad?.tipo_calificacion_modal || "",
+  )
+    .trim()
+    .toLowerCase();
 
-  const idMostrar = detalle?.caracteristicas?.identificador || detalle?.unidad?.identificador || identificador || "---";
+  const idMostrar =
+    detalle?.caracteristicas?.identificador ||
+    detalle?.unidad?.identificador ||
+    identificador ||
+    "---";
   const lblConv = document.getElementById("offcanvasUcConvencionalLabel");
   const lblNoConv = document.getElementById("offcanvasUcNoConvencionalLabel");
   const lblTip = document.getElementById("offcanvasUcTipologiaLabel");
@@ -4222,15 +4845,22 @@ function abrirModalSegunTipoUcEdit(data = {}) {
   if (lblNoConv) lblNoConv.textContent = `ID Unidad Construcción ${idMostrar}`;
   if (lblTip) lblTip.textContent = `ID Unidad Construcción ${idMostrar}`;
 
-  const subConv = document.querySelector("#offcanvasUcConvencional .subtitulo-offcanvas-uc");
-  const subNoConv = document.querySelector("#offcanvasUcNoConvencional .subtitulo-offcanvas-uc");
-  const subTip = document.querySelector("#offcanvasUcTipologia .subtitulo-offcanvas-uc");
+  const subConv = document.querySelector(
+    "#offcanvasUcConvencional .subtitulo-offcanvas-uc",
+  );
+  const subNoConv = document.querySelector(
+    "#offcanvasUcNoConvencional .subtitulo-offcanvas-uc",
+  );
+  const subTip = document.querySelector(
+    "#offcanvasUcTipologia .subtitulo-offcanvas-uc",
+  );
   if (subConv) subConv.textContent = idMostrar;
   if (subNoConv) subNoConv.textContent = idMostrar;
   if (subTip) subTip.textContent = idMostrar;
 
   if (
-    (tipoNormalizado === "convencional" || tipoNormalizado.includes("convencional")) &&
+    (tipoNormalizado === "convencional" ||
+      tipoNormalizado.includes("convencional")) &&
     !tipoNormalizado.includes("no") &&
     offcanvasConvencional
   ) {
@@ -4239,14 +4869,19 @@ function abrirModalSegunTipoUcEdit(data = {}) {
   }
 
   if (
-    (tipoNormalizado === "no_convencional" || tipoNormalizado.includes("no_convencional") || tipoNormalizado.includes("no convencional")) &&
+    (tipoNormalizado === "no_convencional" ||
+      tipoNormalizado.includes("no_convencional") ||
+      tipoNormalizado.includes("no convencional")) &&
     offcanvasNoConvencional
   ) {
     bootstrap.Offcanvas.getOrCreateInstance(offcanvasNoConvencional).show();
     return;
   }
 
-  if ((tipoNormalizado === "tipologia" || tipoNormalizado.includes("tipolog")) && offcanvasTipologia) {
+  if (
+    (tipoNormalizado === "tipologia" || tipoNormalizado.includes("tipolog")) &&
+    offcanvasTipologia
+  ) {
     bootstrap.Offcanvas.getOrCreateInstance(offcanvasTipologia).show();
     return;
   }
@@ -4260,8 +4895,14 @@ function poblarOffcanvasConvencionalEdit(detalle = {}) {
   const car = detalle?.caracteristicas || {};
   const cal = detalle?.calificacion_convencional || {};
 
-  setTextByIdEdit("convencionalTipoCalificacion", car?.tipo_calificacion_nombre || cal?.tipo_calificacion_nombre);
-  setTextByIdEdit("convencionalTipoUnidad", car?.tipo_unidad_construccion_nombre);
+  setTextByIdEdit(
+    "convencionalTipoCalificacion",
+    car?.tipo_calificacion_nombre || cal?.tipo_calificacion_nombre,
+  );
+  setTextByIdEdit(
+    "convencionalTipoUnidad",
+    car?.tipo_unidad_construccion_nombre,
+  );
   setTextByIdEdit("convencionalUso", car?.uso_nombre);
   setTextByIdEdit("convencionalTotalPlantas", car?.total_plantas);
   setTextByIdEdit("convencionalTotalHabitaciones", car?.total_habitaciones);
@@ -4269,36 +4910,73 @@ function poblarOffcanvasConvencionalEdit(detalle = {}) {
   setTextByIdEdit("convencionalTotalLocales", car?.total_locales);
   setTextByIdEdit("convencionalAnioConstruccion", car?.anio_construccion);
   setTextByIdEdit("convencionalAreaConstruida", car?.area_construida);
-  setTextByIdEdit("convencionalAreaPrivadaConstruida", car?.area_privada_construida);
-  setTextByIdEdit("convencionalUsosTradicionales", car?.usos_tradicionales_culturales_nombre ?? car?.usos_tradicionales_culturales);
+  setTextByIdEdit(
+    "convencionalAreaPrivadaConstruida",
+    car?.area_privada_construida,
+  );
+  setTextByIdEdit(
+    "convencionalUsosTradicionales",
+    car?.usos_tradicionales_culturales_nombre ??
+      car?.usos_tradicionales_culturales,
+  );
   setTextByIdEdit("convencionalObservaciones", car?.observaciones);
 
   setTextByIdEdit("convencionalTipoCalificar", cal?.tipo_calificar_nombre);
   setTextByIdEdit("convencionalArmazon", cal?.armazon_nombre);
   setTextByIdEdit("convencionalMuros", cal?.muros_nombre);
   setTextByIdEdit("convencionalCubierta", cal?.cubierta_nombre);
-  setTextByIdEdit("convencionalConservacionEstructura", cal?.conservacion_estructura_nombre);
-  setTextByIdEdit("convencionalCubrimientoMuros", cal?.cubrimiento_muros_nombre);
+  setTextByIdEdit(
+    "convencionalConservacionEstructura",
+    cal?.conservacion_estructura_nombre,
+  );
+  setTextByIdEdit(
+    "convencionalCubrimientoMuros",
+    cal?.cubrimiento_muros_nombre,
+  );
   setTextByIdEdit("convencionalFachada", cal?.fachada_nombre);
   setTextByIdEdit("convencionalPiso", cal?.piso_nombre);
-  setTextByIdEdit("convencionalConservacionAcabados", cal?.conservacion_acabados_nombre);
+  setTextByIdEdit(
+    "convencionalConservacionAcabados",
+    cal?.conservacion_acabados_nombre,
+  );
   setTextByIdEdit("convencionalTamanioBanio", cal?.tamanio_banio_nombre);
   setTextByIdEdit("convencionalEnchapeBanio", cal?.enchape_banio_nombre);
   setTextByIdEdit("convencionalMobiliarioBanio", cal?.mobiliario_banio_nombre);
-  setTextByIdEdit("convencionalConservacionBanio", cal?.conservacion_banio_nombre);
+  setTextByIdEdit(
+    "convencionalConservacionBanio",
+    cal?.conservacion_banio_nombre,
+  );
   setTextByIdEdit("convencionalTamanioCocina", cal?.tamanio_cocina_nombre);
   setTextByIdEdit("convencionalEnchapeCocina", cal?.enchape_cocina_nombre);
-  setTextByIdEdit("convencionalMobiliarioCocina", cal?.mobiliario_cocina_nombre);
-  setTextByIdEdit("convencionalConservacionCocina", cal?.conservacion_cocina_nombre);
-  setTextByIdEdit("convencionalCerchas", cal?.cerchas_complemento_industria_nombre ?? car?.cc_cerchas_complemento_industria);
+  setTextByIdEdit(
+    "convencionalMobiliarioCocina",
+    cal?.mobiliario_cocina_nombre,
+  );
+  setTextByIdEdit(
+    "convencionalConservacionCocina",
+    cal?.conservacion_cocina_nombre,
+  );
+  setTextByIdEdit(
+    "convencionalCerchas",
+    cal?.cerchas_complemento_industria_nombre ??
+      car?.cc_cerchas_complemento_industria,
+  );
   setTextByIdEdit("convencionalObsCalificacion", car?.observaciones);
   setTextByIdEdit("convencionalTotalCalificacion", cal?.total_calificacion);
 
   const chkAlturaCerchas = document.getElementById("convencionalAlturaCerchas");
   if (chkAlturaCerchas) {
     const raw = cal?.altura_cerchas_superior_6m;
-    const normalized = String(raw ?? "").trim().toLowerCase();
-    chkAlturaCerchas.checked = raw === true || normalized === "t" || normalized === "true" || normalized === "1" || normalized === "si" || normalized === "sí";
+    const normalized = String(raw ?? "")
+      .trim()
+      .toLowerCase();
+    chkAlturaCerchas.checked =
+      raw === true ||
+      normalized === "t" ||
+      normalized === "true" ||
+      normalized === "1" ||
+      normalized === "si" ||
+      normalized === "sí";
   }
 }
 
@@ -4306,31 +4984,57 @@ function poblarOffcanvasNoConvencionalEdit(detalle = {}) {
   const car = detalle?.caracteristicas || {};
   const cal = detalle?.tipologia_no_convencional || {};
 
-  setTextByIdEdit("noconvencionalTipoCalificacion", car?.tipo_calificacion_nombre || "No Convencional");
-  setTextByIdEdit("noconvencionalTipoUnidad", car?.tipo_unidad_construccion_nombre);
+  setTextByIdEdit(
+    "noconvencionalTipoCalificacion",
+    car?.tipo_calificacion_nombre || "No Convencional",
+  );
+  setTextByIdEdit(
+    "noconvencionalTipoUnidad",
+    car?.tipo_unidad_construccion_nombre,
+  );
   setTextByIdEdit("noconvencionalUso", car?.uso_nombre);
   setTextByIdEdit("noconvencionalTotalPlantas", car?.total_plantas);
   setTextByIdEdit("noconvencionalAnioConstruccion", car?.anio_construccion);
   setTextByIdEdit("noconvencionalAreaConstruida", car?.area_construida);
-  setTextByIdEdit("noconvencionalAreaPrivadaConstruida", car?.area_privada_construida);
-  setTextByIdEdit("noconvencionalUsosTradicionales", car?.usos_tradicionales_culturales_nombre ?? car?.usos_tradicionales_culturales);
+  setTextByIdEdit(
+    "noconvencionalAreaPrivadaConstruida",
+    car?.area_privada_construida,
+  );
+  setTextByIdEdit(
+    "noconvencionalUsosTradicionales",
+    car?.usos_tradicionales_culturales_nombre ??
+      car?.usos_tradicionales_culturales,
+  );
   setTextByIdEdit("noconvencionalObservaciones", car?.observaciones);
   setTextByIdEdit("noconvencionalTipoAnexo", cal?.tipo_anexo_nombre);
-  setTextByIdEdit("noconvencionalConservacionAnexo", cal?.conservacion_anexo_nombre);
+  setTextByIdEdit(
+    "noconvencionalConservacionAnexo",
+    cal?.conservacion_anexo_nombre,
+  );
 }
 
 function poblarOffcanvasTipologiaEdit(detalle = {}) {
   const car = detalle?.caracteristicas || {};
   const cal = detalle?.tipologia_construccion || {};
 
-  setTextByIdEdit("tipologiaTipoCalificacion", car?.tipo_calificacion_nombre || "Por Tipologa");
+  setTextByIdEdit(
+    "tipologiaTipoCalificacion",
+    car?.tipo_calificacion_nombre || "Por Tipologa",
+  );
   setTextByIdEdit("tipologiaTipoUnidad", car?.tipo_unidad_construccion_nombre);
   setTextByIdEdit("tipologiaUso", car?.uso_nombre);
   setTextByIdEdit("tipologiaTotalPlantas", car?.total_plantas);
   setTextByIdEdit("tipologiaAnioConstruccion", car?.anio_construccion);
   setTextByIdEdit("tipologiaAreaConstruida", car?.area_construida);
-  setTextByIdEdit("tipologiaAreaPrivadaConstruida", car?.area_privada_construida);
-  setTextByIdEdit("tipologiaUsosTradicionales", car?.usos_tradicionales_culturales_nombre ?? car?.usos_tradicionales_culturales);
+  setTextByIdEdit(
+    "tipologiaAreaPrivadaConstruida",
+    car?.area_privada_construida,
+  );
+  setTextByIdEdit(
+    "tipologiaUsosTradicionales",
+    car?.usos_tradicionales_culturales_nombre ??
+      car?.usos_tradicionales_culturales,
+  );
   setTextByIdEdit("tipologiaObservaciones", car?.observaciones);
   setTextByIdEdit("tipologiaTipoTipologia", cal?.tipo_tipologia_nombre);
   setTextByIdEdit("tipologiaConservacionTipologia", cal?.conservacion_nombre);
@@ -4356,18 +5060,23 @@ function seleccionarConstruccionEdit(index) {
     const src = selectedUnitLayerDetail.getSource();
     src.clear();
 
-    const cGeom = construccion.geom || construccion.geometria || (unidades && unidades[0] && (unidades[0].construccion_geom || unidades[0].geom));
+    const cGeom =
+      construccion.geom ||
+      construccion.geometria ||
+      (unidades &&
+        unidades[0] &&
+        (unidades[0].construccion_geom || unidades[0].geom));
     if (cGeom) {
       try {
         const format = new ol.format.GeoJSON();
         let feature = format.readFeature(
           { type: "Feature", geometry: cGeom, properties: construccion },
-          { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
+          { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" },
         );
         if (!feature.getGeometry()) {
           feature = format.readFeature(
             { type: "Feature", geometry: cGeom, properties: construccion },
-            { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" }
+            { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" },
           );
         }
 
@@ -4406,17 +5115,22 @@ function cargarTablasConstruccionesYUcEdit(payload = {}) {
     if (construcciones.length) {
       const format = new ol.format.GeoJSON();
       construcciones.forEach((c) => {
-        const cGeom = c.geom || c.geometria || (c.unidades && c.unidades[0] && (c.unidades[0].construccion_geom || c.unidades[0].geom));
+        const cGeom =
+          c.geom ||
+          c.geometria ||
+          (c.unidades &&
+            c.unidades[0] &&
+            (c.unidades[0].construccion_geom || c.unidades[0].geom));
         if (!cGeom) return;
         try {
           let feature = format.readFeature(
             { type: "Feature", geometry: cGeom, properties: c },
-            { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
+            { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" },
           );
           if (!feature.getGeometry()) {
             feature = format.readFeature(
               { type: "Feature", geometry: cGeom, properties: c },
-              { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" }
+              { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" },
             );
           }
           src.addFeature(feature);
@@ -4441,12 +5155,12 @@ function cargarTablasConstruccionesYUcEdit(payload = {}) {
           try {
             let feature = format.readFeature(
               { type: "Feature", geometry: uGeom, properties: u },
-              { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
+              { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" },
             );
             if (!feature.getGeometry()) {
               feature = format.readFeature(
                 { type: "Feature", geometry: uGeom, properties: u },
-                { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" }
+                { dataProjection: "EPSG:4326", featureProjection: "EPSG:9377" },
               );
             }
             src.addFeature(feature);
@@ -4467,7 +5181,11 @@ function pickFromRowsEdit(rows, keys) {
   for (const row of rows) {
     if (!row || typeof row !== "object") continue;
     for (const key of keys) {
-      if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== "") {
+      if (
+        row[key] !== undefined &&
+        row[key] !== null &&
+        String(row[key]).trim() !== ""
+      ) {
         return row[key];
       }
     }
@@ -4478,13 +5196,27 @@ function pickFromRowsEdit(rows, keys) {
 function setModalTextFieldEdit(id, value) {
   const el = document.getElementById(id);
   if (el) {
-    el.textContent = (value !== null && value !== undefined && String(value).trim() !== "") ? value : "----";
+    el.textContent =
+      value !== null && value !== undefined && String(value).trim() !== ""
+        ? value
+        : "----";
   }
 }
 
 function asSiNoEdit(value) {
-  if (value === true || String(value).toLowerCase() === "true" || String(value).toLowerCase() === "sí" || String(value).toLowerCase() === "si") return "Sí";
-  if (value === false || String(value).toLowerCase() === "false" || String(value).toLowerCase() === "no") return "No";
+  if (
+    value === true ||
+    String(value).toLowerCase() === "true" ||
+    String(value).toLowerCase() === "sí" ||
+    String(value).toLowerCase() === "si"
+  )
+    return "Sí";
+  if (
+    value === false ||
+    String(value).toLowerCase() === "false" ||
+    String(value).toLowerCase() === "no"
+  )
+    return "No";
   return "----";
 }
 
@@ -4500,15 +5232,22 @@ function renderEmptyMarcasAsignacionEdit(selector, mensaje) {
 }
 
 function renderMarcasPredialesAsignacionEdit(marcas = []) {
-  const contenedor = document.querySelector("#contenidoMarcasPredialesAsignacion .contenido-visita");
+  const contenedor = document.querySelector(
+    "#contenidoMarcasPredialesAsignacion .contenido-visita",
+  );
   if (!contenedor) return;
   const registros = Array.isArray(marcas) ? marcas : [];
   if (!registros.length) {
-    renderEmptyMarcasAsignacionEdit("#contenidoMarcasPredialesAsignacion .contenido-visita", "Sin información de marcas prediales");
+    renderEmptyMarcasAsignacionEdit(
+      "#contenidoMarcasPredialesAsignacion .contenido-visita",
+      "Sin información de marcas prediales",
+    );
     return;
   }
-  contenedor.innerHTML = registros.map((marca, index) => `
-        ${index > 0 ? '<div class="border-top my-3"></div>' : ''}
+  contenedor.innerHTML = registros
+    .map(
+      (marca, index) => `
+        ${index > 0 ? '<div class="border-top my-3"></div>' : ""}
         <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
           <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Tipo de marca</div><div class="text-start dato_info">${esc(normalizarTextoEdit(marca?.marca_tipo_nombre ?? marca?.marca_tipo))}</div></div></div>
           <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Fecha de creacin</div><div class="text-start dato_info">${esc(formatDateMaybeEdit(marca?.fecha_creacion))}</div></div></div>
@@ -4516,54 +5255,81 @@ function renderMarcasPredialesAsignacionEdit(marcas = []) {
           <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Fue resuelta?</div><div class="text-start dato_info">${esc(asSiNoEdit(marca?.resuelta))}</div></div></div>
           <div class="col-12"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Observacin</div><div class="text-start dato_info">${esc(normalizarTextoEdit(marca?.observacion))}</div></div></div>
         </div>
-      `).join("");
+      `,
+    )
+    .join("");
 }
 
 function renderNovedadesFMIAsignacionEdit(novedades = []) {
-  const contenedor = document.querySelector("#contenidoNovedadFMIAsignacion .contenido-visita");
+  const contenedor = document.querySelector(
+    "#contenidoNovedadFMIAsignacion .contenido-visita",
+  );
   if (!contenedor) return;
   const registros = Array.isArray(novedades) ? novedades : [];
   if (!registros.length) {
-    renderEmptyMarcasAsignacionEdit("#contenidoNovedadFMIAsignacion .contenido-visita", "Sin información de novedad FMI");
+    renderEmptyMarcasAsignacionEdit(
+      "#contenidoNovedadFMIAsignacion .contenido-visita",
+      "Sin información de novedad FMI",
+    );
     return;
   }
-  contenedor.innerHTML = registros.map((novedad, index) => `
-        ${index > 0 ? '<div class="border-top my-3"></div>' : ''}
+  contenedor.innerHTML = registros
+    .map(
+      (novedad, index) => `
+        ${index > 0 ? '<div class="border-top my-3"></div>' : ""}
         <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
           <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Tipo de novedad</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.tipo_novedad_fmi_nombre ?? novedad?.tipo_novedad_fmi))}</div></div></div>
           <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Cdigo ORIP</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.codigo_orip))}</div></div></div>
           <div class="col-12"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Nmero FMI</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.numero_fmi))}</div></div></div>
         </div>
-      `).join("");
+      `,
+    )
+    .join("");
 }
 
 function renderNovedadesNumeroPredialAsignacionEdit(novedades = []) {
-  const contenedor = document.querySelector("#contenidoNovedadNumeroPredialAsignacion .contenido-visita");
+  const contenedor = document.querySelector(
+    "#contenidoNovedadNumeroPredialAsignacion .contenido-visita",
+  );
   if (!contenedor) return;
   const registros = Array.isArray(novedades) ? novedades : [];
   if (!registros.length) {
-    renderEmptyMarcasAsignacionEdit("#contenidoNovedadNumeroPredialAsignacion .contenido-visita", "Sin información de novedad número predial");
+    renderEmptyMarcasAsignacionEdit(
+      "#contenidoNovedadNumeroPredialAsignacion .contenido-visita",
+      "Sin información de novedad número predial",
+    );
     return;
   }
-  contenedor.innerHTML = registros.map((novedad, index) => `
-        ${index > 0 ? '<div class="border-top my-3"></div>' : ''}
+  contenedor.innerHTML = registros
+    .map(
+      (novedad, index) => `
+        ${index > 0 ? '<div class="border-top my-3"></div>' : ""}
         <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
           <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Tipo de novedad</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.tipo_novedad_nombre ?? novedad?.tipo_novedad))}</div></div></div>
           <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Nmero predial</div><div class="text-start dato_info">${esc(normalizarTextoEdit(novedad?.numero_predial))}</div></div></div>
         </div>
-      `).join("");
+      `,
+    )
+    .join("");
 }
 
 function renderTramitesAsignacionEdit(tramites = []) {
-  const contenedor = document.querySelector("#contenidoTramitesAsignacion .contenido-visita");
+  const contenedor = document.querySelector(
+    "#contenidoTramitesAsignacion .contenido-visita",
+  );
   if (!contenedor) return;
   const registros = Array.isArray(tramites) ? tramites : [];
   if (!registros.length) {
-    renderEmptyMarcasAsignacionEdit("#contenidoTramitesAsignacion .contenido-visita", "Sin información de trámites");
+    renderEmptyMarcasAsignacionEdit(
+      "#contenidoTramitesAsignacion .contenido-visita",
+      "Sin información de trámites",
+    );
     return;
   }
-  contenedor.innerHTML = registros.map((tramite, index) => `
-        ${index > 0 ? '<div class="border-top my-3"></div>' : ''}
+  contenedor.innerHTML = registros
+    .map(
+      (tramite, index) => `
+        ${index > 0 ? '<div class="border-top my-3"></div>' : ""}
         <div class="row g-2 tarjet-row-pot-visita justify-content-center mx-0 mt-1">
           <div class="col-12 col-md-7"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Entidad</div><div class="text-start dato_info">${esc(normalizarTextoEdit(tramite?.entidad_nombre ?? tramite?.entidad))}</div></div></div>
           <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Trmite</div><div class="text-start dato_info">${esc(normalizarTextoEdit(tramite?.tramite_nombre ?? tramite?.tramite))}</div></div></div>
@@ -4571,13 +5337,17 @@ function renderTramitesAsignacionEdit(tramites = []) {
           <div class="col-12 col-md-5"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Fue resuelta?</div><div class="text-start dato_info">${esc(asSiNoEdit(tramite?.resuelta))}</div></div></div>
           <div class="col-12"><div class="d-flex flex-column w-100 dato p-2"><div class="fw-bold text-start tex-num">Observacin</div><div class="text-start dato_info">${esc(normalizarTextoEdit(tramite?.observacion))}</div></div></div>
         </div>
-      `).join("");
+      `,
+    )
+    .join("");
 }
 
 function renderModalMarcasAsignacionEdit(detalle = {}) {
   renderMarcasPredialesAsignacionEdit(detalle?.marcas || []);
   renderNovedadesFMIAsignacionEdit(detalle?.novedades_fmi || []);
-  renderNovedadesNumeroPredialAsignacionEdit(detalle?.novedades_numero_predial || []);
+  renderNovedadesNumeroPredialAsignacionEdit(
+    detalle?.novedades_numero_predial || [],
+  );
   renderTramitesAsignacionEdit(detalle?.tramites || []);
 }
 
@@ -4589,34 +5359,67 @@ function nombreInteresadoEdit(item = {}) {
     item.primer_nombre,
     item.segundo_nombre,
     item.primer_apellido,
-    item.segundo_apellido
-  ].filter(Boolean).join(" ");
+    item.segundo_apellido,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return item.nombre_completo || item.razon_social || nombreCompuesto || "---";
 }
 
 function limpiarModalInformacionPredioEdit() {
   const fields = [
-    "modal_numero_predial_anterior", "modal_codigo_orip", "modal_matricula_inmobiliaria",
-    "modal_estado_fmi", "modal_fecha_apertura_fmi", "modal_fecha_inscripcion_catastral",
-    "modal_vigencia_actualizacion", "modal_area_registral", "modal_area_catastral_terreno",
-    "modal_coeficiente_copropiedad", "modal_area_coeficiente_copropiedad", "modal_condicion_predio",
-    "modal_tipo_predio", "modal_destinacion_economica", "modal_fecha_visita_predial",
-    "modal_correo_visita", "modal_resultado_visita_predial", "modal_celular_visita",
-    "modal_tipo_documento_atendio", "modal_domicilio_notificacion", "modal_numero_documento_atendio",
-    "modal_autoriza_notificaciones", "modal_nombre_atendio", "modal_tipo_captura",
-    "modal_juridico_nombre", "modal_beneficio_comunidades_indigenas", "modal_predio_matriz",
-    "modal_control_calidad", "modal_comodato", "modal_cabida_linderos",
-    "modal_observacion_juridica", "modal_valido_control_calidad",
-    "modal_ph_total_unidades_privadas", "modal_ph_numero_torres", "modal_ph_area_total_terreno",
-    "modal_ph_area_total_terreno_comun", "modal_ph_area_total_terreno_privada", "modal_ph_area_total_construida",
-    "modal_ph_area_total_construida_comun", "modal_ph_area_total_construida_privada",
-    "modal_ph_asoc_predio_matriz", "modal_ph_asoc_coeficiente_copropiedad", "modal_ph_asoc_area_coeficiente_copropiedad"
+    "modal_numero_predial_anterior",
+    "modal_codigo_orip",
+    "modal_matricula_inmobiliaria",
+    "modal_estado_fmi",
+    "modal_fecha_apertura_fmi",
+    "modal_fecha_inscripcion_catastral",
+    "modal_vigencia_actualizacion",
+    "modal_area_registral",
+    "modal_area_catastral_terreno",
+    "modal_coeficiente_copropiedad",
+    "modal_area_coeficiente_copropiedad",
+    "modal_condicion_predio",
+    "modal_tipo_predio",
+    "modal_destinacion_economica",
+    "modal_fecha_visita_predial",
+    "modal_correo_visita",
+    "modal_resultado_visita_predial",
+    "modal_celular_visita",
+    "modal_tipo_documento_atendio",
+    "modal_domicilio_notificacion",
+    "modal_numero_documento_atendio",
+    "modal_autoriza_notificaciones",
+    "modal_nombre_atendio",
+    "modal_tipo_captura",
+    "modal_juridico_nombre",
+    "modal_beneficio_comunidades_indigenas",
+    "modal_predio_matriz",
+    "modal_control_calidad",
+    "modal_comodato",
+    "modal_cabida_linderos",
+    "modal_observacion_juridica",
+    "modal_valido_control_calidad",
+    "modal_ph_total_unidades_privadas",
+    "modal_ph_numero_torres",
+    "modal_ph_area_total_terreno",
+    "modal_ph_area_total_terreno_comun",
+    "modal_ph_area_total_terreno_privada",
+    "modal_ph_area_total_construida",
+    "modal_ph_area_total_construida_comun",
+    "modal_ph_area_total_construida_privada",
+    "modal_ph_asoc_predio_matriz",
+    "modal_ph_asoc_coeficiente_copropiedad",
+    "modal_ph_asoc_area_coeficiente_copropiedad",
   ];
-  fields.forEach(id => setModalTextFieldEdit(id, "----"));
+  fields.forEach((id) => setModalTextFieldEdit(id, "----"));
 }
 
-function construirInteresadosDesdeDerechosEdit(detalle = {}, numeroPredial = "") {
+function construirInteresadosDesdeDerechosEdit(
+  detalle = {},
+  numeroPredial = "",
+) {
   const derechos = Array.isArray(detalle?.derechos) ? detalle.derechos : [];
   const agrupados = new Map();
 
@@ -4642,7 +5445,8 @@ function construirInteresadosDesdeDerechosEdit(detalle = {}, numeroPredial = "")
         tipo_derecho_nombre: der.tipo_derecho_nombre,
         posesion_ancestral_tradicional: der.posesion_ancestral_tradicional,
         descripcion_derecho: der.descripcion_derecho,
-        tipo_fuente_administrativa_nombre: der.tipo_fuente_administrativa_nombre,
+        tipo_fuente_administrativa_nombre:
+          der.tipo_fuente_administrativa_nombre,
         numero_fuente: der.numero_fuente,
         ente_emisor: der.ente_emisor,
         oficina_origen: der.oficina_origen,
@@ -4650,7 +5454,8 @@ function construirInteresadosDesdeDerechosEdit(detalle = {}, numeroPredial = "")
         ciudad_origen: der.ciudad_origen,
         shadow_disponibilidad: der.estado_disponibilidad_nombre,
         descripcion_fuente: der.descripcion_fuente,
-        observacion_fuente_administrativa: der.observacion_fuente_administrativa,
+        observacion_fuente_administrativa:
+          der.observacion_fuente_administrativa,
         grupo_etnico_nombre: der.grupo_etnico_nombre,
         naturaleza_juridica_nombre: der.naturaleza_juridica_nombre,
         codigo_naturaleza_juridica: der.codigo_naturaleza_juridica,
@@ -4670,12 +5475,19 @@ function construirInteresadosDesdeDerechosEdit(detalle = {}, numeroPredial = "")
   return Array.from(agrupados.values());
 }
 
-function setPredioConditionAccordionVisibilityEdit(targetId, predio, expectedItfcodes) {
+function setPredioConditionAccordionVisibilityEdit(
+  targetId,
+  predio,
+  expectedItfcodes,
+) {
   const content = document.getElementById(targetId);
   const trigger = document.querySelector(`[data-bs-target="#${targetId}"]`);
-  const item = trigger?.closest(".accordion-item") || content?.closest(".accordion-item");
+  const item =
+    trigger?.closest(".accordion-item") || content?.closest(".accordion-item");
   const rawItfcode = String(predio?.condicion_predio_itfcode ?? "").trim();
-  const validItfcodes = Array.isArray(expectedItfcodes) ? expectedItfcodes : [expectedItfcodes];
+  const validItfcodes = Array.isArray(expectedItfcodes)
+    ? expectedItfcodes
+    : [expectedItfcodes];
   const isVisible = validItfcodes.map(String).includes(rawItfcode);
 
   if (item) {
@@ -4692,67 +5504,258 @@ function setPredioConditionAccordionVisibilityEdit(targetId, predio, expectedItf
   }
 }
 
-function actualizarModalInformacionPredioEdit(predioListado = {}, detalle = {}, interesados = []) {
-  const predio = (detalle && typeof detalle === "object" && detalle.predio) ? detalle.predio : {};
-  const datosAdicionales = Array.isArray(detalle?.datos_adicionales) ? detalle.datos_adicionales : [];
-  const contactoVisita = Array.isArray(detalle?.contacto_visita) ? detalle.contacto_visita : [];
+function actualizarModalInformacionPredioEdit(
+  predioListado = {},
+  detalle = {},
+  interesados = [],
+) {
+  const predio =
+    detalle && typeof detalle === "object" && detalle.predio
+      ? detalle.predio
+      : {};
+  const datosAdicionales = Array.isArray(detalle?.datos_adicionales)
+    ? detalle.datos_adicionales
+    : [];
+  const contactoVisita = Array.isArray(detalle?.contacto_visita)
+    ? detalle.contacto_visita
+    : [];
   const datoAdicional = datosAdicionales[0] || {};
   const contacto = contactoVisita[0] || {};
-  const primerInteresado = Array.isArray(interesados) && interesados.length ? interesados[0] : {};
+  const primerInteresado =
+    Array.isArray(interesados) && interesados.length ? interesados[0] : {};
   const sourcesPredio = [predio, predioListado, datoAdicional];
   const sourcesVisita = [datoAdicional, contacto, primerInteresado, predio];
 
-  setPredioConditionAccordionVisibilityEdit("contenidoPH", predio, ["1", "3", "5"]);
-  setPredioConditionAccordionVisibilityEdit("contenidoPHasociado", predio, ["2", "4", "6"]);
+  setPredioConditionAccordionVisibilityEdit("contenidoPH", predio, [
+    "1",
+    "3",
+    "5",
+  ]);
+  setPredioConditionAccordionVisibilityEdit("contenidoPHasociado", predio, [
+    "2",
+    "4",
+    "6",
+  ]);
 
-  setModalTextFieldEdit("modal_numero_predial_anterior", pickFromRowsEdit(sourcesPredio, ["numero_predial_anterior", "numero_predial_ant"]));
-  setModalTextFieldEdit("modal_codigo_orip", pickFromRowsEdit(sourcesPredio, ["codigo_orip"]));
-  setModalTextFieldEdit("modal_matricula_inmobiliaria", pickFromRowsEdit(sourcesPredio, ["matricula_inmobiliaria", "fmi"]));
-  setModalTextFieldEdit("modal_estado_fmi", pickFromRowsEdit(sourcesPredio, ["estado_fmi_nombre", "estado_fmi"]));
-  setModalTextFieldEdit("modal_fecha_apertura_fmi", formatDateMaybeEdit(pickFromRowsEdit(sourcesPredio, ["fecha_apertura_fmi"])));
-  setModalTextFieldEdit("modal_fecha_inscripcion_catastral", formatDateMaybeEdit(pickFromRowsEdit(sourcesPredio, ["fecha_inscripcion_catastral"])));
-  setModalTextFieldEdit("modal_vigencia_actualizacion", pickFromRowsEdit(sourcesPredio, ["vigencia_actualizacion", "vigencia"]));
-  setModalTextFieldEdit("modal_area_registral", pickFromRowsEdit(sourcesPredio, ["area_registral", "area_registral_m2"]));
-  setModalTextFieldEdit("modal_area_catastral_terreno", pickFromRowsEdit(sourcesPredio, ["area_catastral_terreno", "area_terreno"]));
-  setModalTextFieldEdit("modal_coeficiente_copropiedad", pickFromRowsEdit(sourcesPredio, ["coeficiente_copropiedad"]));
-  setModalTextFieldEdit("modal_area_coeficiente_copropiedad", pickFromRowsEdit(sourcesPredio, ["area_coeficiente_copropiedad"]));
-  setModalTextFieldEdit("modal_condicion_predio", pickFromRowsEdit(sourcesPredio, ["condicion_predio_nombre", "condicion_predio"]));
-  setModalTextFieldEdit("modal_tipo_predio", pickFromRowsEdit(sourcesPredio, ["tipo_predio_nombre", "tipo_predio"]));
-  setModalTextFieldEdit("modal_destinacion_economica", pickFromRowsEdit(sourcesPredio, ["destinacion_economica_nombre", "destinacion_economica"]));
+  setModalTextFieldEdit(
+    "modal_numero_predial_anterior",
+    pickFromRowsEdit(sourcesPredio, [
+      "numero_predial_anterior",
+      "numero_predial_ant",
+    ]),
+  );
+  setModalTextFieldEdit(
+    "modal_codigo_orip",
+    pickFromRowsEdit(sourcesPredio, ["codigo_orip"]),
+  );
+  setModalTextFieldEdit(
+    "modal_matricula_inmobiliaria",
+    pickFromRowsEdit(sourcesPredio, ["matricula_inmobiliaria", "fmi"]),
+  );
+  setModalTextFieldEdit(
+    "modal_estado_fmi",
+    pickFromRowsEdit(sourcesPredio, ["estado_fmi_nombre", "estado_fmi"]),
+  );
+  setModalTextFieldEdit(
+    "modal_fecha_apertura_fmi",
+    formatDateMaybeEdit(
+      pickFromRowsEdit(sourcesPredio, ["fecha_apertura_fmi"]),
+    ),
+  );
+  setModalTextFieldEdit(
+    "modal_fecha_inscripcion_catastral",
+    formatDateMaybeEdit(
+      pickFromRowsEdit(sourcesPredio, ["fecha_inscripcion_catastral"]),
+    ),
+  );
+  setModalTextFieldEdit(
+    "modal_vigencia_actualizacion",
+    pickFromRowsEdit(sourcesPredio, ["vigencia_actualizacion", "vigencia"]),
+  );
+  setModalTextFieldEdit(
+    "modal_area_registral",
+    pickFromRowsEdit(sourcesPredio, ["area_registral", "area_registral_m2"]),
+  );
+  setModalTextFieldEdit(
+    "modal_area_catastral_terreno",
+    pickFromRowsEdit(sourcesPredio, ["area_catastral_terreno", "area_terreno"]),
+  );
+  setModalTextFieldEdit(
+    "modal_coeficiente_copropiedad",
+    pickFromRowsEdit(sourcesPredio, ["coeficiente_copropiedad"]),
+  );
+  setModalTextFieldEdit(
+    "modal_area_coeficiente_copropiedad",
+    pickFromRowsEdit(sourcesPredio, ["area_coeficiente_copropiedad"]),
+  );
+  setModalTextFieldEdit(
+    "modal_condicion_predio",
+    pickFromRowsEdit(sourcesPredio, [
+      "condicion_predio_nombre",
+      "condicion_predio",
+    ]),
+  );
+  setModalTextFieldEdit(
+    "modal_tipo_predio",
+    pickFromRowsEdit(sourcesPredio, ["tipo_predio_nombre", "tipo_predio"]),
+  );
+  setModalTextFieldEdit(
+    "modal_destinacion_economica",
+    pickFromRowsEdit(sourcesPredio, [
+      "destinacion_economica_nombre",
+      "destinacion_economica",
+    ]),
+  );
 
-  setModalTextFieldEdit("modal_fecha_visita_predial", formatDateMaybeEdit(pickFromRowsEdit(sourcesVisita, ["fecha_visita_predial", "fecha_visita"])));
-  setModalTextFieldEdit("modal_correo_visita", pickFromRowsEdit(sourcesVisita, ["correo_visita", "correo_electronico"]));
-  setModalTextFieldEdit("modal_resultado_visita_predial", pickFromRowsEdit(sourcesVisita, ["resultado_visita_predial_nombre", "resultado_visita_nombre", "resultado_visita_predial", "resultado_visita"]));
-  setModalTextFieldEdit("modal_celular_visita", pickFromRowsEdit(sourcesVisita, ["celular_visita", "celular", "telefono"]));
-  setModalTextFieldEdit("modal_tipo_documento_atendio", pickFromRowsEdit(sourcesVisita, ["tipo_documento_atendio_nombre", "tipo_documento_quien_atendio_nombre", "tipo_documento_atendio", "tipo_documento_quien_atendio"]));
-  setModalTextFieldEdit("modal_domicilio_notificacion", pickFromRowsEdit(sourcesVisita, ["domicilio_notificacion"]));
-  setModalTextFieldEdit("modal_numero_documento_atendio", pickFromRowsEdit(sourcesVisita, ["numero_documento_atendio", "numero_documento_quien_atendio"]));
-  setModalTextFieldEdit("modal_autoriza_notificaciones", asSiNoEdit(pickFromRowsEdit(sourcesVisita, ["autoriza_notificaciones", "autoriza_notificacion_correo"])));
-  setModalTextFieldEdit("modal_nombre_atendio", pickFromRowsEdit(sourcesVisita, ["nombre_atendio", "nombre_quien_atendio", "nombre_contacto", "nombres_apellidos_quien_atendio"]) || nombreInteresadoEdit(primerInteresado));
-  setModalTextFieldEdit("modal_tipo_captura", pickFromRowsEdit(sourcesVisita, ["tipo_captura_nombre", "tipo_captura"]));
+  setModalTextFieldEdit(
+    "modal_fecha_visita_predial",
+    formatDateMaybeEdit(
+      pickFromRowsEdit(sourcesVisita, ["fecha_visita_predial", "fecha_visita"]),
+    ),
+  );
+  setModalTextFieldEdit(
+    "modal_correo_visita",
+    pickFromRowsEdit(sourcesVisita, ["correo_visita", "correo_electronico"]),
+  );
+  setModalTextFieldEdit(
+    "modal_resultado_visita_predial",
+    pickFromRowsEdit(sourcesVisita, [
+      "resultado_visita_predial_nombre",
+      "resultado_visita_nombre",
+      "resultado_visita_predial",
+      "resultado_visita",
+    ]),
+  );
+  setModalTextFieldEdit(
+    "modal_celular_visita",
+    pickFromRowsEdit(sourcesVisita, ["celular_visita", "celular", "telefono"]),
+  );
+  setModalTextFieldEdit(
+    "modal_tipo_documento_atendio",
+    pickFromRowsEdit(sourcesVisita, [
+      "tipo_documento_atendio_nombre",
+      "tipo_documento_quien_atendio_nombre",
+      "tipo_documento_atendio",
+      "tipo_documento_quien_atendio",
+    ]),
+  );
+  setModalTextFieldEdit(
+    "modal_domicilio_notificacion",
+    pickFromRowsEdit(sourcesVisita, ["domicilio_notificacion"]),
+  );
+  setModalTextFieldEdit(
+    "modal_numero_documento_atendio",
+    pickFromRowsEdit(sourcesVisita, [
+      "numero_documento_atendio",
+      "numero_documento_quien_atendio",
+    ]),
+  );
+  setModalTextFieldEdit(
+    "modal_autoriza_notificaciones",
+    asSiNoEdit(
+      pickFromRowsEdit(sourcesVisita, [
+        "autoriza_notificaciones",
+        "autoriza_notificacion_correo",
+      ]),
+    ),
+  );
+  setModalTextFieldEdit(
+    "modal_nombre_atendio",
+    pickFromRowsEdit(sourcesVisita, [
+      "nombre_atendio",
+      "nombre_quien_atendio",
+      "nombre_contacto",
+      "nombres_apellidos_quien_atendio",
+    ]) || nombreInteresadoEdit(primerInteresado),
+  );
+  setModalTextFieldEdit(
+    "modal_tipo_captura",
+    pickFromRowsEdit(sourcesVisita, ["tipo_captura_nombre", "tipo_captura"]),
+  );
 
-  setModalTextFieldEdit("modal_juridico_nombre", nombreInteresadoEdit(primerInteresado));
-  setModalTextFieldEdit("modal_beneficio_comunidades_indigenas", asSiNoEdit(pickFromRowsEdit(sourcesPredio, ["beneficio_comunidades_indigenas", "beneficio_comunidad_indigena"])));
-  setModalTextFieldEdit("modal_predio_matriz", pickFromRowsEdit(sourcesPredio, ["predio_matriz"]));
-  setModalTextFieldEdit("modal_control_calidad", pickFromRowsEdit(sourcesPredio, ["control_calidad"]));
-  setModalTextFieldEdit("modal_comodato", asSiNoEdit(pickFromRowsEdit(sourcesPredio, ["comodato"])));
-  setModalTextFieldEdit("modal_cabida_linderos", pickFromRowsEdit(sourcesPredio, ["cabida_linderos"]));
-  setModalTextFieldEdit("modal_observacion_juridica", pickFromRowsEdit(sourcesPredio, ["observacion_juridica"]));
-  setModalTextFieldEdit("modal_valido_control_calidad", asSiNoEdit(pickFromRowsEdit(sourcesPredio, ["valido_control_calidad", "validado_control_calidad"])));
+  setModalTextFieldEdit(
+    "modal_juridico_nombre",
+    nombreInteresadoEdit(primerInteresado),
+  );
+  setModalTextFieldEdit(
+    "modal_beneficio_comunidades_indigenas",
+    asSiNoEdit(
+      pickFromRowsEdit(sourcesPredio, [
+        "beneficio_comunidades_indigenas",
+        "beneficio_comunidad_indigena",
+      ]),
+    ),
+  );
+  setModalTextFieldEdit(
+    "modal_predio_matriz",
+    pickFromRowsEdit(sourcesPredio, ["predio_matriz"]),
+  );
+  setModalTextFieldEdit(
+    "modal_control_calidad",
+    pickFromRowsEdit(sourcesPredio, ["control_calidad"]),
+  );
+  setModalTextFieldEdit(
+    "modal_comodato",
+    asSiNoEdit(pickFromRowsEdit(sourcesPredio, ["comodato"])),
+  );
+  setModalTextFieldEdit(
+    "modal_cabida_linderos",
+    pickFromRowsEdit(sourcesPredio, ["cabida_linderos"]),
+  );
+  setModalTextFieldEdit(
+    "modal_observacion_juridica",
+    pickFromRowsEdit(sourcesPredio, ["observacion_juridica"]),
+  );
+  setModalTextFieldEdit(
+    "modal_valido_control_calidad",
+    asSiNoEdit(
+      pickFromRowsEdit(sourcesPredio, [
+        "valido_control_calidad",
+        "validado_control_calidad",
+      ]),
+    ),
+  );
 
   const ph = detalle?.informacion_ph || {};
-  setModalTextFieldEdit("modal_ph_total_unidades_privadas", ph.total_unidades_privadas);
+  setModalTextFieldEdit(
+    "modal_ph_total_unidades_privadas",
+    ph.total_unidades_privadas,
+  );
   setModalTextFieldEdit("modal_ph_numero_torres", ph.numero_torres);
   setModalTextFieldEdit("modal_ph_area_total_terreno", ph.area_total_terreno);
-  setModalTextFieldEdit("modal_ph_area_total_terreno_comun", ph.area_total_terreno_comun);
-  setModalTextFieldEdit("modal_ph_area_total_terreno_privada", ph.area_total_terreno_privada);
-  setModalTextFieldEdit("modal_ph_area_total_construida", ph.area_total_construida);
-  setModalTextFieldEdit("modal_ph_area_total_construida_comun", ph.area_total_construida_comun);
-  setModalTextFieldEdit("modal_ph_area_total_construida_privada", ph.area_total_construida_privada);
+  setModalTextFieldEdit(
+    "modal_ph_area_total_terreno_comun",
+    ph.area_total_terreno_comun,
+  );
+  setModalTextFieldEdit(
+    "modal_ph_area_total_terreno_privada",
+    ph.area_total_terreno_privada,
+  );
+  setModalTextFieldEdit(
+    "modal_ph_area_total_construida",
+    ph.area_total_construida,
+  );
+  setModalTextFieldEdit(
+    "modal_ph_area_total_construida_comun",
+    ph.area_total_construida_comun,
+  );
+  setModalTextFieldEdit(
+    "modal_ph_area_total_construida_privada",
+    ph.area_total_construida_privada,
+  );
 
-  setModalTextFieldEdit("modal_ph_asoc_predio_matriz", pickFromRowsEdit(sourcesPredio, ["predio_matriz"]));
-  setModalTextFieldEdit("modal_ph_asoc_coeficiente_copropiedad", pickFromRowsEdit(sourcesPredio, ["coeficiente_copropiedad"]));
-  setModalTextFieldEdit("modal_ph_asoc_area_coeficiente_copropiedad", pickFromRowsEdit(sourcesPredio, ["area_coeficiente_copropiedad"]));
+  setModalTextFieldEdit(
+    "modal_ph_asoc_predio_matriz",
+    pickFromRowsEdit(sourcesPredio, ["predio_matriz"]),
+  );
+  setModalTextFieldEdit(
+    "modal_ph_asoc_coeficiente_copropiedad",
+    pickFromRowsEdit(sourcesPredio, ["coeficiente_copropiedad"]),
+  );
+  setModalTextFieldEdit(
+    "modal_ph_asoc_area_coeficiente_copropiedad",
+    pickFromRowsEdit(sourcesPredio, ["area_coeficiente_copropiedad"]),
+  );
 }
 
 function obtenerNumeroPredialInteresadoEdit(item = {}) {
@@ -4763,8 +5766,10 @@ function contarInteresadosPredioEdit(numeroPredial) {
   if (!numeroPredial || !Array.isArray(interesadosModalEditData)) {
     return 0;
   }
-  return interesadosModalEditData.filter((item) =>
-    String(obtenerNumeroPredialInteresadoEdit(item)) === String(numeroPredial)
+  return interesadosModalEditData.filter(
+    (item) =>
+      String(obtenerNumeroPredialInteresadoEdit(item)) ===
+      String(numeroPredial),
   ).length;
 }
 
@@ -4772,8 +5777,9 @@ function contarConstruccionesPredioEdit(numeroPredial) {
   if (!numeroPredial || !Array.isArray(construccionesDataEdit)) {
     return 0;
   }
-  return construccionesDataEdit.filter((item) =>
-    String(obtenerPredioConstruccionEdit(item)) === String(numeroPredial)
+  return construccionesDataEdit.filter(
+    (item) =>
+      String(obtenerPredioConstruccionEdit(item)) === String(numeroPredial),
   ).length;
 }
 
@@ -4784,7 +5790,9 @@ function obtenerIdOperacionPredioEdit(predio = {}, detalle = {}) {
     predio?.id_operacion,
     predio?.predio_id_operacion,
     predioDetalle?.predio_id_operacion,
-  ].find((item) => item !== null && item !== undefined && String(item).trim() !== "");
+  ].find(
+    (item) => item !== null && item !== undefined && String(item).trim() !== "",
+  );
 
   return valor ?? "-";
 }
@@ -4797,7 +5805,9 @@ function formatearResumenDireccionEdit(direccion) {
 
   if (tipoDireccion === "248") {
     const partes = [
-      direccion?.clase_via_principal_nombre ?? direccion?.clase_via_principal_dispname ?? direccion?.clase_via_principal,
+      direccion?.clase_via_principal_nombre ??
+        direccion?.clase_via_principal_dispname ??
+        direccion?.clase_via_principal,
       direccion?.valor_via_principal,
       direccion?.letra_via_principal,
       direccion?.valor_via_generadora,
@@ -4807,7 +5817,7 @@ function formatearResumenDireccionEdit(direccion) {
       .map((valor) => String(valor ?? "").trim())
       .filter(Boolean);
 
-    return partes.length ? partes.join(" ") : (nombrePredio || "-");
+    return partes.length ? partes.join(" ") : nombrePredio || "-";
   }
 
   return nombrePredio || "-";
@@ -4828,7 +5838,9 @@ function resetDetallePredioEdit() {
   limpiarResumenPredioEdit();
   renderTablaConstruccionesEdit([]);
   renderInteresadosModalEdit([]);
-  const badgeCountContainer = document.getElementById("badgeJuridicoCountContainer");
+  const badgeCountContainer = document.getElementById(
+    "badgeJuridicoCountContainer",
+  );
   if (badgeCountContainer) {
     badgeCountContainer.classList.add("d-none");
     badgeCountContainer.classList.remove("d-flex");
@@ -4844,10 +5856,15 @@ function marcarResumenPredioCargandoEdit(predio = {}) {
   setText("resumenPredioUnidadConstruccion", "...");
 }
 
-function agruparConstruccionesDesdeDetalleEdit(unidades = [], numeroPredial = "", construccionesRaw = []) {
+function agruparConstruccionesDesdeDetalleEdit(
+  unidades = [],
+  numeroPredial = "",
+  construccionesRaw = [],
+) {
   const normalizarUnidad = (unidad = {}, construccionId = null) => ({
     ...unidad,
-    construccion_id: unidad?.construccion_id ?? unidad?.construccion_t_id ?? construccionId,
+    construccion_id:
+      unidad?.construccion_id ?? unidad?.construccion_t_id ?? construccionId,
     identificador:
       unidad?.identificador ??
       unidad?.caracteristica_identificador ??
@@ -4866,13 +5883,23 @@ function agruparConstruccionesDesdeDetalleEdit(unidades = [], numeroPredial = ""
       const consId = c?.t_id ?? c?.id ?? null;
       const nestedUnits = Array.isArray(c?.unidades) ? c.unidades : [];
       const fallbackUnits = Array.isArray(unidades)
-        ? unidades.filter((unidad) => String(unidad?.construccion_id ?? unidad?.construccion_t_id ?? "") === String(consId ?? ""))
+        ? unidades.filter(
+            (unidad) =>
+              String(
+                unidad?.construccion_id ?? unidad?.construccion_t_id ?? "",
+              ) === String(consId ?? ""),
+          )
         : [];
       const unidadesMap = new Map();
 
       [...nestedUnits, ...fallbackUnits].forEach((unidad) => {
         const normalizada = normalizarUnidad(unidad, consId);
-        const key = String(normalizada?.t_id ?? normalizada?.unidad_id ?? normalizada?.id ?? `${consId}-${unidadesMap.size}`);
+        const key = String(
+          normalizada?.t_id ??
+            normalizada?.unidad_id ??
+            normalizada?.id ??
+            `${consId}-${unidadesMap.size}`,
+        );
         if (!unidadesMap.has(key)) {
           unidadesMap.set(key, normalizada);
         }
@@ -4883,7 +5910,10 @@ function agruparConstruccionesDesdeDetalleEdit(unidades = [], numeroPredial = ""
         t_id: consId,
         identificador: c?.identificador || c?.etiqueta || consId,
         tipo_construccion_nombre: c?.tipo_construccion_nombre,
-        predio_numero_predial: c?.numero_predial_nacional || c?.predio_numero_predial || numeroPredial,
+        predio_numero_predial:
+          c?.numero_predial_nacional ||
+          c?.predio_numero_predial ||
+          numeroPredial,
         tipo_dominio_nombre: c?.tipo_dominio_nombre,
         total_mezaninis: c?.total_mezaninis,
         etiqueta: c?.etiqueta,
@@ -4909,7 +5939,8 @@ function agruparConstruccionesDesdeDetalleEdit(unidades = [], numeroPredial = ""
       grupos.set(consKey, {
         id: consId,
         t_id: consId,
-        identificador: unidad?.construccion_identificador || unidad?.identificador || consId,
+        identificador:
+          unidad?.construccion_identificador || unidad?.identificador || consId,
         tipo_construccion_nombre: unidad?.tipo_construccion_nombre,
         predio_numero_predial: unidad?.predio_numero_predial || numeroPredial,
         tipo_dominio_nombre: unidad?.tipo_dominio_nombre,
@@ -4928,11 +5959,15 @@ function agruparConstruccionesDesdeDetalleEdit(unidades = [], numeroPredial = ""
 
     const grupo = grupos.get(consKey);
     const normalizada = normalizarUnidad(unidad, consId);
-    const unitKey = String(normalizada?.t_id ?? normalizada?.unidad_id ?? normalizada?.id ?? "");
-    const yaExiste = Array.isArray(grupo?.unidades) && grupo.unidades.some((item) => {
-      const itemKey = String(item?.t_id ?? item?.unidad_id ?? item?.id ?? "");
-      return unitKey && itemKey === unitKey;
-    });
+    const unitKey = String(
+      normalizada?.t_id ?? normalizada?.unidad_id ?? normalizada?.id ?? "",
+    );
+    const yaExiste =
+      Array.isArray(grupo?.unidades) &&
+      grupo.unidades.some((item) => {
+        const itemKey = String(item?.t_id ?? item?.unidad_id ?? item?.id ?? "");
+        return unitKey && itemKey === unitKey;
+      });
 
     if (!yaExiste) {
       grupo.unidades.push(normalizada);
@@ -4951,35 +5986,51 @@ function invalidarCachesDetalleAsignacion() {
 }
 
 async function aplicarDetallePredioSeleccionadoEdit(predio, detalle = {}) {
-  const numeroPredial = predio?.numero_predial_nacional || detalle?.predio?.numero_predial_nacional || "-";
+  const numeroPredial =
+    predio?.numero_predial_nacional ||
+    detalle?.predio?.numero_predial_nacional ||
+    "-";
   const interesadosRaw = Array.isArray(detalle?.interesados)
     ? detalle.interesados
     : [];
-  const interesados = (interesadosRaw.length ? interesadosRaw : construirInteresadosDesdeDerechosEdit(detalle, numeroPredial))
-    .map((item) => ({
-      ...item,
-      numero_predial_nacional:
-        item?.numero_predial_nacional ||
-        item?.predio_numero_predial ||
-        numeroPredial,
-    }));
+  const interesados = (
+    interesadosRaw.length
+      ? interesadosRaw
+      : construirInteresadosDesdeDerechosEdit(detalle, numeroPredial)
+  ).map((item) => ({
+    ...item,
+    numero_predial_nacional:
+      item?.numero_predial_nacional ||
+      item?.predio_numero_predial ||
+      numeroPredial,
+  }));
   const construcciones = agruparConstruccionesDesdeDetalleEdit(
-    Array.isArray(detalle?.unidades_construccion) ? detalle.unidades_construccion : [],
+    Array.isArray(detalle?.unidades_construccion)
+      ? detalle.unidades_construccion
+      : [],
     numeroPredial,
-    Array.isArray(detalle?.construcciones) ? detalle.construcciones : []
+    Array.isArray(detalle?.construcciones) ? detalle.construcciones : [],
   );
 
-  const direcciones = Array.isArray(detalle?.direcciones) ? detalle.direcciones : [];
+  const direcciones = Array.isArray(detalle?.direcciones)
+    ? detalle.direcciones
+    : [];
   const direccionPredio = direcciones[0] || null;
 
-  setText("resumenPredioOperacionId", obtenerIdOperacionPredioEdit(predio, detalle));
+  setText(
+    "resumenPredioOperacionId",
+    obtenerIdOperacionPredioEdit(predio, detalle),
+  );
   setText("resumenPredioNumero", numeroPredial);
-  setText("resumenPredioDireccion", formatearResumenDireccionEdit(direccionPredio));
+  setText(
+    "resumenPredioDireccion",
+    formatearResumenDireccionEdit(direccionPredio),
+  );
   setText("resumenPredioInteresados", interesados.length);
   setText("resumenPredioConstrucciones", construcciones.length);
   setText(
     "resumenPredioUnidadConstruccion",
-    construcciones.reduce((acc, item) => acc + contarUcAsociadasEdit(item), 0)
+    construcciones.reduce((acc, item) => acc + contarUcAsociadasEdit(item), 0),
   );
 
   detallePredioActualEdit = detalle;
@@ -4990,7 +6041,9 @@ async function aplicarDetallePredioSeleccionadoEdit(predio, detalle = {}) {
 
   // Badge de cantidad de interesados en Información Jurídica
   const badgeCountValue = document.getElementById("badgeJuridicoCountValue");
-  const badgeCountContainer = document.getElementById("badgeJuridicoCountContainer");
+  const badgeCountContainer = document.getElementById(
+    "badgeJuridicoCountContainer",
+  );
   if (badgeCountValue && badgeCountContainer) {
     badgeCountValue.textContent = interesados.length;
     if (interesados.length > 0) {
@@ -5017,23 +6070,40 @@ function construirNombreInteresadoEdit(item = {}) {
     return { html: `${esc(linea1 || "---")}<br>${esc(linea2)}` };
   }
 
-  const primerValorConContenido = (...valores) => valores.find((valor) =>
-    valor !== null && valor !== undefined && String(valor).trim() !== ""
-  );
+  const primerValorConContenido = (...valores) =>
+    valores.find(
+      (valor) =>
+        valor !== null && valor !== undefined && String(valor).trim() !== "",
+    );
   const nombres = [
     primerValorConContenido(item.i_primer_nombre, item.primer_nombre),
     primerValorConContenido(item.i_segundo_nombre, item.segundo_nombre),
-  ].filter((valor) => String(valor ?? "").trim()).join(" ");
+  ]
+    .filter((valor) => String(valor ?? "").trim())
+    .join(" ");
   const apellidos = [
     primerValorConContenido(item.i_primer_apellido, item.primer_apellido),
     primerValorConContenido(item.i_segundo_apellido, item.segundo_apellido),
-  ].filter((valor) => String(valor ?? "").trim()).join(" ");
-  const razonSocial = primerValorConContenido(item.i_razon_social, item.razon_social);
-  const tipoPersonaCodigo = String(primerValorConContenido(item.i_tipo_itfcode, item.tipo_persona_itfcode)).trim();
+  ]
+    .filter((valor) => String(valor ?? "").trim())
+    .join(" ");
+  const razonSocial = primerValorConContenido(
+    item.i_razon_social,
+    item.razon_social,
+  );
+  const tipoPersonaCodigo = String(
+    primerValorConContenido(item.i_tipo_itfcode, item.tipo_persona_itfcode),
+  ).trim();
   const tieneNombreNatural = Boolean(nombres || apellidos);
-  const esPersonaJuridica = tipoPersonaCodigo === "1" || Boolean(razonSocial && !tieneNombreNatural);
+  const esPersonaJuridica =
+    tipoPersonaCodigo === "1" || Boolean(razonSocial && !tieneNombreNatural);
   const nombreCompuesto = [nombres, apellidos].filter(Boolean).join(" ");
-  const nombreMostrar = item.nombre_completo || razonSocial || nombreCompuesto || item.documento_identidad || "---";
+  const nombreMostrar =
+    item.nombre_completo ||
+    razonSocial ||
+    nombreCompuesto ||
+    item.documento_identidad ||
+    "---";
 
   if (esPersonaJuridica) {
     return { html: esc(razonSocial || nombreMostrar) };
@@ -5053,21 +6123,50 @@ function verInformacionCompletaInteresadoEdit(index) {
   }
 
   /* informacion de derechos */
-  setPanelTextEdit("panel_fecha_inicio_tenencia_edit", item.fecha_inicio_tenencia || "---");
-  setPanelTextEdit("panel_tipo_derecho_edit", item.tipo_derecho_nombre || item.tipo_derecho || "---");
-  setPanelTextEdit("panel_posesion_ancestral_edit", asSiNoEdit(item.posesion_ancestral_tradicional));
-  setPanelTextEdit("panel_descripcion_derecho_edit", item.descripcion_derecho || "---");
+  setPanelTextEdit(
+    "panel_fecha_inicio_tenencia_edit",
+    item.fecha_inicio_tenencia || "---",
+  );
+  setPanelTextEdit(
+    "panel_tipo_derecho_edit",
+    item.tipo_derecho_nombre || item.tipo_derecho || "---",
+  );
+  setPanelTextEdit(
+    "panel_posesion_ancestral_edit",
+    asSiNoEdit(item.posesion_ancestral_tradicional),
+  );
+  setPanelTextEdit(
+    "panel_descripcion_derecho_edit",
+    item.descripcion_derecho || "---",
+  );
 
   /* informacion fuente administrativa */
-  setPanelTextEdit("panel_tipo_fuente_admin_edit", item.tipo_fuente_administrativa_nombre || item.tipo_fuente_administrativa || "---");
+  setPanelTextEdit(
+    "panel_tipo_fuente_admin_edit",
+    item.tipo_fuente_administrativa_nombre ||
+      item.tipo_fuente_administrativa ||
+      "---",
+  );
   setPanelTextEdit("panel_numero_fuente_edit", item.numero_fuente || "---");
   setPanelTextEdit("panel_ente_emisor_edit", item.ente_emisor || "---");
   setPanelTextEdit("panel_oficina_origen_edit", item.oficina_origen || "---");
-  setPanelTextEdit("panel_nombre_escritura_edit", item.nombre_escritura || "---");
+  setPanelTextEdit(
+    "panel_nombre_escritura_edit",
+    item.nombre_escritura || "---",
+  );
   setPanelTextEdit("panel_ciudad_origen_edit", item.ciudad_origen || "---");
-  setPanelTextEdit("panel_estado_disponibilidad_edit", item.estado_disponibilidad_nombre || item.estado_disponibilidad || "---");
-  setPanelTextEdit("panel_descripcion_fuente_edit", item.descripcion_fuente || "---");
-  setPanelTextEdit("panel_observacion_fuente_edit", item.observacion_fuente_administrativa || "---");
+  setPanelTextEdit(
+    "panel_estado_disponibilidad_edit",
+    item.estado_disponibilidad_nombre || item.estado_disponibilidad || "---",
+  );
+  setPanelTextEdit(
+    "panel_descripcion_fuente_edit",
+    item.descripcion_fuente || "---",
+  );
+  setPanelTextEdit(
+    "panel_observacion_fuente_edit",
+    item.observacion_fuente_administrativa || "---",
+  );
 
   const modalEl = document.getElementById("modalInformacionAdicional");
   const offcanvasEl = document.getElementById("panelDerechoPredioEdit");
@@ -5080,7 +6179,8 @@ function verInformacionCompletaInteresadoEdit(index) {
   }
 
   if (offcanvasEl) {
-    const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+    const offcanvasInstance =
+      bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
     offcanvasInstance.show();
   }
 }
@@ -5101,29 +6201,41 @@ function renderInteresadosModalEdit(interesadosRaw) {
   }
 
   const interesados = interesadosRaw.map((i) => {
-    const primerValorConContenido = (...valores) => valores.find((valor) =>
-      valor !== null && valor !== undefined && String(valor).trim() !== ""
-    );
+    const primerValorConContenido = (...valores) =>
+      valores.find(
+        (valor) =>
+          valor !== null && valor !== undefined && String(valor).trim() !== "",
+      );
 
     const nombres = [
       primerValorConContenido(i.i_primer_nombre, i.primer_nombre),
       primerValorConContenido(i.i_segundo_nombre, i.segundo_nombre),
-    ].filter((valor) => String(valor ?? "").trim()).join(" ");
+    ]
+      .filter((valor) => String(valor ?? "").trim())
+      .join(" ");
 
     const apellidos = [
       primerValorConContenido(i.i_primer_apellido, i.primer_apellido),
       primerValorConContenido(i.i_segundo_apellido, i.segundo_apellido),
-    ].filter((valor) => String(valor ?? "").trim()).join(" ");
+    ]
+      .filter((valor) => String(valor ?? "").trim())
+      .join(" ");
 
     const nombreCompuesto = [nombres, apellidos]
       .filter((valor) => String(valor ?? "").trim())
       .join(" ");
 
-    const razonSocial = primerValorConContenido(i.i_razon_social, i.razon_social);
+    const razonSocial = primerValorConContenido(
+      i.i_razon_social,
+      i.razon_social,
+    );
     const tipoPersonaCodigo = String(
-      primerValorConContenido(i.i_tipo_itfcode, i.tipo_persona_itfcode)
+      primerValorConContenido(i.i_tipo_itfcode, i.tipo_persona_itfcode),
     ).trim();
-    const documentoIdentidad = primerValorConContenido(i.i_documento_identidad, i.documento_identidad);
+    const documentoIdentidad = primerValorConContenido(
+      i.i_documento_identidad,
+      i.documento_identidad,
+    );
 
     const nombreMostrar =
       i.nombre_completo ||
@@ -5135,11 +6247,12 @@ function renderInteresadosModalEdit(interesadosRaw) {
     const esPersonaJuridica = tipoPersonaCodigo === "1";
     const esPersonaNatural = tipoPersonaCodigo === "0";
     const linea1 = esPersonaJuridica
-      ? (razonSocial || nombreMostrar)
-      : (nombres || nombreMostrar);
+      ? razonSocial || nombreMostrar
+      : nombres || nombreMostrar;
     const linea2 = esPersonaNatural ? apellidos : "";
 
-    const sexo = i.sexo_nombre || i.i_sexo_nombre || i.sexo || i.i_sexo || "---";
+    const sexo =
+      i.sexo_nombre || i.i_sexo_nombre || i.sexo || i.i_sexo || "---";
 
     const cuotaBase =
       i.d_cuota_participacion ??
@@ -5174,17 +6287,42 @@ function renderInteresadosModalEdit(interesadosRaw) {
 
   interesadosModalEditData = interesados;
 
-  tbody.innerHTML = interesados.map((item, index) => {
-    const autorizaNotif = item.autoriza_notificacion_correo === true || item.autoriza_notificacion_correo === 'true' || item.autoriza_notificacion_correo === 't' ? 'S' :
-      (item.autoriza_notificacion_correo === false || item.autoriza_notificacion_correo === 'false' || item.autoriza_notificacion_correo === 'f' ? 'No' : '---');
+  tbody.innerHTML = interesados
+    .map((item, index) => {
+      const autorizaNotif =
+        item.autoriza_notificacion_correo === true ||
+        item.autoriza_notificacion_correo === "true" ||
+        item.autoriza_notificacion_correo === "t"
+          ? "S"
+          : item.autoriza_notificacion_correo === false ||
+              item.autoriza_notificacion_correo === "false" ||
+              item.autoriza_notificacion_correo === "f"
+            ? "No"
+            : "---";
 
-    const campesinoTexto = item.autorreconocimiento_campesino === true || item.autorreconocimiento_campesino === 'true' || item.autorreconocimiento_campesino === 't' ? 'S' :
-      (item.autorreconocimiento_campesino === false || item.autorreconocimiento_campesino === 'false' || item.autorreconocimiento_campesino === 'f' ? 'No' : '---');
+      const campesinoTexto =
+        item.autorreconocimiento_campesino === true ||
+        item.autorreconocimiento_campesino === "true" ||
+        item.autorreconocimiento_campesino === "t"
+          ? "S"
+          : item.autorreconocimiento_campesino === false ||
+              item.autorreconocimiento_campesino === "false" ||
+              item.autorreconocimiento_campesino === "f"
+            ? "No"
+            : "---";
 
-    const etnicoTexto = item.autorreconocimiento_etnico === true || item.autorreconocimiento_etnico === 'true' || item.autorreconocimiento_etnico === 't' ? 'S' :
-      (item.autorreconocimiento_etnico === false || item.autorreconocimiento_etnico === 'false' || item.autorreconocimiento_etnico === 'f' ? 'No' : '---');
+      const etnicoTexto =
+        item.autorreconocimiento_etnico === true ||
+        item.autorreconocimiento_etnico === "true" ||
+        item.autorreconocimiento_etnico === "t"
+          ? "S"
+          : item.autorreconocimiento_etnico === false ||
+              item.autorreconocimiento_etnico === "false" ||
+              item.autorreconocimiento_etnico === "f"
+            ? "No"
+            : "---";
 
-    return `
+      return `
             <tr class="fila-interesado-principal-edit" data-detalle-id="detalleInteresadoEdit_${index}">
                 <td>
                     <div class="d-flex align-items-center gap-3">
@@ -5376,34 +6514,43 @@ function renderInteresadosModalEdit(interesadosRaw) {
                 </td>
             </tr>
         `;
-  }).join("");
+    })
+    .join("");
 
   tbody.querySelectorAll(".collapse").forEach((collapseEl) => {
     collapseEl.addEventListener("show.bs.collapse", () => {
       tbody.querySelectorAll(".collapse.show").forEach((openEl) => {
         if (openEl.id !== collapseEl.id) {
-          const openInstance = bootstrap.Collapse.getOrCreateInstance(openEl, { toggle: false });
+          const openInstance = bootstrap.Collapse.getOrCreateInstance(openEl, {
+            toggle: false,
+          });
           openInstance.hide();
         }
       });
 
-      tbody.querySelectorAll(".fila-interesado-principal-edit").forEach((row) => {
-        row.classList.remove("fila-interesado-activa-edit");
-        const icon = row.querySelector(".btn-detalle-tabla-edit i");
-        if (icon) icon.classList.remove("rotate-180");
-      });
+      tbody
+        .querySelectorAll(".fila-interesado-principal-edit")
+        .forEach((row) => {
+          row.classList.remove("fila-interesado-activa-edit");
+          const icon = row.querySelector(".btn-detalle-tabla-edit i");
+          if (icon) icon.classList.remove("rotate-180");
+        });
 
       tbody.querySelectorAll(".fila-detalle-interesado-edit").forEach((row) => {
         row.classList.remove("fila-detalle-interesado-activa-edit");
       });
 
-      tbody.querySelectorAll(".detalle-interesado-contenido-edit").forEach((box) => {
-        box.classList.remove("detalle-interesado-contenido-activo-edit");
-      });
+      tbody
+        .querySelectorAll(".detalle-interesado-contenido-edit")
+        .forEach((box) => {
+          box.classList.remove("detalle-interesado-contenido-activo-edit");
+        });
 
       const detailRow = collapseEl.closest(".fila-detalle-interesado-edit");
       const principalRow = detailRow?.previousElementSibling;
-      const detailBox = collapseEl.querySelector(".detalle-interesado-contenido-edit");
+      const detailBox = collapseEl.querySelector(
+        ".detalle-interesado-contenido-edit",
+      );
 
       if (principalRow) {
         principalRow.classList.add("fila-interesado-activa-edit");
@@ -5423,7 +6570,9 @@ function renderInteresadosModalEdit(interesadosRaw) {
     collapseEl.addEventListener("hide.bs.collapse", () => {
       const detailRow = collapseEl.closest(".fila-detalle-interesado-edit");
       const principalRow = detailRow?.previousElementSibling;
-      const detailBox = collapseEl.querySelector(".detalle-interesado-contenido-edit");
+      const detailBox = collapseEl.querySelector(
+        ".detalle-interesado-contenido-edit",
+      );
 
       if (principalRow) {
         principalRow.classList.remove("fila-interesado-activa-edit");
