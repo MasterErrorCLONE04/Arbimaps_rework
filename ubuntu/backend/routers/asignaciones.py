@@ -28,24 +28,7 @@ from tenants import TenantContext, app_table, get_tenant_db_connection, main_tab
 router = APIRouter(prefix="/asignaciones", tags=["asignaciones"])
 logger = logging.getLogger(__name__)
 
-AsignacionEstado = Literal[
-    "CREANDO_WORKSPACE",
-    "ERROR_WORKSPACE",
-    "CERRADA",
-    "EN_CAMPO",
-    "CONTROL_CALIDAD_1",
-    "GENERACION_XTF_CAMPO",
-    "DEVUELTO_CAMPO",
-    "EN_DIGITALIZACION",
-    "CONTROL_CALIDAD_2",
-    "EN_APROBACION",
-    "DEVUELTO_DIGITALIZACION",
-    "DEVUELTO_A_DIGITALIZACION",
-    "EN_SINCRONIZACION",
-    "SINCRONIZADO",
-    "APROBADO_DIGITALIZACION",
-    "APROBADO_SINCRONIZACION",
-]
+AsignacionEstado = str
 
 
 def _user_role_scope(user: Optional[dict]) -> tuple[str, str]:
@@ -827,7 +810,7 @@ def asignar_predios(
                 SELECT COUNT(*)
                 FROM {asignacion_table} a
                 WHERE a.usuario_asignado = %s
-                  AND a.estado::text NOT IN ('CERRADA', 'SINCRONIZADO')
+                  AND a.estado::text NOT IN ('CERRADA', 'SINCRONIZADO', 'SINCRONIZADO_PRODUCCION')
                   AND NOT EXISTS (
                       SELECT 1 
                       FROM {event_log_table} el
@@ -957,7 +940,7 @@ def asignar_predios(
                     total = conflictos_por_asignacion.get(asig_id, 0)
                     cur_update.execute(
                         f"""
-                        SELECT work_datasetname
+                        SELECT work_datasetname, estado
                         FROM {asignacion_table}
                         WHERE id = %s
                         FOR UPDATE
@@ -966,6 +949,30 @@ def asignar_predios(
                     )
                     prev_row = cur_update.fetchone() or {}
                     prev_dataset = (prev_row.get("work_datasetname") or "").strip()
+                    prev_estado = str(prev_row.get("estado") or "").strip().upper()
+
+                    if prev_dataset and prev_estado in ("SINCRONIZADO_PRODUCCION", "APROBADO_SINCRONIZACION"):
+                        try:
+                            workspace_service.sync_workspace_predios_to_main(
+                                 conn,
+                                 tenant,
+                                 asig_id,
+                                 prev_dataset,
+                                 tenant.schemas.main,
+                                 tenant.schemas.work,
+                            )
+                            from services.asignaciones_workspace_f_r1_r2_reverse import sincronizar_predios_a_f_r1_r2
+                            sincronizar_predios_a_f_r1_r2(conn, tenant, conflicto_nums, tenant.schemas.main)
+                            _log_event(
+                                 conn,
+                                 tenant,
+                                 asig_id,
+                                 "SINCRONIZADO_PRODUCCION",
+                                 "Sincronización a producción auto-efectuada antes de reasignación.",
+                                 created_by,
+                            )
+                        except Exception as sync_err:
+                            logger.warning("Fallo en sincronizacion previa a reasignacion para asignacion %s: %s", asig_id, sync_err)
 
                     cur_update.execute(
                         f"""

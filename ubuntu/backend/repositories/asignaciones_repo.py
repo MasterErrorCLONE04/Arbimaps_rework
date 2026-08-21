@@ -102,7 +102,7 @@ def ensure_geoserver_assignment_status_view(conn, tenant=None, *, force: bool = 
                 FROM {app_q}."asignacion_predio" ap
                 JOIN {app_q}."asignacion" a ON a.id = ap.asignacion_id
                 WHERE ap.activo IS DISTINCT FROM FALSE
-                  AND a.estado::text NOT IN ('CERRADA', 'SINCRONIZADO')
+                  AND a.estado::text NOT IN ('CERRADA', 'SINCRONIZADO', 'SINCRONIZADO_PRODUCCION')
                   AND NULLIF(BTRIM(ap.numero_predial_nacional::text), '') = NULLIF(BTRIM(p.numero_predial::text), '')
                 ORDER BY a.creado_en DESC NULLS LAST, a.id DESC
                 LIMIT 1
@@ -208,7 +208,7 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                             "WORKSPACE_EN_COLA", "WORKSPACE_OMITIDO", "WORKSPACE_CLEANUP_ERROR",
                             "PUBLICACION_MAIN", "CARGA_WORKSPACE", "RETORNO_XTF_CARGADO", "RETORNO_XTF_IMPORTADO", 
                             "RETORNO_XTF_VALIDACION_REGLAS", "RETORNO_XTF_VALIDADO", "RETORNO_PREDIOS_ELIMINADOS",
-                            "RETORNO_XTF_VALIDACION_ERROR", "SINCRONIZADO_MAIN", "EDICION_PREDIO_GUARDADA"
+                            "RETORNO_XTF_VALIDACION_ERROR", "SINCRONIZADO_MAIN", "EDICION_PREDIO_GUARDADA", "WORKSPACE_ON_DEMAND_SQL"
                         ]:
                             temp_cur.execute(
                                 """
@@ -224,19 +224,21 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                                 except Exception as e:
                                     logger.warning("Fallo agregar valor enum %s en conexion autocommit: %s", val, e)
                         
-                        # 2. Asegurar asignacion_estado contiene 'CONTROL_CALIDAD_1'
-                        temp_cur.execute(
-                            """
-                            SELECT 1 FROM pg_enum 
-                            JOIN pg_type ON pg_enum.enumtypid = pg_type.oid 
-                            WHERE pg_type.typname = 'asignacion_estado' AND pg_enum.enumlabel = 'CONTROL_CALIDAD_1'
-                            """
-                        )
-                        if not temp_cur.fetchone():
-                            try:
-                                temp_cur.execute(f"ALTER TYPE {app_schema}.asignacion_estado ADD VALUE 'CONTROL_CALIDAD_1'")
-                            except Exception as e:
-                                logger.warning("Fallo agregar valor enum CONTROL_CALIDAD_1 en conexion autocommit: %s", e)
+                        # 2. Asegurar asignacion_estado
+                        for val in ["CONTROL_CALIDAD_1", "PENDIENTE_PUBLICACION"]:
+                            temp_cur.execute(
+                                """
+                                SELECT 1 FROM pg_enum 
+                                JOIN pg_type ON pg_enum.enumtypid = pg_type.oid 
+                                WHERE pg_type.typname = 'asignacion_estado' AND pg_enum.enumlabel = %s
+                                """,
+                                (val,),
+                            )
+                            if not temp_cur.fetchone():
+                                try:
+                                    temp_cur.execute(f"ALTER TYPE {app_schema}.asignacion_estado ADD VALUE '{val}'")
+                                except Exception as e:
+                                    logger.warning("Fallo agregar valor enum %s en conexion autocommit: %s", val, e)
             except Exception as e:
                 logger.error("No se pudo conectar a la base de datos para asegurar los enums: %s", e)
 
@@ -1983,11 +1985,7 @@ def list_asignaciones(conn, tenant=None) -> list[dict]:
             f"""
             SELECT
                 a.*,
-                CASE
-                    WHEN COALESCE(pub_main.publicado_main, FALSE) THEN 'SINCRONIZADO'
-                    WHEN a.estado::text = 'CERRADA' THEN a.estado::text
-                    ELSE a.estado::text
-                END AS estado_resuelto,
+                a.estado::text AS estado_resuelto,
                 COALESCE(coo.first_name, cu.first_name) AS coord_first_name,
                 COALESCE(coo.last_name, cu.last_name) AS coord_last_name,
                 COALESCE(coo.username, a.creado_por) AS creado_por,
@@ -2074,11 +2072,7 @@ def get_asignacion_detalle(conn, *args, **kwargs) -> Optional[dict]:
             f"""
             SELECT
                 a.*,
-                CASE
-                    WHEN COALESCE(pub_main.publicado_main, FALSE) THEN 'SINCRONIZADO'
-                    WHEN a.estado::text = 'CERRADA' THEN a.estado::text
-                    ELSE a.estado::text
-                END AS estado_resuelto,
+                a.estado::text AS estado_resuelto,
                 COALESCE(coo.first_name, cu.first_name) AS coord_first_name,
                 COALESCE(coo.last_name, cu.last_name) AS coord_last_name,
                 COALESCE(coo.username, a.creado_por) AS creado_por,

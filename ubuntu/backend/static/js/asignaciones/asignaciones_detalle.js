@@ -597,9 +597,10 @@ async function cargarDetalle() {
       }
     }
 
-    // 1.5b Mostrar/Ocultar botón de Enviar a Líder Técnico (para Coordinador/Admin)
+    // 1.5b Mostrar/Ocultar botón de Enviar a Líder Técnico (reemplazado por Sincronizar XTF para el coordinador)
     const btnSubmitToLider = document.getElementById("btnHeaderSubmitToLider");
     if (btnSubmitToLider) {
+<<<<<<< Updated upstream
       const isReviewerRole =
         currentLoggedRole === "coordinador" || currentLoggedRole === "admin";
       const isAprobadoDig = dataDet.estado === "APROBADO_DIGITALIZACION";
@@ -611,6 +612,10 @@ async function cargarDetalle() {
         btnSubmitToLider.classList.add("d-none");
         btnSubmitToLider.classList.remove("d-inline-flex");
       }
+=======
+      btnSubmitToLider.classList.add("d-none");
+      btnSubmitToLider.classList.remove("d-inline-flex");
+>>>>>>> Stashed changes
     }
 
     // 1.6 Mostrar/Ocultar botón de Revisión de Líder (para Lider de Reconocimiento/Admin)
@@ -657,9 +662,10 @@ async function cargarDetalle() {
       }
     }
 
-    // 1.8 Mostrar/Ocultar botón de Sincronizar XTF (para Soporte/Admin)
+    // 1.8 Mostrar/Ocultar botón de Sincronizar XTF (para Coordinador/Admin/Líder)
     const btnSyncXtf = document.getElementById("btnHeaderSyncXtf");
     if (btnSyncXtf) {
+<<<<<<< Updated upstream
       const isAllowedSyncRole =
         currentLoggedRole === "soporte" ||
         currentLoggedRole === "admin" ||
@@ -668,6 +674,10 @@ async function cargarDetalle() {
       const isSyncState =
         dataDet.estado === "EN_SINCRONIZACION" ||
         dataDet.estado === "EN_APROBACION";
+=======
+      const isAllowedSyncRole = currentLoggedRole === "coordinador" || currentLoggedRole === "soporte" || currentLoggedRole === "admin" || currentLoggedRole === "lider_tecnico" || currentLoggedRole === "lider_reconocimiento";
+      const isSyncState = dataDet.estado === "APROBADO_DIGITALIZACION" || dataDet.estado === "EN_SINCRONIZACION" || dataDet.estado === "EN_APROBACION";
+>>>>>>> Stashed changes
 
       if (isAllowedSyncRole && isSyncState) {
         btnSyncXtf.classList.remove("d-none");
@@ -678,8 +688,25 @@ async function cargarDetalle() {
       }
     }
 
+    // 1.9 Mostrar/Ocultar botón de Sincronizar a Producción (para Líder Técnico/Admin)
+    const btnSyncProd = document.getElementById("btnHeaderSincronizarProduccion");
+    if (btnSyncProd) {
+      const roleNorm = String(currentLoggedRole || "").trim().toLowerCase();
+      const isLiderTecnico = roleNorm.includes("lider") || roleNorm.includes("admin") || roleNorm.includes("soporte");
+      const isAprobadoSync = dataDet.estado === "APROBADO_SINCRONIZACION";
+
+      if (isLiderTecnico && isAprobadoSync) {
+        btnSyncProd.classList.remove("d-none");
+        btnSyncProd.classList.add("d-inline-flex");
+      } else {
+        btnSyncProd.classList.add("d-none");
+        btnSyncProd.classList.remove("d-inline-flex");
+      }
+    }
+
     // Manage visibility of the divider in the dropdown menu
     const workflowButtons = [
+<<<<<<< Updated upstream
       "btnHeaderSyncXtf",
       "btnHeaderSubmitQA",
       "btnHeaderQCReview",
@@ -690,6 +717,11 @@ async function cargarDetalle() {
       "btnHeaderQCReview2",
       "btnHeaderLiderReview",
       "btnHeaderViewDigitalizacionLink",
+=======
+      "btnHeaderSyncXtf", "btnHeaderSubmitQA", "btnHeaderQCReview",
+      "btnHeaderSubmitSoporteLink", "btnHeaderAssignDigitalizador", "btnHeaderViewSoporteLink", "btnHeaderSubmitQA2",
+      "btnHeaderQCReview2", "btnHeaderSincronizarProduccion", "btnHeaderSubmitToLider", "btnHeaderLiderReview", "btnHeaderViewDigitalizacionLink"
+>>>>>>> Stashed changes
     ];
     let anyWorkflowVisible = false;
     workflowButtons.forEach((id) => {
@@ -5800,9 +5832,15 @@ function obtenerIdOperacionPredioEdit(predio = {}, detalle = {}) {
 function formatearResumenDireccionEdit(direccion) {
   if (!direccion) return "-";
 
-  const tipoDireccion = String(direccion?.tipo_direccion ?? "").trim();
   const nombrePredio = String(direccion?.nombre_predio ?? "").trim();
+  const claseVia = String(
+    direccion?.clase_via_principal_nombre ??
+    direccion?.clase_via_principal_dispname ??
+    direccion?.clase_via_principal ??
+    ""
+  ).trim();
 
+<<<<<<< Updated upstream
   if (tipoDireccion === "248") {
     const partes = [
       direccion?.clase_via_principal_nombre ??
@@ -5818,6 +5856,24 @@ function formatearResumenDireccionEdit(direccion) {
       .filter(Boolean);
 
     return partes.length ? partes.join(" ") : nombrePredio || "-";
+=======
+  const valorVia = String(direccion?.valor_via_principal ?? "").trim();
+  const letraVia = String(direccion?.letra_via_principal ?? "").trim();
+  const valorGen = String(direccion?.valor_via_generadora ?? "").trim();
+  const letraGen = String(direccion?.letra_via_generadora ?? "").trim();
+  const numPredio = String(direccion?.numero_predio ?? "").trim();
+  const complemento = String(direccion?.complemento ?? "").trim();
+
+  let viaPart = [claseVia, valorVia, letraVia].filter(Boolean).join(" ");
+  let genPart = [valorGen, letraGen].filter(Boolean).join("");
+
+  if (viaPart || genPart || numPredio) {
+    let result = viaPart;
+    if (genPart) result += (result ? " # " : "# ") + genPart;
+    if (numPredio) result += (result ? " - " : "- ") + numPredio;
+    if (complemento) result += (result ? " " : "") + complemento;
+    return result.trim();
+>>>>>>> Stashed changes
   }
 
   return nombrePredio || "-";
@@ -6590,3 +6646,59 @@ function renderInteresadosModalEdit(interesadosRaw) {
     });
   });
 }
+<<<<<<< Updated upstream
+=======
+// Sincronizar a Producción button and modal logic (Líder Técnico)
+document.getElementById("btnHeaderSincronizarProduccion")?.addEventListener("click", () => {
+  const modalProdEl = document.getElementById("modalSincronizarProduccion");
+  if (modalProdEl && window.bootstrap) {
+    window.bootstrap.Modal.getOrCreateInstance(modalProdEl).show();
+  }
+});
+
+document.getElementById("btnConfirmarSincronizarProduccion")?.addEventListener("click", async () => {
+  const idActual = Number(elId?.value || idFromUrl);
+  if (!idActual || idActual < 1) {
+    showWarning("Debes seleccionar una asignación válida.");
+    return;
+  }
+
+  const btnConfirm = document.getElementById("btnConfirmarSincronizarProduccion");
+  if (btnConfirm) btnConfirm.disabled = true;
+
+  try {
+    const response = await fetch(`${rp}/asignaciones/${idActual}/sincronizar-produccion`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      credentials: "same-origin"
+    });
+
+    if (!response.ok) {
+      const rawText = await response.text();
+      let data = {};
+      try { data = JSON.parse(rawText); } catch (e) { }
+      throw new Error(data?.detail || data?.message || rawText || "Error al sincronizar a producción.");
+    }
+
+    const modalProdEl = document.getElementById("modalSincronizarProduccion");
+    if (modalProdEl && window.bootstrap) {
+      window.bootstrap.Modal.getInstance(modalProdEl)?.hide();
+    }
+
+    showSuccess("Sincronización a producción realizada con éxito.");
+    if (typeof invalidarCachesDetalleAsignacion === "function") {
+      invalidarCachesDetalleAsignacion();
+    }
+    if (typeof cargarDetalle === "function") {
+      await cargarDetalle();
+    }
+  } catch (err) {
+    showError(err.message || "Error ejecutando la sincronización a producción.");
+  } finally {
+    if (btnConfirm) btnConfirm.disabled = false;
+  }
+});
+>>>>>>> Stashed changes

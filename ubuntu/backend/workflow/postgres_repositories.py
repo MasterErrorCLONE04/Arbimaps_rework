@@ -64,10 +64,12 @@ class PostgresAssignmentRepository(AbstractAssignmentRepository):
                 "EN_DIGITALIZACION": "EN_CAMPO",
                 "DEVUELTO_DIGITALIZACION": "DEVUELTO",
                 "DEVUELTO_A_DIGITALIZACION": "DEVUELTO",
-                "CONTROL_CALIDAD_2": "CONTROL_CALIDAD_1"
+                "CONTROL_CALIDAD_2": "CONTROL_CALIDAD_1",
+                    "APROBADO_SINCRONIZACION": "APROBADO_SINCRONIZACION",
+                    "SINCRONIZADO_PRODUCCION": "SINCRONIZADO_PRODUCCION"
             }
             workflow_state = state_map.get(main_estado, "SIN_ASIGNAR")
-            is_closed = (main_estado == "CERRADA")
+            is_closed = (main_estado in ("CERRADA", "SINCRONIZADO_PRODUCCION"))
 
             if main_estado == "CREANDO_WORKSPACE":
                 workspace_state = "BUILDING"
@@ -117,7 +119,9 @@ class PostgresAssignmentRepository(AbstractAssignmentRepository):
                     "EN_DIGITALIZACION": "EN_CAMPO",
                     "DEVUELTO_DIGITALIZACION": "DEVUELTO",
                     "DEVUELTO_A_DIGITALIZACION": "DEVUELTO",
-                    "CONTROL_CALIDAD_2": "CONTROL_CALIDAD_1"
+                    "CONTROL_CALIDAD_2": "CONTROL_CALIDAD_1",
+                    "APROBADO_SINCRONIZACION": "APROBADO_SINCRONIZACION",
+                    "SINCRONIZADO_PRODUCCION": "SINCRONIZADO_PRODUCCION"
                 }
                 mapped_wf_state = state_map.get(main_estado)
 

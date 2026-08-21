@@ -107,6 +107,19 @@ def _main_table(tenant: TenantContext, table_name: str) -> str:
         raise HTTPException(status_code=500, detail="Identificador tenant invalido.") from exc
 
 
+
+def _dataset_exists_in_work(cur, schema_work: str, datasetname: str) -> bool:
+    if not datasetname or not schema_work:
+        return False
+    try:
+        cur.execute(
+            f'SELECT 1 FROM {_qident(schema_work)}."t_ili2db_dataset" WHERE "datasetname" = %s LIMIT 1',
+            (datasetname,)
+        )
+        return bool(cur.fetchone())
+    except Exception:
+        return False
+
 def _work_table(tenant: TenantContext, table_name: str) -> str:
     try:
         return work_table(tenant, table_name)
@@ -1476,14 +1489,15 @@ def obtener_detalle_asignacion(
     synced_predios = int(retorno.get("synced_predios") or 0)
     expected_predios = int(retorno.get("expected_predios") or 0)
     covered_predios = int(retorno.get("covered_predios") or 0)
-    estado_resuelto = (
-        "SINCRONIZADO"
-        if published_main
-        else ("CERRADA" if str(asignacion.get("estado") or "").strip().upper() == "CERRADA" else asignacion.get("estado"))
-    )
-    assignment_closed = estado_resuelto in {"CERRADA", "SINCRONIZADO"} and not str(
-        asignacion.get("work_datasetname") or ""
-    ).strip()
+    estado_resuelto = str(asignacion.get("estado") or "-").strip()
+    raw_work_ds = str(asignacion.get("work_datasetname") or "").strip()
+    has_valid_work = False
+    if raw_work_ds:
+        schema_work_tmp = _safe_ident(_read_schema_work(tenant), fallback="")
+        with conn.cursor() as check_cur:
+            has_valid_work = _dataset_exists_in_work(check_cur, schema_work_tmp, raw_work_ds)
+    is_completed_state = estado_resuelto.upper() in {"CERRADA", "SINCRONIZADO", "SINCRONIZADO_PRODUCCION"}
+    assignment_closed = is_completed_state or not has_valid_work
     if assignment_closed:
         original_scope_predios = expected_predios if expected_predios > 0 else (total_activos + total_inactivos)
         total_asignados = max(synced_predios, covered_predios)
@@ -1588,11 +1602,13 @@ def obtener_scope_geojson_asignacion(
     predio_numero_field = _read_predio_numero_field()
     asignacion_predio_table = _app_table(tenant, "asignacion_predio")
     asignacion = _ensure_assignment_access(conn, tenant, asignacion_id, user)
-    work_datasetname = str(asignacion.get("work_datasetname") or "").strip()
-    source_schema = schema_work if work_datasetname else schema_main
-    include_inactive = not bool(work_datasetname)
-
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        raw_work_ds = str(asignacion.get("work_datasetname") or "").strip()
+        is_completed_state = str(asignacion.get("estado") or "").strip().upper() in {"CERRADA", "SINCRONIZADO", "SINCRONIZADO_PRODUCCION"}
+        has_work_ds = bool(raw_work_ds) and (not is_completed_state) and _dataset_exists_in_work(cur, schema_work, raw_work_ds)
+        work_datasetname = raw_work_ds if has_work_ds else ""
+        source_schema = schema_work if work_datasetname else schema_main
+        include_inactive = not bool(work_datasetname)
         predio_specs = _table_column_specs(cur, source_schema, "arb_predio")
         if not predio_specs:
             raise HTTPException(
@@ -2072,15 +2088,19 @@ def obtener_detalle_predio_completo_asignacion(
                 status_code=404,
                 detail="El predio no pertenece a la asignacion indicada.",
             )
-        if rel.get("activo") is False and rel.get("work_datasetname"):
+        _ensure_assignment_owner_access(user, rel)
+
+        numero_predial_rel = str(rel.get("numero_predial_nacional") or "").strip()
+        raw_work_ds = str(rel.get("work_datasetname") or "").strip()
+        has_work_ds = bool(raw_work_ds) and _dataset_exists_in_work(cur, schema_work, raw_work_ds)
+
+        if rel.get("activo") is False and has_work_ds:
             raise HTTPException(
                 status_code=404,
                 detail="El predio esta inactivo en la asignacion.",
             )
-        _ensure_assignment_owner_access(user, rel)
 
-        numero_predial_rel = str(rel.get("numero_predial_nacional") or "").strip()
-        work_datasetname = str(rel.get("work_datasetname") or "").strip()
+        work_datasetname = raw_work_ds if has_work_ds else ""
         predio_numero_field = _read_predio_numero_field()
         source_schema = schema_work if work_datasetname else schema_main
         safe_schema = _safe_ident(source_schema, fallback="")
@@ -2299,6 +2319,15 @@ def obtener_detalle_predio_completo_asignacion(
                 params=(str(workspace_predio_t_id),),
                 order_sql='x."t_id" ASC',
             )
+            for d in direcciones:
+                clase_via_raw = _first_non_empty(d, "clase_via_principal")
+                d["clase_via_principal_nombre"] = _resolve_domain_name(
+                    cur,
+                    tenant=tenant,
+                    schema=safe_schema,
+                    table_candidates=["arb_claseviaprincipaltipo", "ilc_claseviaprincipaltipo"],
+                    raw_value=clase_via_raw,
+                ) or clase_via_raw
 
             datos_adicionales = _fetch_rows_by_fk_candidates(
                 cur,
@@ -2315,7 +2344,7 @@ def obtener_detalle_predio_completo_asignacion(
                 row["resultado_visita_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=[
                         "arb_resultadovisitatipo",
                         "ilc_resultadovisitatipo",
@@ -2328,7 +2357,7 @@ def obtener_detalle_predio_completo_asignacion(
 
             contacto_visita = _fetch_rows_by_fk_candidates(
                 cur,
-                schema=schema_work,
+                schema=safe_schema,
                 table_candidates=["arb_contactovisita", "ilc_contactovisita"],
                 fk_candidates=["predio", "ilc_predio", "arb_predio", "predio_id"],
                 fk_value=workspace_predio_t_id,
@@ -2336,7 +2365,7 @@ def obtener_detalle_predio_completo_asignacion(
             if not contacto_visita and datos_adicionales_ids:
                 contacto_visita = _fetch_rows_by_fk_any_candidates(
                     cur,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_contactovisita", "ilc_contactovisita"],
                     fk_candidates=[
                         "datos_adicionales",
@@ -2349,7 +2378,7 @@ def obtener_detalle_predio_completo_asignacion(
 
             novedad_fmi = _fetch_rows_by_fk_candidates(
                 cur,
-                schema=schema_work,
+                schema=safe_schema,
                 table_candidates=["arb_novedadfmi", "ilc_novedadfmi"],
                 fk_candidates=["predio", "ilc_predio", "arb_predio", "predio_id"],
                 fk_value=workspace_predio_t_id,
@@ -2357,7 +2386,7 @@ def obtener_detalle_predio_completo_asignacion(
             if not novedad_fmi and datos_adicionales_ids:
                 novedad_fmi = _fetch_rows_by_fk_any_candidates(
                     cur,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_novedadfmi", "ilc_novedadfmi"],
                     fk_candidates=[
                         "datos_adicionales",
@@ -2372,7 +2401,7 @@ def obtener_detalle_predio_completo_asignacion(
             if numero_predial:
                 estructura_novedad_np = _fetch_rows_by_fk_candidates(
                     cur,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=[
                         "arb_estructuranovedadnumeropredial",
                         "ilc_estructuranovedadnumeropredial",
@@ -2383,7 +2412,7 @@ def obtener_detalle_predio_completo_asignacion(
 
             construcciones = _fetch_rows(
                 cur,
-                schema=schema_work,
+                schema=safe_schema,
                 table="arb_construccion",
                 where_sql='x."predio"::text = %s',
                 params=(str(workspace_predio_t_id),),
@@ -2401,7 +2430,7 @@ def obtener_detalle_predio_completo_asignacion(
                 cons["tipo_construccion_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_tipoconstrucciontipo"],
                     raw_value=tipo_cons_val,
                 ) or _first_non_empty(cons, "tipo_construccion_nombre", "tipo_construccion")
@@ -2409,7 +2438,7 @@ def obtener_detalle_predio_completo_asignacion(
                 cons["estado_construccion_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_estadoconstrucciontipo"],
                     raw_value=estado_cons_val,
                 ) or _first_non_empty(cons, "estado_construccion_nombre", "estado_construccion")
@@ -2419,7 +2448,7 @@ def obtener_detalle_predio_completo_asignacion(
             if construccion_ids:
                 unidades = _fetch_rows(
                     cur,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table="arb_unidadconstruccion",
                     where_sql='x."construccion"::text = ANY(%s::text[])',
                     params=(construccion_ids,),
@@ -2437,7 +2466,7 @@ def obtener_detalle_predio_completo_asignacion(
             if caracteristica_ids:
                 caracteristicas_rows = _fetch_rows(
                     cur,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table="arb_caracteristicasunidadconstruccion",
                     where_sql='x."t_id"::text = ANY(%s::text[])',
                     params=(caracteristica_ids,),
@@ -2485,7 +2514,7 @@ def obtener_detalle_predio_completo_asignacion(
                 tipo_calificacion_uc = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_calificaciontipo"],
                     raw_value=_first_non_empty(caracteristica or {}, "tipo_calificacion"),
                 ) or _first_non_empty(
@@ -2499,7 +2528,7 @@ def obtener_detalle_predio_completo_asignacion(
                 unidad["tipo_planta_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_construccionplantatipo"],
                     raw_value=_first_non_empty(unidad, "tipo_planta"),
                 ) or _first_non_empty(unidad, "tipo_planta_nombre", "tipo_planta")
@@ -2507,7 +2536,7 @@ def obtener_detalle_predio_completo_asignacion(
                 unidad["relacion_superficie_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_relacionsuperficieconstrucciontipo", "arb_relacionsuperficietipo", "col_relacionsuperficietipo"],
                     raw_value=_first_non_empty(unidad, "relacion_superficie"),
                 ) or _first_non_empty(unidad, "relacion_superficie_nombre", "relacion_superficie")
@@ -2515,7 +2544,7 @@ def obtener_detalle_predio_completo_asignacion(
                 unidad["estado_unidad_construccion_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_estadoconstrucciontipo"],
                     raw_value=_first_non_empty(unidad, "estado_unidad_construccion"),
                 ) or _first_non_empty(
@@ -2531,7 +2560,7 @@ def obtener_detalle_predio_completo_asignacion(
                 unidad["tipo_unidad_construccion_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_unidadconstrucciontipo"],
                     raw_value=tipo_uc_val,
                 ) or _first_non_empty(
@@ -2543,7 +2572,7 @@ def obtener_detalle_predio_completo_asignacion(
 
             derechos_rows = _fetch_rows(
                 cur,
-                schema=schema_work,
+                schema=safe_schema,
                 table="arb_derechointeresadofuente",
                 where_sql='x."predio"::text = %s',
                 params=(str(workspace_predio_t_id),),
@@ -2552,7 +2581,7 @@ def obtener_detalle_predio_completo_asignacion(
             if not derechos_rows:
                 derechos_rows = _fetch_rows_by_fk_candidates(
                     cur,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_derecho", "ilc_derecho"],
                     fk_candidates=["predio", "unidad", "baunit", "predio_id"],
                     fk_value=workspace_predio_t_id,
@@ -2565,7 +2594,7 @@ def obtener_detalle_predio_completo_asignacion(
             ]
             rrr_interesado = _fetch_rows_by_fk_any_candidates(
                 cur,
-                schema=schema_work,
+                schema=safe_schema,
                 table_candidates=["col_rrrinteresado", "arb_rrrinteresado"],
                 fk_candidates=["rrr", "derecho", "derecho_id"],
                 fk_values=derecho_ids,
@@ -2660,7 +2689,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["tipo_derecho_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_derechotipo"],
                     raw_value=d_tipo,
                 ) or _first_non_empty(item, "tipo_derecho_nombre")
@@ -2669,7 +2698,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["tipo_fuente_administrativa_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_fuenteadministrativatipo"],
                     raw_value=fa_tipo,
                 ) or _first_non_empty(item, "tipo_fuente_administrativa_nombre")
@@ -2677,7 +2706,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["tipo_documento_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_interesadodocumentotipo"],
                     raw_value=i_tipo_doc,
                 ) or _first_non_empty(item, "tipo_documento_nombre")
@@ -2686,7 +2715,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["tipo_persona_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_interesadotipo"],
                     raw_value=i_tipo,
                 ) or _first_non_empty(item, "tipo_persona_nombre")
@@ -2721,7 +2750,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["grupo_etnico_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_grupoetnicotipo"],
                     raw_value=i_grupo,
                 ) or _first_non_empty(item, "grupo_etnico_nombre")
@@ -2729,7 +2758,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["naturaleza_juridica_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_naturalezajuridicatipo"],
                     raw_value=i_naturaleza,
                 ) or _first_non_empty(item, "naturaleza_juridica_nombre")
@@ -2737,7 +2766,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["codigo_naturaleza_juridica_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_codigonaturalezajuridicatipo"],
                     raw_value=i_codigo_nat,
                 ) or _first_non_empty(item, "codigo_naturaleza_juridica_nombre")
@@ -2750,7 +2779,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["sexo_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_sexotipo"],
                     raw_value=i_sexo,
                 ) or _first_non_empty(item, "sexo_nombre", "sexo")
@@ -2758,7 +2787,7 @@ def obtener_detalle_predio_completo_asignacion(
                 item["estado_disponibilidad_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_estadodisponibilidadtipo", "col_estadodisponibilidadtipo"],
                     raw_value=i_estado_disp,
                 ) or _first_non_empty(item, "estado_disponibilidad_nombre", "estado_disponibilidad")
@@ -2814,7 +2843,7 @@ def obtener_detalle_predio_completo_asignacion(
 
             puntos_referencia = _fetch_rows(
                 cur,
-                schema=schema_work,
+                schema=safe_schema,
                 table="arb_puntoreferencia",
                 where_sql='x."predio"::text = %s',
                 params=(str(workspace_predio_t_id),),
@@ -2825,7 +2854,7 @@ def obtener_detalle_predio_completo_asignacion(
                 pr["tipo_punto_nombre"] = _resolve_domain_name(
                     cur,
                     tenant=tenant,
-                    schema=schema_work,
+                    schema=safe_schema,
                     table_candidates=["arb_puntoreferenciatipo", "ilc_puntoreferenciatipo"],
                     raw_value=tipo_pr_val,
                 ) or _first_non_empty(pr, "tipo_punto_nombre", "tipo_punto_referencia")
@@ -3015,10 +3044,7 @@ def _procesar_retorno_xtf(
                             ),
                         )
                 retorno_version = asignaciones_repo.allocate_asignacion_retorno_version(conn, tenant, asignacion_id)
-                if publish_to_main:
-                    retorno_dataset = _build_retorno_datasetname(work_dataset, retorno_version)
-                else:
-                    retorno_dataset = work_dataset
+                retorno_dataset = work_dataset
                 retorno_row = asignaciones_repo.create_asignacion_retorno(
                     conn,
                     tenant,
@@ -3186,102 +3212,28 @@ def _procesar_retorno_xtf(
                     )
 
                 if publish_to_main:
-                    stage = "sync_workspace_predios_to_main"
-                    synced_predios = workspace_service.sync_workspace_predios_to_main(
-                        conn,
-                        tenant,
-                        asignacion_id,
-                        target_dataset,
-                        schema_main,
-                        schema_work,
-                    )
+                    stage = "update_assignment_status_sincronizado_produccion"
                     with conn.cursor() as cur:
-                        cur.execute("SELECT to_regclass('pg_temp._arb_sync_predio_map')")
-                        has_sync_map = bool((cur.fetchone() or [None])[0])
-                    if has_sync_map:
-                        with conn.cursor() as cur:
-                            cur.execute(
-                                """
-                                SELECT numero_predial_nacional
-                                FROM _arb_sync_predio_map
-                                ORDER BY numero_predial_nacional
-                                LIMIT 10
-                                """
-                            )
-                            synced_predios_preview = [
-                                str(row[0]).strip() for row in (cur.fetchall() or []) if row and row[0]
-                            ]
-                    else:
-                        synced_predios_preview = []
-
-                    with conn.cursor() as cur:
-                        cur.execute("SELECT to_regclass('pg_temp._arb_sync_selected_predio')")
-                        has_sync_scope = bool((cur.fetchone() or [None])[0])
-                        if has_sync_scope:
-                            cur.execute(
-                                f"""
-                                SELECT COUNT(*)
-                                FROM _arb_sync_selected_predio sp
-                                WHERE NOT EXISTS (
-                                    SELECT 1
-                                    FROM {asignacion_predio_table} ap
-                                    WHERE ap.asignacion_id = %s
-                                      AND ap.activo IS DISTINCT FROM FALSE
-                                      AND BTRIM(ap.numero_predial_nacional::text) =
-                                          BTRIM(sp.numero_predial_nacional::text)
-                                )
-                                """,
-                                (asignacion_id,),
-                            )
-                            predios_nuevos_sync = int((cur.fetchone() or [0])[0] or 0)
-                        else:
-                            expected_predios_scope = int(coverage_result.get("expected_predios") or 0)
-                            predios_nuevos_sync = max(int(synced_predios or 0) - expected_predios_scope, 0)
                         cur.execute(
                             f"""
                             UPDATE {asignacion_table}
-                            SET predios_soporte_extra = %s
-                            WHERE id = %s
-                            """,
-                            (predios_nuevos_sync, asignacion_id),
-                        )
-                    stage = "release_assignment_after_main_sync"
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            f"""
-                            UPDATE {asignacion_predio_table}
-                            SET activo = FALSE
-                            WHERE asignacion_id = %s
-                              AND activo IS DISTINCT FROM FALSE
-                            """,
-                            (asignacion_id,),
-                        )
-                        cur.execute(
-                            f"""
-                            UPDATE {asignacion_table}
-                            SET estado = 'CERRADA',
-                                work_datasetname = NULL,
-                                predios_soporte_extra = 0,
+                            SET estado = 'SINCRONIZADO_PRODUCCION',
                                 error_msg = NULL
                             WHERE id = %s
                             """,
                             (asignacion_id,),
                         )
-                    workspace_service.remove_workspace_dataset(
-                        conn,
-                        tenant,
-                        work_dataset,
-                        schema_work,
-                    )
-                else:
-                    stage = "refresh_workspace_predio_ids"
-                    workspace_service.actualizar_predio_ids_desde_workspace(
-                        conn,
-                        tenant,
-                        asignacion_id,
-                    )
-                    work_schema_sql = _qident(schema_work)
-                    with conn.cursor() as cur:
+                    synced_predios = 0
+                    synced_predios_preview = []
+
+                stage = "refresh_workspace_predio_ids"
+                workspace_service.actualizar_predio_ids_desde_workspace(
+                    conn,
+                    tenant,
+                    asignacion_id,
+                )
+                work_schema_sql = _qident(schema_work)
+                with conn.cursor() as cur:
                         cur.execute(
                             f"""
                             UPDATE {asignacion_table}
@@ -3297,7 +3249,7 @@ def _procesar_retorno_xtf(
                                 ) - %s,
                                 0
                             )
-                            , estado = 'PENDIENTE_PUBLICACION'
+                            , estado = 'SINCRONIZADO_PRODUCCION'
                             WHERE id = %s
                             """,
                             (
@@ -3691,7 +3643,7 @@ def importar_retorno_xtf(
     conn=Depends(get_tenant_db_connection),
 ):
     del conn
-    _require_assignment_access(user, "admin", "lider_tecnico", "lider_reconocimiento")
+    _require_assignment_access(user, "admin", "coordinador", "lider_tecnico", "lider_reconocimiento")
     return _procesar_retorno_xtf(
         tenant,
         request.app.state.tenant_connection_manager,
@@ -3753,7 +3705,10 @@ def obtener_detalle_basico_predio(
             raise HTTPException(status_code=404, detail="Asignación no encontrada")
             
         usuario_asignado = str(asig.get("usuario_asignado") or "").strip().lower()
-        work_datasetname = str(asig.get("work_datasetname") or "").strip()
+        raw_work_ds = str(asig.get("work_datasetname") or "").strip()
+        has_work_ds = bool(raw_work_ds) and _dataset_exists_in_work(cur, schema_work, raw_work_ds)
+        work_datasetname = raw_work_ds if has_work_ds else ""
+        target_schema = _safe_ident(schema_work if work_datasetname else (tenant.schemas.main or "a_base_principal"), fallback="a_base_principal")
         
         # Verificación de rol
         role = normalize_role(get_user_role(user))
@@ -3767,7 +3722,7 @@ def obtener_detalle_basico_predio(
             f"""
             SELECT numero_predial_nacional 
             FROM {asignacion_predio_table} 
-            WHERE predio_t_id = %s AND asignacion_id = %s AND activo = TRUE
+            WHERE predio_t_id = %s AND asignacion_id = %s
             LIMIT 1
             """,
             (predio_t_id, id)
@@ -3784,9 +3739,9 @@ def obtener_detalle_basico_predio(
             cur.execute(
                 f"""
                 SELECT p.t_id
-                FROM {schema_work}.{predio_table} p
-                JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
-                JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                FROM {target_schema}.{predio_table} p
+                JOIN {target_schema}.t_ili2db_basket b ON b.t_id = p.t_basket
+                JOIN {target_schema}.t_ili2db_dataset d ON d.t_id = b.dataset
                 WHERE d.datasetname = %s
                   AND BTRIM(p.{predio_numero_field}::text) = BTRIM(%s::text)
                 ORDER BY p.t_id DESC
@@ -3802,7 +3757,7 @@ def obtener_detalle_basico_predio(
             cur.execute(
                 f"""
                 SELECT p.t_id
-                FROM {schema_work}.{predio_table} p
+                FROM {target_schema}.{predio_table} p
                 WHERE BTRIM(p.{predio_numero_field}::text) = BTRIM(%s::text)
                 ORDER BY p.t_id DESC
                 LIMIT 1
@@ -3815,7 +3770,7 @@ def obtener_detalle_basico_predio(
 
         if workspace_predio_t_id is None:
             cur.execute(
-                f"SELECT t_id FROM {schema_work}.{predio_table} WHERE t_id = %s LIMIT 1",
+                f"SELECT t_id FROM {target_schema}.{predio_table} WHERE t_id = %s LIMIT 1",
                 (predio_t_id,)
             )
             row = cur.fetchone()
@@ -3835,7 +3790,7 @@ def obtener_detalle_basico_predio(
                 destinacion_economica, 
                 tipo as tipo_predio,
                 area_catastral_terreno
-            FROM {schema_work}.{predio_table}
+            FROM {target_schema}.{predio_table}
             WHERE t_id = %s
             """,
             (workspace_predio_t_id,)
@@ -4324,4 +4279,134 @@ def asignaciones_unidad_detalle(
         "calificacion_convencional": calificacion_convencional,
         "tipologia_construccion": tipologia_construccion,
         "tipologia_no_convencional": tipologia_no_convencional,
+    }
+
+
+@router.post("/{asignacion_id}/sincronizar-produccion")
+def sincronizar_produccion(
+    request: Request,
+    asignacion_id: int,
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+):
+    _require_assignment_access(user, "admin", "lider_tecnico", "soporte")
+    manager = request.app.state.tenant_connection_manager
+    schema_main = tenant.schemas.main
+    schema_work = tenant.schemas.work
+    asignacion_table = app_table(tenant, "asignacion")
+    asignacion_predio_table = app_table(tenant, "asignacion_predio")
+
+    with manager.get_connection(tenant) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"SELECT id, estado, work_datasetname FROM {asignacion_table} WHERE id = %s FOR UPDATE",
+                (asignacion_id,)
+            )
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Asignación no encontrada")
+            
+            estado_actual = row[1]
+            work_dataset = row[2]
+            if estado_actual not in ("APROBADO_SINCRONIZACION", "SINCRONIZADO_PRODUCCION", "SINCRONIZADO"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"La asignación debe estar en estado 'APROBADO_SINCRONIZACION'. Estado actual: '{estado_actual}'"
+                )
+
+            target_dataset = work_dataset or f"ws_asg_{asignacion_id}"
+            has_dataset_in_work = _dataset_exists_in_work(cur, schema_work, target_dataset)
+
+            if not has_dataset_in_work:
+                cur.execute(
+                    f'SELECT datasetname FROM {_qident(schema_work)}."t_ili2db_dataset" WHERE datasetname LIKE %s ORDER BY t_id DESC LIMIT 1',
+                    (f"%_{asignacion_id}",)
+                )
+                found_ds = cur.fetchone()
+                if found_ds and found_ds[0]:
+                    target_dataset = found_ds[0]
+                    has_dataset_in_work = True
+
+            synced_predios = 0
+            if has_dataset_in_work:
+                synced_predios = workspace_service.sync_workspace_predios_to_main(
+                    conn,
+                    tenant,
+                    asignacion_id,
+                    target_dataset,
+                    schema_main,
+                    schema_work,
+                )
+            else:
+                logger.info(
+                    "Dataset '%s' para asignacion %s no se encuentra en %s. Omitiendo copia de workspace.",
+                    target_dataset, asignacion_id, schema_work
+                )
+
+            # Reverse ETL a f_r1_r2 solo al sincronizar a a_base_principal
+            try:
+                from services.asignaciones_workspace_f_r1_r2_reverse import sincronizar_predios_a_f_r1_r2
+                cur.execute(
+                    f"""
+                    SELECT numero_predial_nacional
+                    FROM {asignacion_predio_table}
+                    WHERE asignacion_id = %s;
+                    """,
+                    (asignacion_id,),
+                )
+                npns = [str(r[0]).strip() for r in (cur.fetchall() or []) if r and r[0]]
+                if npns:
+                    sincronizar_predios_a_f_r1_r2(conn, tenant, npns, schema_main)
+            except Exception as exc:
+                logger.error("Error durante Reverse ETL a f_r1_r2 en sincronizar_produccion para asignacion_id=%s: %s", asignacion_id, exc, exc_info=True)
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Fallo durante la sincronización Reverse ETL a f_r1_r2: {exc}"
+                )
+
+            cur.execute(
+                f"""
+                UPDATE {asignacion_predio_table}
+                SET activo = FALSE
+                WHERE asignacion_id = %s AND activo IS DISTINCT FROM FALSE
+                """,
+                (asignacion_id,)
+            )
+            cur.execute(
+                f"""
+                UPDATE {asignacion_table}
+                SET estado = 'SINCRONIZADO',
+                    error_msg = NULL
+                WHERE id = %s
+                """,
+                (asignacion_id,)
+            )
+
+            if work_dataset:
+                try:
+                    workspace_service.remove_workspace_dataset(
+                        conn,
+                        tenant,
+                        work_dataset,
+                        schema_work,
+                    )
+                except Exception as exc:
+                    logger.warning("Error removiendo workspace_dataset en sincronizar_produccion: %s", exc)
+
+            asignaciones_repo.safe_log_event(
+                conn,
+                tenant,
+                asignacion_id,
+                "SINCRONIZADO_PRODUCCION",
+                f"Sincronización a producción efectuada por Líder Técnico ({user.get('username')}). Predios sincronizados: {synced_predios}",
+                usuario=user.get("username"),
+            )
+
+    return {
+        "ok": True,
+        "status": "success",
+        "message": "Sincronización a producción realizada con éxito.",
+        "asignacion_id": asignacion_id,
+        "estado": "SINCRONIZADO_PRODUCCION",
+        "synced_predios": synced_predios,
     }

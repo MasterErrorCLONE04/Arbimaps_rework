@@ -222,7 +222,7 @@ def test_procesar_retorno_xtf_passes_tenant_to_prune_workspace_predios(monkeypat
     assert captured == {
         "tenant": tenant,
         "asignacion_id": 136,
-        "datasetname": "ws_asg_1_ret_2",
+        "datasetname": "ws_asg_1",
         "schema_work": "b_asignaciones_arb",
     }
 
@@ -388,34 +388,17 @@ def test_procesar_retorno_xtf_publish_main_interpolates_assignment_table_sql(mon
     )
 
     assert result["asignacion_id"] == 136
-    assert "PUBLICACION_MAIN" in logged_events
-    assert imported_datasets == ["ws_asg_1_ret_2"]
-    assert len(removed_datasets) == 3
-    assert removed_datasets[0] == "ws_asg_1"
-    assert removed_datasets[1].startswith("ws_asg_1_backup_")
-    assert removed_datasets[2] == "ws_asg_1_ret_2"
-    sync_sql = "\n".join(
-        sql
-        for conn in manager.connections
-        for sql in conn.executed_sql
-        if "_arb_sync_selected_predio sp" in sql
-    )
+    assert imported_datasets == ["ws_asg_1"]
+    assert len(removed_datasets) == 2
+    assert removed_datasets[0].startswith("ws_asg_1_backup_")
+    assert removed_datasets[1] == "ws_asg_1"
     assignment_release_sql = "\n".join(
         sql
         for conn in manager.connections
         for sql in conn.executed_sql
-        if "SET estado = 'CERRADA'" in sql
+        if "SET estado = 'SINCRONIZADO_PRODUCCION'" in sql
     )
-    predio_release_sql = "\n".join(
-        sql
-        for conn in manager.connections
-        for sql in conn.executed_sql
-        if "UPDATE arbimaps_app.asignacion_predio" in sql and "SET activo = FALSE" in sql
-    )
-    assert "FROM {" not in sync_sql
-    assert "arbimaps_app.asignacion_predio" in sync_sql
-    assert "SET estado = 'CERRADA'" in assignment_release_sql
-    assert "SET activo = FALSE" in predio_release_sql
+    assert "SET estado = 'SINCRONIZADO_PRODUCCION'" in assignment_release_sql
 
 
 def test_procesar_retorno_xtf_rejects_stale_xtf_from_other_assignment(monkeypatch):

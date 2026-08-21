@@ -147,7 +147,7 @@ def resumen_estados(
             JOIN {app_schema}.asignacion a
               ON a.id = ap.asignacion_id
             WHERE ap.activo IS DISTINCT FROM FALSE
-              AND a.estado::text NOT IN ('CERRADA', 'SINCRONIZADO')
+              AND a.estado::text NOT IN ('CERRADA', 'SINCRONIZADO', 'SINCRONIZADO_PRODUCCION')
         """
         params_pred_asig = []
         if excluded_usernames:
@@ -162,7 +162,7 @@ def resumen_estados(
             JOIN {app_schema}.asignacion a
               ON a.id = ap.asignacion_id
             WHERE ap.activo IS DISTINCT FROM FALSE
-              AND a.estado::text = 'SINCRONIZADO'
+              AND a.estado::text IN ('SINCRONIZADO', 'SINCRONIZADO_PRODUCCION')
         """
         params_pred_sinc = []
         if excluded_usernames:

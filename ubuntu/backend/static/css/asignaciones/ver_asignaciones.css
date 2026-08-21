@@ -984,3 +984,19 @@
         padding: 14px 16px 18px;
     }
 }
+
+.estado-chip.estado-aprobado-digitalizacion {
+  color: #1e40af;
+  background-color: #dbeafe;
+  border-left: 3px solid #3b82f6;
+}
+.estado-chip.estado-aprobado-sincronizacion {
+  color: #92400e;
+  background-color: #fef3c7;
+  border-left: 3px solid #f59e0b;
+}
+.estado-chip.estado-sincronizado-produccion {
+  color: #065f46;
+  background-color: #d1fae5;
+  border-left: 3px solid #059669;
+}
