@@ -989,8 +989,8 @@ async function cargarDetalle() {
                 <i class="${iconClass}" style="color: ${iconColor}; font-size: 1.15rem;"></i>
               </div>
               <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0;">
-                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                  <span class="fw-bold text-dark" style="font-size: 0.95rem; color: #021f3c !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%;" title="${esc(title)}">${title}</span>
+                <div style="display:flex;align-items:center;width:100%;gap:12px;">
+                  <span class="fw-bold text-dark" style="font-size:.88rem;color:#021f3c!important;white-space:normal;line-height:1.2;max-width:180px;flex:0 1 180px;" title="${esc(title)}">${title}</span>
                   ${transHtml}
                 </div>
                 <div>

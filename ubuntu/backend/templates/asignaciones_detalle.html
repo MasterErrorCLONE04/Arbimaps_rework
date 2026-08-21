@@ -1,3 +1,287 @@
+<style>
+  .modal-header-enlaces {
+    background-color: #0A2C1B;
+    color: white;
+  }
+
+  .btn-cerrar-enlaces {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background-color: #C4D5CC;
+    color: #0A2C1B;
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+
+  .btn-cerrar-enlaces i {
+    transition: transform .25s ease;
+  }
+
+  .btn-cerrar-enlaces:hover {
+    transform: scale(1.12);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+  }
+
+  .btn-cerrar-enlaces:hover i {
+    transform: rotate(90deg);
+  }
+
+  #modalEnlacesAsignacion .modal-body {
+    background: #F7F9F8;
+    padding: 24px;
+  }
+
+  #modalEnlacesAsignacion .enlaces-bloque {
+    position: relative;
+  }
+
+  #modalEnlacesAsignacion .enlaces-titulo-seccion {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    color: #0A2C1B;
+    font-size: .82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  #modalEnlacesAsignacion .enlaces-titulo-icono {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: #E6EFEA;
+    color: #0A2C1B;
+  }
+
+  #modalEnlacesAsignacion .enlaces-divider {
+    border-color: #D5E1DA;
+    opacity: 1;
+    margin: 26px 0;
+  }
+
+  /* TARJETA GENERADA POR JS */
+  #modalWorkflowLinksContainer .link-item-card,
+  #modalCommentLinksContainer .link-item-card {
+    width: 100% !important;
+    display: flex !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+    padding: 16px 18px !important;
+    margin-bottom: 12px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #DCE6E0 !important;
+    border-left: 4px solid #0A2C1B !important;
+    border-radius: 12px !important;
+    box-shadow: 0 3px 10px rgba(10, 44, 27, .06) !important;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease !important;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card:hover,
+  #modalCommentLinksContainer .link-item-card:hover {
+    transform: translateX(5px);
+    border-color: #BFD0C6 !important;
+    box-shadow: 0 7px 18px rgba(10, 44, 27, .12) !important;
+  }
+
+  /* ICONO PRINCIPAL */
+  #modalWorkflowLinksContainer .link-item-card>div:first-child,
+  #modalCommentLinksContainer .link-item-card>div:first-child {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    align-self: flex-start !important;
+    margin-top: 2px;
+    background: #E8F0EB !important;
+    color: #0A2C1B !important;
+    border: 1px solid #CFDDD5;
+    box-shadow: none !important;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card>div:first-child i,
+  #modalCommentLinksContainer .link-item-card>div:first-child i {
+    color: #0A2C1B !important;
+    font-size: 1.1rem !important;
+  }
+
+  /* CONTENIDO PRINCIPAL */
+  #modalWorkflowLinksContainer .link-item-card>div:nth-child(2),
+  #modalCommentLinksContainer .link-item-card>div:nth-child(2) {
+    min-width: 0;
+    flex: 1;
+  }
+
+  /* TITULO */
+  #modalWorkflowLinksContainer .link-item-card .fw-bold.text-dark,
+  #modalCommentLinksContainer .link-item-card .fw-bold.text-dark {
+    color: #0A2C1B !important;
+    font-size: .95rem !important;
+    font-weight: 700 !important;
+    max-width: none !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    line-height: 1.3;
+  }
+
+  /* URL */
+  #modalWorkflowLinksContainer .link-item-card a.text-secondary,
+  #modalCommentLinksContainer .link-item-card a.text-secondary {
+    display: block !important;
+    max-width: 100% !important;
+    padding: 8px 10px;
+    margin-top: 2px;
+    border-radius: 7px;
+    background: #F3F7F5;
+    color: #607168 !important;
+    font-size: .82rem !important;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card a.text-secondary:hover,
+  #modalCommentLinksContainer .link-item-card a.text-secondary:hover {
+    background: #E8F0EB;
+    color: #0A2C1B !important;
+  }
+
+  /* METADATOS */
+  #modalWorkflowLinksContainer .link-item-card .text-muted.mt-1,
+  #modalCommentLinksContainer .link-item-card .text-muted.mt-1 {
+    color: #718078 !important;
+    font-size: .76rem !important;
+    line-height: 1.5 !important;
+    margin-top: 4px !important;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card .text-muted strong,
+  #modalCommentLinksContainer .link-item-card .text-muted strong {
+    color: #344A3F;
+    font-weight: 600;
+  }
+
+  /* TRANSICION */
+  #modalWorkflowLinksContainer .link-item-card .ms-auto,
+  #modalCommentLinksContainer .link-item-card .ms-auto {
+    margin-left: 18px !important;
+    margin-right: auto !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: .72rem !important;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card .ms-auto>span,
+  #modalCommentLinksContainer .link-item-card .ms-auto>span {
+    white-space: nowrap !important;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card .ms-auto .rounded-pill,
+  #modalCommentLinksContainer .link-item-card .ms-auto .rounded-pill {
+    padding: 3px 8px !important;
+    font-size: .67rem !important;
+    line-height: 1.2;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card .ms-auto .mx-1,
+  #modalCommentLinksContainer .link-item-card .ms-auto .mx-1 {
+    margin-left: 4px !important;
+    margin-right: 4px !important;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card .rounded-pill,
+  #modalCommentLinksContainer .link-item-card .rounded-pill {
+    padding: 4px 9px !important;
+    font-size: .72rem !important;
+    border-radius: 20px !important;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card .text-white.rounded-pill,
+  #modalCommentLinksContainer .link-item-card .text-white.rounded-pill {
+    background: #0A2C1B !important;
+    border-color: #0A2C1B !important;
+  }
+
+  /* BOTONES */
+  #modalWorkflowLinksContainer .link-item-card .btn,
+  #modalCommentLinksContainer .link-item-card .btn {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px;
+    border-radius: 8px !important;
+    transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease !important;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card .btn-light,
+  #modalCommentLinksContainer .link-item-card .btn-light {
+    background: #F4F7F5 !important;
+    border: 1px solid #D6E0DA !important;
+    color: #0A2C1B !important;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card .btn-light:hover,
+  #modalCommentLinksContainer .link-item-card .btn-light:hover {
+    background: #E4EDE8 !important;
+    transform: translateY(-2px);
+  }
+
+  #modalWorkflowLinksContainer .link-item-card a.btn.text-white,
+  #modalCommentLinksContainer .link-item-card a.btn.text-white {
+    background: #0A2C1B !important;
+    border-color: #0A2C1B !important;
+  }
+
+  #modalWorkflowLinksContainer .link-item-card a.btn.text-white:hover,
+  #modalCommentLinksContainer .link-item-card a.btn.text-white:hover {
+    background: #123D27 !important;
+    border-color: #123D27 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(10, 44, 27, .22);
+  }
+
+  /* MENSAJE SIN ENLACES */
+  #modalWorkflowLinksContainer>p {
+    margin: 0 !important;
+    padding: 28px 20px !important;
+    border: 2px dashed #D4E0D9;
+    border-radius: 12px;
+    background: #FAFCFB;
+    color: #718078 !important;
+  }
+
+  /* RESPONSIVE */
+  @media(max-width:767.98px) {
+
+    #modalWorkflowLinksContainer .link-item-card,
+    #modalCommentLinksContainer .link-item-card {
+      padding: 14px !important;
+      gap: 12px !important;
+    }
+
+    #modalWorkflowLinksContainer .link-item-card>div:nth-child(2)>div:first-child,
+    #modalCommentLinksContainer .link-item-card>div:nth-child(2)>div:first-child {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 7px;
+    }
+
+    #modalWorkflowLinksContainer .link-item-card .ms-auto,
+    #modalCommentLinksContainer .link-item-card .ms-auto {
+      margin-left: 0 !important;
+      justify-content: flex-start;
+    }
+  }
+</style>
+
 <link rel="stylesheet" href="{{ rp }}/static/css/buscar/informacion_predio.css" />
 <div class="content-modulo-detalles container-fluid px-0 mb-5">
   <div class="row g-4 ">
@@ -1576,50 +1860,50 @@
 
     {% include "asignaciones_detalle/modal_adjuntos_predio.html" %}
 
+
+
     <!-- MODAL ENLACES DE LA ASIGNACION -->
-    <div class="modal fade" id="modalEnlacesAsignacion" tabindex="-1" aria-labelledby="modalEnlacesAsignacionLabel"
-      aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-        <div class="modal-content sync-modal-content"
-          style="border-radius: 12px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
-          <!-- Modal Header -->
-          <div class="modal-header sync-modal-header border-0 p-4 align-items-start justify-content-between">
-            <div class="d-flex flex-column gap-2">
-              <div class="d-flex align-items-center gap-2">
-                <i class="fa-solid fa-link fs-5" style="color: #021f3c;"></i>
-                <h5 class="sync-modal-title fw-bold mb-0" id="modalEnlacesAsignacionLabel"
-                  style="color: #021f3c; font-size: 1.25rem;">Enlaces de la Asignación</h5>
-              </div>
-              <small class="sync-modal-subtitle d-block text-muted" style="font-size: 0.85rem;">Consulta y gestiona los
-                enlaces oficiales y adjuntos enviados para esta asignación</small>
+    <div class="modal fade modal-right" id="modalEnlacesAsignacion" tabindex="-1"
+      aria-labelledby="modalEnlacesAsignacionLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header-enlaces position-relative p-4">
+            <div class="text-center px-5">
+              <h4 class="fw-bold" id="modalEnlacesAsignacionLabel">Enlaces de la Asignación</h4>
+              <small class="mt-1">Consulta los enlaces oficiales y adjuntos registrados durante el flujo de esta
+                asignación</small>
             </div>
             <button type="button"
-              class="btn p-0 border-0 shadow-none sync-modal-close d-flex align-items-center justify-content-center"
-              data-bs-dismiss="modal" aria-label="Cerrar"
-              style="background: transparent; color: #000000; margin-top: -2px;">
-              <i class="bi bi-x-lg fs-4" style="font-weight: 700 !important;"></i>
+              class="btn-cerrar-enlaces position-absolute top-0 end-0 mt-5 me-3 d-flex align-items-center justify-content-center"
+              data-bs-dismiss="modal" aria-label="Cerrar">
+              <i class="bi bi-x-lg fs-5"></i>
             </button>
           </div>
+          <div class="modal-body">
+            <div class="enlaces-bloque">
+              <div class="enlaces-titulo-seccion">
+                <div class="enlaces-titulo-icono">
+                  <i class="fa-solid fa-diagram-project"></i>
+                </div>
+                <span>Enlaces del flujo de trabajo</span>
+              </div>
 
-          <!-- Modal Body -->
-          <div class="modal-body sync-modal-body p-4" style="background-color: #f8fafc;">
-            <!-- Enlaces del Flujo de Trabajo -->
-            <div class="mb-4">
-              <h6 class="fw-bold text-uppercase text-secondary mb-3"
-                style="font-size: 0.75rem; letter-spacing: 0.05em;">
-                Enlaces del flujo de trabajo</h6>
-              <div id="modalWorkflowLinksContainer" class="d-flex flex-column gap-3">
+              <div id="modalWorkflowLinksContainer">
                 <!-- Rellenado por JS -->
               </div>
             </div>
 
-            <!-- Enlaces de Comentarios -->
-            <div class="mb-2" id="modalCommentLinksSection">
-              <hr class="my-4" style="border-color: #e2e8f0;">
-              <h6 class="fw-bold text-uppercase text-secondary mb-3"
-                style="font-size: 0.75rem; letter-spacing: 0.05em;">
-                Enlaces en comentarios y recomendaciones</h6>
-              <div id="modalCommentLinksContainer" class="d-flex flex-column gap-3">
+            <div id="modalCommentLinksSection">
+              <hr class="enlaces-divider">
+
+              <div class="enlaces-titulo-seccion">
+                <div class="enlaces-titulo-icono">
+                  <i class="fa-regular fa-comments"></i>
+                </div>
+                <span>Enlaces en comentarios y recomendaciones</span>
+              </div>
+
+              <div id="modalCommentLinksContainer">
                 <!-- Rellenado por JS -->
               </div>
             </div>
@@ -1627,6 +1911,9 @@
         </div>
       </div>
     </div>
+
+
+
 
 
     {% include 'modales/modal_sincronizar_xtf.html' %}
