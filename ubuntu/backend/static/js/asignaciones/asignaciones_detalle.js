@@ -369,7 +369,7 @@ async function cargarDetalle() {
     msg.textContent = "Inicializando tablas...";
     return;
   }
-  const id = Number(elId.value);
+  const id = Number(elId?.value || idFromUrl);
   if (!id || id < 1) {
     msg.textContent = "Debes indicar un id valido.";
     return;
@@ -600,7 +600,6 @@ async function cargarDetalle() {
     // 1.5b Mostrar/Ocultar botón de Enviar a Líder Técnico (reemplazado por Sincronizar XTF para el coordinador)
     const btnSubmitToLider = document.getElementById("btnHeaderSubmitToLider");
     if (btnSubmitToLider) {
-<<<<<<< Updated upstream
       const isReviewerRole =
         currentLoggedRole === "coordinador" || currentLoggedRole === "admin";
       const isAprobadoDig = dataDet.estado === "APROBADO_DIGITALIZACION";
@@ -612,10 +611,6 @@ async function cargarDetalle() {
         btnSubmitToLider.classList.add("d-none");
         btnSubmitToLider.classList.remove("d-inline-flex");
       }
-=======
-      btnSubmitToLider.classList.add("d-none");
-      btnSubmitToLider.classList.remove("d-inline-flex");
->>>>>>> Stashed changes
     }
 
     // 1.6 Mostrar/Ocultar botón de Revisión de Líder (para Lider de Reconocimiento/Admin)
@@ -665,19 +660,8 @@ async function cargarDetalle() {
     // 1.8 Mostrar/Ocultar botón de Sincronizar XTF (para Coordinador/Admin/Líder)
     const btnSyncXtf = document.getElementById("btnHeaderSyncXtf");
     if (btnSyncXtf) {
-<<<<<<< Updated upstream
-      const isAllowedSyncRole =
-        currentLoggedRole === "soporte" ||
-        currentLoggedRole === "admin" ||
-        currentLoggedRole === "lider_tecnico" ||
-        currentLoggedRole === "lider_reconocimiento";
-      const isSyncState =
-        dataDet.estado === "EN_SINCRONIZACION" ||
-        dataDet.estado === "EN_APROBACION";
-=======
       const isAllowedSyncRole = currentLoggedRole === "coordinador" || currentLoggedRole === "soporte" || currentLoggedRole === "admin" || currentLoggedRole === "lider_tecnico" || currentLoggedRole === "lider_reconocimiento";
       const isSyncState = dataDet.estado === "APROBADO_DIGITALIZACION" || dataDet.estado === "EN_SINCRONIZACION" || dataDet.estado === "EN_APROBACION";
->>>>>>> Stashed changes
 
       if (isAllowedSyncRole && isSyncState) {
         btnSyncXtf.classList.remove("d-none");
@@ -706,22 +690,9 @@ async function cargarDetalle() {
 
     // Manage visibility of the divider in the dropdown menu
     const workflowButtons = [
-<<<<<<< Updated upstream
-      "btnHeaderSyncXtf",
-      "btnHeaderSubmitQA",
-      "btnHeaderQCReview",
-      "btnHeaderSubmitSoporteLink",
-      "btnHeaderAssignDigitalizador",
-      "btnHeaderViewSoporteLink",
-      "btnHeaderSubmitQA2",
-      "btnHeaderQCReview2",
-      "btnHeaderLiderReview",
-      "btnHeaderViewDigitalizacionLink",
-=======
       "btnHeaderSyncXtf", "btnHeaderSubmitQA", "btnHeaderQCReview",
       "btnHeaderSubmitSoporteLink", "btnHeaderAssignDigitalizador", "btnHeaderViewSoporteLink", "btnHeaderSubmitQA2",
-      "btnHeaderQCReview2", "btnHeaderSincronizarProduccion", "btnHeaderSubmitToLider", "btnHeaderLiderReview", "btnHeaderViewDigitalizacionLink"
->>>>>>> Stashed changes
+      "btnHeaderQCReview2", "btnHeaderSincronizarProduccion", "btnHeaderSubmitToLider", "btnHeaderLiderReview", "btnHeaderViewDigitalizacionLink",
     ];
     let anyWorkflowVisible = false;
     workflowButtons.forEach((id) => {
@@ -1331,7 +1302,7 @@ async function cargarDetalle() {
 async function importarRetorno() {
   if (retornoEnCurso) return;
 
-  const id = Number(elId.value);
+  const id = Number(elId?.value || idFromUrl);
   if (!id || id < 1) {
     msg.textContent = "Debes indicar un id valido antes de importar.";
     return;
@@ -2898,7 +2869,7 @@ function displayModalFilePreview(file) {
 async function submitSyncModalFile() {
   if (retornoEnCurso || !selectedModalFile) return;
 
-  const id = Number(elId.value);
+  const id = Number(elId?.value || idFromUrl);
   if (!id || id < 1) {
     showWarning("Debes indicar un id válido.");
     return;
@@ -5840,7 +5811,7 @@ function formatearResumenDireccionEdit(direccion) {
     ""
   ).trim();
 
-<<<<<<< Updated upstream
+  const tipoDireccion = String(direccion?.tipo_direccion ?? "").trim();
   if (tipoDireccion === "248") {
     const partes = [
       direccion?.clase_via_principal_nombre ??
@@ -5855,8 +5826,9 @@ function formatearResumenDireccionEdit(direccion) {
       .map((valor) => String(valor ?? "").trim())
       .filter(Boolean);
 
-    return partes.length ? partes.join(" ") : nombrePredio || "-";
-=======
+    if (partes.length) return partes.join(" ");
+  }
+
   const valorVia = String(direccion?.valor_via_principal ?? "").trim();
   const letraVia = String(direccion?.letra_via_principal ?? "").trim();
   const valorGen = String(direccion?.valor_via_generadora ?? "").trim();
@@ -5873,7 +5845,6 @@ function formatearResumenDireccionEdit(direccion) {
     if (numPredio) result += (result ? " - " : "- ") + numPredio;
     if (complemento) result += (result ? " " : "") + complemento;
     return result.trim();
->>>>>>> Stashed changes
   }
 
   return nombrePredio || "-";
@@ -6646,8 +6617,6 @@ function renderInteresadosModalEdit(interesadosRaw) {
     });
   });
 }
-<<<<<<< Updated upstream
-=======
 // Sincronizar a Producción button and modal logic (Líder Técnico)
 document.getElementById("btnHeaderSincronizarProduccion")?.addEventListener("click", () => {
   const modalProdEl = document.getElementById("modalSincronizarProduccion");
@@ -6701,4 +6670,3 @@ document.getElementById("btnConfirmarSincronizarProduccion")?.addEventListener("
     if (btnConfirm) btnConfirm.disabled = false;
   }
 });
->>>>>>> Stashed changes

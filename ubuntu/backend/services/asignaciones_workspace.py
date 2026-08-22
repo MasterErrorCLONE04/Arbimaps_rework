@@ -1107,7 +1107,6 @@ def _arb_create_sync_selected_predio_scope(
         SELECT 1
         FROM {asignacion_predio_table} ap
         WHERE ap.asignacion_id = {asignacion_id}
-          AND ap.activo IS DISTINCT FROM FALSE
           AND (
               BTRIM(ap.numero_predial_nacional::text) = BTRIM(wp.numero_predial::text)
               {id_op_match}
@@ -3138,6 +3137,9 @@ def _sync_workspace_arb_to_main(
     _arb_assert_schema_parity(conn, schema_main, schema_work)
     _arb_create_sync_basket_map(conn, schema_main, schema_work, work_datasetname)
     synced_predios = _arb_sync_predios_to_main(conn, tenant, asignacion_id, work_datasetname, schema_main, schema_work)
+    if synced_predios <= 0:
+        logger.warning("No predios synchronized for asignacion %s", asignacion_id)
+        return 0
 
     direct_predio_tables = [
         ("arb_avaluovalor", "arb_predio_avaluo"),

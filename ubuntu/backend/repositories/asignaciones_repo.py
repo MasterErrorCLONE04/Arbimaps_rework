@@ -225,7 +225,12 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
                                     logger.warning("Fallo agregar valor enum %s en conexion autocommit: %s", val, e)
                         
                         # 2. Asegurar asignacion_estado
-                        for val in ["CONTROL_CALIDAD_1", "PENDIENTE_PUBLICACION"]:
+                        for val in [
+                            "SIN_ASIGNAR", "EN_CAMPO", "CONTROL_CALIDAD_1", "DEVUELTO_CAMPO", "DEVUELTO_A_CAMPO",
+                            "EN_DIGITALIZACION", "APROBADO_DIGITALIZACION", "DEVUELTO_DIGITALIZACION", "DEVUELTO_A_DIGITALIZACION",
+                            "CONTROL_CALIDAD_2", "EN_SINCRONIZACION", "APROBADO_SINCRONIZACION", "SINCRONIZADO_PRODUCCION",
+                            "EN_APROBACION", "PENDIENTE_PUBLICACION", "CERRADA", "CANCELADA"
+                        ]:
                             temp_cur.execute(
                                 """
                                 SELECT 1 FROM pg_enum 
@@ -242,6 +247,22 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
             except Exception as e:
                 logger.error("No se pudo conectar a la base de datos para asegurar los enums: %s", e)
 
+            cur.execute(
+                f"""
+                CREATE TABLE IF NOT EXISTS {app_schema}.catalogo_estados_asignacion (
+                    id SERIAL PRIMARY KEY,
+                    codigo VARCHAR(50) UNIQUE NOT NULL,
+                    nombre_despliegue VARCHAR(100) NOT NULL,
+                    descripcion TEXT,
+                    fase_flujo VARCHAR(50) NOT NULL,
+                    orden_secuencia INT NOT NULL,
+                    color_badge VARCHAR(20) DEFAULT '#6b7280',
+                    activo BOOLEAN DEFAULT TRUE,
+                    creado_en TIMESTAMPTZ DEFAULT NOW()
+                )
+                """
+            )
+            
             cur.execute(
                 f"""
                 CREATE TABLE IF NOT EXISTS {app_schema}.asignacion_predio (
