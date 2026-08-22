@@ -677,7 +677,7 @@ async function cargarDetalle() {
     if (btnSyncProd) {
       const roleNorm = String(currentLoggedRole || "").trim().toLowerCase();
       const isLiderTecnico = roleNorm.includes("lider") || roleNorm.includes("admin") || roleNorm.includes("soporte");
-      const isAprobadoSync = dataDet.estado === "APROBADO_SINCRONIZACION";
+      const isAprobadoSync = dataDet.estado === "APROBADO_SINCRONIZACION" || dataDet.estado === "EN_SINCRONIZACION";
 
       if (isLiderTecnico && isAprobadoSync) {
         btnSyncProd.classList.remove("d-none");

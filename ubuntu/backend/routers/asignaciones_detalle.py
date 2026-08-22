@@ -3650,7 +3650,7 @@ def importar_retorno_xtf(
         asignacion_id,
         archivo,
         user,
-        publish_to_main=True,
+        publish_to_main=False,
     )
 
 
@@ -4308,10 +4308,10 @@ def sincronizar_produccion(
             
             estado_actual = row[1]
             work_dataset = row[2]
-            if estado_actual not in ("APROBADO_SINCRONIZACION", "SINCRONIZADO_PRODUCCION", "SINCRONIZADO"):
+            if estado_actual not in ("EN_SINCRONIZACION", "APROBADO_SINCRONIZACION", "SINCRONIZADO_PRODUCCION", "SINCRONIZADO"):
                 raise HTTPException(
                     status_code=400,
-                    detail=f"La asignación debe estar en estado 'APROBADO_SINCRONIZACION'. Estado actual: '{estado_actual}'"
+                    detail=f"La asignación debe estar en estado 'EN_SINCRONIZACION' o 'APROBADO_SINCRONIZACION'. Estado actual: '{estado_actual}'"
                 )
 
             target_dataset = work_dataset or f"ws_asg_{asignacion_id}"
@@ -4327,6 +4327,45 @@ def sincronizar_produccion(
                     target_dataset = found_ds[0]
                     has_dataset_in_work = True
 
+            if not has_dataset_in_work:
+                cur.execute(
+                    f"""
+                    SELECT d.datasetname
+                    FROM {_qident(schema_work)}."arb_predio" p
+                    JOIN {_qident(schema_work)}."t_ili2db_basket" b ON b.t_id = p.t_basket
+                    JOIN {_qident(schema_work)}."t_ili2db_dataset" d ON d.t_id = b.dataset
+                    JOIN {asignacion_predio_table} ap ON BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
+                    WHERE ap.asignacion_id = %s
+                    ORDER BY d.t_id DESC
+                    LIMIT 1
+                    """,
+                    (asignacion_id,)
+                )
+                found_ds_by_predio = cur.fetchone()
+                if found_ds_by_predio and found_ds_by_predio[0]:
+                    target_dataset = found_ds_by_predio[0]
+                    has_dataset_in_work = True
+
+            if not has_dataset_in_work:
+                import glob
+                matching_xtfs = sorted(
+                    glob.glob(f"/app/resource/xtf_validation/uploads/*_asignacion_*_{asignacion_id}_*.xtf") +
+                    glob.glob(f"/home/david/Arbimaps_rework/asignacion_*_{asignacion_id}_*.xtf"),
+                    key=os.path.getmtime,
+                    reverse=True
+                )
+                if matching_xtfs:
+                    xtf_restore_path = matching_xtfs[0]
+                    logger.info(
+                        "Re-importando dataset '%s' en %s desde XTF '%s' para asignacion %s",
+                        target_dataset, schema_work, xtf_restore_path, asignacion_id
+                    )
+                    try:
+                        _ili2pg_import(conn, tenant, schema_work, target_dataset, xtf_restore_path)
+                        has_dataset_in_work = True
+                    except Exception as import_err:
+                        logger.error("Fallo re-importando XTF %s para asignacion %s: %s", xtf_restore_path, asignacion_id, import_err)
+
             synced_predios = 0
             if has_dataset_in_work:
                 synced_predios = workspace_service.sync_workspace_predios_to_main(
@@ -4338,10 +4377,24 @@ def sincronizar_produccion(
                     schema_work,
                 )
             else:
-                logger.info(
-                    "Dataset '%s' para asignacion %s no se encuentra en %s. Omitiendo copia de workspace.",
+                logger.warning(
+                    "Dataset '%s' para asignacion %s no se encuentra en %s.",
                     target_dataset, asignacion_id, schema_work
                 )
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"No se encontró un dataset válido en el workspace '{schema_work}' para la asignación {asignacion_id}."
+                )
+
+            # Actualizar predio_t_id y NPNs desde workspace antes de Reverse ETL
+            try:
+                workspace_service.actualizar_predio_ids_desde_workspace(
+                    conn,
+                    tenant,
+                    asignacion_id,
+                )
+            except Exception as update_err:
+                logger.warning("Error actualizando predio_ids desde workspace en sincronizar_produccion: %s", update_err)
 
             # Reverse ETL a f_r1_r2 solo al sincronizar a a_base_principal
             try:

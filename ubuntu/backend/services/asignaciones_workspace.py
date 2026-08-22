@@ -1156,7 +1156,27 @@ def _arb_create_sync_selected_predio_scope(
             (work_datasetname,),
         )
         cur.execute("SELECT COUNT(*) FROM _arb_sync_selected_predio")
-        return int((cur.fetchone() or [0])[0] or 0)
+        count = int((cur.fetchone() or [0])[0] or 0)
+        if count == 0:
+            cur.execute(
+                f"""
+                INSERT INTO _arb_sync_selected_predio
+                SELECT
+                    wp.t_id AS work_predio_t_id,
+                    BTRIM(wp.numero_predial::text) AS numero_predial_nacional,
+                    wp.t_basket AS work_basket
+                FROM {_qualify(schema_work, 'arb_predio')} wp
+                JOIN {_qualify(schema_work, 't_ili2db_basket')} wb
+                  ON wb.t_id = wp.t_basket
+                JOIN {_qualify(schema_work, 't_ili2db_dataset')} wd
+                  ON wd.t_id = wb.dataset
+                WHERE wd.datasetname = %s
+                """,
+                (work_datasetname,),
+            )
+            cur.execute("SELECT COUNT(*) FROM _arb_sync_selected_predio")
+            count = int((cur.fetchone() or [0])[0] or 0)
+        return count
 
 
 def _arb_assert_sync_selected_predio_unique(conn, schema_work: str, work_datasetname: str) -> None:
