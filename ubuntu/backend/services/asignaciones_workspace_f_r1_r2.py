@@ -268,8 +268,58 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
         # Obtener t_id de predio
         cur.execute(f"SELECT t_id, area_catastral_terreno FROM {schema_work}.arb_predio WHERE numero_predial = %s ORDER BY t_id DESC LIMIT 1;", (npn,))
         pred_row = cur.fetchone()
+
         if not pred_row:
-            logger.warning("Predio %s no encontrado en f_r1_r2 para importar.", npn)
+            # Fallback 1: Intentar importar desde a_base_principal si el predio existe en producción
+            sql_predio_main = f"""
+                INSERT INTO {schema_work}.arb_predio (
+                    t_id, t_basket, id_operacion, numero_predial, numero_predial_anterior,
+                    area_catastral_terreno, observaciones{dest_col_sql}
+                )
+                SELECT
+                    nextval('{schema_work}.t_ili2db_seq'),
+                    %s, %s, %s, p.numero_predial_anterior,
+                    COALESCE(p.area_catastral_terreno, 0.00),
+                    'Asignación Backend (a_base_principal)'
+                    {", COALESCE(p.destino_economico, '01')" if has_dest_col else ""}
+                FROM a_base_principal.arb_predio p
+                WHERE p.numero_predial = %s
+                LIMIT 1
+                ON CONFLICT DO NOTHING;
+            """
+            try:
+                cur.execute(sql_predio_main, (t_basket_id, npn, npn, npn))
+            except Exception as e_main:
+                logger.warning("Error intentando importar predio %s desde a_base_principal: %s", npn, e_main)
+
+            cur.execute(f"SELECT t_id, area_catastral_terreno FROM {schema_work}.arb_predio WHERE numero_predial = %s ORDER BY t_id DESC LIMIT 1;", (npn,))
+            pred_row = cur.fetchone()
+
+        if not pred_row:
+            # Fallback 2: Predio Nuevo / Generado por NPN Generator (no existe en f_r1_r2 ni en a_base_principal)
+            logger.info("Predio %s no encontrado en f_r1_r2 ni a_base_principal. Creando predio nuevo en workspace %s...", npn, schema_work)
+            sql_predio_nuevo = f"""
+                INSERT INTO {schema_work}.arb_predio (
+                    t_id, t_basket, id_operacion, numero_predial, numero_predial_anterior,
+                    area_catastral_terreno, observaciones{dest_col_sql}
+                )
+                VALUES (
+                    nextval('{schema_work}.t_ili2db_seq'),
+                    %s, %s, %s, NULL, 0.00, 'Predio Nuevo Generado'
+                    {", '01'" if has_dest_col else ""}
+                )
+                ON CONFLICT DO NOTHING;
+            """
+            try:
+                cur.execute(sql_predio_nuevo, (t_basket_id, npn, npn))
+            except Exception as e_new:
+                logger.warning("Error al crear predio nuevo %s en workspace: %s", npn, e_new)
+
+            cur.execute(f"SELECT t_id, area_catastral_terreno FROM {schema_work}.arb_predio WHERE numero_predial = %s ORDER BY t_id DESC LIMIT 1;", (npn,))
+            pred_row = cur.fetchone()
+
+        if not pred_row:
+            logger.warning("No se pudo crear ni obtener predio %s en %s.", npn, schema_work)
             return False
 
         id_predio = pred_row['t_id']
