@@ -222,10 +222,22 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
             geom_cons_val = None
 
         # 3. Insertar arb_predio
+        # Verificar si arb_predio tiene la columna destino_economico
+        has_dest_col = False
+        with conn.cursor() as check_cur:
+            check_cur.execute(
+                "SELECT 1 FROM information_schema.columns WHERE table_schema = %s AND table_name = 'arb_predio' AND column_name = 'destino_economico' LIMIT 1;",
+                (schema_work,)
+            )
+            has_dest_col = bool(check_cur.fetchone())
+
+        dest_col_sql = ", destino_economico" if has_dest_col else ""
+        dest_val_sql = ", COALESCE(r1.destino_economico, '01')" if has_dest_col else ""
+
         sql_predio = f"""
             INSERT INTO {schema_work}.arb_predio (
                 t_id, t_basket, id_operacion, numero_predial, numero_predial_anterior,
-                area_catastral_terreno, observaciones
+                area_catastral_terreno, observaciones{dest_col_sql}
             )
             SELECT DISTINCT ON (r1.numero_predial)
                 nextval('{schema_work}.t_ili2db_seq'),
@@ -234,7 +246,8 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
                 r1.numero_predial,
                 r1.numero_predial_anterior,
                 r1.area_terreno,
-                CONCAT('Asignación Backend (f_r1_r2) - Dirección: ', r1.direccion, ' | Matrícula: ', COALESCE(r2.matricula, ''))
+                CONCAT('Asignación Backend (f_r1_r2) - Dirección: ', r1.direccion, ' | Matrícula: ', COALESCE(r2.matricula, ''), ' | Destino: ', COALESCE(r1.destino_economico, ''))
+                {dest_val_sql}
             FROM f_r1_r2.r1_predio_propietario r1
             LEFT JOIN f_r1_r2.r2_construccion_zona r2 ON r1.numero_predial = r2.numero_predial
             WHERE r1.numero_predial = %s
@@ -350,7 +363,8 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
         # 8. Insertar propietarios (arb_derechointeresadofuente)
         cur.execute(
             """
-            SELECT nombre, tipo_documento, documento_identidad, participacion, direccion
+            SELECT nombre, tipo_documento, documento_identidad, participacion, direccion,
+                   d_tipo, d_fecha_inicio_tenencia, fa_tipo, fa_numero_fuente, fa_fecha_documento_fuente, fa_ente_emisor
             FROM f_r1_r2.r1_predio_propietario
             WHERE numero_predial = %s
               AND NULLIF(BTRIM(nombre::text), '') IS NOT NULL
@@ -364,13 +378,15 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
                 i_primer_nombre, i_segundo_nombre,
                 i_primer_apellido, i_segundo_apellido, i_razon_social,
                 i_documento_identidad, d_cuota_participacion,
-                ic_direccion_residencia, fa_tipo
+                ic_direccion_residencia, fa_tipo, d_tipo, d_fecha_inicio_tenencia,
+                fa_numero_fuente, fa_fecha_documento_fuente, fa_ente_emisor
             )
             VALUES (
                 nextval('{schema_work}.t_ili2db_seq'),
                 %s, %s,
                 (SELECT t_id FROM {schema_work}.arb_interesadodocumentotipo WHERE ilicode = %s LIMIT 1),
-                %s, %s, %s, %s, %s, %s, %s, %s, 686
+                %s, %s, %s, %s, %s, %s, %s, %s,
+                COALESCE(%s, 686), COALESCE(%s, 1481), %s, %s, %s, %s
             )
             ON CONFLICT DO NOTHING;
         """
@@ -397,6 +413,12 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
                     propietario.get("documento_identidad"),
                     participacion,
                     propietario.get("direccion"),
+                    propietario.get("fa_tipo"),
+                    propietario.get("d_tipo"),
+                    propietario.get("d_fecha_inicio_tenencia"),
+                    propietario.get("fa_numero_fuente"),
+                    propietario.get("fa_fecha_documento_fuente"),
+                    propietario.get("fa_ente_emisor"),
                 ),
             )
         # 9. Insertar unidades de construcción y sus características
@@ -404,43 +426,85 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
         cons_row = cur.fetchone()
         if cons_row:
             id_cons = cons_row['t_id']
-            for b_idx in [1, 2, 3]:
-                sql_ucons = f"""
-                    WITH caracteristicas_ins AS (
-                        INSERT INTO {schema_work}.arb_caracteristicasunidadconstruccion (
-                            t_id, t_basket, identificador, tipo_unidad_construccion, total_habitaciones, total_banios,
-                            total_locales, total_plantas, cc_total_calificacion, area_construida, observaciones,
-                            tipo_calificacion, id_grupo
+            # Consultar todas las filas R2 pertenecientes a este predio (ordenadas por numero_de_orden)
+            cur.execute(
+                """
+                SELECT id, numero_de_orden,
+                       habitaciones_1, banos_1, locales_1, pisos_1, puntaje_1, area_construida_1, tipificacion_1, uso_1,
+                       habitaciones_2, banos_2, locales_2, pisos_2, puntaje_2, area_construida_2, tipificacion_2, uso_2,
+                       habitaciones_3, banos_3, locales_3, pisos_3, puntaje_3, area_construida_3, tipificacion_3, uso_3
+                FROM f_r1_r2.r2_construccion_zona
+                WHERE numero_predial = %s
+                ORDER BY numero_de_orden ASC;
+                """,
+                (npn,),
+            )
+            r2_rows = cur.fetchall() or []
+            u_global_idx = 0
+            for r2_row in r2_rows:
+                r2_id = r2_row['id']
+                r2_order = r2_row['numero_de_orden']
+                for b_idx in [1, 2, 3]:
+                    area_val = float(r2_row.get(f'area_construida_{b_idx}') or 0.0)
+                    if area_val <= 0:
+                        continue
+                    u_global_idx += 1
+                    u_identificador = f"U_{npn[-10:]}_R{r2_order}_B{b_idx}_{u_global_idx}"
+                    tipif_val = r2_row.get(f'tipificacion_{b_idx}')
+                    tipo_calif = int(tipif_val) if tipif_val and int(tipif_val) > 0 else 1447
+                    uso_val = r2_row.get(f'uso_{b_idx}')
+                    tipo_ucons = int(uso_val) if uso_val and int(uso_val) > 0 else 1526
+                    hab = int(r2_row.get(f'habitaciones_{b_idx}') or 0)
+                    ban = int(r2_row.get(f'banos_{b_idx}') or 0)
+                    loc = int(r2_row.get(f'locales_{b_idx}') or 0)
+                    pis = int(r2_row.get(f'pisos_{b_idx}') or 0)
+                    pun = int(r2_row.get(f'puntaje_{b_idx}') or 0)
+
+                    sql_ucons = f"""
+                        WITH caracteristicas_ins AS (
+                            INSERT INTO {schema_work}.arb_caracteristicasunidadconstruccion (
+                                t_id, t_basket, identificador, tipo_unidad_construccion, total_habitaciones, total_banios,
+                                total_locales, total_plantas, cc_total_calificacion, area_construida, observaciones,
+                                tipo_calificacion, id_grupo
+                            )
+                            VALUES (
+                                nextval('{schema_work}.t_ili2db_seq'), %s,
+                                %s, %s, %s, %s, %s, %s, %s, %s,
+                                %s, %s, %s
+                            )
+                            ON CONFLICT DO NOTHING
+                            RETURNING t_id, identificador
+                        )
+                        INSERT INTO {schema_work}.arb_unidadconstruccion (
+                            t_id, t_basket, identificador, area_unidad_construccion, construccion, caracteristicasunidadconstruccion,
+                            tipo_planta, planta_ubicacion, geometria
                         )
                         SELECT 
                             nextval('{schema_work}.t_ili2db_seq'), %s,
-                            CONCAT('U_', RIGHT(r2.numero_predial, 10), '_B{b_idx}'), 1526,
-                            r2.habitaciones_{b_idx}, r2.banos_{b_idx}, r2.locales_{b_idx},
-                            r2.pisos_{b_idx}, r2.puntaje_{b_idx}, r2.area_construida_{b_idx},
-                            CONCAT('Bloque {b_idx} R2 - Tipificación: ', COALESCE(r2.tipificacion_{b_idx}::text, 'S/D')),
-                            1447, r2.numero_predial
-                        FROM f_r1_r2.r2_construccion_zona r2
-                        WHERE r2.numero_predial = %s AND r2.area_construida_{b_idx} > 0
-                        ON CONFLICT DO NOTHING
-                        RETURNING t_id, identificador
-                    )
-                    INSERT INTO {schema_work}.arb_unidadconstruccion (
-                        t_id, t_basket, identificador, area_unidad_construccion, construccion, caracteristicasunidadconstruccion,
-                        tipo_planta, planta_ubicacion, geometria
-                    )
-                    SELECT 
-                        nextval('{schema_work}.t_ili2db_seq'), %s,
-                        ci.identificador, r2.area_construida_{b_idx}, %s, ci.t_id,
-                        1532, 1, {geom_construccion}
-                    FROM f_r1_r2.r2_construccion_zona r2
-                    JOIN caracteristicas_ins ci ON ci.identificador = CONCAT('U_', RIGHT(r2.numero_predial, 10), '_B{b_idx}')
-                    WHERE r2.numero_predial = %s AND r2.area_construida_{b_idx} > 0
-                    ON CONFLICT DO NOTHING;
-                """
-                if geom_construccion == "%s":
-                    cur.execute(sql_ucons, (t_basket_id, npn, t_basket_id, id_cons, geom_cons_val, npn))
-                else:
-                    cur.execute(sql_ucons, (t_basket_id, npn, t_basket_id, id_cons, npn))
+                            ci.identificador, %s, %s, ci.t_id,
+                            1532, 1, {geom_construccion}
+                        FROM caracteristicas_ins ci
+                        ON CONFLICT DO NOTHING;
+                    """
+                    obs_text = f"Reg {r2_order} Bloque {b_idx} R2 - Tipificación: {tipif_val or 'S/D'}"
+                    if geom_construccion == "%s":
+                        cur.execute(
+                            sql_ucons,
+                            (
+                                t_basket_id, u_identificador, tipo_ucons, hab, ban, loc, pis, pun, area_val,
+                                obs_text, tipo_calif, npn,
+                                t_basket_id, area_val, id_cons, geom_cons_val
+                            ),
+                        )
+                    else:
+                        cur.execute(
+                            sql_ucons,
+                            (
+                                t_basket_id, u_identificador, tipo_ucons, hab, ban, loc, pis, pun, area_val,
+                                obs_text, tipo_calif, npn,
+                                t_basket_id, area_val, id_cons
+                            ),
+                        )
 
     logger.info("Importación de predio %s completada con éxito en el workspace.", npn)
     return True

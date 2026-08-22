@@ -80,12 +80,21 @@ def sincronizar_predios_a_f_r1_r2(
                 # 2. Consultar predio principal en schema_source
                 cur.execute(
                     f"""
-                    SELECT t_id, numero_predial, numero_predial_anterior, area_catastral_terreno, observaciones
+                    SELECT t_id, numero_predial, numero_predial_anterior, area_catastral_terreno, observaciones,
+                           COALESCE(
+                               (CASE WHEN EXISTS (
+                                   SELECT 1 FROM information_schema.columns 
+                                   WHERE table_schema = '{schema_source}' AND table_name = 'arb_predio' AND column_name = 'destino_economico'
+                               ) THEN (
+                                   SELECT destino_economico::text FROM {schema_source}.arb_predio WHERE BTRIM(numero_predial::text) = %s LIMIT 1
+                               ) ELSE NULL END),
+                               '01'
+                           ) AS destino_economico
                     FROM {schema_source}.arb_predio
                     WHERE BTRIM(numero_predial::text) = %s
                     LIMIT 1;
                     """,
-                    (npn,),
+                    (npn, npn),
                 )
                 predio_row = cur.fetchone()
                 if not predio_row:
@@ -157,6 +166,7 @@ def sincronizar_predios_a_f_r1_r2(
                     f"""
                     SELECT d.i_primer_nombre, d.i_segundo_nombre, d.i_primer_apellido, d.i_segundo_apellido,
                            d.i_razon_social, d.i_documento_identidad, d.d_cuota_participacion, d.ic_direccion_residencia,
+                           d.d_tipo, d.d_fecha_inicio_tenencia, d.fa_tipo, d.fa_numero_fuente, d.fa_fecha_documento_fuente, d.fa_ente_emisor,
                            t.ilicode AS tipo_doc_ilicode
                     FROM {schema_source}.arb_derechointeresadofuente d
                     LEFT JOIN {schema_source}.arb_interesadodocumentotipo t ON t.t_id = d.i_tipo_documento
@@ -200,7 +210,7 @@ def sincronizar_predios_a_f_r1_r2(
                     f"""
                     SELECT u.area_unidad_construccion,
                            c.total_habitaciones, c.total_banios, c.total_locales, c.total_plantas,
-                           c.cc_total_calificacion, c.tipo_calificacion, c.observaciones AS u_obs
+                           c.cc_total_calificacion, c.tipo_calificacion, c.tipo_unidad_construccion, c.observaciones AS u_obs
                     FROM {schema_source}.arb_construccion cons
                     JOIN {schema_source}.arb_unidadconstruccion u ON u.construccion = cons.t_id
                     LEFT JOIN {schema_source}.arb_caracteristicasunidadconstruccion c ON c.t_id = u.caracteristicasunidadconstruccion
@@ -214,12 +224,16 @@ def sincronizar_predios_a_f_r1_r2(
                 for u_row in ucons_rows:
                     u_area = float(u_row.get("area_unidad_construccion") or 0.00)
                     area_construida_total += u_area
+                    tipif_val = u_row.get("tipo_calificacion")
+                    uso_val = u_row.get("tipo_unidad_construccion")
                     bloques_ucons.append({
                         "habitaciones": int(u_row.get("total_habitaciones") or 0),
                         "banos": int(u_row.get("total_banios") or 0),
                         "locales": int(u_row.get("total_locales") or 0),
                         "pisos": int(u_row.get("total_plantas") or 0),
                         "puntaje": int(u_row.get("cc_total_calificacion") or 0),
+                        "tipificacion": int(tipif_val) if tipif_val and str(tipif_val).isdigit() else 0,
+                        "uso": int(uso_val) if uso_val and str(uso_val).isdigit() else 0,
                         "area_construida": u_area,
                     })
 
@@ -251,48 +265,62 @@ def sincronizar_predios_a_f_r1_r2(
                         participacion = float(prop.get("d_cuota_participacion") or 100.00)
                         prop_dir = _normalize_str(prop.get("ic_direccion_residencia")) or direccion
 
+                        comuna_val = npn_val[9:11] if len(npn_val) >= 11 else None
+                        dest_econ = predio_row.get("destino_economico") or "01"
+                        d_tipo_val = prop.get("d_tipo")
+                        d_fecha_val = prop.get("d_fecha_inicio_tenencia")
+                        fa_tipo_val = prop.get("fa_tipo")
+                        fa_num_val = _normalize_str(prop.get("fa_numero_fuente"))
+                        fa_fecha_val = prop.get("fa_fecha_documento_fuente")
+                        fa_ente_val = _normalize_str(prop.get("fa_ente_emisor"))
+
                         cur.execute(
                             """
                             INSERT INTO f_r1_r2.r1_predio_propietario (
                                 departamento, municipio, numero_predial, tipo_registro,
                                 numero_de_orden, total_registros, nombre, participacion,
-                                tipo_documento, documento_identidad, direccion,
-                                area_terreno, area_construida, avaluo, vigencia, numero_predial_anterior
+                                tipo_documento, documento_identidad, direccion, comuna, destino_economico,
+                                area_terreno, area_construida, avaluo, vigencia, numero_predial_anterior,
+                                d_tipo, d_fecha_inicio_tenencia, fa_tipo, fa_numero_fuente, fa_fecha_documento_fuente, fa_ente_emisor
                             )
                             VALUES (
                                 %s, %s, %s, 1,
                                 %s, %s, %s, %s,
-                                %s, %s, %s,
-                                %s, %s, %s, %s, %s
+                                %s, %s, %s, %s, %s,
+                                %s, %s, %s, %s, %s,
+                                %s, %s, %s, %s, %s, %s
                             );
                             """,
                             (
                                 dpto, mpio, npn_val,
                                 idx, total_regs, nombre, participacion,
-                                tipo_doc, doc_id, prop_dir,
+                                tipo_doc, doc_id, prop_dir, comuna_val, dest_econ,
                                 area_terreno, area_construida_total, avaluo, vigencia, npn_anterior,
+                                d_tipo_val, d_fecha_val, fa_tipo_val, fa_num_val, fa_fecha_val, fa_ente_val,
                             ),
                         )
                 else:
                     # Sin propietarios registrados, crear 1 entrada general
+                    comuna_val = npn_val[9:11] if len(npn_val) >= 11 else None
+                    dest_econ = predio_row.get("destino_economico") or "01"
                     cur.execute(
                         """
                         INSERT INTO f_r1_r2.r1_predio_propietario (
                             departamento, municipio, numero_predial, tipo_registro,
                             numero_de_orden, total_registros, nombre, participacion,
-                            tipo_documento, documento_identidad, direccion,
+                            tipo_documento, documento_identidad, direccion, comuna, destino_economico,
                             area_terreno, area_construida, avaluo, vigencia, numero_predial_anterior
                         )
                         VALUES (
                             %s, %s, %s, 1,
                             1, 1, NULL, 100.00,
-                            'C', NULL, %s,
+                            'C', NULL, %s, %s, %s,
                             %s, %s, %s, %s, %s
                         );
                         """,
                         (
                             dpto, mpio, npn_val,
-                            direccion,
+                            direccion, comuna_val, dest_econ,
                             area_terreno, area_construida_total, avaluo, vigencia, npn_anterior,
                         ),
                     )
@@ -319,26 +347,26 @@ def sincronizar_predios_a_f_r1_r2(
                             INSERT INTO f_r1_r2.r2_construccion_zona (
                                 departamento, municipio, numero_predial, tipo_registro,
                                 numero_de_orden, total_registros, matricula,
-                                habitaciones_1, banos_1, locales_1, pisos_1, puntaje_1, area_construida_1,
-                                habitaciones_2, banos_2, locales_2, pisos_2, puntaje_2, area_construida_2,
-                                habitaciones_3, banos_3, locales_3, pisos_3, puntaje_3, area_construida_3,
+                                habitaciones_1, banos_1, locales_1, pisos_1, tipificacion_1, uso_1, puntaje_1, area_construida_1,
+                                habitaciones_2, banos_2, locales_2, pisos_2, tipificacion_2, uso_2, puntaje_2, area_construida_2,
+                                habitaciones_3, banos_3, locales_3, pisos_3, tipificacion_3, uso_3, puntaje_3, area_construida_3,
                                 vigencia, numero_predial_anterior
                             )
                             VALUES (
                                 %s, %s, %s, 2,
                                 %s, %s, %s,
-                                %s, %s, %s, %s, %s, %s,
-                                %s, %s, %s, %s, %s, %s,
-                                %s, %s, %s, %s, %s, %s,
+                                %s, %s, %s, %s, %s, %s, %s, %s,
+                                %s, %s, %s, %s, %s, %s, %s, %s,
+                                %s, %s, %s, %s, %s, %s, %s, %s,
                                 %s, %s
                             );
                             """,
                             (
                                 dpto, mpio, npn_val,
                                 order_num, total_r2_regs, matricula,
-                                b1.get("habitaciones", 0), b1.get("banos", 0), b1.get("locales", 0), b1.get("pisos", 0), b1.get("puntaje", 0), b1.get("area_construida", 0.00),
-                                b2.get("habitaciones", 0), b2.get("banos", 0), b2.get("locales", 0), b2.get("pisos", 0), b2.get("puntaje", 0), b2.get("area_construida", 0.00),
-                                b3.get("habitaciones", 0), b3.get("banos", 0), b3.get("locales", 0), b3.get("pisos", 0), b3.get("puntaje", 0), b3.get("area_construida", 0.00),
+                                b1.get("habitaciones", 0), b1.get("banos", 0), b1.get("locales", 0), b1.get("pisos", 0), b1.get("tipificacion", 0), b1.get("uso", 0), b1.get("puntaje", 0), b1.get("area_construida", 0.00),
+                                b2.get("habitaciones", 0), b2.get("banos", 0), b2.get("locales", 0), b2.get("pisos", 0), b2.get("tipificacion", 0), b2.get("uso", 0), b2.get("puntaje", 0), b2.get("area_construida", 0.00),
+                                b3.get("habitaciones", 0), b3.get("banos", 0), b3.get("locales", 0), b3.get("pisos", 0), b3.get("tipificacion", 0), b3.get("uso", 0), b3.get("puntaje", 0), b3.get("area_construida", 0.00),
                                 vigencia, npn_anterior,
                             ),
                         )
