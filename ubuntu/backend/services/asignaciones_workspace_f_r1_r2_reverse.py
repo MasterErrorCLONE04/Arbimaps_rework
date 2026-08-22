@@ -304,38 +304,71 @@ def sincronizar_predios_a_f_r1_r2(
                     (npn_val,),
                 )
 
-                b1 = bloques_ucons[0] if len(bloques_ucons) > 0 else {}
-                b2 = bloques_ucons[1] if len(bloques_ucons) > 1 else {}
-                b3 = bloques_ucons[2] if len(bloques_ucons) > 2 else {}
+                import math
+                if bloques_ucons:
+                    total_r2_regs = math.ceil(len(bloques_ucons) / 3.0)
+                    for r2_idx in range(total_r2_regs):
+                        order_num = r2_idx + 1
+                        chunk = bloques_ucons[r2_idx * 3 : (r2_idx + 1) * 3]
+                        b1 = chunk[0] if len(chunk) > 0 else {}
+                        b2 = chunk[1] if len(chunk) > 1 else {}
+                        b3 = chunk[2] if len(chunk) > 2 else {}
 
-                cur.execute(
-                    """
-                    INSERT INTO f_r1_r2.r2_construccion_zona (
-                        departamento, municipio, numero_predial, tipo_registro,
-                        numero_de_orden, total_registros, matricula,
-                        habitaciones_1, banos_1, locales_1, pisos_1, puntaje_1, area_construida_1,
-                        habitaciones_2, banos_2, locales_2, pisos_2, puntaje_2, area_construida_2,
-                        habitaciones_3, banos_3, locales_3, pisos_3, puntaje_3, area_construida_3,
-                        vigencia, numero_predial_anterior
+                        cur.execute(
+                            """
+                            INSERT INTO f_r1_r2.r2_construccion_zona (
+                                departamento, municipio, numero_predial, tipo_registro,
+                                numero_de_orden, total_registros, matricula,
+                                habitaciones_1, banos_1, locales_1, pisos_1, puntaje_1, area_construida_1,
+                                habitaciones_2, banos_2, locales_2, pisos_2, puntaje_2, area_construida_2,
+                                habitaciones_3, banos_3, locales_3, pisos_3, puntaje_3, area_construida_3,
+                                vigencia, numero_predial_anterior
+                            )
+                            VALUES (
+                                %s, %s, %s, 2,
+                                %s, %s, %s,
+                                %s, %s, %s, %s, %s, %s,
+                                %s, %s, %s, %s, %s, %s,
+                                %s, %s, %s, %s, %s, %s,
+                                %s, %s
+                            );
+                            """,
+                            (
+                                dpto, mpio, npn_val,
+                                order_num, total_r2_regs, matricula,
+                                b1.get("habitaciones", 0), b1.get("banos", 0), b1.get("locales", 0), b1.get("pisos", 0), b1.get("puntaje", 0), b1.get("area_construida", 0.00),
+                                b2.get("habitaciones", 0), b2.get("banos", 0), b2.get("locales", 0), b2.get("pisos", 0), b2.get("puntaje", 0), b2.get("area_construida", 0.00),
+                                b3.get("habitaciones", 0), b3.get("banos", 0), b3.get("locales", 0), b3.get("pisos", 0), b3.get("puntaje", 0), b3.get("area_construida", 0.00),
+                                vigencia, npn_anterior,
+                            ),
+                        )
+                else:
+                    # Sin unidades de construcción registradas, crear 1 entrada general de ceros
+                    cur.execute(
+                        """
+                        INSERT INTO f_r1_r2.r2_construccion_zona (
+                            departamento, municipio, numero_predial, tipo_registro,
+                            numero_de_orden, total_registros, matricula,
+                            habitaciones_1, banos_1, locales_1, pisos_1, puntaje_1, area_construida_1,
+                            habitaciones_2, banos_2, locales_2, pisos_2, puntaje_2, area_construida_2,
+                            habitaciones_3, banos_3, locales_3, pisos_3, puntaje_3, area_construida_3,
+                            vigencia, numero_predial_anterior
+                        )
+                        VALUES (
+                            %s, %s, %s, 2,
+                            1, 1, %s,
+                            0, 0, 0, 0, 0, 0.00,
+                            0, 0, 0, 0, 0, 0.00,
+                            0, 0, 0, 0, 0, 0.00,
+                            %s, %s
+                        );
+                        """,
+                        (
+                            dpto, mpio, npn_val,
+                            matricula,
+                            vigencia, npn_anterior,
+                        ),
                     )
-                    VALUES (
-                        %s, %s, %s, 2,
-                        1, 1, %s,
-                        %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s, %s,
-                        %s, %s
-                    );
-                    """,
-                    (
-                        dpto, mpio, npn_val,
-                        matricula,
-                        b1.get("habitaciones", 0), b1.get("banos", 0), b1.get("locales", 0), b1.get("pisos", 0), b1.get("puntaje", 0), b1.get("area_construida", 0.00),
-                        b2.get("habitaciones", 0), b2.get("banos", 0), b2.get("locales", 0), b2.get("pisos", 0), b2.get("puntaje", 0), b2.get("area_construida", 0.00),
-                        b3.get("habitaciones", 0), b3.get("banos", 0), b3.get("locales", 0), b3.get("pisos", 0), b3.get("puntaje", 0), b3.get("area_construida", 0.00),
-                        vigencia, npn_anterior,
-                    ),
-                )
 
                 synced_count += 1
                 logger.info("Reverse ETL a f_r1_r2 completado para el predio %s.", npn_val)

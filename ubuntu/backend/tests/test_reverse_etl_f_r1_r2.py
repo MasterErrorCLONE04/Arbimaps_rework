@@ -115,3 +115,40 @@ def test_sincronizar_predios_a_f_r1_r2_success():
     res = sincronizar_predios_a_f_r1_r2(mock_conn, tenant, [npn], "a_base_principal")
     assert res == 1
     assert mock_cursor.execute.call_count > 5
+
+
+def test_sincronizar_predios_a_f_r1_r2_multiple_r2_chunks():
+    tenant = make_tenant()
+    npn = "410010001000000010017000000000"
+
+    mock_cursor = MagicMock()
+
+    mock_cursor.fetchone.side_effect = [
+        {"schema_name": "f_r1_r2"},
+        {"t_id": 100, "numero_predial": npn, "numero_predial_anterior": "4100100000000", "area_catastral_terreno": 150.50, "observaciones": "Test"},
+        {"area_terreno": 150.50},
+        {"nombre_predio": "CL 5 # 10-20"},
+        {"avaluo_catastral": 50000000.00, "fecha_avaluo_catastral": "2026-01-01"},
+        {"numero_fmi": "200-12345"},
+    ]
+
+    # 5 ucons (requires 2 R2 records)
+    ucons = [
+        {"area_unidad_construccion": 20.0, "total_habitaciones": 1, "total_banios": 1, "total_locales": 0, "total_plantas": 1, "cc_total_calificacion": 50},
+        {"area_unidad_construccion": 30.0, "total_habitaciones": 2, "total_banios": 1, "total_locales": 0, "total_plantas": 1, "cc_total_calificacion": 55},
+        {"area_unidad_construccion": 40.0, "total_habitaciones": 2, "total_banios": 2, "total_locales": 0, "total_plantas": 1, "cc_total_calificacion": 60},
+        {"area_unidad_construccion": 50.0, "total_habitaciones": 3, "total_banios": 2, "total_locales": 1, "total_plantas": 2, "cc_total_calificacion": 65},
+        {"area_unidad_construccion": 60.0, "total_habitaciones": 4, "total_banios": 3, "total_locales": 1, "total_plantas": 2, "cc_total_calificacion": 70},
+    ]
+
+    mock_cursor.fetchall.side_effect = [
+        [{"table_name": "r1_predio_propietario"}, {"table_name": "r2_construccion_zona"}],
+        [], # no owners
+        ucons,
+    ]
+
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+    res = sincronizar_predios_a_f_r1_r2(mock_conn, tenant, [npn], "a_base_principal")
+    assert res == 1
