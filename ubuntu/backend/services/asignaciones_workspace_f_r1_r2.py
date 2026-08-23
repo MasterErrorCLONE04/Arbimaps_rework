@@ -436,7 +436,9 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
                 %s, %s,
                 (SELECT t_id FROM {schema_work}.arb_interesadodocumentotipo WHERE ilicode = %s LIMIT 1),
                 %s, %s, %s, %s, %s, %s, %s, %s,
-                COALESCE(%s, 686), COALESCE(%s, 1481), %s, %s, %s, %s
+                COALESCE((SELECT t_id FROM {schema_work}.arb_fuenteadministrativatipo WHERE t_id = %s LIMIT 1), 686),
+                COALESCE((SELECT t_id FROM {schema_work}.arb_derechotipo WHERE t_id = %s LIMIT 1), (SELECT t_id FROM {schema_work}.arb_derechotipo WHERE ilicode = 'Dominio' LIMIT 1), 1745),
+                %s, %s, %s, %s
             )
             ON CONFLICT DO NOTHING;
         """
@@ -519,8 +521,11 @@ def importar_predio_f_r1_r2_a_workspace(conn, tenant, npn: str, schema_work: str
                             )
                             VALUES (
                                 nextval('{schema_work}.t_ili2db_seq'), %s,
-                                %s, %s, %s, %s, %s, %s, %s, %s,
-                                %s, %s, %s
+                                %s,
+                                COALESCE((SELECT t_id FROM {schema_work}.arb_unidadconstrucciontipo WHERE t_id = %s LIMIT 1), 1526),
+                                %s, %s, %s, %s, %s, %s, %s,
+                                COALESCE((SELECT t_id FROM {schema_work}.arb_calificaciontipo WHERE t_id = %s LIMIT 1), 1447),
+                                %s
                             )
                             ON CONFLICT DO NOTHING
                             RETURNING t_id, identificador
