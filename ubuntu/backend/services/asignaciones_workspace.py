@@ -1462,17 +1462,68 @@ def _arb_sync_predios_to_main(
         cur.execute(
             f"""
             CREATE TEMP TABLE _arb_sync_predio_map AS
-            SELECT
+            SELECT DISTINCT ON (sp.work_predio_t_id)
                 sp.work_predio_t_id,
                 mp.t_id AS main_predio_t_id,
                 sp.numero_predial_nacional
             FROM _arb_sync_selected_predio sp
+            JOIN {_qualify(schema_work, work_predio)} wp
+              ON wp.t_id = sp.work_predio_t_id
             JOIN {_qualify(schema_main, work_predio)} mp
-              ON BTRIM(mp.{numero_field}::text) = BTRIM(sp.numero_predial_nacional::text)
+              ON (
+                  BTRIM(mp.{numero_field}::text) = BTRIM(sp.numero_predial_nacional::text)
+                  OR BTRIM(mp.{numero_field}::text) = BTRIM(wp.{numero_field}::text)
+                  OR (COALESCE(NULLIF(BTRIM(wp.t_ili_tid::text), ''), '') <> '' AND BTRIM(mp.t_ili_tid::text) = BTRIM(wp.t_ili_tid::text))
+                  OR (COALESCE(NULLIF(BTRIM(wp.id_operacion::text), ''), '') <> '' AND BTRIM(mp.{numero_field}::text) = BTRIM(wp.id_operacion::text))
+                  OR (COALESCE(NULLIF(BTRIM(wp.id_operacion::text), ''), '') <> '' AND BTRIM(mp.id_operacion::text) = BTRIM(wp.id_operacion::text))
+              )
+            ORDER BY sp.work_predio_t_id, mp.t_id DESC;
             """
         )
-        cur.execute("SELECT COUNT(*) FROM _arb_sync_predio_map")
+        cur.execute("SELECT COUNT(DISTINCT work_predio_t_id) FROM _arb_sync_predio_map")
         mapped_count = int((cur.fetchone() or [0])[0] or 0)
+
+        if mapped_count < selected_count:
+            # Forzar inserción para predios del workspace que no hayan quedado mapeados en main
+            cur.execute(
+                f"""
+                INSERT INTO {_qualify(schema_main, work_predio)} ({', '.join(insert_cols)})
+                SELECT {', '.join(select_exprs)}
+                FROM {_qualify(schema_work, work_predio)} wp
+                JOIN _arb_sync_selected_predio sp
+                  ON sp.work_predio_t_id = wp.t_id
+                JOIN _arb_sync_basket_map bm
+                  ON bm.work_basket = wp.t_basket
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM _arb_sync_predio_map pm WHERE pm.work_predio_t_id = sp.work_predio_t_id
+                );
+                """
+            )
+            cur.execute("DROP TABLE IF EXISTS _arb_sync_predio_map")
+            cur.execute(
+                f"""
+                CREATE TEMP TABLE _arb_sync_predio_map AS
+                SELECT DISTINCT ON (sp.work_predio_t_id)
+                    sp.work_predio_t_id,
+                    mp.t_id AS main_predio_t_id,
+                    sp.numero_predial_nacional
+                FROM _arb_sync_selected_predio sp
+                JOIN {_qualify(schema_work, work_predio)} wp
+                  ON wp.t_id = sp.work_predio_t_id
+                JOIN {_qualify(schema_main, work_predio)} mp
+                  ON (
+                      BTRIM(mp.{numero_field}::text) = BTRIM(sp.numero_predial_nacional::text)
+                      OR BTRIM(mp.{numero_field}::text) = BTRIM(wp.{numero_field}::text)
+                      OR (COALESCE(NULLIF(BTRIM(wp.t_ili_tid::text), ''), '') <> '' AND BTRIM(mp.t_ili_tid::text) = BTRIM(wp.t_ili_tid::text))
+                      OR (COALESCE(NULLIF(BTRIM(wp.id_operacion::text), ''), '') <> '' AND BTRIM(mp.{numero_field}::text) = BTRIM(wp.id_operacion::text))
+                      OR (COALESCE(NULLIF(BTRIM(wp.id_operacion::text), ''), '') <> '' AND BTRIM(mp.id_operacion::text) = BTRIM(wp.id_operacion::text))
+                  )
+                ORDER BY sp.work_predio_t_id, mp.t_id DESC;
+                """
+            )
+            cur.execute("SELECT COUNT(DISTINCT work_predio_t_id) FROM _arb_sync_predio_map")
+            mapped_count = int((cur.fetchone() or [0])[0] or 0)
+
         if mapped_count != selected_count:
             raise export_service.ExportServiceError(
                 status_code=409,
