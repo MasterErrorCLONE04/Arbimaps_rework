@@ -741,9 +741,12 @@ def _prune_workspace_predios_arb(
 
         main_predio_table = main_table(tenant, "arb_predio")
 
-        # Check for desenglobe / segregados
-        # Allows keeping a predio if it is a completely new predio (does not exist in main database)
-        # AND shares the first 17 digits with any assigned parent predio of the same assignment
+        # Check for desenglobe / segregados / nuevos predios de asignacion
+        # Permite conservar un predio si NO existe previamente en la base principal (es un predio nuevo/desenglobe creado en la asignacion)
+        # Y (posee marca en arb_marca O comparte los primeros 12 digitos (municipio/zona/sector/barrio) con la asignacion O keep_new_informal_predios es True)
+        has_marca_table = has_table("arb_marca")
+        marca_check_sql = f"OR EXISTS (SELECT 1 FROM {_qualify(schema_work, 'arb_marca')} m WHERE m.predio = p.t_id)" if has_marca_table else ""
+
         desenglobe_sql = f"""
             OR (
                 NOT EXISTS (
@@ -751,12 +754,19 @@ def _prune_workspace_predios_arb(
                     FROM {main_predio_table} main_p
                     WHERE BTRIM(main_p.numero_predial::text) = BTRIM(p.numero_predial::text)
                 )
-                AND EXISTS (
-                    SELECT 1
-                    FROM {app_table(tenant, "asignacion_predio")} ap_child
-                    WHERE ap_child.asignacion_id = {asignacion_id}
-                      AND ap_child.activo IS DISTINCT FROM FALSE
-                      AND LEFT(REGEXP_REPLACE(ap_child.numero_predial_nacional::text, '[^0-9]', '', 'g'), 17) = LEFT(REGEXP_REPLACE(p.numero_predial::text, '[^0-9]', '', 'g'), 17)
+                AND (
+                    {str(keep_new_informal_predios).upper()}
+                    {marca_check_sql}
+                    OR EXISTS (
+                        SELECT 1
+                        FROM {app_table(tenant, "asignacion_predio")} ap_child
+                        WHERE ap_child.asignacion_id = {asignacion_id}
+                          AND ap_child.activo IS DISTINCT FROM FALSE
+                          AND (
+                              LEFT(REGEXP_REPLACE(ap_child.numero_predial_nacional::text, '[^0-9]', '', 'g'), 12) = LEFT(REGEXP_REPLACE(p.numero_predial::text, '[^0-9]', '', 'g'), 12)
+                              OR LEFT(REGEXP_REPLACE(ap_child.numero_predial_nacional::text, '[^0-9]', '', 'g'), 17) = LEFT(REGEXP_REPLACE(p.numero_predial::text, '[^0-9]', '', 'g'), 17)
+                          )
+                    )
                 )
             )
         """
