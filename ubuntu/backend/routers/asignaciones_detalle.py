@@ -425,6 +425,14 @@ def _qident(value: str) -> str:
         raise ValueError(f"Identificador SQL invalido: {value!r}")
     return f'"{clean}"'
 
+def _qualify(schema, table):
+    if schema and not isinstance(schema, str) and hasattr(schema, "schemas"):
+        schema = schema.schemas.main
+    schema = str(schema or "").strip().strip('"')
+    if not schema:
+        return table
+    return f"{schema}.{table}"
+
 
 def _table_column_specs(cur, schema: str, table: str) -> list[dict]:
     cur.execute(
