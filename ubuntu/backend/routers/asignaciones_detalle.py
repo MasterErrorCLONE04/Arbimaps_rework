@@ -4409,17 +4409,14 @@ def sincronizar_produccion(
                 from services.asignaciones_workspace_f_r1_r2_reverse import sincronizar_predios_a_f_r1_r2
                 cur.execute(
                     f"""
-                    SELECT DISTINCT p.numero_predial
-                    FROM {_qualify(schema_main, 'arb_predio')} p
-                    JOIN {_qualify(schema_main, 't_ili2db_basket')} b ON b.t_id = p.t_basket
-                    JOIN {_qualify(schema_main, 't_ili2db_dataset')} d ON d.t_id = b.dataset
-                    WHERE d.datasetname = %s OR d.datasetname LIKE %s
+                    SELECT DISTINCT numero_predial_nacional
+                    FROM _arb_sync_selected_predio
                     UNION
                     SELECT DISTINCT numero_predial_nacional
                     FROM {asignacion_predio_table}
                     WHERE asignacion_id = %s;
                     """,
-                    (target_dataset, f"%_{asignacion_id}", asignacion_id),
+                    (asignacion_id,)
                 )
                 npns = [str(r[0]).strip() for r in (cur.fetchall() or []) if r and r[0]]
                 if npns:

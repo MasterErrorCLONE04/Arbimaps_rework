@@ -3322,9 +3322,12 @@ def sync_workspace_predios_to_main(
         with conn.cursor() as cur:
             cur.execute(
                 f"""
-                SELECT numero_predial_nacional
+                SELECT DISTINCT numero_predial_nacional
+                FROM _arb_sync_selected_predio
+                UNION
+                SELECT DISTINCT numero_predial_nacional
                 FROM {asig_predio_tbl}
-                WHERE asignacion_id = %s AND activo IS DISTINCT FROM FALSE;
+                WHERE asignacion_id = %s;
                 """,
                 (asignacion_id,),
             )
