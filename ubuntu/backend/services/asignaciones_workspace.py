@@ -763,8 +763,7 @@ def _prune_workspace_predios_arb(
                         WHERE ap_child.asignacion_id = {asignacion_id}
                           AND ap_child.activo IS DISTINCT FROM FALSE
                           AND (
-                              LEFT(REGEXP_REPLACE(ap_child.numero_predial_nacional::text, '[^0-9]', '', 'g'), 12) = LEFT(REGEXP_REPLACE(p.numero_predial::text, '[^0-9]', '', 'g'), 12)
-                              OR LEFT(REGEXP_REPLACE(ap_child.numero_predial_nacional::text, '[^0-9]', '', 'g'), 17) = LEFT(REGEXP_REPLACE(p.numero_predial::text, '[^0-9]', '', 'g'), 17)
+                              LEFT(REGEXP_REPLACE(ap_child.numero_predial_nacional::text, '[^0-9]', '', 'g'), 5) = LEFT(REGEXP_REPLACE(p.numero_predial::text, '[^0-9]', '', 'g'), 5)
                           )
                     )
                 )
