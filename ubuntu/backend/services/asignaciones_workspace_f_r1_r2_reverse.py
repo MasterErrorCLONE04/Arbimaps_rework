@@ -30,6 +30,77 @@ def _get_r1_doc_type(ilicode: Optional[str]) -> str:
     return _ILI_CODE_TO_R1_DOCUMENT_TYPE.get(norm, "C")
 
 
+_DESTINO_ILICODE_TO_R2_CODE = {
+    "HABITACIONAL": "A",
+    "INDUSTRIAL": "B",
+    "COMERCIAL": "C",
+    "AGROPECUARIO": "D",
+    "CULTURAL": "F",
+    "RECREACIONAL": "G",
+    "SALUBRIDAD": "H",
+    "INSTITUCIONAL": "I",
+    "EDUCATIVO": "J",
+    "RELIGIOSO": "K",
+    "AGRICOLA": "L",
+    "PECUARIO": "M",
+    "AGROINDUSTRIAL": "N",
+    "FORESTAL_PRODUCTOR": "O",
+    "USO_PUBLICO": "P",
+    "INFRAESTRUCTURA_ASOCIADA_PRODUCCION_AGROPECUARIA": "Q",
+    "LOTE_URBANIZABLE_NO_URBANIZADO": "R",
+    "LOTE_URBANIZADO_NO_CONSTRUIDO": "S",
+    "LOTE_NO_URBANIZABLE": "T",
+    "ACUICOLA": "U",
+    "INFRAESTRUCTURA_HIDRAULICA": "V",
+    "MINERIA_HIDROCARBUROS": "W",
+    "INFRAESTRUCTURA_TRANSPORTE": "X",
+    "SERVICIOS_FUNERARIOS": "Y",
+    "AGROFORESTAL": "Z",
+    "INFRAESTRUCTURA_SANEAMIENTO_BASICO": "1",
+    "INFRAESTRUCTURA_SEGURIDAD": "2",
+    "INFRAESTRUCTURA_ENERVABLE_ELECTRICA": "3",
+    "INFRAESTRUCTURA_ENERGIA_RENOVABLE_ELECTRICA": "3",
+    "LOTE_RURAL": "4",
+}
+
+
+def _resolve_destino_economico_r1(cur, raw_val, schema_source: str) -> str:
+    if not raw_val:
+        return "A"
+
+    val_str = str(raw_val).strip()
+
+    # Si ya es una clave valida de f_r1_r2.destino_economico
+    try:
+        cur.execute(
+            "SELECT codigo FROM f_r1_r2.destino_economico WHERE BTRIM(codigo::text) = %s LIMIT 1;",
+            (val_str,),
+        )
+        r = cur.fetchone()
+        if r and r.get("codigo"):
+            return str(r["codigo"]).strip()
+    except Exception:
+        pass
+
+    # Si es un t_id numerico de arb_destinacioneconomicatipo
+    if val_str.isdigit():
+        try:
+            cur.execute(
+                f"SELECT ilicode FROM {schema_source}.arb_destinacioneconomicatipo WHERE t_id = %s LIMIT 1;",
+                (int(val_str),),
+            )
+            type_row = cur.fetchone()
+            if type_row and type_row.get("ilicode"):
+                ilicode = str(type_row["ilicode"]).strip().upper()
+                code_mapped = _DESTINO_ILICODE_TO_R2_CODE.get(ilicode)
+                if code_mapped:
+                    return code_mapped
+        except Exception:
+            pass
+
+    return "A"
+
+
 def sincronizar_predios_a_f_r1_r2(
     conn,
     tenant: TenantContext,
@@ -282,7 +353,7 @@ def sincronizar_predios_a_f_r1_r2(
                         prop_dir = _normalize_str(prop.get("ic_direccion_residencia")) or direccion
 
                         comuna_val = npn_val[9:11] if len(npn_val) >= 11 else None
-                        dest_econ = predio_row.get("destino_economico") or "01"
+                        dest_econ = _resolve_destino_economico_r1(cur, predio_row.get("destino_economico"), schema_source)
                         d_tipo_val = prop.get("d_tipo")
                         d_fecha_val = prop.get("d_fecha_inicio_tenencia")
                         fa_tipo_val = prop.get("fa_tipo")
@@ -318,7 +389,7 @@ def sincronizar_predios_a_f_r1_r2(
                 else:
                     # Sin propietarios registrados, crear 1 entrada general
                     comuna_val = npn_val[9:11] if len(npn_val) >= 11 else None
-                    dest_econ = predio_row.get("destino_economico") or "01"
+                    dest_econ = _resolve_destino_economico_r1(cur, predio_row.get("destino_economico"), schema_source)
                     cur.execute(
                         """
                         INSERT INTO f_r1_r2.r1_predio_propietario (
