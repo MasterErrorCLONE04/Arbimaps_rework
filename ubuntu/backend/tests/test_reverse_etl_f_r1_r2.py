@@ -82,6 +82,7 @@ def test_sincronizar_predios_a_f_r1_r2_success():
 
     mock_cursor.fetchall.side_effect = [
         [{"table_name": "r1_predio_propietario"}, {"table_name": "r2_construccion_zona"}],  # 2. tables check
+        [{"column_name": "t_id"}, {"column_name": "numero_predial"}, {"column_name": "destinacion_economica"}],  # 2b. cols check
         [  # 7. propietarios
             {
                 "i_primer_nombre": "JUAN",
@@ -143,6 +144,7 @@ def test_sincronizar_predios_a_f_r1_r2_multiple_r2_chunks():
 
     mock_cursor.fetchall.side_effect = [
         [{"table_name": "r1_predio_propietario"}, {"table_name": "r2_construccion_zona"}],
+        [{"column_name": "t_id"}, {"column_name": "numero_predial"}, {"column_name": "destinacion_economica"}],
         [], # no owners
         ucons,
     ]

@@ -73,28 +73,44 @@ def sincronizar_predios_a_f_r1_r2(
             logger.warning("Tablas r1_predio_propietario o r2_construccion_zona no encontradas en f_r1_r2.")
             return 0
 
+        # Verificar columnas de arb_predio en Python antes de construir el query
+        cur.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_schema = %s AND table_name = 'arb_predio';",
+            (schema_source,)
+        )
+        predio_cols = set()
+        for row in (cur.fetchall() or []):
+            if isinstance(row, dict):
+                val = row.get("column_name") or row.get("COLUMN_NAME") or (list(row.values())[0] if row else None)
+            elif isinstance(row, (list, tuple)):
+                val = row[0]
+            else:
+                val = getattr(row, "column_name", str(row))
+            if val:
+                predio_cols.add(str(val))
+        if "destino_economico" in predio_cols:
+            dest_col_expr = "destino_economico::text"
+        elif "destinacion_economica" in predio_cols:
+            dest_col_expr = "destinacion_economica::text"
+        else:
+            dest_col_expr = "'01'"
+
         synced_count = 0
 
         for npn in clean_npns:
+            sp_name = f"sp_retl_{abs(hash(npn)) % 10000000}"
             try:
+                cur.execute(f"SAVEPOINT {sp_name};")
                 # 2. Consultar predio principal en schema_source
                 cur.execute(
                     f"""
                     SELECT t_id, numero_predial, numero_predial_anterior, area_catastral_terreno, observaciones,
-                           COALESCE(
-                               (CASE WHEN EXISTS (
-                                   SELECT 1 FROM information_schema.columns 
-                                   WHERE table_schema = '{schema_source}' AND table_name = 'arb_predio' AND column_name = 'destino_economico'
-                               ) THEN (
-                                   SELECT destino_economico::text FROM {schema_source}.arb_predio WHERE BTRIM(numero_predial::text) = %s LIMIT 1
-                               ) ELSE NULL END),
-                               '01'
-                           ) AS destino_economico
+                           COALESCE({dest_col_expr}, '01') AS destino_economico
                     FROM {schema_source}.arb_predio
                     WHERE BTRIM(numero_predial::text) = %s
                     LIMIT 1;
                     """,
-                    (npn, npn),
+                    (npn,),
                 )
                 predio_row = cur.fetchone()
                 if not predio_row:
@@ -402,6 +418,10 @@ def sincronizar_predios_a_f_r1_r2(
                 logger.info("Reverse ETL a f_r1_r2 completado para el predio %s.", npn_val)
 
             except Exception as e:
+                try:
+                    cur.execute(f"ROLLBACK TO SAVEPOINT {sp_name};")
+                except Exception:
+                    pass
                 logger.error("Error durante Reverse ETL a f_r1_r2 para predio %s: %s", npn, e, exc_info=True)
 
         return synced_count
