@@ -1,1231 +1,1129 @@
-<!-- restriccion_predios.html -->
+﻿<!-- restriccion_predios.html -->
 <style>
-  /* =========================================================
-     RESTRICCIÓN DE PREDIOS
-     Namespace visual aislado: rpred-
-     Los ID se conservan porque son parte de la funcionalidad.
-     ========================================================= */
-  .rpred-page {
-    --rpred-primary: #0a2c1b;
-    --rpred-primary-hover: #123d27;
-    --rpred-primary-soft: #edf5f0;
-    --rpred-danger: #dc2626;
-    --rpred-danger-soft: #fef2f2;
-    --rpred-success: #15803d;
-    --rpred-success-soft: #f0fdf4;
-    --rpred-text: #17211b;
-    --rpred-muted: #66736b;
-    --rpred-border: #dce5df;
-    --rpred-surface: #fff;
-    --rpred-surface-soft: #f7faf8;
-    --rpred-shadow: 0 12px 30px rgba(10, 44, 27, .08);
-    width: 100%;
-    padding: 0 12px 14px;
-    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    color: var(--rpred-text);
-    box-sizing: border-box
-  }
-
-  .rpred-page *,
-  .rpred-page *::before,
-  .rpred-page *::after {
-    box-sizing: border-box
-  }
-
-  .rpred-layout {
-    display: flex;
-    gap: 16px;
-    height: calc(100vh - 190px);
-    min-height: 580px
-  }
-
-  .rpred-sidebar {
-    width: 420px;
-    min-width: 380px;
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    height: 100%;
-    overflow: hidden
-  }
-
-  .rpred-card {
-    background: var(--rpred-surface);
-    border: 1px solid var(--rpred-border);
-    border-radius: 16px;
-    box-shadow: var(--rpred-shadow);
-    padding: 16px
-  }
-
-  .rpred-card--search {
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 8px
-  }
-
-  .rpred-card--list {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden
-  }
-
-  .rpred-title {
-    margin: 0;
-    color: var(--rpred-primary);
-    font-size: 1.05rem;
-    font-weight: 800;
-    letter-spacing: -.01em
-  }
-
-  .rpred-description {
-    margin: 0;
-    color: var(--rpred-muted);
-    font-size: .76rem;
-    line-height: 1.45
-  }
-
-  .rpred-warning-text {
-    display: block;
-    margin-top: 3px;
-    color: var(--rpred-danger);
-    font-weight: 800
-  }
-
-  .rpred-search-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 6px
-  }
-
-  .rpred-input,
-  .rpred-textarea,
-  .rpred-select {
-    width: 100%;
-    border: 1px solid #cfd9d2;
-    border-radius: 9px;
-    background: #fff;
-    color: var(--rpred-text);
-    font: inherit;
-    font-size: 11.5px;
-    outline: 0;
-    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease
-  }
-
-  .rpred-input {
-    height: 34px;
-    padding: 7px 10px
-  }
-
-  .rpred-textarea {
-    min-height: 58px;
-    padding: 8px 10px;
-    resize: vertical;
-    line-height: 1.35
-  }
-
-  .rpred-select {
-    height: 36px;
-    padding: 7px 10px;
-    font-size: 12px;
-    font-weight: 650;
-    background: var(--rpred-surface-soft)
-  }
-
-  .rpred-input:focus,
-  .rpred-textarea:focus,
-  .rpred-select:focus {
-    border-color: rgba(10, 44, 27, .65);
-    box-shadow: 0 0 0 3px rgba(10, 44, 27, .10)
-  }
-
-  .rpred-button {
-    border: 1px solid transparent;
-    border-radius: 9px;
-    background: var(--rpred-primary);
-    color: #fff;
-    font: inherit;
-    font-size: 11.5px;
-    font-weight: 750;
-    line-height: 1;
-    cursor: pointer;
-    transition: transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px
-  }
-
-  .rpred-button:hover {
-    background: var(--rpred-primary-hover);
-    transform: translateY(-1px)
-  }
-
-  .rpred-button:focus-visible {
-    outline: 3px solid rgba(10, 44, 27, .18);
-    outline-offset: 2px
-  }
-
-  .rpred-button--search {
-    height: 34px;
-    padding: 0 13px;
-    flex: 0 0 auto
-  }
-
-  .rpred-button--ghost {
-    padding: 5px 9px;
-    background: #fff;
-    color: #66736b;
-    border-color: #ccd7d0;
-    font-size: 10.5px
-  }
-
-  .rpred-button--ghost:hover {
-    background: var(--rpred-surface-soft);
-    color: var(--rpred-primary);
-    border-color: #acbeb3
-  }
-
-  .rpred-button--restrict,
-  .rpred-button--release {
-    width: 100%;
-    min-height: 34px;
-    border-radius: 999px
-  }
-
-  .rpred-button--release {
-    background: var(--rpred-danger)
-  }
-
-  .rpred-button--release:hover {
-    background: #b91c1c
-  }
-
-  .rpred-search-status {
-    display: block;
-    min-height: 15px;
-    margin-top: 2px;
-    font-size: 11px;
-    color: var(--rpred-muted)
-  }
-
-  .rpred-selection {
-    max-height: 280px;
-    margin-top: 6px;
-    padding-top: 10px;
-    padding-right: 5px;
-    border-top: 1px solid var(--rpred-border);
-    overflow: auto
-  }
-
-  .rpred-hidden {
-    display: none !important
-  }
-
-  .rpred-section-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 4px
-  }
-
-  .rpred-section-title {
-    margin: 0;
-    color: var(--rpred-primary);
-    font-size: .95rem;
-    font-weight: 800
-  }
-
-  .rpred-predial-box {
-    margin: 8px 0;
-    padding: 9px 10px;
-    border: 1px solid var(--rpred-border);
-    border-radius: 10px;
-    background: var(--rpred-surface-soft)
-  }
-
-  .rpred-predial-label {
-    color: var(--rpred-muted);
-    font-size: 9.5px;
-    font-weight: 800;
-    letter-spacing: .05em;
-    text-transform: uppercase
-  }
-
-  .rpred-predial-value {
-    margin-top: 2px;
-    color: var(--rpred-primary);
-    font-size: 12px;
-    font-weight: 800;
-    word-break: break-all
-  }
-
-  .rpred-info-grid {
-    display: grid;
-    gap: 4px;
-    font-size: 11.5px
-  }
-
-  .rpred-info-row {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 5px 0;
-    border-bottom: 1px dashed #e5ebe7
-  }
-
-  .rpred-info-row:last-child {
-    border-bottom: 0
-  }
-
-  .rpred-info-icon {
-    width: 28px;
-    height: 28px;
-    flex: 0 0 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    background: var(--rpred-primary-soft);
-    color: var(--rpred-primary);
-    font-size: 13px
-  }
-
-  .rpred-info-copy {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1px
-  }
-
-  .rpred-info-label {
-    color: var(--rpred-muted);
-    font-size: 9.5px;
-    font-weight: 750;
-    text-transform: uppercase;
-    letter-spacing: .035em
-  }
-
-  .rpred-info-copy strong {
-    font-size: 11.5px;
-    color: var(--rpred-text);
-    word-break: break-word
-  }
-
-  .rpred-multi-list {
-    max-height: 150px;
-    margin: 6px 0;
-    padding: 7px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    overflow: auto;
-    border: 1px solid var(--rpred-border);
-    border-radius: 10px;
-    background: var(--rpred-surface-soft)
-  }
-
-  .rpred-selection-item {
-    padding: 9px 10px;
-    border: 1px solid #d9e3dc;
-    border-radius: 9px;
-    background: #fff;
-    font-size: 11px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px
-  }
-
-  .rpred-selection-item.rpred-is-restricted {
-    border-left: 4px solid var(--rpred-danger);
-    background: var(--rpred-danger-soft)
-  }
-
-  .rpred-selection-item.rpred-is-free {
-    border-left: 4px solid var(--rpred-success);
-    background: var(--rpred-success-soft)
-  }
-
-  .rpred-selection-badge {
-    flex: 0 0 auto;
-    padding: 4px 7px;
-    border-radius: 999px;
-    color: #fff;
-    font-size: 9px;
-    font-weight: 800
-  }
-
-  .rpred-selection-badge--restricted {
-    background: var(--rpred-danger)
-  }
-
-  .rpred-selection-badge--free {
-    background: var(--rpred-success)
-  }
-
-  .rpred-restriction-status {
-    margin-top: 8px
-  }
-
-  .rpred-status-badge {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 9px;
-    background: var(--rpred-danger);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 800;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px
-  }
-
-  .rpred-reason {
-    margin-top: 5px;
-    padding: 8px 9px;
-    border-radius: 8px;
-    background: var(--rpred-danger-soft);
-    color: #7f1d1d;
-    font-size: 11px;
-    line-height: 1.35
-  }
-
-  .rpred-action-zone {
-    margin-top: 8px;
-    padding-top: 9px;
-    border-top: 1px solid var(--rpred-border)
-  }
-
-  .rpred-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 7px
-  }
-
-  .rpred-label {
-    margin: 0;
-    color: var(--rpred-primary);
-    font-size: 11px;
-    font-weight: 750
-  }
-
-  .rpred-list-count {
-    margin: 2px 0 6px;
-    color: var(--rpred-muted);
-    font-size: .78rem
-  }
-
-  .rpred-restricted-list {
-    flex: 1 1 auto;
-    min-height: 80px;
-    padding: 2px 5px 6px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    overflow: auto
-  }
-
-  .rpred-restricted-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 11px 12px;
-    border: 1px solid #e0e7e2;
-    border-radius: 12px;
-    background: #fff;
-    cursor: pointer;
-    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease
-  }
-
-  .rpred-restricted-item:hover {
-    transform: translateY(-1px);
-    border-color: #c7d4cb;
-    background: #fafcfb;
-    box-shadow: 0 6px 14px rgba(10, 44, 27, .06)
-  }
-
-  .rpred-restricted-item__info {
-    min-width: 0;
-    max-width: 82%;
-    display: flex;
-    flex-direction: column;
-    gap: 2px
-  }
-
-  .rpred-restricted-item__title {
-    color: var(--rpred-text);
-    font-size: 12.5px;
-    font-weight: 800;
-    word-break: break-all
-  }
-
-  .rpred-restricted-item__reason {
-    color: #526158;
-    font-size: 11px;
-    line-height: 1.35;
-    word-break: break-word
-  }
-
-  .rpred-restricted-item__meta {
-    margin-top: 2px;
-    color: #7b8780;
-    font-size: 10px
-  }
-
-  .rpred-icon-button {
-    width: 30px;
-    height: 30px;
-    flex: 0 0 30px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: #91a098;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background .16s ease, color .16s ease, transform .16s ease
-  }
-
-  .rpred-icon-button:hover {
-    background: var(--rpred-danger-soft);
-    color: var(--rpred-danger);
-    transform: translateY(-1px)
-  }
-
-  .rpred-empty-state {
-    padding: 28px 10px;
-    text-align: center;
-    color: var(--rpred-muted);
-    font-size: 12px
-  }
-
-  .rpred-scroll::-webkit-scrollbar,
-  .rpred-selection::-webkit-scrollbar,
-  .rpred-multi-list::-webkit-scrollbar,
-  .rpred-restricted-list::-webkit-scrollbar {
-    width: 6px
-  }
-
-  .rpred-scroll::-webkit-scrollbar-track,
-  .rpred-selection::-webkit-scrollbar-track,
-  .rpred-multi-list::-webkit-scrollbar-track,
-  .rpred-restricted-list::-webkit-scrollbar-track {
-    background: transparent
-  }
-
-  .rpred-scroll::-webkit-scrollbar-thumb,
-  .rpred-selection::-webkit-scrollbar-thumb,
-  .rpred-multi-list::-webkit-scrollbar-thumb,
-  .rpred-restricted-list::-webkit-scrollbar-thumb {
-    background: #c9d4cd;
-    border-radius: 999px
-  }
-
-  .rpred-map {
-    flex: 1 1 auto;
-    min-width: 0;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid var(--rpred-border);
-    border-radius: 16px;
-    background: #dde9e1;
-    box-shadow: var(--rpred-shadow)
-  }
-
-  #map {
-    width: 100%;
-    height: 100%;
-    background: #dce9f4
-  }
-
-  .rpred-map-toolbar {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 36;
-    display: flex;
-    gap: 7px
-  }
-
-  .rpred-map-button {
-    min-height: 34px;
-    padding: 8px 13px;
-    border: 0;
-    border-radius: 999px;
-    background: var(--rpred-primary);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 800;
-    line-height: 1;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    box-shadow: 0 5px 14px rgba(10, 44, 27, .16)
-  }
-
-  .rpred-map-button--light {
-    background: #fff;
-    color: var(--rpred-primary);
-    border: 1px solid rgba(10, 44, 27, .18)
-  }
-
-  .rpred-map-panel {
-    position: absolute;
-    top: 54px;
-    right: 12px;
-    z-index: 41;
-    width: 220px;
-    overflow: hidden;
-    border: 1px solid rgba(10, 44, 27, .14);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, .98);
-    box-shadow: 0 14px 30px rgba(10, 44, 27, .16);
-    transition: transform .18s ease, opacity .18s ease
-  }
-
-  .rpred-map-panel--basemap {
-    top: 98px
-  }
-
-  .rpred-map-panel.rpred-map-hidden {
-    transform: translateY(-8px);
-    opacity: 0;
-    pointer-events: none
-  }
-
-  .rpred-panel-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 10px 12px;
-    border-bottom: 1px solid rgba(10, 44, 27, .10)
-  }
-
-  .rpred-panel-title {
-    color: var(--rpred-primary);
-    font-size: 13px;
-    font-weight: 800
-  }
-
-  .rpred-panel-close {
-    width: 26px;
-    height: 26px;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: #69766e;
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer
-  }
-
-  .rpred-panel-close:hover {
-    background: #f2f6f3;
-    color: var(--rpred-primary)
-  }
-
-  .rpred-panel-body {
-    padding: 10px
-  }
-
-  .rpred-layer-block-title {
-    margin-bottom: 6px;
-    color: #6d7971;
-    font-size: 10.5px;
-    font-weight: 800;
-    letter-spacing: .04em;
-    text-transform: uppercase
-  }
-
-  .rpred-layer-list {
-    display: flex;
-    flex-direction: column;
-    gap: 7px
-  }
-
-  .rpred-layer-empty {
-    padding: 8px 4px;
-    color: var(--rpred-muted);
-    font-size: 11px;
-    text-align: center
-  }
-
-  .rpred-layer-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 9px;
-    padding: 8px 9px;
-    border: 1px solid rgba(10, 44, 27, .10);
-    border-radius: 10px;
-    background: #f5f8f6;
-    cursor: pointer
-  }
-
-  .rpred-layer-item.rpred-is-on {
-    border-color: rgba(10, 44, 27, .42);
-    background: var(--rpred-primary-soft)
-  }
-
-  .rpred-layer-label-wrap {
-    min-width: 0
-  }
-
-  .rpred-layer-label {
-    color: #243129;
-    font-size: 11.5px;
-    font-weight: 750;
-    line-height: 1.2
-  }
-
-  .rpred-layer-toggle {
-    min-width: 46px;
-    height: 23px;
-    padding: 0 7px;
-    border: 1px solid rgba(10, 44, 27, .20);
-    border-radius: 999px;
-    background: #fff;
-    color: #59665e;
-    font-size: 9.5px;
-    font-weight: 850;
-    cursor: pointer
-  }
-
-  .rpred-layer-toggle.rpred-is-on {
-    border-color: var(--rpred-primary);
-    background: var(--rpred-primary);
-    color: #fff
-  }
-
-  .rpred-layer-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 7px;
-    margin-top: 9px
-  }
-
-  .rpred-panel-button {
-    padding: 8px 9px;
-    border: 1px solid rgba(10, 44, 27, .16);
-    border-radius: 9px;
-    background: #fff;
-    color: #26332b;
-    font-size: 11px;
-    font-weight: 750;
-    cursor: pointer
-  }
-
-  .rpred-panel-button--primary {
-    background: var(--rpred-primary);
-    border-color: var(--rpred-primary);
-    color: #fff
-  }
-
-  .rpred-legend {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 20;
-    min-width: 198px;
-    max-width: 236px;
-    padding: 11px 12px;
-    border: 1px solid rgba(10, 44, 27, .08);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, .96);
-    box-shadow: 0 14px 30px rgba(10, 44, 27, .12);
-    backdrop-filter: blur(8px)
-  }
-
-  .rpred-legend__title {
-    margin-bottom: 7px;
-    color: var(--rpred-primary);
-    font-size: 12px;
-    font-weight: 850
-  }
-
-  .rpred-legend__list {
-    display: flex;
-    flex-direction: column;
-    gap: 7px
-  }
-
-  .rpred-legend__item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #334038;
-    font-size: 11px;
-    font-weight: 650
-  }
-
-  .rpred-legend__swatch {
-    width: 18px;
-    height: 12px;
-    flex: 0 0 auto;
-    border-radius: 3px
-  }
-
-  .rpred-legend__swatch--restricted {
-    background: rgba(220, 38, 38, .25);
-    border: 2px solid var(--rpred-danger)
-  }
-
-  .rpred-legend__swatch--terrain {
-    background: rgba(166, 206, 227, .75);
-    border: 1px solid rgba(16, 81, 2, .65)
-  }
-
-  .rpred-legend__swatch--construction {
-    border: 1px solid #111827;
-    background: repeating-linear-gradient(135deg, #111827 0, #111827 2px, transparent 2px, transparent 6px)
-  }
-
-  .rpred-legend__swatch--unit {
-    border: 1px solid #111827;
-    background: repeating-linear-gradient(45deg, #111827 0, #111827 2px, transparent 2px, transparent 6px)
-  }
-
-  .rpred-legend__restricted-text {
-    color: var(--rpred-danger);
-    font-weight: 800
-  }
-
-  .rpred-popup {
-    position: absolute;
-    z-index: 40;
-    min-width: 240px;
-    max-width: 300px;
-    padding: 12px 14px;
-    border: 1px solid rgba(10, 44, 27, .08);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, .98);
-    box-shadow: 0 18px 36px rgba(10, 44, 27, .16)
-  }
-
-  .rpred-popup.rpred-map-hidden {
-    display: none
-  }
-
-  .rpred-popup__close {
-    position: absolute;
-    top: 7px;
-    right: 7px;
-    width: 25px;
-    height: 25px;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: #6a776f;
-    font-size: 14px;
-    font-weight: 800;
-    cursor: pointer
-  }
-
-  .rpred-popup__close:hover {
-    background: #f1f5f2;
-    color: var(--rpred-primary)
-  }
-
-  .rpred-popup__title {
-    margin-bottom: 9px;
-    padding-right: 20px;
-    color: var(--rpred-primary);
-    font-size: 13px;
-    font-weight: 850
-  }
-
-  .rpred-popup__grid {
-    display: grid;
-    gap: 7px
-  }
-
-  .rpred-popup__row {
-    display: grid;
-    gap: 2px
-  }
-
-  .rpred-popup__label {
-    color: #728078;
-    font-size: 10.5px;
-    font-weight: 750;
-    letter-spacing: .025em;
-    text-transform: uppercase
-  }
-
-  .rpred-popup__value {
-    color: #17211b;
-    font-size: 12.5px;
-    font-weight: 750;
-    word-break: break-word
-  }
-
-  .rpred-zoom {
-    position: absolute;
-    left: 12px;
-    bottom: 12px;
-    z-index: 34;
-    display: flex;
-    flex-direction: column;
-    gap: 7px
-  }
-
-  .rpred-zoom-button {
-    width: 38px;
-    height: 38px;
-    border: 1px solid rgba(10, 44, 27, .15);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, .96);
-    color: var(--rpred-primary);
-    box-shadow: 0 6px 14px rgba(10, 44, 27, .14);
-    font-size: 20px;
-    font-weight: 800;
-    line-height: 1;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center
-  }
-
-  .rpred-zoom-button:hover {
-    background: var(--rpred-primary);
-    color: #fff
-  }
-
-  .rpred-snap-marker {
-    position: absolute;
-    z-index: 45;
-    width: 12px;
-    height: 12px;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    background: #ef4444;
-    box-shadow: 0 0 0 2px rgba(239, 68, 68, .55);
-    transform: translate(-50%, -50%);
-    pointer-events: none
-  }
-
-  .rpred-snap-marker.rpred-map-hidden {
-    display: none
-  }
-
-  .rpred-scale-line {
-    position: absolute;
-    right: 12px;
-    bottom: 12px;
-    z-index: 21;
-    padding: 4px 7px;
-    border-radius: 7px;
-    background: rgba(255, 255, 255, .9);
-    color: var(--rpred-primary);
-    font-size: 10px;
-    box-shadow: 0 3px 10px rgba(10, 44, 27, .10)
-  }
-
-  .rpred-scale-line .ol-scale-line-inner {
-    border-color: var(--rpred-primary);
-    color: var(--rpred-primary);
-    font-size: 10px
-  }
-
-  .rpred-measure-panel {
-    position: absolute;
-    right: 12px;
-    bottom: 50px;
-    z-index: 23
-  }
-
-  .rpred-measure-panel.rpred-map-hidden {
-    display: none
-  }
-
-  .rpred-is-active {
-    box-shadow: 0 0 0 3px rgba(10, 44, 27, .16) !important
-  }
-
-  .ol-zoom,
-  .ol-attribution {
-    display: none !important
-  }
-
-  .rpred-swal-popup {
-    border: 1px solid rgba(10, 44, 27, .10) !important;
-    border-radius: 16px !important;
-    padding: 24px !important;
-    box-shadow: 0 20px 40px rgba(10, 44, 27, .14) !important
-  }
-
-  .rpred-swal-button {
-    border-radius: 8px !important;
-    padding: 8px 24px !important;
-    font-size: 13px !important;
-    font-weight: 700 !important
-  }
-
-  .rpred-swal-title {
-    color: #17211b;
-    font-family: Outfit, Inter, sans-serif;
-    font-size: 1.15rem;
-    font-weight: 800
-  }
-
-  .rpred-swal-content {
-    margin-bottom: 14px;
-    text-align: left;
-    font-family: Inter, sans-serif
-  }
-
-  .rpred-swal-description {
-    margin: 0 0 12px;
-    color: #526158;
-    font-size: .85rem;
-    line-height: 1.4
-  }
-
-  .rpred-swal-warning {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 12px 14px;
-    border: 1.5px solid #fecaca;
-    border-left: 4px solid var(--rpred-danger);
-    border-radius: 8px;
-    background: var(--rpred-danger-soft)
-  }
-
-  .rpred-swal-warning__icon {
-    margin-top: 2px;
-    color: var(--rpred-danger);
-    font-size: 16px;
-    line-height: 1
-  }
-
-  .rpred-swal-warning__title {
-    display: block;
-    margin-bottom: 2px;
-    color: #991b1b;
-    font-size: .78rem;
-    font-weight: 800;
-    letter-spacing: .02em;
-    text-transform: uppercase
-  }
-
-  .rpred-swal-warning__text {
-    display: block;
-    color: #b91c1c;
-    font-size: .78rem;
-    font-weight: 650;
-    line-height: 1.35
-  }
-
-  .rpred-page .bi {
-    line-height: 1
-  }
-
-  .rpred-icon-gap {
-    margin-right: 4px
-  }
-
-  @media(max-width:1100px) {
-    .rpred-layout {
-      height: auto;
-      min-height: 0;
-      flex-direction: column
-    }
-
-    .rpred-sidebar {
-      width: 100%;
-      min-width: 0;
-      height: auto;
-      overflow: visible
-    }
-
-    .rpred-card--list {
-      min-height: 280px
-    }
-
-    .rpred-map {
-      height: 620px;
-      min-height: 520px
-    }
-  }
-
-  @media(max-width:640px) {
-    .rpred-page {
-      padding-inline: 6px
-    }
-
-    .rpred-map {
-      height: 560px
-    }
-
-    .rpred-search-row {
-      flex-direction: column
-    }
-
-    .rpred-button--search {
-      width: 100%
-    }
-
-    .rpred-map-toolbar {
-      left: 12px;
-      right: 12px;
-      justify-content: flex-end
-    }
-
-    .rpred-legend {
-      top: 58px;
-      max-width: calc(100% - 24px)
-    }
-  }
+/* =========================================================
+   REDISEÑO VISUAL — SOLO CSS
+   No se modifica HTML, IDs, clases funcionales ni JavaScript.
+   Paleta principal: #0A2C1B
+   ========================================================= */
+
+:root{
+  --arbi-green:#0A2C1B;
+  --arbi-green-2:#185336;
+  --arbi-green-3:#246B46;
+  --arbi-green-4:#EAF5EE;
+  --arbi-line:#D6E5DC;
+  --arbi-ink:#17231C;
+  --arbi-muted:#6C7A72;
+  --arbi-bg:#F3F7F4;
+  --arbi-danger:#DC3545;
+  --arbi-shadow:0 18px 45px rgba(10,44,27,.10);
+  --arbi-shadow-soft:0 8px 24px rgba(10,44,27,.07);
+}
+
+/* =========================
+   CONTENEDOR PRINCIPAL
+   ========================= */
+
+.restriccion-container{
+  display:flex;
+  gap:18px;
+  height:calc(100vh - 190px);
+  min-height:580px;
+  padding:2px 0 15px;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(24,83,54,.035), transparent 30%),
+    var(--arbi-bg);
+}
+
+.restriccion-sidebar{
+  width:410px;
+  min-width:380px;
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  height:100%;
+  overflow:hidden;
+}
+
+/* =========================
+   TARJETAS DEL SIDEBAR
+   ========================= */
+
+.premium-card{
+  position:relative;
+  background:rgba(255,255,255,.97);
+  border-radius:18px;
+  border:1px solid var(--arbi-line);
+  box-shadow:var(--arbi-shadow-soft);
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  overflow:hidden;
+}
+
+.premium-card::before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:3px;
+  background:linear-gradient(90deg,var(--arbi-green),var(--arbi-green-3),transparent);
+}
+
+.premium-card h3{
+  color:var(--arbi-green)!important;
+  font-size:1.02rem!important;
+  font-weight:800!important;
+  letter-spacing:-.025em;
+}
+
+.premium-card h4{
+  color:var(--arbi-green)!important;
+  font-weight:800!important;
+}
+
+.premium-card p{
+  color:var(--arbi-muted)!important;
+}
+
+
+
+
+
+
+.restriccion-sidebar > .premium-card:first-child > p{
+  line-height:1.5!important;
+}
+
+.restriccion-sidebar > .premium-card:first-child > p span{
+  display:block!important;
+  padding:9px 10px;
+  margin-top:8px!important;
+  border-radius:10px;
+  background:#FFF6F7;
+  border:1px solid rgba(220,53,69,.14);
+  line-height:1.35;
+}
+
+
+#vmPredioSearchInput{
+  min-height:41px;
+  border:1px solid #D3E0D8!important;
+  border-radius:11px!important;
+  background:#FBFDFB;
+  color:var(--arbi-ink);
+  font-size:11.5px!important;
+  transition:border-color .2s ease,box-shadow .2s ease,background .2s ease;
+}
+
+#vmPredioSearchInput::placeholder{
+  color:#99A69F;
+}
+
+#vmPredioSearchInput:hover{
+  border-color:#B7CCBD!important;
+}
+
+#vmPredioSearchInput:focus{
+  border-color:var(--arbi-green-2)!important;
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(24,83,54,.10)!important;
+}
+
+#vmPredioSearchBtn{
+  min-width:82px;
+  border:0!important;
+  border-radius:11px!important;
+  background:linear-gradient(135deg,var(--arbi-green),var(--arbi-green-2))!important;
+  font-size:11.5px!important;
+  font-weight:750!important;
+  padding-inline:13px!important;
+  box-shadow:0 8px 18px rgba(10,44,27,.18);
+  transition:transform .18s ease,box-shadow .18s ease,filter .18s ease;
+}
+
+#vmPredioSearchBtn:hover{
+  transform:translateY(-1px);
+  filter:brightness(1.06);
+  box-shadow:0 11px 24px rgba(10,44,27,.23);
+}
+
+#vmPredioSearchStatus{
+  color:var(--arbi-muted)!important;
+}
+
+/* =========================
+   SELECCIÓN
+   ========================= */
+
+#vmSelectionContent{
+  border-top:1px solid var(--arbi-line)!important;
+  padding-top:13px!important;
+}
+
+#selectionCardTitle{
+  color:var(--arbi-green)!important;
+  font-size:.92rem!important;
+  font-weight:800!important;
+}
+
+#btnClearSelection{
+  color:var(--arbi-green)!important;
+  border:1px solid #C9DCCF!important;
+  background:var(--arbi-green-4)!important;
+  border-radius:8px!important;
+  font-weight:700!important;
+}
+
+#btnClearSelection:hover{
+  background:#DDEDE3!important;
+}
+
+/* Número predial */
+#singleSelectionDetails > .p-2{
+  border:1px solid #D4E4DA!important;
+  border-radius:12px!important;
+  background:linear-gradient(135deg,#F4FAF6,#EAF4EE)!important;
+}
+
+#vmSidebarNumeroPredial{
+  color:var(--arbi-green)!important;
+}
+
+/* Datos del predio */
+.visor-info-grid{
+  display:grid;
+  gap:7px;
+}
+
+.visor-info-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px!important;
+  border:1px solid #E0EBE4;
+  border-radius:11px;
+  background:#FCFDFC;
+  transition:border-color .18s ease,transform .18s ease,background .18s ease;
+}
+
+.visor-info-row:hover{
+  transform:translateX(2px);
+  border-color:#C3D8CA;
+  background:#F8FCF9;
+}
+
+.visor-info-icon{
+  width:30px;
+  height:30px;
+  flex:0 0 30px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  color:var(--arbi-green);
+  background:var(--arbi-green-4);
+}
+
+.visor-info-copy{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:1px;
+}
+
+.visor-info-field-label{
+  color:#849188!important;
+  font-size:9px!important;
+  font-weight:800!important;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+.visor-info-copy strong{
+  color:var(--arbi-ink)!important;
+  font-size:11.5px;
+}
+
+/* =========================
+   SELECCIÓN MÚLTIPLE
+   ========================= */
+
+#multiSelectionList{
+  border:1px solid #D5E5DB!important;
+  border-radius:12px!important;
+  background:#F7FBF8!important;
+}
+
+.selection-list-item{
+  padding:10px 12px!important;
+  border-radius:10px!important;
+  border:1px solid #DCE8E0!important;
+  background:#fff!important;
+  font-size:11.5px!important;
+  transition:.18s ease;
+}
+
+.selection-list-item:hover{
+  transform:translateX(2px);
+  border-color:#B9D1C1!important;
+}
+
+.selection-list-item.is-restricted{
+  border-left:4px solid var(--arbi-danger)!important;
+  background:#FFF5F6!important;
+}
+
+.selection-list-item.is-free{
+  border-left:4px solid #198754!important;
+  background:#F2FBF5!important;
+}
+
+/* =========================
+   ESTADO DE RESTRICCIÓN
+   ========================= */
+
+#singleRestrictionStatus .badge{
+  border-radius:10px!important;
+  background:#FFF0F2!important;
+  color:#B42332!important;
+  border:1px solid rgba(220,53,69,.15);
+}
+
+#singleRestrictionReason{
+  border:1px solid #E1E9E4;
+  border-radius:10px!important;
+  background:#F8FAF9!important;
+  color:var(--arbi-muted)!important;
+}
+
+/* =========================
+   ACCIONES
+   ========================= */
+
+#restrictControls{
+  padding-top:2px;
+}
+
+#restrictMotivo{
+  border:1px solid #D3E0D8!important;
+  border-radius:11px!important;
+  background:#FBFDFB;
+  font-size:11.5px!important;
+  transition:border-color .2s ease,box-shadow .2s ease;
+}
+
+#restrictMotivo:focus{
+  border-color:var(--arbi-green-2)!important;
+  box-shadow:0 0 0 3px rgba(24,83,54,.10)!important;
+}
+
+#btnRestrictSelected{
+  min-height:40px;
+  border:0!important;
+  border-radius:11px!important;
+  background:linear-gradient(135deg,var(--arbi-green),var(--arbi-green-2))!important;
+  box-shadow:0 8px 18px rgba(10,44,27,.16);
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+
+#btnRestrictSelected:hover{
+  transform:translateY(-1px);
+  box-shadow:0 11px 24px rgba(10,44,27,.21);
+}
+
+#btnReleaseSelected{
+  min-height:40px;
+  border-radius:11px!important;
+}
+
+/* =========================
+   LISTADO DE RESTRINGIDOS
+   ========================= */
+
+#restrictionsCountText{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:5px!important;
+}
+
+#restrictionsCountText::before{
+  content:"";
+  width:7px;
+  height:7px;
+  flex:0 0 7px;
+  border-radius:50%;
+  background:#22A35A;
+  box-shadow:0 0 0 4px #EAF7EF;
+}
+
+.restriccion-list-item{
+  border:1px solid #DCE7E0!important;
+  border-radius:13px!important;
+  padding:12px 13px!important;
+  background:#fff!important;
+  box-shadow:0 2px 8px rgba(10,44,27,.035)!important;
+  transition:all .2s ease!important;
+}
+
+.restriccion-list-item:hover{
+  transform:translateY(-2px)!important;
+  border-color:#B9D0C1!important;
+  background:#FBFEFC!important;
+  box-shadow:0 10px 22px rgba(10,44,27,.09)!important;
+}
+
+.restriccion-list-item-info{
+  gap:3px!important;
+}
+
+.restriccion-list-item-title{
+  color:var(--arbi-green)!important;
+  font-weight:800!important;
+  font-size:12px!important;
+}
+
+.restriccion-list-item-reason{
+  color:#596860!important;
+  font-size:10.5px!important;
+  line-height:1.4!important;
+}
+
+.restriccion-list-item-meta{
+  color:#87938C!important;
+  font-size:9.5px!important;
+}
+
+.btn-icon-trash{
+  background:#FFF6F7!important;
+  border:1px solid rgba(220,53,69,.10)!important;
+  color:#9BA7A0!important;
+  border-radius:9px!important;
+}
+
+.btn-icon-trash:hover{
+  color:#DC3545!important;
+  background:#FFECEF!important;
+}
+
+/* =========================
+   SCROLLBAR
+   ========================= */
+
+.restriccion-sidebar .overflow-auto::-webkit-scrollbar{
+  width:5px;
+}
+
+.restriccion-sidebar .overflow-auto::-webkit-scrollbar-track{
+  background:transparent;
+}
+
+.restriccion-sidebar .overflow-auto::-webkit-scrollbar-thumb{
+  background:#C5D7CB;
+  border-radius:999px;
+}
+
+.restriccion-sidebar .overflow-auto::-webkit-scrollbar-thumb:hover{
+  background:#9DB6A6;
+}
+
+/* =========================
+   VISOR — NO TOCAR DIMENSIONES
+   ========================= */
+
+.restriccion-map-wrapper{
+  flex:1;
+  position:relative;
+  border-radius:20px;
+  border:1px solid #D0DED5;
+  background:#E7EFEA;
+  box-shadow:var(--arbi-shadow);
+  overflow:hidden;
+}
+
+#map{
+  width:100%;
+  height:100%;
+  background:#DCE9E2;
+}
+
+/* =========================
+   TOOLBAR DEL MAPA
+   ========================= */
+
+.restriccion-map-wrapper .visor-map-topbar{
+  top:12px;
+  right:12px;
+  left:auto;
+  z-index:36;
+  display:flex;
+  gap:7px;
+}
+
+.vm-toolbar-btn{
+  border:1px solid rgba(255,255,255,.5)!important;
+  background:linear-gradient(135deg,var(--arbi-green),var(--arbi-green-2))!important;
+  color:#fff!important;
+  border-radius:11px!important;
+  padding:9px 14px!important;
+  font-size:11px!important;
+  font-weight:800!important;
+  box-shadow:0 8px 20px rgba(10,44,27,.20);
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+
+.vm-toolbar-btn:hover{
+  transform:translateY(-1px);
+  box-shadow:0 11px 25px rgba(10,44,27,.25);
+}
+
+.vm-toolbar-btn-light{
+  background:rgba(255,255,255,.95)!important;
+  color:var(--arbi-green)!important;
+  border:1px solid #D4E1D9!important;
+}
+
+/* =========================
+   PANELES DE CAPAS / MAPABASE
+   ========================= */
+
+.vm-layer-panel{
+  position:absolute;
+  width:245px;
+  background:rgba(255,255,255,.98);
+  border:1px solid #D5E2D9;
+  border-radius:16px;
+  box-shadow:0 20px 45px rgba(10,44,27,.17);
+  overflow:hidden;
+  transition:transform .2s ease,opacity .2s ease;
+  backdrop-filter:blur(10px);
+}
+
+.vm-layer-panel.hidden{
+  transform:translateY(-8px);
+  opacity:0;
+  pointer-events:none;
+}
+
+.restriccion-map-wrapper .vm-layer-panel{
+  top:54px!important;
+  right:12px!important;
+  left:auto!important;
+  z-index:41;
+}
+
+.restriccion-map-wrapper .vm-layer-panel-basemap{
+  top:108px!important;
+}
+
+.vm-layer-panel-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:11px 13px;
+  background:linear-gradient(135deg,var(--arbi-green),var(--arbi-green-2));
+  border-bottom:0!important;
+}
+
+.vm-layer-panel-head strong{
+  font-size:12px!important;
+  color:#fff!important;
+}
+
+.vm-panel-close{
+  width:26px;
+  height:26px;
+  display:grid;
+  place-items:center;
+  border:0!important;
+  border-radius:8px;
+  background:rgba(255,255,255,.12)!important;
+  color:#fff!important;
+  font-size:18px!important;
+  cursor:pointer;
+}
+
+.vm-panel-close:hover{
+  background:rgba(255,255,255,.22)!important;
+}
+
+.vm-layer-panel-body{
+  padding:12px!important;
+}
+
+.vm-layer-block-title{
+  margin-bottom:6px!important;
+  color:#7C8A82!important;
+  font-size:9.5px!important;
+  font-weight:850!important;
+  letter-spacing:.07em!important;
+  text-transform:uppercase;
+}
+
+.vm-select{
+  width:100%;
+  border:1px solid #D3E0D8!important;
+  border-radius:10px!important;
+  background:#F8FBF9!important;
+  color:var(--arbi-ink)!important;
+  padding:8px 10px!important;
+  font-size:11px!important;
+  font-weight:650!important;
+}
+
+.vm-layer-list{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.vm-layer-item{
+  border:1px solid #DCE7E0!important;
+  border-radius:11px!important;
+  background:#F9FCFA!important;
+  padding:8px 10px!important;
+  transition:.18s ease;
+}
+
+.vm-layer-item:hover{
+  border-color:#BCD2C3!important;
+}
+
+.vm-layer-item.is-on{
+  border-color:#91BCA0!important;
+  background:#EEF8F1!important;
+}
+
+.vm-layer-label{
+  font-size:11px!important;
+  font-weight:750!important;
+  color:#2B3A31!important;
+}
+
+.vm-layer-toggle{
+  min-width:46px;
+  height:23px;
+  border:1px solid #CBDACF!important;
+  background:#fff!important;
+  color:#6E7C73!important;
+  font-size:9px!important;
+}
+
+.vm-layer-toggle.is-on{
+  border-color:var(--arbi-green-2)!important;
+  background:var(--arbi-green-2)!important;
+  color:#fff!important;
+}
+
+.vm-layer-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  margin-top:10px;
+}
+
+.vm-btn{
+  border:1px solid #D5E2D9!important;
+  background:#fff!important;
+  color:var(--arbi-green)!important;
+  border-radius:10px!important;
+  padding:8px 9px!important;
+  font-size:10.5px!important;
+  font-weight:750!important;
+}
+
+.vm-btn-primary{
+  background:var(--arbi-green)!important;
+  border-color:var(--arbi-green)!important;
+  color:#fff!important;
+}
+
+/* =========================
+   LEYENDA
+   ========================= */
+
+.vm-legend-card{
+  position:absolute;
+  min-width:200px;
+  max-width:240px;
+  padding:12px 14px;
+  border-radius:16px;
+  background:rgba(255,255,255,.95);
+  border:1px solid #D7E4DB;
+  box-shadow:0 18px 40px rgba(10,44,27,.14);
+  backdrop-filter:blur(9px);
+}
+
+.restriccion-map-wrapper .vm-legend-card{
+  left:12px;
+  top:12px;
+  z-index:20;
+}
+
+.vm-legend-title{
+  margin-bottom:8px;
+  font-size:10px!important;
+  font-weight:850!important;
+  color:var(--arbi-green)!important;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.vm-legend-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.vm-legend-item{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:10.5px!important;
+  font-weight:650;
+  color:#415048!important;
+}
+
+.vm-legend-swatch{
+  display:inline-flex;
+  width:18px;
+  height:12px;
+  flex:0 0 auto;
+  border-radius:3px;
+}
+
+.vm-legend-swatch-terreno{
+  background:rgba(166,206,227,.75)!important;
+  border:1px solid rgba(16,81,2,.65)!important;
+}
+
+.vm-legend-swatch-construccion{
+  border:1px solid #111827!important;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      #111827 0,
+      #111827 2px,
+      transparent 2px,
+      transparent 6px
+    )!important;
+}
+
+.vm-legend-swatch-unidad{
+  border:1px solid #111827!important;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      #111827 0,
+      #111827 2px,
+      transparent 2px,
+      transparent 6px
+    )!important;
+}
+
+/* =========================
+   ZOOM
+   ========================= */
+
+.restriccion-map-wrapper .vm-zoom-stack{
+  left:12px!important;
+  bottom:12px!important;
+  z-index:34;
+}
+
+.vm-zoom-btn{
+  width:38px;
+  height:38px;
+  border-radius:11px!important;
+  border:1px solid #D2E0D7!important;
+  background:rgba(255,255,255,.96)!important;
+  color:var(--arbi-green)!important;
+  box-shadow:0 8px 18px rgba(10,44,27,.14)!important;
+  font-size:20px!important;
+  transition:.18s ease;
+}
+
+.vm-zoom-btn:hover{
+  background:var(--arbi-green)!important;
+  color:#fff!important;
+  transform:translateY(-1px);
+}
+
+/* =========================
+   NORTE / ESCALA / MEDICIÓN
+   ========================= */
+
+.restriccion-map-wrapper .vm-north-indicator{
+  left:12px!important;
+  bottom:13.8rem!important;
+  z-index:22;
+}
+
+.vm-north-arrow{
+  border-bottom-color:var(--arbi-green)!important;
+}
+
+.vm-north-label{
+  color:var(--arbi-green)!important;
+  font-weight:800;
+}
+
+.restriccion-map-wrapper .vm-scale-line{
+  right:12px!important;
+  bottom:12px!important;
+  z-index:21;
+}
+
+.restriccion-map-wrapper .vm-measure-panel{
+  right:12px!important;
+  bottom:50px!important;
+  z-index:23;
+}
+
+/* =========================
+   POPUP DEL MAPA
+   ========================= */
+
+.vm-info-popup{
+  position:absolute;
+  min-width:240px;
+  max-width:300px;
+  padding:13px 14px;
+  border-radius:15px;
+  background:rgba(255,255,255,.98);
+  border:1px solid #D7E4DB;
+  box-shadow:0 20px 45px rgba(10,44,27,.18);
+  z-index:40;
+  backdrop-filter:blur(10px);
+}
+
+.vm-info-popup.hidden{
+  display:none;
+}
+
+.vm-info-popup-title{
+  color:var(--arbi-green)!important;
+  font-size:12.5px!important;
+  font-weight:850!important;
+}
+
+.vm-info-popup-row{
+  padding:7px 8px;
+  border-radius:9px;
+  background:#F7FAF8;
+}
+
+.vm-info-popup-label{
+  color:#7E8C84!important;
+  font-size:9px!important;
+  font-weight:800!important;
+}
+
+.vm-info-popup-value{
+  color:var(--arbi-ink)!important;
+  font-size:12px!important;
+  font-weight:750!important;
+}
+
+.vm-info-popup-close{
+  width:25px;
+  height:25px;
+  border:0!important;
+  border-radius:7px;
+  background:#EFF5F1!important;
+  color:#65746B!important;
+}
+
+/* OpenLayers: mantener ocultos, igual que la vista original */
+.ol-zoom,
+.ol-attribution{
+  display:none!important;
+}
+
+/* =========================
+   SWEETALERT
+   ========================= */
+
+.premium-alert-popup{
+  border-radius:18px!important;
+  padding:24px!important;
+  box-shadow:0 24px 55px rgba(10,44,27,.18)!important;
+  border:1px solid #DCE8DF!important;
+}
+
+.premium-alert-btn{
+  border-radius:10px!important;
+  padding:9px 24px!important;
+  font-size:12px!important;
+  font-weight:700!important;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media(max-width:1050px){
+  .restriccion-sidebar{
+    width:365px;
+    min-width:350px;
+  }
+}
+
+@media(max-width:850px){
+  .restriccion-container{
+    height:auto;
+    min-height:0;
+    flex-direction:column;
+  }
+
+  .restriccion-sidebar{
+    width:100%;
+    min-width:0;
+    height:auto;
+  }
+
+  .restriccion-map-wrapper{
+    height:68vh;
+    min-height:500px;
+  }
+}
+
+@media(max-width:560px){
+  .restriccion-container{
+    gap:10px;
+  }
+
+  .premium-card{
+    padding:14px;
+    border-radius:15px;
+  }
+
+  .restriccion-map-wrapper .visor-map-topbar{
+    top:8px;
+    right:8px;
+  }
+
+  .vm-toolbar-btn{
+    padding:8px 9px!important;
+    font-size:10px!important;
+  }
+
+  .restriccion-map-wrapper .vm-legend-card{
+    left:8px;
+    top:auto;
+    bottom:8px;
+    transform:scale(.9);
+    transform-origin:bottom left;
+  }
+}
 </style>
 
-<div class="rpred-page">
-  {% set municipality_label = current_municipality_name|default(current_municipality, true)|default('Municipio actual',
-  true) %}
-  <div class="rpred-layout">
-    <aside class="rpred-sidebar">
-      <section class="rpred-card rpred-card--search">
-        <h3 class="rpred-title">Buscar y Restringir Predios</h3>
-        <p class="rpred-description">Busca uno o varios números prediales a la vez para restringir o liberar su
-          asignación.<br><span class="rpred-warning-text">⚠️ TODO PREDIO BLOQUEADO NO PUEDE SER USADO PARA LA RADICACIÓN
-            DE PROCESO CATASTRAL.</span></p>
-        <div class="rpred-search-row">
-          <input type="text" id="vmPredioSearchInput" class="rpred-input"
-            placeholder="ej. 197850002000000200001000000000" />
-          <button id="vmPredioSearchBtn" class="rpred-button rpred-button--search" type="button">Buscar</button>
-        </div>
-        <small id="vmPredioSearchStatus" class="rpred-search-status"></small>
-        <div id="vmSelectionContent" class="rpred-selection rpred-hidden">
-          <div class="rpred-section-head">
-            <h4 id="selectionCardTitle" class="rpred-section-title">Predios Seleccionados</h4>
-            <button id="btnClearSelection" class="rpred-button rpred-button--ghost" type="button">Limpiar</button>
-          </div>
-          <div id="singleSelectionDetails" class="rpred-hidden">
-            <div class="rpred-predial-box">
-              <div class="rpred-predial-label">Número Predial</div>
-              <div id="vmSidebarNumeroPredial" class="rpred-predial-value">Sin dato</div>
-            </div>
-            <div class="rpred-info-grid">
-              <div class="rpred-info-row">
-                <div class="rpred-info-icon"><i class="bi bi-geo-alt"></i></div>
-                <div class="rpred-info-copy"><span class="rpred-info-label">Dirección</span><strong
-                    id="vmSidebarDireccion">Sin dato</strong></div>
-              </div>
-              <div class="rpred-info-row">
-                <div class="rpred-info-icon"><i class="bi bi-bounding-box-circles"></i></div>
-                <div class="rpred-info-copy"><span class="rpred-info-label">Área de terreno</span><strong
-                    id="vmSidebarArea">Sin dato</strong></div>
-              </div>
-              <div class="rpred-info-row">
-                <div class="rpred-info-icon"><i class="bi bi-house-door"></i></div>
-                <div class="rpred-info-copy"><span class="rpred-info-label">Condición</span><strong
-                    id="vmSidebarCondicion">Sin dato</strong></div>
-              </div>
-            </div>
-          </div>
-          <div id="multiSelectionDetails" class="rpred-hidden">
-            <span id="multiSelectionCount" class="rpred-hidden">0</span>
-            <div id="multiSelectionList" class="rpred-multi-list"></div>
-          </div>
-          <div id="singleRestrictionStatus" class="rpred-restriction-status rpred-hidden">
-            <span class="rpred-status-badge"><i class="bi bi-slash-circle"></i>Restringido (Bloqueado)</span>
-            <div id="singleRestrictionReason" class="rpred-reason"></div>
-          </div>
-          <div class="rpred-action-zone">
-            <div id="restrictControls" class="rpred-controls">
-              <label for="restrictMotivo" class="rpred-label">Motivo de restricción:</label>
-              <textarea id="restrictMotivo" class="rpred-textarea" rows="2"
-                placeholder="Indique la causa del bloqueo..."></textarea>
-              <button id="btnRestrictSelected" class="rpred-button rpred-button--restrict" type="button"><i
-                  class="bi bi-slash-circle"></i>Restringir Predios</button>
-            </div>
-            <div id="releaseControls" class="rpred-hidden">
-              <button id="btnReleaseSelected" class="rpred-button rpred-button--release" type="button"><i
-                  class="bi bi-unlock-fill"></i>Liberar Predios</button>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="rpred-card rpred-card--list">
-        <h3 class="rpred-title">Predios Restringidos</h3>
-        <p id="restrictionsCountText" class="rpred-list-count">Cargando restricciones...</p>
-        <div id="restList" class="rpred-restricted-list"></div>
-      </section>
-    </aside>
+<div class="container-fluid page-wrapper page-wrapper-visor">
+  {% set municipality_label = current_municipality_name|default(current_municipality, true)|default('Municipio actual', true) %}
 
-    <section class="rpred-map">
-      <div class="rpred-map-toolbar">
-        <button id="vmOpenLayerPanel" class="rpred-map-button" type="button"><i class="bi bi-layers"></i>Capas</button>
-        <button id="vmOpenBasemapPanel" class="rpred-map-button rpred-map-button--light" type="button"><i
-            class="bi bi-map"></i>Mapabase</button>
-      </div>
-      <div id="vmLayerPanel" class="rpred-map-panel rpred-map-hidden">
-        <div class="rpred-panel-head"><strong class="rpred-panel-title">Capas</strong><button id="vmCloseLayerPanel"
-            class="rpred-panel-close" type="button" title="Ocultar panel">×</button></div>
-        <div class="rpred-panel-body">
-          <div>
-            <div class="rpred-layer-block-title">Capas visibles</div>
-            <div id="vmLayerList" class="rpred-layer-list"></div>
+  <div class="restriccion-container">
+    <!-- Left Side: Sidebar Panel -->
+    <div class="restriccion-sidebar">
+      
+      <!-- Search & Selection Card -->
+      <div class="premium-card" style="flex-shrink: 0; gap: 8px;">
+        <h3 class="text-center" style="font-size: 1.05rem; color: #002f55; margin: 0; font-weight: 700;">Buscar y Restringir Predios</h3>
+        <p style="font-size: 0.76rem; color: #475569; margin: 0; line-height: 1.4;">
+          Busca uno o varios números prediales a la vez para restringir o liberar su asignación.<br>
+          <span style="color: #dc2626; font-weight: 700; display: inline-block; margin-top: 2px;">TODO PREDIO BLOQUEADO NO PUEDE SER USADO PARA LA RADICACIÓN DE PROCESO CATASTRAL.</span>
+        </p>
+        
+        <div class="d-flex gap-2 mt-2">
+          <input type="text" id="vmPredioSearchInput" class="form-control form-control-sm shadow-none"
+            placeholder="ej. 197850002000000200001000000000" style="font-size: 11.5px; border-radius: 8px;" />
+          <button id="vmPredioSearchBtn" class="btn btn-sm text-white" style="background-color: #002f55; font-size: 11.5px; font-weight: 600; border-radius: 8px; padding-inline: 12px;" type="button">Buscar</button>
+        </div>
+        <small id="vmPredioSearchStatus" class="visor-map-search-status m-0 mt-1" style="font-size: 11px;"></small>
+
+        <!-- Selection Content Wrapper inside search card -->
+        <div id="vmSelectionContent" class="d-none mt-2 pt-2 border-top overflow-auto" style="max-height: 280px; padding-right: 6px;">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <h4 id="selectionCardTitle" style="font-size: 0.95rem; color: #002f55; margin: 0; font-weight: 700;">Predios Seleccionados</h4>
+            <button id="btnClearSelection" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 10.5px; border-radius: 6px;" type="button">Limpiar</button>
           </div>
-          <div class="rpred-layer-actions"><button id="vmZoomProject"
-              class="rpred-panel-button rpred-panel-button--primary" type="button">Ver zona</button><button
-              id="vmHideLayers" class="rpred-panel-button" type="button">Apagar capas</button></div>
+
+          <!-- Single selection detail fields -->
+          <div id="singleSelectionDetails" class="d-none">
+            <div class="p-2 rounded border bg-light my-2">
+              <div class="fw-bold text-muted small uppercase" style="font-size: 9.5px;">Número Predial</div>
+              <div class="fw-extrabold text-primary" id="vmSidebarNumeroPredial" style="font-size: 12px; word-break: break-all;">Sin dato</div>
+            </div>
+            <div class="visor-info-grid" style="font-size: 11.5px;">
+              <div class="visor-info-row py-1">
+                <div class="visor-info-icon"><i class="bi bi-geo-alt"></i></div>
+                <div class="visor-info-copy">
+                  <span class="visor-info-field-label">Dirección</span>
+                  <strong id="vmSidebarDireccion">Sin dato</strong>
+                </div>
+              </div>
+              <div class="visor-info-row py-1">
+                <div class="visor-info-icon"><i class="bi bi-bounding-box-circles"></i></div>
+                <div class="visor-info-copy">
+                  <span class="visor-info-field-label">Área de terreno</span>
+                  <strong id="vmSidebarArea">Sin dato</strong>
+                </div>
+              </div>
+              <div class="visor-info-row py-1">
+                <div class="visor-info-icon"><i class="bi bi-house-door"></i></div>
+                <div class="visor-info-copy">
+                  <span class="visor-info-field-label">Condición</span>
+                  <strong id="vmSidebarCondicion">Sin dato</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multiple selection detail fields -->
+          <div id="multiSelectionDetails" class="d-none">
+            <span id="multiSelectionCount" class="d-none">0</span>
+            <div id="multiSelectionList" class="my-1 border rounded p-2 bg-light overflow-auto" style="max-height: 150px; display: flex; flex-direction: column; gap: 4px;">
+              <!-- Selection items dynamic list -->
+            </div>
+          </div>
+
+          <!-- Restriction status alert for single item -->
+          <div id="singleRestrictionStatus" class="mt-2 d-none">
+            <span class="badge bg-danger p-2 w-100 text-white"><i class="bi bi-slash-circle me-1"></i> Restringido (Bloqueado)</span>
+            <div class="small text-muted mt-1 p-2 bg-light rounded" id="singleRestrictionReason" style="font-size: 11px;"></div>
+          </div>
+
+          <!-- Motivo inputs & Action Buttons -->
+          <div class="pt-2 border-top mt-2">
+            <!-- Restrict controls -->
+            <div id="restrictControls" class="d-flex flex-column gap-2">
+              <label for="restrictMotivo" class="form-label mb-0" style="font-size: 11px; font-weight: 600; color: #163c62;">Motivo de restricción:</label>
+              <textarea id="restrictMotivo" class="form-control form-control-sm shadow-none" rows="2" placeholder="Indique la causa del bloqueo..." style="font-size: 11.5px; border-radius: 8px;"></textarea>
+              <button id="btnRestrictSelected" class="btn btn-primary btn-sm w-100 fw-semibold text-white" style="background-color: #002f55; border-color: #002f55; border-radius: 999px;" type="button">
+                <i class="bi bi-slash-circle me-1"></i> Restringir Predios
+              </button>
+            </div>
+
+            <!-- Release controls -->
+            <div id="releaseControls" class="d-none">
+              <button id="btnReleaseSelected" class="btn btn-danger btn-sm w-100 fw-semibold text-white" style="border-radius: 999px;" type="button">
+                <i class="bi bi-unlock-fill me-1"></i> Liberar Predios
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      <div id="vmBasemapPanel" class="rpred-map-panel rpred-map-panel--basemap rpred-map-hidden">
-        <div class="rpred-panel-head"><strong class="rpred-panel-title">Mapabase</strong><button
-            id="vmCloseBasemapPanel" class="rpred-panel-close" type="button" title="Ocultar panel">×</button></div>
-        <div class="rpred-panel-body">
-          <div class="rpred-layer-block-title">Seleccionar</div><select id="vmBasemapSelect" class="rpred-select">
-            <option value="osm">OpenStreetMap</option>
-            <option value="sat">Satelite</option>
-            <option value="none">Sin mapabase</option>
-          </select>
+
+      <!-- Active Restrictions List Card -->
+      <div class="premium-card" style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0;">
+        <h3 class="text-center" style="font-size: 1.05rem; color: #002f55; margin: 0; font-weight: 700;">Predios Restringidos</h3>
+        <p id="restrictionsCountText" style="font-size: 0.78rem; color: #64748b; margin: 0; margin-bottom: 6px;">Cargando restricciones...</p>
+        
+        <div id="restList" class="my-1 d-flex flex-column gap-2 overflow-auto" style="flex-grow: 1; min-height: 80px; padding-right: 6px; padding-bottom: 6px;">
+          <!-- List of restricted properties -->
         </div>
       </div>
-      <div class="rpred-legend" aria-label="Convenciones del mapa">
-        <div class="rpred-legend__title">Convenciones</div>
-        <div class="rpred-legend__list">
-          <div class="rpred-legend__item"><span
-              class="rpred-legend__swatch rpred-legend__swatch--restricted"></span><span
-              class="rpred-legend__restricted-text">Predio Restringido</span></div>
-          <div class="rpred-legend__item"><span
-              class="rpred-legend__swatch rpred-legend__swatch--terrain"></span><span>Terreno Catastral</span></div>
-          <div class="rpred-legend__item"><span
-              class="rpred-legend__swatch rpred-legend__swatch--construction"></span><span>Construcciones</span></div>
-          <div class="rpred-legend__item"><span
-              class="rpred-legend__swatch rpred-legend__swatch--unit"></span><span>Unidades</span></div>
+    </div>
+
+    <!-- Right Side: Map Viewer Panel -->
+    <div class="restriccion-map-wrapper">
+      <!-- Map Toolbar controls -->
+      <div class="visor-map-topbar">
+        <button id="vmOpenLayerPanel" class="vm-toolbar-btn" type="button">
+          <i class="bi bi-layers me-1"></i>
+          Capas
+        </button>
+        <button id="vmOpenBasemapPanel" class="vm-toolbar-btn vm-toolbar-btn-light" type="button">
+          <i class="bi bi-map me-1"></i>
+          Mapabase
+        </button>
+      </div>
+
+      <!-- Layers list panel -->
+      <div id="vmLayerPanel" class="vm-layer-panel hidden">
+        <div class="vm-layer-panel-head">
+          <strong>Capas</strong>
+          <button id="vmCloseLayerPanel" class="vm-panel-close" type="button" title="Ocultar panel">x</button>
+        </div>
+        <div class="vm-layer-panel-body">
+          <div class="vm-layer-block">
+            <div class="vm-layer-block-title">Capas visibles</div>
+            <div id="vmLayerList" class="vm-layer-list"></div>
+          </div>
+          <div class="vm-layer-actions">
+            <button id="vmZoomProject" class="vm-btn vm-btn-primary" type="button">Ver zona</button>
+            <button id="vmHideLayers" class="vm-btn" type="button">Apagar capas</button>
+          </div>
         </div>
       </div>
-      <div id="vmInfoPopup" class="rpred-popup rpred-map-hidden" aria-live="polite">
-        <button id="vmInfoPopupClose" class="rpred-popup__close" type="button" title="Cerrar">×</button>
-        <div class="rpred-popup__title">Predio seleccionado</div>
-        <div class="rpred-popup__grid">
-          <div class="rpred-popup__row"><span class="rpred-popup__label">ID operación</span><span id="vmInfoOperacion"
-              class="rpred-popup__value">Sin dato</span></div>
-          <div class="rpred-popup__row"><span class="rpred-popup__label">Número predial</span><span
-              id="vmInfoNumeroPredial" class="rpred-popup__value">Sin dato</span></div>
+
+      <!-- Basemap select panel -->
+      <div id="vmBasemapPanel" class="vm-layer-panel vm-layer-panel-basemap hidden">
+        <div class="vm-layer-panel-head">
+          <strong>Mapabase</strong>
+          <button id="vmCloseBasemapPanel" class="vm-panel-close" type="button" title="Ocultar panel">x</button>
+        </div>
+        <div class="vm-layer-panel-body">
+          <div class="vm-layer-block">
+            <div class="vm-layer-block-title">Seleccionar</div>
+            <select id="vmBasemapSelect" class="vm-select">
+              <option value="osm">OpenStreetMap</option>
+              <option value="sat">Satelite</option>
+              <option value="none">Sin mapabase</option>
+            </select>
+          </div>
         </div>
       </div>
+
+      <!-- Convenciones card with highlights -->
+      <div class="vm-legend-card" aria-label="Convenciones del mapa">
+        <div class="vm-legend-title">Convenciones</div>
+        <div class="vm-legend-list">
+          <div class="vm-legend-item">
+            <span class="vm-legend-swatch" style="background: rgba(220, 38, 38, 0.25); border: 2.5px solid #dc2626; border-radius: 4px;"></span>
+            <span class="fw-bold text-danger">Predio Restringido</span>
+          </div>
+          <div class="vm-legend-item">
+            <span class="vm-legend-swatch vm-legend-swatch-terreno"></span>
+            <span>Terreno Catastral</span>
+          </div>
+          <div class="vm-legend-item">
+            <span class="vm-legend-swatch vm-legend-swatch-construccion"></span>
+            <span>Construcciones</span>
+          </div>
+          <div class="vm-legend-item">
+            <span class="vm-legend-swatch vm-legend-swatch-unidad"></span>
+            <span>Unidades</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Simple info popup for clicks -->
+      <div id="vmInfoPopup" class="vm-info-popup hidden" aria-live="polite">
+        <button id="vmInfoPopupClose" class="vm-info-popup-close" type="button" title="Cerrar">x</button>
+        <div class="vm-info-popup-title">Predio seleccionado</div>
+        <div class="vm-info-popup-grid">
+          <div class="vm-info-popup-row">
+            <span class="vm-info-popup-label">ID operación</span>
+            <span id="vmInfoOperacion" class="vm-info-popup-value">Sin dato</span>
+          </div>
+          <div class="vm-info-popup-row">
+            <span class="vm-info-popup-label">Número predial</span>
+            <span id="vmInfoNumeroPredial" class="vm-info-popup-value">Sin dato</span>
+          </div>
+        </div>
+      </div>
+
       <div id="map"></div>
-      <div id="vmSnapMarker" class="rpred-snap-marker rpred-map-hidden" aria-hidden="true"></div>
-      <div class="rpred-zoom" aria-label="Controles de zoom"><button id="vmZoomInBtn" class="rpred-zoom-button"
-          type="button" title="Acercar">+</button><button id="vmZoomOutBtn" class="rpred-zoom-button" type="button"
-          title="Alejar">−</button></div>
-    </section>
+      <div id="vmSnapMarker" class="vm-snap-marker hidden" aria-hidden="true"></div>
+
+      <div class="vm-zoom-stack" aria-label="Controles de zoom">
+        <button id="vmZoomInBtn" class="vm-zoom-btn" type="button" title="Acercar">+</button>
+        <button id="vmZoomOutBtn" class="vm-zoom-btn" type="button" title="Alejar">-</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1265,1545 +1163,1542 @@
       {{ visor_geoserver_layers | default('A_Base_Principal:Base_Principal') | tojson }}
     )
       .split(",")
-    .map((name) => name.trim())
-    .filter(Boolean);
-  const GEOSERVER_LAYERS = parsedLayers.length
-    ? parsedLayers
-    : ["A_Base_Principal:Base_Principal"];
+      .map((name) => name.trim())
+      .filter(Boolean);
+    const GEOSERVER_LAYERS = parsedLayers.length
+      ? parsedLayers
+      : ["A_Base_Principal:Base_Principal"];
 
-  const DEFAULT_EXTENT_9377 = [
-    3630797.8981345687,
-    1069522.7796902722,
-    5709687.44243233,
-    3346020.2810714217,
-  ];
-  let extent9377 = [...DEFAULT_EXTENT_9377];
+    const DEFAULT_EXTENT_9377 = [
+      3630797.8981345687,
+      1069522.7796902722,
+      5709687.44243233,
+      3346020.2810714217,
+    ];
+    let extent9377 = [...DEFAULT_EXTENT_9377];
 
-  proj4.defs(
-    "EPSG:9377",
-    "+proj=tmerc +lat_0=4 +lon_0=-73 +k=0.9992 +x_0=5000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
-  );
-  ol.proj.proj4.register(proj4);
-
-  const projection = ol.proj.get("EPSG:9377");
-  projection.setExtent(extent9377);
-
-  function isValidExtent(extent) {
-    if (!Array.isArray(extent) || extent.length !== 4) return false;
-    const values = extent.map((v) => Number(v));
-    return (
-      values.every((v) => Number.isFinite(v)) &&
-      values[0] < values[2] &&
-      values[1] < values[3]
+    proj4.defs(
+      "EPSG:9377",
+      "+proj=tmerc +lat_0=4 +lon_0=-73 +k=0.9992 +x_0=5000000 +y_0=2000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
     );
-  }
+    ol.proj.proj4.register(proj4);
 
-  function setMapExtent(extent, duration = 300) {
-    if (!isValidExtent(extent)) return false;
-    extent9377 = extent.map((v) => Number(v));
+    const projection = ol.proj.get("EPSG:9377");
     projection.setExtent(extent9377);
 
-    if (mapInstance) {
-      mapInstance.getView().fit(extent9377, {
-        padding: [20, 20, 20, 20],
-        duration,
-      });
+    function isValidExtent(extent) {
+      if (!Array.isArray(extent) || extent.length !== 4) return false;
+      const values = extent.map((v) => Number(v));
+      return (
+        values.every((v) => Number.isFinite(v)) &&
+        values[0] < values[2] &&
+        values[1] < values[3]
+      );
     }
-    return true;
-  }
 
-  function layerTitleFromName(layerName) {
-    const raw = String(layerName || "").split(":").pop() || String(layerName || "");
-    const knownLabels = {
-      arb_terreno: "Terreno",
-      arb_terrenohistorico: "Terreno historico",
-      arb_construccion: "Construccion",
-      arb_unidadconstruccion: "Unidad construccion",
-      arb_direccion: "Direccion",
-    };
-    if (knownLabels[raw]) return knownLabels[raw];
-    return raw
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (m) => m.toUpperCase());
-  }
+    function setMapExtent(extent, duration = 300) {
+      if (!isValidExtent(extent)) return false;
+      extent9377 = extent.map((v) => Number(v));
+      projection.setExtent(extent9377);
 
-  function setBasemap(name) {
-    const selected = name === "sat" || name === "none" ? name : "osm";
-    activeBasemap = selected;
-
-    if (basemapEntries.osm) basemapEntries.osm.setVisible(selected === "osm");
-    if (basemapEntries.sat) basemapEntries.sat.setVisible(selected === "sat");
-
-    const select = document.getElementById("vmBasemapSelect");
-    if (select && select.value !== selected) {
-      select.value = selected;
-    }
-  }
-
-  function getDirectChildText(node, tagName) {
-    if (!node) return "";
-    const expected = String(tagName || "").toLowerCase();
-    const child = Array.from(node.children || []).find(
-      (el) => {
-        const local = String(el.localName || "").toLowerCase();
-        const tag = String(el.tagName || "").toLowerCase();
-        return local === expected || tag === expected || tag.endsWith(`:${expected}`);
+      if (mapInstance) {
+        mapInstance.getView().fit(extent9377, {
+          padding: [20, 20, 20, 20],
+          duration,
+        });
       }
-    );
-    return String(child?.textContent || "").trim();
-  }
-
-  function getLayerNodes(xmlDoc) {
-    if (!xmlDoc) return [];
-    let nodes = [];
-    if (typeof xmlDoc.getElementsByTagNameNS === "function") {
-      nodes = Array.from(xmlDoc.getElementsByTagNameNS("*", "Layer"));
+      return true;
     }
-    if (!nodes.length) {
-      nodes = Array.from(xmlDoc.getElementsByTagName("Layer"));
+
+    function layerTitleFromName(layerName) {
+      const raw = String(layerName || "").split(":").pop() || String(layerName || "");
+      const knownLabels = {
+        arb_terreno: "Terreno",
+        arb_terrenohistorico: "Terreno historico",
+        arb_construccion: "Construccion",
+        arb_unidadconstruccion: "Unidad construccion",
+        arb_direccion: "Direccion",
+      };
+      if (knownLabels[raw]) return knownLabels[raw];
+      return raw
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (m) => m.toUpperCase());
     }
-    return nodes;
-  }
 
-  async function getWmsCapabilitiesDoc() {
-    if (wmsCapabilitiesDoc) return wmsCapabilitiesDoc;
-    try {
-      const capUrl = `${WMS_URL}?SERVICE=WMS&VERSION=1.1.0&REQUEST=GetCapabilities`;
-      const r = await fetch(capUrl);
-      if (!r.ok) return null;
-      const xmlText = await r.text();
-      wmsCapabilitiesDoc = new DOMParser().parseFromString(xmlText, "text/xml");
-      return wmsCapabilitiesDoc;
-    } catch (_err) {
-      return null;
+    function setBasemap(name) {
+      const selected = name === "sat" || name === "none" ? name : "osm";
+      activeBasemap = selected;
+
+      if (basemapEntries.osm) basemapEntries.osm.setVisible(selected === "osm");
+      if (basemapEntries.sat) basemapEntries.sat.setVisible(selected === "sat");
+
+      const select = document.getElementById("vmBasemapSelect");
+      if (select && select.value !== selected) {
+        select.value = selected;
+      }
     }
-  }
 
-  function defaultBasePrincipalLayerDefs() {
-    return [
-      { suffix: "arb_terreno", title: "Terreno" },
-      { suffix: "arb_terrenohistorico", title: "Terreno historico" },
-      { suffix: "arb_construccion", title: "Construccion" },
-      { suffix: "arb_unidadconstruccion", title: "Unidad construccion" },
-      { suffix: "arb_direccion", title: "Direccion" },
-    ];
-  }
+    function getDirectChildText(node, tagName) {
+      if (!node) return "";
+      const expected = String(tagName || "").toLowerCase();
+      const child = Array.from(node.children || []).find(
+        (el) => {
+          const local = String(el.localName || "").toLowerCase();
+          const tag = String(el.tagName || "").toLowerCase();
+          return local === expected || tag === expected || tag.endsWith(`:${expected}`);
+        }
+      );
+      return String(child?.textContent || "").trim();
+    }
 
-  function defaultBasePrincipalSubLayers(namespace, { qualified = true } = {}) {
-    const defs = [...defaultBasePrincipalLayerDefs()];
-    return defs.map((d) => ({
-      name: qualified && namespace ? `${namespace}:${d.suffix}` : d.suffix,
-      title: d.title,
-    }));
-  }
+    function getLayerNodes(xmlDoc) {
+      if (!xmlDoc) return [];
+      let nodes = [];
+      if (typeof xmlDoc.getElementsByTagNameNS === "function") {
+        nodes = Array.from(xmlDoc.getElementsByTagNameNS("*", "Layer"));
+      }
+      if (!nodes.length) {
+        nodes = Array.from(xmlDoc.getElementsByTagName("Layer"));
+      }
+      return nodes;
+    }
 
-  function expandConfiguredLayers(configuredLayers) {
-    const expanded = [];
-    const seen = new Set();
+    async function getWmsCapabilitiesDoc() {
+      if (wmsCapabilitiesDoc) return wmsCapabilitiesDoc;
+      try {
+        const capUrl = `${WMS_URL}?SERVICE=WMS&VERSION=1.1.0&REQUEST=GetCapabilities`;
+        const r = await fetch(capUrl);
+        if (!r.ok) return null;
+        const xmlText = await r.text();
+        wmsCapabilitiesDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+        return wmsCapabilitiesDoc;
+      } catch (_err) {
+        return null;
+      }
+    }
 
-    const add = (layer) => {
-      const key = String(layer?.name || "").toLowerCase();
-      if (!key || seen.has(key)) return;
-      seen.add(key);
-      expanded.push(layer);
-    };
+    function defaultBasePrincipalLayerDefs() {
+      return [
+        { suffix: "arb_terreno", title: "Terreno" },
+        { suffix: "arb_terrenohistorico", title: "Terreno historico" },
+        { suffix: "arb_construccion", title: "Construccion" },
+        { suffix: "arb_unidadconstruccion", title: "Unidad construccion" },
+        { suffix: "arb_direccion", title: "Direccion" },
+      ];
+    }
 
-    (configuredLayers || []).forEach((configuredName) => {
-      const clean = String(configuredName || "").trim();
-      if (!clean) return;
-      const [namespace, layerPart = ""] = clean.split(":");
-      const isBasePrincipalGroup = layerPart.toLowerCase() === "base_principal";
+    function defaultBasePrincipalSubLayers(namespace, { qualified = true } = {}) {
+      const defs = [...defaultBasePrincipalLayerDefs()];
+      return defs.map((d) => ({
+        name: qualified && namespace ? `${namespace}:${d.suffix}` : d.suffix,
+        title: d.title,
+      }));
+    }
 
-      if (isBasePrincipalGroup) {
-        defaultBasePrincipalSubLayers(namespace).forEach(add);
+    function expandConfiguredLayers(configuredLayers) {
+      const expanded = [];
+      const seen = new Set();
+
+      const add = (layer) => {
+        const key = String(layer?.name || "").toLowerCase();
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        expanded.push(layer);
+      };
+
+      (configuredLayers || []).forEach((configuredName) => {
+        const clean = String(configuredName || "").trim();
+        if (!clean) return;
+        const [namespace, layerPart = ""] = clean.split(":");
+        const isBasePrincipalGroup = layerPart.toLowerCase() === "base_principal";
+
+        if (isBasePrincipalGroup) {
+          defaultBasePrincipalSubLayers(namespace).forEach(add);
+          return;
+        }
+
+        add({
+          name: clean,
+          title: layerTitleFromName(clean),
+        });
+      });
+
+      return expanded;
+    }
+
+    function getPublishedLayerNames(xmlDoc) {
+      if (!xmlDoc) return new Set();
+      return new Set(
+        Array.from(xmlDoc.getElementsByTagName("Name"))
+          .map((node) => String(node.textContent || "").trim())
+          .filter(Boolean)
+          .map((name) => name.toLowerCase())
+      );
+    }
+
+    function defaultBasePrincipalLayers(namespace, qualified = true) {
+      const suffixes = [
+        "arb_terreno",
+        "arb_terrenohistorico",
+        "arb_construccion",
+        "arb_unidadconstruccion",
+        "arb_direccion",
+      ];
+      return suffixes.map((suffix) => (
+        qualified && namespace ? `${namespace}:${suffix}` : suffix
+      ));
+    }
+
+    function renderLayerControls() {
+      const box = document.getElementById("vmLayerList");
+      if (!box) return;
+
+      box.innerHTML = "";
+      if (!wmsLayerEntries.length) {
+        box.innerHTML = "<div class='vm-layer-empty'>No hay capas configuradas.</div>";
         return;
       }
 
-      add({
-        name: clean,
-        title: layerTitleFromName(clean),
+      wmsLayerEntries.forEach((entry, idx) => {
+        const row = document.createElement("div");
+        row.className = "vm-layer-item";
+        const isOn = Boolean(entry.layer.getVisible());
+        row.classList.toggle("is-on", isOn);
+
+        const labelWrap = document.createElement("div");
+        labelWrap.className = "vm-layer-label-wrap";
+
+        const label = document.createElement("div");
+        label.className = "vm-layer-label";
+        label.textContent = entry.title;
+
+        const sw = document.createElement("button");
+        sw.type = "button";
+        sw.className = "vm-layer-toggle";
+        sw.classList.toggle("is-on", isOn);
+        sw.setAttribute("aria-pressed", isOn ? "true" : "false");
+        sw.textContent = isOn ? "ON" : "OFF";
+
+        const toggleLayer = () => {
+          const next = !Boolean(entry.layer.getVisible());
+          entry.layer.setVisible(next);
+          renderLayerControls();
+          if (measureMode) {
+            loadSnapGuideFeatures(true);
+          }
+        };
+
+        sw.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleLayer();
+        });
+
+        row.addEventListener("click", () => {
+          toggleLayer();
+        });
+
+        labelWrap.appendChild(label);
+        row.appendChild(labelWrap);
+        row.appendChild(sw);
+        box.appendChild(row);
       });
-    });
 
-    return expanded;
-  }
-
-  function getPublishedLayerNames(xmlDoc) {
-    if (!xmlDoc) return new Set();
-    return new Set(
-      Array.from(xmlDoc.getElementsByTagName("Name"))
-        .map((node) => String(node.textContent || "").trim())
-        .filter(Boolean)
-        .map((name) => name.toLowerCase())
-    );
-  }
-
-  function defaultBasePrincipalLayers(namespace, qualified = true) {
-    const suffixes = [
-      "arb_terreno",
-      "arb_terrenohistorico",
-      "arb_construccion",
-      "arb_unidadconstruccion",
-      "arb_direccion",
-    ];
-    return suffixes.map((suffix) => (
-      qualified && namespace ? `${namespace}:${suffix}` : suffix
-    ));
-  }
-
-  function renderLayerControls() {
-    const box = document.getElementById("vmLayerList");
-    if (!box) return;
-
-    box.innerHTML = "";
-    if (!wmsLayerEntries.length) {
-      box.innerHTML = "<div class='rpred-layer-empty'>No hay capas configuradas.</div>";
-      return;
+      const hideBtn = document.getElementById("vmHideLayers");
+      if (hideBtn) {
+        const anyVisible = wmsLayerEntries.some((entry) => entry.layer.getVisible());
+        hideBtn.textContent = anyVisible ? "Apagar capas" : "Encender capas";
+      }
     }
 
-    wmsLayerEntries.forEach((entry, idx) => {
-      const row = document.createElement("div");
-      row.className = "rpred-layer-item";
-      const isOn = Boolean(entry.layer.getVisible());
-      row.classList.toggle("rpred-is-on", isOn);
+    function bindLayerPanelControls() {
+      if (layerPanelBound) return;
+      layerPanelBound = true;
 
-      const labelWrap = document.createElement("div");
-      labelWrap.className = "rpred-layer-label-wrap";
+      const layerPanel = document.getElementById("vmLayerPanel");
+      const basemapPanel = document.getElementById("vmBasemapPanel");
+      const openLayerBtn = document.getElementById("vmOpenLayerPanel");
+      const openBasemapBtn = document.getElementById("vmOpenBasemapPanel");
+      const closeLayerBtn = document.getElementById("vmCloseLayerPanel");
+      const closeBasemapBtn = document.getElementById("vmCloseBasemapPanel");
+      const hideBtn = document.getElementById("vmHideLayers");
+      const zoomBtn = document.getElementById("vmZoomProject");
+      const basemapSelect = document.getElementById("vmBasemapSelect");
 
-      const label = document.createElement("div");
-      label.className = "rpred-layer-label";
-      label.textContent = entry.title;
+      const setExpanded = (layersOpen, basemapOpen) => {
+        openLayerBtn?.setAttribute("aria-expanded", layersOpen ? "true" : "false");
+        openBasemapBtn?.setAttribute("aria-expanded", basemapOpen ? "true" : "false");
+      };
 
-      const sw = document.createElement("button");
-      sw.type = "button";
-      sw.className = "rpred-layer-toggle";
-      sw.classList.toggle("rpred-is-on", isOn);
-      sw.setAttribute("aria-pressed", isOn ? "true" : "false");
-      sw.textContent = isOn ? "ON" : "OFF";
+      const closeAllPanels = () => {
+        layerPanel?.classList.add("hidden");
+        basemapPanel?.classList.add("hidden");
+        setExpanded(false, false);
+      };
 
-      const toggleLayer = () => {
-        const next = !Boolean(entry.layer.getVisible());
-        entry.layer.setVisible(next);
+      const togglePanel = (target) => {
+        if (!target) return;
+        const shouldOpen = target.classList.contains("hidden");
+        closeAllPanels();
+        if (shouldOpen) {
+          target.classList.remove("hidden");
+        }
+        setExpanded(
+          shouldOpen && target === layerPanel,
+          shouldOpen && target === basemapPanel
+        );
+      };
+
+      openLayerBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        togglePanel(layerPanel);
+      });
+
+      openBasemapBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        togglePanel(basemapPanel);
+      });
+
+      closeLayerBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeAllPanels();
+      });
+
+      closeBasemapBtn?.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeAllPanels();
+      });
+
+      layerPanel?.addEventListener("click", (e) => e.stopPropagation());
+      basemapPanel?.addEventListener("click", (e) => e.stopPropagation());
+
+      document.addEventListener("click", () => {
+        closeAllPanels();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeAllPanels();
+        }
+      });
+
+      hideBtn?.addEventListener("click", () => {
+        const anyVisible = wmsLayerEntries.some((entry) => entry.layer.getVisible());
+        const targetVisible = !anyVisible;
+        wmsLayerEntries.forEach((entry) => entry.layer.setVisible(targetVisible));
         renderLayerControls();
         if (measureMode) {
           loadSnapGuideFeatures(true);
         }
-      };
-
-      sw.addEventListener("click", (e) => {
-        e.stopPropagation();
-        toggleLayer();
       });
 
-      row.addEventListener("click", () => {
-        toggleLayer();
+      basemapSelect?.addEventListener("change", () => {
+        setBasemap(basemapSelect.value);
       });
 
-      labelWrap.appendChild(label);
-      row.appendChild(labelWrap);
-      row.appendChild(sw);
-      box.appendChild(row);
-    });
-
-    const hideBtn = document.getElementById("vmHideLayers");
-    if (hideBtn) {
-      const anyVisible = wmsLayerEntries.some((entry) => entry.layer.getVisible());
-      hideBtn.textContent = anyVisible ? "Apagar capas" : "Encender capas";
-    }
-  }
-
-  function bindLayerPanelControls() {
-    if (layerPanelBound) return;
-    layerPanelBound = true;
-
-    const layerPanel = document.getElementById("vmLayerPanel");
-    const basemapPanel = document.getElementById("vmBasemapPanel");
-    const openLayerBtn = document.getElementById("vmOpenLayerPanel");
-    const openBasemapBtn = document.getElementById("vmOpenBasemapPanel");
-    const closeLayerBtn = document.getElementById("vmCloseLayerPanel");
-    const closeBasemapBtn = document.getElementById("vmCloseBasemapPanel");
-    const hideBtn = document.getElementById("vmHideLayers");
-    const zoomBtn = document.getElementById("vmZoomProject");
-    const basemapSelect = document.getElementById("vmBasemapSelect");
-
-    const setExpanded = (layersOpen, basemapOpen) => {
-      openLayerBtn?.setAttribute("aria-expanded", layersOpen ? "true" : "false");
-      openBasemapBtn?.setAttribute("aria-expanded", basemapOpen ? "true" : "false");
-    };
-
-    const closeAllPanels = () => {
-      layerPanel?.classList.add("rpred-map-hidden");
-      basemapPanel?.classList.add("rpred-map-hidden");
-      setExpanded(false, false);
-    };
-
-    const togglePanel = (target) => {
-      if (!target) return;
-      const shouldOpen = target.classList.contains("rpred-map-hidden");
-      closeAllPanels();
-      if (shouldOpen) {
-        target.classList.remove("rpred-map-hidden");
-      }
-      setExpanded(
-        shouldOpen && target === layerPanel,
-        shouldOpen && target === basemapPanel
-      );
-    };
-
-    openLayerBtn?.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      togglePanel(layerPanel);
-    });
-
-    openBasemapBtn?.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      togglePanel(basemapPanel);
-    });
-
-    closeLayerBtn?.addEventListener("click", (e) => {
-      e.preventDefault();
-      closeAllPanels();
-    });
-
-    closeBasemapBtn?.addEventListener("click", (e) => {
-      e.preventDefault();
-      closeAllPanels();
-    });
-
-    layerPanel?.addEventListener("click", (e) => e.stopPropagation());
-    basemapPanel?.addEventListener("click", (e) => e.stopPropagation());
-
-    document.addEventListener("click", () => {
-      closeAllPanels();
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeAllPanels();
-      }
-    });
-
-    hideBtn?.addEventListener("click", () => {
-      const anyVisible = wmsLayerEntries.some((entry) => entry.layer.getVisible());
-      const targetVisible = !anyVisible;
-      wmsLayerEntries.forEach((entry) => entry.layer.setVisible(targetVisible));
-      renderLayerControls();
-      if (measureMode) {
-        loadSnapGuideFeatures(true);
-      }
-    });
-
-    basemapSelect?.addEventListener("change", () => {
-      setBasemap(basemapSelect.value);
-    });
-
-    zoomBtn?.addEventListener("click", () => {
-      if (!mapInstance) return;
-      mapInstance.getView().fit(extent9377, {
-        padding: [20, 20, 20, 20],
-        duration: 300,
-      });
-      closeAllPanels();
-    });
-
-    setExpanded(false, false);
-  }
-
-  function bindCustomZoomButtons() {
-    if (zoomButtonsBound) return;
-    zoomButtonsBound = true;
-
-    const zoomInBtn = document.getElementById("vmZoomInBtn");
-    const zoomOutBtn = document.getElementById("vmZoomOutBtn");
-
-    zoomInBtn?.addEventListener("click", () => {
-      if (!mapInstance) return;
-      const view = mapInstance.getView();
-      const current = Number(view.getZoom() || 0);
-      view.animate({ zoom: current + 1, duration: 180 });
-    });
-
-    zoomOutBtn?.addEventListener("click", () => {
-      if (!mapInstance) return;
-      const view = mapInstance.getView();
-      const current = Number(view.getZoom() || 0);
-      view.animate({ zoom: current - 1, duration: 180 });
-    });
-  }
-
-  function formatMeasureLength(lineGeometry) {
-    const length = Number(lineGeometry?.getLength?.() || 0);
-    if (!Number.isFinite(length) || length <= 0) return "0 m";
-    if (length >= 1000) return `${(length / 1000).toFixed(2)} km`;
-    return `${length.toFixed(length >= 100 ? 0 : 2)} m`;
-  }
-
-  function formatMeasureArea(polygonGeometry) {
-    const area = Number(polygonGeometry?.getArea?.() || 0);
-    if (!Number.isFinite(area) || area <= 0) return "0 m²";
-    if (area >= 1000000) return `${(area / 1000000).toFixed(2)} km²`;
-    if (area >= 10000) return `${area.toFixed(0)} m²`;
-    return `${area.toFixed(2)} m²`;
-  }
-
-  function getCurrentMapExtent() {
-    if (!mapInstance) return null;
-    const view = mapInstance.getView();
-    const size = mapInstance.getSize();
-    if (!view || !size) return null;
-    const extent = view.calculateExtent(size);
-    if (!isValidExtent(extent)) return null;
-    return extent;
-  }
-
-  function extentToSnapKey(extent) {
-    if (!Array.isArray(extent) || extent.length !== 4) return "";
-    return extent.map((value) => Number(value).toFixed(0)).join("|");
-  }
-
-  function getSnapEligibleVisibleLayers() {
-    const eligible = new Set([
-      "arb_terreno",
-      "arb_construccion",
-      "arb_unidadconstruccion",
-    ]);
-    return wmsLayerEntries
-      .filter((entry) => entry?.layer?.getVisible?.())
-      .map((entry) => String(entry?.name || "").split(":").pop().toLowerCase())
-      .filter((name) => eligible.has(name));
-  }
-
-  function updateMeasurePanel({
-    visible = Boolean(measureMode),
-    status = "Activa una herramienta para medir.",
-    value = "0 m",
-  } = {}) {
-    const panel = document.getElementById("vmMeasurePanel");
-    const statusNode = document.getElementById("vmMeasureStatus");
-    const valueNode = document.getElementById("vmMeasureValue");
-    const distanceButton = document.getElementById("vmMeasureBtn");
-    const areaButton = document.getElementById("vmMeasureAreaBtn");
-    if (panel) panel.classList.toggle("rpred-map-hidden", !visible);
-    if (statusNode) statusNode.textContent = status;
-    if (valueNode) valueNode.textContent = value;
-    if (distanceButton) distanceButton.classList.toggle("rpred-is-active", measureMode === "distance");
-    if (areaButton) areaButton.classList.toggle("rpred-is-active", measureMode === "area");
-  }
-
-  function hideSnapMarker() {
-    const marker = document.getElementById("vmSnapMarker");
-    if (!marker) return;
-    marker.classList.add("rpred-map-hidden");
-  }
-
-  function showSnapMarker(coordinate) {
-    if (!mapInstance || !Array.isArray(coordinate)) return;
-    const marker = document.getElementById("vmSnapMarker");
-    if (!marker) return;
-    const pixel = mapInstance.getPixelFromCoordinate(coordinate);
-    if (!Array.isArray(pixel)) return;
-    marker.style.left = `${Number(pixel[0] || 0)}px`;
-    marker.style.top = `${Number(pixel[1] || 0)}px`;
-    marker.classList.remove("rpred-map-hidden");
-  }
-
-  async function loadSnapGuideFeatures(force = false) {
-    if (!snapGuideLayer || !mapInstance) return;
-    const visibleSnapLayers = getSnapEligibleVisibleLayers();
-    if (!visibleSnapLayers.length) {
-      snapGuideLayer.getSource().clear();
-      hideSnapMarker();
-      snapExtentKey = "";
-      return;
-    }
-    const extent = getCurrentMapExtent();
-    if (!extent) return;
-
-    const padded = [
-      extent[0] - 20,
-      extent[1] - 20,
-      extent[2] + 20,
-      extent[3] + 20,
-    ];
-    const nextKey = `${extentToSnapKey(padded)}::${visibleSnapLayers.join(",")}`;
-    if (!force && nextKey && nextKey === snapExtentKey) return;
-    snapExtentKey = nextKey;
-
-    if (snapLoadAbortController) {
-      snapLoadAbortController.abort();
-    }
-    snapLoadAbortController = new AbortController();
-
-    const url = `${rp}/visor/terrenos/snap?minx=${encodeURIComponent(padded[0])}&miny=${encodeURIComponent(padded[1])}&maxx=${encodeURIComponent(padded[2])}&maxy=${encodeURIComponent(padded[3])}&layers=${encodeURIComponent(visibleSnapLayers.join(","))}`;
-
-    try {
-      const resp = await fetch(url, { signal: snapLoadAbortController.signal });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      const format = new ol.format.GeoJSON();
-      const features = format.readFeatures(data, {
-        dataProjection: "EPSG:9377",
-        featureProjection: "EPSG:9377",
-      });
-      const source = snapGuideLayer.getSource();
-      source.clear();
-      source.addFeatures(features);
-    } catch (err) {
-      if (err?.name !== "AbortError") {
-        console.warn("[visor] No se pudo cargar snapping de terrenos:", err);
-      }
-    } finally {
-      snapLoadAbortController = null;
-    }
-  }
-
-  function clearMeasureDrawing() {
-    measureLayer?.getSource?.()?.clear();
-    updateMeasurePanel({
-      status: measureMode === "area" ? "Dibuja un polígono para medir el área." : "Dibuja líneas para medir la distancia.",
-      value: measureMode === "area" ? "0 m²" : "0 m",
-    });
-  }
-
-  function disableMeasureTool() {
-    if (!mapInstance) return;
-    if (measureDraw) {
-      mapInstance.removeInteraction(measureDraw);
-      measureDraw = null;
-    }
-    if (snapInteraction) {
-      mapInstance.removeInteraction(snapInteraction);
-      snapInteraction = null;
-    }
-    if (measureSketchListener) {
-      ol.Observable.unByKey(measureSketchListener);
-      measureSketchListener = null;
-    }
-    measureMode = null;
-    snapGuideLayer?.setVisible?.(false);
-    hideSnapMarker();
-    updateMeasurePanel({ visible: false });
-  }
-
-  async function enableMeasureTool(type) {
-    if (!mapInstance || !measureLayer) return;
-    const selected = type === "area" ? "area" : "distance";
-    measureMode = selected;
-    clearMeasureDrawing();
-    updateMeasurePanel({
-      visible: true,
-      status: selected === "area" ? "Dibuja un polígono para medir el área." : "Dibuja líneas para medir la distancia.",
-      value: selected === "area" ? "0 m²" : "0 m",
-    });
-
-    snapGuideLayer?.setVisible?.(true);
-    await loadSnapGuideFeatures(true);
-
-    const drawType = selected === "area" ? "Polygon" : "LineString";
-    measureDraw = new ol.interaction.Draw({
-      source: measureLayer.getSource(),
-      type: drawType,
-      style: new ol.style.Style({
-        fill: new ol.style.Fill({
-          color: "rgba(239, 68, 68, 0.15)",
-        }),
-        stroke: new ol.style.Stroke({
-          color: "#ef4444",
-          width: 3,
-          lineDash: [8, 4],
-        }),
-        image: new ol.style.Circle({
-          radius: 5,
-          fill: new ol.style.Fill({ color: "#ef4444" }),
-          stroke: new ol.style.Stroke({ color: "#fff", width: 1.5 }),
-        }),
-      }),
-    });
-
-    measureDraw.on("drawstart", (evt) => {
-      measureLayer.getSource().clear();
-      const sketch = evt.feature;
-      let listener;
-
-      if (sketch) {
-        listener = sketch.getGeometry()?.on("change", (e) => {
-          const geom = e.target;
-          let output = "0 m";
-          if (geom instanceof ol.geom.Polygon) {
-            output = formatMeasureArea(geom);
-          } else if (geom instanceof ol.geom.LineString) {
-            output = formatMeasureLength(geom);
-          }
-          updateMeasurePanel({
-            status: "Midiendo...",
-            value: output,
-          });
+      zoomBtn?.addEventListener("click", () => {
+        if (!mapInstance) return;
+        mapInstance.getView().fit(extent9377, {
+          padding: [20, 20, 20, 20],
+          duration: 300,
         });
-      }
-      measureSketchListener = listener;
-    });
+        closeAllPanels();
+      });
 
-    measureDraw.on("drawend", () => {
+      setExpanded(false, false);
+    }
+
+    function bindCustomZoomButtons() {
+      if (zoomButtonsBound) return;
+      zoomButtonsBound = true;
+
+      const zoomInBtn = document.getElementById("vmZoomInBtn");
+      const zoomOutBtn = document.getElementById("vmZoomOutBtn");
+
+      zoomInBtn?.addEventListener("click", () => {
+        if (!mapInstance) return;
+        const view = mapInstance.getView();
+        const current = Number(view.getZoom() || 0);
+        view.animate({ zoom: current + 1, duration: 180 });
+      });
+
+      zoomOutBtn?.addEventListener("click", () => {
+        if (!mapInstance) return;
+        const view = mapInstance.getView();
+        const current = Number(view.getZoom() || 0);
+        view.animate({ zoom: current - 1, duration: 180 });
+      });
+    }
+
+    function formatMeasureLength(lineGeometry) {
+      const length = Number(lineGeometry?.getLength?.() || 0);
+      if (!Number.isFinite(length) || length <= 0) return "0 m";
+      if (length >= 1000) return `${(length / 1000).toFixed(2)} km`;
+      return `${length.toFixed(length >= 100 ? 0 : 2)} m`;
+    }
+
+    function formatMeasureArea(polygonGeometry) {
+      const area = Number(polygonGeometry?.getArea?.() || 0);
+      if (!Number.isFinite(area) || area <= 0) return "0 m²";
+      if (area >= 1000000) return `${(area / 1000000).toFixed(2)} km²`;
+      if (area >= 10000) return `${area.toFixed(0)} m²`;
+      return `${area.toFixed(2)} m²`;
+    }
+
+    function getCurrentMapExtent() {
+      if (!mapInstance) return null;
+      const view = mapInstance.getView();
+      const size = mapInstance.getSize();
+      if (!view || !size) return null;
+      const extent = view.calculateExtent(size);
+      if (!isValidExtent(extent)) return null;
+      return extent;
+    }
+
+    function extentToSnapKey(extent) {
+      if (!Array.isArray(extent) || extent.length !== 4) return "";
+      return extent.map((value) => Number(value).toFixed(0)).join("|");
+    }
+
+    function getSnapEligibleVisibleLayers() {
+      const eligible = new Set([
+        "arb_terreno",
+        "arb_construccion",
+        "arb_unidadconstruccion",
+      ]);
+      return wmsLayerEntries
+        .filter((entry) => entry?.layer?.getVisible?.())
+        .map((entry) => String(entry?.name || "").split(":").pop().toLowerCase())
+        .filter((name) => eligible.has(name));
+    }
+
+    function updateMeasurePanel({
+      visible = Boolean(measureMode),
+      status = "Activa una herramienta para medir.",
+      value = "0 m",
+    } = {}) {
+      const panel = document.getElementById("vmMeasurePanel");
+      const statusNode = document.getElementById("vmMeasureStatus");
+      const valueNode = document.getElementById("vmMeasureValue");
+      const distanceButton = document.getElementById("vmMeasureBtn");
+      const areaButton = document.getElementById("vmMeasureAreaBtn");
+      if (panel) panel.classList.toggle("hidden", !visible);
+      if (statusNode) statusNode.textContent = status;
+      if (valueNode) valueNode.textContent = value;
+      if (distanceButton) distanceButton.classList.toggle("is-active", measureMode === "distance");
+      if (areaButton) areaButton.classList.toggle("is-active", measureMode === "area");
+    }
+
+    function hideSnapMarker() {
+      const marker = document.getElementById("vmSnapMarker");
+      if (!marker) return;
+      marker.classList.add("hidden");
+    }
+
+    function showSnapMarker(coordinate) {
+      if (!mapInstance || !Array.isArray(coordinate)) return;
+      const marker = document.getElementById("vmSnapMarker");
+      if (!marker) return;
+      const pixel = mapInstance.getPixelFromCoordinate(coordinate);
+      if (!Array.isArray(pixel)) return;
+      marker.style.left = `${Number(pixel[0] || 0)}px`;
+      marker.style.top = `${Number(pixel[1] || 0)}px`;
+      marker.classList.remove("hidden");
+    }
+
+    async function loadSnapGuideFeatures(force = false) {
+      if (!snapGuideLayer || !mapInstance) return;
+      const visibleSnapLayers = getSnapEligibleVisibleLayers();
+      if (!visibleSnapLayers.length) {
+        snapGuideLayer.getSource().clear();
+        hideSnapMarker();
+        snapExtentKey = "";
+        return;
+      }
+      const extent = getCurrentMapExtent();
+      if (!extent) return;
+
+      const padded = [
+        extent[0] - 20,
+        extent[1] - 20,
+        extent[2] + 20,
+        extent[3] + 20,
+      ];
+      const nextKey = `${extentToSnapKey(padded)}::${visibleSnapLayers.join(",")}`;
+      if (!force && nextKey && nextKey === snapExtentKey) return;
+      snapExtentKey = nextKey;
+
+      if (snapLoadAbortController) {
+        snapLoadAbortController.abort();
+      }
+      snapLoadAbortController = new AbortController();
+
+      const url = `${rp}/visor/terrenos/snap?minx=${encodeURIComponent(padded[0])}&miny=${encodeURIComponent(padded[1])}&maxx=${encodeURIComponent(padded[2])}&maxy=${encodeURIComponent(padded[3])}&layers=${encodeURIComponent(visibleSnapLayers.join(","))}`;
+
+      try {
+        const resp = await fetch(url, { signal: snapLoadAbortController.signal });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const format = new ol.format.GeoJSON();
+        const features = format.readFeatures(data, {
+          dataProjection: "EPSG:9377",
+          featureProjection: "EPSG:9377",
+        });
+        const source = snapGuideLayer.getSource();
+        source.clear();
+        source.addFeatures(features);
+      } catch (err) {
+        if (err?.name !== "AbortError") {
+          console.warn("[visor] No se pudo cargar snapping de terrenos:", err);
+        }
+      } finally {
+        snapLoadAbortController = null;
+      }
+    }
+
+    function clearMeasureDrawing() {
+      measureLayer?.getSource?.()?.clear();
+      updateMeasurePanel({
+        status: measureMode === "area" ? "Dibuja un polígono para medir el área." : "Dibuja líneas para medir la distancia.",
+        value: measureMode === "area" ? "0 m²" : "0 m",
+      });
+    }
+
+    function disableMeasureTool() {
+      if (!mapInstance) return;
+      if (measureDraw) {
+        mapInstance.removeInteraction(measureDraw);
+        measureDraw = null;
+      }
+      if (snapInteraction) {
+        mapInstance.removeInteraction(snapInteraction);
+        snapInteraction = null;
+      }
       if (measureSketchListener) {
         ol.Observable.unByKey(measureSketchListener);
         measureSketchListener = null;
       }
-      updateMeasurePanel({
-        status: "Medición finalizada.",
-      });
-    });
+      measureMode = null;
+      snapGuideLayer?.setVisible?.(false);
+      hideSnapMarker();
+      updateMeasurePanel({ visible: false });
+    }
 
-    mapInstance.addInteraction(measureDraw);
-
-    const snapSource = snapGuideLayer.getSource();
-    snapInteraction = new ol.interaction.Snap({
-      source: snapSource,
-      pixelTolerance: 12,
-    });
-
-    snapInteraction.on("snap", (evt) => {
-      if (evt.coordinate) showSnapMarker(evt.coordinate);
-    });
-
-    mapInstance.addInteraction(snapInteraction);
-
-    mapInstance.getTargetElement().addEventListener("mousemove", (e) => {
-      if (!measureMode || !snapInteraction) return;
-      const pixel = mapInstance.getEventPixel(e);
-      const hit = mapInstance.hasFeatureAtPixel(pixel, {
-        layerFilter: (l) => l === snapGuideLayer,
-      });
-      if (!hit) hideSnapMarker();
-    });
-  }
-
-  function bindMeasureControls() {
-    if (measureControlsBound) return;
-    measureControlsBound = true;
-
-    const measureBtn = document.getElementById("vmMeasureBtn");
-    const measureAreaBtn = document.getElementById("vmMeasureAreaBtn");
-    const clearBtn = document.getElementById("vmMeasureClearBtn");
-
-    measureBtn?.addEventListener("click", async () => {
-      if (measureMode === "distance") {
-        disableMeasureTool();
-      } else {
-        disableMeasureTool();
-        await enableMeasureTool("distance");
-      }
-    });
-
-    measureAreaBtn?.addEventListener("click", async () => {
-      if (measureMode === "area") {
-        disableMeasureTool();
-      } else {
-        disableMeasureTool();
-        await enableMeasureTool("area");
-      }
-    });
-
-    clearBtn?.addEventListener("click", () => {
+    async function enableMeasureTool(type) {
+      if (!mapInstance || !measureLayer) return;
+      const selected = type === "area" ? "area" : "distance";
+      measureMode = selected;
       clearMeasureDrawing();
-    });
-  }
+      updateMeasurePanel({
+        visible: true,
+        status: selected === "area" ? "Dibuja un polígono para medir el área." : "Dibuja líneas para medir la distancia.",
+        value: selected === "area" ? "0 m²" : "0 m",
+      });
 
-  function getTerrainLayerEntry() {
-    return (
-      wmsLayerEntries.find((entry) => {
-        const rawName = String(entry?.name || "").toLowerCase();
-        return rawName.includes("arb_terreno") && !rawName.includes("historico");
-      }) || null
-    );
-  }
+      snapGuideLayer?.setVisible?.(true);
+      await loadSnapGuideFeatures(true);
 
-  function extractTerrenoIdFromFeatureInfo(data) {
-    const feature = Array.isArray(data?.features) ? data.features[0] : null;
-    if (!feature) return null;
+      const drawType = selected === "area" ? "Polygon" : "LineString";
+      measureDraw = new ol.interaction.Draw({
+        source: measureLayer.getSource(),
+        type: drawType,
+        style: new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: "rgba(239, 68, 68, 0.15)",
+          }),
+          stroke: new ol.style.Stroke({
+            color: "#ef4444",
+            width: 3,
+            lineDash: [8, 4],
+          }),
+          image: new ol.style.Circle({
+            radius: 5,
+            fill: new ol.style.Fill({ color: "#ef4444" }),
+            stroke: new ol.style.Stroke({ color: "#fff", width: 1.5 }),
+          }),
+        }),
+      });
 
-    const props = feature.properties || {};
-    const directCandidates = [props.t_id, props.terreno_id, props.id, props.pk];
+      measureDraw.on("drawstart", (evt) => {
+        measureLayer.getSource().clear();
+        const sketch = evt.feature;
+        let listener;
 
-    for (const candidate of directCandidates) {
-      const value = Number(candidate);
-      if (Number.isFinite(value) && value > 0) return value;
-    }
-
-    const rawFeatureId = String(feature.id || "");
-    const lastToken = rawFeatureId.split(".").pop();
-    const parsed = Number(lastToken);
-    if (Number.isFinite(parsed) && parsed > 0) return parsed;
-
-    console.warn("[visor] GetFeatureInfo sin terreno_id util:", feature);
-    return null;
-  }
-
-  function hideInfoPopup() {
-    const popup = document.getElementById("vmInfoPopup");
-    if (!popup) return;
-    popup.classList.add("rpred-map-hidden");
-  }
-
-  function clearSelectedTerrainHighlight() {
-    if (!selectedTerrainLayer) return;
-    selectedTerrainLayer.getSource()?.clear();
-  }
-
-  function formatVisorDetailValue(value) {
-    const normalized = String(value ?? "").trim();
-    return normalized || "Sin dato";
-  }
-
-  function formatVisorArea(geometry) {
-    if (!geometry) return "Sin dato";
-    try {
-      const feature = new ol.format.GeoJSON().readFeature(
-        { type: "Feature", geometry, properties: {} },
-        {
-          dataProjection: "EPSG:9377",
-          featureProjection: "EPSG:9377",
+        if (sketch) {
+          listener = sketch.getGeometry()?.on("change", (e) => {
+            const geom = e.target;
+            let output = "0 m";
+            if (geom instanceof ol.geom.Polygon) {
+              output = formatMeasureArea(geom);
+            } else if (geom instanceof ol.geom.LineString) {
+              output = formatMeasureLength(geom);
+            }
+            updateMeasurePanel({
+              status: "Midiendo...",
+              value: output,
+            });
+          });
         }
-      );
-      const area = feature.getGeometry()?.getArea?.();
-      if (!Number.isFinite(area)) return "Sin dato";
-      return `${new Intl.NumberFormat("es-CO", {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-      }).format(area)} m²`;
-    } catch (_error) {
-      return "Sin dato";
-    }
-  }
+        measureSketchListener = listener;
+      });
 
-  function setVisorInfoField(id, value) {
-    const node = document.getElementById(id);
-    if (!node) return;
-    node.textContent = formatVisorDetailValue(value);
-  }
+      measureDraw.on("drawend", () => {
+        if (measureSketchListener) {
+          ol.Observable.unByKey(measureSketchListener);
+          measureSketchListener = null;
+        }
+        updateMeasurePanel({
+          status: "Medición finalizada.",
+        });
+      });
 
-  function normalizePredioDetailForViewer(payload) {
-    const predio = payload?.predio || {};
-    const direcciones = Array.isArray(payload?.direcciones) ? payload.direcciones : [];
-    const primeraDireccion = direcciones[0] || {};
+      mapInstance.addInteraction(measureDraw);
 
-    return {
-      terreno_id: predio?.terreno_id,
-      terreno_geom: predio?.terreno_geom,
-      predio_id: predio?.t_id,
-      id_operacion: predio?.id_operacion,
-      numero_predial_nacional: predio?.numero_predial_nacional || predio?.numero_predial,
-      condicion_predio: predio?.condicion_predio,
-      condicion_predio_nombre: predio?.condicion_predio_nombre,
-      tipo: predio?.tipo_nombre || predio?.tipo,
-      destinacion_economica: predio?.destinacion_economica_nombre || predio?.destinacion_economica,
-      estado_construccion: predio?.estado_construccion_nombre || null,
-      direccion: primeraDireccion?.direccion || primeraDireccion?.texto || primeraDireccion?.nomenclatura || null,
-      barrio_vereda: primeraDireccion?.barrio || primeraDireccion?.vereda || primeraDireccion?.sector || null,
-      fecha_actualizacion: predio?.fecha_actualizacion || predio?.updated_at || predio?.fecha_visita || null,
-    };
-  }
+      const snapSource = snapGuideLayer.getSource();
+      snapInteraction = new ol.interaction.Snap({
+        source: snapSource,
+        pixelTolerance: 12,
+      });
 
-  function bindInfoPopupControls() {
-    if (infoPopupBound) return;
-    infoPopupBound = true;
-    const closeBtn = document.getElementById("vmInfoPopupClose");
-    closeBtn?.addEventListener("click", () => {
-      hideInfoPopup();
-    });
-  }
+      snapInteraction.on("snap", (evt) => {
+        if (evt.coordinate) showSnapMarker(evt.coordinate);
+      });
 
-  function clearFloatingPredioInfo() {
-    selectedPredios = [];
-    selectedTerrainLayer?.getSource?.().clear();
+      mapInstance.addInteraction(snapInteraction);
 
-    document.getElementById("vmSelectionContent")?.classList.add("rpred-hidden");
-  }
-
-  function updateFloatingPredioInfo() {
-    const contentCard = document.getElementById("vmSelectionContent");
-
-    if (!selectedPredios || selectedPredios.length === 0) {
-      clearFloatingPredioInfo();
-      return;
+      mapInstance.getTargetElement().addEventListener("mousemove", (e) => {
+        if (!measureMode || !snapInteraction) return;
+        const pixel = mapInstance.getEventPixel(e);
+        const hit = mapInstance.hasFeatureAtPixel(pixel, {
+          layerFilter: (l) => l === snapGuideLayer,
+        });
+        if (!hit) hideSnapMarker();
+      });
     }
 
-    contentCard?.classList.remove("rpred-hidden");
+    function bindMeasureControls() {
+      if (measureControlsBound) return;
+      measureControlsBound = true;
 
-    const singleDiv = document.getElementById("singleSelectionDetails");
-    const multiDiv = document.getElementById("multiSelectionDetails");
-    const restrictForm = document.getElementById("restrictControls");
-    const releaseForm = document.getElementById("releaseControls");
-    const singleStatusRow = document.getElementById("singleRestrictionStatus");
+      const measureBtn = document.getElementById("vmMeasureBtn");
+      const measureAreaBtn = document.getElementById("vmMeasureAreaBtn");
+      const clearBtn = document.getElementById("vmMeasureClearBtn");
 
-    // Reset panels
-    singleDiv.classList.add("rpred-hidden");
-    multiDiv.classList.add("rpred-hidden");
-    singleStatusRow.classList.add("rpred-hidden");
-    restrictForm.classList.add("rpred-hidden");
-    releaseForm.classList.add("rpred-hidden");
-
-    if (selectedPredios.length === 1) {
-      const detail = selectedPredios[0];
-      singleDiv.classList.remove("rpred-hidden");
-
-      const num = detail.numero_predial_nacional || detail.id_operacion || "---";
-      setVisorInfoField("vmSidebarNumeroPredial", num);
-      setVisorInfoField("vmSidebarDireccion", detail.direccion);
-      setVisorInfoField("vmSidebarArea", formatVisorArea(detail.terreno_geom));
-      setVisorInfoField("vmSidebarCondicion", detail.condicion_predio_nombre || detail.condicion_predio);
-
-      // Check if restricted
-      const restriction = restrictedList.find(r => r.numero_predial_nacional === num);
-      if (restriction) {
-        singleStatusRow.classList.remove("rpred-hidden");
-        document.getElementById("singleRestrictionReason").textContent = `Motivo: ${restriction.motivo || 'Sin motivo especificado.'}`;
-        releaseForm.classList.remove("rpred-hidden");
-      } else {
-        document.getElementById("restrictMotivo").value = "";
-        restrictForm.classList.remove("rpred-hidden");
-      }
-    } else {
-      // Multi selection view
-      multiDiv.classList.remove("rpred-hidden");
-      document.getElementById("multiSelectionCount").textContent = selectedPredios.length;
-
-      const listContainer = document.getElementById("multiSelectionList");
-      listContainer.innerHTML = "";
-
-      let someFree = false;
-      let someRestricted = false;
-
-      selectedPredios.forEach(p => {
-        const num = p.numero_predial_nacional || p.id_operacion;
-        const restriction = restrictedList.find(r => r.numero_predial_nacional === num);
-        const isRestricted = !!restriction;
-
-        if (isRestricted) {
-          someRestricted = true;
+      measureBtn?.addEventListener("click", async () => {
+        if (measureMode === "distance") {
+          disableMeasureTool();
         } else {
-          someFree = true;
+          disableMeasureTool();
+          await enableMeasureTool("distance");
         }
+      });
 
-        const itemEl = document.createElement("div");
-        itemEl.className = `rpred-selection-item ${isRestricted ? 'rpred-is-restricted' : 'rpred-is-free'}`;
-        itemEl.innerHTML = `
+      measureAreaBtn?.addEventListener("click", async () => {
+        if (measureMode === "area") {
+          disableMeasureTool();
+        } else {
+          disableMeasureTool();
+          await enableMeasureTool("area");
+        }
+      });
+
+      clearBtn?.addEventListener("click", () => {
+        clearMeasureDrawing();
+      });
+    }
+
+    function getTerrainLayerEntry() {
+      return (
+        wmsLayerEntries.find((entry) => {
+          const rawName = String(entry?.name || "").toLowerCase();
+          return rawName.includes("arb_terreno") && !rawName.includes("historico");
+        }) || null
+      );
+    }
+
+    function extractTerrenoIdFromFeatureInfo(data) {
+      const feature = Array.isArray(data?.features) ? data.features[0] : null;
+      if (!feature) return null;
+
+      const props = feature.properties || {};
+      const directCandidates = [props.t_id, props.terreno_id, props.id, props.pk];
+
+      for (const candidate of directCandidates) {
+        const value = Number(candidate);
+        if (Number.isFinite(value) && value > 0) return value;
+      }
+
+      const rawFeatureId = String(feature.id || "");
+      const lastToken = rawFeatureId.split(".").pop();
+      const parsed = Number(lastToken);
+      if (Number.isFinite(parsed) && parsed > 0) return parsed;
+
+      console.warn("[visor] GetFeatureInfo sin terreno_id util:", feature);
+      return null;
+    }
+
+    function hideInfoPopup() {
+      const popup = document.getElementById("vmInfoPopup");
+      if (!popup) return;
+      popup.classList.add("hidden");
+    }
+
+    function clearSelectedTerrainHighlight() {
+      if (!selectedTerrainLayer) return;
+      selectedTerrainLayer.getSource()?.clear();
+    }
+
+    function formatVisorDetailValue(value) {
+      const normalized = String(value ?? "").trim();
+      return normalized || "Sin dato";
+    }
+
+    function formatVisorArea(geometry) {
+      if (!geometry) return "Sin dato";
+      try {
+        const feature = new ol.format.GeoJSON().readFeature(
+          { type: "Feature", geometry, properties: {} },
+          {
+            dataProjection: "EPSG:9377",
+            featureProjection: "EPSG:9377",
+          }
+        );
+        const area = feature.getGeometry()?.getArea?.();
+        if (!Number.isFinite(area)) return "Sin dato";
+        return `${new Intl.NumberFormat("es-CO", {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        }).format(area)} m²`;
+      } catch (_error) {
+        return "Sin dato";
+      }
+    }
+
+    function setVisorInfoField(id, value) {
+      const node = document.getElementById(id);
+      if (!node) return;
+      node.textContent = formatVisorDetailValue(value);
+    }
+
+    function normalizePredioDetailForViewer(payload) {
+      const predio = payload?.predio || {};
+      const direcciones = Array.isArray(payload?.direcciones) ? payload.direcciones : [];
+      const primeraDireccion = direcciones[0] || {};
+
+      return {
+        terreno_id: predio?.terreno_id,
+        terreno_geom: predio?.terreno_geom,
+        predio_id: predio?.t_id,
+        id_operacion: predio?.id_operacion,
+        numero_predial_nacional: predio?.numero_predial_nacional || predio?.numero_predial,
+        condicion_predio: predio?.condicion_predio,
+        condicion_predio_nombre: predio?.condicion_predio_nombre,
+        tipo: predio?.tipo_nombre || predio?.tipo,
+        destinacion_economica: predio?.destinacion_economica_nombre || predio?.destinacion_economica,
+        estado_construccion: predio?.estado_construccion_nombre || null,
+        direccion: primeraDireccion?.direccion || primeraDireccion?.texto || primeraDireccion?.nomenclatura || null,
+        barrio_vereda: primeraDireccion?.barrio || primeraDireccion?.vereda || primeraDireccion?.sector || null,
+        fecha_actualizacion: predio?.fecha_actualizacion || predio?.updated_at || predio?.fecha_visita || null,
+      };
+    }
+
+    function bindInfoPopupControls() {
+      if (infoPopupBound) return;
+      infoPopupBound = true;
+      const closeBtn = document.getElementById("vmInfoPopupClose");
+      closeBtn?.addEventListener("click", () => {
+        hideInfoPopup();
+      });
+    }
+
+    function clearFloatingPredioInfo() {
+      selectedPredios = [];
+      selectedTerrainLayer?.getSource?.().clear();
+
+      document.getElementById("vmSelectionContent")?.classList.add("d-none");
+    }
+
+    function updateFloatingPredioInfo() {
+      const contentCard = document.getElementById("vmSelectionContent");
+
+      if (!selectedPredios || selectedPredios.length === 0) {
+        clearFloatingPredioInfo();
+        return;
+      }
+
+      contentCard?.classList.remove("d-none");
+
+      const singleDiv = document.getElementById("singleSelectionDetails");
+      const multiDiv = document.getElementById("multiSelectionDetails");
+      const restrictForm = document.getElementById("restrictControls");
+      const releaseForm = document.getElementById("releaseControls");
+      const singleStatusRow = document.getElementById("singleRestrictionStatus");
+
+      // Reset panels
+      singleDiv.classList.add("d-none");
+      multiDiv.classList.add("d-none");
+      singleStatusRow.classList.add("d-none");
+      restrictForm.classList.add("d-none");
+      releaseForm.classList.add("d-none");
+
+      if (selectedPredios.length === 1) {
+        const detail = selectedPredios[0];
+        singleDiv.classList.remove("d-none");
+
+        const num = detail.numero_predial_nacional || detail.id_operacion || "---";
+        setVisorInfoField("vmSidebarNumeroPredial", num);
+        setVisorInfoField("vmSidebarDireccion", detail.direccion);
+        setVisorInfoField("vmSidebarArea", formatVisorArea(detail.terreno_geom));
+        setVisorInfoField("vmSidebarCondicion", detail.condicion_predio_nombre || detail.condicion_predio);
+
+        // Check if restricted
+        const restriction = restrictedList.find(r => r.numero_predial_nacional === num);
+        if (restriction) {
+          singleStatusRow.classList.remove("d-none");
+          document.getElementById("singleRestrictionReason").textContent = `Motivo: ${restriction.motivo || 'Sin motivo especificado.'}`;
+          releaseForm.classList.remove("d-none");
+        } else {
+          document.getElementById("restrictMotivo").value = "";
+          restrictForm.classList.remove("d-none");
+        }
+      } else {
+        // Multi selection view
+        multiDiv.classList.remove("d-none");
+        document.getElementById("multiSelectionCount").textContent = selectedPredios.length;
+
+        const listContainer = document.getElementById("multiSelectionList");
+        listContainer.innerHTML = "";
+
+        let someFree = false;
+        let someRestricted = false;
+
+        selectedPredios.forEach(p => {
+          const num = p.numero_predial_nacional || p.id_operacion;
+          const restriction = restrictedList.find(r => r.numero_predial_nacional === num);
+          const isRestricted = !!restriction;
+
+          if (isRestricted) {
+            someRestricted = true;
+          } else {
+            someFree = true;
+          }
+
+          const itemEl = document.createElement("div");
+          itemEl.className = `selection-list-item ${isRestricted ? 'is-restricted' : 'is-free'}`;
+          itemEl.innerHTML = `
             <span>${num}</span>
-            <span class="rpred-selection-badge ${isRestricted ? 'rpred-selection-badge--restricted' : 'rpred-selection-badge--free'}">
+            <span class="badge ${isRestricted ? 'bg-danger' : 'bg-success'}" style="font-size: 9px;">
               ${isRestricted ? 'Restringido' : 'Libre'}
             </span>
           `;
-        listContainer.appendChild(itemEl);
-      });
+          listContainer.appendChild(itemEl);
+        });
 
-      // If at least one selected property is free, show restrict option
-      if (someFree) {
-        document.getElementById("restrictMotivo").value = "";
-        restrictForm.classList.remove("rpred-hidden");
-      } else if (someRestricted) {
-        // If all are restricted, show release option
-        releaseForm.classList.remove("rpred-hidden");
+        // If at least one selected property is free, show restrict option
+        if (someFree) {
+          document.getElementById("restrictMotivo").value = "";
+          restrictForm.classList.remove("d-none");
+        } else if (someRestricted) {
+          // If all are restricted, show release option
+          releaseForm.classList.remove("d-none");
+        }
       }
     }
-  }
 
-  async function handleTerrainInfoClick(evt) {
-    if (!mapInstance) return;
-    if (measureMode) return;
+    async function handleTerrainInfoClick(evt) {
+      if (!mapInstance) return;
+      if (measureMode) return;
 
-    const terrainEntry = getTerrainLayerEntry();
-    if (!terrainEntry || !terrainEntry.layer.getVisible()) {
-      hideInfoPopup();
-      clearFloatingPredioInfo();
-      return;
-    }
-
-    try {
-      const [x, y] = Array.isArray(evt.coordinate) ? evt.coordinate : [];
-      if (!Number.isFinite(Number(x)) || !Number.isFinite(Number(y))) {
+      const terrainEntry = getTerrainLayerEntry();
+      if (!terrainEntry || !terrainEntry.layer.getVisible()) {
         hideInfoPopup();
         clearFloatingPredioInfo();
         return;
       }
-      const tolerance = Math.max(
-        Number(mapInstance.getView()?.getResolution?.() || 0) * 6,
-        1.5
-      );
 
-      const detailResp = await fetch(
-        `${rp}/visor/terreno/seleccion?x=${encodeURIComponent(x)}&y=${encodeURIComponent(y)}&tolerance=${encodeURIComponent(tolerance)}`
-      );
-      if (detailResp.ok) {
-        const detail = await detailResp.json();
-        let viewerDetail = detail;
+      try {
+        const [x, y] = Array.isArray(evt.coordinate) ? evt.coordinate : [];
+        if (!Number.isFinite(Number(x)) || !Number.isFinite(Number(y))) {
+          hideInfoPopup();
+          clearFloatingPredioInfo();
+          return;
+        }
+        const tolerance = Math.max(
+          Number(mapInstance.getView()?.getResolution?.() || 0) * 6,
+          1.5
+        );
 
-        if (detail?.terreno_id) {
-          const detailByIdResp = await fetch(
-            `${rp}/visor/terreno/detalle?terreno_id=${encodeURIComponent(detail.terreno_id)}`
-          );
-          if (detailByIdResp.ok) {
-            viewerDetail = await detailByIdResp.json();
+        const detailResp = await fetch(
+          `${rp}/visor/terreno/seleccion?x=${encodeURIComponent(x)}&y=${encodeURIComponent(y)}&tolerance=${encodeURIComponent(tolerance)}`
+        );
+        if (detailResp.ok) {
+          const detail = await detailResp.json();
+          let viewerDetail = detail;
+
+          if (detail?.terreno_id) {
+            const detailByIdResp = await fetch(
+              `${rp}/visor/terreno/detalle?terreno_id=${encodeURIComponent(detail.terreno_id)}`
+            );
+            if (detailByIdResp.ok) {
+              viewerDetail = await detailByIdResp.json();
+            }
+          }
+
+          if (viewerDetail && (viewerDetail.numero_predial_nacional || viewerDetail.id_operacion)) {
+            const normalized = normalizePredioDetailForViewer({ predio: viewerDetail });
+            selectedPredios = [normalized];
+            
+            selectedTerrainLayer.getSource().clear();
+            const format = new ol.format.GeoJSON();
+            const feature = format.readFeature(
+              { type: "Feature", geometry: normalized.terreno_geom, properties: {} },
+              { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
+            );
+            selectedTerrainLayer.getSource().addFeature(feature);
+
+            updateFloatingPredioInfo();
           }
         }
-
-        if (viewerDetail && (viewerDetail.numero_predial_nacional || viewerDetail.id_operacion)) {
-          const normalized = normalizePredioDetailForViewer({ predio: viewerDetail });
-          selectedPredios = [normalized];
-
-          selectedTerrainLayer.getSource().clear();
-          const format = new ol.format.GeoJSON();
-          const feature = format.readFeature(
-            { type: "Feature", geometry: normalized.terreno_geom, properties: {} },
-            { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
-          );
-          selectedTerrainLayer.getSource().addFeature(feature);
-
-          updateFloatingPredioInfo();
-        }
+      } catch (err) {
+        console.warn("[visor] No se pudo cargar el detalle del terreno:", err);
+        hideInfoPopup();
+        clearFloatingPredioInfo();
       }
-    } catch (err) {
-      console.warn("[visor] No se pudo cargar el detalle del terreno:", err);
-      hideInfoPopup();
-      clearFloatingPredioInfo();
     }
-  }
 
-  async function loadRestricciones() {
-    try {
-      const r = await fetch(`${rp}/restriccion-predios/list`);
-      if (r.ok) {
-        restrictedList = await r.json();
-      }
+    async function loadRestricciones() {
+      try {
+        const r = await fetch(`${rp}/restriccion-predios/list`);
+        if (r.ok) {
+          restrictedList = await r.json();
+        }
 
-      // Render List of restricted properties in sidebar
-      const listDiv = document.getElementById("restList");
-      const countText = document.getElementById("restrictionsCountText");
+        // Render List of restricted properties in sidebar
+        const listDiv = document.getElementById("restList");
+        const countText = document.getElementById("restrictionsCountText");
+        
+        countText.textContent = `${restrictedList.length} predio(s) restringido(s) actualmente.`;
 
-      countText.textContent = `${restrictedList.length} predio(s) restringido(s) actualmente.`;
-
-      if (restrictedList.length === 0) {
-        listDiv.innerHTML = `<div class="rpred-empty-state">No hay predios restringidos.</div>`;
-      } else {
-        listDiv.innerHTML = restrictedList.map(item => {
-          const dateStr = item.creado_en ? new Date(item.creado_en).toLocaleDateString("es-CO", { day: '2-digit', month: 'short', year: 'numeric' }) : "";
-          return `
-              <div class="rpred-restricted-item" onclick="zoomToRestrictedNumber('${item.numero_predial_nacional}')">
-                <div class="rpred-restricted-item__info">
-                  <span class="rpred-restricted-item__title">${item.numero_predial_nacional}</span>
-                  <span class="rpred-restricted-item__reason">${item.motivo || 'Sin motivo especificado'}</span>
-                  <span class="rpred-restricted-item__meta">Por: ${item.creado_por || 'Sistema'} · ${dateStr}</span>
+        if (restrictedList.length === 0) {
+          listDiv.innerHTML = `<div class="text-center text-muted py-4 small">No hay predios restringidos.</div>`;
+        } else {
+          listDiv.innerHTML = restrictedList.map(item => {
+            const dateStr = item.creado_en ? new Date(item.creado_en).toLocaleDateString("es-CO", { day: '2-digit', month: 'short', year: 'numeric' }) : "";
+            return `
+              <div class="restriccion-list-item" onclick="zoomToRestrictedNumber('${item.numero_predial_nacional}')">
+                <div class="restriccion-list-item-info">
+                  <span class="restriccion-list-item-title">${item.numero_predial_nacional}</span>
+                  <span class="restriccion-list-item-reason">${item.motivo || 'Sin motivo especificado'}</span>
+                  <span class="restriccion-list-item-meta">Por: ${item.creado_por || 'Sistema'} · ${dateStr}</span>
                 </div>
-                <button type="button" class="rpred-icon-button" onclick="event.stopPropagation(); releaseByNumber('${item.numero_predial_nacional}')" title="Liberar predio">
+                <button type="button" class="btn-icon-trash" onclick="event.stopPropagation(); releaseByNumber('${item.numero_predial_nacional}')" title="Liberar predio">
                   <i class="bi bi-trash-fill"></i>
                 </button>
               </div>
             `;
-        }).join("");
-      }
-
-      // Reload Map Red translucent Layer geometries
-      if (restrictedTerrainLayer) {
-        const source = restrictedTerrainLayer.getSource();
-        source.clear();
-
-        const geomResp = await fetch(`${rp}/restriccion-predios/geometrias`);
-        if (geomResp.ok) {
-          const featureCollection = await geomResp.json();
-          const format = new ol.format.GeoJSON();
-          const features = format.readFeatures(featureCollection, {
-            dataProjection: "EPSG:9377",
-            featureProjection: "EPSG:9377",
-          });
-          source.addFeatures(features);
+          }).join("");
         }
-      }
 
-      if (selectedPredios.length > 0) {
-        updateFloatingPredioInfo();
-      }
-    } catch (e) {
-      console.warn("[restriccion_predios] Error loading restrictions list:", e);
-    }
-  }
+        // Reload Map Red translucent Layer geometries
+        if (restrictedTerrainLayer) {
+          const source = restrictedTerrainLayer.getSource();
+          source.clear();
 
-  window.zoomToRestrictedNumber = async function (numero) {
-    if (!mapInstance) return;
-    try {
-      const response = await fetch(`${rp}/predio/buscar?numero_predial=${encodeURIComponent(numero)}`);
-      if (response.ok) {
-        const fc = await response.json();
-        if (fc.features && fc.features.length > 0) {
-          const props = fc.features[0].properties || {};
-          const predioId = props.t_id ?? props.predio_id;
-
-          const detailResp = await fetch(`${rp}/visor/terreno/detalle?terreno_id=${encodeURIComponent(predioId)}`);
-          if (detailResp.ok) {
-            const viewerDetail = await detailResp.json();
-            const normalized = normalizePredioDetailForViewer({ predio: viewerDetail });
-            selectedPredios = [normalized];
-            updateFloatingPredioInfo();
-
-            // Highlight selected
-            selectedTerrainLayer.getSource().clear();
+          const geomResp = await fetch(`${rp}/restriccion-predios/geometrias`);
+          if (geomResp.ok) {
+            const featureCollection = await geomResp.json();
             const format = new ol.format.GeoJSON();
-            const feature = format.readFeature({ type: "Feature", geometry: normalized.terreno_geom, properties: {} });
-            selectedTerrainLayer.getSource().addFeature(feature);
-
-            // Fit View
-            const extent = feature.getGeometry()?.getExtent?.();
-            if (extent) {
-              mapInstance.getView().fit(extent, { padding: [60, 60, 60, 60], duration: 500, maxZoom: 19 });
-            }
+            const features = format.readFeatures(featureCollection, {
+              dataProjection: "EPSG:9377",
+              featureProjection: "EPSG:9377",
+            });
+            source.addFeatures(features);
           }
         }
-      }
-    } catch (e) {
-      console.warn("[restriccion_predios] Zoom failed:", e);
-    }
-  };
 
-  window.releaseByNumber = async function (numero) {
-    const confirmed = await swalConfirm({
-      title: 'Liberar restricción',
-      text: `¿Estás seguro de que deseas liberar la restricción del predio ${numero}?`,
-      icon: 'warning',
-      confirmButtonText: 'Sí, liberar'
-    });
-    if (!confirmed) return;
-
-    try {
-      const r = await fetch(`${rp}/restriccion-predios/liberar`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ numero_predial_nacional: numero })
-      });
-      const data = await r.json();
-      if (r.ok) {
-        showToast("success", "Predio liberado correctamente");
-        await loadRestricciones();
-      } else {
-        showToast("error", data.detail || "No se pudo liberar el predio");
-      }
-    } catch (err) {
-      showToast("error", "Error de comunicación con el servidor");
-    }
-  };
-
-  async function loadExtentFromWmsCapabilities() {
-    try {
-      const xml = await getWmsCapabilitiesDoc();
-      if (!xml) return false;
-      const layerNode = findLayerNodeByName(xml, GEOSERVER_LAYERS[0]);
-      if (!layerNode) return false;
-
-      const getBoundingBox9377 = (node) => {
-        const boxes = Array.from(node.getElementsByTagName("BoundingBox"));
-        return (
-          boxes.find(
-            (box) =>
-              String(box.getAttribute("SRS") || box.getAttribute("CRS") || "").toUpperCase() === "EPSG:9377"
-          ) || null
-        );
-      };
-
-      const boxEl = getBoundingBox9377(layerNode);
-      if (boxEl) {
-        const minx = Number(boxEl.getAttribute("minx"));
-        const miny = Number(boxEl.getAttribute("miny"));
-        const maxx = Number(boxEl.getAttribute("maxx"));
-        const maxy = Number(boxEl.getAttribute("maxy"));
-        const ext = [minx, miny, maxx, maxy];
-        if (isValidExtent(ext)) {
-          setMapExtent(ext);
-          return true;
+        if (selectedPredios.length > 0) {
+          updateFloatingPredioInfo();
         }
+      } catch (e) {
+        console.warn("[restriccion_predios] Error loading restrictions list:", e);
       }
-      return false;
-    } catch (_err) {
-      return false;
-    }
-  }
-
-  async function loadProjectExtent() {
-    try {
-      const r = await fetch(`${rp}/visor/project-extent`);
-      if (r.ok) {
-        const data = await r.json();
-        if (isValidExtent(data.extent)) {
-          setMapExtent(data.extent);
-        } else {
-          await loadExtentFromWmsCapabilities();
-        }
-      } else {
-        await loadExtentFromWmsCapabilities();
-      }
-    } catch (err) {
-      console.warn("[visor] No se pudo cargar el extent dinamico:", err);
-      await loadExtentFromWmsCapabilities();
-    }
-  }
-
-  function findLayerNodeByName(xmlDoc, layerName) {
-    if (!xmlDoc || !layerName) return null;
-    const target = String(layerName).trim();
-    const layerNodes = getLayerNodes(xmlDoc);
-    const exactMatch = layerNodes.find(
-      (node) => getDirectChildText(node, "Name") === target
-    );
-    if (exactMatch) return exactMatch;
-
-    const simpleTarget = target.includes(":") ? target.split(":").pop() : target;
-    return (
-      layerNodes.find(
-        (node) => getDirectChildText(node, "Name") === simpleTarget
-      ) || null
-    );
-  }
-
-  async function initMap() {
-    if (mapInstance) return;
-
-    const resolvedLayersObj = expandConfiguredLayers(GEOSERVER_LAYERS);
-    const resolvedLayers = resolvedLayersObj.map(l => l.name);
-
-    wmsLayerEntries = resolvedLayers.map((layerName) => {
-      const source = new ol.source.TileWMS({
-        url: WMS_URL,
-        params: {
-          LAYERS: layerName,
-          TILED: true,
-          VERSION: "1.1.0",
-          FORMAT: "image/png",
-          TRANSPARENT: true,
-          SRS: "EPSG:9377",
-        },
-        serverType: "geoserver",
-        crossOrigin: "anonymous",
-      });
-
-      return {
-        name: layerName,
-        title: layerTitleFromName(layerName),
-        layer: new ol.layer.Tile({ source, visible: true }),
-      };
-    });
-
-    basemapEntries = {
-      osm: new ol.layer.Tile({
-        source: new ol.source.OSM(),
-        visible: true,
-      }),
-      sat: new ol.layer.Tile({
-        source: new ol.source.XYZ({
-          url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-          attributions: "Tiles (c) Esri",
-        }),
-        visible: false,
-      }),
-    };
-
-    selectedTerrainLayer = new ol.layer.Vector({
-      source: new ol.source.Vector(),
-      style: new ol.style.Style({
-        fill: new ol.style.Fill({
-          color: "rgba(37, 99, 235, 0.18)",
-        }),
-        stroke: new ol.style.Stroke({
-          color: "#1d4ed8",
-          width: 3,
-        }),
-      }),
-    });
-
-    restrictedTerrainLayer = new ol.layer.Vector({
-      source: new ol.source.Vector(),
-      style: new ol.style.Style({
-        fill: new ol.style.Fill({
-          color: "rgba(220, 38, 38, 0.25)",
-        }),
-        stroke: new ol.style.Stroke({
-          color: "#dc2626",
-          width: 3,
-        }),
-      }),
-    });
-
-    snapGuideLayer = new ol.layer.Vector({
-      source: new ol.source.Vector(),
-      visible: false,
-      style: new ol.style.Style({
-        stroke: new ol.style.Stroke({
-          color: "rgba(15, 23, 42, 0.35)",
-          width: 1.5,
-          lineDash: [4, 4],
-        }),
-        fill: new ol.style.Fill({
-          color: "rgba(255, 255, 255, 0.02)",
-        }),
-        image: new ol.style.Circle({
-          radius: 3,
-          fill: new ol.style.Fill({ color: "#ffffff" }),
-          stroke: new ol.style.Stroke({ color: "#0f172a", width: 1 }),
-        }),
-      }),
-    });
-
-    measureLayer = new ol.layer.Vector({
-      source: new ol.source.Vector(),
-      style: new ol.style.Style({
-        stroke: new ol.style.Stroke({
-          color: "#ef4444",
-          width: 3,
-          lineDash: [10, 6],
-        }),
-        image: new ol.style.Circle({
-          radius: 5,
-          fill: new ol.style.Fill({ color: "#ef4444" }),
-          stroke: new ol.style.Stroke({ color: "#fff", width: 2 }),
-        }),
-      }),
-    });
-
-    const wmsLayers = wmsLayerEntries.map((entry) => entry.layer);
-
-    const mapOptions = {
-      target: "map",
-      layers: [
-        basemapEntries.osm,
-        basemapEntries.sat,
-        ...wmsLayers,
-        restrictedTerrainLayer,
-        selectedTerrainLayer,
-        snapGuideLayer,
-        measureLayer,
-      ],
-      view: new ol.View({
-        projection: projection,
-        center: ol.extent.getCenter(extent9377),
-        zoom: 2,
-      }),
-    };
-
-    const defaultsFactory = ol?.control?.defaults;
-    if (typeof defaultsFactory === "function") {
-      mapOptions.controls = defaultsFactory({ zoom: false });
     }
 
-    mapInstance = new ol.Map(mapOptions);
-
-    if (typeof ol?.control?.ScaleLine === "function") {
-      mapInstance.addControl(
-        new ol.control.ScaleLine({
-          units: "metric",
-          minWidth: 96,
-          className: "rpred-scale-line",
-        })
-      );
-    }
-
-    setBasemap(activeBasemap);
-    mapInstance.getView().fit(extent9377, { padding: [20, 20, 20, 20] });
-    renderLayerControls();
-    bindLayerPanelControls();
-    bindCustomZoomButtons();
-    bindInfoPopupControls();
-    bindMeasureControls();
-    updateMeasurePanel({ visible: false });
-    mapInstance.on("singleclick", handleTerrainInfoClick);
-    mapInstance.on("moveend", () => {
-      if (measureMode) {
-        loadSnapGuideFeatures();
-      }
-    });
-  }
-
-  async function runPredioSearchFromViewer() {
-    const input = document.getElementById("vmPredioSearchInput");
-    const status = document.getElementById("vmPredioSearchStatus");
-    const query = String(input?.value || "").trim();
-
-    if (!status) return;
-    status.textContent = "";
-
-    if (!query) {
-      status.textContent = "Escribe uno o varios números prediales para consultar.";
-      return;
-    }
-
-    const queries = query.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean);
-    if (!queries.length) {
-      status.textContent = "Consulta no válida.";
-      return;
-    }
-
-    status.textContent = "Buscando...";
-    clearSelectedTerrainHighlight();
-    selectedPredios = [];
-
-    let foundCount = 0;
-    let notFound = [];
-
-    for (const q of queries) {
+    window.zoomToRestrictedNumber = async function(numero) {
+      if (!mapInstance) return;
       try {
-        const qs = new URLSearchParams({ numero_predial: q });
-        const response = await fetch(`${rp}/predio/buscar?${qs.toString()}`);
-        if (!response.ok) continue;
-
-        const featureCollection = await response.json();
-        const features = Array.isArray(featureCollection?.features) ? featureCollection.features : [];
-
-        if (features.length > 0) {
-          const props = features[0]?.properties || {};
-          const predioId = props.t_id ?? props.predio_id;
-
-          if (predioId) {
-            const detailResp = await fetch(`${rp}/predio/detalle?predio_id=${encodeURIComponent(predioId)}`);
+        const response = await fetch(`${rp}/predio/buscar?numero_predial=${encodeURIComponent(numero)}`);
+        if (response.ok) {
+          const fc = await response.json();
+          if (fc.features && fc.features.length > 0) {
+            const props = fc.features[0].properties || {};
+            const predioId = props.t_id ?? props.predio_id;
+            
+            const detailResp = await fetch(`${rp}/visor/terreno/detalle?terreno_id=${encodeURIComponent(predioId)}`);
             if (detailResp.ok) {
-              const payload = await detailResp.json();
-              const viewerDetail = normalizePredioDetailForViewer(payload);
-              if (viewerDetail.terreno_geom) {
-                selectedPredios.push(viewerDetail);
-                foundCount++;
+              const viewerDetail = await detailResp.json();
+              const normalized = normalizePredioDetailForViewer({ predio: viewerDetail });
+              selectedPredios = [normalized];
+              updateFloatingPredioInfo();
 
-                const format = new ol.format.GeoJSON();
-                const feature = format.readFeature(
-                  { type: "Feature", geometry: viewerDetail.terreno_geom, properties: {} },
-                  { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
-                );
-                selectedTerrainLayer.getSource().addFeature(feature);
+              // Highlight selected
+              selectedTerrainLayer.getSource().clear();
+              const format = new ol.format.GeoJSON();
+              const feature = format.readFeature({ type: "Feature", geometry: normalized.terreno_geom, properties: {} });
+              selectedTerrainLayer.getSource().addFeature(feature);
+
+              // Fit View
+              const extent = feature.getGeometry()?.getExtent?.();
+              if (extent) {
+                mapInstance.getView().fit(extent, { padding: [60, 60, 60, 60], duration: 500, maxZoom: 19 });
               }
             }
           }
-        } else {
-          notFound.push(q);
         }
       } catch (e) {
-        console.warn("[restriccion_predios] Error searching for property:", q, e);
+        console.warn("[restriccion_predios] Zoom failed:", e);
       }
-    }
+    };
 
-    if (foundCount === 0) {
-      status.textContent = "No se encontraron predios.";
-      clearFloatingPredioInfo();
-      return;
-    }
-
-    const extent = selectedTerrainLayer.getSource().getExtent();
-    if (extent && extent.length === 4 && ol.extent.isEmpty(extent) === false) {
-      mapInstance.getView().fit(extent, {
-        padding: [60, 60, 60, 60],
-        duration: 500,
-        maxZoom: 19,
-      });
-    }
-
-    updateFloatingPredioInfo();
-
-    if (notFound.length > 0) {
-      status.textContent = `Encontrados: ${foundCount}. No encontrados: ${notFound.join(", ")}`;
-    } else {
-      status.textContent = `Encontrados: ${foundCount} predio(s).`;
-    }
-  }
-
-  function bindViewerShellControls() {
-    document.getElementById("vmPredioSearchBtn")?.addEventListener("click", () => {
-      runPredioSearchFromViewer();
-    });
-
-    document.getElementById("vmPredioSearchInput")?.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter") return;
-      event.preventDefault();
-      runPredioSearchFromViewer();
-    });
-
-    document.getElementById("btnClearSelection")?.addEventListener("click", () => {
-      clearFloatingPredioInfo();
-      document.getElementById("vmPredioSearchInput").value = "";
-      document.getElementById("vmPredioSearchStatus").textContent = "";
-    });
-
-    document.getElementById("btnRestrictSelected")?.addEventListener("click", async () => {
-      if (selectedPredios.length === 0) return;
-      const motivo = document.getElementById("restrictMotivo").value.trim();
-
-      const toRestrict = selectedPredios.filter(p => {
-        const num = p.numero_predial_nacional || p.id_operacion;
-        return !restrictedList.some(r => r.numero_predial_nacional === num);
-      });
-
-      if (toRestrict.length === 0) {
-        showToast("error", "Todos los predios seleccionados ya están restringidos.");
-        return;
-      }
-
-      let successCount = 0;
-      let failCount = 0;
-
-      for (const p of toRestrict) {
-        const num = p.numero_predial_nacional || p.id_operacion;
-        try {
-          const r = await fetch(`${rp}/restriccion-predios/restringir`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              numero_predial_nacional: num,
-              motivo: motivo,
-            }),
-          });
-          if (r.ok) {
-            successCount++;
-          } else {
-            failCount++;
-          }
-        } catch (e) {
-          failCount++;
-        }
-      }
-
-      if (successCount > 0) {
-        showToast("success", `${successCount} predio(s) restringido(s) correctamente.`);
-        await loadRestricciones();
-      } else {
-        showToast("error", "No se pudo restringir ninguno de los predios.");
-      }
-    });
-
-    document.getElementById("btnReleaseSelected")?.addEventListener("click", async () => {
-      if (selectedPredios.length === 0) return;
-
-      const toRelease = selectedPredios.filter(p => {
-        const num = p.numero_predial_nacional || p.id_operacion;
-        return restrictedList.some(r => r.numero_predial_nacional === num);
-      });
-
-      if (toRelease.length === 0) return;
-
-      const numbersToConfirm = toRelease.map(p => p.numero_predial_nacional || p.id_operacion).join(", ");
+    window.releaseByNumber = async function(numero) {
       const confirmed = await swalConfirm({
-        title: 'Liberar restricciones',
-        text: `¿Estás seguro de que deseas liberar la restricción para los siguientes predios: ${numbersToConfirm}?`,
+        title: 'Liberar restricción',
+        text: `¿Estás seguro de que deseas liberar la restricción del predio ${numero}?`,
         icon: 'warning',
         confirmButtonText: 'Sí, liberar'
       });
       if (!confirmed) return;
 
-      let successCount = 0;
-      let failCount = 0;
+      try {
+        const r = await fetch(`${rp}/restriccion-predios/liberar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ numero_predial_nacional: numero })
+        });
+        const data = await r.json();
+        if (r.ok) {
+          showToast("success", "Predio liberado correctamente");
+          await loadRestricciones();
+        } else {
+          showToast("error", data.detail || "No se pudo liberar el predio");
+        }
+      } catch (err) {
+        showToast("error", "Error de comunicación con el servidor");
+      }
+    };
 
-      for (const p of toRelease) {
-        const num = p.numero_predial_nacional || p.id_operacion;
-        try {
-          const r = await fetch(`${rp}/restriccion-predios/liberar`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              numero_predial_nacional: num,
-            }),
-          });
-          if (r.ok) {
-            successCount++;
+    async function loadExtentFromWmsCapabilities() {
+      try {
+        const xml = await getWmsCapabilitiesDoc();
+        if (!xml) return false;
+        const layerNode = findLayerNodeByName(xml, GEOSERVER_LAYERS[0]);
+        if (!layerNode) return false;
+
+        const getBoundingBox9377 = (node) => {
+          const boxes = Array.from(node.getElementsByTagName("BoundingBox"));
+          return (
+            boxes.find(
+              (box) =>
+                String(box.getAttribute("SRS") || box.getAttribute("CRS") || "").toUpperCase() === "EPSG:9377"
+            ) || null
+          );
+        };
+
+        const boxEl = getBoundingBox9377(layerNode);
+        if (boxEl) {
+          const minx = Number(boxEl.getAttribute("minx"));
+          const miny = Number(boxEl.getAttribute("miny"));
+          const maxx = Number(boxEl.getAttribute("maxx"));
+          const maxy = Number(boxEl.getAttribute("maxy"));
+          const ext = [minx, miny, maxx, maxy];
+          if (isValidExtent(ext)) {
+            setMapExtent(ext);
+            return true;
+          }
+        }
+        return false;
+      } catch (_err) {
+        return false;
+      }
+    }
+
+    async function loadProjectExtent() {
+      try {
+        const r = await fetch(`${rp}/visor/project-extent`);
+        if (r.ok) {
+          const data = await r.json();
+          if (isValidExtent(data.extent)) {
+            setMapExtent(data.extent);
           } else {
-            failCount++;
+            await loadExtentFromWmsCapabilities();
+          }
+        } else {
+          await loadExtentFromWmsCapabilities();
+        }
+      } catch (err) {
+        console.warn("[visor] No se pudo cargar el extent dinamico:", err);
+        await loadExtentFromWmsCapabilities();
+      }
+    }
+
+    function findLayerNodeByName(xmlDoc, layerName) {
+      if (!xmlDoc || !layerName) return null;
+      const target = String(layerName).trim();
+      const layerNodes = getLayerNodes(xmlDoc);
+      const exactMatch = layerNodes.find(
+        (node) => getDirectChildText(node, "Name") === target
+      );
+      if (exactMatch) return exactMatch;
+
+      const simpleTarget = target.includes(":") ? target.split(":").pop() : target;
+      return (
+        layerNodes.find(
+          (node) => getDirectChildText(node, "Name") === simpleTarget
+        ) || null
+      );
+    }
+
+    async function initMap() {
+      if (mapInstance) return;
+
+      const resolvedLayersObj = expandConfiguredLayers(GEOSERVER_LAYERS);
+      const resolvedLayers = resolvedLayersObj.map(l => l.name);
+
+      wmsLayerEntries = resolvedLayers.map((layerName) => {
+        const source = new ol.source.TileWMS({
+          url: WMS_URL,
+          params: {
+            LAYERS: layerName,
+            TILED: true,
+            VERSION: "1.1.0",
+            FORMAT: "image/png",
+            TRANSPARENT: true,
+            SRS: "EPSG:9377",
+          },
+          serverType: "geoserver",
+          crossOrigin: "anonymous",
+        });
+
+        return {
+          name: layerName,
+          title: layerTitleFromName(layerName),
+          layer: new ol.layer.Tile({ source, visible: true }),
+        };
+      });
+
+      basemapEntries = {
+        osm: new ol.layer.Tile({
+          source: new ol.source.OSM(),
+          visible: true,
+        }),
+        sat: new ol.layer.Tile({
+          source: new ol.source.XYZ({
+            url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            attributions: "Tiles (c) Esri",
+          }),
+          visible: false,
+        }),
+      };
+
+      selectedTerrainLayer = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+        style: new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: "rgba(37, 99, 235, 0.18)",
+          }),
+          stroke: new ol.style.Stroke({
+            color: "#1d4ed8",
+            width: 3,
+          }),
+        }),
+      });
+
+      restrictedTerrainLayer = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+        style: new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: "rgba(220, 38, 38, 0.25)",
+          }),
+          stroke: new ol.style.Stroke({
+            color: "#dc2626",
+            width: 3,
+          }),
+        }),
+      });
+
+      snapGuideLayer = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+        visible: false,
+        style: new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: "rgba(15, 23, 42, 0.35)",
+            width: 1.5,
+            lineDash: [4, 4],
+          }),
+          fill: new ol.style.Fill({
+            color: "rgba(255, 255, 255, 0.02)",
+          }),
+          image: new ol.style.Circle({
+            radius: 3,
+            fill: new ol.style.Fill({ color: "#ffffff" }),
+            stroke: new ol.style.Stroke({ color: "#0f172a", width: 1 }),
+          }),
+        }),
+      });
+
+      measureLayer = new ol.layer.Vector({
+        source: new ol.source.Vector(),
+        style: new ol.style.Style({
+          stroke: new ol.style.Stroke({
+            color: "#ef4444",
+            width: 3,
+            lineDash: [10, 6],
+          }),
+          image: new ol.style.Circle({
+            radius: 5,
+            fill: new ol.style.Fill({ color: "#ef4444" }),
+            stroke: new ol.style.Stroke({ color: "#fff", width: 2 }),
+          }),
+        }),
+      });
+
+      const wmsLayers = wmsLayerEntries.map((entry) => entry.layer);
+
+      const mapOptions = {
+        target: "map",
+        layers: [
+          basemapEntries.osm,
+          basemapEntries.sat,
+          ...wmsLayers,
+          restrictedTerrainLayer,
+          selectedTerrainLayer,
+          snapGuideLayer,
+          measureLayer,
+        ],
+        view: new ol.View({
+          projection: projection,
+          center: ol.extent.getCenter(extent9377),
+          zoom: 2,
+        }),
+      };
+
+      const defaultsFactory = ol?.control?.defaults;
+      if (typeof defaultsFactory === "function") {
+        mapOptions.controls = defaultsFactory({ zoom: false });
+      }
+
+      mapInstance = new ol.Map(mapOptions);
+
+      if (typeof ol?.control?.ScaleLine === "function") {
+        mapInstance.addControl(
+          new ol.control.ScaleLine({
+            units: "metric",
+            minWidth: 96,
+            className: "vm-scale-line",
+          })
+        );
+      }
+
+      setBasemap(activeBasemap);
+      mapInstance.getView().fit(extent9377, { padding: [20, 20, 20, 20] });
+      renderLayerControls();
+      bindLayerPanelControls();
+      bindCustomZoomButtons();
+      bindInfoPopupControls();
+      bindMeasureControls();
+      updateMeasurePanel({ visible: false });
+      mapInstance.on("singleclick", handleTerrainInfoClick);
+      mapInstance.on("moveend", () => {
+        if (measureMode) {
+          loadSnapGuideFeatures();
+        }
+      });
+    }
+
+    async function runPredioSearchFromViewer() {
+      const input = document.getElementById("vmPredioSearchInput");
+      const status = document.getElementById("vmPredioSearchStatus");
+      const query = String(input?.value || "").trim();
+
+      if (!status) return;
+      status.textContent = "";
+
+      if (!query) {
+        status.textContent = "Escribe uno o varios números prediales para consultar.";
+        return;
+      }
+
+      const queries = query.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean);
+      if (!queries.length) {
+        status.textContent = "Consulta no válida.";
+        return;
+      }
+
+      status.textContent = "Buscando...";
+      clearSelectedTerrainHighlight();
+      selectedPredios = [];
+
+      let foundCount = 0;
+      let notFound = [];
+
+      for (const q of queries) {
+        try {
+          const qs = new URLSearchParams({ numero_predial: q });
+          const response = await fetch(`${rp}/predio/buscar?${qs.toString()}`);
+          if (!response.ok) continue;
+
+          const featureCollection = await response.json();
+          const features = Array.isArray(featureCollection?.features) ? featureCollection.features : [];
+
+          if (features.length > 0) {
+            const props = features[0]?.properties || {};
+            const predioId = props.t_id ?? props.predio_id;
+
+            if (predioId) {
+              const detailResp = await fetch(`${rp}/predio/detalle?predio_id=${encodeURIComponent(predioId)}`);
+              if (detailResp.ok) {
+                const payload = await detailResp.json();
+                const viewerDetail = normalizePredioDetailForViewer(payload);
+                if (viewerDetail.terreno_geom) {
+                  selectedPredios.push(viewerDetail);
+                  foundCount++;
+                  
+                  const format = new ol.format.GeoJSON();
+                  const feature = format.readFeature(
+                    { type: "Feature", geometry: viewerDetail.terreno_geom, properties: {} },
+                    { dataProjection: "EPSG:9377", featureProjection: "EPSG:9377" }
+                  );
+                  selectedTerrainLayer.getSource().addFeature(feature);
+                }
+              }
+            }
+          } else {
+            notFound.push(q);
           }
         } catch (e) {
-          failCount++;
+          console.warn("[restriccion_predios] Error searching for property:", q, e);
         }
       }
 
-      if (successCount > 0) {
-        showToast("success", `${successCount} predio(s) liberado(s) correctamente.`);
-        await loadRestricciones();
-      } else {
-        showToast("error", "No se pudo liberar ninguno de los predios.");
+      if (foundCount === 0) {
+        status.textContent = "No se encontraron predios.";
+        clearFloatingPredioInfo();
+        return;
       }
-    });
-  }
 
-  function showToast(type, message) {
-    if (window.Swal) {
-      window.Swal.fire({
-        icon: type,
-        text: message,
-        timer: 3000,
-        toast: true,
-        position: "top-end",
-        showConfirmButton: false,
-      });
-    } else {
-      alert(message);
+      const extent = selectedTerrainLayer.getSource().getExtent();
+      if (extent && extent.length === 4 && ol.extent.isEmpty(extent) === false) {
+        mapInstance.getView().fit(extent, {
+          padding: [60, 60, 60, 60],
+          duration: 500,
+          maxZoom: 19,
+        });
+      }
+
+      updateFloatingPredioInfo();
+
+      if (notFound.length > 0) {
+        status.textContent = `Encontrados: ${foundCount}. No encontrados: ${notFound.join(", ")}`;
+      } else {
+        status.textContent = `Encontrados: ${foundCount} predio(s).`;
+      }
     }
-  }
 
-  async function swalConfirm({ title, text, icon = "question", confirmButtonText = "Continuar" }) {
-    if (window.Swal) {
-      const result = await window.Swal.fire({
-        title: title,
-        text: text,
-        icon: icon,
-        showCancelButton: true,
-        confirmButtonColor: "#032F57",
-        cancelButtonColor: "#6c757d",
-        confirmButtonText: confirmButtonText,
-        cancelButtonText: "Cancelar",
+    function bindViewerShellControls() {
+      document.getElementById("vmPredioSearchBtn")?.addEventListener("click", () => {
+        runPredioSearchFromViewer();
       });
-      return result.isConfirmed;
-    } else {
-      return confirm(text);
+
+      document.getElementById("vmPredioSearchInput")?.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        runPredioSearchFromViewer();
+      });
+
+      document.getElementById("btnClearSelection")?.addEventListener("click", () => {
+        clearFloatingPredioInfo();
+        document.getElementById("vmPredioSearchInput").value = "";
+        document.getElementById("vmPredioSearchStatus").textContent = "";
+      });
+
+      document.getElementById("btnRestrictSelected")?.addEventListener("click", async () => {
+        if (selectedPredios.length === 0) return;
+        const motivo = document.getElementById("restrictMotivo").value.trim();
+
+        const toRestrict = selectedPredios.filter(p => {
+          const num = p.numero_predial_nacional || p.id_operacion;
+          return !restrictedList.some(r => r.numero_predial_nacional === num);
+        });
+
+        if (toRestrict.length === 0) {
+          showToast("error", "Todos los predios seleccionados ya están restringidos.");
+          return;
+        }
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const p of toRestrict) {
+          const num = p.numero_predial_nacional || p.id_operacion;
+          try {
+            const r = await fetch(`${rp}/restriccion-predios/restringir`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                numero_predial_nacional: num,
+                motivo: motivo,
+              }),
+            });
+            if (r.ok) {
+              successCount++;
+            } else {
+              failCount++;
+            }
+          } catch (e) {
+            failCount++;
+          }
+        }
+
+        if (successCount > 0) {
+          showToast("success", `${successCount} predio(s) restringido(s) correctamente.`);
+          await loadRestricciones();
+        } else {
+          showToast("error", "No se pudo restringir ninguno de los predios.");
+        }
+      });
+
+      document.getElementById("btnReleaseSelected")?.addEventListener("click", async () => {
+        if (selectedPredios.length === 0) return;
+        
+        const toRelease = selectedPredios.filter(p => {
+          const num = p.numero_predial_nacional || p.id_operacion;
+          return restrictedList.some(r => r.numero_predial_nacional === num);
+        });
+
+        if (toRelease.length === 0) return;
+
+        const numbersToConfirm = toRelease.map(p => p.numero_predial_nacional || p.id_operacion).join(", ");
+        const confirmed = await swalConfirm({
+          title: 'Liberar restricciones',
+          text: `¿Estás seguro de que deseas liberar la restricción para los siguientes predios: ${numbersToConfirm}?`,
+          icon: 'warning',
+          confirmButtonText: 'Sí, liberar'
+        });
+        if (!confirmed) return;
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const p of toRelease) {
+          const num = p.numero_predial_nacional || p.id_operacion;
+          try {
+            const r = await fetch(`${rp}/restriccion-predios/liberar`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                numero_predial_nacional: num,
+              }),
+            });
+            if (r.ok) {
+              successCount++;
+            } else {
+              failCount++;
+            }
+          } catch (e) {
+            failCount++;
+          }
+        }
+
+        if (successCount > 0) {
+          showToast("success", `${successCount} predio(s) liberado(s) correctamente.`);
+          await loadRestricciones();
+        } else {
+          showToast("error", "No se pudo liberar ninguno de los predios.");
+        }
+      });
     }
-  }
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    clearFloatingPredioInfo();
-    bindViewerShellControls();
-    await initMap();
-    await loadProjectExtent();
-    await loadRestricciones();
+    function showToast(type, message) {
+      if (window.Swal) {
+        window.Swal.fire({
+          icon: type,
+          text: message,
+          timer: 3000,
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+        });
+      } else {
+        alert(message);
+      }
+    }
 
-    // Alerta informativa al ingresar a la vista
-    if (window.Swal) {
-      window.Swal.fire({
-        title: '<span class="rpred-swal-title">Módulo de Restricción de Predios</span>',
-        icon: 'warning',
-        html: `
-            <div class="rpred-swal-content">
-              <p class="rpred-swal-description">
+    async function swalConfirm({ title, text, icon = "question", confirmButtonText = "Continuar" }) {
+      if (window.Swal) {
+        const result = await window.Swal.fire({
+          title: title,
+          text: text,
+          icon: icon,
+          showCancelButton: true,
+          confirmButtonColor: "#0A2C1B",
+          cancelButtonColor: "#6c757d",
+          confirmButtonText: confirmButtonText,
+          cancelButtonText: "Cancelar",
+        });
+        return result.isConfirmed;
+      } else {
+        return confirm(text);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      clearFloatingPredioInfo();
+      bindViewerShellControls();
+      await initMap();
+      await loadProjectExtent();
+      await loadRestricciones();
+
+      // Alerta informativa al ingresar a la vista
+      if (window.Swal) {
+        window.Swal.fire({
+          title: '<span style="color: #0f172a; font-size: 1.15rem; font-weight: 700; font-family: \'Outfit\', \'Inter\', sans-serif;">Módulo de Restricción de Predios</span>',
+          icon: 'warning',
+          html: `
+            <div style="font-family: 'Inter', sans-serif; text-align: left; margin-bottom: 14px;">
+              <p style="font-size: 0.85rem; color: #475569; line-height: 1.4; margin: 0 0 12px 0;">
                 Bienvenido al panel de restricción predial. Este módulo permite restringir (bloquear) y liberar números prediales nacionales para regular su estado y controlar la asignación catastral.
               </p>
-              <div class="rpred-swal-warning">
-                <div class="rpred-swal-warning__icon">
-                  <i class="bi bi-exclamation-triangle-fill"></i>
-                </div>
+              <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-left: 4px solid #dc2626; border-radius: 8px; padding: 12px 14px; display: flex; gap: 10px; align-items: start;">
                 <div>
-                  <strong class="rpred-swal-warning__title">Aviso de Bloqueo Catastral</strong>
-                  <span class="rpred-swal-warning__text">
+                  <strong style="font-size: 0.78rem; color: #991b1b; display: block; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.02em;">Aviso de Bloqueo Catastral</strong>
+                  <span style="font-size: 0.78rem; color: #b91c1c; font-weight: 600; line-height: 1.35; display: block;">
                     EL PREDIO BLOQUEADO NO PUEDE SER USADO PARA LA RADICACIÓN DE PROCESO CATASTRAL.
                   </span>
                 </div>
               </div>
             </div>
           `,
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#0A2C1B',
-        buttonsStyling: true,
-        customClass: {
-          popup: 'rpred-swal-popup',
-          confirmButton: 'rpred-swal-button'
-        },
-        showClass: {
-          popup: 'animate__animated animate__fadeInUp animate__faster'
-        },
-        hideClass: {
-          popup: 'animate__animated animate__fadeOutDown animate__faster'
-        }
-      });
-    }
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#0A2C1B',
+          buttonsStyling: true,
+          customClass: {
+            popup: 'premium-alert-popup',
+            confirmButton: 'premium-alert-btn'
+          },
+          showClass: {
+            popup: 'animate__animated animate__fadeInUp animate__faster'
+          },
+          hideClass: {
+            popup: 'animate__animated animate__fadeOutDown animate__faster'
+          }
+        });
+      }
 
-    setTimeout(() => {
-      mapInstance?.updateSize?.();
-      mapInstance?.renderSync?.();
-    }, 120);
-  });
-  }) ();
+      setTimeout(() => {
+        mapInstance?.updateSize?.();
+        mapInstance?.renderSync?.();
+      }, 120);
+    });
+  })();
 </script>
