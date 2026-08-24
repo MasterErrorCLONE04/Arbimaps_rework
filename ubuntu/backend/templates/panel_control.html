@@ -1,3 +1,474 @@
+<style>
+  /* ============================================================
+   MODAL DETALLE COORDINADOR
+   ============================================================ */
+  #modalDetalleCoord {
+    --coord-primary: #0A2C1B;
+    --coord-primary-hover: #123D29;
+    --coord-accent: #0A5F3C;
+    --coord-soft: #E8F0EB;
+    --coord-soft-2: #F5F8F6;
+    --coord-border: #DCE7E0;
+    --coord-text: #173D2B;
+    --coord-muted: #718078;
+  }
+
+  #modalDetalleCoord .modal-dialog {
+    max-width: 1180px;
+    width: calc(100% - 2rem);
+  }
+
+  #modalDetalleCoord .modal-coord-content {
+    border: 0;
+    border-radius: 22px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(10, 44, 27, .22);
+  }
+
+  #modalDetalleCoord .modal-coord-header {
+    min-height: 92px;
+    padding: 20px 26px;
+    background: linear-gradient(135deg, #0A2C1B 0%, #123D29 100%);
+    color: #fff;
+    position: relative;
+  }
+
+  #modalDetalleCoord .modal-header-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .14);
+    font-size: 1.25rem;
+  }
+
+  #modalDetalleCoord .modal-coord-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0;
+    color: #fff !important;
+  }
+
+  #modalDetalleCoord .modal-coord-subtitle {
+    display: block;
+    margin-top: 3px;
+    color: rgba(255, 255, 255, .76);
+    font-size: .78rem;
+    font-weight: 300;
+  }
+
+  #modalDetalleCoord .modal-coord-close {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #C4D5CC;
+    color: #0A2C1B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: transform .25s ease, background-color .25s ease, box-shadow .25s ease;
+  }
+
+  #modalDetalleCoord .modal-coord-close:hover {
+    background: #DCE8E1;
+    color: #0A2C1B;
+    transform: translateY(-3px) rotate(90deg);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .18);
+  }
+
+  #modalDetalleCoord .modal-coord-body {
+    padding: 22px;
+    background: #F5F8F6;
+  }
+
+  #modalDetalleCoord .modal-section-card {
+    height: 100%;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid var(--coord-border);
+    border-radius: 17px;
+    box-shadow: 0 7px 20px rgba(10, 44, 27, .05);
+  }
+
+  #modalDetalleCoord .modal-section-heading {
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #E8EFEB;
+  }
+
+  #modalDetalleCoord .modal-section-heading h5 {
+    color: #0A2C1B;
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  #modalDetalleCoord .modal-section-heading small {
+    color: #77857D;
+    font-size: .73rem;
+  }
+
+  #modalDetalleCoord #modalAsignacionesTotal,
+  #modalDetalleCoord #modalCoordReconocedoresCount {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 6px 13px;
+    border-radius: 9px;
+    background: #0A2C1B;
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  #modalDetalleCoord .modal-coord-info-card {
+    padding: 13px 15px;
+    margin-bottom: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    background: #F5F8F6;
+    border: 1px solid #DCE7E0;
+    border-radius: 14px;
+  }
+
+  #modalDetalleCoord #modalCoordAvatar {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0A2C1B;
+    color: #fff;
+    font-size: .95rem !important;
+    font-weight: 800;
+    box-shadow: 0 5px 13px rgba(10, 44, 27, .16);
+  }
+
+  #modalDetalleCoord #modalCoordNombre {
+    color: #0A2C1B;
+    font-size: .9rem;
+  }
+
+  #modalDetalleCoord .coord-role-badge {
+    width: max-content;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: #DDEAE2;
+    color: #0A5F3C;
+    font-size: .65rem;
+    font-weight: 700;
+  }
+
+  #modalDetalleCoord .modal-chart-area {
+    min-height: 325px;
+    padding: 15px;
+    background: #FBFCFB;
+    border: 1px solid #E8EFEB;
+    border-radius: 14px;
+  }
+
+  #modalDetalleCoord .modal-chart-container {
+    position: relative;
+    width: 235px;
+    height: 235px;
+    max-width: 100%;
+  }
+
+  #modalDetalleCoord .modal-chart-container canvas {
+    position: relative;
+    z-index: 1;
+  }
+
+  #modalDetalleCoord .modal-chart-center-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    width: 115px;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  #modalDetalleCoord .modal-chart-center-text h4 {
+    color: #0A2C1B;
+    font-size: 1.35rem;
+  }
+
+  #modalDetalleCoord .modal-chart-center-text small {
+    display: block;
+    margin-top: 3px;
+    color: #78847D !important;
+    font-size: .61rem !important;
+    line-height: 1.2;
+  }
+
+  #modalDetalleCoord .modal-legend-container {
+    max-height: 280px;
+    padding-right: 5px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #C5D5CC transparent;
+  }
+
+  #modalDetalleCoord .modal-legend-container::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  #modalDetalleCoord .modal-legend-container::-webkit-scrollbar-thumb {
+    background: #C5D5CC;
+    border-radius: 20px;
+  }
+
+  #modalDetalleCoord .leyenda-modal-item {
+    min-height: 37px;
+    padding: 7px 8px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border-radius: 9px;
+    color: #355344;
+    font-size: .73rem;
+    transition: background-color .2s ease, transform .2s ease;
+  }
+
+  #modalDetalleCoord .leyenda-modal-item:hover {
+    background: #F1F6F3;
+    transform: translateX(2px);
+  }
+
+  #modalDetalleCoord .leyenda-dot {
+    width: 9px;
+    height: 9px;
+    min-width: 9px;
+    display: inline-block;
+    border-radius: 50%;
+  }
+
+  #modalDetalleCoord .modal-update {
+    margin-top: 13px;
+    padding-top: 12px;
+    border-top: 1px solid #EDF2EF;
+    text-align: center;
+  }
+
+  #modalDetalleCoord #modalLastUpdate {
+    color: #849087 !important;
+    font-size: .69rem !important;
+  }
+
+  #modalDetalleCoord .reconocedores-panel {
+    height: 100%;
+    min-height: 100%;
+    padding: 0;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--coord-border);
+    border-radius: 17px;
+    box-shadow: 0 7px 20px rgba(10, 44, 27, .05);
+  }
+
+  #modalDetalleCoord .reconocedores-header {
+    padding: 17px 18px;
+    background: #0A2C1B;
+    color: #fff;
+  }
+
+  #modalDetalleCoord .reconocedores-header-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .12);
+  }
+
+  #modalDetalleCoord .reconocedores-header p {
+    margin: 0;
+    color: #fff;
+    font-size: .83rem;
+    font-weight: 700;
+  }
+
+  #modalDetalleCoord .reconocedores-header small {
+    display: block;
+    margin-top: 2px;
+    color: rgba(255, 255, 255, .72);
+    font-size: .68rem;
+  }
+
+  #modalDetalleCoord #modalListaReconocedores {
+    max-height: 390px;
+    min-height: 310px;
+    padding: 12px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #C5D5CC transparent;
+  }
+
+  #modalDetalleCoord #modalListaReconocedores::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  #modalDetalleCoord #modalListaReconocedores::-webkit-scrollbar-thumb {
+    background: #C5D5CC;
+    border-radius: 20px;
+  }
+
+  #modalDetalleCoord .reconocedor-item {
+    padding: 10px;
+    margin-bottom: 7px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid #E2EAE5;
+    border-radius: 11px;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease, background .2s ease;
+  }
+
+  #modalDetalleCoord .reconocedor-item:hover {
+    transform: translateX(3px);
+    background: #F7FAF8;
+    border-color: #B9CFC1;
+    box-shadow: 0 4px 12px rgba(10, 44, 27, .06);
+  }
+
+  #modalDetalleCoord .rec-avatar {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #DDEAE2;
+    color: #0A5F3C;
+    font-size: .73rem;
+    font-weight: 800;
+  }
+
+  #modalDetalleCoord .reconocedor-item .fw-bold {
+    color: #244737;
+  }
+
+  #modalDetalleCoord .reconocedor-item .coord-action-btn {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border: 0;
+    border-radius: 9px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: #E5EFE9;
+    color: #0A2C1B;
+    transition: .2s ease;
+  }
+
+  #modalDetalleCoord .reconocedor-item .coord-action-btn:hover {
+    background: #0A2C1B;
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  #modalDetalleCoord .reconocedores-footer {
+    padding: 13px 15px;
+    background: #F9FBFA;
+    border-top: 1px solid #E3EBE6;
+  }
+
+  #modalDetalleCoord .btn-cerrar-modal {
+    min-height: 38px;
+    padding: 7px 17px;
+    border: 1px solid #0A2C1B;
+    border-radius: 9px;
+    background: #0A2C1B;
+    color: #fff;
+    font-size: .76rem;
+    font-weight: 600;
+    transition: .2s ease;
+  }
+
+  #modalDetalleCoord .btn-cerrar-modal:hover {
+    background: #123D29;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(10, 44, 27, .16);
+  }
+
+  @media(max-width:991.98px) {
+    #modalDetalleCoord .modal-dialog {
+      width: calc(100% - 1.25rem);
+      margin: .625rem auto;
+    }
+
+    #modalDetalleCoord .modal-coord-body {
+      padding: 15px;
+    }
+
+    #modalDetalleCoord .reconocedores-panel {
+      margin-top: 0;
+    }
+
+    #modalDetalleCoord #modalListaReconocedores {
+      min-height: 0;
+      max-height: 320px;
+    }
+  }
+
+  @media(max-width:575.98px) {
+    #modalDetalleCoord .modal-coord-header {
+      padding: 16px;
+    }
+
+    #modalDetalleCoord .modal-coord-body {
+      padding: 10px;
+    }
+
+    #modalDetalleCoord .modal-section-card {
+      padding: 13px;
+    }
+
+    #modalDetalleCoord .modal-section-heading {
+      align-items: flex-start !important;
+      flex-direction: column;
+    }
+
+    #modalDetalleCoord .modal-coord-info-card {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    #modalDetalleCoord .modal-chart-area {
+      padding: 10px;
+    }
+
+    #modalDetalleCoord .modal-chart-container {
+      width: 210px;
+      height: 210px;
+    }
+  }
+</style>
 <main class="content-section container-fluid d-flex flex-column gap-4 px-0">
   <div class="d-flex flex-column flex-md-row gap-3 align-items-center justify-content-between">
     <!-- <div class="d-flex flex-column mb-3">
@@ -153,12 +624,12 @@
               <div class="card card-dashboard h-100">
                 <div class="card-body p-3 d-flex flex-column justify-content-center">
                   <div class="d-flex justify-content-between align-items-center py-2 border-bottom  ">
-                    <p class="mb-0" style="color: #002f55; font-weight: 700">
+                    <p class="mb-0" style="color: #0A2C1B; font-weight: 700">
                       Estado de las asignaciones
                     </p>
                     <div class="rounded-2 p-1 px-2" style="
                         background-color: #6aa4d4;
-                        color: #003456;
+                        color: #0A2C1B;
                         font-weight: 800;
                       ">
                       <small class="fw-bold text-white" style="font-size: 0.7rem !important" id="dona2Badge">0
@@ -248,7 +719,7 @@
 
                 <div class="rounded-2 p-1 px-2" style="
                     background-color: #6aa4d4;
-                    color: #003456;
+                    color: #0A2C1B;
                     font-weight: 800;
                   ">
                   <small id="coordCount" class="fw-bold text-white"></small>
@@ -440,100 +911,119 @@
 </main>
 
 <!-- ============================================================
-     MODAL: DETALLE COORDINADOR (ESTADO ASIGNACIONES)
+     MODAL: DETALLE COORDINADOR
+     IMPORTANTE: DEJAR UNA SOLA INSTANCIA EN LA VISTA
      ============================================================ -->
-
-<div class="modal fade" id="modalDetalleCoord" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
+<div class="modal fade" id="modalDetalleCoord" tabindex="-1" aria-labelledby="modalDetalleCoordTitle"
+  aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content modal-coord-content">
+      <!-- HEADER -->
+      <div class="modal-coord-header d-flex align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div>
+            <h5 class="modal-coord-title" id="modalDetalleCoordTitle">Detalle del coordinador</h5>
+            <small class="modal-coord-subtitle">Consulta el estado y distribución de las asignaciones</small>
+          </div>
+        </div>
+        <button type="button" class="modal-coord-close" data-bs-dismiss="modal" aria-label="Cerrar">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <!-- BODY -->
       <div class="modal-body modal-coord-body">
-        <div class="row g-4">
-          <!-- LADO IZQUIERDO: Gráfico y Estados -->
+        <div class="row g-3">
+          <!-- LADO IZQUIERDO -->
           <div class="col-12 col-lg-8">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-              <h5 class="fw-bold mb-0">Estado de las asignaciones</h5>
-              <small class="badge rounded-pill px-3 py-2" style="
-                  background: #6aa4d4;
-                  color: #fff;
-                  font-weight: 700;
-                  border-radius: 10px !important;
-                " id="modalAsignacionesTotal">0 Asignaciones</small>
-            </div>
-
-            <!-- Tarjeta sub-header info coord -->
-            <div class="modal-coord-info-card">
-              <div class="d-flex align-items-center gap-3">
-                <div id="modalCoordAvatar" class="coord-avatar" style="width: 45px; height: 45px; font-size: 1rem">
-                  --
-                </div>
+            <div class="modal-section-card">
+              <!-- TÍTULO -->
+              <div class="modal-section-heading d-flex align-items-center justify-content-between gap-3">
                 <div>
-                  <h6 class="fw-bold mb-0" id="modalCoordNombre">
-                    Cargando...
-                  </h6>
-                  <div class="coord-role-badge mt-2" id="modalCoordRol">
-                    Rol
+                  <h5>Estado de las asignaciones</h5>
+                  <small>Distribución general de predios del coordinador seleccionado</small>
+                </div>
+                <small id="modalAsignacionesTotal">0 Asignaciones</small>
+              </div>
+
+              <!-- INFORMACIÓN COORDINADOR -->
+              <div class="modal-coord-info-card">
+                <div class="d-flex align-items-center gap-3">
+                  <div id="modalCoordAvatar" class="coord-avatar">--</div>
+                  <div>
+                    <h6 class="fw-bold mb-0" id="modalCoordNombre">Cargando...</h6>
+                    <div class="coord-role-badge mt-1" id="modalCoordRol">Coordinador</div>
+                  </div>
+                </div>
+                <div id="modalCoordReconocedoresCount">0 Reconocedores</div>
+              </div>
+
+              <!-- GRÁFICA + LEYENDA -->
+              <div class="modal-chart-area">
+                <div class="row h-100 align-items-center g-3">
+                  <div class="col-12 col-md-5 d-flex justify-content-center">
+                    <div class="modal-chart-container">
+                      <canvas id="chartModalAsignaciones"></canvas>
+                      <div class="modal-chart-center-text">
+                        <h4 class="fw-bold mb-0" id="modalChartTotalCenter">0</h4>
+                        <small>Predios asignados</small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="col-12 col-md-7">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                      <i class="bi bi-list-ul" style="color:#0A5F3C;"></i>
+                      <small class="fw-bold" style="color:#0A2C1B;">Distribución por estado</small>
+                    </div>
+                    <div id="modalLeyendaDetallada" class="modal-legend-container">
+                      <!-- Renderizado por JS -->
+                    </div>
                   </div>
                 </div>
               </div>
-              <div class="rounded-pill px-3 py-2" style="
-                  background: #003456;
-                  color: #fff;
-                  border-radius: 10px !important;
-                  font-size: 0.85rem;
-                  font-weight: 700;
-                " id="modalCoordReconocedoresCount">
-                0 Reconocedores
-              </div>
-            </div>
 
-            <!-- Layout dona + leyenda -->
-            <div class="row align-items-center">
-              <div class="col-12 col-md-6 d-flex justify-content-center">
-                <div class="modal-chart-container">
-                  <canvas id="chartModalAsignaciones"></canvas>
-                  <div class="modal-chart-center-text">
-                    <h4 class="fw-bold mb-0" id="modalChartTotalCenter">0</h4>
-                    <small class="text-muted" style="font-size: 0.65rem">Predios asignados</small>
-                  </div>
-                </div>
+              <!-- ÚLTIMA ACTUALIZACIÓN -->
+              <div class="modal-update">
+                <small id="modalLastUpdate">
+                  <i class="bi bi-clock-history me-1"></i>
+                  Última actualización --/--/-- --:--
+                </small>
               </div>
-              <div class="col-12 col-md-6">
-                <div id="modalLeyendaDetallada" class="pe-3">
-                  <!-- Renderizado por JS -->
-                </div>
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-center mt-4">
-              <small class="text-muted italic" style="font-size: 0.75rem" id="modalLastUpdate">Última actualización
-                --/--/-- --:--</small>
             </div>
           </div>
 
-          <!-- LADO DERECHO: Listado de Reconocedores -->
+          <!-- LADO DERECHO -->
           <div class="col-12 col-lg-4">
-            <div class="reconocedores-panel d-flex flex-column gap-2">
-              <div class="p-2 px-3" style="
-                  background-color: var(--azulsecundario-200);
-                  border-radius: 10px;
-                ">
-                <small class="fw-bold">Reconocedores con asignaciones</small>
+            <div class="reconocedores-panel d-flex flex-column">
+              <div class="reconocedores-header">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="reconocedores-header-icon">
+                    <i class="bi bi-people-fill"></i>
+                  </div>
+                  <div>
+                    <p>Reconocedores asignados</p>
+                    <small>Personal asociado al coordinador</small>
+                  </div>
+                </div>
               </div>
 
-              <div class="flex-grow-1 overflow-auto" style="max-height: 400px" id="modalListaReconocedores">
+              <div class="flex-grow-1" id="modalListaReconocedores">
                 <!-- Renderizado por JS -->
               </div>
-              <div class="text-end mt-4">
-                <button type="button" class="btn btn-cerrar-modal d-inline-flex align-items-center gap-2"
-                  data-bs-dismiss="modal">
-                  <span>Cerrar</span>
-                  <i class="bi bi-x-lg"></i>
-                </button>
+
+              <div class="reconocedores-footer">
+                <div class="d-flex justify-content-end mt-3">
+                  <button type="button" class="btn btn-cerrar-modal d-inline-flex align-items-center gap-2 mt-5"
+                    data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i>
+                    <span>Cerrar</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <!-- /row -->
       </div>
     </div>
   </div>
