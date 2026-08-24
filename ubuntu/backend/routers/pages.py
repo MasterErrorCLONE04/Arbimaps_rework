@@ -396,20 +396,9 @@ def panel_buscar(request: Request):
 # -------------------------------------------------
 # DOCUMENTOS (BOX)
 # -------------------------------------------------
-
 @router.get("/panel/soportes/explorar")
 def soportes_explorar(request: Request):
-
-    user = get_user(request)
-
-    if not user:
-        return RedirectResponse(
-            url=with_root_path(request, "/login"),
-            status_code=302
-        )
-
-    return _render_panel(request, user, view="box_explorer")
-
+    raise HTTPException(status_code=404, detail="La página solicitada no está disponible.")
 
 # -------------------------------------------------
 # BUSCAR PREDIO
