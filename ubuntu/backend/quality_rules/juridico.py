@@ -873,7 +873,6 @@ def _rule_2_1(dataset: DatasetReader) -> list[RuleIssue]:
 def _rule_2_2(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
     predios_by_id: dict[str, dict[str, object]] = {}
 
     for _, row in helper.iter_predios():
@@ -884,32 +883,44 @@ def _rule_2_2(dataset: DatasetReader) -> list[RuleIssue]:
     for table_name, row in helper.iter_derecho_interesado_fuente():
         tipo_derecho = helper.get_field_value(row, ("d_tipo",))
         predio_ref = helper.get_relation_value(row, ("predio",))
-
         predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
         if not predio_row:
             continue
 
         tipo_predio = helper.get_field_value(predio_row, ("tipo",))
+        condicion_predio = helper.get_field_value(
+            predio_row,
+            ("Condicion_Predio", "condicion_predio", "Condicion_predio"),
+        )
         matricula = helper.get_field_value(predio_row, ("Matricula_Inmobiliaria",))
         numero_predial = helper.get_field_value(predio_row, ("Numero_Predial", "numero_predial"))
 
         tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
         tipo_predio_str = str(tipo_predio).strip() if tipo_predio else ""
-
+        condicion_predio_str = str(condicion_predio).strip() if condicion_predio else ""
+        es_informal = condicion_predio_str == "Informal"
         message = None
 
-        # Caso 1: privado + dominio => matrícula obligatoria
-        if (
+        if es_informal:
+            if tipo_derecho_str not in ("Posesion", "Ocupacion"):
+                message = (
+                    "Un predio con condición Informal solo puede estar asociado a un derecho "
+                    "de Posesion u Ocupacion."
+                )
+            elif not _matricula_es_vacia_o_cero(matricula):
+                message = (
+                    "Un predio con condición Informal y derecho de Posesion u Ocupacion "
+                    "no debe tener matrícula inmobiliaria."
+                )
+        elif (
             tipo_predio_str == "Predio.Privado.Privado"
             and tipo_derecho_str == "Dominio"
             and _matricula_es_vacia_o_cero(matricula)
         ):
             message = (
-                "En un predio de tipo privado con derecho de Dominio, "
-                "su matrícula inmobiliaria debe ser diferente de NULL."
+                "En un predio de tipo privado con derecho de Dominio y condición distinta "
+                "de Informal, la matrícula inmobiliaria es obligatoria."
             )
-
-        # Caso 2: ocupación o posesión => matrícula debe ser NULL
         elif (
             tipo_derecho_str in ("Ocupacion", "Posesion")
             and not _matricula_es_vacia_o_cero(matricula)
@@ -928,6 +939,7 @@ def _rule_2_2(dataset: DatasetReader) -> list[RuleIssue]:
                     details={
                         "tabla": table_name,
                         "tipo_predio": tipo_predio,
+                        "condicion_predio": condicion_predio,
                         "tipo_derecho": tipo_derecho,
                         "matricula": matricula,
                         "numero_predial": numero_predial,
@@ -989,7 +1001,6 @@ def _rule_2_3(dataset: DatasetReader) -> list[RuleIssue]:
 def _rule_2_4(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
     predios_by_id: dict[str, dict[str, object]] = {}
 
     for _, row in helper.iter_predios():
@@ -1000,31 +1011,40 @@ def _rule_2_4(dataset: DatasetReader) -> list[RuleIssue]:
     for table_name, row in helper.iter_derecho_interesado_fuente():
         tipo_derecho = helper.get_field_value(row, ("d_tipo",))
         predio_ref = helper.get_relation_value(row, ("predio",))
-
         predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
         if not predio_row:
             continue
 
         tipo_predio = helper.get_field_value(predio_row, ("tipo",))
+        condicion_predio = helper.get_field_value(
+            predio_row,
+            ("Condicion_Predio", "condicion_predio", "Condicion_predio"),
+        )
         numero_predial = helper.get_field_value(predio_row, ("Numero_Predial", "numero_predial"))
         matricula = helper.get_field_value(predio_row, ("Matricula_Inmobiliaria",))
 
         tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
         tipo_predio_str = str(tipo_predio).strip() if tipo_predio else ""
+        condicion_predio_str = str(condicion_predio).strip() if condicion_predio else ""
 
-        if tipo_predio_str == "Predio.Privado.Privado" and tipo_derecho_str == "Ocupacion":
+        if (
+            tipo_predio_str == "Predio.Privado.Privado"
+            and tipo_derecho_str == "Ocupacion"
+            and condicion_predio_str != "Informal"
+        ):
             issues.append(
                 helper.make_issue(
                     row,
                     rule_id="2.4",
                     message=(
-                        "Los predios con tipo de predio Privado "
-                        "no deben estar asociados a derechos de Ocupación."
+                        "Los predios de tipo Privado con derecho de Ocupacion "
+                        "deben tener condición Informal."
                     ),
                     details={
                         "tabla": table_name,
                         "tipo_derecho": tipo_derecho,
                         "tipo_predio": tipo_predio,
+                        "condicion_predio": condicion_predio,
                         "numero_predial": numero_predial,
                         "matricula": matricula,
                         "predio_ref": predio_ref,

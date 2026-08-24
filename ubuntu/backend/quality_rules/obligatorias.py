@@ -815,42 +815,31 @@ def rule_11_14(dataset: DatasetReader) -> list[RuleIssue]:
     helper = ObligatoriasHelper(dataset)
     issues: list[RuleIssue] = []
 
-    predios = list(helper.iter_predios())
-    if not any(helper.has_field(predio, ("autoriza_notificaciones",)) for _, predio in predios):
-        return issues
+    for table_name, predio in helper.iter_predios():
+        resultado_visita = helper.get_field_value(predio, ("resultado_visita",))
+        if not _is_resultado_visita_exitoso(resultado_visita):
+            continue
 
-    for table_name, predio in predios:
-        autoriza_notificaciones = helper.get_field_value(
-            predio,
-            ("autoriza_notificaciones",),
-        )
-
+        autoriza_notificaciones = helper.get_field_value(predio, ("autoriza_notificaciones",))
         if autoriza_notificaciones in (None, ""):
-            predio_id = helper.get_field_value(
+            predio_id = helper.get_field_value(predio, ("t_id", "TID", "id"))
+            numero_predial = helper.get_field_value(predio, ("numero_predial",))
+            issues.append(helper.make_issue(
                 predio,
-                ("t_id", "TID", "id"),
-            )
-
-            numero_predial = helper.get_field_value(
-                predio,
-                ("numero_predial",),
-            )
-
-            issues.append(
-                helper.make_issue(
-                    predio,
-                    rule_id="11.14",
-                    message="El predio no tiene el campo autorización de notificacione diligenciado.",
-                    details={
-                        "tabla": table_name,
-                        "predio_id": predio_id,
-                        "numero_predial": numero_predial,
-                        "autoriza_notificaciones": autoriza_notificaciones,
-                        "tiene_autoriza_notificaciones": False,
-                    },
-                )
-            )
-
+                rule_id="11.14",
+                message=(
+                    "Cuando el resultado de la visita es Exitoso, el predio debe tener "
+                    "diligenciado el campo autorizacion de notificaciones."
+                ),
+                details={
+                    "tabla": table_name,
+                    "predio_id": predio_id,
+                    "numero_predial": numero_predial,
+                    "resultado_visita": resultado_visita,
+                    "autoriza_notificaciones": autoriza_notificaciones,
+                    "tiene_autoriza_notificaciones": False,
+                },
+            ))
     return issues
 
 def rule_11_15(dataset: DatasetReader) -> list[RuleIssue]:

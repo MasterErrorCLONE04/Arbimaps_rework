@@ -6375,6 +6375,17 @@ def _rule_1_43(dataset: DatasetReader) -> list[RuleIssue]:
 
     return issues
 
+def _resultado_visita_es_exitoso(row: dict[str, object], helper: NumeroPredialHelper) -> bool:
+    """Las reglas de contacto de visita solo aplican cuando el resultado es Exitoso."""
+    value = helper.get_field_value(
+        row,
+        ("resultado_visita", "Resultado_Visita", "Resultado Visita"),
+    )
+    if value in (None, ""):
+        return False
+    token = helper._normalize_key(str(value))
+    return token in {"exitoso", "exitosa", "exito", "visitaexitosa", "resultadoexitoso"}
+
 def _rule_1_44(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
@@ -6406,6 +6417,8 @@ def _rule_1_44(dataset: DatasetReader) -> list[RuleIssue]:
             continue
 
         for row in dataset.get_records(table_name):
+            if not _resultado_visita_es_exitoso(row, helper):
+                continue
             object_ref = helper.identify(row)
 
             nombres_match = helper._extract_field(
@@ -6530,6 +6543,8 @@ def _rule_1_45(dataset: DatasetReader) -> list[RuleIssue]:
             continue
 
         for row in dataset.get_records(table_name):
+            if not _resultado_visita_es_exitoso(row, helper):
+                continue
             object_ref = helper.identify(row)
 
             nombres_match = helper._extract_field(
@@ -6715,6 +6730,8 @@ def _rule_1_47(dataset: DatasetReader) -> list[RuleIssue]:
             continue
 
         for row in dataset.get_records(table_name):
+            if not _resultado_visita_es_exitoso(row, helper):
+                continue
             object_ref = helper.identify(row)
 
             autoriza_match = helper._extract_field(
