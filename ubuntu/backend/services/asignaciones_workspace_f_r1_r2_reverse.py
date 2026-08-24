@@ -166,6 +166,11 @@ def sincronizar_predios_a_f_r1_r2(
         else:
             dest_col_expr = "'01'"
 
+        if "codigo_orip" in predio_cols:
+            orip_col_expr = "codigo_orip::text"
+        else:
+            orip_col_expr = "NULL::text"
+
         synced_count = 0
 
         for npn in clean_npns:
@@ -176,7 +181,8 @@ def sincronizar_predios_a_f_r1_r2(
                 cur.execute(
                     f"""
                     SELECT t_id, numero_predial, numero_predial_anterior, area_catastral_terreno, observaciones,
-                           COALESCE({dest_col_expr}, '01') AS destino_economico
+                           COALESCE({dest_col_expr}, '01') AS destino_economico,
+                           {orip_col_expr} AS codigo_orip
                     FROM {schema_source}.arb_predio
                     WHERE BTRIM(numero_predial::text) = %s
                     LIMIT 1;
@@ -192,6 +198,7 @@ def sincronizar_predios_a_f_r1_r2(
                 npn_val = str(predio_row["numero_predial"]).strip()
                 npn_anterior = _normalize_str(predio_row.get("numero_predial_anterior"))
                 observaciones = _normalize_str(predio_row.get("observaciones"))
+                codigo_orip = _normalize_str(predio_row.get("codigo_orip"))
 
                 # Extraer dpto y mpio del NPN (Dpto 2 pos, Mpio 3 pos)
                 dpto = npn_val[:2] if len(npn_val) >= 2 else "41"
@@ -269,7 +276,7 @@ def sincronizar_predios_a_f_r1_r2(
                 try:
                     cur.execute(
                         f"""
-                        SELECT numero_fmi
+                        SELECT *
                         FROM {schema_source}.arb_novedadfmivalor
                         WHERE arb_predio_novedad_fmi = %s
                         ORDER BY t_id DESC
@@ -278,8 +285,13 @@ def sincronizar_predios_a_f_r1_r2(
                         (id_predio,),
                     )
                     fmi_row = cur.fetchone()
-                    if fmi_row and fmi_row.get("numero_fmi"):
-                        matricula = _normalize_str(fmi_row["numero_fmi"])
+                    if fmi_row:
+                        if fmi_row.get("numero_fmi"):
+                            matricula = _normalize_str(fmi_row["numero_fmi"])
+                        if not codigo_orip:
+                            fmi_orip = fmi_row.get("codigo_orip") or fmi_row.get("codio_orip")
+                            if fmi_orip:
+                                codigo_orip = _normalize_str(fmi_orip)
                 except Exception:
                     pass
 
@@ -288,6 +300,16 @@ def sincronizar_predios_a_f_r1_r2(
                     mat_match = re.search(r"Matrícula:\s*([^\s|]+)", observaciones)
                     if mat_match:
                         matricula = mat_match.group(1).strip()
+
+                if not codigo_orip and observaciones:
+                    orip_match = re.search(r"ORIP:\s*([^\s|]+)", observaciones)
+                    if orip_match and orip_match.group(1):
+                        codigo_orip = orip_match.group(1).strip()
+
+                # Formatear la matrícula del R2 uniendo codigo_orip + matricula (ej: 200-4895)
+                if codigo_orip and matricula:
+                    if not matricula.startswith(f"{codigo_orip}-"):
+                        matricula = f"{codigo_orip}-{matricula}"
 
                 # 8. Consultar Construcciones y Unidades de Construcción
                 area_construida_total = 0.00
