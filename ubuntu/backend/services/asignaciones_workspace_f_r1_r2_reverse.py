@@ -166,6 +166,11 @@ def sincronizar_predios_a_f_r1_r2(
         else:
             dest_col_expr = "'01'"
 
+        if "estado" in predio_cols:
+            estado_col_expr = "estado::text"
+        else:
+            estado_col_expr = "NULL::text"
+
         if "codigo_orip" in predio_cols:
             orip_col_expr = "codigo_orip::text"
         else:
@@ -182,7 +187,8 @@ def sincronizar_predios_a_f_r1_r2(
                     f"""
                     SELECT t_id, numero_predial, numero_predial_anterior, area_catastral_terreno, observaciones,
                            COALESCE({dest_col_expr}, '01') AS destino_economico,
-                           {orip_col_expr} AS codigo_orip
+                           {orip_col_expr} AS codigo_orip,
+                           {estado_col_expr} AS predio_estado
                     FROM {schema_source}.arb_predio
                     WHERE BTRIM(numero_predial::text) = %s
                     LIMIT 1;
@@ -199,6 +205,35 @@ def sincronizar_predios_a_f_r1_r2(
                 npn_anterior = _normalize_str(predio_row.get("numero_predial_anterior"))
                 observaciones = _normalize_str(predio_row.get("observaciones"))
                 codigo_orip = _normalize_str(predio_row.get("codigo_orip"))
+
+                # Detección del Estado de Cancelación
+                is_cancelled = False
+                predio_estado_raw = predio_row.get("predio_estado")
+                if predio_estado_raw and str(predio_estado_raw).strip().lower() == "cancelado":
+                    is_cancelled = True
+
+                if not is_cancelled:
+                    try:
+                        cur.execute(
+                            f"""
+                            SELECT 1
+                            FROM {schema_source}.arb_novedadnumeropredialvalor nnp
+                            LEFT JOIN {schema_source}.arb_novedadnumeropredialtipo nt ON nt.t_id = nnp.tipo_novedad
+                            WHERE nnp.arb_predio_novedad_numero_predial = %s
+                              AND (
+                                LOWER(BTRIM(nt.ilicode::text)) IN ('cancelacion', 'cancelacion_por_desenglobe', 'cancelacion_por_englobe')
+                                OR LOWER(BTRIM(nnp.tipo_novedad::text)) LIKE 'cancelacion%'
+                              )
+                            LIMIT 1;
+                            """,
+                            (id_predio,),
+                        )
+                        if cur.fetchone():
+                            is_cancelled = True
+                    except Exception:
+                        pass
+
+                estado_r1_val = "CANCELADO" if is_cancelled else "ACTIVO"
 
                 # Extraer dpto y mpio del NPN (Dpto 2 pos, Mpio 3 pos)
                 dpto = npn_val[:2] if len(npn_val) >= 2 else "41"
@@ -390,14 +425,14 @@ def sincronizar_predios_a_f_r1_r2(
                                 numero_de_orden, total_registros, nombre, participacion,
                                 tipo_documento, documento_identidad, direccion, comuna, destino_economico,
                                 area_terreno, area_construida, avaluo, vigencia, numero_predial_anterior,
-                                d_tipo, d_fecha_inicio_tenencia, fa_tipo, fa_numero_fuente, fa_fecha_documento_fuente, fa_ente_emisor
+                                d_tipo, d_fecha_inicio_tenencia, fa_tipo, fa_numero_fuente, fa_fecha_documento_fuente, fa_ente_emisor, estado
                             )
                             VALUES (
                                 %s, %s, %s, 1,
                                 %s, %s, %s, %s,
                                 %s, %s, %s, %s, %s,
                                 %s, %s, %s, %s, %s,
-                                %s, %s, %s, %s, %s, %s
+                                %s, %s, %s, %s, %s, %s, %s
                             );
                             """,
                             (
@@ -405,7 +440,7 @@ def sincronizar_predios_a_f_r1_r2(
                                 idx, total_regs, nombre, participacion,
                                 tipo_doc, doc_id, prop_dir, comuna_val, dest_econ,
                                 area_terreno, area_construida_total, avaluo, vigencia, npn_anterior,
-                                d_tipo_val, d_fecha_val, fa_tipo_val, fa_num_val, fa_fecha_val, fa_ente_val,
+                                d_tipo_val, d_fecha_val, fa_tipo_val, fa_num_val, fa_fecha_val, fa_ente_val, estado_r1_val,
                             ),
                         )
                 else:
@@ -418,19 +453,19 @@ def sincronizar_predios_a_f_r1_r2(
                             departamento, municipio, numero_predial, tipo_registro,
                             numero_de_orden, total_registros, nombre, participacion,
                             tipo_documento, documento_identidad, direccion, comuna, destino_economico,
-                            area_terreno, area_construida, avaluo, vigencia, numero_predial_anterior
+                            area_terreno, area_construida, avaluo, vigencia, numero_predial_anterior, estado
                         )
                         VALUES (
                             %s, %s, %s, 1,
                             1, 1, NULL, 100.00,
                             'C', NULL, %s, %s, %s,
-                            %s, %s, %s, %s, %s
+                            %s, %s, %s, %s, %s, %s
                         );
                         """,
                         (
                             dpto, mpio, npn_val,
                             direccion, comuna_val, dest_econ,
-                            area_terreno, area_construida_total, avaluo, vigencia, npn_anterior,
+                            area_terreno, area_construida_total, avaluo, vigencia, npn_anterior, estado_r1_val,
                         ),
                     )
 

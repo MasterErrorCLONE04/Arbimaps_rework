@@ -74,6 +74,7 @@ def test_sincronizar_predios_a_f_r1_r2_success():
     mock_cursor.fetchone.side_effect = [
         {"schema_name": "f_r1_r2"},  # 1. schema check
         {"t_id": 100, "numero_predial": npn, "numero_predial_anterior": "4100100000000", "area_catastral_terreno": 150.50, "observaciones": "Test"},  # 3. predio
+        None,  # 3b. cancel check
         {"area_terreno": 150.50},  # 4. terreno
         {"nombre_predio": "CL 5 # 10-20"},  # 5. direccion
         {"avaluo_catastral": 50000000.00, "fecha_avaluo_catastral": "2026-01-01"},  # 6. avaluo
@@ -127,6 +128,7 @@ def test_sincronizar_predios_a_f_r1_r2_multiple_r2_chunks():
     mock_cursor.fetchone.side_effect = [
         {"schema_name": "f_r1_r2"},
         {"t_id": 100, "numero_predial": npn, "numero_predial_anterior": "4100100000000", "area_catastral_terreno": 150.50, "observaciones": "Test"},
+        None, # cancel check
         {"area_terreno": 150.50},
         {"nombre_predio": "CL 5 # 10-20"},
         {"avaluo_catastral": 50000000.00, "fecha_avaluo_catastral": "2026-01-01"},
@@ -165,6 +167,7 @@ def test_sincronizar_predios_a_f_r1_r2_orip_matricula_concatenation():
     mock_cursor.fetchone.side_effect = [
         {"schema_name": "f_r1_r2"},
         {"t_id": 100, "numero_predial": npn, "codigo_orip": "200", "numero_predial_anterior": "4100100000000", "area_catastral_terreno": 150.50, "observaciones": "Test"},
+        None, # cancel check
         {"area_terreno": 150.50},
         {"nombre_predio": "CL 5 # 10-20"},
         {"avaluo_catastral": 50000000.00, "fecha_avaluo_catastral": "2026-01-01"},
@@ -189,3 +192,37 @@ def test_sincronizar_predios_a_f_r1_r2_orip_matricula_concatenation():
     assert len(r2_inserts) > 0
     executed_args = r2_inserts[0].args[1]
     assert "200-4895" in executed_args
+
+
+def test_sincronizar_predios_a_f_r1_r2_estado_cancelado():
+    tenant = make_tenant()
+    npn = "410010001000000010017000000000"
+
+    mock_cursor = MagicMock()
+
+    mock_cursor.fetchone.side_effect = [
+        {"schema_name": "f_r1_r2"},
+        {"t_id": 100, "numero_predial": npn, "predio_estado": "Cancelado", "numero_predial_anterior": "4100100000000", "area_catastral_terreno": 150.50, "observaciones": "Test"},
+        {"area_terreno": 150.50},
+        {"nombre_predio": "CL 5 # 10-20"},
+        {"avaluo_catastral": 50000000.00, "fecha_avaluo_catastral": "2026-01-01"},
+        {"numero_fmi": "12345"},
+    ]
+
+    mock_cursor.fetchall.side_effect = [
+        [{"table_name": "r1_predio_propietario"}, {"table_name": "r2_construccion_zona"}],
+        [{"column_name": "t_id"}, {"column_name": "estado"}, {"column_name": "numero_predial"}],
+        [],
+        [],
+    ]
+
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+    res = sincronizar_predios_a_f_r1_r2(mock_conn, tenant, [npn], "a_base_principal")
+    assert res == 1
+
+    r1_inserts = [call for call in mock_cursor.execute.call_args_list if "INSERT INTO f_r1_r2.r1_predio_propietario" in str(call)]
+    assert len(r1_inserts) > 0
+    executed_args = r1_inserts[0].args[1]
+    assert "CANCELADO" in executed_args
