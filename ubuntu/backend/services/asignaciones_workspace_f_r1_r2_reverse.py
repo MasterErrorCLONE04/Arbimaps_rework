@@ -176,6 +176,11 @@ def sincronizar_predios_a_f_r1_r2(
         else:
             orip_col_expr = "NULL::text"
 
+        if "matricula_inmobiliaria" in predio_cols:
+            mat_col_expr = "matricula_inmobiliaria::text"
+        else:
+            mat_col_expr = "NULL::text"
+
         synced_count = 0
 
         for npn in clean_npns:
@@ -188,6 +193,7 @@ def sincronizar_predios_a_f_r1_r2(
                     SELECT t_id, numero_predial, numero_predial_anterior, area_catastral_terreno, observaciones,
                            COALESCE({dest_col_expr}, '01') AS destino_economico,
                            {orip_col_expr} AS codigo_orip,
+                           {mat_col_expr} AS matricula_inmobiliaria,
                            {estado_col_expr} AS predio_estado
                     FROM {schema_source}.arb_predio
                     WHERE BTRIM(numero_predial::text) = %s
@@ -205,12 +211,29 @@ def sincronizar_predios_a_f_r1_r2(
                 npn_anterior = _normalize_str(predio_row.get("numero_predial_anterior"))
                 observaciones = _normalize_str(predio_row.get("observaciones"))
                 codigo_orip = _normalize_str(predio_row.get("codigo_orip"))
+                matricula = _normalize_str(predio_row.get("matricula_inmobiliaria"))
 
                 # Detección del Estado de Cancelación
                 is_cancelled = False
                 predio_estado_raw = predio_row.get("predio_estado")
-                if predio_estado_raw and str(predio_estado_raw).strip().lower() == "cancelado":
-                    is_cancelled = True
+                if predio_estado_raw:
+                    raw_str = str(predio_estado_raw).strip().lower()
+                    if raw_str in ("cancelado", "cancelacion"):
+                        is_cancelled = True
+                    elif raw_str.isdigit():
+                        try:
+                            cur.execute(
+                                f"SELECT ilicode, dispname FROM {schema_source}.arb_estadotipo WHERE t_id = %s LIMIT 1;",
+                                (int(raw_str),)
+                            )
+                            et_row = cur.fetchone()
+                            if et_row:
+                                ili = str(et_row.get("ilicode") or "").strip().lower()
+                                disp = str(et_row.get("dispname") or "").strip().lower()
+                                if "cancelado" in ili or "cancelado" in disp or "cancelacion" in ili or "cancelacion" in disp:
+                                    is_cancelled = True
+                        except Exception as e:
+                            pass
 
                 if not is_cancelled:
                     try:
@@ -306,29 +329,29 @@ def sincronizar_predios_a_f_r1_r2(
                 )
                 propietarios = cur.fetchall() or []
 
-                # 7. Consultar Matrícula Inmobiliaria (novedad FMI o observaciones)
-                matricula = None
-                try:
-                    cur.execute(
-                        f"""
-                        SELECT *
-                        FROM {schema_source}.arb_novedadfmivalor
-                        WHERE arb_predio_novedad_fmi = %s
-                        ORDER BY t_id DESC
-                        LIMIT 1;
-                        """,
-                        (id_predio,),
-                    )
-                    fmi_row = cur.fetchone()
-                    if fmi_row:
-                        if fmi_row.get("numero_fmi"):
-                            matricula = _normalize_str(fmi_row["numero_fmi"])
-                        if not codigo_orip:
-                            fmi_orip = fmi_row.get("codigo_orip") or fmi_row.get("codio_orip")
-                            if fmi_orip:
-                                codigo_orip = _normalize_str(fmi_orip)
-                except Exception:
-                    pass
+                # 7. Consultar Matrícula Inmobiliaria (predio, novedad FMI u observaciones)
+                if not matricula:
+                    try:
+                        cur.execute(
+                            f"""
+                            SELECT *
+                            FROM {schema_source}.arb_novedadfmivalor
+                            WHERE arb_predio_novedad_fmi = %s
+                            ORDER BY t_id DESC
+                            LIMIT 1;
+                            """,
+                            (id_predio,),
+                        )
+                        fmi_row = cur.fetchone()
+                        if fmi_row:
+                            if fmi_row.get("numero_fmi"):
+                                matricula = _normalize_str(fmi_row["numero_fmi"])
+                            if not codigo_orip:
+                                fmi_orip = fmi_row.get("codigo_orip") or fmi_row.get("codio_orip")
+                                if fmi_orip:
+                                    codigo_orip = _normalize_str(fmi_orip)
+                    except Exception:
+                        pass
 
                 if not matricula and observaciones:
                     # Intentar extraer Matrícula desde observaciones si fue importado con 'Matrícula: XYZ'
