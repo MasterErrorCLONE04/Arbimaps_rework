@@ -892,6 +892,7 @@
   function obtenerEstadoPredio(it) {
     const estado = (it.estado || "").toString().trim().toLowerCase();
 
+    if (estado === "cancelado") return "Cancelado";
     if (estado === "disponible") return "Disponible";
     if (estado === "asignado") return "Asignado";
 
@@ -904,9 +905,15 @@
     const estadoTexto = obtenerEstadoPredio(it);
     const esDisponible = estadoTexto.toLowerCase() === "disponible";
 
-    const badgeClass = esDisponible
-      ? "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-disponible"
-      : "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-asignado";
+    const esCancelado = estadoTexto.toLowerCase() === "cancelado";
+    let badgeClass = "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge ";
+    if (esDisponible) {
+      badgeClass += "estado-badge-disponible";
+    } else if (esCancelado) {
+      badgeClass += "estado-badge-bloqueado";
+    } else {
+      badgeClass += "estado-badge-asignado";
+    }
 
     return `
       <span class="${badgeClass}">

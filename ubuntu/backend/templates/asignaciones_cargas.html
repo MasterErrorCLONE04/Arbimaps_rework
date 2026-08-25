@@ -841,6 +841,7 @@
   function obtenerEstadoPredio(it) {
     const estado = (it.estado || "").toString().trim().toLowerCase();
 
+    if (estado === "cancelado") return "Cancelado";
     if (estado === "disponible") return "Disponible";
     if (estado === "asignado") return "Asignado";
     if (estado === "restringido" || estado === "bloqueado") return "Bloqueado";
@@ -857,7 +858,7 @@
     let badgeClass = "";
     if (lower === "disponible") {
       badgeClass = "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-disponible";
-    } else if (lower === "bloqueado" || lower === "restringido") {
+    } else if (lower === "bloqueado" || lower === "restringido" || lower === "cancelado") {
       badgeClass = "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-bloqueado";
     } else {
       badgeClass = "badge rounded-pill d-inline-flex align-items-center justify-content-center estado-badge estado-badge-asignado";

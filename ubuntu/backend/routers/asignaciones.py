@@ -634,7 +634,10 @@ def buscar_predios(
         asignado_por = assigned_info.get('asignado_por') if existe else None
         source_schema = assigned_info.get('source_schema', 'a_base_principal') if existe else None
         
-        if asignado_a:
+        es_cancelado = bool(assigned_info.get('es_cancelado')) if existe else False
+        if es_cancelado:
+            estado = 'CANCELADO'
+        elif asignado_a:
             estado = 'ASIGNADO'
         elif n in restringidos_set:
             estado = 'RESTRINGIDO'
@@ -694,7 +697,8 @@ def buscar_predios(
     existen = sum(1 for it in items if it['existe'])
     asignados = sum(1 for it in items if it['estado'] == 'ASIGNADO')
     restringidos_count = sum(1 for it in items if it['estado'] == 'RESTRINGIDO')
-    disponibles = existen - asignados - restringidos_count
+    cancelados_count = sum(1 for it in items if it['estado'] == 'CANCELADO')
+    disponibles = existen - asignados - restringidos_count - cancelados_count
     no_existen = total - existen
 
     return {
@@ -892,6 +896,13 @@ def asignar_predios(
             raise HTTPException(
                 status_code=400,
                 detail=f"No se puede crear la asignación. Los siguientes predios están restringidos y no pueden ser asignados: {', '.join(restringidos)}"
+            )
+
+        cancelados = [row.get("numero_predial_nacional") for row in predios_info if row.get("es_cancelado")]
+        if cancelados:
+            raise HTTPException(
+                status_code=400,
+                detail=f"No se puede crear la asignación. Los siguientes predios están CANCELADOS y no pueden ser asignados: {', '.join(cancelados)}"
             )
 
         conflictos = _fetch_predios_asignados(conn, tenant, numeros)
@@ -1650,6 +1661,19 @@ def crear_solicitud(
     coordinador_id = user.get("id_global")
     creado_por = user.get("username")
     app_schema = tenant.schemas.app
+
+    # Validar que ningún predio en la solicitud esté cancelado
+    all_predio_npns = list(dict.fromkeys(
+        npn for item in body.datos_desglose for npn in (item.predios or []) if npn and str(npn).strip()
+    ))
+    if all_predio_npns:
+        predios_check = asignaciones_repo.buscar_predios_estado(conn, tenant, all_predio_npns)
+        cancelados_sol = [row.get("numero_predial_nacional") for row in predios_check if row.get("es_cancelado")]
+        if cancelados_sol:
+            raise HTTPException(
+                status_code=400,
+                detail=f"No se puede crear la solicitud. Los siguientes predios tienen estado CANCELADO y no pueden ser solicitados: {', '.join(cancelados_sol)}"
+            )
 
     desglose_list = []
     for item in body.datos_desglose:

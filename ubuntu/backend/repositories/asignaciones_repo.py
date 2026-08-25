@@ -1515,8 +1515,26 @@ def buscar_predios_estado(
                   AND a.estado IS DISTINCT FROM 'CERRADA'
                 LIMIT 1
               ) AS asignado_por,
+              (
+                CASE 
+                  WHEN LOWER(BTRIM(COALESCE(et.ilicode::text, ''))) IN ('cancelado', 'cancelacion')
+                    OR LOWER(BTRIM(COALESCE(et.dispname::text, ''))) IN ('cancelado', 'cancelacion') THEN TRUE
+                  WHEN EXISTS (
+                    SELECT 1 
+                    FROM a_base_principal.arb_novedadnumeropredialvalor nnp
+                    LEFT JOIN a_base_principal.arb_novedadnumeropredialtipo nt ON nt.t_id = nnp.tipo_novedad
+                    WHERE nnp.arb_predio_novedad_numero_predial = p.t_id
+                      AND (
+                        LOWER(BTRIM(nt.ilicode::text)) IN ('cancelacion', 'cancelacion_por_desenglobe', 'cancelacion_por_englobe')
+                        OR LOWER(BTRIM(nnp.tipo_novedad::text)) LIKE 'cancelacion%%'
+                      )
+                  ) THEN TRUE
+                  ELSE FALSE
+                END
+              ) AS es_cancelado,
               'a_base_principal'::varchar AS source_schema
             FROM {predio_table} p
+            LEFT JOIN a_base_principal.arb_estadotipo et ON et.t_id = p.estado
             LEFT JOIN a_base_principal.arb_predio_tramite pt ON pt.predio = p.t_id
             WHERE p.{numero_field} = ANY(%s)
             """,
