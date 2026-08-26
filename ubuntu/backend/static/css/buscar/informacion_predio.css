@@ -1269,7 +1269,7 @@
     padding: 0 14px;
     border-radius: 8px;
     background-color: var(--cp-accent);
-    color: var(--cp-green);
+    color: var(--cp-green) !important;
     font-size: 0.95rem;
     font-weight: 700;
 }
@@ -1282,6 +1282,15 @@
 
 .btn-detalle-tabla:hover {
     color: #092c1c;
+}
+
+.btn-detalle-tabla i {
+    display: inline-block;
+    transition: transform 0.3s ease-in-out;
+}
+
+.btn-detalle-tabla[aria-expanded="true"] i {
+    transform: rotate(180deg);
 }
 
 .columna-con-linea {
@@ -1369,7 +1378,7 @@
 
 .tarjet-infop {
     /* background-color: #335977; */
-    border-bottom: 1px solid #5d6a53;
+    border-bottom: none;
 }
 
 .text-infort {
@@ -1380,6 +1389,11 @@
 .text-lojh {
     font-size: 0.94rem;
     font-weight: 700;
+}
+
+.text-lojh2 {
+    font-size: 0.89rem;
+    font-weight: 600;
 }
 
 #modalInformacionAdicional .modal-dialog {
