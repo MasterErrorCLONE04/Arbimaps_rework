@@ -597,22 +597,6 @@ async function cargarDetalle() {
       }
     }
 
-    // 1.5b Mostrar/Ocultar botón de Enviar a Líder Técnico (reemplazado por Sincronizar XTF para el coordinador)
-    const btnSubmitToLider = document.getElementById("btnHeaderSubmitToLider");
-    if (btnSubmitToLider) {
-      const isReviewerRole =
-        currentLoggedRole === "coordinador" || currentLoggedRole === "admin";
-      const isAprobadoDig = dataDet.estado === "APROBADO_DIGITALIZACION";
-
-      if (isReviewerRole && isAprobadoDig) {
-        btnSubmitToLider.classList.remove("d-none");
-        btnSubmitToLider.classList.add("d-inline-flex");
-      } else {
-        btnSubmitToLider.classList.add("d-none");
-        btnSubmitToLider.classList.remove("d-inline-flex");
-      }
-    }
-
     // 1.6 Mostrar/Ocultar botón de Revisión de Líder (para Lider de Reconocimiento/Admin)
     const btnLiderReview = document.getElementById("btnHeaderLiderReview");
     if (btnLiderReview) {
@@ -692,7 +676,7 @@ async function cargarDetalle() {
     const workflowButtons = [
       "btnHeaderSyncXtf", "btnHeaderSubmitQA", "btnHeaderQCReview",
       "btnHeaderSubmitSoporteLink", "btnHeaderAssignDigitalizador", "btnHeaderViewSoporteLink", "btnHeaderSubmitQA2",
-      "btnHeaderQCReview2", "btnHeaderSincronizarProduccion", "btnHeaderSubmitToLider", "btnHeaderLiderReview", "btnHeaderViewDigitalizacionLink",
+      "btnHeaderQCReview2", "btnHeaderSincronizarProduccion", "btnHeaderLiderReview", "btnHeaderViewDigitalizacionLink",
     ];
     let anyWorkflowVisible = false;
     workflowButtons.forEach((id) => {
@@ -2052,109 +2036,6 @@ document
       showSuccess(
         "Se ha asignado el digitalizador y enviado el enlace exitosamente.",
       );
-      invalidarCachesDetalleAsignacion();
-      await cargarDetalle();
-    } catch (err) {
-      showError(err.message);
-    } finally {
-      if (btnConfirm) btnConfirm.disabled = false;
-      if (btnCancel) btnCancel.disabled = false;
-    }
-  });
-
-// Submit to Lider button click opens the modal
-document
-  .getElementById("btnHeaderSubmitToLider")
-  ?.addEventListener("click", () => {
-    const inpLink = document.getElementById("inpSubmitToLiderLink");
-    const errEl = document.getElementById("submitToLiderLinkError");
-    const commentEl = document.getElementById("txtSubmitToLiderComment");
-
-    // Set the Box link field to empty by default
-    if (inpLink) {
-      inpLink.value = "";
-    }
-    if (errEl) errEl.classList.add("d-none");
-    if (commentEl) commentEl.value = "";
-
-    const modalEl = document.getElementById("modalSubmitToLider");
-    if (modalEl && window.bootstrap) {
-      window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
-    }
-  });
-
-// Confirm Submit to Lider from modal
-document
-  .getElementById("btnConfirmSubmitToLider")
-  ?.addEventListener("click", async () => {
-    const idActual = Number(elId?.value || idFromUrl);
-    if (!idActual || idActual < 1) {
-      showWarning("Debes cargar primero una asignación.");
-      return;
-    }
-
-    const inpLink = document.getElementById("inpSubmitToLiderLink");
-    const errEl = document.getElementById("submitToLiderLinkError");
-    const linkVal = inpLink?.value?.trim() || "";
-
-    if (
-      !linkVal ||
-      (!linkVal.startsWith("http://") && !linkVal.startsWith("https://"))
-    ) {
-      if (errEl) {
-        errEl.textContent =
-          "Por favor ingresa un enlace de entregable válido (debe iniciar con http:// o https://).";
-        errEl.classList.remove("d-none");
-      }
-      return;
-    }
-
-    if (errEl) errEl.classList.add("d-none");
-
-    const commentVal =
-      document.getElementById("txtSubmitToLiderComment")?.value?.trim() || "";
-
-    const btnConfirm = document.getElementById("btnConfirmSubmitToLider");
-    const btnCancel = document.querySelector(
-      "#modalSubmitToLider [data-bs-dismiss='modal']",
-    );
-    if (btnConfirm) btnConfirm.disabled = true;
-    if (btnCancel) btnCancel.disabled = true;
-
-    try {
-      const response = await fetch(
-        `${rp}/api/workflow/asignaciones/${idActual}/submit-to-lider`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            enlace_digitalizacion: linkVal,
-            comentario: commentVal || null,
-          }),
-          credentials: "same-origin",
-        },
-      );
-
-      if (!response.ok) {
-        const rawText = await response.text();
-        let data = {};
-        try {
-          data = JSON.parse(rawText);
-        } catch (e) {}
-        throw new Error(
-          data?.detail || rawText || "Error al enviar al Líder Técnico.",
-        );
-      }
-
-      const modalEl = document.getElementById("modalSubmitToLider");
-      if (modalEl && window.bootstrap) {
-        window.bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-      }
-
-      showSuccess("Se ha enviado el trabajo al Líder Técnico exitosamente.");
       invalidarCachesDetalleAsignacion();
       await cargarDetalle();
     } catch (err) {
