@@ -304,28 +304,28 @@ def predio_buscar(
         f_where = []
         f_params = []
         if numero_predial:
-            f_where.append("(BTRIM(numero_predial::text) = BTRIM(%s::text))")
+            f_where.append("(BTRIM(p.numero_predial::text) = BTRIM(%s::text))")
             f_params.append(numero_predial)
         if matricula:
-            f_where.append("(BTRIM(matricula::text) = BTRIM(%s::text))")
+            f_where.append("(BTRIM(r2.matricula::text) = BTRIM(%s::text))")
             f_params.append(matricula)
         if direccion:
-            f_where.append("(direccion ILIKE %s)")
+            f_where.append("(p.direccion ILIKE %s)")
             f_params.append(f"%{direccion}%")
         if documento:
             documento_norm = re.sub(r"[^0-9a-zA-Z]+", "", documento).lower()
             if documento_norm:
-                f_where.append("(regexp_replace(lower(coalesce(documento_identidad::text, '')), '[^0-9a-z]+', '', 'g') LIKE %s)")
+                f_where.append("(regexp_replace(lower(coalesce(p.documento_identidad::text, '')), '[^0-9a-z]+', '', 'g') LIKE %s)")
                 f_params.append(f"%{documento_norm}%")
             else:
-                f_where.append("(documento_identidad ILIKE %s)")
+                f_where.append("(p.documento_identidad ILIKE %s)")
                 f_params.append(f"%{documento}%")
         if nombre:
             palabras = [p.strip() for p in nombre.split() if p.strip()]
             if not palabras:
                 palabras = [nombre.strip()]
             for palabra in palabras:
-                f_where.append("(propietario ILIKE %s)")
+                f_where.append("(p.nombre ILIKE %s)")
                 f_params.append(f"%{palabra}%")
 
         if f_where:
@@ -414,30 +414,48 @@ def predio_buscar_f_r1_r2_detail(
     conn=Depends(get_tenant_db_connection),
 ):
     try:
-        sql = """
+        sql_interesados = """
         SELECT r1.*,
-               de.descripcion AS descripcion_destino_economico,
-               r1.nombre AS propietario,
-               r1.area_terreno AS area_terreno_r1,
-               r1.area_construida AS area_construida_r1,
-               r2.matricula,
-               r2.zona_fisica_1, r2.zona_economica_1, r2.area_terreno_1, r2.area_construida_1,
-               r2.habitaciones_1, r2.banos_1, r2.locales_1, r2.pisos_1, r2.tipificacion_1, r2.uso_1, r2.puntaje_1,
-               r2.zona_fisica_2, r2.zona_economica_2, r2.area_terreno_2, r2.area_construida_2,
-               r2.habitaciones_2, r2.banos_2, r2.locales_2, r2.pisos_2, r2.tipificacion_2, r2.uso_2, r2.puntaje_2,
-               NULL::text AS zona_fisica_3, NULL::text AS zona_economica_3, NULL::numeric AS area_terreno_3, r2.area_construida_3,
-               r2.habitaciones_3, r2.banos_3, r2.locales_3, r2.pisos_3, r2.tipificacion_3, r2.uso_3, r2.puntaje_3,
-               ((COALESCE(r2.area_construida_1, 0) + COALESCE(r2.area_construida_2, 0)) + COALESCE(r2.area_construida_3, 0)) AS area_construida_total_r2
+              de.descripcion AS descripcion_destino_economico,
+              r1.nombre AS propietario,
+              r1.area_terreno AS area_terreno_r1,
+              r1.area_construida AS area_construida_r1,
+              dt.dispname AS descripcion_d_tipo,
+              fat.dispname AS descripcion_fa_tipo
         FROM f_r1_r2.r1_predio_propietario r1
         LEFT JOIN f_r1_r2.destino_economico de ON r1.destino_economico = de.codigo
-        LEFT JOIN f_r1_r2.r2_construccion_zona r2 ON r1.numero_predial = r2.numero_predial
-        WHERE BTRIM(r1.numero_predial::text) = BTRIM(%s::text)
+        LEFT JOIN f_r1_r2.arb_derechotipo dt ON r1.d_tipo = dt.t_id
+        LEFT JOIN f_r1_r2.arb_fuenteadministrativatipo fat ON r1.fa_tipo = fat.t_id
+        WHERE RTRIM(r1.numero_predial::text) = BTRIM(%s::text)
+        ORDER BY r1.id ASC
+        """
+        interesados_rows = _execute_fetchall(conn, sql_interesados, (numero_predial,))
+        if not interesados_rows:
+            raise HTTPException(status_code=404, detail="Predio alfanumérico no encontrado.")
+
+        main_data = dict(interesados_rows[0])
+
+        sql_r2 = """
+        SELECT r2.matricula,
+              r2.zona_fisica_1, r2.zona_economica_1, r2.area_terreno_1, r2.area_construida_1,
+              r2.habitaciones_1, r2.banos_1, r2.locales_1, r2.pisos_1, r2.tipificacion_1, r2.uso_1, r2.puntaje_1,
+              r2.zona_fisica_2, r2.zona_economica_2, r2.area_terreno_2, r2.area_construida_2,
+              r2.habitaciones_2, r2.banos_2, r2.locales_2, r2.pisos_2, r2.tipificacion_2, r2.uso_2, r2.puntaje_2,
+              NULL::text AS zona_fisica_3, NULL::text AS zona_economica_3, NULL::numeric AS area_terreno_3, r2.area_construida_3,
+              r2.habitaciones_3, r2.banos_3, r2.locales_3, r2.pisos_3, r2.tipificacion_3, r2.uso_3, r2.puntaje_3,
+              ((COALESCE(r2.area_construida_1, 0) + COALESCE(r2.area_construida_2, 0)) + COALESCE(r2.area_construida_3, 0)) AS area_construida_total_r2
+        FROM f_r1_r2.r2_construccion_zona r2
+        WHERE RTRIM(r2.numero_predial::text) = BTRIM(%s::text)
         LIMIT 1
         """
-        rows = _execute_fetchall(conn, sql, (numero_predial,))
-        if not rows:
-            raise HTTPException(status_code=404, detail="Predio alfanum\xc3\xa9rico no encontrado.")
-        return rows[0]
+        r2_rows = _execute_fetchall(conn, sql_r2, (numero_predial,))
+        if r2_rows:
+            main_data.update(r2_rows[0])
+
+        main_data["interesados"] = interesados_rows
+        return main_data
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception("Error consultando detalle f_r1_r2 NPN=%s", numero_predial)
         raise HTTPException(status_code=500, detail=f"Error consultando base de datos: {e}")

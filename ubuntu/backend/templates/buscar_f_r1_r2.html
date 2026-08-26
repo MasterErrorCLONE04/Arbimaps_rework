@@ -392,61 +392,21 @@
       </div>
       <div class="modal-body modal-predio-body">
         <div class="container-fluid p-0">
-          <div class="row g-3 g-xl-0 align-items-stretch modal-predio-row">
-            <!-- Tarjeta Izquierda -->
-            <div class="col-12 col-md-6">
-              <div class="card border-0 rounded-4 shadow-none h-100 tarjeta-modal-predio">
-                <div class="card-body p-0 m-2">
-                  <div class="part-ge w-100 p-2 mb-3">
-                    <div class="tit-ge text-center fw-bold">Datos del Propietario</div>
-                  </div>
-                  <div class="row g-2">
-                    <div class="col-12">
-                      <div class="d-flex flex-column w-100 dato p-2">
-                        <div class="fw-bold text-start tex-num">Nombre / Razón Social</div>
-                        <div id="m_propietario" class="text-start dato_info"
-                          style="font-size: 1.1rem; font-weight: 700; color: #0A2C1B;">-</div>
-                      </div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <div class="d-flex flex-column w-100 dato p-2">
-                        <div class="fw-bold text-start tex-num">Tipo Documento</div>
-                        <div id="m_tipo_documento" class="text-start dato_info">-</div>
-                      </div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <div class="d-flex flex-column w-100 dato p-2">
-                        <div class="fw-bold text-start tex-num">Documento Identidad</div>
-                        <div id="m_documento_id" class="text-start dato_info">-</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- Tarjeta Derecha -->
-            <div class="col-12 col-md-6">
-              <div class="card border-0 rounded-4 shadow-none h-100 tarjeta-modal-predio">
-                <div class="card-body p-0 m-2">
-                  <div class="part-ge w-100 p-2 mb-3">
-                    <div class="tit-ge text-center fw-bold">Derecho y Participación</div>
-                  </div>
-                  <div class="row g-2">
-                    <div class="col-12 col-md-6">
-                      <div class="d-flex flex-column w-100 dato p-2">
-                        <div class="fw-bold text-start tex-num">Porcentaje de Participación</div>
-                        <div id="m_participacion" class="text-start dato_info"
-                          style="font-size: 1.2rem; font-weight: 800; color: #28a745;">-</div>
-                      </div>
-                    </div>
-                    <div class="col-12 col-md-6">
-                      <div class="d-flex flex-column w-100 dato p-2">
-                        <div class="fw-bold text-start tex-num">Estado Civil</div>
-                        <div id="m_estado_civil" class="text-start dato_info">-</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          <div class="card border-0 rounded-4 shadow-none tarjeta-modal-predio">
+            <div class="card-body p-0 m-0">
+              <div class="table-responsive tabla-modal-interesados-wrap">
+                <table class="table align-middle mb-0 tabla-modal-interesados">
+                  <thead>
+                    <tr>
+                      <th class="text-center">Propietario / Interesado</th>
+                      <th class="text-center">Documento Identidad</th>
+                      <th class="text-center">% Participación</th>
+                      <th class="text-center">Estado Civil</th>
+                      <th class="text-center">Ver detalles</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyModalInteresadosF_R1_R2"></tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -455,7 +415,6 @@
     </div>
   </div>
 </div>
-
 <script>
   (function () {
     const rp = "{{ rp }}";
@@ -481,11 +440,10 @@
         document.getElementById("m_area_construida").textContent = data.area_construida_r1 ? `${data.area_construida_r1} m²` : "-";
         document.getElementById("m_avaluo").textContent = data.avaluo ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(data.avaluo) : "-";
 
-        document.getElementById("m_propietario").textContent = data.propietario || "-";
-        document.getElementById("m_tipo_documento").textContent = data.tipo_documento || "-";
-        document.getElementById("m_documento_id").textContent = data.documento_identidad || "-";
-        document.getElementById("m_participacion").textContent = data.participacion ? `${data.participacion}%` : "-";
-        document.getElementById("m_estado_civil").textContent = data.estado_civil || "-";
+        // Interesados
+        const interesados = (Array.isArray(data.interesados) && data.interesados.length) ? data.interesados : [data];
+        document.getElementById("resumenPredioInteresados").textContent = interesados.length;
+        renderInteresadosModalF_R1_R2(interesados);
 
         // Llenar tabla de Zonas R2
         const r2Tbody = document.getElementById("r2_zones_tbody");
@@ -494,19 +452,16 @@
         let countZonasTerreno = 0;
         let countZonasConstruccion = 0;
 
-        // Zona 1
         if (data.zona_fisica_1 || data.area_construida_1) {
           r2Tbody.appendChild(createRow(1, data.zona_fisica_1, data.zona_economica_1, data.area_terreno_1, data.area_construida_1, data.habitaciones_1, data.banos_1, data.locales_1, data.pisos_1, data.tipificacion_1, data.uso_1, data.puntaje_1));
           if (data.zona_fisica_1) countZonasTerreno++;
           if (data.area_construida_1) countZonasConstruccion++;
         }
-        // Zona 2
         if (data.zona_fisica_2 || data.area_construida_2) {
           r2Tbody.appendChild(createRow(2, data.zona_fisica_2, data.zona_economica_2, data.area_terreno_2, data.area_construida_2, data.habitaciones_2, data.banos_2, data.locales_2, data.pisos_2, data.tipificacion_2, data.uso_2, data.puntaje_2));
           if (data.zona_fisica_2) countZonasTerreno++;
           if (data.area_construida_2) countZonasConstruccion++;
         }
-        // Zona 3
         if (data.zona_fisica_3 || data.area_construida_3) {
           r2Tbody.appendChild(createRow(3, data.zona_fisica_3, data.zona_economica_3, data.area_terreno_3, data.area_construida_3, data.habitaciones_3, data.banos_3, data.locales_3, data.pisos_3, data.tipificacion_3, data.uso_3, data.puntaje_3));
           if (data.zona_fisica_3) countZonasTerreno++;
@@ -523,11 +478,9 @@
         document.getElementById("resumenPredioZonasConstruccion").textContent = countZonasConstruccion;
         document.getElementById("area_construida_total_r2").textContent = data.area_construida_total_r2 ? `${data.area_construida_total_r2} m²` : "-";
 
-        // ELIMINAR loaderVistaPredio
         const loader = document.getElementById("loaderVistaPredio");
         if (loader) loader.remove();
 
-        // MOSTRAR el contenido
         const content = document.getElementById("contentVistaPredio");
         if (content) content.style.setProperty("display", "block", "important");
       } catch (err) {
@@ -542,6 +495,150 @@
           `;
         }
       }
+    }
+
+    function renderInteresadosModalF_R1_R2(interesados) {
+      const tbody = document.getElementById("tbodyModalInteresadosF_R1_R2");
+      if (!tbody) return;
+
+      if (!interesados || !interesados.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted">
+              No hay interesados asociados.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = interesados.map((item, index) => {
+        const nombre = item.nombre || item.propietario || "---";
+        const tipoDoc = item.tipo_documento || "";
+        const docId = item.documento_identidad || "---";
+        const docCompleto = tipoDoc ? `${tipoDoc} - ${docId}` : docId;
+        const participacion = item.participacion ? `${item.participacion}%` : "-";
+        const estadoCivil = item.estado_civil || "-";
+
+        const derechoNombre = item.descripcion_d_tipo || item.d_tipo || "-";
+        const fechaTenencia = item.d_fecha_inicio_tenencia || "-";
+
+        const fuenteNombre = item.descripcion_fa_tipo || item.fa_tipo || "-";
+        const numFuente = item.fa_numero_fuente || "-";
+        const fechaFuente = item.fa_fecha_documento_fuente || "-";
+        const enteEmisor = item.fa_ente_emisor || "-";
+
+        return `
+          <tr class="fila-interesado-principal" data-detalle-id="detalleInteresadoR1R2_${index}">
+            <td>
+              <div class="d-flex align-items-center gap-3">
+                <div class="icono-interesado-circle">
+                  <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="info-interesado-nombre fw-bold">
+                  <div>${nombre}</div>
+                </div>
+              </div>
+            </td>
+
+            <td class="columna-con-linea text-center">
+              <span class="texto-tabla-interesado fw-semibold">${docCompleto}</span>
+            </td>
+
+            <td class="text-center">
+              <span class="badge-cuota-participacion fw-bold text-success">${participacion}</span>
+            </td>
+
+            <td class="text-center">
+              <span class="texto-tabla-interesado">${estadoCivil}</span>
+            </td>
+
+            <td class="text-center">
+              <button
+                type="button"
+                class="btn-detalle-tabla border-0 bg-transparent text-primary"
+                data-bs-toggle="collapse"
+                data-bs-target="#detalleInteresadoR1R2_${index}"
+                aria-expanded="false"
+                aria-controls="detalleInteresadoR1R2_${index}"
+              >
+                <i class="fa-solid fa-chevron-down"></i>
+              </button>
+            </td>
+          </tr>
+
+          <tr class="fila-detalle-interesado">
+            <td colspan="5" class="p-0 border-0">
+              <div class="collapse" id="detalleInteresadoR1R2_${index}">
+                <div class="p-4 border-top detalle-interesado-contenido text-white" style="background-color:#092c1c !important; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;">
+                  <div class="tarjet-infop d-inline-block w-100 px-3 py-2 mb-3">
+                    <div class="text-center mb-0 text-infort fw-bold">Detalle completo del Interesado y Derecho (R1)</div>
+                  </div>
+                  <div class="row g-3 w-100 mx-0">
+
+                    <div class="col-12 col-md-4 border-md-end pe-md-4">
+                      <div class="fw-bold text-success mb-2"><i class="fa-solid fa-user me-2"></i>Interesado</div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">Nombre / Razón Social:</span>
+                        <span class="fw-semibold text-end ms-2">${nombre}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">Tipo Documento:</span>
+                        <span class="fw-semibold text-end ms-2">${tipoDoc || "-"}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">Documento:</span>
+                        <span class="fw-semibold text-end ms-2">${docId}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">% Participación:</span>
+                        <span class="fw-bold text-success text-end ms-2">${participacion}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">Estado Civil:</span>
+                        <span class="fw-semibold text-end ms-2">${estadoCivil}</span>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4 border-md-end px-md-4">
+                      <div class="fw-bold text-success mb-2"><i class="fa-solid fa-scale-unbalanced me-2"></i>Derecho y Tenencia</div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">Tipo Derecho:</span>
+                        <span class="fw-semibold text-end ms-2">${derechoNombre}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">Inicio Tenencia:</span>
+                        <span class="fw-semibold text-end ms-2">${fechaTenencia}</span>
+                      </div>
+                    </div>
+
+                    <div class="col-12 col-md-4 ps-md-4">
+                      <div class="fw-bold text-success mb-2"><i class="fa-solid fa-file-lines me-2"></i>Fuente Administrativa</div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">Tipo Fuente:</span>
+                        <span class="fw-semibold text-end ms-2">${fuenteNombre}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">N° Fuente:</span>
+                        <span class="fw-semibold text-end ms-2">${numFuente}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">Fecha Doc.:</span>
+                        <span class="fw-semibold text-end ms-2">${fechaFuente}</span>
+                      </div>
+                      <div class="d-flex justify-content-between mb-2">
+                        <span class="text-white-50">Ente Emisor:</span>
+                        <span class="fw-semibold text-end ms-2">${enteEmisor}</span>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
     }
 
     function createRow(index, zf, ze, at, ac, hab, ban, loc, pis, tip, uso, pts) {
@@ -569,7 +666,7 @@
       return tr;
     }
 
-    // Cargar los datos inmediatamente
     loadDetails();
   })();
 </script>
+
