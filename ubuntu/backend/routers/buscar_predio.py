@@ -644,23 +644,7 @@ def predio_detalle(
     ORDER BY nnp.t_id DESC;
     """
 
-    sql_tramites = f"""
-    SELECT
-      tr.entidad,
-      et.dispname AS entidad_nombre,
-      tr.tramite,
-      tt.dispname AS tramite_nombre,
-      tr.resuelta,
-      tr.fecha_radicacion,
-      tr.observacion
-    FROM {_qualified_table(tenant, 'arb_tramite')} tr
-    LEFT JOIN {_qualified_table(tenant, 'arb_entidadtipo')} et
-      ON et.t_id::text = tr.entidad::text
-    LEFT JOIN {_qualified_table(tenant, 'arb_tramitetipo')} tt
-      ON tt.t_id::text = tr.tramite::text
-    WHERE tr.predio::text = %s::text
-    ORDER BY tr.fecha_radicacion DESC NULLS LAST, tr.t_id DESC;
-    """
+    # sql_tramites generated dynamically per schema
 
     sql_informacion_ph = f"""
     SELECT
@@ -807,10 +791,78 @@ def predio_detalle(
 
             try:
                 if _table_exists(cur, schema, "arb_tramite"):
-                    cur.execute(sql_tramites, (predio_id,))
+                    tramite_cols = _table_columns(cur, schema, "arb_tramite")
+                    has_predio_col = "predio" in tramite_cols
+                    has_predio_tramite_table = _table_exists(cur, schema, "arb_predio_tramite")
+                    has_tipotramitetipo = _table_exists(cur, schema, "arb_tipotramitetipo")
+                    has_tramitetipo = _table_exists(cur, schema, "arb_tramitetipo")
+                    has_entidadtipo = _table_exists(cur, schema, "arb_entidadtipo")
+
+                    entidad_tbl = _qualified_table(tenant, "arb_entidadtipo")
+                    tramite_tbl = _qualified_table(tenant, "arb_tramitetipo")
+                    tipo_tramite_tbl = _qualified_table(tenant, "arb_tipotramitetipo")
+                    main_tbl = _qualified_table(tenant, "arb_tramite")
+                    pt_tbl = _qualified_table(tenant, "arb_predio_tramite")
+
+                    entidad_join = f"LEFT JOIN {entidad_tbl} et ON et.t_id::text = tr.entidad::text" if has_entidadtipo else ""
+                    entidad_select = "et.dispname AS entidad_nombre" if has_entidadtipo else "NULL AS entidad_nombre"
+
+                    tramite_join = f"LEFT JOIN {tramite_tbl} tt ON tt.t_id::text = tr.tramite::text" if has_tramitetipo else ""
+                    tipo_tramite_join = f"LEFT JOIN {tipo_tramite_tbl} ttt ON ttt.t_id::text = tr.tipo_tramite::text" if has_tipotramitetipo else ""
+
+                    tt_disp = "tt.dispname" if has_tramitetipo else "NULL"
+                    ttt_disp = "ttt.dispname" if has_tipotramitetipo else "NULL"
+                    tramite_col_expr = "tr.tramite::text" if "tramite" in tramite_cols else "NULL"
+                    tipo_tramite_col_expr = "tr.tipo_tramite::text" if "tipo_tramite" in tramite_cols else "NULL"
+
+                    num_sol_expr = "tr.numero_solicitud" if "numero_solicitud" in tramite_cols else "NULL AS numero_solicitud"
+                    num_tram_expr = "tr.numero_tramite" if "numero_tramite" in tramite_cols else "NULL AS numero_tramite"
+                    num_rad_expr = "tr.numero_radicacion" if "numero_radicacion" in tramite_cols else "NULL AS numero_radicacion"
+                    num_res_expr = "tr.numero_resolucion" if "numero_resolucion" in tramite_cols else "NULL AS numero_resolucion"
+                    fec_res_expr = "tr.fecha_resolucion" if "fecha_resolucion" in tramite_cols else "NULL AS fecha_resolucion"
+                    cod_ini_expr = "tr.codigo_inicial" if "codigo_inicial" in tramite_cols else "NULL AS codigo_inicial"
+                    pred_res_expr = "tr.predios_resultantes" if "predios_resultantes" in tramite_cols else "NULL AS predios_resultantes"
+
+                    tramite_nombre_select = f"COALESCE({tt_disp}, {ttt_disp}, {tramite_col_expr}, {tipo_tramite_col_expr}) AS tramite_nombre"
+
+                    from_clause = f"FROM {main_tbl} tr"
+                    if has_predio_col:
+                        where_clause = "WHERE tr.predio::text = %s::text"
+                    elif has_predio_tramite_table:
+                        from_clause += f" JOIN {pt_tbl} pt ON pt.tramite = tr.t_id"
+                        where_clause = "WHERE pt.predio::text = %s::text"
+                    else:
+                        where_clause = "WHERE false"
+
+                    sql_tramites_dynamic = f"""
+                    SELECT
+                      tr.entidad,
+                      {entidad_select},
+                      tr.tramite,
+                      {tramite_nombre_select},
+                      tr.resuelta,
+                      tr.fecha_radicacion,
+                      tr.observacion,
+                      {num_sol_expr},
+                      {num_tram_expr},
+                      {num_rad_expr},
+                      {num_res_expr},
+                      {fec_res_expr},
+                      {cod_ini_expr},
+                      {pred_res_expr}
+                    {from_clause}
+                    {entidad_join}
+                    {tramite_join}
+                    {tipo_tramite_join}
+                    {where_clause}
+                    ORDER BY tr.fecha_radicacion DESC NULLS LAST, tr.t_id DESC;
+                    """
+
+                    cur.execute(sql_tramites_dynamic, (predio_id,))
                     tramites = cur.fetchall()
-            except Exception:
+            except Exception as exc:
                 _rollback_safely(conn)
+                logger.warning("Error consultando tramites para predio_id=%s: %s", predio_id, exc)
                 tramites = tramites or []
 
             try:

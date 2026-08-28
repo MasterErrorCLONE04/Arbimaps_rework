@@ -3731,16 +3731,58 @@
               <div class="text-start dato_info">${escapeHtml(_fmtText(tramite?.tramite_nombre ?? tramite?.tramite))}</div>
             </div>
           </div>
-          <div class="col-12 col-md-7">
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100 dato p-2">
+              <div class="fw-bold text-start tex-num">N&uacute;mero de solicitud</div>
+              <div class="text-start dato_info">${escapeHtml(_fmtText(tramite?.numero_solicitud))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100 dato p-2">
+              <div class="fw-bold text-start tex-num">N&uacute;mero de tr&aacute;mite</div>
+              <div class="text-start dato_info">${escapeHtml(_fmtText(tramite?.numero_tramite))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100 dato p-2">
+              <div class="fw-bold text-start tex-num">N&uacute;mero de radicaci&oacute;n</div>
+              <div class="text-start dato_info">${escapeHtml(_fmtText(tramite?.numero_radicacion))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
             <div class="d-flex flex-column w-100 dato p-2">
               <div class="fw-bold text-start tex-num">Fecha de radicaci&oacute;n</div>
               <div class="text-start dato_info">${escapeHtml(_fmtDate(tramite?.fecha_radicacion))}</div>
             </div>
           </div>
-          <div class="col-12 col-md-5">
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100 dato p-2">
+              <div class="fw-bold text-start tex-num">N&uacute;mero de resoluci&oacute;n</div>
+              <div class="text-start dato_info">${escapeHtml(_fmtText(tramite?.numero_resolucion))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100 dato p-2">
+              <div class="fw-bold text-start tex-num">Fecha de resoluci&oacute;n</div>
+              <div class="text-start dato_info">${escapeHtml(_fmtDate(tramite?.fecha_resolucion))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="d-flex flex-column w-100 dato p-2">
+              <div class="fw-bold text-start tex-num">C&oacute;digo inicial</div>
+              <div class="text-start dato_info">${escapeHtml(_fmtText(tramite?.codigo_inicial))}</div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
             <div class="d-flex flex-column w-100 dato p-2">
               <div class="fw-bold text-start tex-num">&iquest;Fue resuelta?</div>
               <div class="text-start dato_info">${escapeHtml(_fmtBool(tramite?.resuelta))}</div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="d-flex flex-column w-100 dato p-2">
+              <div class="fw-bold text-start tex-num">Predios resultantes</div>
+              <div class="text-start dato_info">${escapeHtml(_fmtText(tramite?.predios_resultantes))}</div>
             </div>
           </div>
           <div class="col-12">
