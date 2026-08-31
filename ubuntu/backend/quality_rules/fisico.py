@@ -1601,12 +1601,61 @@ def _rule_3_17(dataset: DatasetReader) -> list[RuleIssue]:
 
     return issues
 
+def _resolve_predio_ref_desde_unidad(
+    helper: FisicoHelper,
+    unidad: dict[str, object],
+    construccion_a_predio: dict[str, str],
+) -> str | None:
+    """Resuelve el predio de una unidad usando las relaciones reales del XTF.
+
+    Ruta preferida del modelo: UnidadConstruccion -> Construccion -> Predio.
+    Se conserva la relación directa como respaldo para datasets ya aplanados.
+    """
+    predio_ref = helper.get_field_value(
+        unidad,
+        ("predio", "arb_predio_unidadconstruccion", "arb_predio"),
+    )
+    if predio_ref:
+        return str(predio_ref)
+
+    construccion_ref = helper.get_field_value(
+        unidad,
+        ("construccion", "arb_construccion_unidadconstruccion", "arb_construccion"),
+    )
+    if not construccion_ref:
+        return None
+
+    return construccion_a_predio.get(str(construccion_ref))
+
+
+def _construccion_a_predio(helper: FisicoHelper) -> dict[str, str]:
+    relacion: dict[str, str] = {}
+
+    for _, construccion in helper._iter_table_rows((
+        "ARB_Construccion",
+        "arb_construccion",
+    )):
+        construccion_id = helper.get_field_value(
+            construccion,
+            ("TID", "t_id", "id", "t_ili_tid"),
+        )
+        predio_ref = helper.get_field_value(
+            construccion,
+            ("predio", "arb_predio_construccion", "arb_predio"),
+        )
+        if construccion_id and predio_ref:
+            relacion[str(construccion_id)] = str(predio_ref)
+
+    return relacion
+
+
 def _rule_3_18(dataset: DatasetReader) -> list[RuleIssue]:
     helper = FisicoHelper(dataset)
     issues: list[RuleIssue] = []
 
     predios_by_id: dict[str, dict[str, object]] = {}
     caracteristicas_by_id: dict[str, dict[str, object]] = {}
+    construccion_a_predio = _construccion_a_predio(helper)
 
     for _, predio in helper.iter_predios():
         predio_id = helper.get_field_value(predio, ("TID", "t_id", "id"))
@@ -1627,7 +1676,11 @@ def _rule_3_18(dataset: DatasetReader) -> list[RuleIssue]:
     }
 
     for table_name, unidad in helper.iter_unidades_construccion():
-        predio_ref = helper.get_field_value(unidad, ("predio",))
+        predio_ref = _resolve_predio_ref_desde_unidad(
+            helper,
+            unidad,
+            construccion_a_predio,
+        )
         caracteristica_ref = helper.get_field_value(unidad, ("caracteristicasunidadconstruccion",))
 
         predio = predios_by_id.get(str(predio_ref)) if predio_ref else None
@@ -1681,6 +1734,7 @@ def _rule_3_19(dataset: DatasetReader) -> list[RuleIssue]:
 
     predios_by_id: dict[str, dict[str, object]] = {}
     caracteristicas_by_id: dict[str, dict[str, object]] = {}
+    construccion_a_predio = _construccion_a_predio(helper)
 
     for _, predio in helper.iter_predios():
         predio_id = helper.get_field_value(predio, ("TID", "t_id", "id"))
@@ -1701,7 +1755,11 @@ def _rule_3_19(dataset: DatasetReader) -> list[RuleIssue]:
     }
 
     for table_name, unidad in helper.iter_unidades_construccion():
-        predio_ref = helper.get_field_value(unidad, ("predio",))
+        predio_ref = _resolve_predio_ref_desde_unidad(
+            helper,
+            unidad,
+            construccion_a_predio,
+        )
         caracteristica_ref = helper.get_field_value(unidad, ("caracteristicasunidadconstruccion",))
 
         predio = predios_by_id.get(str(predio_ref)) if predio_ref else None
@@ -1712,6 +1770,9 @@ def _rule_3_19(dataset: DatasetReader) -> list[RuleIssue]:
 
         condicion = helper.get_field_value(predio, ("condicion_predio",))
         condicion_str = _condicion_predio_ilicode(condicion)
+
+        if not condicion_str:
+            continue
 
         area_construida_raw = helper.get_field_value(caracteristica, ("area_construida",))
         area_privada_raw = helper.get_field_value(caracteristica, ("area_privada_construida",))
