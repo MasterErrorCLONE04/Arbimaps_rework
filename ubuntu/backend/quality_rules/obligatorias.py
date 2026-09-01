@@ -32,8 +32,6 @@ _EMPTY_TEXTS = {
     "<NULL>",
     "NONE",
     "NAN",
-    "0",
-    "0.0",
     "NO APLICA",
     "NO_APLICA",
     "N/A",
@@ -284,35 +282,53 @@ class ObligatoriasHelper:
         )
 
     def is_calificacion_convencional(self, row: dict[str, object]) -> bool:
-        value = self._get_raw_field_value(row, ("tipo_calificacion", "Tipo de calificación", "Tipo de calificacion"))
-
+        value = self._get_raw_field_value(
+            row,
+            ("tipo_calificacion", "Tipo_Calificacion", "Tipo de calificación", "Tipo de calificacion"),
+        )
         token = self._normalize_key(value)
-        if token in {"3", "0", "noconvencional"} or "noconvencional" in token:
-            return False
-        if token in {"1", "tipologia"} or "tipologia" in token:
-            return False
         if _is_empty_value(value):
+            # Compatibilidad con modelos antiguos donde el tipo no se materializaba.
             return True
-        return token in {"2", "convencional"} or "convencional" in token
+        if token in {"0", "3", "noconvencional"} or "noconvencional" in token:
+            return False
+        if token in {"2", "tipologia"} or "tipologia" in token:
+            return False
+        # ARB_CalificacionTipo: itfCode 1 = Convencional.
+        return token in {"1", "convencional"} or "convencional" in token
 
     def is_calificacion_tipologia(self, row: dict[str, object]) -> bool:
-        value = self._get_raw_field_value(row, ("tipo_calificacion", "Tipo de calificación", "Tipo de calificacion"))
-
-        token = self._normalize_key(value)
-        if _is_empty_value(value) and token != "0":
+        value = self._get_raw_field_value(
+            row,
+            ("tipo_calificacion", "Tipo_Calificacion", "Tipo de calificación", "Tipo de calificacion"),
+        )
+        if _is_empty_value(value):
             return False
-        return token in {"1", "tipologia"} or "tipologia" in token
+        token = self._normalize_key(value)
+        # ARB_CalificacionTipo: itfCode 2 = Tipologia.
+        return token in {"2", "tipologia"} or "tipologia" in token
+
+    def is_calificacion_no_convencional(self, row: dict[str, object]) -> bool:
+        value = self._get_raw_field_value(
+            row,
+            ("tipo_calificacion", "Tipo_Calificacion", "Tipo de calificación", "Tipo de calificacion"),
+        )
+        if _is_empty_value(value):
+            return False
+        token = self._normalize_key(value)
+        # ARB_CalificacionTipo: itfCode 0 = No_Convencional. Se conserva 3 por compatibilidad legada.
+        return token in {"0", "3", "noconvencional"} or "noconvencional" in token
 
     def is_unidad_anexo(self, row: dict[str, object]) -> bool:
         value = self._get_raw_field_value(
             row,
-            ("tipo_unidad_construccion", "Tipo de unidad de construcción", "Tipo de unidad de construccion"),
+            ("tipo_unidad_construccion", "Tipo_Unidad_Construccion", "Tipo de unidad de construcción", "Tipo de unidad de construccion"),
         )
-
-        token = self._normalize_key(value)
-        if _is_empty_value(value) and token != "0":
+        if _is_empty_value(value):
             return False
-        return token in {"4", "289", "anexo"} or "anexo" in token
+        token = self._normalize_key(value)
+        # Modelo actual: t_id 4 / itfCode 5 = Anexo; se conservan códigos legados conocidos.
+        return token in {"4", "5", "289", "1351", "anexo"} or "anexo" in token
 
     def make_issue(
         self,
@@ -413,7 +429,7 @@ def rule_11_2(dataset: DatasetReader) -> list[RuleIssue]:
     for _, row in helper.iter_direccion():
         predio_ref = helper.get_field_value(
             row,
-            ("arb_predio_direccion",),
+            ("arb_predio_direccion", "arb_direccion_arb_predio_direccion_fkey", "arb_predio", "predio"),
         )
 
         if predio_ref:
@@ -644,9 +660,9 @@ def rule_11_10(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     predios = list(helper.iter_predios())
-    if not any(helper.has_field(predio, ("resultado_visita",)) for _, predio in predios):
-        return issues
 
+    # La regla es obligatoria en el modelo ARB actual: si el atributo viene NULL o no
+    # viene en el XTF, se reporta. False/0 explícitos siguen contando como diligenciados.
     for table_name, predio in predios:
         resultado_visita = helper.get_field_value(
             predio,
@@ -686,9 +702,9 @@ def rule_11_11(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     predios = list(helper.iter_predios())
-    if not any(helper.has_field(predio, ("comodato",)) for _, predio in predios):
-        return issues
 
+    # La regla es obligatoria en el modelo ARB actual: si el atributo viene NULL o no
+    # viene en el XTF, se reporta. False/0 explícitos siguen contando como diligenciados.
     for table_name, predio in predios:
         comadato = helper.get_field_value(
             predio,
@@ -728,9 +744,9 @@ def rule_11_12(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     predios = list(helper.iter_predios())
-    if not any(helper.has_field(predio, ("beneficio_comunidades_indigenas",)) for _, predio in predios):
-        return issues
 
+    # La regla es obligatoria en el modelo ARB actual: si el atributo viene NULL o no
+    # viene en el XTF, se reporta. False/0 explícitos siguen contando como diligenciados.
     for table_name, predio in predios:
         comunidades_indegenas = helper.get_field_value(
             predio,
@@ -1750,6 +1766,10 @@ def rule_11_42(dataset: DatasetReader) ->list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     for table_name, caracteristicas_unidades in helper.iter_caracteristicas_unidades():
+        # CC_Total_Calificacion pertenece exclusivamente a la calificación Convencional.
+        if not helper.is_calificacion_convencional(caracteristicas_unidades):
+            continue
+
         total_calificacion = helper.get_field_value(
             caracteristicas_unidades,
             helper.TOTAL_CALIFICACION_FIELDS,
@@ -1942,12 +1962,12 @@ def rule_11_48(dataset: DatasetReader) ->list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     for table_name, derecho_interesado in helper.iter_derecho_interesado():
-        tipo_fuente_administrativa = helper.get_field_value(
+        tipo_interesado = helper.get_field_value(
             derecho_interesado,
-            ("fa_tipo",),
+            ("i_tipo",),
         )
 
-        if tipo_fuente_administrativa in (None,""):
+        if tipo_interesado in (None,""):
             derecho_interesado_id = helper.get_field_value(
                 derecho_interesado,
                 ("t_id", "TID", "id"),
@@ -1961,8 +1981,8 @@ def rule_11_48(dataset: DatasetReader) ->list[RuleIssue]:
                     details={
                         "tabla": table_name,
                         "derecho_interesado_id": derecho_interesado_id,
-                        "tipo_fuente_administrativa": tipo_fuente_administrativa,
-                        "tiene_tipo_fuente_administrativa": False,
+                        "tipo_interesado": tipo_interesado,
+                        "tiene_tipo_interesado": False,
                     },
                 )
             )
@@ -2080,7 +2100,8 @@ def rule_11_52(dataset: DatasetReader) -> list[RuleIssue]:
             ("i_grupo_etnico",),
         )
 
-        if str(grupo_etnico) in {'8', '0', 'Etnico.Indigena'} and nombre_pueblo in (None, ''):
+        grupo_token = helper._normalize_key(grupo_etnico)
+        if grupo_token in {"0", "etnicoindigena", "indigena"} and nombre_pueblo in (None, ''):
             derecho_interesado_id = helper.get_field_value(
                 derecho_interesado,
                 ("t_id", "TID", "id"),
@@ -2246,7 +2267,7 @@ def rule_11_57(dataset: DatasetReader) -> list[RuleIssue]:
             ("tipo_unidad_construccion",),
         )
 
-        if helper.is_unidad_anexo(caracteristicas_unidades) and tipo_anexo in (None, ""):
+        if helper.is_calificacion_no_convencional(caracteristicas_unidades) and tipo_anexo in (None, ""):
             caracteristicas_unidades_id = helper.get_field_value(
                 caracteristicas_unidades,
                 ("t_id", "TID", "id"),
@@ -2287,7 +2308,7 @@ def rule_11_58(dataset: DatasetReader) -> list[RuleIssue]:
             ("tipo_unidad_construccion",),
         )
 
-        if helper.is_unidad_anexo(caracteristicas_unidades) and conservacion_anexo in (None, ""):
+        if helper.is_calificacion_no_convencional(caracteristicas_unidades) and conservacion_anexo in (None, ""):
             caracteristicas_unidades_id = helper.get_field_value(
                 caracteristicas_unidades,
                 ("t_id", "TID", "id"),

@@ -545,9 +545,12 @@ def _numero_predial_es_rural(numero_predial: str | None) -> bool:
 
 
 def _numero_predial_es_urbano_sql(numero_predial: str | None) -> bool:
+    """Retorna True cuando las posiciones 6-7 del NPN están entre 01 y 99."""
     if not numero_predial or len(numero_predial) < 7:
         return False
-    return numero_predial[5:7] == "01"
+    codigo = str(numero_predial)[5:7]
+    return codigo.isdigit() and 1 <= int(codigo) <= 99
+
 
 def _normalize_text_for_compare(value: object) -> str:
     if value in (None, ""):
@@ -644,17 +647,67 @@ def _has_suc(value: object) -> bool:
 
 
 def _nit_es_valido(value: object) -> bool:
+    """Valida la estructura indicada por la regla 2.16: 9 dígitos-guion-dígito."""
     if not _is_not_empty(value):
         return False
-
     text = str(value).strip()
-
-    if not re.fullmatch(r"[0-9]+(-[0-9])?", text):
+    match = re.fullmatch(r"([0-9]{9})-([0-9])", text)
+    if not match:
         return False
+    cuerpo = match.group(1)
+    if int(cuerpo) <= 0:
+        return False
+    return not _es_secuencia_simple(cuerpo)
 
-    numero = text.replace("-", "")
 
-    return int(numero) > 0
+
+def _es_secuencia_simple(value: object) -> bool:
+    """Detecta secuencias completas ascendentes o descendentes (123456 / 654321)."""
+    text = str(value).strip()
+    if len(text) < 4 or not text.isdigit():
+        return False
+    digits = [int(ch) for ch in text]
+    asc = all(b - a == 1 for a, b in zip(digits, digits[1:]))
+    desc = all(b - a == -1 for a, b in zip(digits, digits[1:]))
+    return asc or desc
+
+
+def _documento_numerico_valido(value: object) -> bool:
+    if not _is_not_empty(value):
+        return False
+    text = str(value).strip()
+    if not re.fullmatch(r"[0-9]+", text):
+        return False
+    if int(text) <= 0:
+        return False
+    return not _es_secuencia_simple(text)
+
+
+def _ente_emisor_valido_acto_administrativo(value: object) -> bool:
+    """Evita falsos positivos por subcadenas, por ejemplo ANT dentro de SANTANDER."""
+    if not _is_not_empty(value):
+        return False
+    normalized = _normalize_text_for_compare(value)
+    if "AGENCIA NACIONAL DE TIERRAS" in normalized:
+        return True
+    tokens = re.findall(r"[A-Z0-9]+", normalized)
+    if any(token.startswith("ALCALD") for token in tokens):
+        return True
+    return any(token in {"ANT", "INCODER", "INCORA", "MINISTERIO"} for token in tokens)
+
+
+def _firma_identidad_interesado(row: dict[str, object], helper: JuridicoHelper) -> str:
+    tipo = _tipo_interesado_ilicode(helper.get_field_value(row, TIPO_INTERESADO_FIELDS))
+    tipo_documento = helper.get_field_value(row, ("i_tipo_documento", "I_Tipo_Documento", "tipo_documento"))
+    razon_social = helper.get_field_value(row, RAZON_SOCIAL_FIELDS)
+    nombre = _nombre_completo_interesado(row, helper)
+    if _is_not_empty(razon_social):
+        identidad = "J:" + _normalize_text_for_compare(razon_social)
+    elif _is_not_empty(nombre):
+        identidad = "N:" + _normalize_text_for_compare(nombre)
+    else:
+        return ""
+    return "|".join((tipo, _normalize_text_for_compare(tipo_documento), identidad))
 
 
 def _derecho_tipo_ilicode(value: object) -> str:
@@ -701,15 +754,24 @@ def _normalizar_documento_identidad(value: object) -> str:
     return normalized
 
 def _tiene_marca_persona_juridica(value: object) -> bool:
+    """Detecta las marcas societarias enumeradas por la regla 2.22 en cualquier posición."""
     if not _is_not_empty(value):
         return False
+    text = _normalize_text_for_compare(value)
+    patterns = (
+        r"\bLTDA\b",
+        r"\bS\s*\.?\s*A\s*\.?\s*S\b",
+        r"\bSAS\b",
+        r"\bS\s*\.?\s*A\b",
+        r"\bSA\b",
+        r"\bS\s*\.?\s*C\s*\.?\s*A\b",
+        r"\bSCA\b",
+        r"\bS\s*\.?\s*EN\s+C\b",
+        r"&\s*CIA\b",
+        r"\bCIA\b",
+    )
+    return any(re.search(pattern, text) for pattern in patterns)
 
-    text = str(value).strip().upper()
-
-    return re.search(
-        r"(?:\sLTDA|\sS\.A\.|\s&\sCIA|S\.C\.A\.|\sS\.A\.S\.|\sSAS)$",
-        text,
-    ) is not None
 
 def _fuente_tipo_ilicode(value: object) -> str:
     if _is_empty_qgis(value):
@@ -780,1184 +842,478 @@ def _buscar_predio_relacionado(
 def _rule_2_1(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    today = date.today()
-    min_valid_date = date(1900, 1, 1)
     rural_expected = date(1936, 12, 4)
     urban_expected = date(1959, 12, 31)
-
     predios_by_id = _indexar_predios_por_identificador(helper)
 
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        fecha_inicio_raw = helper.get_field_value(
-            row,
-            FECHA_INICIO_TENENCIA_FIELDS,
-        )
+        fecha_inicio_raw = helper.get_field_value(row, FECHA_INICIO_TENENCIA_FIELDS)
+        if fecha_inicio_raw is None:
+            # La obligatoriedad de este dato se controla en el componente 11.x.
+            continue
         fecha_inicio = _parse_date(fecha_inicio_raw)
-
-        tipo_derecho = helper.get_field_value(
-            row,
-            TIPO_DERECHO_FIELDS,
-        )
+        tipo_derecho = helper.get_field_value(row, TIPO_DERECHO_FIELDS)
         tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
-
         predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
-
-        numero_predial = helper.get_field_value(
-            predio_row or {},
-            NUMERO_PREDIAL_FIELDS,
-        )
-
-        fecha_visita_raw = helper.get_field_value(
-            predio_row or {},
-            FECHA_VISITA_PREDIAL_FIELDS,
-        )
+        numero_predial = helper.get_field_value(predio_row or {}, NUMERO_PREDIAL_FIELDS)
+        fecha_visita_raw = helper.get_field_value(predio_row or {}, FECHA_VISITA_PREDIAL_FIELDS)
         fecha_visita = _parse_date(fecha_visita_raw)
-
-        matricula = helper.get_field_value(
-            predio_row or {},
-            MATRICULA_INMOBILIARIA_FIELDS,
-        )
-
+        matricula = helper.get_field_value(predio_row or {}, MATRICULA_INMOBILIARIA_FIELDS)
         message = None
 
-        # La regla 2.1 valida la coherencia de una fecha cuando está diligenciada.
-        # La ausencia de Fecha_Inicio_Tenencia se reporta por la regla obligatoria 11.46,
-        # evitando duplicar el mismo hallazgo en dos reglas distintas.
         if fecha_inicio is None:
-            continue
-
-        if fecha_inicio < min_valid_date:
-            message = "La fecha de inicio de tenencia no puede ser inferior a 1900-01-01."
-
+            message = "La fecha de inicio de tenencia tiene un formato o valor no válido."
         elif fecha_visita and fecha_inicio > fecha_visita:
             message = "La fecha de inicio de tenencia no puede ser mayor a la fecha de visita predial."
-
-        elif fecha_inicio > today:
-            message = "La fecha de inicio de tenencia no puede ser mayor a la fecha actual."
-
         elif tipo_derecho_str == "Dominio" and _matricula_es_vacia_o_cero(matricula):
             if _numero_predial_es_rural(numero_predial) and fecha_inicio != rural_expected:
-                message = (
-                    "Predio rural sin matrícula o con 0 y derecho Dominio "
-                    "debe tener fecha 1936-12-04."
-                )
-
+                message = "Predio rural sin matrícula y con derecho Dominio debe tener fecha de inicio 1936-12-04."
             elif _numero_predial_es_urbano_sql(numero_predial) and fecha_inicio != urban_expected:
-                message = (
-                    "Predio urbano sin matrícula o con 0 y derecho Dominio "
-                    "debe tener fecha 1959-12-31."
-                )
+                message = "Predio urbano sin matrícula y con derecho Dominio debe tener fecha de inicio 1959-12-31."
 
         if message:
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.1",
-                    message=message,
-                    details={
-                        "tabla": table_name,
-                        "class": table_name,
-                        "fecha_inicio_tenencia": fecha_inicio_raw,
-                        "fecha_visita_predial": fecha_visita_raw,
-                        "numero_predial": numero_predial,
-                        "matricula": matricula,
-                        "tipo_derecho": tipo_derecho,
-                        "predio_ref": predio_ref,
-                    },
-                )
-            )
-
+            issues.append(helper.make_issue(row, rule_id="2.1", message=message, details={
+                "tabla": table_name, "fecha_inicio_tenencia": fecha_inicio_raw,
+                "fecha_visita_predial": fecha_visita_raw, "numero_predial": numero_predial,
+                "matricula": matricula, "tipo_derecho": tipo_derecho, "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_2(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_derecho = helper.get_field_value(row, ("d_tipo",))
-        predio_ref = helper.get_relation_value(row, ("predio",))
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        tipo_derecho = helper.get_field_value(row, TIPO_DERECHO_FIELDS)
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
         if not predio_row:
             continue
-
-        tipo_predio = helper.get_field_value(predio_row, ("tipo",))
-        condicion_predio = helper.get_field_value(
-            predio_row,
-            ("Condicion_Predio", "condicion_predio", "Condicion_predio"),
-        )
-        matricula = helper.get_field_value(predio_row, ("Matricula_Inmobiliaria",))
-        numero_predial = helper.get_field_value(predio_row, ("Numero_Predial", "numero_predial"))
-
+        tipo_predio = helper.get_field_value(predio_row, ("tipo", "Tipo"))
+        condicion = helper.get_field_value(predio_row, ("Condicion_Predio", "condicion_predio"))
+        matricula = helper.get_field_value(predio_row, MATRICULA_INMOBILIARIA_FIELDS)
         tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
-        tipo_predio_str = str(tipo_predio).strip() if tipo_predio else ""
-        condicion_predio_str = str(condicion_predio).strip() if condicion_predio else ""
-        es_informal = condicion_predio_str == "Informal"
+        tipo_predio_str = str(tipo_predio or "").strip()
+        condicion_str = str(condicion or "").strip()
         message = None
-
-        if es_informal:
-            if tipo_derecho_str not in ("Posesion", "Ocupacion"):
-                message = (
-                    "Un predio con condición Informal solo puede estar asociado a un derecho "
-                    "de Posesion u Ocupacion."
-                )
+        if condicion_str == "Informal":
+            if tipo_derecho_str not in {"Posesion", "Ocupacion"}:
+                message = "Un predio con condición Informal solo puede estar asociado a Posesion u Ocupacion."
             elif not _matricula_es_vacia_o_cero(matricula):
-                message = (
-                    "Un predio con condición Informal y derecho de Posesion u Ocupacion "
-                    "no debe tener matrícula inmobiliaria."
-                )
-        elif (
-            tipo_predio_str == "Predio.Privado.Privado"
-            and tipo_derecho_str == "Dominio"
-            and _matricula_es_vacia_o_cero(matricula)
-        ):
-            message = (
-                "En un predio de tipo privado con derecho de Dominio y condición distinta "
-                "de Informal, la matrícula inmobiliaria es obligatoria."
-            )
-        elif (
-            tipo_derecho_str in ("Ocupacion", "Posesion")
-            and not _matricula_es_vacia_o_cero(matricula)
-        ):
-            message = (
-                "En un predio con derecho de Ocupacion o Posesion, "
-                "su matrícula inmobiliaria debe ser igual a NULL."
-            )
-
+                message = "Un predio con condición Informal no debe tener matrícula inmobiliaria."
+        elif tipo_predio_str == "Predio.Privado.Privado" and tipo_derecho_str == "Dominio" and _matricula_es_vacia_o_cero(matricula):
+            message = "En un predio Privado no informal con derecho Dominio, la matrícula inmobiliaria es obligatoria."
         if message:
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.2",
-                    message=message,
-                    details={
-                        "tabla": table_name,
-                        "tipo_predio": tipo_predio,
-                        "condicion_predio": condicion_predio,
-                        "tipo_derecho": tipo_derecho,
-                        "matricula": matricula,
-                        "numero_predial": numero_predial,
-                        "predio_ref": predio_ref,
-                    },
-                )
-            )
-
+            issues.append(helper.make_issue(row, rule_id="2.2", message=message, details={
+                "tabla": table_name, "tipo_derecho": tipo_derecho, "tipo_predio": tipo_predio,
+                "condicion_predio": condicion, "matricula": matricula, "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_3(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_derecho = helper.get_field_value(row, ("d_tipo",))
-        predio_ref = helper.get_relation_value(row, ("predio",))
-
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        tipo_derecho = helper.get_field_value(row, TIPO_DERECHO_FIELDS)
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
         if not predio_row:
             continue
-
-        tipo_predio = helper.get_field_value(predio_row, ("tipo",))
-        numero_predial = helper.get_field_value(predio_row, ("Numero_Predial", "numero_predial"))
-        matricula = helper.get_field_value(predio_row, ("Matricula_Inmobiliaria",))
-
-        tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
-        tipo_predio_str = str(tipo_predio).strip() if tipo_predio else ""
-
-        if tipo_derecho_str == "Posesion" and tipo_predio_str != "Predio.Privado.Privado":
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.3",
-                    message=(
-                        "Los predios asociados a derecho de tipo Posesión "
-                        "deben ser predios de tipo Privado."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "tipo_derecho": tipo_derecho,
-                        "tipo_predio": tipo_predio,
-                        "numero_predial": numero_predial,
-                        "matricula": matricula,
-                        "predio_ref": predio_ref,
-                    },
-                )
-            )
-
+        tipo_predio = helper.get_field_value(predio_row, ("tipo", "Tipo"))
+        if _derecho_tipo_ilicode(tipo_derecho) == "Posesion" and str(tipo_predio or "").strip() != "Predio.Privado.Privado":
+            issues.append(helper.make_issue(row, rule_id="2.3", message="Los predios asociados a derecho Posesion deben ser de tipo Privado.", details={
+                "tabla": table_name, "tipo_derecho": tipo_derecho, "tipo_predio": tipo_predio, "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_4(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_derecho = helper.get_field_value(row, ("d_tipo",))
-        predio_ref = helper.get_relation_value(row, ("predio",))
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        tipo_derecho = helper.get_field_value(row, TIPO_DERECHO_FIELDS)
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
         if not predio_row:
             continue
-
-        tipo_predio = helper.get_field_value(predio_row, ("tipo",))
-        condicion_predio = helper.get_field_value(
-            predio_row,
-            ("Condicion_Predio", "condicion_predio", "Condicion_predio"),
-        )
-        numero_predial = helper.get_field_value(predio_row, ("Numero_Predial", "numero_predial"))
-        matricula = helper.get_field_value(predio_row, ("Matricula_Inmobiliaria",))
-
-        tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
-        tipo_predio_str = str(tipo_predio).strip() if tipo_predio else ""
-        condicion_predio_str = str(condicion_predio).strip() if condicion_predio else ""
-
-        if (
-            tipo_predio_str == "Predio.Privado.Privado"
-            and tipo_derecho_str == "Ocupacion"
-            and condicion_predio_str != "Informal"
-        ):
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.4",
-                    message=(
-                        "Los predios de tipo Privado con derecho de Ocupacion "
-                        "deben tener condición Informal."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "tipo_derecho": tipo_derecho,
-                        "tipo_predio": tipo_predio,
-                        "condicion_predio": condicion_predio,
-                        "numero_predial": numero_predial,
-                        "matricula": matricula,
-                        "predio_ref": predio_ref,
-                    },
-                )
-            )
-
+        tipo_predio = helper.get_field_value(predio_row, ("tipo", "Tipo"))
+        condicion = helper.get_field_value(predio_row, ("Condicion_Predio", "condicion_predio"))
+        if str(tipo_predio or "").strip() == "Predio.Privado.Privado" and _derecho_tipo_ilicode(tipo_derecho) == "Ocupacion" and str(condicion or "").strip() != "Informal":
+            issues.append(helper.make_issue(row, rule_id="2.4", message="Los predios Privados con derecho Ocupacion deben tener condición Informal.", details={
+                "tabla": table_name, "tipo_derecho": tipo_derecho, "tipo_predio": tipo_predio,
+                "condicion_predio": condicion, "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_5(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
+    tipos_publicos = {
+        "Predio.Publico.Baldio.Baldio", "Predio.Publico.Baldio.Reserva_Indigena",
+        "Predio.Publico.Fiscal_Patrimonial", "Predio.Publico.Uso_Publico", "Predio.Publico.Presunto_Baldio",
+    }
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_derecho = helper.get_field_value(row, ("d_tipo",))
-        predio_ref = helper.get_relation_value(row, ("predio",))
-
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        tipo_derecho = helper.get_field_value(row, TIPO_DERECHO_FIELDS)
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
         if not predio_row:
             continue
-
-        tipo_predio = helper.get_field_value(predio_row, ("tipo",))
-        numero_predial = helper.get_field_value(predio_row, ("Numero_Predial", "numero_predial"))
-        matricula = helper.get_field_value(predio_row, ("Matricula_Inmobiliaria",))
-
-        tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
-        tipo_predio_str = str(tipo_predio).strip() if tipo_predio else ""
-
-        if tipo_predio_str.startswith("Predio.Publico") and tipo_derecho_str == "Posesion":
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.5",
-                    message=(
-                        "Para los predios asociados a tipo de predio Público, "
-                        "el tipo de derecho no puede ser Posesión."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "tipo_derecho": tipo_derecho,
-                        "tipo_predio": tipo_predio,
-                        "numero_predial": numero_predial,
-                        "matricula": matricula,
-                        "predio_ref": predio_ref,
-                    },
-                )
-            )
-
+        tipo_predio = helper.get_field_value(predio_row, ("tipo", "Tipo"))
+        if str(tipo_predio or "").strip() in tipos_publicos and _derecho_tipo_ilicode(tipo_derecho) == "Posesion":
+            issues.append(helper.make_issue(row, rule_id="2.5", message="Para predios Públicos, el tipo de derecho no puede ser Posesion.", details={
+                "tabla": table_name, "tipo_derecho": tipo_derecho, "tipo_predio": tipo_predio, "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_6(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
-    tipos_validos_baldio = {
-        "Predio.Publico.Baldio.Baldio",
-        "Predio.Publico.Baldio.Reserva_Indigena",
-        "Predio.Publico.Presunto_Baldio",
-    }
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
+    tipos_baldio = {"Predio.Publico.Baldio.Baldio", "Predio.Publico.Baldio.Reserva_Indigena", "Predio.Publico.Presunto_Baldio"}
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_derecho = helper.get_field_value(row, ("d_tipo",))
-        predio_ref = helper.get_relation_value(row, ("predio",))
-        nombre_interesado = helper.get_field_value(row, ("nombre",))
-
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        tipo_derecho = helper.get_field_value(row, TIPO_DERECHO_FIELDS)
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
         if not predio_row:
             continue
-
-        tipo_predio = helper.get_field_value(predio_row, ("tipo",))
-        numero_predial = helper.get_field_value(predio_row, ("Numero_Predial", "numero_predial"))
-        matricula = helper.get_field_value(predio_row, ("Matricula_Inmobiliaria",))
-
-        tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
-        tipo_predio_str = str(tipo_predio).strip() if tipo_predio else ""
-
-        es_baldio = tipo_predio_str in tipos_validos_baldio
-
-        if es_baldio and tipo_derecho_str == "Dominio":
-            if not _interesado_es_valido_baldio(nombre_interesado):
-                issues.append(
-                    helper.make_issue(
-                        row,
-                        rule_id="2.6",
-                        message=(
-                            "En los predios baldíos, baldío reserva indígena y presunto baldío "
-                            "con derecho de Dominio, el interesado debe corresponder a la Nación, "
-                            "al Municipio o a la Agencia Nacional de Tierras."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            "tipo_derecho": tipo_derecho,
-                            "tipo_predio": tipo_predio,
-                            "nombre_interesado": nombre_interesado,
-                            "numero_predial": numero_predial,
-                            "matricula": matricula,
-                            "predio_ref": predio_ref,
-                        },
-                    )
-                )
-
+        tipo_predio = helper.get_field_value(predio_row, ("tipo", "Tipo"))
+        razon_social = helper.get_field_value(row, RAZON_SOCIAL_FIELDS)
+        if str(tipo_predio or "").strip() in tipos_baldio and _derecho_tipo_ilicode(tipo_derecho) == "Dominio" and not _interesado_es_valido_baldio(razon_social):
+            issues.append(helper.make_issue(row, rule_id="2.6", message="En baldíos con derecho Dominio, la razón social debe corresponder a la Nación, Municipio o Agencia Nacional de Tierras.", details={
+                "tabla": table_name, "tipo_derecho": tipo_derecho, "tipo_predio": tipo_predio,
+                "razon_social": razon_social, "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_7(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        predio_ref = helper.get_relation_value(row, ("predio",))
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
         if not predio_row:
             continue
-
-        tipo_predio = helper.get_field_value(predio_row, ("tipo",))
-        numero_predial = helper.get_field_value(predio_row, ("Numero_Predial", "numero_predial"))
-
-        grupo_etnico = helper.get_field_value(
-            row,
-            ("I_Grupo_Etnico", "i_grupo_etnico"),
-        )
-
-        tipo_predio_str = str(tipo_predio).strip() if tipo_predio else ""
-        grupo_etnico_norm = _normalize_text_for_compare(grupo_etnico)
-
-        es_privado_colectivo = tipo_predio_str == "Predio.Privado.Colectivo"
-
-        if es_privado_colectivo:
-            if not grupo_etnico_norm or grupo_etnico_norm == "NINGUNO":
-                issues.append(
-                    helper.make_issue(
-                        row,
-                        rule_id="2.7",
-                        message=(
-                            "Si el predio es catalogado como Privado colectivo, "
-                            "el interesado debe tener diligenciado el campo "
-                            "Grupo_Etnico y debe ser distinto de 'Ninguno'."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            "tipo_predio": tipo_predio,
-                            "grupo_etnico": grupo_etnico,
-                            "numero_predial": numero_predial,
-                            "predio_ref": predio_ref,
-                        },
-                    )
-                )
-
+        tipo_predio = helper.get_field_value(predio_row, ("tipo", "Tipo"))
+        grupo = helper.get_field_value(row, ("I_Grupo_Etnico", "i_grupo_etnico"))
+        grupo_str = _grupo_etnico_ilicode(grupo)
+        if str(tipo_predio or "").strip() == "Predio.Privado.Colectivo" and (not grupo_str or grupo_str == "Ninguno"):
+            issues.append(helper.make_issue(row, rule_id="2.7", message="En un predio Privado Colectivo, el grupo étnico debe estar diligenciado y ser diferente de Ninguno.", details={
+                "tabla": table_name, "tipo_predio": tipo_predio, "grupo_etnico": grupo, "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_8(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
+    tipos_baldio = {"Predio.Publico.Baldio.Baldio", "Predio.Publico.Baldio.Reserva_Indigena", "Predio.Publico.Presunto_Baldio"}
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_derecho = helper.get_field_value(row, ("d_tipo",))
-        predio_ref = helper.get_relation_value(row, ("predio",))
-        razon_social_interesado = helper.get_field_value(row, ("i_razon_social",))
-
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        tipo_derecho = helper.get_field_value(row, TIPO_DERECHO_FIELDS)
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
         if not predio_row:
             continue
-
-        tipo_predio = helper.get_field_value(predio_row, ("tipo",))
-        numero_predial = helper.get_field_value(predio_row, ("Numero_Predial", "numero_predial"))
-        matricula = helper.get_field_value(predio_row, ("Matricula_Inmobiliaria",))
-
-        tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
-        tipo_predio_str = str(tipo_predio).strip() if tipo_predio else ""
-
-        es_presunto_baldio = tipo_predio_str == "Predio.Publico.Presunto_Baldio"
-
-        if es_presunto_baldio and tipo_derecho_str == "Ocupacion":
-            if _interesado_es_valido_baldio(razon_social_interesado):
-                issues.append(
-                    helper.make_issue(
-                        row,
-                        rule_id="2.8",
-                        message=(
-                            "Para los predios presuntos baldíos con derecho de Ocupación, "
-                            "el interesado relacionado no debe corresponder a la Nación, "
-                            "al Municipio o a la Agencia Nacional de Tierras."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            "tipo_derecho": tipo_derecho,
-                            "tipo_predio": tipo_predio,
-                            "razon_social_interesado": razon_social_interesado,
-                            "numero_predial": numero_predial,
-                            "matricula": matricula,
-                            "predio_ref": predio_ref,
-                        },
-                    )
-                )
-
+        tipo_predio = helper.get_field_value(predio_row, ("tipo", "Tipo"))
+        razon_social = helper.get_field_value(row, RAZON_SOCIAL_FIELDS)
+        if str(tipo_predio or "").strip() in tipos_baldio and _derecho_tipo_ilicode(tipo_derecho) == "Ocupacion" and _interesado_es_valido_baldio(razon_social):
+            issues.append(helper.make_issue(row, rule_id="2.8", message="En baldíos con derecho Ocupacion, el interesado no debe corresponder a la Nación, Municipio o Agencia Nacional de Tierras.", details={
+                "tabla": table_name, "tipo_derecho": tipo_derecho, "tipo_predio": tipo_predio,
+                "razon_social": razon_social, "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_9(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
-    predios_publicos = {
-        "Predio.Publico.Uso_Publico",
-        "Predio.Publico.Fiscal_Patrimonial",
-    }
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
+    tipos_objetivo = {"Predio.Publico.Fiscal_Patrimonial", "Predio.Publico.Uso_Publico"}
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_derecho = helper.get_field_value(row, ("d_tipo",))
-        predio_ref = helper.get_relation_value(row, ("predio",))
-        tipo_persona = helper.get_field_value(row, ("i_tipo",))
-
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        tipo_derecho = helper.get_field_value(row, TIPO_DERECHO_FIELDS)
+        tipo_interesado = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
         if not predio_row:
             continue
-
-        tipo_predio = helper.get_field_value(predio_row, ("tipo",))
-        numero_predial = helper.get_field_value(predio_row, ("Numero_Predial", "numero_predial"))
-        matricula = helper.get_field_value(predio_row, ("Matricula_Inmobiliaria",))
-
-        tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
-        tipo_predio_str = str(tipo_predio).strip() if tipo_predio else ""
-        tipo_persona_str = str(tipo_persona).strip() if tipo_persona else ""
-
-        # ✅ Lógica correcta
-        if (
-            tipo_predio_str in predios_publicos
-            and tipo_derecho_str == "Dominio"
-            and tipo_persona_str != "Persona_Juridica"
-        ):
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.9",
-                    message=(
-                        "Los predios públicos (Fiscal-Patrimonial y Uso Público) "
-                        "asociados a derechos de tipo Dominio deben tener una "
-                        "persona jurídica como tipo de interesado"
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "tipo_derecho": tipo_derecho,
-                        "tipo_predio": tipo_predio,
-                        "tipo_persona": tipo_persona_str,
-                        "numero_predial": numero_predial,
-                        "matricula": matricula,
-                        "predio_ref": predio_ref,
-                    },
-                )
-            )
-
+        tipo_predio = helper.get_field_value(predio_row, ("tipo", "Tipo"))
+        if str(tipo_predio or "").strip() in tipos_objetivo and _derecho_tipo_ilicode(tipo_derecho) == "Dominio" and _tipo_interesado_ilicode(tipo_interesado) != "Persona_Juridica":
+            issues.append(helper.make_issue(row, rule_id="2.9", message="En predios Públicos fiscales/patrimoniales o de uso público con Dominio, el interesado debe ser Persona_Juridica.", details={
+                "tabla": table_name, "tipo_predio": tipo_predio, "tipo_derecho": tipo_derecho,
+                "tipo_interesado": tipo_interesado, "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_10(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_derecho = helper.get_field_value(row, ("d_tipo",))
-        predio_ref = helper.get_relation_value(row, ("predio",))
-
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        tipo_derecho = helper.get_field_value(row, TIPO_DERECHO_FIELDS)
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
         if not predio_row:
             continue
-
-        condicion_predio = helper.get_field_value(
-            predio_row,
-            ("Condicion_Predio", "condicion_predio"),
-        )
-        tipo_predio = helper.get_field_value(predio_row, ("tipo",))
-        numero_predial = helper.get_field_value(
-            predio_row,
-            ("Numero_Predial", "numero_predial"),
-        )
-        matricula = helper.get_field_value(predio_row, ("Matricula_Inmobiliaria",))
-
-        condicion_predio_str = str(condicion_predio).strip() if condicion_predio else ""
-        tipo_predio_str = str(tipo_predio).strip() if tipo_predio else ""
-        tipo_derecho_str = _derecho_tipo_ilicode(tipo_derecho)
-
-        es_via_o_uso_publico = condicion_predio_str in (
-            "Via",
-            "Bien_Uso_Publico",
-        )
-
-        if es_via_o_uso_publico and (
-            tipo_predio_str != "Predio.Publico.Uso_Publico"
-            or tipo_derecho_str != "Dominio"
-        ):
-            if (
-                tipo_predio_str != "Predio.Publico.Uso_Publico"
-                and tipo_derecho_str != "Dominio"
-            ):
-                message = (
-                    "Para los predios que son vía o de uso público, "
-                    "el tipo de predio debe ser Uso Público y el tipo de derecho "
-                    "relacionado debe ser Dominio."
-                )
-            elif tipo_predio_str != "Predio.Publico.Uso_Publico":
-                message = (
-                    "Para los predios que son vía o de uso público, "
-                    "el tipo de predio debe ser Uso Público."
-                )
-            else:
-                message = (
-                    "Para los predios que son vía o de uso público, "
-                    "el tipo de derecho relacionado debe ser Dominio."
-                )
-
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.10",
-                    message=message,
-                    details={
-                        "tabla": table_name,
-                        "condicion_predio": condicion_predio,
-                        "tipo_predio": tipo_predio,
-                        "tipo_derecho": tipo_derecho,
-                        "numero_predial": numero_predial,
-                        "matricula": matricula,
-                        "predio_ref": predio_ref,
-                    },
-                )
-            )
-
+        tipo_predio = helper.get_field_value(predio_row, ("tipo", "Tipo"))
+        condicion = helper.get_field_value(predio_row, ("Condicion_Predio", "condicion_predio"))
+        condicion_str = str(condicion or "").strip()
+        if condicion_str in {"Via", "Bien_Uso_Publico"} and (str(tipo_predio or "").strip() != "Predio.Publico.Uso_Publico" or _derecho_tipo_ilicode(tipo_derecho) != "Dominio"):
+            issues.append(helper.make_issue(row, rule_id="2.10", message="Para predios con condición Via o Bien_Uso_Publico, el tipo debe ser Predio.Publico.Uso_Publico y el derecho Dominio.", details={
+                "tabla": table_name, "condicion_predio": condicion, "tipo_predio": tipo_predio,
+                "tipo_derecho": tipo_derecho, "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_11(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    # Indexar predios
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
     for table_name, row in helper.iter_derecho_interesado_fuente():
-
-        fecha_inicio_raw = helper.get_field_value(
-            row,
-            ("d_fecha_inicio_tenencia",),
-        )
-        fecha_inicio = _parse_date(fecha_inicio_raw)
-
-        fecha_fuente_raw = helper.get_field_value(
-            row,
-            ("FA_Fecha_Documento_Fuente", "fa_fecha_documento_fuente"),
-        )
-        fecha_fuente = _parse_date(fecha_fuente_raw)
-
-        predio_ref = helper.get_relation_value(row, ("predio",))
-
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        tipo_derecho = helper.get_field_value(row, TIPO_DERECHO_FIELDS)
+        if _derecho_tipo_ilicode(tipo_derecho) != "Dominio":
+            continue
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
         if not predio_row:
             continue
-
-        matricula = helper.get_field_value(
-            predio_row,
-            ("Matricula_Inmobiliaria",),
-        )
-
-        numero_predial = helper.get_field_value(
-            predio_row,
-            ("Numero_Predial", "numero_predial"),
-        )
-
-        # Solo aplica si hay matrícula
-        if not _matricula_es_vacia_o_cero(matricula):
-            if fecha_inicio and fecha_fuente and fecha_inicio < fecha_fuente:
-                issues.append(
-                    helper.make_issue(
-                        row,
-                        rule_id="2.11",
-                        message=(
-                            "Para los predios con matrícula inmobiliaria, "
-                            "la fecha de inicio de tenencia debe ser mayor o igual "
-                            "a la fecha del documento fuente."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            "fecha_inicio_tenencia": fecha_inicio_raw,
-                            "fecha_documento_fuente": fecha_fuente_raw,
-                            "matricula": matricula,
-                            "numero_predial": numero_predial,
-                            "predio_ref": predio_ref,
-                        },
-                    )
-                )
-
+        matricula = helper.get_field_value(predio_row, MATRICULA_INMOBILIARIA_FIELDS)
+        if _matricula_es_vacia_o_cero(matricula):
+            continue
+        fecha_inicio_raw = helper.get_field_value(row, FECHA_INICIO_TENENCIA_FIELDS)
+        fecha_fuente_raw = helper.get_field_value(row, FECHA_FUENTE_FIELDS)
+        fecha_inicio = _parse_date(fecha_inicio_raw)
+        fecha_fuente = _parse_date(fecha_fuente_raw)
+        if fecha_inicio and fecha_fuente and fecha_inicio < fecha_fuente:
+            issues.append(helper.make_issue(row, rule_id="2.11", message="En predios con matrícula y derecho Dominio, la fecha de inicio de tenencia debe ser mayor o igual a la fecha del documento fuente.", details={
+                "tabla": table_name, "matricula": matricula, "tipo_derecho": tipo_derecho,
+                "fecha_inicio_tenencia": fecha_inicio_raw, "fecha_documento_fuente": fecha_fuente_raw,
+                "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_12(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
+    require_numero_emisor = {
+        "Documento_Fuente.Acto_Administrativo", "Documento_Fuente.Sentencia_Judicial",
+        "Documento_Fuente.Escritura_Publica", "Documento_Fuente.Otro_Documento_fuente",
+        "Fuente_Informativa_Intercultural.Auto", "Fuente_Informativa_Intercultural.Protocolizacion_Notarial",
+        "Fuente_Informativa_Intercultural.Otros_Documentos",
+    }
+    require_emisor_sin_numero = {
+        "Documento_Fuente.Titulo_Colonial", "Documento_Fuente.Titulo_Republicano", "Documento_Fuente.Cedula_Real",
+    }
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        predio_ref = helper.get_relation_value(row, ("predio",))
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
         if not predio_row:
             continue
-
-        matricula = helper.get_field_value(predio_row, ("matricula_inmobiliaria",))
-        fecha_visita_raw = helper.get_field_value(predio_row, ("fecha_visita_predial",))
-        fecha_visita = _parse_date(fecha_visita_raw)
-
-        fecha_fuente_raw = helper.get_field_value(row, ("fa_fecha_documento_fuente",))
+        matricula = helper.get_field_value(predio_row, MATRICULA_INMOBILIARIA_FIELDS)
+        if _matricula_es_vacia_o_cero(matricula):
+            continue
+        tipo_fuente = helper.get_field_value(row, TIPO_FUENTE_FIELDS)
+        tipo_fuente_str = _fuente_tipo_ilicode(tipo_fuente)
+        fecha_fuente_raw = helper.get_field_value(row, FECHA_FUENTE_FIELDS)
+        numero_fuente = helper.get_field_value(row, NUMERO_FUENTE_FIELDS)
+        ente_emisor = helper.get_field_value(row, ENTE_EMISOR_FIELDS)
+        fecha_visita_raw = helper.get_field_value(predio_row, FECHA_VISITA_PREDIAL_FIELDS)
         fecha_fuente = _parse_date(fecha_fuente_raw)
-
-        tipo_fuente = helper.get_field_value(row, ("fa_tipo",))
-        numero_fuente = helper.get_field_value(row, ("fa_numero_fuente",))
-        ente_emisor = helper.get_field_value(row, ("fa_ente_emisor",))
-
+        fecha_visita = _parse_date(fecha_visita_raw)
+        faltantes: list[str] = []
         message = None
 
-        if not _matricula_es_vacia_o_cero(matricula):
-            if fecha_fuente is None:
-                message = "La fecha de documento fuente no puede ser NULL."
-            elif not _is_not_empty(tipo_fuente):
-                message = "El tipo de fuente administrativa no puede ser NULL."
-            elif not _is_not_empty(numero_fuente):
-                message = "El número de fuente administrativa no puede ser NULL."
-            elif not _is_not_empty(ente_emisor):
-                message = "El ente emisor de fuente administrativa no puede ser NULL."
-            elif fecha_visita and fecha_fuente > fecha_visita:
-                message = "La fecha de documento fuente no puede ser posterior a la fecha de levantamiento."
+        if not tipo_fuente_str:
+            faltantes.append("tipo de fuente")
+        elif tipo_fuente_str == "Sin_Documento":
+            message = "Un predio con matrícula inmobiliaria debe tener una fuente documental asociada."
+        else:
+            if not _is_not_empty(fecha_fuente_raw):
+                faltantes.append("fecha del documento fuente")
+            if tipo_fuente_str in require_numero_emisor:
+                if not _is_not_empty(numero_fuente):
+                    faltantes.append("número de fuente")
+                if not _is_not_empty(ente_emisor):
+                    faltantes.append("ente emisor")
+            elif tipo_fuente_str in require_emisor_sin_numero and not _is_not_empty(ente_emisor):
+                faltantes.append("ente emisor")
+
+        if message is None and faltantes:
+            message = "Predio con matrícula: faltan " + ", ".join(faltantes) + "."
+        elif message is None and _is_not_empty(fecha_fuente_raw) and fecha_fuente is None:
+            message = "La fecha del documento fuente tiene un formato o valor no válido."
+        elif message is None and fecha_fuente and fecha_visita and fecha_fuente > fecha_visita:
+            message = "La fecha del documento fuente no puede ser posterior a la fecha de visita predial."
 
         if message:
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.12",
-                    message=message,
-                    details={
-                        "tabla": table_name,
-                        "matricula": matricula,
-                        "fecha_documento_fuente": fecha_fuente_raw,
-                        "fecha_levantamiento": fecha_visita_raw,
-                        "tipo_fuente": tipo_fuente,
-                        "numero_fuente": numero_fuente,
-                        "ente_emisor": ente_emisor,
-                        "predio_ref": predio_ref,
-                    },
-                )
-            )
-
+            issues.append(helper.make_issue(row, rule_id="2.12", message=message, details={
+                "tabla": table_name, "matricula": matricula, "tipo_fuente": tipo_fuente,
+                "fecha_documento_fuente": fecha_fuente_raw, "numero_fuente": numero_fuente,
+                "ente_emisor": ente_emisor, "fecha_visita_predial": fecha_visita_raw, "predio_ref": predio_ref,
+            }))
     return issues
+
 
 def _rule_2_13(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo = helper.get_field_value(row, ("i_tipo",))
-        tipo_documento = helper.get_field_value(row, ("i_tipo_documento",))
-
-        if str(tipo).strip() == "Persona_Juridica" and str(tipo_documento).strip() not in ("NIT", "Secuencial"):
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.13",
-                    message=(
-                        "Un interesado de tipo Persona_Juridica solamente puede tener "
-                        "tipo de documento NIT o Secuencial."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "tipo": tipo,
-                        "tipo_documento": tipo_documento,
-                    },
-                )
-            )
-
+        tipo = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
+        tipo_documento = helper.get_field_value(row, ("i_tipo_documento", "I_Tipo_Documento", "tipo_documento"))
+        if _tipo_interesado_ilicode(tipo) == "Persona_Juridica" and str(tipo_documento or "").strip() not in {"NIT", "Secuencial"}:
+            issues.append(helper.make_issue(row, rule_id="2.13", message="Una Persona_Juridica solamente puede tener tipo de documento NIT o Secuencial.", details={"tabla": table_name, "tipo": tipo, "tipo_documento": tipo_documento}))
     return issues
+
 
 def _rule_2_14(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    documentos_validos = {
-        "Cedula_Ciudadania",
-        "Pasaporte",
-        "Cedula_Extranjeria",
-        "Tarjeta_Identidad",
-        "Registro_Civil",
-        "Secuencial",
-    }
-
+    validos = {"Cedula_Ciudadania", "Pasaporte", "Cedula_Extranjeria", "Tarjeta_Identidad", "Registro_Civil", "Secuencial"}
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo = helper.get_field_value(row, ("i_tipo",))
-        tipo_documento = helper.get_field_value(row, ("i_tipo_documento",))
-
-        if str(tipo).strip() == "Persona_Natural" and str(tipo_documento).strip() not in documentos_validos:
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.14",
-                    message=(
-                        "Un interesado de tipo Persona_Natural solamente puede tener tipo de documento "
-                        "Cédula de Ciudadanía, Pasaporte, Cédula de Extranjería, Tarjeta de Identidad, "
-                        "Registro Civil o Secuencial."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "tipo": tipo,
-                        "tipo_documento": tipo_documento,
-                    },
-                )
-            )
-
+        tipo = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
+        tipo_documento = helper.get_field_value(row, ("i_tipo_documento", "I_Tipo_Documento", "tipo_documento"))
+        if _tipo_interesado_ilicode(tipo) == "Persona_Natural" and str(tipo_documento or "").strip() not in validos:
+            issues.append(helper.make_issue(row, rule_id="2.14", message="Una Persona_Natural solo puede usar CC, Pasaporte, CE, TI, Registro Civil o Secuencial.", details={"tabla": table_name, "tipo": tipo, "tipo_documento": tipo_documento}))
     return issues
+
 
 def _rule_2_15(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    documentos_obligan_numero = {
-        "Cedula_Ciudadania",
-        "Cedula_Extranjeria",
-        "Tarjeta_Identidad",
-        "Registro_Civil",
-    }
-
+    tipos = {"Cedula_Ciudadania", "Cedula_Extranjeria", "Tarjeta_Identidad", "Registro_Civil"}
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_documento = helper.get_field_value(row, ("i_tipo_documento",))
-        documento = helper.get_field_value(row, ("i_documento_identidad",))
-
-        if str(tipo_documento).strip() in documentos_obligan_numero:
-            if not _is_not_empty(documento) or str(documento).strip() == "0":
-                issues.append(
-                    helper.make_issue(
-                        row,
-                        rule_id="2.15",
-                        message=(
-                            "El número de documento de identidad debe ser diferente "
-                            "de cero o vacío."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            "tipo_documento": tipo_documento,
-                            "documento_identidad": documento,
-                        },
-                    )
-                )
-
+        tipo_documento = helper.get_field_value(row, ("i_tipo_documento", "I_Tipo_Documento", "tipo_documento"))
+        documento = helper.get_field_value(row, DOCUMENTO_IDENTIDAD_FIELDS)
+        if str(tipo_documento or "").strip() in tipos and not _documento_numerico_valido(documento):
+            issues.append(helper.make_issue(row, rule_id="2.15", message="El documento debe ser numérico, mayor que cero, sin caracteres especiales y no debe ser una secuencia consecutiva.", details={"tabla": table_name, "tipo_documento": tipo_documento, "documento_identidad": documento}))
     return issues
+
 
 def _rule_2_16(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_documento = helper.get_field_value(row, ("i_tipo_documento",))
-        documento = helper.get_field_value(row, ("i_documento_identidad",))
-
-        if str(tipo_documento).strip() == "NIT" and not _nit_es_valido(documento):
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.16",
-                    message=(
-                        "El NIT debe ser mayor a cero, sin letras ni caracteres especiales "
-                        "excepto guion. Antes del guion debe ser numérico y después del guion "
-                        "debe existir un único dígito entre 0 y 9."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "tipo_documento": tipo_documento,
-                        "documento_identidad": documento,
-                    },
-                )
-            )
-
+        tipo_documento = helper.get_field_value(row, ("i_tipo_documento", "I_Tipo_Documento", "tipo_documento"))
+        documento = helper.get_field_value(row, DOCUMENTO_IDENTIDAD_FIELDS)
+        if str(tipo_documento or "").strip() == "NIT" and not _nit_es_valido(documento):
+            issues.append(helper.make_issue(row, rule_id="2.16", message="El NIT debe cumplir la estructura de nueve dígitos, guion y un dígito de verificación; ser mayor a cero y no consecutivo.", details={"tabla": table_name, "tipo_documento": tipo_documento, "documento_identidad": documento}))
     return issues
+
 
 def _rule_2_17(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    campos_nombre = (
-        (PRIMER_NOMBRE_FIELDS, "primer nombre", "primer_nombre"),
-        (SEGUNDO_NOMBRE_FIELDS, "segundo nombre", "segundo_nombre"),
-        (PRIMER_APELLIDO_FIELDS, "primer apellido", "primer_apellido"),
-        (SEGUNDO_APELLIDO_FIELDS, "segundo apellido", "segundo_apellido"),
+    campos = (
+        (PRIMER_NOMBRE_FIELDS, "primer nombre", True), (SEGUNDO_NOMBRE_FIELDS, "segundo nombre", False),
+        (PRIMER_APELLIDO_FIELDS, "primer apellido", True), (SEGUNDO_APELLIDO_FIELDS, "segundo apellido", False),
     )
-
     for table_name, row in helper.iter_derecho_interesado_fuente():
         tipo = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
-        razon_social = helper.get_field_value(row, RAZON_SOCIAL_FIELDS)
-
         if _tipo_interesado_ilicode(tipo) != "Persona_Natural":
             continue
-
-        if _is_not_empty(razon_social):
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.17",
-                    message="Para Persona_Natural, la razón social debe ser NULL.",
-                    details={
-                        "tabla": table_name,
-                        "tipo": tipo,
-                        "razon_social": razon_social,
-                    },
-                )
-            )
-            continue
-
-        for campos, etiqueta, detalle in campos_nombre:
-            valor = helper.get_field_value(row, campos)
-            if _is_not_empty(valor) and not _only_letters_spaces(valor):
-                issues.append(
-                    helper.make_issue(
-                        row,
-                        rule_id="2.17",
-                        message=f"El {etiqueta} debe estar compuesto exclusivamente por caracteres alfabéticos.",
-                        details={
-                            "tabla": table_name,
-                            "tipo": tipo,
-                            detalle: valor,
-                        },
-                    )
-                )
+        for field_names, etiqueta, obligatorio in campos:
+            valor = helper.get_field_value(row, field_names)
+            invalido = (obligatorio and not _is_not_empty(valor)) or (_is_not_empty(valor) and not _only_letters_spaces(valor))
+            if invalido:
+                message = f"Para Persona_Natural, el {etiqueta} es obligatorio y debe contener solo caracteres alfabéticos." if obligatorio else f"Si se diligencia el {etiqueta}, debe contener solo caracteres alfabéticos."
+                issues.append(helper.make_issue(row, rule_id="2.17", message=message, details={"tabla": table_name, "tipo": tipo, etiqueta.replace(' ', '_'): valor}))
                 break
-
     return issues
+
 
 def _rule_2_18(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    campos_nombre = (
-        ("i_primer_nombre", "primer nombre"),
-        ("i_segundo_nombre", "segundo nombre"),
-        ("i_primer_apellido", "primer apellido"),
-        ("i_segundo_apellido", "segundo apellido"),
-    )
-
+    campos = ((PRIMER_NOMBRE_FIELDS, "primer nombre"), (SEGUNDO_NOMBRE_FIELDS, "segundo nombre"), (PRIMER_APELLIDO_FIELDS, "primer apellido"), (SEGUNDO_APELLIDO_FIELDS, "segundo apellido"))
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo = helper.get_field_value(row, ("i_tipo",))
-
-        if str(tipo).strip() != "Persona_Juridica":
+        tipo = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
+        if _tipo_interesado_ilicode(tipo) != "Persona_Juridica":
             continue
-
-        for campo, etiqueta in campos_nombre:
-            valor = helper.get_field_value(row, (campo,))
+        for fields, etiqueta in campos:
+            valor = helper.get_field_value(row, fields)
             if _is_not_empty(valor):
-                issues.append(
-                    helper.make_issue(
-                        row,
-                        rule_id="2.18",
-                        message=(
-                            f"En el caso de un interesado de tipo Persona_Juridica, "
-                            f"el valor del {etiqueta} debe ser NULL."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            campo: valor,
-                        },
-                    )
-                )
+                issues.append(helper.make_issue(row, rule_id="2.18", message=f"Para Persona_Juridica, el {etiqueta} debe ser NULL.", details={"tabla": table_name, "tipo": tipo, etiqueta.replace(' ', '_'): valor}))
                 break
-
     return issues
+
 
 def _rule_2_19(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    campos_nombre = (
-        ("i_primer_nombre", "primer nombre"),
-        ("i_segundo_nombre", "segundo nombre"),
-        ("i_primer_apellido", "primer apellido"),
-        ("i_segundo_apellido", "segundo apellido"),
-    )
-
+    campos = ((PRIMER_NOMBRE_FIELDS, "primer nombre"), (SEGUNDO_NOMBRE_FIELDS, "segundo nombre"), (PRIMER_APELLIDO_FIELDS, "primer apellido"), (SEGUNDO_APELLIDO_FIELDS, "segundo apellido"))
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo = helper.get_field_value(row, ("i_tipo",))
-
-        if str(tipo).strip() != "Persona_Natural":
+        tipo = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
+        if _tipo_interesado_ilicode(tipo) != "Persona_Natural":
             continue
-
-        for campo, etiqueta in campos_nombre:
-            valor = helper.get_field_value(row, (campo,))
+        for fields, etiqueta in campos:
+            valor = helper.get_field_value(row, fields)
             if _is_not_empty(valor) and (not _only_letters_spaces(valor) or _has_suc(valor)):
-                issues.append(
-                    helper.make_issue(
-                        row,
-                        rule_id="2.19",
-                        message=(
-                            f"El {etiqueta} debe consistir únicamente en caracteres alfabéticos "
-                            f"y no puede contener la sigla SUC."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            campo: valor,
-                        },
-                    )
-                )
+                issues.append(helper.make_issue(row, rule_id="2.19", message=f"El {etiqueta} no debe contener SUC, números ni caracteres especiales.", details={"tabla": table_name, "tipo": tipo, etiqueta.replace(' ', '_'): valor}))
                 break
-
     return issues
+
 
 def _rule_2_20(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    campos_nombre = (
-        ("i_primer_nombre", "primer nombre"),
-        ("i_segundo_nombre", "segundo nombre"),
-        ("i_primer_apellido", "primer apellido"),
-        ("i_segundo_apellido", "segundo apellido"),
-    )
-
+    campos = (PRIMER_NOMBRE_FIELDS, SEGUNDO_NOMBRE_FIELDS, PRIMER_APELLIDO_FIELDS, SEGUNDO_APELLIDO_FIELDS)
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo = helper.get_field_value(row, ("i_tipo",))
-        razon_social = helper.get_field_value(row, ("i_razon_social",))
-
-        if str(tipo).strip() != "Persona_Juridica":
+        tipo = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
+        if _tipo_interesado_ilicode(tipo) != "Persona_Juridica":
             continue
-
-        message = None
-        details = {
-            "tabla": table_name,
-            "razon_social": razon_social,
-        }
-
-        for campo, etiqueta in campos_nombre:
-            valor = helper.get_field_value(row, (campo,))
-            if _is_not_empty(valor):
-                message = (
-                    f"En el caso de un interesado de tipo Persona_Juridica, "
-                    f"el valor del {etiqueta} debe ser NULL."
-                )
-                details[campo] = valor
-                break
-
-        if message is None and not _is_not_empty(razon_social):
-            message = (
-                "Para los interesados asociados a Persona_Juridica, "
-                "se debe diligenciar solamente el campo de razón social."
-            )
-
-        if message:
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.20",
-                    message=message,
-                    details=details,
-                )
-            )
-
+        razon = helper.get_field_value(row, RAZON_SOCIAL_FIELDS)
+        nombres_diligenciados = [helper.get_field_value(row, fields) for fields in campos]
+        if any(_is_not_empty(v) for v in nombres_diligenciados) or not _is_not_empty(razon):
+            issues.append(helper.make_issue(row, rule_id="2.20", message="Para Persona_Juridica solo debe diligenciarse la razón social y esta es obligatoria.", details={"tabla": table_name, "tipo": tipo, "razon_social": razon, "nombres": nombres_diligenciados}))
     return issues
 
-def _rule_2_21(dataset: DatasetReader) -> list[RuleIssue]:
-    """Regla 2.21 alineada con el validador web.
 
-    QGIS 4 puede entregar i_tipo e i_sexo como T_Id, itfCode, iliCode o
-    dispName. En este archivo esos valores ya se normalizan mediante
-    get_field_value; por eso aqui solo comparamos contra los valores canonicos
-    del validador web: Persona_Juridica y Persona_Natural.
-    """
+def _rule_2_21(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
     for table_name, row in helper.iter_derecho_interesado_fuente():
         tipo = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
         sexo = helper.get_field_value(row, SEXO_FIELDS)
-
         tipo_str = _tipo_interesado_ilicode(tipo)
-        if not tipo_str and tipo is not None:
-            fallback_tipo = _normalize_text_for_compare(tipo)
-            if "PERSONA_NATURAL" in fallback_tipo or "NATURAL" in fallback_tipo:
-                tipo_str = "Persona_Natural"
-            elif "PERSONA_JURIDICA" in fallback_tipo or "JURIDICA" in fallback_tipo:
-                tipo_str = "Persona_Juridica"
-
-        message = None
-
-        if tipo_str == "Persona_Juridica" and _is_not_empty(sexo):
-            message = (
-                "En el caso de un interesado de tipo Persona_Juridica, "
-                "el valor del campo sexo debe ser NULL."
-            )
-
-        elif tipo_str == "Persona_Natural" and not _is_not_empty(sexo):
-            message = (
-                "En el caso de un interesado de tipo Persona_Natural, "
-                "el valor del campo sexo debe ser diferente de NULL."
-            )
-
-        if message:
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.21",
-                    message=message,
-                    details={
-                        "tabla": table_name,
-                        "tipo": tipo,
-                        "tipo_ilicode": tipo_str,
-                        "sexo": sexo,
-                        "sexo_raw": row.get("i_sexo__raw") or row.get("I_Sexo__raw"),
-                    },
-                )
-            )
-
+        if _is_not_empty(sexo) and tipo_str != "Persona_Natural":
+            issues.append(helper.make_issue(row, rule_id="2.21", message="El atributo Sexo solo puede diligenciarse para interesados de tipo Persona_Natural.", details={"tabla": table_name, "tipo": tipo, "tipo_ilicode": tipo_str, "sexo": sexo}))
     return issues
+
 
 def _rule_2_22(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    campos_nombre = (
-        ("i_primer_nombre", "primer nombre"),
-        ("i_segundo_nombre", "segundo nombre"),
-        ("i_primer_apellido", "primer apellido"),
-        ("i_segundo_apellido", "segundo apellido"),
-    )
-
+    campos = ((PRIMER_NOMBRE_FIELDS, "primer nombre"), (SEGUNDO_NOMBRE_FIELDS, "segundo nombre"), (PRIMER_APELLIDO_FIELDS, "primer apellido"), (SEGUNDO_APELLIDO_FIELDS, "segundo apellido"))
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo = helper.get_field_value(row, ("i_tipo",))
-
-        if str(tipo).strip() != "Persona_Natural":
+        tipo = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
+        if _tipo_interesado_ilicode(tipo) != "Persona_Natural":
             continue
-
-        for campo, etiqueta in campos_nombre:
-            valor = helper.get_field_value(row, (campo,))
-
+        for fields, etiqueta in campos:
+            valor = helper.get_field_value(row, fields)
             if _tiene_marca_persona_juridica(valor):
-                issues.append(
-                    helper.make_issue(
-                        row,
-                        rule_id="2.22",
-                        message=(
-                            f"El valor del {etiqueta} asocia información "
-                            f"de personas jurídicas."
-                        ),
-                        details={
-                            "tabla": table_name,
-                            campo: valor,
-                            "tipo": tipo,
-                        },
-                    )
-                )
+                issues.append(helper.make_issue(row, rule_id="2.22", message=f"El {etiqueta} contiene una marca propia de Persona_Juridica.", details={"tabla": table_name, "tipo": tipo, etiqueta.replace(' ', '_'): valor}))
                 break
-
     return issues
 
+
 def _rule_2_23(dataset: DatasetReader) -> list[RuleIssue]:
+    # N/A en ARB actual: no se materializa COL_AgrupacionInteresados como entidad independiente.
     return []
 
 
 def _rule_2_24(dataset: DatasetReader) -> list[RuleIssue]:
+    # N/A en ARB actual: no se materializa COL_AgrupacionInteresados como entidad independiente.
     return []
 
 
 def _rule_2_25(dataset: DatasetReader) -> list[RuleIssue]:
+    # N/A en ARB actual: no se materializa COL_AgrupacionInteresados como entidad independiente.
     return []
 
 
 def _rule_2_26(dataset: DatasetReader) -> list[RuleIssue]:
+    # N/A en ARB actual: no existe col_miembros/agrupación con identidad propia para sumar participación sin ambigüedad.
     return []
 
 def _rule_2_27(dataset: DatasetReader) -> list[RuleIssue]:
@@ -2041,93 +1397,48 @@ def _rule_2_27(dataset: DatasetReader) -> list[RuleIssue]:
 def _rule_2_28(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
     for table_name, row in helper.iter_derecho_interesado_fuente():
-        tipo_fuente = helper.get_field_value(row, ("fa_tipo",))
+        tipo_fuente = helper.get_field_value(row, TIPO_FUENTE_FIELDS)
         tipo_fuente_str = _fuente_tipo_ilicode(tipo_fuente)
-
-        ente_emisor = helper.get_field_value(row, ("fa_ente_emisor",))
-
+        ente = helper.get_field_value(row, ENTE_EMISOR_FIELDS)
         message = None
-
-        if tipo_fuente_str == "Documento_Fuente.Escritura_Publica":
-            if not _contains_any(ente_emisor, ("NOTAR",)):
-                message = "El ente emisor de una Escritura Pública debe corresponder a una notaría."
-
-        elif tipo_fuente_str == "Documento_Fuente.Sentencia_Judicial":
-            if not _contains_any(ente_emisor, ("JUZGADO",)):
-                message = "El ente emisor de una Sentencia Judicial debe corresponder a un juzgado."
-
-        elif tipo_fuente_str == "Documento_Fuente.Acto_Administrativo":
-            if not _contains_any(
-                ente_emisor,
-                ("ALCALD", "ANT", "INCODER", "INCORA", "MINISTERIO"),
-            ):
-                message = (
-                    "El ente emisor de un Acto Administrativo debe corresponder "
-                    "a alcaldía, ANT, INCODER, INCORA o ministerio."
-                )
-
+        if tipo_fuente_str == "Documento_Fuente.Escritura_Publica" and not _contains_any(ente, ("NOTAR",)):
+            message = "El ente emisor de una Escritura Pública debe corresponder a una notaría."
+        elif tipo_fuente_str == "Documento_Fuente.Sentencia_Judicial" and not _contains_any(ente, ("JUZGADO",)):
+            message = "El ente emisor de una Sentencia Judicial debe corresponder a un juzgado."
+        elif tipo_fuente_str == "Documento_Fuente.Acto_Administrativo" and not _ente_emisor_valido_acto_administrativo(ente):
+            message = "El ente emisor de un Acto Administrativo debe corresponder a alcaldía, ANT, INCODER, INCORA o ministerio."
         if message:
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.28",
-                    message=message,
-                    details={
-                        "tabla": table_name,
-                        "tipo_fuente": tipo_fuente,
-                        "tipo_fuente_ilicode": tipo_fuente_str,
-                        "ente_emisor": ente_emisor,
-                    },
-                )
-            )
-
+            issues.append(helper.make_issue(row, rule_id="2.28", message=message, details={"tabla": table_name, "tipo_fuente": tipo_fuente, "tipo_fuente_ilicode": tipo_fuente_str, "ente_emisor": ente}))
     return issues
+
 
 def _rule_2_29(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
     issues: list[RuleIssue] = []
-
+    predios_by_id = _indexar_predios_por_identificador(helper)
     predios_con_interesado: set[str] = set()
-
     for _, row in helper.iter_derecho_interesado_fuente():
-        predio_ref = helper.get_relation_value(row, ("predio",))
-        tipo_interesado = helper.get_field_value(row, ("i_tipo",))
+        tipo = helper.get_field_value(row, TIPO_INTERESADO_FIELDS)
         documento = helper.get_field_value(row, DOCUMENTO_IDENTIDAD_FIELDS)
-        razon_social = helper.get_field_value(row, RAZON_SOCIAL_FIELDS)
-        nombre_completo = _nombre_completo_interesado(row, helper)
-
-        if predio_ref and (
-            _is_not_empty(tipo_interesado)
-            or _is_not_empty(documento)
-            or _is_not_empty(razon_social)
-            or _is_not_empty(nombre_completo)
-        ):
+        razon = helper.get_field_value(row, RAZON_SOCIAL_FIELDS)
+        nombre = _nombre_completo_interesado(row, helper)
+        if not any((_is_not_empty(tipo), _is_not_empty(documento), _is_not_empty(razon), _is_not_empty(nombre))):
+            continue
+        predio_ref, predio_row = _buscar_predio_relacionado(helper, row, predios_by_id)
+        if predio_row:
+            for field in PREDIO_IDENTIFIER_FIELDS:
+                value = helper.get_field_value(predio_row, (field,))
+                if value:
+                    predios_con_interesado.add(str(value))
+        elif predio_ref:
             predios_con_interesado.add(str(predio_ref))
-
     for table_name, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        numero_predial = helper.get_field_value(row, ("numero_predial", "Numero_Predial"))
-
-        if predio_id and str(predio_id) not in predios_con_interesado:
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="2.29",
-                    message=(
-                        "Todo predio debe tener asociado al menos un derecho "
-                        "y un interesado relacionado."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "predio_id": predio_id,
-                        "numero_predial": numero_predial,
-                    },
-                )
-            )
-
+        ids = {str(v) for field in PREDIO_IDENTIFIER_FIELDS if (v := helper.get_field_value(row, (field,)))}
+        if ids and ids.isdisjoint(predios_con_interesado):
+            issues.append(helper.make_issue(row, rule_id="2.29", message="Todo predio debe tener asociado al menos un interesado (o agrupación cuando el modelo la represente).", details={"tabla": table_name, "predio_ids": sorted(ids), "numero_predial": helper.get_field_value(row, NUMERO_PREDIAL_FIELDS)}))
     return issues
+
 
 def _rule_2_30(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
@@ -2180,7 +1491,32 @@ def _rule_2_30(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 def _rule_2_31(dataset: DatasetReader) -> list[RuleIssue]:
-    return []
+    """Detecta un mismo documento asociado a identidades distintas.
+
+    ARB_DerechoInteresadoFuente es una vista/estructura aplanada: la misma persona
+    puede repetirse legítimamente por derechos o fuentes diferentes. Sin un id de
+    ILC_Interesado separado, tratar toda repetición como duplicado produciría falsos
+    positivos. Se reporta cuando el mismo documento identifica personas distintas.
+    """
+    helper = JuridicoHelper(dataset)
+    por_documento: dict[str, dict[str, list[tuple[str, dict[str, object]]]]] = {}
+    for table_name, row in helper.iter_derecho_interesado_fuente():
+        documento = _normalizar_documento_identidad(helper.get_field_value(row, DOCUMENTO_IDENTIDAD_FIELDS))
+        if not documento:
+            continue
+        firma = _firma_identidad_interesado(row, helper)
+        if not firma:
+            continue
+        por_documento.setdefault(documento, {}).setdefault(firma, []).append((table_name, row))
+    issues: list[RuleIssue] = []
+    for documento, firmas in por_documento.items():
+        if len(firmas) <= 1:
+            continue
+        for rows in firmas.values():
+            for table_name, row in rows:
+                issues.append(helper.make_issue(row, rule_id="2.31", message="El mismo número de documento está asociado a identidades diferentes.", details={"tabla": table_name, "documento_identidad": helper.get_field_value(row, DOCUMENTO_IDENTIDAD_FIELDS), "documento_normalizado": documento, "identidades_distintas": len(firmas)}))
+    return issues
+
 
 def _rule_2_32(dataset: DatasetReader) -> list[RuleIssue]:
     helper = JuridicoHelper(dataset)
