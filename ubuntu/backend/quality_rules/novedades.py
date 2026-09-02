@@ -15,7 +15,10 @@ except Exception:
 COMPONENT_SLUG = "novedades"
 
 DEFAULT_RULE_IDS = frozenset({
-    "8.1", "8.2", "8.3", "8.4", "8.5", "8.6", "8.7", "8.8", "8.11", "8.12", "8.13", "8.14", "8.15", "8.16", "8.18", "8.19", "8.20", "8.22", "8.24", "8.26",
+    # Conserva el catálogo actual. 8.2, 8.4, 8.5 y 8.7 siguen sin función
+    # ejecutable, tal como en la base de 207 reglas; no se reactivan en esta auditoría.
+    "8.1", "8.2", "8.3", "8.4", "8.5", "8.6", "8.7", "8.8", "8.11", "8.12",
+    "8.13", "8.14", "8.15", "8.16", "8.18", "8.19", "8.20", "8.22", "8.24", "8.26",
 })
 
 
@@ -47,6 +50,11 @@ class NovedadescoHelper:
         "arb_terreno",
     )
 
+    CONSTRUCCION_TABLES = (
+        "ARB_Construccion",
+        "arb_construccion",
+    )
+
 
     def __init__(self, dataset: DatasetReader):
         self.dataset = dataset
@@ -76,6 +84,9 @@ class NovedadescoHelper:
 
     def iter_terreno(self):
         yield from self._iter_table_rows(self.TERRENO_TABLES)
+
+    def iter_construccion(self):
+        yield from self._iter_table_rows(self.CONSTRUCCION_TABLES)
 
     def identify(self, row: dict[str, object]) -> str | None:
         for field in self.IDENTIFIER_FIELDS:
@@ -130,49 +141,30 @@ class NovedadescoHelper:
 def _pos_22(value: object) -> str | None:
     if value in (None, ""):
         return None
-
     text = str(value).strip()
-
-    if len(text) < 22:
-        return None
-
-    return text[21]  # índice 21 = posición 22
+    return None if len(text) < 22 else text[21]
 
 def _pos_18(value: object) -> str | None:
     if value in (None, ""):
         return None
-
     text = str(value).strip()
-
-    if len(text) < 18:
-        return None
-
-    return text[17]  # índice 17 = posición 18
-
-
-def _pos_14(value: object) -> str | None:
-    if value in (None, ""):
-        return None
-
-    text = str(value).strip()
-
-    if len(text) < 14:
-        return None
-
-    return text[13]
-
-
-def _is_predio_nuevo_provisional(value: object) -> bool:
-    pos_18 = _pos_18(value)
-    pos_14 = _pos_14(value)
-    return bool((pos_18 and pos_18.isalpha()) or (pos_14 and pos_14.isalpha()))
+    return None if len(text) < 18 else text[17]
 
 def _is_predio_nuevo_pos_18(pos_18: str | None) -> bool:
-    if pos_18 in (None, ""):
+    # Las reglas 8.18 y 8.20 definen predio nuevo como A-Z en la posicion 18.
+    return bool(pos_18 and pos_18.isalpha())
+
+def _matricula_vacia(value: object) -> bool:
+    if value in (None, ""):
+        return True
+    text = str(value).strip()
+    if not text:
+        return True
+    try:
+        return float(text.replace(",", ".")) == 0
+    except Exception:
         return False
 
-    return pos_18 == "9" or pos_18.isalpha()
-    
     # --------------- reglas -------------------
 
 def _rule_8_1(dataset: DatasetReader) -> list[RuleIssue]:
@@ -212,7 +204,7 @@ def _rule_8_1(dataset: DatasetReader) -> list[RuleIssue]:
             ("matricula_inmobiliaria", "Matricula_Inmobiliaria"),
         )
 
-        if matricula in (None, "", "0"):
+        if _matricula_vacia(matricula):
             issues.append(
                 helper.make_issue(
                     predio,
@@ -267,12 +259,12 @@ def _rule_8_3(dataset: DatasetReader) -> list[RuleIssue]:
 
         numero_predial_predio = helper.get_field_value(
             predio,
-            ("numero_predial"),
+            ("numero_predial",),
         )
 
         numero_predial_novedad = helper.get_field_value(
             novedad,
-            ("numero_predial"),
+            ("numero_predial",),
         )
 
         pos_22_predio = _pos_22(numero_predial_predio)
@@ -340,7 +332,7 @@ def _rule_8_6(dataset: DatasetReader) -> list[RuleIssue]:
             ("matricula_inmobiliaria", "Matricula_Inmobiliaria"),
         )
 
-        if matricula in (None, "", "0"):
+        if _matricula_vacia(matricula):
             issues.append(
                 helper.make_issue(
                     predio,
@@ -395,12 +387,12 @@ def _rule_8_8(dataset: DatasetReader) -> list[RuleIssue]:
 
         numero_predial_predio = helper.get_field_value(
             predio,
-            ("numero_predial"),
+            ("numero_predial",),
         )
 
         numero_predial_novedad = helper.get_field_value(
             novedad,
-            ("numero_predial"),
+            ("numero_predial",),
         )
 
         pos_22_predio = _pos_22(numero_predial_predio)
@@ -473,11 +465,16 @@ def _rule_8_11(dataset: DatasetReader) -> list[RuleIssue]:
             ("numero_predial",),
         )
 
-        pos_18_predio = _pos_18(numero_predial_predio)
-        pos_14_predio = _pos_14(numero_predial_predio)
+        pos_18_novedad = _pos_18(numero_predial_novedad)
         pos_22_novedad = _pos_22(numero_predial_novedad)
 
-        predio_es_nuevo = _is_predio_nuevo_provisional(numero_predial_predio)
+        # 8.11: en la NOVEDAD, posicion 18 debe ser numerica y distinta de 9;
+        # posicion 22 debe ser distinta de 2.
+        predio_es_nuevo = (
+            pos_18_novedad is None
+            or not pos_18_novedad.isdigit()
+            or pos_18_novedad == "9"
+        )
         predio_es_informal = pos_22_novedad == "2"
 
         if predio_es_nuevo or predio_es_informal:
@@ -496,8 +493,7 @@ def _rule_8_11(dataset: DatasetReader) -> list[RuleIssue]:
                         "tipo_novedad": tipo_novedad,
                         "numero_predial_predio": numero_predial_predio,
                         "numero_predial_novedad": numero_predial_novedad,
-                        "pos_18_predio": pos_18_predio,
-                        "pos_14_predio": pos_14_predio,
+                        "pos_18_novedad": pos_18_novedad,
                         "pos_22_novedad": pos_22_novedad,
                     },
                 )
@@ -640,84 +636,51 @@ def _rule_8_14(dataset: DatasetReader) -> list[RuleIssue]:
     }
 
     predios_by_id: dict[str, dict[str, object]] = {}
-    novedades_por_predio: dict[str, int] = {}
     predios_con_terreno: set[str] = set()
+    predios_con_construccion: set[str] = set()
 
     for _, predio in helper.iter_predio():
-        predio_id = helper.get_field_value(predio, ("t_id", "TID", "id"))
+        predio_id = helper.get_field_value(predio, ("t_id", "TID", "id", "t_ili_tid"))
         if predio_id:
             predios_by_id[str(predio_id)] = predio
 
     for _, terreno in helper.iter_terreno():
-        predio_ref_terreno = helper.get_field_value(
-            terreno,
-            (
-                "arb_predio",
-                "predio",
-                "baunit",
-                "ilc_predio",
-                "ue_baunit",
-            ),
-        )
+        ref = helper.get_field_value(terreno, ("arb_predio", "predio", "baunit", "ilc_predio", "ue_baunit"))
+        if ref:
+            predios_con_terreno.add(str(ref))
 
-        if predio_ref_terreno:
-            predios_con_terreno.add(str(predio_ref_terreno))
-
-    for _, novedad in helper.iter_novedad_numero_predial():
-        predio_ref = helper.get_field_value(
-            novedad,
-            ("arb_predio_novedad_numero_predial",),
-        )
-
-        if predio_ref:
-            predio_ref_text = str(predio_ref)
-            novedades_por_predio[predio_ref_text] = (
-                novedades_por_predio.get(predio_ref_text, 0) + 1
-            )
+    for _, construccion in helper.iter_construccion():
+        ref = helper.get_field_value(construccion, ("arb_predio", "predio", "baunit", "ilc_predio", "ue_baunit"))
+        if ref:
+            predios_con_construccion.add(str(ref))
 
     for table_name, novedad in helper.iter_novedad_numero_predial():
         tipo_novedad = helper.get_field_value(novedad, ("tipo_novedad",))
-
         if not tipo_novedad or str(tipo_novedad) not in TIPOS_CANCELACION:
             continue
 
-        predio_ref = helper.get_field_value(
-            novedad,
-            ("arb_predio_novedad_numero_predial",),
-        )
-
+        predio_ref = helper.get_field_value(novedad, ("arb_predio_novedad_numero_predial",))
         predio = predios_by_id.get(str(predio_ref))
         if not predio:
             continue
 
         tiene_terreno = str(predio_ref) in predios_con_terreno
-        conteo_novedades = novedades_por_predio.get(str(predio_ref), 0)
+        tiene_construccion = str(predio_ref) in predios_con_construccion
 
-        if tiene_terreno or conteo_novedades > 1:
-            numero_predial_predio = helper.get_field_value(
+        if tiene_terreno or tiene_construccion:
+            issues.append(helper.make_issue(
                 predio,
-                ("numero_predial", "numero_predial_nacional"),
-            )
-
-            issues.append(
-                helper.make_issue(
-                    predio,
-                    rule_id="8.14",
-                    message=(
-                        "Los predios cancelados no deben tener información espacial."
-                    ),
-                    details={
-                        "tabla": "ARB_Predio",
-                        "tabla_terreno": "ARB_Terreno",
-                        "tabla_novedad": table_name,
-                        "predio_ref": predio_ref,
-                        "tipo_novedad": tipo_novedad,
-                        "numero_predial_predio": numero_predial_predio,
-                        "tiene_terreno": 1 if tiene_terreno else 0,
-                        "conteo_novedades": conteo_novedades,
-                    },
-                )
-            )
+                rule_id="8.14",
+                message="Los predios cancelados no deben tener informacion espacial.",
+                details={
+                    "tabla": "ARB_Predio",
+                    "tabla_novedad": table_name,
+                    "predio_ref": predio_ref,
+                    "tipo_novedad": tipo_novedad,
+                    "tiene_terreno": 1 if tiene_terreno else 0,
+                    "tiene_construccion": 1 if tiene_construccion else 0,
+                },
+            ))
 
     return issues
 
@@ -834,15 +797,10 @@ def _rule_8_16(dataset: DatasetReader) -> list[RuleIssue]:
         pos_18_novedad = _pos_18(numero_predial_novedad)
         pos_22_novedad = _pos_22(numero_predial_novedad)
 
-        es_predio_nuevo = (
-            pos_18_novedad is None
-            or not pos_18_novedad.isdigit()
-            or not ("0" <= pos_18_novedad <= "8")
-        )
-
+        posicion_18_invalida = pos_18_novedad is None or not pos_18_novedad.isdigit()
         es_predio_informal = pos_22_novedad == "2"
 
-        if es_predio_nuevo or es_predio_informal:
+        if posicion_18_invalida or es_predio_informal:
             issues.append(
                 helper.make_issue(
                     predio,
@@ -900,13 +858,8 @@ def _rule_8_18(dataset: DatasetReader) -> list[RuleIssue]:
 
         pos_18 = _pos_18(numero_predial_predio)
 
-        # ❌ condición de error (NO es predio nuevo)
-        es_predio_nuevo = (
-            pos_18 is not None and (
-                pos_18.isdigit() and pos_18 == "9"
-                or pos_18.isalpha()
-            )
-        )
+        # 8.18 exige expresamente una letra A-Z en la posicion 18.
+        es_predio_nuevo = bool(pos_18 and pos_18.isalpha())
 
         if not es_predio_nuevo:
             issues.append(
@@ -1041,7 +994,7 @@ def _rule_8_20(dataset: DatasetReader) -> list[RuleIssue]:
                     message=(
                         "Para predios con una novedad de tipo Predio nuevo, "
                         "el carácter en la posición 18 del número predial en "
-                        "predio y en la novedad debe ser una letra o el dígito 9."
+                        "predio y en la novedad debe ser una letra de A a Z."
                     ),
                     details={
                         "tabla": "ARB_Predio",
@@ -1207,7 +1160,7 @@ def _rule_8_26(dataset: DatasetReader) -> list[RuleIssue]:
         cancelacion = valores["cancelacion"]
         predionuevo = valores["predionuevo"]
 
-        if cancelacion + predionuevo <= 1:
+        if cancelacion == 0 or predionuevo == 0:
             continue
 
         table_name, novedad = muestra_por_numero[numero_predial_novedad]
@@ -1230,26 +1183,53 @@ def _rule_8_26(dataset: DatasetReader) -> list[RuleIssue]:
         )
 
     return issues
-    
+
+
+def _dedupe_issues(issues: list[RuleIssue]) -> list[RuleIssue]:
+    """Elimina solo reportes exactamente repetidos de una misma infracción.
+
+    Un mismo predio puede tener dos filas de novedad idénticas. Eso no convierte
+    una matrícula faltante, por ejemplo, en dos errores distintos. Se conservan
+    por separado los reportes cuyo mensaje, objeto o detalles sí sean diferentes.
+    """
+    unique: list[RuleIssue] = []
+    seen: set[tuple[str, str | None, str, str]] = set()
+    for issue in issues:
+        try:
+            details_key = json.dumps(issue.details or {}, sort_keys=True, ensure_ascii=False, default=str)
+        except Exception:
+            details_key = repr(issue.details)
+        key = (issue.rule_id, issue.object_ref, issue.message, details_key)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(issue)
+    return unique
+
+
+def _deduped(rule_function):
+    def wrapped(dataset: DatasetReader) -> list[RuleIssue]:
+        return _dedupe_issues(rule_function(dataset))
+    wrapped.__name__ = getattr(rule_function, "__name__", "wrapped_rule")
+    wrapped.__doc__ = getattr(rule_function, "__doc__", None)
+    return wrapped
+
+
 RULE_FUNCTIONS = {
-    "8.1": _rule_8_1,
-    "8.3": _rule_8_3,
-    "8.6": _rule_8_6,
-    "8.8": _rule_8_8,
-    "8.11": _rule_8_11,
-    "8.12": _rule_8_12,
-    "8.13": _rule_8_13,
-    "8.14": _rule_8_14,
-    "8.15": _rule_8_15,
-    "8.16": _rule_8_16,
-    "8.18": _rule_8_18,
-    "8.19": _rule_8_19,
-    "8.20": _rule_8_20,
-    "8.22": _rule_8_22,
-    "8.24": _rule_8_24,
-    "8.26": _rule_8_26,
-    
+    "8.1": _deduped(_rule_8_1),
+    "8.3": _deduped(_rule_8_3),
+    "8.6": _deduped(_rule_8_6),
+    "8.8": _deduped(_rule_8_8),
+    "8.11": _deduped(_rule_8_11),
+    "8.12": _deduped(_rule_8_12),
+    "8.13": _deduped(_rule_8_13),
+    "8.14": _deduped(_rule_8_14),
+    "8.15": _deduped(_rule_8_15),
+    "8.16": _deduped(_rule_8_16),
+    "8.18": _deduped(_rule_8_18),
+    "8.19": _deduped(_rule_8_19),
+    "8.20": _deduped(_rule_8_20),
+    "8.22": _deduped(_rule_8_22),
+    "8.24": _deduped(_rule_8_24),
+    "8.26": _deduped(_rule_8_26),
 }
-
-    
-

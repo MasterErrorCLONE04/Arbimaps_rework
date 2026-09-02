@@ -120,6 +120,10 @@ class TopologicoHelper:
     CONSTRUCCION_TABLES = (
         "ARB_Construccion",
         "arb_construccion",
+        "ARB Construccion",
+        "ARB Construcción",
+        "(ARB) Construccion",
+        "(ARB) Construcción",
         "Construccion",
         "Construcción",
     )
@@ -273,9 +277,9 @@ class TopologicoHelper:
             "16": "Dominio",
             "dominio": "Dominio",
         }
-        if field_norm in {"dtipo", "tipoderecho", "tipo"} and norm in derecho:
+        if field_norm in {"dtipo", "tipoderecho"} and norm in derecho:
             return derecho[norm]
-        if field_norm in {"dtipo", "tipoderecho", "tipo"}:
+        if field_norm in {"dtipo", "tipoderecho"}:
             for suffix, ilicode in (
                 ("posesion", "Posesion"),
                 ("ocupacion", "Ocupacion"),
@@ -870,7 +874,11 @@ def _unidad_predio_ref_fields() -> tuple[str, ...]:
 
 
 def _unidad_construccion_ref_fields() -> tuple[str, ...]:
-    return ("construccion", "Construccion", "construcción", "arb_construccion_unidadconstruccion")
+    return (
+        "construccion", "Construccion", "construcción", "Construcción",
+        "arb_construccion", "arb_construccion_unidadconstruccion",
+        "id_construccion", "construccion_id",
+    )
 
 
 def _direccion_predio_ref_fields() -> tuple[str, ...]:

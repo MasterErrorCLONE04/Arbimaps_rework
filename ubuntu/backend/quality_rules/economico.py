@@ -7,7 +7,8 @@ from .base import DatasetReader, RuleIssue
 COMPONENT_SLUG = "economico"
 
 DEFAULT_RULE_IDS = frozenset({
-    "4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "4.11", "4.12", "4.13", "4.14", "4.15",
+    "4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9",
+    "4.10", "4.11", "4.12", "4.13", "4.14", "4.15", "4.16", "4.17", "4.18",
 })
 
 
@@ -750,6 +751,10 @@ _COMERCIAL_TIPOLOGIA_EXCEPCIONES = {
 }
 
 
+def _tipologia_residencial_excepcion(value: object) -> bool:
+    return _tipologia_es_excepcion(value, _RESIDENCIAL_TIPOLOGIA_EXCEPCIONES)
+
+
 def _tipologia_residencial_valida(value: object) -> bool:
     if _is_empty(value):
         return True
@@ -757,7 +762,7 @@ def _tipologia_residencial_valida(value: object) -> bool:
     norm = _normalized_domain_text(value)
     return (
         _tipologia_categoria(value) == "Residencial"
-        or _tipologia_es_excepcion(value, _RESIDENCIAL_TIPOLOGIA_EXCEPCIONES)
+        or _tipologia_residencial_excepcion(value)
         or norm in _TIPOLOGIAS_RESIDENCIALES_QGIS_ANTERIOR
     )
 
@@ -867,10 +872,196 @@ def _to_float(value: object) -> float | None:
 
 
 def _novedad_es_cancelacion(value: object) -> bool:
-    if value in (None, ""):
+    if _is_empty(value):
         return False
+    norm = _normalized_domain_text(value)
+    return "cancelacion" in norm or "cancelacion" in norm
+# Puntajes de calificacion convencional. Se mantienen alineados con el
+# calculador de calificacion de edificaciones usado por el proyecto.
+def _score_norm(value: object) -> str:
+    return _normalized_domain_text(value)
 
-    return str(value).strip().startswith("Cancelacion")
+
+def _score_conservacion(value: object) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    v = _score_norm(value)
+    for key, pts in (("malo", 0), ("regular", 2), ("bueno", 4), ("excelente", 5)):
+        if key in v: return pts, True
+    return 0, False
+
+
+def _score_armazon(value: object, industrial_comercial: bool) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    v = _score_norm(value)
+    if "concretocuatro" in v or "concreto4" in v: return (22 if industrial_comercial else 6), True
+    if "concretohastatres" in v or "concretohasta3" in v: return (22 if industrial_comercial else 4), True
+    if "ladrillo" in v or "bloque" in v: return (12 if industrial_comercial else 2), True
+    if "prefabricado" in v: return (8 if industrial_comercial else 1), True
+    if "madera" in v: return (4 if industrial_comercial else 0), True
+    return 0, False
+
+
+def _score_muros(value: object) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    v = _score_norm(value)
+    if "materialesdedesecho" in v or "esterilla" in v: return 0, True
+    if any(x in v for x in ("bahareque", "adobe", "tapia")): return 1, True
+    if "concretoprefabricado" in v: return 3, True
+    if "madera" in v: return 2, True
+    if "bloque" in v or "ladrillo" in v: return 4, True
+    return 0, False
+
+
+def _score_cubierta(value: object) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    v = _score_norm(value)
+    if "placaimpermeabilizada" in v or "cubiertalujosa" in v or "ornamental" in v: return 16, True
+    if "azotea" in v or "aluminio" in v or "placasencilla" in v: return 13, True
+    if "cubiertasencilla" in v and ("eternit" in v or "tejadebarro" in v): return 9, True
+    if "entrepiso" in v or ("provisional" in v and "prefabricado" in v): return 6, True
+    if "zinc" in v or "eternitrustico" in v or "tejadebarro" in v: return 3, True
+    if "materialesdedesecho" in v or "telasasfalticas" in v: return 1, True
+    return 0, False
+
+
+def _score_fachada(value: object, industrial_comercial: bool) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    v = _score_norm(value).replace("fachada", "")
+    tabla = ({"pobre": 2, "sencilla": 4, "regular": 6, "buena": 8, "lujosa": 12}
+             if industrial_comercial else
+             {"pobre": 0, "sencilla": 2, "regular": 4, "buena": 6, "lujosa": 8})
+    for key, pts in tabla.items():
+        if key in v: return pts, True
+    return 0, False
+
+
+def _score_cubrimiento(value: object, industrial_comercial: bool) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    v = _score_norm(value)
+    if "sincubrimiento" in v: return 0, True
+    if "marmol" in v or "lujoso" in v or "otros" in v: return (7 if industrial_comercial else 4), True
+    if "madera" in v or "piedraornamental" in v: return (5 if industrial_comercial else 3), True
+    if "estuco" in v or "ceramica" in v or "papelfino" in v: return (3 if industrial_comercial else 2), True
+    if "panete" in v or "paniete" in v or "papelcomun" in v or "ladrilloprensado" in v: return (2 if industrial_comercial else 1), True
+    return 0, False
+
+
+def _score_piso(value: object, industrial_comercial: bool) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    v = _score_norm(value)
+    if "granopequeno" in v: return (11 if industrial_comercial else 8), True
+    if "retaldemarmol" in v or "otroslujosos" in v or ("marmol" in v and "granopequeno" not in v): return (13 if industrial_comercial else 9), True
+    if "parquet" in v or "paquet" in v or "alfombra" in v or "maderafina" in v: return (11 if industrial_comercial else 8), True
+    if any(x in v for x in ("tableta", "caucho", "cuacho", "acrilico", "granito", "baldosafina")): return (9 if industrial_comercial else 6), True
+    if "listonmachihembrado" in v: return (7 if industrial_comercial else 4), True
+    if "baldosacomun" in v or "tablon" in v or "ladrillo" in v: return (5 if industrial_comercial else 3), True
+    if "cemento" in v or "maderaburda" in v: return (3 if industrial_comercial else 2), True
+    if "tierrapisada" in v: return 0, True
+    return 0, False
+
+
+def _score_tamanio(value: object, objeto: str, comercial: bool) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    if comercial: return 0, True
+    v = _score_norm(value)
+    if (objeto == "banio" and ("sinbanio" in v or "sinbano" in v)) or (objeto == "cocina" and "sincocina" in v): return 0, True
+    if "pequen" in v: return 1, True
+    if "median" in v: return 2, True
+    if "grande" in v: return 3, True
+    return 0, False
+
+
+def _score_enchape(value: object, comercial: bool) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    if comercial: return 0, True
+    v = _score_norm(value)
+    if "sincubrimiento" in v: return 0, True
+    if "marmol" in v or "enchapelujoso" in v: return 5, True
+    if "ceramica" in v or "cristanac" in v or "granito" in v: return 4, True
+    if "decorado" in v or "papelfino" in v: return 3, True
+    if "unicolor" in v or "papelcomun" in v: return 2, True
+    if "panete" in v or "paniete" in v or "baldosa" in v or "cemento" in v: return 1, True
+    return 0, False
+
+
+def _score_mobiliario_banio(value: object, comercial: bool) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    v = _score_norm(value)
+    tabla = (("lujoso", 16), ("bueno", 9), ("regular", 6), ("sencillo", 3), ("pobre", 0)) if comercial else (("lujoso", 11), ("bueno", 9), ("regular", 6), ("sencillo", 3), ("pobre", 0))
+    for key, pts in tabla:
+        if key in v: return pts, True
+    return 0, False
+
+
+def _score_mobiliario_cocina(value: object, comercial: bool) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    v = _score_norm(value)
+    tabla = (("lujoso", 13), ("bueno", 9), ("regular", 6), ("sencillo", 3), ("pobre", 0)) if comercial else (("lujoso", 6), ("bueno", 4), ("regular", 3), ("sencillo", 2), ("pobre", 0))
+    for key, pts in tabla:
+        if key in v: return pts, True
+    return 0, False
+
+
+def _score_cercha(value: object) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    v = _score_norm(value)
+    if "metalicapesada" in v: return 34, True
+    if "metalicamediana" in v: return 22, True
+    if "metalicaliviana" in v: return 12, True
+    if "madera" in v: return 6, True
+    return 0, False
+
+
+def _score_altura(value: object) -> tuple[int, bool]:
+    if _is_empty(value): return 0, True
+    if isinstance(value, bool): return (6 if value else 0), True
+    v = _score_norm(value)
+    if v in {"1", "true", "si", "yes", "checked"} or "superiora6" in v: return 6, True
+    if v in {"0", "false", "no", "unchecked"}: return 0, True
+    return 0, False
+
+
+def _calcular_total_convencional(helper: EconomicoHelper, row: dict[str, object], tipo: str) -> tuple[int | None, list[str]]:
+    tipo_norm = _normalized_domain_text(tipo)
+    industrial = tipo_norm == "industrial"
+    comercial = tipo_norm == "comercial"
+    residencial = tipo_norm == "residencial"
+    if not (industrial or comercial or residencial):
+        return None, ["cc_tipo_calificar"]
+    ic = industrial or comercial
+    total = 0
+    desconocidos: list[str] = []
+
+    def add(campo: str, scorer, *args):
+        nonlocal total
+        valor = helper.get_field_value(row, (campo,))
+        puntos, conocido = scorer(valor, *args)
+        total += puntos
+        if not conocido and _is_not_empty(valor): desconocidos.append(campo)
+
+    add("cc_armazon", _score_armazon, ic)
+    add("cc_muros", _score_muros)
+    add("cc_cubierta", _score_cubierta)
+    add("cc_conservacion_estructura", _score_conservacion)
+    add("cc_fachada", _score_fachada, ic)
+    add("cc_cubrimiento_muros", _score_cubrimiento, ic)
+    add("cc_piso", _score_piso, ic)
+    add("cc_conservacion_acabados", _score_conservacion)
+    if industrial:
+        add("cc_cerchas_complemento_industria", _score_cercha)
+        add("cc_altura_cerchas_superior_6m", _score_altura)
+    else:
+        add("cc_tamanio_banio", _score_tamanio, "banio", comercial)
+        add("cc_enchape_banio", _score_enchape, comercial)
+        add("cc_mobiliario_banio", _score_mobiliario_banio, comercial)
+        add("cc_conservacion_banio", _score_conservacion)
+        add("cc_tamanio_cocina", _score_tamanio, "cocina", comercial)
+        add("cc_enchape_cocina", _score_enchape, comercial)
+        add("cc_mobiliario_cocina", _score_mobiliario_cocina, comercial)
+        add("cc_conservacion_cocina", _score_conservacion)
+    return total, desconocidos
+
+
 TIPO_CALIFICACION_FIELDS = (
     "tipo_calificacion",
     "Tipo_Calificacion",
@@ -930,75 +1121,65 @@ def _rule_4_1(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     for table_name, row, tipo_unidad, tipo_tipologia, relation_details in helper.iter_caracteristicas_tipologia():
+        _raw_metodo, _resolved_metodo, metodo = _get_tipo_calificacion_resuelto(helper, row)
+        if metodo and metodo != "Tipologia":
+            continue
         tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad, table_name=table_name)
         tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
+        if not _is_not_empty(tipo_tipologia_ilicode):
+            continue
 
-        if (
-            tipo_unidad_str == "Residencial"
-            and _is_not_empty(tipo_tipologia_ilicode)
-            and not _tipologia_residencial_valida(tipo_tipologia_ilicode)
-        ):
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="4.1",
-                    message=(
-                        "Cuando el tipo de unidad de construccion es Residencial, "
-                        "solo se permiten tipologias residenciales."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "tipo_unidad_construccion": tipo_unidad,
-                        "tipo_unidad_construccion_ilicode": tipo_unidad_str,
-                        "tipo_tipologia": tipo_tipologia,
-                        "tipo_tipologia_ilicode": tipo_tipologia_ilicode,
-                        **relation_details,
-                    },
-                )
-            )
+        message = None
+        if tipo_unidad_str == "Residencial" and not _tipologia_residencial_valida(tipo_tipologia_ilicode):
+            message = "Cuando el tipo de unidad de construccion es Residencial, solo se permiten tipologias residenciales."
+        elif tipo_unidad_str != "Residencial" and _tipologia_residencial_excepcion(tipo_tipologia_ilicode):
+            message = "Cuando la tipologia corresponde a una excepcion residencial de Conservacion o ED, el tipo de unidad de construccion debe ser Residencial."
 
+        if message:
+            issues.append(helper.make_issue(row, rule_id="4.1", message=message, details={
+                "tabla": table_name, "tipo_unidad_construccion": tipo_unidad,
+                "tipo_unidad_construccion_ilicode": tipo_unidad_str,
+                "tipo_tipologia": tipo_tipologia, "tipo_tipologia_ilicode": tipo_tipologia_ilicode,
+                **relation_details,
+            }))
     return issues
-
 
 def _rule_4_2(dataset: DatasetReader) -> list[RuleIssue]:
     helper = EconomicoHelper(dataset)
     issues: list[RuleIssue] = []
 
     for table_name, row, tipo_unidad, tipo_tipologia, relation_details in helper.iter_caracteristicas_tipologia():
+        _raw_metodo, _resolved_metodo, metodo = _get_tipo_calificacion_resuelto(helper, row)
+        if metodo and metodo != "Tipologia":
+            continue
         tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad, table_name=table_name)
         tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
-
         if not _is_not_empty(tipo_tipologia_ilicode):
             continue
 
+        message = None
         if tipo_unidad_str == "Comercial" and not _tipologia_comercial_valida(tipo_tipologia_ilicode):
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="4.2",
-                    message=(
-                        "Cuando el tipo de unidad de construccion es Comercial, "
-                        "solamente se pueden asociar tipologias comerciales."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "tipo_unidad_construccion": tipo_unidad,
-                        "tipo_unidad_construccion_ilicode": tipo_unidad_str,
-                        "tipo_tipologia": tipo_tipologia,
-                        "tipo_tipologia_ilicode": tipo_tipologia_ilicode,
-                        **relation_details,
-                    },
-                )
-            )
+            message = "Cuando el tipo de unidad de construccion es Comercial, solo se permiten tipologias comerciales y sus excepciones definidas."
+        elif tipo_unidad_str != "Comercial" and _tipologia_comercial_excepcion(tipo_tipologia_ilicode):
+            message = "Cuando la tipologia corresponde a una excepcion comercial de Conservacion o ED, el tipo de unidad de construccion debe ser Comercial."
 
+        if message:
+            issues.append(helper.make_issue(row, rule_id="4.2", message=message, details={
+                "tabla": table_name, "tipo_unidad_construccion": tipo_unidad,
+                "tipo_unidad_construccion_ilicode": tipo_unidad_str,
+                "tipo_tipologia": tipo_tipologia, "tipo_tipologia_ilicode": tipo_tipologia_ilicode,
+                **relation_details,
+            }))
     return issues
-
 
 def _rule_4_3(dataset: DatasetReader) -> list[RuleIssue]:
     helper = EconomicoHelper(dataset)
     issues: list[RuleIssue] = []
 
     for table_name, row, tipo_unidad, tipo_tipologia, relation_details in helper.iter_caracteristicas_tipologia():
+        _raw_metodo, _resolved_metodo, metodo = _get_tipo_calificacion_resuelto(helper, row)
+        if metodo and metodo != "Tipologia":
+            continue
         tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad, table_name=table_name)
         tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
 
@@ -1034,6 +1215,9 @@ def _rule_4_4(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     for table_name, row, tipo_unidad, tipo_tipologia, relation_details in helper.iter_caracteristicas_tipologia():
+        _raw_metodo, _resolved_metodo, metodo = _get_tipo_calificacion_resuelto(helper, row)
+        if metodo and metodo != "Tipologia":
+            continue
         tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad, table_name=table_name)
         tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
 
@@ -1084,6 +1268,9 @@ def _rule_4_5(dataset: DatasetReader) -> list[RuleIssue]:
     tipos_validos = {"Residencial", "Comercial", "Industrial", "Institucional", "Anexo"}
 
     for table_name, row in helper.iter_caracteristicas_unidad_construccion():
+        _raw_metodo, _resolved_metodo, metodo = _get_tipo_calificacion_resuelto(helper, row)
+        if metodo and metodo != "Convencional":
+            continue
         tipo_calificar = helper.get_field_value(
             row,
             ("cc_tipo_calificar", "tipo_calificar"),
@@ -1153,8 +1340,14 @@ def _rule_4_6(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     for table_name, row in helper.iter_caracteristicas_unidad_construccion():
-        tipo_calificar = helper.get_field_value(row, ("cc_tipo_calificar",))
+        _raw_metodo, _resolved_metodo, metodo = _get_tipo_calificacion_resuelto(helper, row)
+        if metodo and metodo != "Convencional":
+            continue
+        tipo_calificar = helper.get_field_value(row, ("cc_tipo_calificar", "tipo_calificar"))
         tipo_calificar_str = _tipo_calificar_ilicode(tipo_calificar)
+        if tipo_calificar_str not in {"Residencial", "Comercial", "Industrial", "Institucional", "Anexo"}:
+            tipo_unidad = helper.get_field_value(row, ("tipo_unidad_construccion",))
+            tipo_calificar_str = _unidad_construccion_tipo_ilicode(tipo_unidad, table_name=table_name)
 
         if tipo_calificar_str != "Residencial":
             continue
@@ -1236,8 +1429,14 @@ def _rule_4_7(dataset: DatasetReader) -> list[RuleIssue]:
     )
 
     for table_name, row in helper.iter_caracteristicas_unidad_construccion():
-        tipo_calificar = helper.get_field_value(row, ("cc_tipo_calificar",))
+        _raw_metodo, _resolved_metodo, metodo = _get_tipo_calificacion_resuelto(helper, row)
+        if metodo and metodo != "Convencional":
+            continue
+        tipo_calificar = helper.get_field_value(row, ("cc_tipo_calificar", "tipo_calificar"))
         tipo_calificar_str = _tipo_calificar_ilicode(tipo_calificar)
+        if tipo_calificar_str not in {"Residencial", "Comercial", "Industrial", "Institucional", "Anexo"}:
+            tipo_unidad = helper.get_field_value(row, ("tipo_unidad_construccion",))
+            tipo_calificar_str = _unidad_construccion_tipo_ilicode(tipo_unidad, table_name=table_name)
 
         if tipo_calificar_str != "Comercial":
             continue
@@ -1289,84 +1488,161 @@ def _rule_4_8(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     for table_name, row in helper.iter_caracteristicas_unidad_construccion():
+        _raw_cal, _resolved_cal, tipo_calificacion = _get_tipo_calificacion_resuelto(helper, row)
+        # 4.8 corresponde a la calificacion convencional. Si el modelo no trae
+        # Tipo_Calificacion, se aplica solo cuando existen campos CC diligenciados.
+        if tipo_calificacion and tipo_calificacion != "Convencional":
+            continue
+
         total_raw = helper.get_field_value(row, ("cc_total_calificacion", "total_calificacion"))
+        campos_cc = ("cc_armazon", "cc_muros", "cc_cubierta", "cc_conservacion_estructura", "cc_fachada",
+                     "cc_cubrimiento_muros", "cc_piso", "cc_conservacion_acabados", "cc_tamanio_banio",
+                     "cc_mobiliario_banio", "cc_tamanio_cocina", "cc_mobiliario_cocina",
+                     "cc_cerchas_complemento_industria")
+        if not tipo_calificacion and not any(_is_not_empty(helper.get_field_value(row, (f,))) for f in campos_cc) and _is_empty(total_raw):
+            continue
+
         total = _to_float(total_raw)
+        tipo_calificar = helper.get_field_value(row, ("cc_tipo_calificar", "tipo_calificar"))
+        tipo_puntaje = _tipo_calificar_ilicode(tipo_calificar)
+        if tipo_puntaje not in {"Residencial", "Comercial", "Industrial"}:
+            tipo_unidad = helper.get_field_value(row, ("tipo_unidad_construccion",))
+            tipo_puntaje = _unidad_construccion_tipo_ilicode(tipo_unidad, table_name=table_name)
 
-        if total is not None and total > 100:
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="4.8",
-                    message="El total de la calificación no puede ser mayor a 100.",
-                    details={
-                        "tabla": table_name,
-                        "total_calificacion": total_raw,
-                    },
-                )
-            )
+        esperado, desconocidos = _calcular_total_convencional(helper, row, tipo_puntaje)
+        message = None
+        if total is None:
+            message = "El total de la calificacion convencional debe ser un valor numerico mayor que cero."
+        elif total <= 0:
+            message = "El total de la calificacion convencional debe ser diferente de cero."
+        elif total > 100:
+            message = "El total de la calificacion no puede ser mayor a 100."
+        elif esperado is not None and not desconocidos and abs(total - esperado) > 1e-9:
+            message = "El total de la calificacion no coincide con la sumatoria de los puntos de los atributos diligenciados."
 
+        if message:
+            issues.append(helper.make_issue(row, rule_id="4.8", message=message, details={
+                "tabla": table_name, "tipo_calificar": tipo_calificar, "tipo_calificar_ilicode": tipo_puntaje,
+                "total_calificacion": total_raw, "total_calculado": esperado,
+                "campos_sin_equivalencia_puntaje": desconocidos,
+            }))
     return issues
 
-#def _rule_4_9(dataset: DatasetReader) -> list[RuleIssue]:
+
+def _row_identifier_aliases(helper: EconomicoHelper, row: dict[str, object]) -> set[str]:
+    aliases: set[str] = set()
+    for field in helper.IDENTIFIER_FIELDS:
+        value = helper.get_field_value(row, (field,))
+        if _is_not_empty(value):
+            aliases.add(str(value).strip())
+    return aliases
+
+
+def _rule_4_9(dataset: DatasetReader) -> list[RuleIssue]:
+    """En una base final ILC, cada predio no cancelado debe tener EstructuraAvaluo."""
     helper = EconomicoHelper(dataset)
+    predios = list(helper._iter_table_rows(("ILC_Predio", "ilc_predio")))
+    if not predios:
+        return []  # No es contexto de base catastral final ILC.
+
+    avaluos = list(helper._iter_table_rows(("ILC_EstructuraAvaluo", "ilc_estructuraavaluo")))
+    avaluo_refs: set[str] = set()
+    for _, row in avaluos:
+        ref = helper.get_field_value(row, ("ilc_predio_avaluo", "predio", "predio_ref", "ilc_predio", "predio_id"))
+        if _is_not_empty(ref):
+            avaluo_refs.add(str(ref).strip())
+
+    # El lector XTF normalmente crea la referencia. Para un único predio/avalúo
+    # legacy sin FK explícita se puede asociar sin ambigüedad.
+    if not avaluo_refs and len(predios) == 1 and avaluos:
+        avaluo_refs.update(_row_identifier_aliases(helper, predios[0][1]))
+
+    cancelados: set[str] = set()
+    datos = list(helper._iter_table_rows((
+        "ILC_DatosAdicionalesLevantamientoCatastral",
+        "ilc_datosadicionaleslevantamientocatastral",
+    )))
+    for _, row in datos:
+        novedad = helper.get_field_value(row, (
+            "novedad_numeros_prediales", "Novedad_Numeros_Prediales",
+            "novedad_numero_predial", "novedad_numeros_prediales_tipo",
+        ))
+        if not _novedad_es_cancelacion(novedad):
+            continue
+        ref = helper.get_field_value(row, ("predio", "ilc_predio", "predio_ref", "ilc_predio_datos_adicionales", "predio_id"))
+        if _is_not_empty(ref):
+            cancelados.add(str(ref).strip())
+        elif len(predios) == 1:
+            cancelados.update(_row_identifier_aliases(helper, predios[0][1]))
+
     issues: list[RuleIssue] = []
-
-    predios_cancelados: set[str] = set()
-
-    for _, row in helper._iter_table_rows((
-        "ARB_NovedadNumeroPredialValor",
-        "arb_novedadnumeropredialvalor",
-    )):
-        predio_ref = helper.get_field_value(
-            row,
-            (
-                "cca_predio_novedad_numero_predial",
-                "predio",
-            ),
-        )
-        tipo_novedad = helper.get_field_value(row, ("tipo_novedad",))
-
-        if predio_ref and _novedad_es_cancelacion(tipo_novedad):
-            predios_cancelados.add(str(predio_ref))
-
-    for table_name, row in helper._iter_table_rows((
-        "ARB_Predio",
-        "arb_predio",
-    )):
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        numero_predial = helper.get_field_value(row, ("numero_predial",))
-        avaluo_catastral = helper.get_field_value(
-            row,
-            (
-                "avaluo_catastral",
-                "avaluo",
-                "valor_avaluo",
-            ),
-        )
-
-        if (
-            predio_id
-            and str(predio_id) not in predios_cancelados
-            and not _is_not_empty(avaluo_catastral)
-        ):
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="4.9",
-                    message=(
-                        "En la base catastral final se debe registrar el avalúo "
-                        "del predio, exceptuando los predios cancelados."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "predio_id": predio_id,
-                        "numero_predial": numero_predial,
-                        "avaluo_catastral": avaluo_catastral,
-                    },
-                )
-            )
-
+    for table_name, row in predios:
+        aliases = _row_identifier_aliases(helper, row)
+        novedad_predio = helper.get_field_value(row, ("novedad_numeros_prediales", "Novedad_Numeros_Prediales"))
+        if _novedad_es_cancelacion(novedad_predio):
+            cancelados.update(aliases)
+        if aliases & cancelados:
+            continue
+        if not aliases:
+            continue
+        if not (aliases & avaluo_refs):
+            issues.append(helper.make_issue(row, rule_id="4.9", message=(
+                "En la base catastral final, el predio no cancelado debe tener un registro en ILC_EstructuraAvaluo."
+            ), details={"tabla": table_name, "identificadores_predio": sorted(aliases)}))
     return issues
+
+
+def _iter_estructura_avaluo(helper: EconomicoHelper):
+    yield from helper._iter_table_rows(("ILC_EstructuraAvaluo", "ilc_estructuraavaluo"))
+
+
+def _avaluo_values(helper: EconomicoHelper, row: dict[str, object]) -> dict[str, float | None]:
+    fields = {
+        "valor_comercial": ("valor_comercial", "Valor_Comercial"),
+        "valor_comercial_terreno": ("valor_comercial_terreno", "Valor_Comercial_Terreno"),
+        "valor_comercial_unidades": ("valor_comercial_total_unidadesconstruccion", "Valor_Comercial_Total_UnidadesConstruccion", "valor_comercial_total_unidades_construccion"),
+        "valor_catastral": ("valor_catastral", "Valor_Catastral"),
+        "valor_catastral_terreno": ("valor_catastral_terreno", "Valor_Catastral_Terreno"),
+        "valor_catastral_unidades": ("valor_catastral_total_unidadesconstruccion", "Valor_Catastral_Total_UnidadesConstruccion", "valor_catastral_total_unidades_construccion"),
+    }
+    return {key: _to_float(helper.get_field_value(row, aliases)) for key, aliases in fields.items()}
+
+
+def _rule_4_16(dataset: DatasetReader) -> list[RuleIssue]:
+    helper = EconomicoHelper(dataset); issues: list[RuleIssue] = []
+    for table_name, row in _iter_estructura_avaluo(helper):
+        v = _avaluo_values(helper, row); total=v["valor_comercial"]; terreno=v["valor_comercial_terreno"]; unidades=v["valor_comercial_unidades"]
+        if total is None or terreno is None or unidades is None or total <= 0 or abs(total - (terreno + unidades)) > 0.01:
+            issues.append(helper.make_issue(row, rule_id="4.16", message="El avalúo comercial debe ser mayor que cero y corresponder a terreno + total de unidades de construcción.", details={"tabla":table_name, **v}))
+    return issues
+
+
+def _rule_4_17(dataset: DatasetReader) -> list[RuleIssue]:
+    helper = EconomicoHelper(dataset); issues: list[RuleIssue] = []
+    for table_name, row in _iter_estructura_avaluo(helper):
+        v = _avaluo_values(helper, row); total=v["valor_catastral"]; terreno=v["valor_catastral_terreno"]; unidades=v["valor_catastral_unidades"]
+        if total is None or terreno is None or unidades is None or total <= 0 or abs(total - (terreno + unidades)) > 0.01:
+            issues.append(helper.make_issue(row, rule_id="4.17", message="El avalúo catastral debe ser mayor que cero y corresponder a terreno + total de unidades de construcción.", details={"tabla":table_name, **v}))
+    return issues
+
+
+def _rule_4_18(dataset: DatasetReader) -> list[RuleIssue]:
+    helper = EconomicoHelper(dataset); issues: list[RuleIssue] = []
+    for table_name, row in _iter_estructura_avaluo(helper):
+        v = _avaluo_values(helper, row)
+        if any(value is None or value <= 0 for value in v.values()):
+            bad = True
+        else:
+            bad = not (
+                v["valor_comercial"] > v["valor_catastral"]
+                and v["valor_catastral"] > 0.60 * v["valor_comercial"]
+                and v["valor_comercial_terreno"] > v["valor_catastral_terreno"]
+                and v["valor_comercial_unidades"] > v["valor_catastral_unidades"]
+            )
+        if bad:
+            issues.append(helper.make_issue(row, rule_id="4.18", message="Los avalúos comerciales deben ser mayores a los catastrales, el catastral debe superar el 60% del comercial y todos los valores deben ser mayores que cero.", details={"tabla":table_name, **v}))
+    return issues
+
 
 def _rule_4_10(dataset: DatasetReader) -> list[RuleIssue]:
     """
@@ -1378,6 +1654,9 @@ def _rule_4_10(dataset: DatasetReader) -> list[RuleIssue]:
     issues: list[RuleIssue] = []
 
     for table_name, row, tipo_unidad, tipo_tipologia, relation_details in helper.iter_caracteristicas_tipologia():
+        _raw_metodo, _resolved_metodo, metodo = _get_tipo_calificacion_resuelto(helper, row)
+        if metodo and metodo != "Tipologia":
+            continue
         tipo_unidad_str = _unidad_construccion_tipo_ilicode(tipo_unidad, table_name=table_name)
         tipo_tipologia_ilicode = _tipologia_ilicode(tipo_tipologia)
 
@@ -1644,11 +1923,14 @@ RULE_FUNCTIONS = {
     "4.6": _rule_4_6,
     "4.7": _rule_4_7,
     "4.8": _rule_4_8,
-    #"4.9": _rule_4_9,
+    "4.9": _rule_4_9,
     "4.10": _rule_4_10,
     "4.11": _rule_4_11,
     "4.12": _rule_4_12,
     "4.13": _rule_4_13,
     "4.14": _rule_4_14,
     "4.15": _rule_4_15,
+    "4.16": _rule_4_16,
+    "4.17": _rule_4_17,
+    "4.18": _rule_4_18,
 }

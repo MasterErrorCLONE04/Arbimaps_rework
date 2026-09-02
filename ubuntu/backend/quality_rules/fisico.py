@@ -4,6 +4,7 @@ from shapely.geometry import shape
 from .base import DatasetReader, RuleIssue
 import xml.etree.ElementTree as ET
 from shapely.geometry import Polygon
+from shapely.ops import unary_union
 
 COMPONENT_SLUG = "fisico"
 
@@ -293,7 +294,7 @@ def _area_unidad(row: dict[str, object], helper: FisicoHelper) -> float:
         try:
             geom = feature.geometry()
             if geom is not None and not geom.isEmpty():
-                return round(float(geom.area()), 1)
+                return float(geom.area())
         except Exception:
             pass
 
@@ -317,14 +318,14 @@ def _area_unidad(row: dict[str, object], helper: FisicoHelper) -> float:
     # QgsGeometry guardado directamente
     try:
         if hasattr(geom_raw, "area") and callable(geom_raw.area):
-            return round(float(geom_raw.area()), 1)
+            return float(geom_raw.area())
     except Exception:
         pass
 
     # Shapely geometry
     try:
         if hasattr(geom_raw, "area") and not callable(geom_raw.area):
-            return round(float(geom_raw.area), 1)
+            return float(geom_raw.area)
     except Exception:
         pass
 
@@ -332,12 +333,12 @@ def _area_unidad(row: dict[str, object], helper: FisicoHelper) -> float:
 
     try:
         if text.upper().startswith(("POLYGON", "MULTIPOLYGON")):
-            return round(float(wkt.loads(text).area), 1)
+            return float(wkt.loads(text).area)
 
         if text.startswith("<"):
-            return round(_area_from_xtf_geometry(text), 1)
+            return float(_area_from_xtf_geometry(text))
 
-        return round(float(wkb.loads(bytes.fromhex(text)).area), 1)
+        return float(wkb.loads(bytes.fromhex(text)).area)
 
     except Exception:
         return 0.0
@@ -419,39 +420,435 @@ def _build_ilicode_map(dataset: DatasetReader, table_name: str) -> dict[str, str
     return mapping
 
 def _area_terreno(terreno: dict[str, object], helper: FisicoHelper) -> float | None:
-    geometria = helper.get_field_value(
-        terreno,
-        (
-            "geometria",
-            "geometry",
-            "geom",
-            "wkb_geometry",
-            "SHAPE",
-            "shape",
-        ),
-    )
+    """Área geométrica exacta del terreno, sin redondear antes de aplicar la regla 3.5.
 
-    if geometria is None:
+    La regla compara contra 2 m², por lo que redondear 1.99 a 2.0 produciría un
+    falso negativo. Se aceptan geometrías QGIS/Shapely, WKT, WKB hexadecimal y
+    el XML geométrico nativo del XTF.
+    """
+    feature = terreno.get("__qgis_feature__")
+    if feature is not None:
+        try:
+            geom = feature.geometry()
+            if geom is not None and not geom.isEmpty():
+                return float(geom.area())
+        except Exception:
+            pass
+
+    geometria = None
+    wanted = {
+        "geometria", "geometry", "geom", "thegeom", "wkbgeometry", "shape"
+    }
+    for key, value in terreno.items():
+        if helper._normalize_key(str(key)) in wanted:
+            geometria = value
+            break
+
+    if geometria is None or (isinstance(geometria, str) and geometria.strip() == ""):
         return None
 
     try:
-        if hasattr(geometria, "area"):
+        if hasattr(geometria, "area") and callable(geometria.area):
+            return float(geometria.area())
+    except Exception:
+        pass
+
+    try:
+        if hasattr(geometria, "area") and not callable(geometria.area):
             return float(geometria.area)
+    except Exception:
+        pass
 
-        if isinstance(geometria, dict):
-            from shapely.geometry import shape
-
+    if isinstance(geometria, dict):
+        try:
             return float(shape(geometria).area)
+        except Exception:
+            return None
 
-        if isinstance(geometria, str):
-            from shapely import wkt
+    text = str(geometria).strip()
+    if not text:
+        return None
 
-            return float(wkt.loads(geometria).area)
-
+    try:
+        if text.upper().startswith(("POLYGON", "MULTIPOLYGON")):
+            return float(wkt.loads(text).area)
+        if text.startswith("<"):
+            return float(_area_from_xtf_geometry(text))
+        return float(wkb.loads(bytes.fromhex(text)).area)
     except Exception:
         return None
 
-    return None
+
+def _is_empty_value(value: object) -> bool:
+    return value is None or (isinstance(value, str) and value.strip() == "")
+
+
+def _all_row_keys(helper: FisicoHelper, row: dict[str, object], candidates: tuple[str, ...]) -> set[str]:
+    wanted = {helper._normalize_key(name) for name in candidates}
+    values: set[str] = set()
+    for key, value in row.items():
+        if helper._normalize_key(str(key)) in wanted and not _is_empty_value(value):
+            values.add(str(value).strip())
+    return values
+
+
+def _index_rows_by_fields(helper: FisicoHelper, rows, fields):
+    index = {}
+    for table_name, row in rows:
+        for key in _all_row_keys(helper, row, fields):
+            index.setdefault(key, []).append((table_name, row))
+    return index
+
+
+def _unique_rows(index, refs):
+    matches = []; seen = set()
+    for ref in refs:
+        for item in index.get(ref, []):
+            rid = id(item[1])
+            if rid not in seen:
+                seen.add(rid); matches.append(item)
+    return matches if len(matches) == 1 else []
+
+
+def _iter_caracteristicas_con_predio(dataset: DatasetReader):
+    """Relación real: Predio <- Construcción <- Unidad -> Característica.
+
+    Se admiten vínculos directos y ID_Grupo=NPN solo como respaldos no ambiguos.
+    """
+    helper = FisicoHelper(dataset)
+    predios = list(helper.iter_predios())
+    construcciones = list(helper._iter_table_rows(("ARB_Construccion", "arb_construccion")))
+    unidades = list(helper.iter_unidades_construccion())
+    caracteristicas = list(helper._iter_table_rows(("ARB_CaracteristicasUnidadConstruccion", "arb_caracteristicasunidadconstruccion")))
+    predio_id_index = _index_rows_by_fields(helper, predios, ("TID", "t_ili_tid", "t_id", "id"))
+    predio_npn_index = _index_rows_by_fields(helper, predios, ("numero_predial", "Numero_Predial", "Numero_Predial_Nacional"))
+    construccion_index = _index_rows_by_fields(helper, construcciones, ("TID", "t_ili_tid", "t_id", "id"))
+    caracteristica_index = _index_rows_by_fields(helper, caracteristicas, ("TID", "t_ili_tid", "t_id", "id"))
+    yielded = set()
+    for unidad_table, unidad in unidades:
+        car_refs = _all_row_keys(helper, unidad, ("caracteristicasunidadconstruccion", "caracteristicas_unidad_construccion"))
+        car_matches = _unique_rows(caracteristica_index, car_refs)
+        if not car_matches:
+            continue
+        caracteristica_table, caracteristica = car_matches[0]
+        predio_matches = _unique_rows(predio_id_index, _all_row_keys(helper, unidad, ("predio", "arb_predio_unidadconstruccion", "arb_predio")))
+        if not predio_matches:
+            cons_matches = _unique_rows(construccion_index, _all_row_keys(helper, unidad, ("construccion", "arb_construccion_unidadconstruccion", "arb_construccion")))
+            if cons_matches:
+                _, construccion = cons_matches[0]
+                predio_matches = _unique_rows(predio_id_index, _all_row_keys(helper, construccion, ("predio", "arb_predio_construccion", "arb_predio")))
+        if not predio_matches:
+            predio_matches = _unique_rows(predio_npn_index, _all_row_keys(helper, caracteristica, ("id_grupo", "ID_Grupo", "numero_predial")))
+        if not predio_matches:
+            continue
+        predio_table, predio = predio_matches[0]
+        key = (id(predio), id(unidad), id(caracteristica))
+        if key in yielded:
+            continue
+        yielded.add(key)
+        yield predio_table, predio, unidad_table, unidad, caracteristica_table, caracteristica
+
+
+
+def _geometry_shape(row: dict[str, object], helper: FisicoHelper):
+    """Devuelve una geometría Shapely sin alterar su precisión.
+
+    Se usa únicamente para resolver excepciones espaciales de las reglas
+    3.13-3.16. Acepta la geometría nativa del XTF, WKT/WKB, GeoJSON/dict y
+    objetos Shapely. Si no se puede interpretar, devuelve None.
+    """
+    raw = None
+    wanted = {"geometria", "geometry", "geom", "thegeom", "wkbgeometry", "shape"}
+    for key, value in row.items():
+        if helper._normalize_key(str(key)) in wanted:
+            raw = value
+            break
+    if raw is None or (isinstance(raw, str) and raw.strip() == ""):
+        return None
+
+    # Shapely u otro objeto geométrico compatible.
+    try:
+        if hasattr(raw, "geom_type") and hasattr(raw, "intersection"):
+            return raw
+    except Exception:
+        pass
+
+    if isinstance(raw, dict):
+        try:
+            return shape(raw)
+        except Exception:
+            return None
+
+    text = str(raw).strip()
+    if not text:
+        return None
+    try:
+        if text.upper().startswith(("POLYGON", "MULTIPOLYGON")):
+            return wkt.loads(text)
+        if not text.startswith("<"):
+            return wkb.loads(bytes.fromhex(text))
+    except Exception:
+        return None
+
+    # Geometría XML INTERLIS/ISO19107 del XTF. Cada SURFACE puede tener
+    # varias BOUNDARY; la primera es exterior y las siguientes son huecos.
+    try:
+        root = ET.fromstring(text)
+        surfaces = [node for node in root.iter() if _clean_xml_tag(node.tag) == "surface"]
+        if not surfaces:
+            surfaces = [root]
+        polygons = []
+        for surface in surfaces:
+            rings = []
+            boundaries = [node for node in surface.iter() if _clean_xml_tag(node.tag) == "boundary"]
+            if not boundaries:
+                boundaries = [surface]
+            for boundary in boundaries:
+                ring = []
+                for node in boundary.iter():
+                    if _clean_xml_tag(node.tag) != "coord":
+                        continue
+                    coords = {}
+                    for child in node:
+                        if child.text:
+                            coords[_clean_xml_tag(child.tag)] = child.text.strip()
+                    if coords.get("c1") is not None and coords.get("c2") is not None:
+                        ring.append((float(coords["c1"]), float(coords["c2"])))
+                if len(ring) >= 3:
+                    if ring[0] != ring[-1]:
+                        ring.append(ring[0])
+                    rings.append(ring)
+            if rings:
+                poly = Polygon(rings[0], rings[1:])
+                if not poly.is_valid:
+                    poly = poly.buffer(0)
+                if not poly.is_empty:
+                    polygons.append(poly)
+        if not polygons:
+            return None
+        return polygons[0] if len(polygons) == 1 else unary_union(polygons)
+    except Exception:
+        return None
+
+
+def _predios_exentos_por_unidades_informales(dataset: DatasetReader) -> set[str]:
+    """Predios formales sin unidad propia cubiertos por unidades informales.
+
+    La excepción textual de 3.13-3.16 solo es aplicable cuando puede
+    demostrarse espacialmente: una unidad asociada a un predio Informal tiene
+    intersección de área positiva con el terreno del predio formal. No se usa
+    una mera existencia global de predios informales porque eso eximiría
+    predios no relacionados y generaría falsos negativos.
+    """
+    helper = FisicoHelper(dataset)
+    predios = list(helper.iter_predios())
+    predio_id_index = _index_rows_by_fields(
+        helper, predios, ("TID", "t_ili_tid", "t_id", "id", "id_operacion")
+    )
+
+    terrenos_por_predio: dict[int, list[object]] = {}
+    for _, terreno in helper._iter_table_rows(("ARB_Terreno", "arb_terreno", "Terreno", "terreno")):
+        predio_matches = _unique_rows(
+            predio_id_index,
+            _all_row_keys(helper, terreno, ("predio", "arb_predio", "id_predio", "Id_Predio")),
+        )
+        if not predio_matches:
+            continue
+        _, predio = predio_matches[0]
+        geom = _geometry_shape(terreno, helper)
+        if geom is not None:
+            terrenos_por_predio.setdefault(id(predio), []).append(geom)
+
+    unidades_informales = []
+    seen_units = set()
+    for _, predio, _, unidad, _, _ in _iter_caracteristicas_con_predio(dataset):
+        condicion_raw = helper.get_field_value(predio, ("condicion_predio", "Condicion_Predio"))
+        if _condicion_predio_ilicode(condicion_raw) != "Informal":
+            continue
+        uid = helper.identify(unidad) or str(id(unidad))
+        if uid in seen_units:
+            continue
+        seen_units.add(uid)
+        geom = _geometry_shape(unidad, helper)
+        if geom is not None:
+            unidades_informales.append(geom)
+
+    if not unidades_informales:
+        return set()
+
+    exentos: set[str] = set()
+    for _, predio in predios:
+        condicion_raw = helper.get_field_value(predio, ("condicion_predio", "Condicion_Predio"))
+        if _condicion_predio_ilicode(condicion_raw) == "Informal":
+            continue
+        terrenos = terrenos_por_predio.get(id(predio), [])
+        if not terrenos:
+            continue
+        encontrado = False
+        for terreno_geom in terrenos:
+            for unidad_geom in unidades_informales:
+                try:
+                    inter = terreno_geom.intersection(unidad_geom)
+                    if not inter.is_empty and float(inter.area) > 1e-8:
+                        encontrado = True
+                        break
+                except Exception:
+                    continue
+            if encontrado:
+                break
+        if encontrado:
+            key = helper.identify(predio)
+            if key:
+                exentos.add(key)
+    return exentos
+
+
+def _dominio_uso_unidad(value: object) -> str:
+    if _is_empty_value(value):
+        return ""
+    prefix = str(value).strip().split(".", 1)[0]
+    return prefix if prefix in {"Anexo", "Comercial", "Industrial", "Institucional", "Residencial"} else ""
+
+
+def _clasificacion_predominancia(helper: FisicoHelper, caracteristica: dict[str, object]):
+    tipo_raw = helper.get_field_value(caracteristica, ("tipo_unidad_construccion",))
+    tipo = _tipo_unidad_construccion_ilicode(tipo_raw)
+    uso = helper.get_field_value(caracteristica, ("uso",))
+    dominio_uso = _dominio_uso_unidad(uso)
+    return dominio_uso or tipo or "Sin_clasificar", {
+        "tipo_unidad_construccion": tipo_raw, "tipo_unidad_construccion_ilicode": tipo,
+        "uso": uso, "dominio_uso": dominio_uso,
+    }
+
+
+def _validar_destinacion_vs_tipo_predominante(dataset: DatasetReader, *, rule_id: str, destinaciones_aplican: set[str], tipo_requerido: str, mensaje_existencia: str, mensaje_predominancia: str) -> list[RuleIssue]:
+    helper = FisicoHelper(dataset)
+    issues: list[RuleIssue] = []
+    datos_por_predio: dict[str, dict[str, object]] = {}
+
+    # Registrar primero TODOS los predios a los que aplica la destinación.
+    # Así un predio sin ninguna unidad no queda invisible para la regla.
+    for predio_table, predio in helper.iter_predios():
+        destinacion_raw = helper.get_field_value(predio, ("destinacion_economica", "Destinacion_Economica"))
+        destinacion = _destinacion_economica_ilicode(destinacion_raw)
+        if destinacion not in destinaciones_aplican:
+            continue
+        predio_key = helper.identify(predio) or str(id(predio))
+        datos_por_predio[predio_key] = {
+            "predio": predio,
+            "tabla": predio_table,
+            "destinacion": destinacion_raw,
+            "destinacion_str": destinacion,
+            "areas": {},
+            "tiene": False,
+            "clasificaciones": [],
+            "cantidad_unidades": 0,
+        }
+
+    # Agregar las unidades correctamente relacionadas Predio <- Construcción <- Unidad.
+    unidades_vistas: dict[str, set[str]] = {}
+    for _, predio, unidad_table, unidad, caracteristica_table, caracteristica in _iter_caracteristicas_con_predio(dataset):
+        predio_key = helper.identify(predio) or str(id(predio))
+        datos = datos_por_predio.get(predio_key)
+        if datos is None:
+            continue
+        uid = helper.identify(unidad) or str(id(unidad))
+        vistos = unidades_vistas.setdefault(predio_key, set())
+        if uid not in vistos:
+            vistos.add(uid)
+            datos["cantidad_unidades"] = int(datos["cantidad_unidades"]) + 1
+
+        clasificacion, detalles = _clasificacion_predominancia(helper, caracteristica)
+        area = _area_unidad(unidad, helper)
+        if area <= 0:
+            area = _to_float(helper.get_field_value(caracteristica, ("area_construida",))) or 0.0
+        areas = datos["areas"]
+        assert isinstance(areas, dict)
+        areas[clasificacion] = float(areas.get(clasificacion, 0.0)) + area
+        datos["tiene"] = bool(datos["tiene"]) or clasificacion == tipo_requerido
+        clasificaciones = datos["clasificaciones"]
+        assert isinstance(clasificaciones, list)
+        clasificaciones.append({
+            "tabla": caracteristica_table,
+            "unidad_tabla": unidad_table,
+            "area": area,
+            "clasificacion": clasificacion,
+            **detalles,
+        })
+
+    # Excepción descrita por las reglas: predio formal sin unidad propia cuando
+    # existen unidades de predios informales espacialmente sobre su terreno.
+    exentos_informales = _predios_exentos_por_unidades_informales(dataset)
+
+    for predio_key, datos in datos_por_predio.items():
+        predio = datos["predio"]
+        assert isinstance(predio, dict)
+        numero_predial = helper.get_field_value(predio, ("numero_predial", "Numero_Predial"))
+
+        if int(datos["cantidad_unidades"]) == 0:
+            condicion = _condicion_predio_ilicode(
+                helper.get_field_value(predio, ("condicion_predio", "Condicion_Predio"))
+            )
+            if condicion != "Informal" and predio_key in exentos_informales:
+                continue
+            issues.append(helper.make_issue(
+                predio,
+                rule_id=rule_id,
+                message=mensaje_existencia,
+                details={
+                    "tabla": datos["tabla"],
+                    "numero_predial": numero_predial,
+                    "destinacion_economica": datos["destinacion"],
+                    "destinacion_economica_ilicode": datos["destinacion_str"],
+                    "validacion": f"existencia_tipo_{tipo_requerido.lower()}",
+                    "motivo": "predio_sin_unidades_construccion",
+                    "clasificaciones": [],
+                },
+            ))
+            continue
+
+        if not bool(datos["tiene"]):
+            issues.append(helper.make_issue(
+                predio,
+                rule_id=rule_id,
+                message=mensaje_existencia,
+                details={
+                    "tabla": datos["tabla"],
+                    "numero_predial": numero_predial,
+                    "destinacion_economica": datos["destinacion"],
+                    "destinacion_economica_ilicode": datos["destinacion_str"],
+                    "validacion": f"existencia_tipo_{tipo_requerido.lower()}",
+                    "clasificaciones": datos["clasificaciones"],
+                },
+            ))
+            continue
+
+        areas = datos["areas"]
+        assert isinstance(areas, dict)
+        area_req = float(areas.get(tipo_requerido, 0.0))
+        otras = {k: float(v) for k, v in areas.items() if k != tipo_requerido}
+        if otras:
+            tipo_mayor, area_mayor = max(otras.items(), key=lambda x: x[1])
+            if area_mayor > area_req + 0.1:
+                issues.append(helper.make_issue(
+                    predio,
+                    rule_id=rule_id,
+                    message=mensaje_predominancia,
+                    details={
+                        "tabla": datos["tabla"],
+                        "numero_predial": numero_predial,
+                        "destinacion_economica": datos["destinacion"],
+                        "destinacion_economica_ilicode": datos["destinacion_str"],
+                        "tipo_predominante": tipo_mayor,
+                        "area_tipo_requerido": area_req,
+                        "area_tipo_predominante": area_mayor,
+                        "areas_por_tipo": areas,
+                        "validacion": f"predominancia_area_{tipo_requerido.lower()}",
+                        "clasificaciones": datos["clasificaciones"],
+                    },
+                ))
+    return issues
+
 # -------------------- Reglas --------------------
 
 def _rule_3_1(dataset: DatasetReader) -> list[RuleIssue]:
@@ -565,243 +962,72 @@ def _rule_3_1(dataset: DatasetReader) -> list[RuleIssue]:
 def _rule_3_2(dataset: DatasetReader) -> list[RuleIssue]:
     helper = FisicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
-    caracteristicas_by_id: dict[str, dict[str, object]] = {}
-
-    for table_name, row in helper._iter_table_rows((
-        "ARB_CaracteristicasUnidadConstruccion",
-        "arb_caracteristicasunidadconstruccion",
-    )):
-        caracteristica_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if caracteristica_id:
-            caracteristicas_by_id[str(caracteristica_id)] = row
-
     condiciones_ph_condominio = {
-        "PH.Matriz",
-        "PH.Unidad_Predial",
-        "Condominio.Matriz",
-        "Condominio.Unidad_Predial",
+        "PH.Matriz", "PH.Unidad_Predial", "Condominio.Matriz", "Condominio.Unidad_Predial",
     }
-
-    tipos_convencionales = {
-        "Residencial",
-        "Comercial",
-        "Industrial",
-        "Institucional",
-    }
-
-    for table_name, row in helper.iter_unidades_construccion():
-        predio_ref = helper.get_field_value(row, ("predio",))
-        caracteristica_ref = helper.get_field_value(
-            row,
-            ("caracteristicasunidadconstruccion",),
-        )
-
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
-        caracteristica_row = (
-            caracteristicas_by_id.get(str(caracteristica_ref))
-            if caracteristica_ref
-            else None
-        )
-
-        if not predio_row or not caracteristica_row:
-            continue
-
-        condicion_predio = helper.get_field_value(
-            predio_row,
-            ("condicion_predio", "Condicion_Predio"),
-        )
-        condicion_predio_str = _condicion_predio_ilicode(condicion_predio)
-
-        tipo_unidad = helper.get_field_value(
-            caracteristica_row,
-            ("tipo_unidad_construccion",),
-        )
-        tipo_unidad_str = _tipo_unidad_construccion_ilicode(tipo_unidad)
-
-        uso = helper.get_field_value(caracteristica_row, ("uso",))
-
-        if (
-            condicion_predio_str in condiciones_ph_condominio
-            and tipo_unidad_str in tipos_convencionales
-            and not _uso_unidad_es_ph_o_deposito_locker(uso)
-        ):
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="3.2",
-                    message=(
-                        "Toda unidad de construcción asociada a un predio con condición "
-                        "PH o Condominio debe relacionar usos establecidos específicamente "
-                        "para PH o Depósitos_Lockers."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "predio_ref": predio_ref,
-                        "condicion_predio": condicion_predio,
-                        "condicion_predio_ilicode": condicion_predio_str,
-                        "tipo_unidad_construccion": tipo_unidad,
-                        "tipo_unidad_construccion_ilicode": tipo_unidad_str,
-                        "uso": uso,
-                    },
-                )
-            )
-
+    tipos_convencionales = {"Residencial", "Comercial", "Industrial", "Institucional"}
+    for _, predio, unidad_table, unidad, caracteristica_table, caracteristica in _iter_caracteristicas_con_predio(dataset):
+        condicion_raw = helper.get_field_value(predio, ("condicion_predio", "Condicion_Predio"))
+        condicion = _condicion_predio_ilicode(condicion_raw)
+        tipo_raw = helper.get_field_value(caracteristica, ("tipo_unidad_construccion",))
+        tipo = _tipo_unidad_construccion_ilicode(tipo_raw)
+        uso = helper.get_field_value(caracteristica, ("uso",))
+        if condicion in condiciones_ph_condominio and tipo in tipos_convencionales and not _uso_unidad_es_ph_o_deposito_locker(uso):
+            issues.append(helper.make_issue(
+                caracteristica, rule_id="3.2",
+                message=("Toda unidad de construcción asociada a un predio con condición PH o Condominio "
+                         "debe relacionar usos establecidos específicamente para PH o Depósitos_Lockers."),
+                details={"tabla": caracteristica_table, "unidad_tabla": unidad_table,
+                         "condicion_predio": condicion_raw, "condicion_predio_ilicode": condicion,
+                         "tipo_unidad_construccion": tipo_raw, "tipo_unidad_construccion_ilicode": tipo, "uso": uso},
+            ))
     return issues
 
 def _rule_3_3(dataset: DatasetReader) -> list[RuleIssue]:
     helper = FisicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper.iter_predios():
-        predio_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = row
-
-    caracteristicas_by_id: dict[str, dict[str, object]] = {}
-
-    for _, row in helper._iter_table_rows((
-        "ARB_CaracteristicasUnidadConstruccion",
-        "arb_caracteristicasunidadconstruccion",
-    )):
-        caracteristica_id = helper.get_field_value(row, ("TID", "t_id", "id"))
-        if caracteristica_id:
-            caracteristicas_by_id[str(caracteristica_id)] = row
-
     condiciones_ph_condominio = {
-        "PH.Matriz",
-        "PH.Unidad_Predial",
-        "Condominio.Matriz",
-        "Condominio.Unidad_Predial",
+        "PH.Matriz", "PH.Unidad_Predial", "Condominio.Matriz", "Condominio.Unidad_Predial",
     }
-
-    tipos_convencionales = {
-        "Residencial",
-        "Comercial",
-        "Industrial",
-        "Institucional",
-    }
-
-    for table_name, row in helper.iter_unidades_construccion():
-        predio_ref = helper.get_field_value(row, ("predio",))
-        caracteristica_ref = helper.get_field_value(
-            row,
-            ("caracteristicasunidadconstruccion",),
-        )
-
-        predio_row = predios_by_id.get(str(predio_ref)) if predio_ref else None
-        caracteristica_row = (
-            caracteristicas_by_id.get(str(caracteristica_ref))
-            if caracteristica_ref
-            else None
-        )
-
-        if not predio_row or not caracteristica_row:
+    tipos_convencionales = {"Residencial", "Comercial", "Industrial", "Institucional"}
+    for _, predio, unidad_table, unidad, caracteristica_table, caracteristica in _iter_caracteristicas_con_predio(dataset):
+        condicion_raw = helper.get_field_value(predio, ("condicion_predio", "Condicion_Predio"))
+        condicion = _condicion_predio_ilicode(condicion_raw)
+        if not condicion:
             continue
-
-        condicion_predio = helper.get_field_value(
-            predio_row,
-            ("condicion_predio", "Condicion_Predio"),
-        )
-        condicion_predio_str = _condicion_predio_ilicode(condicion_predio)
-
-        tipo_unidad = helper.get_field_value(
-            caracteristica_row,
-            ("tipo_unidad_construccion",),
-        )
-        tipo_unidad_str = _tipo_unidad_construccion_ilicode(tipo_unidad)
-
-        uso = helper.get_field_value(caracteristica_row, ("uso",))
-
-        if (
-            condicion_predio_str not in condiciones_ph_condominio
-            and tipo_unidad_str in tipos_convencionales
-            and _uso_unidad_es_ph(uso)
-        ):
-            issues.append(
-                helper.make_issue(
-                    row,
-                    rule_id="3.3",
-                    message=(
-                        "Toda unidad de construcción asociada a un predio con condición "
-                        "diferente a PH o Condominio no debe relacionar usos de PH."
-                    ),
-                    details={
-                        "tabla": table_name,
-                        "predio_ref": predio_ref,
-                        "condicion_predio": condicion_predio,
-                        "condicion_predio_ilicode": condicion_predio_str,
-                        "tipo_unidad_construccion": tipo_unidad,
-                        "tipo_unidad_construccion_ilicode": tipo_unidad_str,
-                        "uso": uso,
-                    },
-                )
-            )
-
+        tipo_raw = helper.get_field_value(caracteristica, ("tipo_unidad_construccion",))
+        tipo = _tipo_unidad_construccion_ilicode(tipo_raw)
+        uso = helper.get_field_value(caracteristica, ("uso",))
+        if condicion not in condiciones_ph_condominio and tipo in tipos_convencionales and _uso_unidad_es_ph(uso):
+            issues.append(helper.make_issue(
+                caracteristica, rule_id="3.3",
+                message=("Toda unidad de construcción asociada a un predio con condición diferente a PH "
+                         "o Condominio no debe relacionar usos de PH."),
+                details={"tabla": caracteristica_table, "unidad_tabla": unidad_table,
+                         "condicion_predio": condicion_raw, "condicion_predio_ilicode": condicion,
+                         "tipo_unidad_construccion": tipo_raw, "tipo_unidad_construccion_ilicode": tipo, "uso": uso},
+            ))
     return issues
-
-#def _rule_3_4(dataset: DatasetReader) -> list[RuleIssue]:
-    #sin defenir
-    return []
 
 def _rule_3_5(dataset: DatasetReader) -> list[RuleIssue]:
-    """
-    Regla: No debe haber polígonos de terreno menores a 2 m².
-    """
+    """No debe haber polígonos de terreno menores a 2 m²."""
     helper = FisicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    for _, terreno in helper._iter_table_rows((
-        "ARB_Terreno",
-        "arb_terreno",
-        "Terreno",
-        "terreno",
-    )):
-        terreno_id = helper.get_field_value(
-            terreno,
-            ("TID", "t_id", "id", "identificador"),
-        )
-
-        area_terreno = _area_terreno(terreno, helper)
-
-        if area_terreno is None:
+    for table_name, terreno in helper._iter_table_rows(("ARB_Terreno", "arb_terreno", "Terreno", "terreno")):
+        area = _area_terreno(terreno, helper)
+        if area is None:
             continue
-
-        area_terreno_calculada = round(area_terreno, 2)
-
-        if area_terreno_calculada < 2:
-            issues.append(
-                helper.make_issue(
-                    terreno,
-                    rule_id="3.5",
-                    message=(
-                        "Error en área de terreno: no debe haber polígonos "
-                        f"de terreno menores a 2 m². Área calculada: "
-                        f"{area_terreno_calculada} m²."
-                    ),
-                    details={
-                        "tabla": "ARB_Terreno",
-                        "terreno_id": terreno_id,
-                        "area_calculada": area_terreno_calculada,
-                        "area_minima_permitida": 2,
-                    },
-                )
-            )
-
+        area_calculada = round(area, 2)
+        if area_calculada < 2:
+            issues.append(helper.make_issue(
+                terreno, rule_id="3.5",
+                message=("Error en área de terreno: no debe haber polígonos de terreno menores a 2 m². "
+                         f"Área calculada: {area_calculada} m²."),
+                details={"tabla": table_name,
+                         "terreno_id": helper.get_field_value(terreno, ("TID", "t_id", "id", "identificador", "etiqueta")),
+                         "area_calculada": area_calculada, "area_minima_permitida": 2},
+            ))
     return issues
-
-#def _rule_3_6(dataset: DatasetReader) -> list[RuleIssue]:
-    #sin defenir
-    return []
 
 def _rule_3_7(dataset: DatasetReader) -> list[RuleIssue]:
     return _validar_uso_por_tipo_unidad(
@@ -869,707 +1095,33 @@ def _rule_3_12(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 def _rule_3_13(dataset: DatasetReader) -> list[RuleIssue]:
-    helper = FisicoHelper(dataset)
-    issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-    caracteristicas_by_id: dict[str, dict[str, object]] = {}
-    unidades_por_predio: dict[str, list[dict[str, object]]] = {}
-
-    for _, predio in helper.iter_predios():
-        predio_id = helper.get_field_value(predio, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = predio
-
-    for _, caracteristica in helper._iter_table_rows((
-        "ARB_CaracteristicasUnidadConstruccion",
-        "arb_caracteristicasunidadconstruccion",
-    )):
-        caracteristica_id = helper.get_field_value(
-            caracteristica,
-            ("TID", "t_id", "id"),
-        )
-        if caracteristica_id:
-            caracteristicas_by_id[str(caracteristica_id)] = caracteristica
-
-    for _, unidad in helper.iter_unidades_construccion():
-        predio_ref = helper.get_field_value(unidad, ("predio",))
-        if predio_ref:
-            unidades_por_predio.setdefault(str(predio_ref), []).append(unidad)
-
-    for predio_id, predio in predios_by_id.items():
-        destinacion = helper.get_field_value(predio, ("destinacion_economica",))
-        destinacion_str = _destinacion_economica_ilicode(destinacion)
-
-        if destinacion_str != "Habitacional":
-            continue
-
-        unidades = unidades_por_predio.get(str(predio_id), [])
-
-        # Si el predio no tiene unidades, no se valida.
-        if not unidades:
-            continue
-
-        caracteristicas_del_predio: list[dict[str, object]] = []
-        areas_por_tipo: dict[str, float] = {}
-        tiene_residencial = False
-
-        for unidad in unidades:
-            caracteristica_ref = helper.get_field_value(
-                unidad,
-                ("caracteristicasunidadconstruccion",),
-            )
-
-            caracteristica = (
-                caracteristicas_by_id.get(str(caracteristica_ref))
-                if caracteristica_ref
-                else None
-            )
-
-            if not caracteristica:
-                continue
-
-            caracteristicas_del_predio.append(caracteristica)
-
-            tipo_unidad = helper.get_field_value(
-                caracteristica,
-                ("tipo_unidad_construccion",),
-            )
-            tipo_unidad_str = _tipo_unidad_construccion_ilicode(tipo_unidad)
-
-            if tipo_unidad_str == "Residencial":
-                tiene_residencial = True
-
-            area = _area_unidad(unidad, helper)
-
-            if area == 0:
-                area = _area_unidad(caracteristica, helper)
-
-            areas_por_tipo[tipo_unidad_str] = (
-                areas_por_tipo.get(tipo_unidad_str, 0.0) + area
-            )
-
-        if not caracteristicas_del_predio:
-            continue
-
-        numero_predial = helper.get_field_value(
-            predio,
-            ("numero_predial", "Numero_Predial"),
-        )
-
-        if not tiene_residencial:
-            for caracteristica in caracteristicas_del_predio:
-                issues.append(
-                    helper.make_issue(
-                        caracteristica,
-                        rule_id="3.13",
-                        message=(
-                            "El predio con destinación económica Habitacional "
-                            "debe tener al menos una unidad de construcción "
-                            "con característica de tipo Residencial."
-                        ),
-                        details={
-                            "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                            "numero_predial": numero_predial,
-                            "destinacion_economica": destinacion,
-                            "destinacion_economica_ilicode": destinacion_str,
-                            "validacion": "existencia_tipo_residencial",
-                        },
-                    )
-                )
-            continue
-
-        tipo_predominante = max(
-            areas_por_tipo.items(),
-            key=lambda item: item[1],
-        )[0]
-
-        if tipo_predominante != "Residencial":
-            for caracteristica in caracteristicas_del_predio:
-                issues.append(
-                    helper.make_issue(
-                        caracteristica,
-                        rule_id="3.13",
-                        message=(
-                            "El predio con destinación económica Habitacional "
-                            "tiene unidad de construcción Residencial, pero esta "
-                            "no es predominante en área frente a las demás."
-                        ),
-                        details={
-                            "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                            "numero_predial": numero_predial,
-                            "destinacion_economica": destinacion,
-                            "destinacion_economica_ilicode": destinacion_str,
-                            "tipo_predominante": tipo_predominante,
-                            "areas_por_tipo": areas_por_tipo,
-                            "validacion": "predominancia_area_residencial",
-                        },
-                    )
-                )
-
-    return issues
+    return _validar_destinacion_vs_tipo_predominante(
+        dataset, rule_id="3.13", destinaciones_aplican={"Habitacional"}, tipo_requerido="Residencial",
+        mensaje_existencia="El predio con destinación económica Habitacional debe tener al menos una unidad de construcción con característica de tipo Residencial.",
+        mensaje_predominancia="El predio con destinación económica Habitacional tiene unidad de construcción Residencial, pero esta no es predominante en área frente a las demás.",
+    )
 
 def _rule_3_14(dataset: DatasetReader) -> list[RuleIssue]:
-    helper = FisicoHelper(dataset)
-    issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-    caracteristicas_by_id: dict[str, dict[str, object]] = {}
-    unidades_por_predio: dict[str, list[dict[str, object]]] = {}
-
-    for _, predio in helper.iter_predios():
-        predio_id = helper.get_field_value(predio, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = predio
-
-    for _, caracteristica in helper._iter_table_rows((
-        "ARB_CaracteristicasUnidadConstruccion",
-        "arb_caracteristicasunidadconstruccion",
-    )):
-        caracteristica_id = helper.get_field_value(caracteristica, ("TID", "t_id", "id"))
-        if caracteristica_id:
-            caracteristicas_by_id[str(caracteristica_id)] = caracteristica
-
-    for _, unidad in helper.iter_unidades_construccion():
-        predio_ref = helper.get_field_value(unidad, ("predio",))
-        if predio_ref:
-            unidades_por_predio.setdefault(str(predio_ref), []).append(unidad)
-
-    for predio_id, predio in predios_by_id.items():
-        destinacion = helper.get_field_value(predio, ("destinacion_economica",))
-        destinacion_str = _destinacion_economica_ilicode(destinacion)
-
-        if destinacion_str != "Comercial":
-            continue
-
-        unidades = unidades_por_predio.get(str(predio_id), [])
-
-        if not unidades:
-            continue
-
-        caracteristicas_del_predio: list[dict[str, object]] = []
-        areas_por_tipo: dict[str, float] = {}
-        tiene_comercial = False
-
-        for unidad in unidades:
-            caracteristica_ref = helper.get_field_value(
-                unidad,
-                ("caracteristicasunidadconstruccion",),
-            )
-
-            caracteristica = (
-                caracteristicas_by_id.get(str(caracteristica_ref))
-                if caracteristica_ref
-                else None
-            )
-
-            if not caracteristica:
-                continue
-
-            caracteristicas_del_predio.append(caracteristica)
-
-            tipo_unidad = helper.get_field_value(
-                caracteristica,
-                ("tipo_unidad_construccion",),
-            )
-            tipo_unidad_str = _tipo_unidad_construccion_ilicode(tipo_unidad)
-
-            if tipo_unidad_str == "Comercial":
-                tiene_comercial = True
-
-            area = _area_unidad(unidad, helper)
-
-            if area == 0:
-                area = _area_unidad(caracteristica, helper)
-
-            areas_por_tipo[tipo_unidad_str] = (
-                areas_por_tipo.get(tipo_unidad_str, 0.0) + area
-            )
-
-        if not caracteristicas_del_predio:
-            continue
-
-        numero_predial = helper.get_field_value(
-            predio,
-            ("numero_predial", "Numero_Predial"),
-        )
-
-        if not tiene_comercial:
-            for caracteristica in caracteristicas_del_predio:
-                issues.append(
-                    helper.make_issue(
-                        caracteristica,
-                        rule_id="3.14",
-                        message=(
-                            "El predio con destinación económica Comercial "
-                            "debe tener al menos una unidad de construcción "
-                            "con característica de tipo Comercial."
-                        ),
-                        details={
-                            "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                            "numero_predial": numero_predial,
-                            "destinacion_economica": destinacion,
-                            "destinacion_economica_ilicode": destinacion_str,
-                            "validacion": "existencia_tipo_comercial",
-                        },
-                    )
-                )
-            continue
-
-        tipo_predominante = max(
-            areas_por_tipo.items(),
-            key=lambda item: item[1],
-        )[0]
-
-        if tipo_predominante != "Comercial":
-            for caracteristica in caracteristicas_del_predio:
-                issues.append(
-                    helper.make_issue(
-                        caracteristica,
-                        rule_id="3.14",
-                        message=(
-                            "El predio con destinación económica Comercial "
-                            "tiene unidad de construcción Comercial, pero esta "
-                            "no es predominante en área frente a las demás."
-                        ),
-                        details={
-                            "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                            "numero_predial": numero_predial,
-                            "destinacion_economica": destinacion,
-                            "destinacion_economica_ilicode": destinacion_str,
-                            "tipo_predominante": tipo_predominante,
-                            "areas_por_tipo": areas_por_tipo,
-                            "validacion": "predominancia_area_comercial",
-                        },
-                    )
-                )
-
-    return issues
+    return _validar_destinacion_vs_tipo_predominante(
+        dataset, rule_id="3.14", destinaciones_aplican={"Comercial"}, tipo_requerido="Comercial",
+        mensaje_existencia="El predio con destinación económica Comercial debe tener al menos una unidad de construcción con característica de tipo Comercial.",
+        mensaje_predominancia="El predio con destinación económica Comercial tiene unidad de construcción Comercial, pero esta no es predominante en área frente a las demás.",
+    )
 
 def _rule_3_15(dataset: DatasetReader) -> list[RuleIssue]:
-    helper = FisicoHelper(dataset)
-    issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-    caracteristicas_by_id: dict[str, dict[str, object]] = {}
-    unidades_por_predio: dict[str, list[dict[str, object]]] = {}
-
-    for _, predio in helper.iter_predios():
-        predio_id = helper.get_field_value(predio, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = predio
-
-    for _, caracteristica in helper._iter_table_rows((
-        "ARB_CaracteristicasUnidadConstruccion",
-        "arb_caracteristicasunidadconstruccion",
-    )):
-        caracteristica_id = helper.get_field_value(caracteristica, ("TID", "t_id", "id"))
-        if caracteristica_id:
-            caracteristicas_by_id[str(caracteristica_id)] = caracteristica
-
-    for _, unidad in helper.iter_unidades_construccion():
-        predio_ref = helper.get_field_value(unidad, ("predio",))
-        if predio_ref:
-            unidades_por_predio.setdefault(str(predio_ref), []).append(unidad)
-
-    for predio_id, predio in predios_by_id.items():
-        destinacion = helper.get_field_value(predio, ("destinacion_economica",))
-        destinacion_str = _destinacion_economica_ilicode(destinacion)
-
-        if destinacion_str != "Industrial":
-            continue
-
-        unidades = unidades_por_predio.get(str(predio_id), [])
-
-        if not unidades:
-            continue
-
-        caracteristicas_del_predio: list[dict[str, object]] = []
-        areas_por_tipo: dict[str, float] = {}
-        tiene_industrial = False
-
-        for unidad in unidades:
-            caracteristica_ref = helper.get_field_value(
-                unidad,
-                ("caracteristicasunidadconstruccion",),
-            )
-
-            caracteristica = (
-                caracteristicas_by_id.get(str(caracteristica_ref))
-                if caracteristica_ref
-                else None
-            )
-
-            if not caracteristica:
-                continue
-
-            caracteristicas_del_predio.append(caracteristica)
-
-            tipo_unidad = helper.get_field_value(
-                caracteristica,
-                ("tipo_unidad_construccion",),
-            )
-            tipo_unidad_str = _tipo_unidad_construccion_ilicode(tipo_unidad)
-
-            if tipo_unidad_str == "Industrial":
-                tiene_industrial = True
-
-            area = _area_unidad(unidad, helper)
-
-            if area == 0:
-                area = _area_unidad(caracteristica, helper)
-
-            areas_por_tipo[tipo_unidad_str] = (
-                areas_por_tipo.get(tipo_unidad_str, 0.0) + area
-            )
-
-        if not caracteristicas_del_predio:
-            continue
-
-        numero_predial = helper.get_field_value(
-            predio,
-            ("numero_predial", "Numero_Predial"),
-        )
-
-        if not tiene_industrial:
-            for caracteristica in caracteristicas_del_predio:
-                issues.append(
-                    helper.make_issue(
-                        caracteristica,
-                        rule_id="3.15",
-                        message=(
-                            "El predio con destinación económica Industrial "
-                            "debe tener al menos una unidad de construcción "
-                            "con característica de tipo Industrial."
-                        ),
-                        details={
-                            "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                            "numero_predial": numero_predial,
-                            "destinacion_economica": destinacion,
-                            "destinacion_economica_ilicode": destinacion_str,
-                            "validacion": "existencia_tipo_industrial",
-                        },
-                    )
-                )
-            continue
-
-        tipo_predominante = max(
-            areas_por_tipo.items(),
-            key=lambda item: item[1],
-        )[0]
-
-        if tipo_predominante != "Industrial":
-            for caracteristica in caracteristicas_del_predio:
-                issues.append(
-                    helper.make_issue(
-                        caracteristica,
-                        rule_id="3.15",
-                        message=(
-                            "El predio con destinación económica Industrial "
-                            "tiene unidad de construcción Industrial, pero esta "
-                            "no es predominante en área frente a las demás."
-                        ),
-                        details={
-                            "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                            "numero_predial": numero_predial,
-                            "destinacion_economica": destinacion,
-                            "destinacion_economica_ilicode": destinacion_str,
-                            "tipo_predominante": tipo_predominante,
-                            "areas_por_tipo": areas_por_tipo,
-                            "validacion": "predominancia_area_industrial",
-                        },
-                    )
-                )
-
-    return issues
+    return _validar_destinacion_vs_tipo_predominante(
+        dataset, rule_id="3.15", destinaciones_aplican={"Industrial"}, tipo_requerido="Industrial",
+        mensaje_existencia="El predio con destinación económica Industrial debe tener al menos una unidad de construcción con característica de tipo Industrial.",
+        mensaje_predominancia="El predio con destinación económica Industrial tiene unidad de construcción Industrial, pero esta no es predominante en área frente a las demás.",
+    )
 
 def _rule_3_16(dataset: DatasetReader) -> list[RuleIssue]:
-    helper = FisicoHelper(dataset)
-    issues: list[RuleIssue] = []
+    return _validar_destinacion_vs_tipo_predominante(
+        dataset, rule_id="3.16", destinaciones_aplican={"Institucional", "Cultural", "Educativo", "Religioso"}, tipo_requerido="Institucional",
+        mensaje_existencia="El predio con destinación económica Institucional, Cultural, Educativo o Religioso debe tener al menos una unidad de construcción con característica de tipo Institucional.",
+        mensaje_predominancia="El predio con destinación económica Institucional, Cultural, Educativo o Religioso tiene unidad de construcción Institucional, pero esta no es predominante en área frente a las demás.",
+    )
 
-    predios_by_id: dict[str, dict[str, object]] = {}
-    caracteristicas_by_id: dict[str, dict[str, object]] = {}
-    unidades_por_predio: dict[str, list[dict[str, object]]] = {}
-
-    for _, predio in helper.iter_predios():
-        predio_id = helper.get_field_value(predio, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = predio
-
-    for _, caracteristica in helper._iter_table_rows((
-        "ARB_CaracteristicasUnidadConstruccion",
-        "arb_caracteristicasunidadconstruccion",
-    )):
-        caracteristica_id = helper.get_field_value(caracteristica, ("TID", "t_id", "id"))
-        if caracteristica_id:
-            caracteristicas_by_id[str(caracteristica_id)] = caracteristica
-
-    for _, unidad in helper.iter_unidades_construccion():
-        predio_ref = helper.get_field_value(unidad, ("predio",))
-        if predio_ref:
-            unidades_por_predio.setdefault(str(predio_ref), []).append(unidad)
-
-    destinaciones_institucionales = {
-        "Institucional",
-        "Cultural",
-        "Educativo",
-        "Religioso",
-    }
-
-    for predio_id, predio in predios_by_id.items():
-        destinacion = helper.get_field_value(predio, ("destinacion_economica",))
-        destinacion_str = _destinacion_economica_ilicode(destinacion)
-
-        if destinacion_str not in destinaciones_institucionales:
-            continue
-
-        unidades = unidades_por_predio.get(str(predio_id), [])
-
-        if not unidades:
-            continue
-
-        caracteristicas_del_predio: list[dict[str, object]] = []
-        areas_por_tipo: dict[str, float] = {}
-        tiene_institucional = False
-
-        for unidad in unidades:
-            caracteristica_ref = helper.get_field_value(
-                unidad,
-                ("caracteristicasunidadconstruccion",),
-            )
-
-            caracteristica = (
-                caracteristicas_by_id.get(str(caracteristica_ref))
-                if caracteristica_ref
-                else None
-            )
-
-            if not caracteristica:
-                continue
-
-            caracteristicas_del_predio.append(caracteristica)
-
-            tipo_unidad = helper.get_field_value(
-                caracteristica,
-                ("tipo_unidad_construccion",),
-            )
-            tipo_unidad_str = _tipo_unidad_construccion_ilicode(tipo_unidad)
-
-            if tipo_unidad_str == "Institucional":
-                tiene_institucional = True
-
-            area = _area_unidad(unidad, helper)
-
-            if area == 0:
-                area = _area_unidad(caracteristica, helper)
-
-            areas_por_tipo[tipo_unidad_str] = (
-                areas_por_tipo.get(tipo_unidad_str, 0.0) + area
-            )
-
-        if not caracteristicas_del_predio:
-            continue
-
-        numero_predial = helper.get_field_value(
-            predio,
-            ("numero_predial", "Numero_Predial"),
-        )
-
-        if not tiene_institucional:
-            for caracteristica in caracteristicas_del_predio:
-                issues.append(
-                    helper.make_issue(
-                        caracteristica,
-                        rule_id="3.16",
-                        message=(
-                            "El predio con destinación económica Institucional, Cultural, "
-                            "Educativo o Religioso debe tener al menos una unidad de "
-                            "construcción con característica de tipo Institucional."
-                        ),
-                        details={
-                            "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                            "numero_predial": numero_predial,
-                            "destinacion_economica": destinacion,
-                            "destinacion_economica_ilicode": destinacion_str,
-                            "validacion": "existencia_tipo_institucional",
-                        },
-                    )
-                )
-            continue
-
-        tipo_predominante = max(
-            areas_por_tipo.items(),
-            key=lambda item: item[1],
-        )[0]
-
-        if tipo_predominante != "Institucional":
-            for caracteristica in caracteristicas_del_predio:
-                issues.append(
-                    helper.make_issue(
-                        caracteristica,
-                        rule_id="3.16",
-                        message=(
-                            "El predio con destinación económica Institucional, Cultural, "
-                            "Educativo o Religioso tiene unidad de construcción Institucional, "
-                            "pero esta no es predominante en área frente a las demás."
-                        ),
-                        details={
-                            "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                            "numero_predial": numero_predial,
-                            "destinacion_economica": destinacion,
-                            "destinacion_economica_ilicode": destinacion_str,
-                            "tipo_predominante": tipo_predominante,
-                            "areas_por_tipo": areas_por_tipo,
-                            "validacion": "predominancia_area_institucional",
-                        },
-                    )
-                )
-
-    return issues
-
-def _rule_3_16(dataset: DatasetReader) -> list[RuleIssue]:
-    helper = FisicoHelper(dataset)
-    issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-    caracteristicas_by_id: dict[str, dict[str, object]] = {}
-    unidades_por_predio: dict[str, list[dict[str, object]]] = {}
-
-    for _, predio in helper.iter_predios():
-        predio_id = helper.get_field_value(predio, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = predio
-
-    for _, caracteristica in helper._iter_table_rows((
-        "ARB_CaracteristicasUnidadConstruccion",
-        "arb_caracteristicasunidadconstruccion",
-    )):
-        caracteristica_id = helper.get_field_value(caracteristica, ("TID", "t_id", "id"))
-        if caracteristica_id:
-            caracteristicas_by_id[str(caracteristica_id)] = caracteristica
-
-    for _, unidad in helper.iter_unidades_construccion():
-        predio_ref = helper.get_field_value(unidad, ("predio",))
-        if predio_ref:
-            unidades_por_predio.setdefault(str(predio_ref), []).append(unidad)
-
-    destinaciones_institucionales = {
-        "Institucional",
-        "Cultural",
-        "Educativo",
-        "Religioso",
-    }
-
-    for predio_id, predio in predios_by_id.items():
-        destinacion = helper.get_field_value(predio, ("destinacion_economica",))
-        destinacion_str = _destinacion_economica_ilicode(destinacion)
-
-        if destinacion_str not in destinaciones_institucionales:
-            continue
-
-        unidades = unidades_por_predio.get(str(predio_id), [])
-
-        if not unidades:
-            continue
-
-        caracteristicas_del_predio: list[dict[str, object]] = []
-        areas_por_tipo: dict[str, float] = {}
-        tiene_institucional = False
-
-        for unidad in unidades:
-            caracteristica_ref = helper.get_field_value(
-                unidad,
-                ("caracteristicasunidadconstruccion",),
-            )
-
-            caracteristica = (
-                caracteristicas_by_id.get(str(caracteristica_ref))
-                if caracteristica_ref
-                else None
-            )
-
-            if not caracteristica:
-                continue
-
-            caracteristicas_del_predio.append(caracteristica)
-
-            tipo_unidad = helper.get_field_value(
-                caracteristica,
-                ("tipo_unidad_construccion",),
-            )
-            tipo_unidad_str = _tipo_unidad_construccion_ilicode(tipo_unidad)
-
-            if tipo_unidad_str == "Institucional":
-                tiene_institucional = True
-
-            area = _area_unidad(unidad, helper)
-
-            if area == 0:
-                area = _area_unidad(caracteristica, helper)
-
-            areas_por_tipo[tipo_unidad_str] = (
-                areas_por_tipo.get(tipo_unidad_str, 0.0) + area
-            )
-
-        if not caracteristicas_del_predio:
-            continue
-
-        numero_predial = helper.get_field_value(
-            predio,
-            ("numero_predial", "Numero_Predial"),
-        )
-
-        if not tiene_institucional:
-            for caracteristica in caracteristicas_del_predio:
-                issues.append(
-                    helper.make_issue(
-                        caracteristica,
-                        rule_id="3.16",
-                        message=(
-                            "El predio con destinación económica Institucional, Cultural, "
-                            "Educativo o Religioso debe tener al menos una unidad de "
-                            "construcción con característica de tipo Institucional."
-                        ),
-                        details={
-                            "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                            "numero_predial": numero_predial,
-                            "destinacion_economica": destinacion,
-                            "destinacion_economica_ilicode": destinacion_str,
-                            "validacion": "existencia_tipo_institucional",
-                        },
-                    )
-                )
-            continue
-
-        tipo_predominante = max(
-            areas_por_tipo.items(),
-            key=lambda item: item[1],
-        )[0]
-
-        if tipo_predominante != "Institucional":
-            for caracteristica in caracteristicas_del_predio:
-                issues.append(
-                    helper.make_issue(
-                        caracteristica,
-                        rule_id="3.16",
-                        message=(
-                            "El predio con destinación económica Institucional, Cultural, "
-                            "Educativo o Religioso tiene unidad de construcción Institucional, "
-                            "pero esta no es predominante en área frente a las demás."
-                        ),
-                        details={
-                            "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                            "numero_predial": numero_predial,
-                            "destinacion_economica": destinacion,
-                            "destinacion_economica_ilicode": destinacion_str,
-                            "tipo_predominante": tipo_predominante,
-                            "areas_por_tipo": areas_por_tipo,
-                            "validacion": "predominancia_area_institucional",
-                        },
-                    )
-                )
-
-    return issues
 
 
 def _rule_3_17(dataset: DatasetReader) -> list[RuleIssue]:
@@ -1652,237 +1204,97 @@ def _construccion_a_predio(helper: FisicoHelper) -> dict[str, str]:
 def _rule_3_18(dataset: DatasetReader) -> list[RuleIssue]:
     helper = FisicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-    caracteristicas_by_id: dict[str, dict[str, object]] = {}
-    construccion_a_predio = _construccion_a_predio(helper)
-
-    for _, predio in helper.iter_predios():
-        predio_id = helper.get_field_value(predio, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = predio
-
-    for _, caracteristica in helper._iter_table_rows((
-        "ARB_CaracteristicasUnidadConstruccion",
-        "arb_caracteristicasunidadconstruccion",
-    )):
-        caracteristica_id = helper.get_field_value(caracteristica, ("TID", "t_id", "id"))
-        if caracteristica_id:
-            caracteristicas_by_id[str(caracteristica_id)] = caracteristica
-
-    condiciones_unidad_predial = {
-        "PH.Unidad_Predial",
-        "Condominio.Unidad_Predial",
-    }
-
-    for table_name, unidad in helper.iter_unidades_construccion():
-        predio_ref = _resolve_predio_ref_desde_unidad(
-            helper,
-            unidad,
-            construccion_a_predio,
-        )
-        caracteristica_ref = helper.get_field_value(unidad, ("caracteristicasunidadconstruccion",))
-
-        predio = predios_by_id.get(str(predio_ref)) if predio_ref else None
-        caracteristica = caracteristicas_by_id.get(str(caracteristica_ref)) if caracteristica_ref else None
-
-        if not predio or not caracteristica:
+    condiciones = {"PH.Unidad_Predial", "Condominio.Unidad_Predial"}
+    for _, predio, unidad_table, unidad, caracteristica_table, caracteristica in _iter_caracteristicas_con_predio(dataset):
+        condicion_raw = helper.get_field_value(predio, ("condicion_predio", "Condicion_Predio"))
+        condicion = _condicion_predio_ilicode(condicion_raw)
+        if condicion not in condiciones:
             continue
-
-        condicion = helper.get_field_value(predio, ("condicion_predio",))
-        condicion_str = _condicion_predio_ilicode(condicion)
-
         area_construida_raw = helper.get_field_value(caracteristica, ("area_construida",))
         area_privada_raw = helper.get_field_value(caracteristica, ("area_privada_construida",))
-
         area_construida = _to_float(area_construida_raw)
         area_privada = _to_float(area_privada_raw)
-
-        if (
-            condicion_str in condiciones_unidad_predial
-            and (
-                area_construida != 0
-                or area_privada is None
-                or area_privada <= 0
-            )
-        ):
-            issues.append(
-                helper.make_issue(
-                    caracteristica,
-                    rule_id="3.18",
-                    message=(
-                        "Para PH unidad predial y Condominio unidad predial, "
-                        "el área construida debe ser cero y el área privada construida "
-                        "debe ser mayor a cero."
-                    ),
-                    details={
-                        "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                        "predio_ref": predio_ref,
-                        "condicion_predio": condicion,
-                        "condicion_predio_ilicode": condicion_str,
-                        "area_construida": area_construida_raw,
-                        "area_privada_construida": area_privada_raw,
-                    },
-                )
-            )
-
+        if area_construida != 0 or area_privada is None or area_privada <= 0:
+            issues.append(helper.make_issue(
+                caracteristica, rule_id="3.18",
+                message="Para PH unidad predial y Condominio unidad predial, el área construida debe ser cero y el área privada construida debe ser mayor a cero.",
+                details={"tabla": caracteristica_table, "unidad_tabla": unidad_table,
+                         "condicion_predio": condicion_raw, "condicion_predio_ilicode": condicion,
+                         "area_construida": area_construida_raw, "area_privada_construida": area_privada_raw},
+            ))
     return issues
 
 def _rule_3_19(dataset: DatasetReader) -> list[RuleIssue]:
     helper = FisicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    predios_by_id: dict[str, dict[str, object]] = {}
-    caracteristicas_by_id: dict[str, dict[str, object]] = {}
-    construccion_a_predio = _construccion_a_predio(helper)
-
-    for _, predio in helper.iter_predios():
-        predio_id = helper.get_field_value(predio, ("TID", "t_id", "id"))
-        if predio_id:
-            predios_by_id[str(predio_id)] = predio
-
-    for _, caracteristica in helper._iter_table_rows((
-        "ARB_CaracteristicasUnidadConstruccion",
-        "arb_caracteristicasunidadconstruccion",
-    )):
-        caracteristica_id = helper.get_field_value(caracteristica, ("TID", "t_id", "id"))
-        if caracteristica_id:
-            caracteristicas_by_id[str(caracteristica_id)] = caracteristica
-
-    condiciones_unidad_predial = {
-        "PH.Unidad_Predial",
-        "Condominio.Unidad_Predial",
-    }
-
-    for table_name, unidad in helper.iter_unidades_construccion():
-        predio_ref = _resolve_predio_ref_desde_unidad(
-            helper,
-            unidad,
-            construccion_a_predio,
-        )
-        caracteristica_ref = helper.get_field_value(unidad, ("caracteristicasunidadconstruccion",))
-
-        predio = predios_by_id.get(str(predio_ref)) if predio_ref else None
-        caracteristica = caracteristicas_by_id.get(str(caracteristica_ref)) if caracteristica_ref else None
-
-        if not predio or not caracteristica:
+    condiciones_unidad = {"PH.Unidad_Predial", "Condominio.Unidad_Predial"}
+    for _, predio, unidad_table, unidad, caracteristica_table, caracteristica in _iter_caracteristicas_con_predio(dataset):
+        condicion_raw = helper.get_field_value(predio, ("condicion_predio", "Condicion_Predio"))
+        condicion = _condicion_predio_ilicode(condicion_raw)
+        if not condicion or condicion in condiciones_unidad:
             continue
-
-        condicion = helper.get_field_value(predio, ("condicion_predio",))
-        condicion_str = _condicion_predio_ilicode(condicion)
-
-        if not condicion_str:
-            continue
-
         area_construida_raw = helper.get_field_value(caracteristica, ("area_construida",))
         area_privada_raw = helper.get_field_value(caracteristica, ("area_privada_construida",))
-
         area_construida = _to_float(area_construida_raw)
-
-        if (
-            condicion_str not in condiciones_unidad_predial
-            and (
-                area_construida is None
-                or area_construida <= 0
-                or area_privada_raw not in (None, "")
-            )
-        ):
-            issues.append(
-                helper.make_issue(
-                    caracteristica,
-                    rule_id="3.19",
-                    message=(
-                        "Para predios con condición diferente a PH unidad predial "
-                        "o Condominio unidad predial, el área construida debe ser mayor "
-                        "a cero y el área privada construida debe ser NULL."
-                    ),
-                    details={
-                        "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                        "predio_ref": predio_ref,
-                        "condicion_predio": condicion,
-                        "condicion_predio_ilicode": condicion_str,
-                        "area_construida": area_construida_raw,
-                        "area_privada_construida": area_privada_raw,
-                    },
-                )
-            )
-
+        if area_construida is None or area_construida <= 0 or not _is_empty_value(area_privada_raw):
+            issues.append(helper.make_issue(
+                caracteristica, rule_id="3.19",
+                message="Para predios con condición diferente a PH unidad predial o Condominio unidad predial, el área construida debe ser mayor a cero y el área privada construida debe ser NULL.",
+                details={"tabla": caracteristica_table, "unidad_tabla": unidad_table,
+                         "condicion_predio": condicion_raw, "condicion_predio_ilicode": condicion,
+                         "area_construida": area_construida_raw, "area_privada_construida": area_privada_raw},
+            ))
     return issues
 
 def _rule_3_20(dataset: DatasetReader) -> list[RuleIssue]:
+    """Compara el área declarada con la suma geométrica de las unidades (tolerancia 1%).
+
+    Para PH/Condominio Unidad_Predial se compara Área_Privada_Construida, porque
+    3.18 exige que Área_Construida sea cero. Para las demás condiciones se usa
+    Área_Construida.
+    """
     helper = FisicoHelper(dataset)
     issues: list[RuleIssue] = []
-
-    caracteristicas_by_id: dict[str, dict[str, object]] = {}
-    area_geometrica_por_caracteristica: dict[str, float] = {}
-
-    for _, caracteristica in helper._iter_table_rows((
-        "ARB_CaracteristicasUnidadConstruccion",
-        "arb_caracteristicasunidadconstruccion",
-    )):
-        caracteristica_id = helper.get_field_value(
-            caracteristica,
-            ("TID", "t_id", "id", "identificador"),
-        )
-        if caracteristica_id:
-            caracteristicas_by_id[str(caracteristica_id)] = caracteristica
-
-    for _, unidad in helper.iter_unidades_construccion():
-        caracteristica_ref = helper.get_field_value(
-            unidad,
-            ("caracteristicasunidadconstruccion",),
-        )
-        if not caracteristica_ref:
+    condiciones_privada = {"PH.Unidad_Predial", "Condominio.Unidad_Predial"}
+    groups: dict[tuple[str, str], dict[str, object]] = {}
+    for _, predio, _, unidad, caracteristica_table, caracteristica in _iter_caracteristicas_con_predio(dataset):
+        predio_key = helper.identify(predio) or str(id(predio))
+        car_key = helper.identify(caracteristica) or str(id(caracteristica))
+        key = (predio_key, car_key)
+        item = groups.setdefault(key, {"predio": predio, "caracteristica": caracteristica,
+                                       "tabla": caracteristica_table, "area": 0.0, "unidades": set()})
+        unidades = item["unidades"]
+        assert isinstance(unidades, set)
+        uid = helper.identify(unidad) or str(id(unidad))
+        if uid in unidades:
             continue
-
-        area_unidad = _area_unidad(unidad, helper)
-
-        area_geometrica_por_caracteristica[str(caracteristica_ref)] = (
-            area_geometrica_por_caracteristica.get(str(caracteristica_ref), 0.0)
-            + area_unidad
-        )
-    for caracteristica_id, area_total in area_geometrica_por_caracteristica.items():
-        caracteristica = caracteristicas_by_id.get(caracteristica_id)
-        if not caracteristica:
+        unidades.add(uid)
+        item["area"] = float(item["area"]) + _area_unidad(unidad, helper)
+    for item in groups.values():
+        predio = item["predio"]; caracteristica = item["caracteristica"]
+        assert isinstance(predio, dict) and isinstance(caracteristica, dict)
+        condicion_raw = helper.get_field_value(predio, ("condicion_predio", "Condicion_Predio"))
+        condicion = _condicion_predio_ilicode(condicion_raw)
+        usa_privada = condicion in condiciones_privada
+        campo = "area_privada_construida" if usa_privada else "area_construida"
+        declarada_raw = helper.get_field_value(caracteristica, (campo,))
+        declarada = _to_float(declarada_raw)
+        if declarada is None:
             continue
-
-        area_construida_raw = helper.get_field_value(
-            caracteristica,
-            ("area_construida",),
-        )
-        area_construida = _to_float(area_construida_raw)
-
-        if area_construida is None:
-            continue
-
-        # Igual que QGIS: round(...,1)
-        area_total_calculada = round(area_total, 1)
-        area_construida_redondeada = round(area_construida, 1)
-
-        diferencia = round(area_construida_redondeada - area_total_calculada, 2)
-        tolerancia_area = 0.25
-
-        if abs(diferencia) > tolerancia_area:
-            issues.append(
-                helper.make_issue(
-                    caracteristica,
-                    rule_id="3.20",
-                    message=(
-                        "Error en área construida: el valor diligenciado "
-                        f"({area_construida_redondeada}) no coincide con el área calculada "
-                        f"de las unidades ({area_total_calculada})."
-                    ),
-                    details={
-                        "tabla": "ARB_CaracteristicasUnidadConstruccion",
-                        "caracteristica_id": caracteristica_id,
-                        "area_construida": area_construida_redondeada,
-                        "area_total_calculada": area_total_calculada,
-                        "diferencia": diferencia,
-                        "tolerancia_area": tolerancia_area,
-                    },
-                )
-            )
-
+        geom = float(item["area"]); decl = float(declarada)
+        porcentaje = (0.0 if geom == 0 else float("inf")) if decl == 0 else abs(decl - geom) / abs(decl) * 100.0
+        if porcentaje > 1.0:
+            issues.append(helper.make_issue(
+                caracteristica, rule_id="3.20",
+                message=(f"Error en área {'privada construida' if usa_privada else 'construida'}: el valor diligenciado "
+                         f"({round(decl, 4)}) no coincide, dentro de la tolerancia del 1%, con el área calculada de las unidades ({round(geom, 4)})."),
+                details={"tabla": item["tabla"], "condicion_predio": condicion_raw,
+                         "condicion_predio_ilicode": condicion, "campo_comparado": campo,
+                         "area_declarada": round(decl, 6), "area_total_calculada": round(geom, 6),
+                         "diferencia": round(decl - geom, 2),
+                         "diferencia_porcentual": None if porcentaje == float("inf") else round(porcentaje, 4),
+                         "tolerancia_porcentual": 1.0},
+            ))
     return issues
 
 def _rule_3_21(dataset: DatasetReader) -> list[RuleIssue]:
