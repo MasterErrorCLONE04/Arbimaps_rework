@@ -152,7 +152,7 @@ def sugerir_consecutivos_territoriales(
     conn=Depends(get_tenant_db_connection),
 ):
     """
-    Rastrea en tiempo real el último consecutivo existente de Manzana, Barrio y Comuna
+    Rastrea en tiempo real y alta velocidad el último consecutivo existente de Manzana, Barrio y Comuna
     en la base de datos para sugerir el siguiente número correlativo sin dejar vacíos.
     """
     depto = "41"
@@ -167,69 +167,73 @@ def sugerir_consecutivos_territoriales(
     schema_main = tenant.schemas.main or "a_base_principal"
     
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
-        # 1. Última manzana registrada en ese sector/comuna/barrio
+        # 1. Manzanas en base principal
         cur.execute(f"""
             SELECT MAX(SUBSTRING(numero_predial, 14, 4)::int) AS max_manzana,
                    COUNT(DISTINCT SUBSTRING(numero_predial, 14, 4)) AS total_manzanas
-            FROM (
-                SELECT numero_predial FROM {schema_main}.arb_predio WHERE numero_predial LIKE %s AND length(numero_predial) = 30
-                UNION
-                SELECT numero_predial FROM f_r1_r2.r1_predio_propietario WHERE numero_predial LIKE %s AND length(numero_predial) = 30
-                UNION
-                SELECT numero_predial FROM arbimaps_app.codigos_homologados WHERE numero_predial LIKE %s AND length(numero_predial) = 30
-            ) t
-            WHERE SUBSTRING(numero_predial, 14, 4) ~ '^[0-9]+$';
-        """, (f"{prefijo_13}%", f"{prefijo_13}%", f"{prefijo_13}%"))
-        res_m = cur.fetchone()
-        max_m = res_m["max_manzana"] if res_m and res_m["max_manzana"] is not None else 0
+            FROM {schema_main}.arb_predio
+            WHERE numero_predial LIKE %s
+              AND length(numero_predial) = 30
+              AND SUBSTRING(numero_predial, 14, 4) ~ '^[0-9]+$';
+        """, (f"{prefijo_13}%",))
+        res_m1 = cur.fetchone() or {}
+        max_m1 = res_m1.get("max_manzana") or 0
+        total_m = res_m1.get("total_manzanas") or 0
+        
+        # Manzanas en homologados
+        cur.execute("""
+            SELECT MAX(SUBSTRING(numero_predial, 14, 4)::int) AS max_manzana
+            FROM arbimaps_app.codigos_homologados
+            WHERE numero_predial LIKE %s
+              AND length(numero_predial) = 30
+              AND SUBSTRING(numero_predial, 14, 4) ~ '^[0-9]+$';
+        """, (f"{prefijo_13}%",))
+        res_m2 = cur.fetchone() or {}
+        max_m2 = res_m2.get("max_manzana") or 0
+        
+        max_m = max(max_m1, max_m2)
         sig_m = str(max_m + 1).zfill(4)
         
-        # 2. Último barrio/vereda registrado en ese sector/comuna
+        # 2. Barrios/Veredas
         cur.execute(f"""
             SELECT MAX(SUBSTRING(numero_predial, 10, 4)::int) AS max_barrio
-            FROM (
-                SELECT numero_predial FROM {schema_main}.arb_predio WHERE numero_predial LIKE %s AND length(numero_predial) = 30
-                UNION
-                SELECT numero_predial FROM f_r1_r2.r1_predio_propietario WHERE numero_predial LIKE %s AND length(numero_predial) = 30
-                UNION
-                SELECT numero_predial FROM arbimaps_app.codigos_homologados WHERE numero_predial LIKE %s AND length(numero_predial) = 30
-            ) t
-            WHERE SUBSTRING(numero_predial, 10, 4) ~ '^[0-9]+$';
-        """, (f"{prefijo_9}%", f"{prefijo_9}%", f"{prefijo_9}%"))
-        res_b = cur.fetchone()
-        max_b = res_b["max_barrio"] if res_b and res_b["max_barrio"] is not None else 0
+            FROM {schema_main}.arb_predio
+            WHERE numero_predial LIKE %s
+              AND length(numero_predial) = 30
+              AND SUBSTRING(numero_predial, 10, 4) ~ '^[0-9]+$';
+        """, (f"{prefijo_9}%",))
+        res_b = cur.fetchone() or {}
+        max_b = res_b.get("max_barrio") or 0
         sig_b = str(max_b + 1).zfill(4)
 
-        # 3. Última comuna registrada en ese sector
+        # 3. Comunas
         cur.execute(f"""
             SELECT MAX(SUBSTRING(numero_predial, 8, 2)::int) AS max_comuna
-            FROM (
-                SELECT numero_predial FROM {schema_main}.arb_predio WHERE numero_predial LIKE %s AND length(numero_predial) = 30
-                UNION
-                SELECT numero_predial FROM f_r1_r2.r1_predio_propietario WHERE numero_predial LIKE %s AND length(numero_predial) = 30
-                UNION
-                SELECT numero_predial FROM arbimaps_app.codigos_homologados WHERE numero_predial LIKE %s AND length(numero_predial) = 30
-            ) t
-            WHERE SUBSTRING(numero_predial, 8, 2) ~ '^[0-9]+$';
-        """, (f"{prefijo_7}%", f"{prefijo_7}%", f"{prefijo_7}%"))
-        res_c = cur.fetchone()
-        max_c = res_c["max_comuna"] if res_c and res_c["max_comuna"] is not None else 0
+            FROM {schema_main}.arb_predio
+            WHERE numero_predial LIKE %s
+              AND length(numero_predial) = 30
+              AND SUBSTRING(numero_predial, 8, 2) ~ '^[0-9]+$';
+        """, (f"{prefijo_7}%",))
+        res_c = cur.fetchone() or {}
+        max_c = res_c.get("max_comuna") or 0
         sig_c = str(max_c + 1).zfill(2)
-        npn_sugerido = f"{prefijo_13}{sig_m}0000000000000"
-
+        
+        npn_base_sugerido = f"{prefijo_13}{sig_m}0000000000000"
+        
         return {
             "success": True,
             "sector": sec,
             "comuna": com,
             "barrio": bar,
+            "prefijo_13": prefijo_13,
             "max_manzana_existente": str(max_m).zfill(4),
             "siguiente_manzana_sugerida": sig_m,
-            "total_manzanas_en_zona": res_m["total_manzanas"] if res_m else 0,
+            "total_manzanas_en_zona": total_m,
             "max_barrio_existente": str(max_b).zfill(4),
             "siguiente_barrio_sugerido": sig_b,
             "max_comuna_existente": str(max_c).zfill(2),
             "siguiente_comuna_sugerida": sig_c,
-            "npn_base_sugerido": npn_sugerido
+            "npn_base_sugerido": npn_base_sugerido,
         }
 
 

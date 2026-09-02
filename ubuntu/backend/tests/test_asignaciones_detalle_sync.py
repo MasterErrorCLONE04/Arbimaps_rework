@@ -95,7 +95,7 @@ def _patch_common(monkeypatch):
     monkeypatch.setattr(
         asignaciones_detalle,
         "_validate_retorno_xtf_rules",
-        lambda tmp_path, municipality_code=None: {"status": "ok", "municipality_code": municipality_code},
+        lambda tmp_path, municipality_code=None, **kwargs: {"status": "ok", "municipality_code": municipality_code},
     )
     monkeypatch.setattr(
         asignaciones_detalle,
@@ -231,7 +231,7 @@ def test_procesar_retorno_xtf_passes_tenant_municipality_to_validation(monkeypat
     _patch_common(monkeypatch)
     captured = {}
 
-    def _validate(tmp_path, municipality_code=None):
+    def _validate(tmp_path, municipality_code=None, **kwargs):
         captured["tmp_path"] = tmp_path
         captured["municipality_code"] = municipality_code
         return {"status": "success"}

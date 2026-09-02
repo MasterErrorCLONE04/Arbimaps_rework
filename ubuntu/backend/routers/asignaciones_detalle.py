@@ -359,6 +359,7 @@ class AsignacionPredioDetalle(BaseModel):
     activo: Optional[bool] = None
     creado_por: Optional[str] = None
     creado_en: Optional[datetime] = None
+    rol_predio: Optional[str] = "principal"
 
 
 class AsignacionComentario(BaseModel):
@@ -1120,6 +1121,35 @@ def _validation_history_message(result: Optional[dict]) -> str:
     )
 
 
+
+
+class RolPredioPayload(BaseModel):
+    rol_predio: str
+
+
+@router.patch("/{asignacion_id}/predios/{predio_id}/rol")
+def actualizar_rol_predio(
+    asignacion_id: int,
+    predio_id: str,
+    payload: RolPredioPayload,
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+    conn=Depends(get_tenant_db_connection),
+):
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "lider_reconocimiento", "reconocedor")
+    updated = asignaciones_repo.update_asignacion_predio_rol(
+        conn,
+        tenant,
+        asignacion_id,
+        predio_id,
+        payload.rol_predio,
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Predio no encontrado en la asignacion.")
+    conn.commit()
+    return {"status": "ok", "asignacion_id": asignacion_id, "predio_id": predio_id, "rol_predio": payload.rol_predio}
+
+
 @router.get("/validadores-xtf")
 def listar_validadores_xtf(
     user: dict = Depends(get_current_user),
@@ -1140,10 +1170,53 @@ def listar_validadores_xtf(
     }
 
 
+def _filter_validation_result_for_exempt_npns(result: dict, exempt_npns: set[str]) -> dict:
+    if not exempt_npns or not isinstance(result, dict):
+        return result
+
+    val = result.get("validation") if isinstance(result.get("validation"), dict) else result
+    rule_errors = val.get("rule_errors") or []
+    quality = val.get("quality") or {}
+    issues = quality.get("issues") or []
+
+    clean_exempt = {str(n).strip() for n in exempt_npns if n}
+
+    def is_exempt_issue(issue: dict) -> bool:
+        comp = str(issue.get("component") or issue.get("rule_group") or "").strip().lower()
+        if comp in ("topologico", "topológico"):
+            return False
+        issue_npn = str(issue.get("npn") or "").strip()
+        details = issue.get("details") or {}
+        if not issue_npn and isinstance(details, dict):
+            issue_npn = str(details.get("npn") or details.get("numero_predial") or "").strip()
+        return issue_npn in clean_exempt
+
+    filtered_rule_errors = [e for e in rule_errors if not is_exempt_issue(e)]
+    filtered_issues = [i for i in issues if not is_exempt_issue(i)]
+
+    val["rule_errors"] = filtered_rule_errors
+    quality["issues"] = filtered_issues
+    if "summary" in quality and isinstance(quality["summary"], dict):
+        quality["summary"]["total_issues"] = len(filtered_issues)
+        quality["summary"]["failed_rules"] = len({str(i.get("rule")) for i in filtered_issues if i.get("rule")})
+
+    # Si no quedan errores no exentos, ajustar estado a success
+    if not filtered_rule_errors and not filtered_issues:
+        result["status"] = "success"
+        val["status"] = "success"
+        result["message"] = "Validacion XTF aprobada (errores alfanumericos de colindantes/cancelados omitidos)."
+        val["message"] = "Validacion XTF aprobada (errores alfanumericos de colindantes/cancelados omitidos)."
+
+    return result
+
+
 def _validate_retorno_xtf_rules(
     xtf_path: str,
     *,
     municipality_code: str | None = None,
+    asignacion_id: int | None = None,
+    conn=None,
+    tenant: TenantContext | None = None,
 ) -> dict:
     service = xtf_validation_service
 
@@ -1225,6 +1298,20 @@ def _validate_retorno_xtf_rules(
                 f"{message}"
             ),
         )
+
+        # Exención de validaciones alfanuméricas para predios colindantes y cancelados
+    if asignacion_id and conn and tenant:
+        try:
+            roles = asignaciones_repo.get_asignacion_predio_roles(conn, tenant, asignacion_id)
+            exempt_npns = {npn for npn, rol in roles.items() if rol in ("colindante", "cancelado")}
+            schema_work = (getattr(tenant.schemas, "work", None) or "b_asignaciones_arb")
+            auto_cancelled = asignaciones_repo.auto_detect_cancelled_predios_sql(conn, schema_work)
+            exempt_npns.update(auto_cancelled)
+            if exempt_npns:
+                result = _filter_validation_result_for_exempt_npns(result, exempt_npns)
+                status = str(result.get("status") or "").strip().lower()
+        except Exception as exc:
+            logger.warning("Error aplicando exencion de roles en validacion XTF para asignacion %s: %s", asignacion_id, exc)
 
     if _is_production_runtime() and status != "success":
         raise export_service.ExportServiceError(
@@ -1538,6 +1625,7 @@ def obtener_detalle_asignacion(
                 activo=True if predios_should_show_active else (False if assignment_closed else row.get("activo")),
                 creado_por=row.get("creado_por"),
                 creado_en=row.get("creado_en"),
+                rol_predio=row.get("rol_predio") or "principal",
             )
         )
 
@@ -3078,6 +3166,9 @@ def _procesar_retorno_xtf(
             xtf_validation_result = _validate_retorno_xtf_rules(
                 validation_xtf_path,
                 municipality_code=tenant.municipality_code,
+                asignacion_id=asignacion_id,
+                conn=conn,
+                tenant=tenant,
             )
         finally:
             if validation_xtf_path != tmp_path:

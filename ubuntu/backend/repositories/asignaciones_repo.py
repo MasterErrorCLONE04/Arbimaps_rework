@@ -284,6 +284,12 @@ def ensure_asignacion_tables(conn, tenant=None, *, force: bool = False) -> None:
             )
             cur.execute(
                 f"""
+                ALTER TABLE IF EXISTS {app_schema}.asignacion_predio
+                ADD COLUMN IF NOT EXISTS rol_predio VARCHAR(20) DEFAULT 'principal'
+                """
+            )
+            cur.execute(
+                f"""
                 CREATE TABLE IF NOT EXISTS {app_schema}.asignacion_event_log (
                     id SERIAL PRIMARY KEY,
                     asignacion_id BIGINT REFERENCES {app_schema}.asignacion(id) ON DELETE CASCADE,
@@ -2203,7 +2209,8 @@ def list_predios_asignacion(conn, *args, **kwargs) -> list[dict]:
                 ap.predio_t_id,
                 ap.activo,
                 ap.creado_por,
-                ap.creado_en
+                ap.creado_en,
+                LOWER(COALESCE(ap.rol_predio, 'principal')) AS rol_predio
             FROM {app_schema}.asignacion_predio ap
             WHERE ap.asignacion_id = %s
             ORDER BY ap.activo DESC, ap.numero_predial_nacional ASC
@@ -2299,3 +2306,149 @@ def obtener_predios_tramite(
             (tramite_id,),
         )
         return [dict(r) for r in (cur.fetchall() or [])]
+
+
+def update_asignacion_predio_rol(
+    conn,
+    tenant,
+    asignacion_id: int,
+    predio_id_or_npn,
+    rol_predio: str,
+) -> bool:
+    """Actualiza el rol del predio ('principal', 'colindante', 'cancelado') en asignacion_predio."""
+    ensure_asignacion_tables(conn, tenant, force=True)
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    rol_clean = str(rol_predio or "principal").strip().lower()
+    if rol_clean not in {"principal", "colindante", "cancelado"}:
+        rol_clean = "principal"
+
+    is_int = isinstance(predio_id_or_npn, int) or (isinstance(predio_id_or_npn, str) and str(predio_id_or_npn).isdigit())
+    param_str = str(predio_id_or_npn).strip()
+
+    with conn.cursor() as cur:
+        if is_int:
+            param_int = int(predio_id_or_npn)
+            cur.execute(
+                f"""
+                UPDATE {app_schema}.asignacion_predio
+                SET rol_predio = %s
+                WHERE asignacion_id = %s
+                  AND (id = %s OR predio_t_id = %s OR BTRIM(numero_predial_nacional::text) = %s)
+                """,
+                (rol_clean, asignacion_id, param_int, param_int, param_str),
+            )
+        else:
+            cur.execute(
+                f"""
+                UPDATE {app_schema}.asignacion_predio
+                SET rol_predio = %s
+                WHERE asignacion_id = %s
+                  AND BTRIM(numero_predial_nacional::text) = %s
+                """,
+                (rol_clean, asignacion_id, param_str),
+            )
+        return (cur.rowcount or 0) > 0
+
+
+def get_asignacion_predio_roles(
+    conn,
+    tenant,
+    asignacion_id: int,
+) -> dict[str, str]:
+    """Retorna un mapeo de numero_predial_nacional -> rol_predio para una asignacion."""
+    ensure_asignacion_tables(conn, tenant)
+    app_schema = "arbimaps_app"
+    if tenant is not None:
+        if hasattr(tenant, "schemas"):
+            app_schema = tenant.schemas.app
+        elif isinstance(tenant, str):
+            app_schema = tenant
+
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(
+            f"""
+            SELECT BTRIM(numero_predial_nacional::text) AS npn,
+                   LOWER(COALESCE(rol_predio, 'principal')) AS rol
+            FROM {app_schema}.asignacion_predio
+            WHERE asignacion_id = %s
+              AND activo IS DISTINCT FROM FALSE
+            """,
+            (asignacion_id,),
+        )
+        rows = cur.fetchall() or []
+        return {r["npn"]: r["rol"] for r in rows if r and r.get("npn")}
+
+
+def auto_detect_cancelled_predios_sql(
+    conn,
+    schema_name: str,
+    npns: list[str] | None = None,
+) -> set[str]:
+    """
+    Ejecuta la consulta unificada de dominios/catálogos para detectar predios cancelados
+    evaluando arb_estadotipo, arb_estadofmitipo, arb_marcapredialtipo, arb_novedadfmitipo
+    y arb_novedadnumeropredialtipo.
+    """
+    if not schema_name:
+        return set()
+
+    with conn.cursor() as cur:
+        # Verificar existencia de arb_predio
+        cur.execute(
+            "SELECT 1 FROM information_schema.tables WHERE table_schema = %s AND table_name = 'arb_predio' LIMIT 1;",
+            (schema_name,),
+        )
+        if not cur.fetchone():
+            return set()
+
+    npn_filter = ""
+    params: list[object] = []
+    if npns:
+        clean_npns = [str(n).strip() for n in npns if n]
+        if clean_npns:
+            npn_filter = "AND BTRIM(p.numero_predial::text) = ANY(%s)"
+            params.append(clean_npns)
+
+    query = f"""
+    SELECT DISTINCT BTRIM(p.numero_predial::text) AS numero_predial
+    FROM {schema_name}.arb_predio p
+    LEFT JOIN {schema_name}.arb_estadotipo et ON et.t_id = p.estado
+    LEFT JOIN {schema_name}.arb_estadofmitipo eft ON eft.t_id = p.estado_fmi
+    WHERE NULLIF(BTRIM(p.numero_predial::text), '') IS NOT NULL
+      {npn_filter}
+      AND (
+        et.ilicode ILIKE 'Cancelado' OR et.dispname ILIKE 'Cancelado'
+        OR eft.ilicode ILIKE '%Cancelad%' OR eft.dispname ILIKE '%Cancelad%'
+        OR EXISTS (
+            SELECT 1 FROM {schema_name}.arb_marca m
+            JOIN {schema_name}.arb_marcapredialtipo mt ON mt.t_id = m.marca_tipo
+            WHERE m.predio = p.t_id
+              AND (mt.ilicode ILIKE '%Cancelac%' OR mt.dispname ILIKE '%Cancelac%')
+        )
+        OR EXISTS (
+            SELECT 1 FROM {schema_name}.arb_novedadfmivalor nf
+            JOIN {schema_name}.arb_novedadfmitipo nft ON nft.t_id = nf.tipo_novedad_fmi
+            WHERE nf.arb_predio_novedad_fmi = p.t_id
+              AND (nft.ilicode ILIKE '%Cancelac%' OR nft.dispname ILIKE '%Cancelac%')
+        )
+        OR EXISTS (
+            SELECT 1 FROM {schema_name}.arb_novedadnumeropredialvalor np
+            JOIN {schema_name}.arb_novedadnumeropredialtipo npt ON npt.t_id = np.tipo_novedad
+            WHERE np.arb_predio_novedad_numero_predial = p.t_id
+              AND npt.ilicode IN ('Cancelacion', 'Cancelacion_por_Desenglobe', 'Cancelacion_por_Englobe')
+        )
+      )
+    """
+    with conn.cursor() as cur:
+        try:
+            cur.execute(query, tuple(params))
+            rows = cur.fetchall() or []
+            return {str(r[0]).strip() for r in rows if r and r[0]}
+        except Exception:
+            return set()

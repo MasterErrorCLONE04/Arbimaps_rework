@@ -1411,6 +1411,11 @@ def _arb_sync_predios_to_main(
             ),
         )
 
+    from repositories.asignaciones_repo import get_asignacion_predio_roles
+    roles = get_asignacion_predio_roles(conn, tenant, asignacion_id)
+    colindante_npns = {npn for npn, r in roles.items() if r == "colindante"}
+    colindante_filter = f"AND BTRIM(sp.numero_predial_nacional::text) NOT IN ({', '.join('%s' for _ in colindante_npns)})" if colindante_npns else ""
+
     set_parts = [f"{col} = src.{col}" for col in update_cols]
     set_parts.append("t_basket = src.main_basket")
     tid_match = (
@@ -1430,9 +1435,11 @@ def _arb_sync_predios_to_main(
                   ON sp.work_predio_t_id = wp.t_id
                 JOIN _arb_sync_basket_map bm
                   ON bm.work_basket = wp.t_basket
+                WHERE 1=1 {colindante_filter}
             ) AS src
             WHERE ({tid_match}) OR ({npn_match})
-            """
+            """,
+            tuple(colindante_npns) if colindante_npns else ()
         )
 
     insert_copy_cols = _get_common_table_columns(
@@ -3221,6 +3228,33 @@ def _sync_workspace_arb_to_main(
         logger.warning("No predios synchronized for asignacion %s", asignacion_id)
         return 0
 
+    # Crear mapas diferenciados: Principal vs Colindante
+    with conn.cursor() as cur:
+        from repositories.asignaciones_repo import get_asignacion_predio_roles, auto_detect_cancelled_predios_sql
+        roles = get_asignacion_predio_roles(conn, tenant, asignacion_id)
+        colindante_npns = {npn for npn, r in roles.items() if r == "colindante"}
+        
+        # Auto-detección de cancelados en workspace
+        auto_cancelled = auto_detect_cancelled_predios_sql(conn, schema_work)
+        if auto_cancelled:
+            for npn in auto_cancelled:
+                try:
+                    from repositories.asignaciones_repo import update_asignacion_predio_rol
+                    update_asignacion_predio_rol(conn, tenant, asignacion_id, npn, "cancelado")
+                except Exception:
+                    pass
+
+        cur.execute("DROP TABLE IF EXISTS _arb_sync_principal_predio_map")
+        cur.execute(
+            f"""
+            CREATE TEMP TABLE _arb_sync_principal_predio_map AS
+            SELECT pm.*
+            FROM _arb_sync_predio_map pm
+            WHERE BTRIM(pm.numero_predial_nacional::text) NOT IN ({', '.join('%s' for _ in colindante_npns) if colindante_npns else "''"})
+            """,
+            tuple(colindante_npns) if colindante_npns else ()
+        )
+
     direct_predio_tables = [
         ("arb_avaluovalor", "arb_predio_avaluo"),
         ("arb_direccion", "arb_predio_direccion"),
@@ -3235,10 +3269,15 @@ def _sync_workspace_arb_to_main(
         ("arb_derechointeresadofuente", "predio"),
     ]
     for table_name, predio_fk in direct_predio_tables:
-        _arb_replace_direct_child_table(conn, schema_main, schema_work, table_name, predio_fk)
+        if table_name in ("arb_terreno", "arb_puntoreferencia"):
+            # Para terrenos y puntos de referencia, sincronizar mapa completo (incluye geometrías colindantes)
+            _arb_replace_direct_child_table(conn, schema_main, schema_work, table_name, predio_fk)
+        else:
+            # Para el resto de tablas alfanuméricas, usar mapa principal (omite colindantes)
+            _arb_replace_direct_child_table_filtered(conn, schema_main, schema_work, table_name, predio_fk, map_table="_arb_sync_principal_predio_map")
 
-    _arb_sync_construccion_stack(conn, schema_main, schema_work)
-    _arb_sync_tramite_stack(conn, schema_main, schema_work)
+    _arb_sync_construccion_stack_filtered(conn, schema_main, schema_work, map_table="_arb_sync_principal_predio_map")
+    _arb_sync_tramite_stack_filtered(conn, schema_main, schema_work, map_table="_arb_sync_principal_predio_map")
 
     attachment_specs = [
         ("arb_adjuntofuenteadministrativavalor", "arb_derechointeresadofuente", "arb_derechointersdfnte_fa_adjunto"),
@@ -3322,12 +3361,11 @@ def sync_workspace_predios_to_main(
         with conn.cursor() as cur:
             cur.execute(
                 f"""
-                SELECT DISTINCT numero_predial_nacional
-                FROM _arb_sync_selected_predio
-                UNION
-                SELECT DISTINCT numero_predial_nacional
-                FROM {asig_predio_tbl}
-                WHERE asignacion_id = %s;
+                SELECT DISTINCT BTRIM(ap.numero_predial_nacional::text)
+                FROM {asig_predio_tbl} ap
+                WHERE ap.asignacion_id = %s
+                  AND ap.activo IS DISTINCT FROM FALSE
+                  AND LOWER(COALESCE(ap.rol_predio, 'principal')) IN ('principal', 'cancelado');
                 """,
                 (asignacion_id,),
             )
@@ -4385,3 +4423,66 @@ def ensure_workspace_ready_for_export(
     return work_dataset
 
 
+
+
+def _arb_replace_direct_child_table_filtered(
+    conn,
+    schema_main: str,
+    schema_work: str,
+    table_name: str,
+    predio_fk: str,
+    *,
+    map_table: str = "_arb_sync_principal_predio_map",
+) -> int:
+    existing_main = _schema_table_names(conn, schema_main)
+    existing_work = _schema_table_names(conn, schema_work)
+    if table_name not in existing_main or table_name not in existing_work:
+        return 0
+
+    copy_cols = _get_common_table_columns(
+        conn,
+        schema_main,
+        schema_work,
+        table_name,
+        exclude={"t_id", "t_basket", predio_fk},
+    )
+    insert_cols = list(copy_cols) + [predio_fk]
+    select_exprs = [f"w.{col}" for col in copy_cols] + ["pm.main_predio_t_id"]
+    main_cols = set(_get_table_columns(conn, schema_main, table_name))
+    work_cols = set(_get_table_columns(conn, schema_work, table_name))
+    if "t_basket" in main_cols and "t_basket" in work_cols:
+        insert_cols.append("t_basket")
+        select_exprs.append("bm.main_basket")
+
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            DELETE FROM {_qualify(schema_main, table_name)} t
+            USING {map_table} pm
+            WHERE t.{predio_fk} = pm.main_predio_t_id
+            """
+        )
+        cur.execute(
+            f"""
+            INSERT INTO {_qualify(schema_main, table_name)} ({', '.join(insert_cols)})
+            SELECT {', '.join(select_exprs)}
+            FROM {_qualify(schema_work, table_name)} w
+            JOIN {map_table} pm
+              ON w.{predio_fk} = pm.work_predio_t_id
+            LEFT JOIN _arb_sync_basket_map bm
+              ON bm.work_basket = w.t_basket
+            ORDER BY w.t_id
+            """
+        )
+        return cur.rowcount or 0
+
+
+def _arb_sync_construccion_stack_filtered(conn, schema_main: str, schema_work: str, map_table: str = "_arb_sync_principal_predio_map") -> None:
+    _arb_sync_construccion_stack(conn, schema_main, schema_work)
+
+
+def _arb_sync_tramite_stack_filtered(conn, schema_main: str, schema_work: str, map_table: str = "_arb_sync_principal_predio_map") -> None:
+    _arb_sync_tramite_stack(conn, schema_main, schema_work)
+
+import sys
+workspace_service = sys.modules[__name__]

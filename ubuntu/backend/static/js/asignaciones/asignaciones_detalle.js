@@ -723,12 +723,38 @@ async function cargarDetalle() {
     prediosAsignacionDataEdit = predios;
     tablaPrediosDT.clear();
 
+    let cPrincipal = 0;
+    let cColindante = 0;
+    let cCancelado = 0;
+
     if (predios.length) {
       predios.forEach((p) => {
+        const rolClean = String(p.rol_predio || "principal").toLowerCase();
+        if (rolClean === "colindante") cColindante++;
+        else if (rolClean === "cancelado") cCancelado++;
+        else cPrincipal++;
+
+        let badgeStyle = "background-color:#e0f2fe;color:#0369a1;border:1.5px solid #7dd3fc;font-weight:600;";
+        if (rolClean === "colindante") {
+          badgeStyle = "background-color:#f0fdf4;color:#15803d;border:1.5px solid #86efac;font-weight:600;";
+        } else if (rolClean === "cancelado") {
+          badgeStyle = "background-color:#fef2f2;color:#b91c1c;border:1.5px solid #fca5a5;font-weight:600;";
+        }
+
+        const selectRolHtml = `
+          <div class="d-flex align-items-center justify-content-center">
+            <select class="form-select form-select-sm select-rol-predio shadow-sm" data-predio-id="${p.id}" style="font-size:0.8rem;padding:0.25rem 0.6rem;border-radius:6px;cursor:pointer;${badgeStyle}" onclick="event.stopPropagation();">
+              <option value="principal" ${rolClean === "principal" ? "selected" : ""}>🏢 Principal (Trámite)</option>
+              <option value="colindante" ${rolClean === "colindante" ? "selected" : ""}>📐 Colindante (Soporte)</option>
+              <option value="cancelado" ${rolClean === "cancelado" ? "selected" : ""}>🚫 Cancelado (Histórico)</option>
+            </select>
+          </div>
+        `;
         const rowNode = tablaPrediosDT.row
           .add([
             esc(p.predio_t_id ?? "-"),
             esc(p.numero_predial_nacional || ""),
+            selectRolHtml,
             `<span class="chip ${p.activo ? "ok" : "off"}">${p.activo ? "Activo" : "Inactivo"}</span>`,
           ])
           .node();
@@ -745,6 +771,12 @@ async function cargarDetalle() {
     }
 
     tablaPrediosDT.draw();
+    const elP = document.getElementById("cntPrincipal");
+    const elC = document.getElementById("cntColindante");
+    const elX = document.getElementById("cntCancelado");
+    if (elP) elP.innerHTML = `<i class="fa-solid fa-building me-1"></i> Principales: ${cPrincipal}`;
+    if (elC) elC.innerHTML = `<i class="fa-solid fa-draw-polygon me-1"></i> Colindantes: ${cColindante}`;
+    if (elX) elX.innerHTML = `<i class="fa-solid fa-ban me-1"></i> Cancelados: ${cCancelado}`;
     syncPredioSelectionUI();
 
     // Initialize map and load assignment scope on details page
@@ -2933,7 +2965,7 @@ $(document).ready(function () {
 
 // Attach row click listeners for the breakdown table to select predio
 $(document).on("click", "#tablaPredios tbody tr", function (e) {
-  if ($(e.target).closest(".btn-editar-predio").length) {
+  if ($(e.target).closest(".btn-editar-predio, .select-rol-predio").length) {
     return; // Do not intercept clicks on the edit button
   }
   const predioTId = $(this).attr("data-predio-t-id");
@@ -6549,5 +6581,53 @@ document.getElementById("btnConfirmarSincronizarProduccion")?.addEventListener("
     showError(err.message || "Error ejecutando la sincronización a producción.");
   } finally {
     if (btnConfirm) btnConfirm.disabled = false;
+  }
+});
+
+
+$(document).on("change", ".select-rol-predio", async function(e) {
+  e.stopPropagation();
+  const $select = $(this);
+  const predioId = $select.attr("data-predio-id");
+  const nuevoRol = $select.val();
+
+  if (nuevoRol === "colindante") {
+    $select.css({ "background-color": "#f0fdf4", "color": "#15803d", "border-color": "#86efac" });
+  } else if (nuevoRol === "cancelado") {
+    $select.css({ "background-color": "#fef2f2", "color": "#b91c1c", "border-color": "#fca5a5" });
+  } else {
+    $select.css({ "background-color": "#e0f2fe", "color": "#0369a1", "border-color": "#7dd3fc" });
+  }
+  const asignacionId = Number(document.getElementById("asigDetalleId")?.value || new URLSearchParams(window.location.search).get("id"));
+  if (!asignacionId || !predioId) return;
+
+  try {
+    const res = await fetch(`/asignaciones/${asignacionId}/predios/${predioId}/rol`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rol_predio: nuevoRol }),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.detail || "Error actualizando rol del predio");
+    }
+    if (typeof Swal !== "undefined") {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: `Rol actualizado a ${nuevoRol}`,
+        showConfirmButton: false,
+        timer: 2000
+      });
+    }
+  } catch (err) {
+    if (typeof Swal !== "undefined") {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: err.message || 'No fue posible actualizar el rol del predio.',
+      });
+    }
   }
 });
