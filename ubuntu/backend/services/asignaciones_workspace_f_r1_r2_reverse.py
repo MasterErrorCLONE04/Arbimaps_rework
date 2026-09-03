@@ -16,6 +16,28 @@ _ILI_CODE_TO_R1_DOCUMENT_TYPE = {
 }
 
 
+def _get_table_columns(cur, schema: str, table_name: str) -> set[str]:
+    cur.execute(
+        """
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = %s
+          AND table_name = %s;
+        """,
+        (schema, table_name),
+    )
+    rows = cur.fetchall() or []
+    cols = set()
+    for r in rows:
+        if isinstance(r, dict):
+            c = r.get("column_name")
+        else:
+            c = r[0] if r else None
+        if c:
+            cols.add(str(c))
+    return cols
+
+
 def _normalize_str(val: Optional[object]) -> Optional[str]:
     if val is None:
         return None
@@ -441,55 +463,73 @@ def sincronizar_predios_a_f_r1_r2(
                         fa_fecha_val = prop.get("fa_fecha_documento_fuente")
                         fa_ente_val = _normalize_str(prop.get("fa_ente_emisor"))
 
+                        r1_cols = set(_get_table_columns(cur, "f_r1_r2", "r1_predio_propietario"))
+                        r1_data = {
+                            "departamento": dpto,
+                            "municipio": mpio,
+                            "numero_predial": npn_val,
+                            "tipo_registro": 1,
+                            "numero_de_orden": idx,
+                            "total_registros": total_regs,
+                            "nombre": nombre,
+                            "participacion": participacion,
+                            "tipo_documento": tipo_doc,
+                            "documento_identidad": doc_id,
+                            "direccion": prop_dir,
+                            "comuna": comuna_val,
+                            "destino_economico": dest_econ,
+                            "area_terreno": area_terreno,
+                            "area_construida": area_construida_total,
+                            "avaluo": avaluo,
+                            "vigencia": vigencia,
+                            "numero_predial_anterior": npn_anterior,
+                            "d_tipo": d_tipo_val,
+                            "d_fecha_inicio_tenencia": d_fecha_val,
+                            "fa_tipo": fa_tipo_val,
+                            "fa_numero_fuente": fa_num_val,
+                            "fa_fecha_documento_fuente": fa_fecha_val,
+                            "fa_ente_emisor": fa_ente_val,
+                            "estado": estado_r1_val,
+                        }
+                        valid_r1_data = {k: v for k, v in r1_data.items() if k in r1_cols}
+                        cols_str = ", ".join(valid_r1_data.keys())
+                        placeholders = ", ".join(["%s"] * len(valid_r1_data))
                         cur.execute(
-                            """
-                            INSERT INTO f_r1_r2.r1_predio_propietario (
-                                departamento, municipio, numero_predial, tipo_registro,
-                                numero_de_orden, total_registros, nombre, participacion,
-                                tipo_documento, documento_identidad, direccion, comuna, destino_economico,
-                                area_terreno, area_construida, avaluo, vigencia, numero_predial_anterior,
-                                d_tipo, d_fecha_inicio_tenencia, fa_tipo, fa_numero_fuente, fa_fecha_documento_fuente, fa_ente_emisor, estado
-                            )
-                            VALUES (
-                                %s, %s, %s, 1,
-                                %s, %s, %s, %s,
-                                %s, %s, %s, %s, %s,
-                                %s, %s, %s, %s, %s,
-                                %s, %s, %s, %s, %s, %s, %s
-                            );
-                            """,
-                            (
-                                dpto, mpio, npn_val,
-                                idx, total_regs, nombre, participacion,
-                                tipo_doc, doc_id, prop_dir, comuna_val, dest_econ,
-                                area_terreno, area_construida_total, avaluo, vigencia, npn_anterior,
-                                d_tipo_val, d_fecha_val, fa_tipo_val, fa_num_val, fa_fecha_val, fa_ente_val, estado_r1_val,
-                            ),
+                            f"INSERT INTO f_r1_r2.r1_predio_propietario ({cols_str}) VALUES ({placeholders});",
+                            tuple(valid_r1_data.values()),
                         )
                 else:
                     # Sin propietarios registrados, crear 1 entrada general
                     comuna_val = npn_val[9:11] if len(npn_val) >= 11 else None
                     dest_econ = _resolve_destino_economico_r1(cur, predio_row.get("destino_economico"), schema_source)
+                    r1_cols = set(_get_table_columns(cur, "f_r1_r2", "r1_predio_propietario"))
+                    r1_gen_data = {
+                        "departamento": dpto,
+                        "municipio": mpio,
+                        "numero_predial": npn_val,
+                        "tipo_registro": 1,
+                        "numero_de_orden": 1,
+                        "total_registros": 1,
+                        "nombre": None,
+                        "participacion": 100.00,
+                        "tipo_documento": "C",
+                        "documento_identidad": None,
+                        "direccion": direccion,
+                        "comuna": comuna_val,
+                        "destino_economico": dest_econ,
+                        "area_terreno": area_terreno,
+                        "area_construida": area_construida_total,
+                        "avaluo": avaluo,
+                        "vigencia": vigencia,
+                        "numero_predial_anterior": npn_anterior,
+                        "estado": estado_r1_val,
+                    }
+                    valid_gen_data = {k: v for k, v in r1_gen_data.items() if k in r1_cols}
+                    cols_str = ", ".join(valid_gen_data.keys())
+                    placeholders = ", ".join(["%s"] * len(valid_gen_data))
                     cur.execute(
-                        """
-                        INSERT INTO f_r1_r2.r1_predio_propietario (
-                            departamento, municipio, numero_predial, tipo_registro,
-                            numero_de_orden, total_registros, nombre, participacion,
-                            tipo_documento, documento_identidad, direccion, comuna, destino_economico,
-                            area_terreno, area_construida, avaluo, vigencia, numero_predial_anterior, estado
-                        )
-                        VALUES (
-                            %s, %s, %s, 1,
-                            1, 1, NULL, 100.00,
-                            'C', NULL, %s, %s, %s,
-                            %s, %s, %s, %s, %s, %s
-                        );
-                        """,
-                        (
-                            dpto, mpio, npn_val,
-                            direccion, comuna_val, dest_econ,
-                            area_terreno, area_construida_total, avaluo, vigencia, npn_anterior, estado_r1_val,
-                        ),
+                        f"INSERT INTO f_r1_r2.r1_predio_propietario ({cols_str}) VALUES ({placeholders});",
+                        tuple(valid_gen_data.values()),
                     )
 
                 # --- APLICAR REVERSE ETL A f_r1_r2.r2_construccion_zona ---

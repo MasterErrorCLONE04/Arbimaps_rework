@@ -3004,30 +3004,21 @@ def _arb_archive_cancelled_predios_to_history(
         return 0
 
     schema_history = str(getattr(getattr(tenant, "schemas", None), "history", "") or "").strip()
-    if not schema_history:
-        raise export_service.ExportServiceError(
-            status_code=500,
-            detail="No se configuro tenant.schemas.history para archivar predios cancelados.",
-        )
-    if schema_history in {schema_main, schema_work}:
-        raise export_service.ExportServiceError(
-            status_code=500,
-            detail=(
-                f"El schema historico '{schema_history}' no puede ser igual al principal "
-                "ni al workspace para archivar predios cancelados."
-            ),
-        )
+    existing_history = _schema_table_names(conn, schema_history) if schema_history else set()
 
-    existing_history = _schema_table_names(conn, schema_history)
-    if not existing_history:
+    if not existing_history or "arb_predio" not in existing_history:
+        for alt in ("e_historico", "c_base_historico", "e_base_historico", "historico"):
+            if alt not in {schema_main, schema_work}:
+                alt_tables = _schema_table_names(conn, alt)
+                if "arb_predio" in alt_tables:
+                    schema_history = alt
+                    existing_history = alt_tables
+                    break
+
+    if not schema_history or not existing_history or "arb_predio" not in existing_history:
         raise export_service.ExportServiceError(
             status_code=500,
-            detail=f"El schema historico '{schema_history}' no existe o no es visible.",
-        )
-    if "arb_predio" not in existing_history:
-        raise export_service.ExportServiceError(
-            status_code=500,
-            detail=f"El schema historico '{schema_history}' no tiene la estructura Arbimaps requerida: falta arb_predio.",
+            detail=f"El schema historico '{schema_history or 'desconocido'}' no existe o no tiene la estructura Arbimaps requerida (falta arb_predio).",
         )
 
     _arb_copy_all_ili2db_metadata_if_absent(conn, schema_main, schema_history)
