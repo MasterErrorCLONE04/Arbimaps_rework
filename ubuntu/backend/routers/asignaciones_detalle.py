@@ -4165,8 +4165,12 @@ def obtener_detalle_basico_predio(
 
 def _table_exists(cur, schema: str, table_name: str) -> bool:
     cur.execute("SELECT to_regclass(%s) IS NOT NULL AS ok;", (f"{schema}.{table_name}",))
-    row = cur.fetchone() or {}
-    return bool(row.get("ok"))
+    row = cur.fetchone()
+    if not row:
+        return False
+    if isinstance(row, dict):
+        return bool(row.get("ok"))
+    return bool(row[0])
 
 
 def _table_columns(cur, schema: str, table_name: str) -> set[str]:
@@ -4179,7 +4183,16 @@ def _table_columns(cur, schema: str, table_name: str) -> set[str]:
         """,
         (schema, table_name),
     )
-    return {r.get("column_name") for r in (cur.fetchall() or []) if r.get("column_name")}
+    rows = cur.fetchall() or []
+    cols: set[str] = set()
+    for r in rows:
+        if isinstance(r, dict):
+            c = r.get("column_name")
+        else:
+            c = r[0] if r else None
+        if c:
+            cols.add(str(c))
+    return cols
 
 
 def _resolve_domain_label(cur, schema: str, table_name: str, pk_value) -> str | None:
