@@ -200,6 +200,23 @@ def _clear_reconocedores_supervisor(cur, tenant: TenantContext, supervisor_id: i
     return cur.rowcount or 0
 
 
+
+def _sync_user_primary_role(cur, tenant: TenantContext, user_id: int, role_id: int | None):
+    if not role_id or not user_id:
+        return
+    cur.execute(
+        f"UPDATE {_app_table(tenant, 'user_roles')} SET es_principal = false WHERE user_id = %s",
+        (user_id,),
+    )
+    cur.execute(
+        f"""
+        INSERT INTO {_app_table(tenant, 'user_roles')} (user_id, role_id, es_principal, asignado_en)
+        VALUES (%s, %s, true, NOW())
+        ON CONFLICT (user_id, role_id) DO UPDATE SET es_principal = true, asignado_en = NOW()
+        """,
+        (user_id, role_id),
+    )
+
 def _get_role_id(conn, tenant: TenantContext, role_code: str) -> int:
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
@@ -560,6 +577,8 @@ def crear_usuario(
                 ),
             )
             row = cur.fetchone()
+            if row and role_id:
+                _sync_user_primary_role(cur, tenant, row["id_global"], role_id)
         conn.commit()
         return row
     except HTTPException:
@@ -1192,6 +1211,8 @@ def actualizar_usuario(
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="Usuario no encontrado")
+            if role_id:
+                _sync_user_primary_role(cur, tenant, id_global, role_id)
 
             if previous_role in {"coordinador", "lider_reconocimiento"} and role not in {"coordinador", "lider_reconocimiento"}:
                 _clear_reconocedores_supervisor(cur, tenant, id_global)

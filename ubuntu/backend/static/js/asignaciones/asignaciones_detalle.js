@@ -646,7 +646,7 @@ async function cargarDetalle() {
     const btnSyncXtf = document.getElementById("btnHeaderSyncXtf");
     if (btnSyncXtf) {
       const isAllowedSyncRole = currentLoggedRole === "coordinador" || currentLoggedRole === "soporte" || currentLoggedRole === "admin" || currentLoggedRole === "lider_tecnico" || currentLoggedRole === "lider_reconocimiento";
-      const isSyncState = dataDet.estado === "APROBADO_DIGITALIZACION" || dataDet.estado === "EN_SINCRONIZACION" || dataDet.estado === "EN_APROBACION";
+      const isSyncState = dataDet.estado === "EN_SINCRONIZACION" || dataDet.estado === "EN_APROBACION";
 
       if (isAllowedSyncRole && isSyncState) {
         btnSyncXtf.classList.remove("d-none");

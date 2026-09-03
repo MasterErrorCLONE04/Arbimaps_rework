@@ -1501,13 +1501,14 @@ def buscar_predios_estado(
             SELECT
               p.{numero_field} AS numero_predial_nacional,
               p.t_id AS predio_t_id,
+              p.matricula_inmobiliaria::text AS matricula_inmobiliaria,
               pt.tramite AS tramite_id,
               (SELECT COUNT(*) FROM a_base_principal.arb_predio_tramite pt2 WHERE pt2.tramite = pt.tramite) AS total_predios_tramite,
               (
                 SELECT a.usuario_asignado
                 FROM {app_schema}.asignacion a
                 JOIN {app_schema}.asignacion_predio ap ON ap.asignacion_id = a.id
-                WHERE ap.numero_predial_nacional = p.{numero_field}
+                WHERE (ap.predio_t_id = p.t_id OR (ap.predio_t_id IS NULL AND ap.numero_predial_nacional = p.{numero_field}))
                   AND ap.activo IS DISTINCT FROM FALSE
                   AND a.estado IS DISTINCT FROM 'CERRADA'
                 LIMIT 1
@@ -1516,7 +1517,7 @@ def buscar_predios_estado(
                 SELECT a.creado_por
                 FROM {app_schema}.asignacion a
                 JOIN {app_schema}.asignacion_predio ap2 ON ap2.asignacion_id = a.id
-                WHERE ap2.numero_predial_nacional = p.{numero_field}
+                WHERE (ap2.predio_t_id = p.t_id OR (ap2.predio_t_id IS NULL AND ap2.numero_predial_nacional = p.{numero_field}))
                   AND ap2.activo IS DISTINCT FROM FALSE
                   AND a.estado IS DISTINCT FROM 'CERRADA'
                 LIMIT 1

@@ -95,6 +95,7 @@ class BuscarPrediosResponseItem(BaseModel):
     asignado_por: Optional[str] = None
     source_schema: Optional[str] = "a_base_principal"
     predio_t_id: Optional[int] = None
+    matricula_inmobiliaria: Optional[str] = None
     tramite_id: Optional[int] = None
     total_predios_tramite: Optional[int] = None
     buscado_inicialmente: Optional[bool] = True
@@ -620,52 +621,74 @@ def buscar_predios(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error consultando base de datos: {e}")
 
-    existentes = {r.get('numero_predial_nacional') for r in rows}
-    lookup = {r.get('numero_predial_nacional'): r for r in rows}
+    rows_by_npn: dict[str, list[dict]] = {}
+    for r in rows:
+        npn = r.get("numero_predial_nacional")
+        if npn:
+            rows_by_npn.setdefault(npn, []).append(r)
 
+    existentes = set(rows_by_npn.keys())
     items: List[dict] = []
-    seen_npns = set()
     tramite_ids = set()
+    seen_predio_t_ids = set()
 
     for n in numeros:
-        existe = n in existentes
-        assigned_info = lookup.get(n) or {}
-        asignado_a = assigned_info.get('asignado_a') if existe else None
-        asignado_por = assigned_info.get('asignado_por') if existe else None
-        source_schema = assigned_info.get('source_schema', 'a_base_principal') if existe else None
-        
-        es_cancelado = bool(assigned_info.get('es_cancelado')) if existe else False
-        if es_cancelado:
-            estado = 'CANCELADO'
-        elif asignado_a:
-            estado = 'ASIGNADO'
-        elif n in restringidos_set:
-            estado = 'RESTRINGIDO'
-        else:
-            estado = None
-
-        predio_t_id = assigned_info.get('predio_t_id') if existe else None
-        tramite_id = assigned_info.get('tramite_id') if existe else None
-        total_predios_tramite = assigned_info.get('total_predios_tramite') if existe else None
-
-        if tramite_id and total_predios_tramite and total_predios_tramite > 1:
-            tramite_ids.add(tramite_id)
-
-        if n not in seen_npns:
-            seen_npns.add(n)
-            item_obj = BuscarPrediosResponseItem(
-                numero_predial_nacional=n,
-                existe=existe,
-                estado=estado,
-                asignado_a=asignado_a,
-                asignado_por=asignado_por,
-                source_schema=source_schema,
-                predio_t_id=predio_t_id,
-                tramite_id=tramite_id,
-                total_predios_tramite=total_predios_tramite,
-                buscado_inicialmente=True,
+        if n not in existentes:
+            items.append(
+                BuscarPrediosResponseItem(
+                    numero_predial_nacional=n,
+                    existe=False,
+                    estado=None,
+                    asignado_a=None,
+                    asignado_por=None,
+                    source_schema="a_base_principal",
+                    predio_t_id=None,
+                    matricula_inmobiliaria=None,
+                    tramite_id=None,
+                    total_predios_tramite=None,
+                    buscado_inicialmente=True,
+                ).dict()
             )
-            items.append(item_obj.dict())
+        else:
+            npn_rows = rows_by_npn[n]
+            for r in npn_rows:
+                predio_t_id = r.get("predio_t_id")
+                if predio_t_id:
+                    seen_predio_t_ids.add(predio_t_id)
+
+                asignado_a = r.get("asignado_a")
+                asignado_por = r.get("asignado_por")
+                source_schema = r.get("source_schema", "a_base_principal")
+                es_cancelado = bool(r.get("es_cancelado"))
+
+                if es_cancelado:
+                    estado = "CANCELADO"
+                elif asignado_a:
+                    estado = "ASIGNADO"
+                elif n in restringidos_set:
+                    estado = "RESTRINGIDO"
+                else:
+                    estado = None
+
+                tramite_id = r.get("tramite_id")
+                total_predios_tramite = r.get("total_predios_tramite")
+                if tramite_id and total_predios_tramite and total_predios_tramite > 1:
+                    tramite_ids.add(tramite_id)
+
+                item_obj = BuscarPrediosResponseItem(
+                    numero_predial_nacional=n,
+                    existe=True,
+                    estado=estado,
+                    asignado_a=asignado_a,
+                    asignado_por=asignado_por,
+                    source_schema=source_schema,
+                    predio_t_id=predio_t_id,
+                    matricula_inmobiliaria=r.get("matricula_inmobiliaria"),
+                    tramite_id=tramite_id,
+                    total_predios_tramite=total_predios_tramite,
+                    buscado_inicialmente=True,
+                )
+                items.append(item_obj.dict())
 
     # Expandir predios hermanos del mismo trámite
     for tid in tramite_ids:
@@ -673,8 +696,9 @@ def buscar_predios(
             brothers = asignaciones_repo.obtener_predios_tramite(conn, tenant, tid)
             for b in brothers:
                 npn_b = b.get("numero_predial_nacional")
-                if npn_b and npn_b not in seen_npns:
-                    seen_npns.add(npn_b)
+                pid_b = b.get("predio_t_id")
+                if pid_b and pid_b not in seen_predio_t_ids:
+                    seen_predio_t_ids.add(pid_b)
                     asig_a = b.get("asignado_a")
                     b_estado = "ASIGNADO" if asig_a else None
                     item_b = BuscarPrediosResponseItem(
@@ -683,7 +707,8 @@ def buscar_predios(
                         estado=b_estado,
                         asignado_a=asig_a,
                         source_schema="a_base_principal",
-                        predio_t_id=b.get("predio_t_id"),
+                        predio_t_id=pid_b,
+                        matricula_inmobiliaria=b.get("matricula_inmobiliaria"),
                         tramite_id=tid,
                         total_predios_tramite=None,
                         buscado_inicialmente=False,
@@ -694,16 +719,16 @@ def buscar_predios(
             logger.warning(f"Error expandiendo predios hermanos del tramite {tid}: {e}")
 
     total = len(numeros)
-    existen = sum(1 for it in items if it['existe'])
-    asignados = sum(1 for it in items if it['estado'] == 'ASIGNADO')
-    restringidos_count = sum(1 for it in items if it['estado'] == 'RESTRINGIDO')
-    cancelados_count = sum(1 for it in items if it['estado'] == 'CANCELADO')
-    disponibles = existen - asignados - restringidos_count - cancelados_count
-    no_existen = total - existen
+    existen_npns = len({it["numero_predial_nacional"] for it in items if it["existe"]})
+    asignados = sum(1 for it in items if it["existe"] and it["estado"] == "ASIGNADO")
+    restringidos_count = sum(1 for it in items if it["existe"] and it["estado"] == "RESTRINGIDO")
+    cancelados_count = sum(1 for it in items if it["existe"] and it["estado"] == "CANCELADO")
+    disponibles = sum(1 for it in items if it["existe"] and not it["estado"])
+    no_existen = total - existen_npns
 
     return {
         "total": total,
-        "existen": existen,
+        "existen": existen_npns,
         "no_existen": no_existen,
         "asignados": asignados,
         "disponibles": max(disponibles, 0),

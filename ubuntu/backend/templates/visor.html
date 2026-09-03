@@ -14,6 +14,20 @@
           <button id="vmPredioSearchBtn" class="btn visor-search-btn" type="button">Buscar</button>
         </div>
         <small id="vmPredioSearchStatus" class="visor-map-search-status"></small>
+        
+        <!-- Tarjeta Interactiva de Resultados de Búsqueda -->
+        <div id="vmSearchResultsCard" class="visor-search-results-card shadow rounded-3 bg-white d-none mt-1 p-2" style="max-height: 340px; overflow-y: auto;">
+          <div class="d-flex flex-column px-2 py-1 mb-2 border-bottom">
+            <div class="d-flex align-items-center justify-content-between">
+              <small class="fw-bold text-navy" style="font-size: 0.78rem;">
+                <i class="bi bi-list-stars me-1 text-primary"></i>Predios encontrados (<span id="vmSearchResultsCount">0</span>)
+              </small>
+              <button type="button" class="btn-close" id="vmCloseSearchResults" style="font-size: 0.65rem;" aria-label="Cerrar"></button>
+            </div>
+            <small id="vmSearchResultsSubStatus" class="text-primary mt-1" style="font-size: 0.72rem; font-weight: 500;"></small>
+          </div>
+          <div id="vmSearchResultsList" class="d-flex flex-column gap-2"></div>
+        </div>
       </div>
 
       <div class="visor-map-topbar">
@@ -2513,6 +2527,127 @@
     });
   }
 
+  let currentSearchResults = [];
+
+  function hideSearchResultsCard() {
+    const card = document.getElementById("vmSearchResultsCard");
+    if (card) card.classList.add("d-none");
+  }
+
+  async function selectPredioFromViewer(predioId, feature) {
+    document.querySelectorAll(".visor-search-result-item").forEach(el => {
+      const isCur = String(el.dataset.predioId) === String(predioId);
+      el.classList.toggle("active", isCur);
+      const icon = el.querySelector(".active-indicator-icon");
+      if (icon) icon.classList.toggle("d-none", !isCur);
+    });
+
+    const subStatus = document.getElementById("vmSearchResultsSubStatus");
+    const status = document.getElementById("vmPredioSearchStatus");
+
+    try {
+      const detailResp = await fetch(
+        `${rp}/predio/detalle?predio_id=${encodeURIComponent(predioId)}`,
+      );
+      if (!detailResp.ok) {
+        const msg = "No fue posible cargar el detalle del predio seleccionado.";
+        if (subStatus) subStatus.textContent = msg;
+        if (status) status.textContent = msg;
+        return;
+      }
+
+      const payload = await detailResp.json();
+      const viewerDetail = normalizePredioDetailForViewer(payload);
+
+      if (viewerDetail?.terreno_geom) {
+        highlightSelectedTerrain(viewerDetail);
+        updateFloatingPredioInfo(viewerDetail);
+        fitViewerDetail(viewerDetail);
+        hideInfoPopup();
+        const esCancelado = feature?.properties?.es_cancelado;
+        const estadoTxt = esCancelado ? "Cancelado" : "Activo";
+        const msg = `Mostrando predio ${estadoTxt} (ID #${predioId}).`;
+        if (subStatus) subStatus.textContent = msg;
+        if (status) status.textContent = msg;
+      } else {
+        clearSelectedTerrainHighlight();
+        updateFloatingPredioInfo(viewerDetail);
+        hideInfoPopup();
+        const esCancelado = feature?.properties?.es_cancelado;
+        const estadoLabel = esCancelado ? " (Cancelado)" : "";
+        const msg = `Predio ID #${predioId}${estadoLabel} no tiene geometría de terreno disponible.`;
+        if (subStatus) subStatus.textContent = msg;
+        if (status) status.textContent = msg;
+      }
+    } catch (e) {
+      console.error("Error seleccionando predio en el visor", e);
+      if (subStatus) subStatus.textContent = "Error al seleccionar el predio.";
+    }
+  }
+
+  function renderSearchResultsList(features) {
+    const card = document.getElementById("vmSearchResultsCard");
+    const countEl = document.getElementById("vmSearchResultsCount");
+    const listEl = document.getElementById("vmSearchResultsList");
+    if (!card || !listEl) return;
+
+    currentSearchResults = features || [];
+    if (countEl) countEl.textContent = String(currentSearchResults.length);
+
+    listEl.innerHTML = "";
+
+    if (!currentSearchResults.length) {
+      card.classList.add("d-none");
+      return;
+    }
+
+    card.classList.remove("d-none");
+
+    currentSearchResults.forEach((feat, idx) => {
+      const props = feat?.properties || {};
+      const pId = props.t_id ?? props.predio_id;
+      const esCancelado = !!props.es_cancelado;
+      const matricula = props.matricula_inmobiliaria || props.matricula || "Sin matrícula";
+      const sourceSchema = props.source_schema || "a_base_principal";
+      const condicion = props.condicion_predio_nombre || "";
+
+      const div = document.createElement("div");
+      div.className = `visor-search-result-item d-flex align-items-center justify-content-between ${idx === 0 ? 'active' : ''}`;
+      div.dataset.predioId = String(pId || idx);
+
+      let badgeHtml = "";
+      if (sourceSchema === "f_r1_r2") {
+        badgeHtml = `<span class="badge bg-info text-white" style="font-size:0.68rem;">Alfanumérico</span>`;
+      } else if (esCancelado) {
+        badgeHtml = `<span class="badge bg-danger text-white" style="font-size:0.68rem;"><i class="bi bi-x-circle-fill me-1"></i>Cancelado</span>`;
+      } else {
+        badgeHtml = `<span class="badge bg-success text-white" style="font-size:0.68rem;"><i class="bi bi-check-circle-fill me-1"></i>Activo</span>`;
+      }
+
+      div.innerHTML = `
+        <div class="d-flex flex-column gap-1" style="line-height:1.2;">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-check-circle-fill text-primary active-indicator-icon ${idx === 0 ? '' : 'd-none'}" style="font-size:0.9rem;"></i>
+            <strong class="text-navy" style="font-size:0.84rem;">ID #${pId || '---'}</strong>
+            ${badgeHtml}
+          </div>
+          <div class="text-muted" style="font-size:0.74rem;">
+            <i class="bi bi-journal-bookmark me-1"></i>Matrícula: <strong>${matricula}</strong> ${condicion ? ' &bull; (' + condicion + ')' : ''}
+          </div>
+        </div>
+        <div class="text-end ms-2">
+          <i class="bi bi-chevron-right text-muted" style="font-size:0.85rem;"></i>
+        </div>
+      `;
+
+      div.addEventListener("click", () => {
+        selectPredioFromViewer(pId, feat);
+      });
+
+      listEl.appendChild(div);
+    });
+  }
+
   async function runPredioSearchFromViewer() {
     const input = document.getElementById("vmPredioSearchInput");
     const status = document.getElementById("vmPredioSearchStatus");
@@ -2522,6 +2657,7 @@
 
     if (!numeroPredial) {
       status.textContent = "Escribe un número predial para consultar.";
+      hideSearchResultsCard();
       return;
     }
 
@@ -2532,6 +2668,7 @@
       const response = await fetch(`${rp}/predio/buscar?${qs.toString()}`);
       if (!response.ok) {
         status.textContent = "No fue posible completar la búsqueda.";
+        hideSearchResultsCard();
         return;
       }
 
@@ -2542,46 +2679,36 @@
 
       if (!features.length) {
         status.textContent = "No se encontraron predios con ese número.";
+        hideSearchResultsCard();
         hideInfoPopup();
         clearSelectedTerrainHighlight();
         clearFloatingPredioInfo();
         return;
       }
 
-      const props = features[0]?.properties || {};
-      const predioId = props.t_id ?? props.predio_id;
+      // Render search results list
+      renderSearchResultsList(features);
 
-      if (!predioId) {
-        status.textContent = "La búsqueda no devolvió un predio utilizable.";
-        return;
+      // Select first active feature or feature 0 by default
+      let chosenFeat = features[0];
+      let chosenPId = chosenFeat?.properties?.t_id ?? chosenFeat?.properties?.predio_id;
+
+      for (const feat of features) {
+        const props = feat?.properties || {};
+        if (!props.es_cancelado && (props.t_id || props.predio_id)) {
+          chosenFeat = feat;
+          chosenPId = props.t_id ?? props.predio_id;
+          break;
+        }
       }
 
-      const detailResp = await fetch(
-        `${rp}/predio/detalle?predio_id=${encodeURIComponent(predioId)}`,
-      );
-      if (!detailResp.ok) {
-        status.textContent = "Se encontró el predio, pero no fue posible cargar el detalle.";
-        return;
+      if (chosenPId) {
+        selectPredioFromViewer(chosenPId, chosenFeat);
       }
-
-      const payload = await detailResp.json();
-      const viewerDetail = normalizePredioDetailForViewer(payload);
-
-      if (!viewerDetail?.terreno_geom) {
-        status.textContent = "Se encontró el predio, pero no tiene geometría disponible.";
-        return;
-      }
-
-      highlightSelectedTerrain(viewerDetail);
-      updateFloatingPredioInfo(viewerDetail);
-      fitViewerDetail(viewerDetail);
-      hideInfoPopup();
-
-      status.textContent = features.length > 1
-        ? `Se encontraron ${features.length} resultados. Se muestra el primero.`
-        : "";
     } catch (_error) {
+      console.error(_error);
       status.textContent = "No fue posible completar la búsqueda.";
+      hideSearchResultsCard();
     }
   }
 
@@ -2593,6 +2720,8 @@
       if (!predioId) return;
       window.location.href = `${rp}/panel/buscar/predio/${encodeURIComponent(predioId)}`;
     });
+
+    document.getElementById("vmCloseSearchResults")?.addEventListener("click", hideSearchResultsCard);
 
     document.getElementById("vmPredioSearchBtn")?.addEventListener("click", () => {
       runPredioSearchFromViewer();

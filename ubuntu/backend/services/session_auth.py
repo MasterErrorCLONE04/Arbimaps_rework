@@ -240,7 +240,8 @@ def _fetch_active_user_for_tenant(request: Request, tenant: TenantContext) -> di
                       u.first_name,
                       u.last_name,
                       u.activo,
-                      r.itf_code AS role_code
+                      r.itf_code AS role_code,
+                      COALESCE(r.permite_python, true) AS permite_python
                     FROM {users_table} u
                     JOIN {roles_table} r ON r.t_id = u.rol_id
                     WHERE u.id_global = %s
@@ -319,7 +320,8 @@ def authenticate_user_for_tenant(
                       u.last_name,
                       u.password_hash,
                       u.activo,
-                      r.itf_code AS role_code
+                      r.itf_code AS role_code,
+                      COALESCE(r.permite_python, true) AS permite_python
                     FROM {users_table} u
                     JOIN {roles_table} r ON r.t_id = u.rol_id
                     WHERE u.username = %s
@@ -343,5 +345,12 @@ def authenticate_user_for_tenant(
     password_hash = user.get("password_hash")
     if not password_hash or not verify_password(password, password_hash):
         return None
+
+    if user.get("permite_python") is False:
+        role_disp = user.get("role_code") or "desconocido"
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"El rol '{role_disp}' no tiene acceso a esta plataforma ni módulos habilitados.",
+        )
 
     return user

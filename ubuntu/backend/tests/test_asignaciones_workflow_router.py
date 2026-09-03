@@ -633,7 +633,7 @@ def test_approve_digitalization_success(mock_command_service, monkeypatch):
         client = TestClient(app)
         response = client.post("/api/workflow/asignaciones/123/approve-digitalization")
         assert response.status_code == 200
-        assert len(notifications_sent) == 0
+        assert len(notifications_sent) == 1
     finally:
         app.dependency_overrides[get_tenant_db_connection] = mock_get_tenant_db_connection
         app.dependency_overrides[get_current_user_from_session] = mock_get_current_user

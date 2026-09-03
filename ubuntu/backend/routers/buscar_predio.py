@@ -265,25 +265,47 @@ def predio_buscar(
     """
 
     sql = f"""
-    SELECT
-      DISTINCT ON (COALESCE(NULLIF(BTRIM(p.numero_predial::text), ''), p.t_id::text))
-      p.*,
-      p.numero_predial AS numero_predial_nacional,
-      uat.dispname AS tipo_nombre,
-      uat.dispname AS tipo_predio_nombre,
-      c.dispname AS condicion_predio_nombre,
-      de.dispname AS destinacion_economica_nombre
-    FROM {_qualified_table(tenant, 'arb_predio')} p
-    LEFT JOIN {_qualified_table(tenant, 'arb_prediotipo')} uat
-      ON uat.t_id::text = p.tipo::text
-    LEFT JOIN {_qualified_table(tenant, 'arb_condicionprediotipo')} c
-      ON c.t_id::text = p.condicion_predio::text
-    LEFT JOIN {_qualified_table(tenant, 'arb_destinacioneconomicatipo')} de
-      ON de.t_id::text = p.destinacion_economica::text
-    {join_ext_sql}
-    WHERE {" OR ".join(where)}
-    ORDER BY COALESCE(NULLIF(BTRIM(p.numero_predial::text), ''), p.t_id::text), p.t_id DESC
-    LIMIT 20;
+    WITH predios_raw AS (
+      SELECT
+        DISTINCT ON (p.t_id)
+        p.*,
+        p.numero_predial AS numero_predial_nacional,
+        uat.dispname AS tipo_nombre,
+        uat.dispname AS tipo_predio_nombre,
+        c.dispname AS condicion_predio_nombre,
+        de.dispname AS destinacion_economica_nombre,
+        (
+          CASE 
+            WHEN LOWER(BTRIM(COALESCE(et.ilicode::text, ''))) IN ('cancelado', 'cancelacion')
+              OR LOWER(BTRIM(COALESCE(et.dispname::text, ''))) IN ('cancelado', 'cancelacion') THEN TRUE
+            WHEN EXISTS (
+              SELECT 1 
+              FROM {_qualified_table(tenant, 'arb_novedadnumeropredialvalor')} nnp
+              LEFT JOIN {_qualified_table(tenant, 'arb_novedadnumeropredialtipo')} nt ON nt.t_id = nnp.tipo_novedad
+              WHERE nnp.arb_predio_novedad_numero_predial = p.t_id
+                AND (
+                  LOWER(BTRIM(nt.ilicode::text)) IN ('cancelacion', 'cancelacion_por_desenglobe', 'cancelacion_por_englobe')
+                  OR LOWER(BTRIM(nnp.tipo_novedad::text)) LIKE 'cancelacion%%'
+                )
+            ) THEN TRUE
+            ELSE FALSE
+          END
+        ) AS es_cancelado
+      FROM {_qualified_table(tenant, 'arb_predio')} p
+      LEFT JOIN {_qualified_table(tenant, 'arb_estadotipo')} et ON et.t_id = p.estado
+      LEFT JOIN {_qualified_table(tenant, 'arb_prediotipo')} uat
+        ON uat.t_id::text = p.tipo::text
+      LEFT JOIN {_qualified_table(tenant, 'arb_condicionprediotipo')} c
+        ON c.t_id::text = p.condicion_predio::text
+      LEFT JOIN {_qualified_table(tenant, 'arb_destinacioneconomicatipo')} de
+        ON de.t_id::text = p.destinacion_economica::text
+      {join_ext_sql}
+      WHERE {" OR ".join(where)}
+      ORDER BY p.t_id DESC
+    )
+    SELECT * FROM predios_raw
+    ORDER BY (CASE WHEN es_cancelado THEN 1 ELSE 0 END) ASC, t_id DESC
+    LIMIT 30;
     """
 
     try:

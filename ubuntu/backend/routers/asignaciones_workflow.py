@@ -1344,12 +1344,12 @@ def approve_digitalization(
             event=WorkflowEvent.APPROVE
         )
 
-        # 2. Update legacy fields to APROBADO_DIGITALIZACION
+        # 2. Update legacy fields to EN_APROBACION
         asignaciones_repo.update_asignacion_fields(
             conn,
             tenant,
             int(assignment_id),
-            estado="APROBADO_DIGITALIZACION",
+            estado="EN_APROBACION",
         )
 
         if payload and payload.comentario:
@@ -1362,21 +1362,53 @@ def approve_digitalization(
                 rol=role,
                 comentario=payload.comentario,
                 estado_origen=asig_row["estado"],
-                estado_destino="APROBADO_DIGITALIZACION"
+                estado_destino="EN_APROBACION"
             )
+
+        # Notify lider_tecnico users for final review
+        try:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute(
+                    f"""
+                    SELECT u.id_global, u.username
+                    FROM {users_table} u
+                    JOIN {roles_table} r ON r.t_id = u.rol_id
+                    WHERE r.itf_code = 'lider_tecnico' AND u.activo = TRUE
+                    """
+                )
+                lider_users = cur.fetchall()
+
+            for lid in lider_users:
+                asignaciones_repo.safe_crear_notificacion(
+                    conn,
+                    tenant=tenant,
+                    id_asignacion=int(assignment_id),
+                    id_usuario_destino=int(lid["id_global"]),
+                    id_usuario_origen=int(user["id_global"]),
+                    rol_origen="coordinador",
+                    rol_destino="lider_tecnico",
+                    tipo="asignacion",
+                    titulo="Digitalización aprobada y enviada a revisión final",
+                    mensaje=f"El coordinador {user.get('username')} aprobó la digitalización del trabajo '{asig_title}'. Estado: EN_APROBACION.",
+                    url_destino=f"/panel/asignaciones/detalle?id={assignment_id}#asig-open",
+                    prioridad="alta",
+                    metadata={"assignment_id": int(assignment_id), "enlace_digitalizacion": enlace}
+                )
+        except Exception as support_err:
+            logger.error(f"Fallo al notificar lideres para revisión final: {support_err}")
 
         asignaciones_repo.safe_log_event(
             conn,
             tenant,
             int(assignment_id),
             "ESTADO_CAMBIADO",
-            "Digitalización aprobada por coordinador. Estado: APROBADO_DIGITALIZACION.",
+            "Digitalización aprobada por coordinador. Estado: EN_APROBACION.",
             user.get("username")
         )
         conn.commit()
         return {
             "assignment_id": result.transition.assignment.assignment_id,
-            "workflow_state": "APROBADO_DIGITALIZACION",
+            "workflow_state": "EN_APROBACION",
             "assigned_user_id": result.transition.assignment.assigned_user_id
         }
 
@@ -1423,7 +1455,7 @@ def submit_to_lider(
     if not asig_row:
         raise HTTPException(status_code=404, detail="Asignación no encontrada.")
 
-    if asig_row["estado"] != "APROBADO_DIGITALIZACION":
+    if asig_row["estado"] not in ("EN_APROBACION", "APROBADO_DIGITALIZACION"):
         raise HTTPException(
             status_code=400,
             detail="La asignación debe estar aprobada en digitalización para enviarse al Líder Técnico."

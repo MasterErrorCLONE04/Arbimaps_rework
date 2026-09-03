@@ -137,6 +137,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                 <span>Visor geográfico</span>
               </a>
 
+
               <a class="menuBtn sidebar-link {{ 'active' if view in ['buscar', 'buscar_predio'] else '' }}"
                 href="{{ rp }}/panel/buscar">
                 <i class="bi bi-search"></i>
@@ -289,6 +290,13 @@ effective_role in ['digitalizador', 'reconocedor'] %}
             </div>
 
             <div class="d-flex align-items-center gap-3">
+              <a class="btn-web-php"
+                 href="{{ rp }}/sso/redirect-to-php" 
+                 target="_blank" 
+                 title="Ir a la Plataforma Web PHP (dashboardcopy)">
+                <span>Ir a Alfa</span>
+              </a>
+
               <div class="dropdown notification-dropdown">
                 <button id="notificationToggle"
                   class="btn p-0 border-0 bg-transparent d-inline-flex align-items-center justify-content-center notification-toggle text-white"
@@ -346,6 +354,7 @@ effective_role in ['digitalizador', 'reconocedor'] %}
                   <li>
                     <hr class="dropdown-divider" />
                   </li>
+
                   <li>
                     <a class="dropdown-item d-flex align-items-center gap-2" href="{{ rp }}/logout-app">
                       <i class="bi bi-box-arrow-right"></i>

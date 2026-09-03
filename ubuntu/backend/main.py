@@ -28,6 +28,7 @@ from routers.asignaciones_historial import router as asignaciones_historial_rout
 from routers.panel_control import router as panel_control_router
 from routers.restriccion_predios import router as restriccion_predios_router
 from routers.sincronizacion_mergin import router as sincronizacion_mergin_router
+from routers.sso import router as sso_router
 from tenants import ConnectionManager, init_connection_manager, init_municipality_registry
 
 
@@ -161,6 +162,7 @@ def create_app() -> FastAPI:
     app.include_router(panel_control_router)
     app.include_router(restriccion_predios_router)
     app.include_router(sincronizacion_mergin_router)
+    app.include_router(sso_router)
     app.include_router(predios_generador_router)
 
 

@@ -279,6 +279,17 @@ def login_post(
             password=password,
         )
     except HTTPException as exc:
+        if exc.status_code == 403:
+            return templates.TemplateResponse(
+                "login.html",
+                _login_template_context(
+                    request,
+                    error=exc.detail,
+                    municipality_code=municipality_code,
+                    username=username,
+                ),
+                status_code=403,
+            )
         if exc.status_code != 503:
             raise
         logger.exception(
