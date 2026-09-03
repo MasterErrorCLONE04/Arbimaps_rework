@@ -3186,7 +3186,7 @@ def _auto_sync_asignacion_predio_roles_and_new_predios(
                     SELECT 1 FROM {schema_work}.arb_marca m
                     JOIN {schema_work}.arb_marcapredialtipo mt ON mt.t_id = m.marca_tipo
                     WHERE m.predio = p.t_id
-                      AND (mt.ilicode ILIKE '%Cancelac%' OR mt.dispname ILIKE '%Cancelac%')
+                      AND (POSITION('cancelac' IN LOWER(COALESCE(mt.ilicode, ''))) > 0 OR POSITION('cancelac' IN LOWER(COALESCE(mt.dispname, ''))) > 0)
                 )
             """ if has_marca else ""
 

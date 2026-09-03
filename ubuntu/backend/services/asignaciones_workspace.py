@@ -2915,7 +2915,7 @@ def _arb_create_cancelled_predio_scope(conn, schema_main: str, schema_work: str 
                     SELECT 1 FROM {_qualify(work_schema, 'arb_marca')} m
                     JOIN {_qualify(work_schema, 'arb_marcapredialtipo')} mt ON mt.t_id = m.marca_tipo
                     WHERE m.predio = pm.work_predio_t_id
-                      AND (mt.ilicode ILIKE '%Cancelac%' OR mt.dispname ILIKE '%Cancelac%')
+                      AND (POSITION('cancelac' IN LOWER(COALESCE(mt.ilicode, ''))) > 0 OR POSITION('cancelac' IN LOWER(COALESCE(mt.dispname, ''))) > 0)
                 )
             """ if has_marca else ""
 
@@ -2924,7 +2924,7 @@ def _arb_create_cancelled_predio_scope(conn, schema_main: str, schema_work: str 
                     SELECT 1 FROM {_qualify(work_schema, 'arb_novedadnumeropredialvalor')} nnp
                     JOIN {_qualify(work_schema, 'arb_novedadnumeropredialtipo')} nt ON nt.t_id = nnp.tipo_novedad
                     WHERE nnp.arb_predio_novedad_numero_predial = pm.work_predio_t_id
-                      AND (nt.ilicode ILIKE '%Cancelac%' OR nt.dispname ILIKE '%Cancelac%')
+                      AND (POSITION('cancelac' IN LOWER(COALESCE(nt.ilicode, ''))) > 0 OR POSITION('cancelac' IN LOWER(COALESCE(nt.dispname, ''))) > 0)
                 )
             """ if has_novedad else ""
 
