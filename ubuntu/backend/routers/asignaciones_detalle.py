@@ -3169,75 +3169,86 @@ def _auto_sync_asignacion_predio_roles_and_new_predios(
     asignacion_id: int,
     work_datasetname: str,
 ) -> None:
-    schema_work = _safe_ident(_read_schema_work(tenant), fallback="")
-    if not schema_work or not work_datasetname:
-        return
+    try:
+        schema_work = _safe_ident(_read_schema_work(tenant), fallback="")
+        if not schema_work or not work_datasetname:
+            return
 
-    asignacion_predio_tbl = _app_table(tenant, "asignacion_predio")
+        asignacion_predio_tbl = _app_table(tenant, "asignacion_predio")
 
-    with conn.cursor() as cur:
-        # 1. Detectar y marcar cancelados en asignacion_predio
-        cur.execute(
-            f"""
-            UPDATE {asignacion_predio_tbl} ap
-            SET rol_predio = 'cancelado'
-            WHERE ap.asignacion_id = %s
-              AND LOWER(COALESCE(ap.rol_predio, '')) <> 'cancelado'
-              AND BTRIM(ap.numero_predial_nacional::text) IN (
-                  SELECT BTRIM(p.numero_predial::text)
-                  FROM {schema_work}.arb_predio p
-                  JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
-                  JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
-                  LEFT JOIN {schema_work}.arb_estadotipo et ON et.t_id = p.estado
-                  WHERE d.datasetname = %s
-                    AND (
-                        et.ilicode ILIKE 'Cancelado' OR et.dispname ILIKE 'Cancelado'
-                        OR EXISTS (
-                            SELECT 1 FROM {schema_work}.arb_marca m
-                            JOIN {schema_work}.arb_marcapredialtipo mt ON mt.t_id = m.marca_tipo
-                            WHERE m.predio = p.t_id
-                              AND (mt.ilicode ILIKE '%Cancelac%' OR mt.dispname ILIKE '%Cancelac%')
+        with conn.cursor() as cur:
+            if not _table_exists(cur, schema_work, "arb_predio"):
+                return
+
+            has_marca = _table_exists(cur, schema_work, "arb_marca") and _table_exists(cur, schema_work, "arb_marcapredialtipo")
+            marca_check = f"""
+                OR EXISTS (
+                    SELECT 1 FROM {schema_work}.arb_marca m
+                    JOIN {schema_work}.arb_marcapredialtipo mt ON mt.t_id = m.marca_tipo
+                    WHERE m.predio = p.t_id
+                      AND (mt.ilicode ILIKE '%Cancelac%' OR mt.dispname ILIKE '%Cancelac%')
+                )
+            """ if has_marca else ""
+
+            # 1. Detectar y marcar cancelados en asignacion_predio
+            cur.execute(
+                f"""
+                UPDATE {asignacion_predio_tbl} ap
+                SET rol_predio = 'cancelado'
+                WHERE ap.asignacion_id = %s
+                  AND LOWER(COALESCE(ap.rol_predio, '')) <> 'cancelado'
+                  AND BTRIM(ap.numero_predial_nacional::text) IN (
+                      SELECT BTRIM(p.numero_predial::text)
+                      FROM {schema_work}.arb_predio p
+                      JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
+                      JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                      LEFT JOIN {schema_work}.arb_estadotipo et ON et.t_id = p.estado
+                      WHERE d.datasetname = %s
+                        AND (
+                            et.ilicode ILIKE 'Cancelado' OR et.dispname ILIKE 'Cancelado' OR BTRIM(p.estado::text) IN ('1445', 'Cancelado')
+                            {marca_check}
                         )
-                    )
-              );
-            """,
-            (asignacion_id, work_datasetname),
-        )
-
-        # 2. Detectar e incorporar predios nuevos creados en workspace hacia asignacion_predio
-        cur.execute(
-            f"""
-            INSERT INTO {asignacion_predio_tbl} (
-                asignacion_id,
-                numero_predial_nacional,
-                predio_t_id,
-                activo,
-                rol_predio,
-                creado_por,
-                creado_en
+                  );
+                """,
+                (asignacion_id, work_datasetname),
             )
-            SELECT DISTINCT
-                %s,
-                BTRIM(p.numero_predial::text),
-                p.t_id,
-                TRUE,
-                'nuevo',
-                'system_sync',
-                NOW()
-            FROM {schema_work}.arb_predio p
-            JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
-            JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
-            WHERE d.datasetname = %s
-              AND NULLIF(BTRIM(p.numero_predial::text), '') IS NOT NULL
-              AND NOT EXISTS (
-                  SELECT 1
-                  FROM {asignacion_predio_tbl} ap
-                  WHERE ap.asignacion_id = %s
-                    AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
-              );
-            """,
-            (asignacion_id, work_datasetname, asignacion_id),
-        )
+
+            # 2. Detectar e incorporar predios nuevos creados en workspace hacia asignacion_predio
+            cur.execute(
+                f"""
+                INSERT INTO {asignacion_predio_tbl} (
+                    asignacion_id,
+                    numero_predial_nacional,
+                    predio_t_id,
+                    activo,
+                    rol_predio,
+                    creado_por,
+                    creado_en
+                )
+                SELECT DISTINCT
+                    %s,
+                    BTRIM(p.numero_predial::text),
+                    p.t_id,
+                    TRUE,
+                    'nuevo',
+                    'system_sync',
+                    NOW()
+                FROM {schema_work}.arb_predio p
+                JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
+                JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                WHERE d.datasetname = %s
+                  AND NULLIF(BTRIM(p.numero_predial::text), '') IS NOT NULL
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM {asignacion_predio_tbl} ap
+                      WHERE ap.asignacion_id = %s
+                        AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
+                  );
+                """,
+                (asignacion_id, work_datasetname, asignacion_id),
+            )
+    except Exception as exc:
+        logger.warning("Error en _auto_sync_asignacion_predio_roles_and_new_predios para asignacion %s: %s", asignacion_id, exc)
 
 
 def _procesar_retorno_xtf(

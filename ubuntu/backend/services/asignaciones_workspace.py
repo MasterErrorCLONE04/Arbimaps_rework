@@ -2894,57 +2894,76 @@ def _arb_insert_table_rows_if_absent(
 
 
 def _arb_create_cancelled_predio_scope(conn, schema_main: str, schema_work: str = "b_asignaciones_arb") -> int:
-    existing_main = _schema_table_names(conn, schema_main)
-    if "arb_predio" not in existing_main:
-        return 0
+    try:
+        existing_main = _schema_table_names(conn, schema_main)
+        if "arb_predio" not in existing_main:
+            return 0
 
-    work_schema = schema_work or "b_asignaciones_arb"
+        work_schema = schema_work or "b_asignaciones_arb"
+        existing_work = _schema_table_names(conn, work_schema)
+        if "arb_predio" not in existing_work:
+            return 0
 
-    with conn.cursor() as cur:
-        cur.execute("DROP TABLE IF EXISTS _arb_history_cancelled_predio")
-        cur.execute(
-            f"""
-            CREATE TEMP TABLE _arb_history_cancelled_predio AS
-            SELECT DISTINCT
-                pm.main_predio_t_id,
-                BTRIM(mp.numero_predial::text) AS numero_predial
-            FROM _arb_sync_predio_map pm
-            JOIN {_qualify(schema_main, 'arb_predio')} mp ON mp.t_id = pm.main_predio_t_id
-            LEFT JOIN {_qualify(schema_main, 'arb_estadotipo')} et ON et.t_id = mp.estado
-            LEFT JOIN {_qualify(work_schema, 'arb_predio')} wp ON wp.t_id = pm.work_predio_t_id
-            LEFT JOIN {_qualify(work_schema, 'arb_estadotipo')} wet ON wet.t_id = wp.estado
-            WHERE (
-                et.ilicode ILIKE 'Cancelado' OR et.dispname ILIKE 'Cancelado' OR BTRIM(mp.estado::text) IN ('1445', 'Cancelado')
-                OR wet.ilicode ILIKE 'Cancelado' OR wet.dispname ILIKE 'Cancelado' OR BTRIM(wp.estado::text) IN ('1445', 'Cancelado')
+        with conn.cursor() as cur:
+            cur.execute("DROP TABLE IF EXISTS _arb_history_cancelled_predio")
+            
+            has_marca = {"arb_marca", "arb_marcapredialtipo"}.issubset(existing_work)
+            has_novedad = {"arb_novedadnumeropredialvalor", "arb_novedadnumeropredialtipo"}.issubset(existing_work)
+            
+            marca_cond = f"""
                 OR EXISTS (
                     SELECT 1 FROM {_qualify(work_schema, 'arb_marca')} m
                     JOIN {_qualify(work_schema, 'arb_marcapredialtipo')} mt ON mt.t_id = m.marca_tipo
                     WHERE m.predio = pm.work_predio_t_id
                       AND (mt.ilicode ILIKE '%Cancelac%' OR mt.dispname ILIKE '%Cancelac%')
                 )
+            """ if has_marca else ""
+
+            novedad_cond = f"""
                 OR EXISTS (
                     SELECT 1 FROM {_qualify(work_schema, 'arb_novedadnumeropredialvalor')} nnp
                     JOIN {_qualify(work_schema, 'arb_novedadnumeropredialtipo')} nt ON nt.t_id = nnp.tipo_novedad
                     WHERE nnp.arb_predio_novedad_numero_predial = pm.work_predio_t_id
                       AND (nt.ilicode ILIKE '%Cancelac%' OR nt.dispname ILIKE '%Cancelac%')
                 )
+            """ if has_novedad else ""
+
+            cur.execute(
+                f"""
+                CREATE TEMP TABLE _arb_history_cancelled_predio AS
+                SELECT DISTINCT
+                    pm.main_predio_t_id,
+                    BTRIM(mp.numero_predial::text) AS numero_predial
+                FROM _arb_sync_predio_map pm
+                JOIN {_qualify(schema_main, 'arb_predio')} mp ON mp.t_id = pm.main_predio_t_id
+                LEFT JOIN {_qualify(schema_main, 'arb_estadotipo')} et ON et.t_id = mp.estado
+                LEFT JOIN {_qualify(work_schema, 'arb_predio')} wp ON wp.t_id = pm.work_predio_t_id
+                LEFT JOIN {_qualify(work_schema, 'arb_estadotipo')} wet ON wet.t_id = wp.estado
+                WHERE (
+                    et.ilicode ILIKE 'Cancelado' OR et.dispname ILIKE 'Cancelado' OR BTRIM(mp.estado::text) IN ('1445', 'Cancelado')
+                    OR wet.ilicode ILIKE 'Cancelado' OR wet.dispname ILIKE 'Cancelado' OR BTRIM(wp.estado::text) IN ('1445', 'Cancelado')
+                    {marca_cond}
+                    {novedad_cond}
+                )
+                AND NULLIF(BTRIM(mp.numero_predial::text), '') IS NOT NULL;
+                """
             )
-            AND NULLIF(BTRIM(mp.numero_predial::text), '') IS NOT NULL;
-            """
-        )
 
-        # Update main predio estado to 1445 (Cancelado) for archived predios
-        cur.execute(
-            f"""
-            UPDATE {_qualify(schema_main, 'arb_predio')} mp
-            SET estado = 1445
-            FROM _arb_history_cancelled_predio cp
-            WHERE mp.t_id = cp.main_predio_t_id;
-            """
-        )
+            # Update main predio estado to 1445 (Cancelado) for archived predios
+            cur.execute(
+                f"""
+                UPDATE {_qualify(schema_main, 'arb_predio')} mp
+                SET estado = 1445
+                FROM _arb_history_cancelled_predio cp
+                WHERE mp.t_id = cp.main_predio_t_id;
+                """
+            )
 
-        cur.execute("SELECT COUNT(*) FROM _arb_history_cancelled_predio")
-        return int((cur.fetchone() or [0])[0] or 0)
+            cur.execute("SELECT COUNT(*) FROM _arb_history_cancelled_predio")
+            return int((cur.fetchone() or [0])[0] or 0)
+    except Exception as exc:
+        logger.warning("Error en _arb_create_cancelled_predio_scope: %s", exc)
+        return 0
 
 
 def _arb_copy_all_ili2db_metadata_if_absent(conn, schema_main: str, schema_history: str) -> None:
