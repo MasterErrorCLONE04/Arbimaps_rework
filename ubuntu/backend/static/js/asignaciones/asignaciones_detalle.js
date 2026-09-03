@@ -6598,29 +6598,58 @@ document.getElementById("btnConfirmarSincronizarProduccion")?.addEventListener("
 
 
 function updateTopCardsCounters() {
-  let cntPrincipales = 0;
-  let cntColindantes = 0;
-  let cntCancelados = 0;
-  let cntNuevos = 0;
+  if (Array.isArray(prediosAsignacionDataEdit) && prediosAsignacionDataEdit.length > 0) {
+    let cntPrincipales = 0;
+    let cntColindantes = 0;
+    let cntCancelados = 0;
+    let cntNuevos = 0;
 
-  $("#tablaPredios tbody tr").each(function () {
-    const $select = $(this).find(".select-rol-predio");
-    if ($select.length) {
-      const val = $select.val();
-      if (val === "colindante") cntColindantes++;
-      else if (val === "principal") cntPrincipales++;
-    } else {
-      const text = $(this).text().toLowerCase();
-      if (text.includes("cancelado")) cntCancelados++;
-      else if (text.includes("nuevo")) cntNuevos++;
-      else cntPrincipales++;
-    }
-  });
+    prediosAsignacionDataEdit.forEach((p) => {
+      const rolClean = String(p.rol_predio || "principal").toLowerCase();
+      if (rolClean === "colindante") {
+        cntColindantes++;
+      } else if (rolClean === "cancelado") {
+        cntCancelados++;
+      } else if (rolClean === "nuevo") {
+        cntNuevos++;
+      } else {
+        cntPrincipales++;
+      }
+    });
 
-  setText("d_asig", cntPrincipales + cntNuevos);
-  setText("d_colindantes", cntColindantes);
-  setText("d_elim", cntCancelados);
-  setText("d_new", cntNuevos);
+    setText("d_asig", cntPrincipales + cntNuevos);
+    setText("d_colindantes", cntColindantes);
+    setText("d_elim", cntCancelados);
+    setText("d_new", cntNuevos);
+    return;
+  }
+
+  if ($.fn.DataTable && $.fn.DataTable.isDataTable("#tablaPredios")) {
+    const api = $("#tablaPredios").DataTable();
+    let cntPrincipales = 0;
+    let cntColindantes = 0;
+    let cntCancelados = 0;
+    let cntNuevos = 0;
+
+    api.rows().nodes().to$().each(function () {
+      const $select = $(this).find(".select-rol-predio");
+      if ($select.length) {
+        const val = $select.val();
+        if (val === "colindante") cntColindantes++;
+        else if (val === "principal") cntPrincipales++;
+      } else {
+        const text = $(this).text().toLowerCase();
+        if (text.includes("cancelado")) cntCancelados++;
+        else if (text.includes("nuevo")) cntNuevos++;
+        else cntPrincipales++;
+      }
+    });
+
+    setText("d_asig", cntPrincipales + cntNuevos);
+    setText("d_colindantes", cntColindantes);
+    setText("d_elim", cntCancelados);
+    setText("d_new", cntNuevos);
+  }
 }
 
 $(document).on("change", ".select-rol-predio", async function(e) {
