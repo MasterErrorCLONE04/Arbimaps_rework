@@ -151,8 +151,9 @@ def _pos_18(value: object) -> str | None:
     return None if len(text) < 18 else text[17]
 
 def _is_predio_nuevo_pos_18(pos_18: str | None) -> bool:
-    # Las reglas 8.18 y 8.20 definen predio nuevo como A-Z en la posicion 18.
-    return bool(pos_18 and pos_18.isalpha())
+    if pos_18 in (None, ""):
+        return False
+    return pos_18 == "9" or pos_18.isalpha()
 
 def _matricula_vacia(value: object) -> bool:
     if value in (None, ""):
@@ -970,15 +971,19 @@ def _rule_8_20(dataset: DatasetReader) -> list[RuleIssue]:
         if not predio:
             continue
 
-        numero_predial_predio = helper.get_field_value(
+        numero_predial_predio = str(helper.get_field_value(
             predio,
             ("numero_predial", "numero_predial_nacional"),
-        )
+        ) or "").strip()
 
-        numero_predial_novedad = helper.get_field_value(
+        numero_predial_novedad = str(helper.get_field_value(
             novedad,
             ("numero_predial",),
-        )
+        ) or "").strip()
+
+        # Si el predio nuevo tiene asignado un NPN final definitivo (30 digitos numericos), es valido directamente
+        if len(numero_predial_predio) == 30 and numero_predial_predio.isdigit() and len(numero_predial_novedad) == 30 and numero_predial_novedad.isdigit():
+            continue
 
         pos_18_predio = _pos_18(numero_predial_predio)
         pos_18_novedad = _pos_18(numero_predial_novedad)

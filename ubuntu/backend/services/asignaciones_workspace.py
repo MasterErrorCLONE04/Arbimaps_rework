@@ -2893,37 +2893,12 @@ def _arb_insert_table_rows_if_absent(
         return cur.rowcount or 0
 
 
-def _arb_create_cancelled_predio_scope(conn, schema_main: str) -> int:
+def _arb_create_cancelled_predio_scope(conn, schema_main: str, schema_work: str = "b_asignaciones_arb") -> int:
     existing_main = _schema_table_names(conn, schema_main)
     if "arb_predio" not in existing_main:
         return 0
 
-    predio_cols = set(_get_table_columns(conn, schema_main, "arb_predio"))
-    predicates: list[str] = []
-    joins = ""
-
-    if "estado" in predio_cols:
-        if "arb_estadotipo" in existing_main:
-            joins += f"\n            LEFT JOIN {_qualify(schema_main, 'arb_estadotipo')} et ON et.t_id = mp.estado"
-            predicates.append("et.ilicode = 'Cancelado'")
-        predicates.append("BTRIM(mp.estado::text) ILIKE 'Cancelado'")
-
-    if {"arb_novedadnumeropredialvalor", "arb_novedadnumeropredialtipo"}.issubset(existing_main):
-        predicates.append(
-            f"""
-            EXISTS (
-                SELECT 1
-                FROM {_qualify(schema_main, 'arb_novedadnumeropredialvalor')} nnp
-                JOIN {_qualify(schema_main, 'arb_novedadnumeropredialtipo')} nt
-                  ON nt.t_id = nnp.tipo_novedad
-                WHERE nnp.arb_predio_novedad_numero_predial = mp.t_id
-                  AND nt.ilicode IN ('Cancelacion', 'Cancelacion_por_Desenglobe', 'Cancelacion_por_Englobe')
-            )
-            """.strip()
-        )
-
-    if not predicates:
-        return 0
+    work_schema = schema_work or "b_asignaciones_arb"
 
     with conn.cursor() as cur:
         cur.execute("DROP TABLE IF EXISTS _arb_history_cancelled_predio")
@@ -2934,13 +2909,40 @@ def _arb_create_cancelled_predio_scope(conn, schema_main: str) -> int:
                 pm.main_predio_t_id,
                 BTRIM(mp.numero_predial::text) AS numero_predial
             FROM _arb_sync_predio_map pm
-            JOIN {_qualify(schema_main, 'arb_predio')} mp
-              ON mp.t_id = pm.main_predio_t_id
-            {joins}
-            WHERE ({' OR '.join(f'({predicate})' for predicate in predicates)})
-              AND NULLIF(BTRIM(mp.numero_predial::text), '') IS NOT NULL
+            JOIN {_qualify(schema_main, 'arb_predio')} mp ON mp.t_id = pm.main_predio_t_id
+            LEFT JOIN {_qualify(schema_main, 'arb_estadotipo')} et ON et.t_id = mp.estado
+            LEFT JOIN {_qualify(work_schema, 'arb_predio')} wp ON wp.t_id = pm.work_predio_t_id
+            LEFT JOIN {_qualify(work_schema, 'arb_estadotipo')} wet ON wet.t_id = wp.estado
+            WHERE (
+                et.ilicode ILIKE 'Cancelado' OR et.dispname ILIKE 'Cancelado' OR BTRIM(mp.estado::text) IN ('1445', 'Cancelado')
+                OR wet.ilicode ILIKE 'Cancelado' OR wet.dispname ILIKE 'Cancelado' OR BTRIM(wp.estado::text) IN ('1445', 'Cancelado')
+                OR EXISTS (
+                    SELECT 1 FROM {_qualify(work_schema, 'arb_marca')} m
+                    JOIN {_qualify(work_schema, 'arb_marcapredialtipo')} mt ON mt.t_id = m.marca_tipo
+                    WHERE m.predio = pm.work_predio_t_id
+                      AND (mt.ilicode ILIKE '%Cancelac%' OR mt.dispname ILIKE '%Cancelac%')
+                )
+                OR EXISTS (
+                    SELECT 1 FROM {_qualify(work_schema, 'arb_novedadnumeropredialvalor')} nnp
+                    JOIN {_qualify(work_schema, 'arb_novedadnumeropredialtipo')} nt ON nt.t_id = nnp.tipo_novedad
+                    WHERE nnp.arb_predio_novedad_numero_predial = pm.work_predio_t_id
+                      AND (nt.ilicode ILIKE '%Cancelac%' OR nt.dispname ILIKE '%Cancelac%')
+                )
+            )
+            AND NULLIF(BTRIM(mp.numero_predial::text), '') IS NOT NULL;
             """
         )
+
+        # Update main predio estado to 1445 (Cancelado) for archived predios
+        cur.execute(
+            f"""
+            UPDATE {_qualify(schema_main, 'arb_predio')} mp
+            SET estado = 1445
+            FROM _arb_history_cancelled_predio cp
+            WHERE mp.t_id = cp.main_predio_t_id;
+            """
+        )
+
         cur.execute("SELECT COUNT(*) FROM _arb_history_cancelled_predio")
         return int((cur.fetchone() or [0])[0] or 0)
 
@@ -2978,7 +2980,7 @@ def _arb_archive_cancelled_predios_to_history(
     schema_main: str,
     schema_work: str,
 ) -> int:
-    cancelled_count = _arb_create_cancelled_predio_scope(conn, schema_main)
+    cancelled_count = _arb_create_cancelled_predio_scope(conn, schema_main, schema_work=schema_work)
     if cancelled_count <= 0:
         return 0
 

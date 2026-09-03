@@ -2382,7 +2382,13 @@ def get_asignacion_predio_roles(
             (asignacion_id,),
         )
         rows = cur.fetchall() or []
-        return {r["npn"]: r["rol"] for r in rows if r and r.get("npn")}
+        res = {r["npn"]: r["rol"] for r in rows if r and r.get("npn")}
+    if not getattr(conn, "autocommit", True):
+        try:
+            conn.commit()
+        except Exception:
+            pass
+    return res
 
 
 def auto_detect_cancelled_predios_sql(
@@ -2449,6 +2455,67 @@ def auto_detect_cancelled_predios_sql(
         try:
             cur.execute(query, tuple(params))
             rows = cur.fetchall() or []
-            return {str(r[0]).strip() for r in rows if r and r[0]}
+            res = {str(r[0]).strip() for r in rows if r and r[0]}
+            if not getattr(conn, "autocommit", True):
+                try:
+                    conn.commit()
+                except Exception:
+                    pass
+            return res
+        except Exception:
+            return set()
+
+
+def auto_detect_new_predios_sql(
+    conn,
+    schema_name: str,
+    npns: list[str] | None = None,
+) -> set[str]:
+    """
+    Detecta predios nuevos evaluando si tienen marca de predio nuevo ('Predio_Nuevo')
+    en arb_marca o si son predios incorporados en workspace.
+    """
+    if not schema_name:
+        return set()
+
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT 1 FROM information_schema.tables WHERE table_schema = %s AND table_name = 'arb_predio' LIMIT 1;",
+            (schema_name,),
+        )
+        if not cur.fetchone():
+            return set()
+
+    npn_filter = ""
+    params: list[object] = []
+    if npns:
+        clean_npns = [str(n).strip() for n in npns if n]
+        if clean_npns:
+            npn_filter = "AND BTRIM(p.numero_predial::text) = ANY(%s)"
+            params.append(clean_npns)
+
+    query = f"""
+    SELECT DISTINCT BTRIM(p.numero_predial::text) AS numero_predial
+    FROM {schema_name}.arb_predio p
+    WHERE NULLIF(BTRIM(p.numero_predial::text), '') IS NOT NULL
+      {npn_filter}
+      AND EXISTS (
+          SELECT 1 FROM {schema_name}.arb_marca m
+          JOIN {schema_name}.arb_marcapredialtipo mt ON mt.t_id = m.marca_tipo
+          WHERE m.predio = p.t_id
+            AND (mt.ilicode ILIKE '%Nuevo%' OR mt.dispname ILIKE '%Nuevo%' OR mt.ilicode ILIKE '%Incorp%')
+      )
+    """
+    with conn.cursor() as cur:
+        try:
+            cur.execute(query, tuple(params))
+            rows = cur.fetchall() or []
+            res = {str(r[0]).strip() for r in rows if r and r[0]}
+            if not getattr(conn, "autocommit", True):
+                try:
+                    conn.commit()
+                except Exception:
+                    pass
+            return res
         except Exception:
             return set()

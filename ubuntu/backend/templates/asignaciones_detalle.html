@@ -568,11 +568,11 @@
             <div id="d_qa_link_row" class="d-none"></div>
             <div id="d_devolucion_link_row" class="d-none"></div>
 
-            <!-- STATISTICS CARDS -->
-            <div class="container  mt-3">
-              <div class="row">
-                <!-- Card 1: Asignados -->
-                <div class="col-12 col-md-4 px-1 ">
+            <!-- STATISTICS CARDS (FICHAS SUPERIORES UNIFICADAS) -->
+            <div class="container mt-3">
+              <div class="row g-2">
+                <!-- Card 1: Asignados (Principales) -->
+                <div class="col-12 col-sm-6 col-md-3 px-1">
                   <div class="stat-card stat-card-left h-100">
                     <div class="stat-card-icon-wrap stat-card-icon-blue">
                       <i class="fa-solid fa-map-location-dot fs-5"></i>
@@ -584,8 +584,21 @@
                   </div>
                 </div>
 
-                <!-- Card 2: Eliminados -->
-                <div class="col-12 col-md-4 px-1">
+                <!-- Card 2: Colindantes (Nuevo al lado de Asignados) -->
+                <div class="col-12 col-sm-6 col-md-3 px-1">
+                  <div class="stat-card stat-card-left h-100" style="border-left: 4px solid #0284c7;">
+                    <div class="stat-card-icon-wrap" style="background: rgba(2, 132, 199, 0.15); color: #0284c7;">
+                      <i class="fa-solid fa-draw-polygon fs-5"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <small class="d-block stat-card-title">Predios Colindantes</small>
+                      <span id="d_colindantes" class="d-block stat-card-value">0</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 3: Eliminados (Cancelados) -->
+                <div class="col-12 col-sm-6 col-md-3 px-1">
                   <div class="stat-card stat-card-right stat-card-border-red h-100">
                     <div class="min-w-0">
                       <small class="d-block stat-card-title">Predios Eliminados</small>
@@ -604,8 +617,8 @@
                   </div>
                 </div>
 
-                <!-- Card 3: Nuevos -->
-                <div class="col-12 col-md-4 px-1">
+                <!-- Card 4: Nuevos -->
+                <div class="col-12 col-sm-6 col-md-3 px-1">
                   <div class="stat-card stat-card-right stat-card-border-green h-100">
                     <div class="min-w-0">
                       <small class="d-block stat-card-title">Predios Nuevos</small>
@@ -618,7 +631,7 @@
                             d="M16.7409 1.82115C17.0419 2.00527 17.2225 2.33225 17.2225 2.68462L17.2193 7.14482C16.592 6.88768 15.9076 6.748 15.1915 6.748C13.5756 6.748 12.1181 7.46544 11.1359 8.60192V5.44962L7.08027 4.0941V13.1256L10.2867 14.1954C10.5434 14.9097 10.8888 15.5763 11.2373 16.1573C11.3672 16.3731 11.5003 16.5858 11.6365 16.789L6.14557 14.9541L2.467 16.7985C2.15332 16.9573 1.78261 16.9382 1.48161 16.7541C1.1806 16.57 1 16.243 1 15.8906V4.71631C1 4.33219 1.21545 3.97982 1.56082 3.80522L5.61644 1.77353C5.85724 1.6529 6.1329 1.63385 6.38954 1.71956L12.0738 3.6211L15.7555 1.7767C16.0692 1.61798 16.4399 1.63703 16.7409 1.82115Z"
                             fill="#03A025" />
                           <path
-                            d="M20 12.2581C20 13.4558 19.5242 14.6045 18.6773 15.4515C17.8303 16.2984 16.6817 16.7742 15.4839 16.7742C14.2862 16.7742 13.1375 16.2984 12.2905 15.4515C11.4436 14.6045 10.9678 13.4558 10.9678 12.2581C10.9678 11.0603 11.4436 9.91163 12.2905 9.06469C13.1375 8.21775 14.2862 7.74194 15.4839 7.74194C16.6817 7.74194 17.8303 8.21775 18.6773 9.06469C19.5242 9.91163 20 11.0603 20 12.2581ZM15.7662 10.2823C15.7662 10.2074 15.7364 10.1356 15.6835 10.0827C15.6306 10.0297 15.5588 10 15.4839 10C15.409 10 15.3372 10.0297 15.2843 10.0827C15.2314 10.1356 15.2016 10.2074 15.2016 10.2823V11.9758H13.5081C13.4332 11.9758 13.3614 12.0056 13.3085 12.0585C13.2556 12.1114 13.2258 12.1832 13.2258 12.2581C13.2258 12.3329 13.2556 12.4047 13.3085 12.4577C13.3614 12.5106 13.4332 12.5403 13.5081 12.5403H15.2016V14.2339C15.2016 14.3087 15.2314 14.3805 15.2843 14.4335C15.3372 14.4864 15.409 14.5161 15.4839 14.5161C15.5588 14.5161 15.6306 14.4864 15.6835 14.4335C15.7364 14.3805 15.7662 14.3087 15.7662 14.2339V12.5403H17.4597C17.5346 12.5403 17.6064 12.5106 17.6593 12.4577C17.7122 12.4047 17.742 12.3329 17.742 12.2581C17.7122 12.1832 17.7122 12.1114 17.6593 12.0585C17.6064 12.0056 17.5346 11.9758 17.4597 11.9758H15.7662V10.2823Z"
+                            d="M20 12.2581C20 13.4558 19.5242 14.6045 18.6773 15.4515C17.8303 16.2984 16.6817 16.7742 15.4839 16.7742C14.2862 16.7742 13.1375 16.2984 12.2905 15.4515C11.4436 14.6045 10.9678 13.4558 10.9678 12.2581C10.9678 11.0603 11.4436 9.91163 12.2905 9.06469C13.1375 8.21775 14.2862 7.74194 15.4839 7.74194C16.6817 7.74194 17.8303 8.21775 18.6773 9.06469C19.5242 9.91163 20 11.0603 20 12.2581ZM15.7662 10.2823C15.7662 10.2074 15.7364 10.1356 15.6835 10.0827C15.6306 10.0297 15.5588 10 15.4839 10C15.409 10 15.3372 10.0297 15.2843 10.0827C15.2314 10.1356 15.2016 10.2074 15.2016 10.2823V11.9758H13.5081C13.4332 11.9758 13.3614 12.0056 13.3085 12.0585C13.2556 12.1114 13.2258 12.1832 13.2258 12.2581C13.2258 12.3329 13.3614 12.4047 13.3085 12.4577C13.3614 12.5106 13.4332 12.5403 13.5081 12.5403H15.2016V14.2339C15.2016 14.3087 15.2314 14.4335 15.2843 14.4335C15.3372 14.4864 15.409 14.5161 15.4839 14.5161C15.5588 14.5161 15.6306 14.4864 15.6835 14.4335C15.7364 14.3805 15.7662 14.3087 15.7662 14.2339V12.5403H17.4597C17.5346 12.5403 17.6064 12.5106 17.6593 12.4577C17.7122 12.4047 17.742 12.3329 17.742 12.2581C17.7122 12.1832 17.7122 12.1114 17.6593 12.0585C17.6064 12.0056 17.5346 11.9758 17.4597 11.9758H15.7662V10.2823Z"
                             fill="#03A025" />
                         </g>
                         <defs>
@@ -640,13 +653,8 @@
                 <div>
                   <h4 class="title mb-1">Desglose Predios</h4>
                   <p class="sub mb-0">
-                    Consulta los predios correspondientes y asigna su rol (Principal, Colindante o Cancelado)
+                    Consulta los predios correspondientes a esta asignación
                   </p>
-                </div>
-                <div class="d-flex gap-2 align-items-center flex-wrap" id="rolesSummaryBadges">
-                  <span class="badge bg-primary-subtle text-primary border border-primary px-3 py-2 rounded-pill fw-semibold" id="cntPrincipal"><i class="fa-solid fa-building me-1"></i> Principales: 0</span>
-                  <span class="badge bg-info-subtle text-info-emphasis border border-info px-3 py-2 rounded-pill fw-semibold" id="cntColindante"><i class="fa-solid fa-draw-polygon me-1"></i> Colindantes: 0</span>
-                  <span class="badge bg-danger-subtle text-danger border border-danger px-3 py-2 rounded-pill fw-semibold" id="cntCancelado"><i class="fa-solid fa-ban me-1"></i> Cancelados: 0</span>
                 </div>
               </div>
 

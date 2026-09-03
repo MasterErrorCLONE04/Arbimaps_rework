@@ -395,6 +395,7 @@ class AsignacionDetalleResponse(BaseModel):
     work_datasetname: Optional[str] = None
     error_msg: Optional[str] = None
     total_asignados: int = 0
+    total_colindantes: int = 0
     total_eliminados: int = 0
     total_nuevos: int = 0
     predios: List[AsignacionPredioDetalle] = Field(default_factory=list)
@@ -1170,14 +1171,70 @@ def listar_validadores_xtf(
     }
 
 
+def _auto_detect_cancelled_npns_from_xtf_xml(xtf_path: str) -> set[str]:
+    cancelled_npns = set()
+    if not xtf_path or not os.path.exists(xtf_path):
+        return cancelled_npns
+    try:
+        tree = ET.parse(xtf_path)
+        root = tree.getroot()
+        tid_to_npn = {}
+        cancelled_tids = set()
+
+        for elem in root.iter():
+            raw_tag = str(elem.tag or "")
+            clean_tag = raw_tag.split("}")[-1].split(".")[-1]
+            tid = elem.attrib.get("TID") or elem.attrib.get("tid")
+            if clean_tag == "ARB_Predio":
+                npn = ""
+                is_canc = False
+                for child in elem:
+                    ctag = str(child.tag or "").split("}")[-1].split(".")[-1]
+                    if ctag == "Numero_Predial":
+                        npn = str(child.text or "").strip()
+                    elif ctag in ("Estado", "Estado_FMI"):
+                        val = str(child.text or "").strip().lower()
+                        if "cancelad" in val or "cerrad" in val:
+                            is_canc = True
+                    elif ctag == "Novedad_Numero_Predial":
+                        val = "".join(child.itertext()).lower()
+                        if "cancelac" in val:
+                            is_canc = True
+                if tid and npn:
+                    tid_to_npn[tid] = npn
+                if is_canc:
+                    if npn:
+                        cancelled_npns.add(npn)
+                    if tid:
+                        cancelled_tids.add(tid)
+            elif clean_tag == "ARB_Marca":
+                val = "".join(elem.itertext()).lower()
+                if "cancelac" in val:
+                    for child in elem:
+                        ctag = str(child.tag or "").split("}")[-1].split(".")[-1]
+                        if ctag == "predio":
+                            ref = child.attrib.get("REF") or child.attrib.get("ref")
+                            if ref:
+                                cancelled_tids.add(ref)
+
+        for tid in cancelled_tids:
+            if tid in tid_to_npn:
+                cancelled_npns.add(tid_to_npn[tid])
+    except Exception as exc:
+        logger.warning("Error auto-detectando NPNs cancelados desde XML XTF: %s", exc)
+
+    return cancelled_npns
+
+
 def _filter_validation_result_for_exempt_npns(result: dict, exempt_npns: set[str]) -> dict:
     if not exempt_npns or not isinstance(result, dict):
         return result
 
     val = result.get("validation") if isinstance(result.get("validation"), dict) else result
     rule_errors = val.get("rule_errors") or []
-    quality = val.get("quality") or {}
+    quality = val.get("quality") if isinstance(val.get("quality"), dict) else (result.get("quality") if isinstance(result.get("quality"), dict) else {})
     issues = quality.get("issues") or []
+    npn_lookup = quality.get("npn_by_object_id") or {}
 
     clean_exempt = {str(n).strip() for n in exempt_npns if n}
 
@@ -1185,10 +1242,17 @@ def _filter_validation_result_for_exempt_npns(result: dict, exempt_npns: set[str
         comp = str(issue.get("component") or issue.get("rule_group") or "").strip().lower()
         if comp in ("topologico", "topológico"):
             return False
+
         issue_npn = str(issue.get("npn") or "").strip()
         details = issue.get("details") or {}
         if not issue_npn and isinstance(details, dict):
             issue_npn = str(details.get("npn") or details.get("numero_predial") or "").strip()
+
+        if not issue_npn:
+            obj_id = str(issue.get("object_id") or issue.get("display_id") or issue.get("object_ref") or issue.get("tid") or "").strip()
+            if obj_id:
+                issue_npn = str(npn_lookup.get(obj_id) or "").strip()
+
         return issue_npn in clean_exempt
 
     filtered_rule_errors = [e for e in rule_errors if not is_exempt_issue(e)]
@@ -1215,8 +1279,8 @@ def _validate_retorno_xtf_rules(
     *,
     municipality_code: str | None = None,
     asignacion_id: int | None = None,
-    conn=None,
     tenant: TenantContext | None = None,
+    connection_manager=None,
 ) -> dict:
     service = xtf_validation_service
 
@@ -1259,6 +1323,24 @@ def _validate_retorno_xtf_rules(
             ),
         )
 
+    # Exención de validaciones alfanuméricas para predios colindantes y cancelados (APLICAR PRIMERO)
+    if asignacion_id and tenant:
+        try:
+            cm = connection_manager
+            if cm:
+                with cm.connection(tenant) as active_conn:
+                    roles = asignaciones_repo.get_asignacion_predio_roles(active_conn, tenant, asignacion_id)
+                    exempt_npns = {npn for npn, rol in roles.items() if rol in ("colindante", "cancelado")}
+                    schema_work = (getattr(tenant.schemas, "work", None) or "b_asignaciones_arb")
+                    auto_cancelled = asignaciones_repo.auto_detect_cancelled_predios_sql(active_conn, schema_work)
+                    exempt_npns.update(auto_cancelled)
+                    xtf_cancelled = _auto_detect_cancelled_npns_from_xtf_xml(xtf_path)
+                    exempt_npns.update(xtf_cancelled)
+                    if exempt_npns:
+                        result = _filter_validation_result_for_exempt_npns(result, exempt_npns)
+        except Exception as exc:
+            logger.warning("Error aplicando exencion de roles en validacion XTF para asignacion %s: %s", asignacion_id, exc)
+
     status = str(result.get("status") or "").strip().lower()
 
     if status in {"failed", "invalid"}:
@@ -1298,20 +1380,6 @@ def _validate_retorno_xtf_rules(
                 f"{message}"
             ),
         )
-
-        # Exención de validaciones alfanuméricas para predios colindantes y cancelados
-    if asignacion_id and conn and tenant:
-        try:
-            roles = asignaciones_repo.get_asignacion_predio_roles(conn, tenant, asignacion_id)
-            exempt_npns = {npn for npn, rol in roles.items() if rol in ("colindante", "cancelado")}
-            schema_work = (getattr(tenant.schemas, "work", None) or "b_asignaciones_arb")
-            auto_cancelled = asignaciones_repo.auto_detect_cancelled_predios_sql(conn, schema_work)
-            exempt_npns.update(auto_cancelled)
-            if exempt_npns:
-                result = _filter_validation_result_for_exempt_npns(result, exempt_npns)
-                status = str(result.get("status") or "").strip().lower()
-        except Exception as exc:
-            logger.warning("Error aplicando exencion de roles en validacion XTF para asignacion %s: %s", asignacion_id, exc)
 
     if _is_production_runtime() and status != "success":
         raise export_service.ExportServiceError(
@@ -1608,6 +1676,20 @@ def obtener_detalle_asignacion(
         )
     predios_rows = asignaciones_repo.list_predios_asignacion(conn, tenant, asignacion_id)
 
+    schema_work_name = _safe_ident(_read_schema_work(tenant), fallback="")
+    auto_cancelled = set()
+    auto_new = set()
+    if has_valid_work and schema_work_name:
+        assignment_npns = [str(r.get("numero_predial_nacional") or "").strip() for r in predios_rows if r.get("numero_predial_nacional")]
+        if assignment_npns:
+            auto_cancelled = asignaciones_repo.auto_detect_cancelled_predios_sql(conn, schema_work_name, npns=assignment_npns)
+            auto_new = asignaciones_repo.auto_detect_new_predios_sql(conn, schema_work_name, npns=assignment_npns)
+
+    c_principal = 0
+    c_colindante = 0
+    c_eliminado = 0
+    c_nuevo = 0
+
     def _display_name(first_name: Optional[str], last_name: Optional[str], username: Optional[str]) -> Optional[str]:
         full_name = " ".join(part for part in (first_name, last_name) if part).strip()
         if full_name and username:
@@ -1617,17 +1699,40 @@ def obtener_detalle_asignacion(
     predios: List[AsignacionPredioDetalle] = []
     predios_should_show_active = assignment_closed and total_eliminados == 0 and total_asignados > 0
     for row in predios_rows:
+        npn = str(row.get("numero_predial_nacional") or "").strip()
+        rol = str(row.get("rol_predio") or "principal").lower()
+        if npn in auto_cancelled or rol == "cancelado":
+            resolved_rol = "cancelado"
+            c_eliminado += 1
+        elif npn in auto_new or rol == "nuevo" or row.get("predio_t_id") is None:
+            resolved_rol = "nuevo"
+            c_nuevo += 1
+        elif rol == "colindante":
+            resolved_rol = "colindante"
+            c_colindante += 1
+        else:
+            resolved_rol = "principal"
+            c_principal += 1
+
         predios.append(
             AsignacionPredioDetalle(
                 id=row.get("id"),
-                numero_predial_nacional=row.get("numero_predial_nacional") or "",
+                numero_predial_nacional=npn,
                 predio_t_id=_maybe_int(row.get("predio_t_id")),
                 activo=True if predios_should_show_active else (False if assignment_closed else row.get("activo")),
                 creado_por=row.get("creado_por"),
                 creado_en=row.get("creado_en"),
-                rol_predio=row.get("rol_predio") or "principal",
+                rol_predio=resolved_rol,
             )
         )
+
+    if predios_rows:
+        total_asignados = c_principal + c_nuevo
+        total_colindantes = c_colindante
+        total_eliminados = c_eliminado
+        total_nuevos = c_nuevo
+    else:
+        total_colindantes = 0
 
     comentarios: List[AsignacionComentario] = []
     for row in comentarios_rows:
@@ -1678,6 +1783,7 @@ def obtener_detalle_asignacion(
         work_datasetname=asignacion.get("work_datasetname"),
         error_msg=asignacion.get("error_msg"),
         total_asignados=total_asignados,
+        total_colindantes=total_colindantes,
         total_eliminados=total_eliminados,
         total_nuevos=total_nuevos,
         predios=predios,
@@ -2472,18 +2578,19 @@ def obtener_detalle_predio_completo_asignacion(
                     fk_values=datos_adicionales_ids,
                 )
 
+            # 1. Novedades FMI (arb_novedadfmivalor)
             novedad_fmi = _fetch_rows_by_fk_candidates(
                 cur,
                 schema=safe_schema,
-                table_candidates=["arb_novedadfmi", "ilc_novedadfmi"],
-                fk_candidates=["predio", "ilc_predio", "arb_predio", "predio_id"],
+                table_candidates=["arb_novedadfmivalor", "arb_novedadfmi", "ilc_novedadfmi"],
+                fk_candidates=["arb_predio_novedad_fmi", "predio", "ilc_predio", "arb_predio", "predio_id"],
                 fk_value=workspace_predio_t_id,
             )
             if not novedad_fmi and datos_adicionales_ids:
                 novedad_fmi = _fetch_rows_by_fk_any_candidates(
                     cur,
                     schema=safe_schema,
-                    table_candidates=["arb_novedadfmi", "ilc_novedadfmi"],
+                    table_candidates=["arb_novedadfmivalor", "arb_novedadfmi", "ilc_novedadfmi"],
                     fk_candidates=[
                         "datos_adicionales",
                         "ilc_dtsdcnltmntctstral_novedad_fmi",
@@ -2492,19 +2599,66 @@ def obtener_detalle_predio_completo_asignacion(
                     ],
                     fk_values=datos_adicionales_ids,
                 )
+            for row in novedad_fmi:
+                tn_val = _first_non_empty(row, "tipo_novedad_fmi", "tipo_novedad")
+                row["tipo_novedad_fmi_nombre"] = _resolve_domain_name(
+                    cur,
+                    tenant=tenant,
+                    schema=safe_schema,
+                    table_candidates=["arb_novedadfmitipo"],
+                    raw_value=tn_val,
+                ) or _first_non_empty(row, "tipo_novedad_fmi_nombre", "tipo_novedad_nombre")
 
-            estructura_novedad_np = []
-            if numero_predial:
+            # 2. Novedades Número Predial (arb_novedadnumeropredialvalor)
+            estructura_novedad_np = _fetch_rows_by_fk_candidates(
+                cur,
+                schema=safe_schema,
+                table_candidates=[
+                    "arb_novedadnumeropredialvalor",
+                    "arb_estructuranovedadnumeropredial",
+                    "ilc_estructuranovedadnumeropredial",
+                ],
+                fk_candidates=["arb_predio_novedad_numero_predial", "predio", "numero_predial", "numero_predial_nacional"],
+                fk_value=workspace_predio_t_id,
+            )
+            if not estructura_novedad_np and numero_predial:
                 estructura_novedad_np = _fetch_rows_by_fk_candidates(
                     cur,
                     schema=safe_schema,
                     table_candidates=[
+                        "arb_novedadnumeropredialvalor",
                         "arb_estructuranovedadnumeropredial",
-                        "ilc_estructuranovedadnumeropredial",
                     ],
                     fk_candidates=["numero_predial", "numero_predial_nacional"],
                     fk_value=numero_predial,
                 )
+            for row in estructura_novedad_np:
+                tn_val = _first_non_empty(row, "tipo_novedad", "tipo_novedad_np")
+                row["tipo_novedad_nombre"] = _resolve_domain_name(
+                    cur,
+                    tenant=tenant,
+                    schema=safe_schema,
+                    table_candidates=["arb_novedadnumeropredialtipo"],
+                    raw_value=tn_val,
+                ) or _first_non_empty(row, "tipo_novedad_nombre", "tipo_novedad")
+
+            # 3. Marcas Prediales (arb_marca)
+            marcas = _fetch_rows_by_fk_candidates(
+                cur,
+                schema=safe_schema,
+                table_candidates=["arb_marca", "ilc_marca"],
+                fk_candidates=["predio", "arb_predio", "predio_id"],
+                fk_value=workspace_predio_t_id,
+            )
+            for row in marcas:
+                mt_val = _first_non_empty(row, "marca_tipo")
+                row["marca_tipo_nombre"] = _resolve_domain_name(
+                    cur,
+                    tenant=tenant,
+                    schema=safe_schema,
+                    table_candidates=["arb_marcapredialtipo"],
+                    raw_value=mt_val,
+                ) or _first_non_empty(row, "marca_tipo_nombre", "marca_tipo")
 
             construcciones = _fetch_rows(
                 cur,
@@ -2994,13 +3148,96 @@ def obtener_detalle_predio_completo_asignacion(
         "fuente_administrativa": fuentes_admin,
         "uebaunit": [],
         "novedad_fmi": novedad_fmi,
+        "novedades_fmi": novedad_fmi,
         "datos_adicionales": datos_adicionales,
         "estructura_novedad_np": estructura_novedad_np,
+        "novedades_numero_predial": estructura_novedad_np,
+        "marcas": marcas,
+        "marcas_prediales": marcas,
         "contacto_visita": contacto_visita,
         "rrr_interesado": rrr_interesado,
         "informacion_ph": informacion_ph,
         "schema_work": schema_work,
     }
+
+
+
+
+def _auto_sync_asignacion_predio_roles_and_new_predios(
+    conn,
+    tenant: TenantContext,
+    asignacion_id: int,
+    work_datasetname: str,
+) -> None:
+    schema_work = _safe_ident(_read_schema_work(tenant), fallback="")
+    if not schema_work or not work_datasetname:
+        return
+
+    asignacion_predio_tbl = _app_table(tenant, "asignacion_predio")
+
+    with conn.cursor() as cur:
+        # 1. Detectar y marcar cancelados en asignacion_predio
+        cur.execute(
+            f"""
+            UPDATE {asignacion_predio_tbl} ap
+            SET rol_predio = 'cancelado'
+            WHERE ap.asignacion_id = %s
+              AND LOWER(COALESCE(ap.rol_predio, '')) <> 'cancelado'
+              AND BTRIM(ap.numero_predial_nacional::text) IN (
+                  SELECT BTRIM(p.numero_predial::text)
+                  FROM {schema_work}.arb_predio p
+                  JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
+                  JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+                  LEFT JOIN {schema_work}.arb_estadotipo et ON et.t_id = p.estado
+                  WHERE d.datasetname = %s
+                    AND (
+                        et.ilicode ILIKE 'Cancelado' OR et.dispname ILIKE 'Cancelado'
+                        OR EXISTS (
+                            SELECT 1 FROM {schema_work}.arb_marca m
+                            JOIN {schema_work}.arb_marcapredialtipo mt ON mt.t_id = m.marca_tipo
+                            WHERE m.predio = p.t_id
+                              AND (mt.ilicode ILIKE '%Cancelac%' OR mt.dispname ILIKE '%Cancelac%')
+                        )
+                    )
+              );
+            """,
+            (asignacion_id, work_datasetname),
+        )
+
+        # 2. Detectar e incorporar predios nuevos creados en workspace hacia asignacion_predio
+        cur.execute(
+            f"""
+            INSERT INTO {asignacion_predio_tbl} (
+                asignacion_id,
+                numero_predial_nacional,
+                predio_t_id,
+                activo,
+                rol_predio,
+                creado_por,
+                creado_en
+            )
+            SELECT DISTINCT
+                %s,
+                BTRIM(p.numero_predial::text),
+                p.t_id,
+                TRUE,
+                'nuevo',
+                'system_sync',
+                NOW()
+            FROM {schema_work}.arb_predio p
+            JOIN {schema_work}.t_ili2db_basket b ON b.t_id = p.t_basket
+            JOIN {schema_work}.t_ili2db_dataset d ON d.t_id = b.dataset
+            WHERE d.datasetname = %s
+              AND NULLIF(BTRIM(p.numero_predial::text), '') IS NOT NULL
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM {asignacion_predio_tbl} ap
+                  WHERE ap.asignacion_id = %s
+                    AND BTRIM(ap.numero_predial_nacional::text) = BTRIM(p.numero_predial::text)
+              );
+            """,
+            (asignacion_id, work_datasetname, asignacion_id),
+        )
 
 
 def _procesar_retorno_xtf(
@@ -3167,8 +3404,8 @@ def _procesar_retorno_xtf(
                 validation_xtf_path,
                 municipality_code=tenant.municipality_code,
                 asignacion_id=asignacion_id,
-                conn=conn,
                 tenant=tenant,
+                connection_manager=connection_manager,
             )
         finally:
             if validation_xtf_path != tmp_path:
@@ -3181,6 +3418,7 @@ def _procesar_retorno_xtf(
         with connection_manager.connection(tenant) as conn:
             conn.autocommit = False
             try:
+                _auto_sync_asignacion_predio_roles_and_new_predios(conn, tenant, asignacion_id, retorno_dataset or work_dataset)
                 with conn.cursor() as cur:
                     cur.execute("SELECT pg_advisory_xact_lock(%s)", (asignacion_id,))
 

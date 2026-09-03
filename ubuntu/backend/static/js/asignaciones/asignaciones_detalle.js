@@ -446,6 +446,7 @@ async function cargarDetalle() {
     setText("d_work", dataDet.work_datasetname || "-");
     setText("d_error", dataDet.error_msg || "-");
     setText("d_asig", dataDet.total_asignados ?? 0);
+    setText("d_colindantes", dataDet.total_colindantes ?? 0);
     setText("d_elim", dataDet.total_eliminados ?? 0);
     setText("d_new", dataDet.total_nuevos ?? 0);
 
@@ -730,26 +731,39 @@ async function cargarDetalle() {
     if (predios.length) {
       predios.forEach((p) => {
         const rolClean = String(p.rol_predio || "principal").toLowerCase();
-        if (rolClean === "colindante") cColindante++;
-        else if (rolClean === "cancelado") cCancelado++;
-        else cPrincipal++;
 
-        let badgeStyle = "background-color:#e0f2fe;color:#0369a1;border:1.5px solid #7dd3fc;font-weight:600;";
-        if (rolClean === "colindante") {
-          badgeStyle = "background-color:#f0fdf4;color:#15803d;border:1.5px solid #86efac;font-weight:600;";
-        } else if (rolClean === "cancelado") {
-          badgeStyle = "background-color:#fef2f2;color:#b91c1c;border:1.5px solid #fca5a5;font-weight:600;";
+        let selectRolHtml = "";
+        if (rolClean === "cancelado") {
+          selectRolHtml = `
+            <div class="d-flex align-items-center justify-content-center">
+              <span class="badge bg-danger-subtle text-danger border border-danger px-2 py-1 shadow-sm" style="font-size:0.78rem;font-weight:600;" title="Cancelación auto-detectada por marca/novedad (no editable)">
+                <i class="fa-solid fa-ban me-1"></i> Cancelado (Auto)
+              </span>
+            </div>
+          `;
+        } else if (rolClean === "nuevo") {
+          selectRolHtml = `
+            <div class="d-flex align-items-center justify-content-center">
+              <span class="badge bg-success-subtle text-success border border-success px-2 py-1 shadow-sm" style="font-size:0.78rem;font-weight:600;" title="Predio nuevo incorporado como principal del trámite">
+                <i class="fa-solid fa-plus-circle me-1"></i> Predio Nuevo (Principal)
+              </span>
+            </div>
+          `;
+        } else {
+          let badgeStyle = "background-color:#e0f2fe;color:#0369a1;border:1.5px solid #7dd3fc;font-weight:600;";
+          if (rolClean === "colindante") {
+            badgeStyle = "background-color:#f0fdf4;color:#15803d;border:1.5px solid #86efac;font-weight:600;";
+          }
+
+          selectRolHtml = `
+            <div class="d-flex align-items-center justify-content-center">
+              <select class="form-select form-select-sm select-rol-predio shadow-sm" data-predio-id="${p.id}" style="font-size:0.8rem;padding:0.25rem 0.6rem;border-radius:6px;cursor:pointer;${badgeStyle}" onclick="event.stopPropagation();">
+                <option value="principal" ${rolClean === "principal" ? "selected" : ""}>🏢 Principal (Trámite)</option>
+                <option value="colindante" ${rolClean === "colindante" ? "selected" : ""}>📐 Colindante (Soporte)</option>
+              </select>
+            </div>
+          `;
         }
-
-        const selectRolHtml = `
-          <div class="d-flex align-items-center justify-content-center">
-            <select class="form-select form-select-sm select-rol-predio shadow-sm" data-predio-id="${p.id}" style="font-size:0.8rem;padding:0.25rem 0.6rem;border-radius:6px;cursor:pointer;${badgeStyle}" onclick="event.stopPropagation();">
-              <option value="principal" ${rolClean === "principal" ? "selected" : ""}>🏢 Principal (Trámite)</option>
-              <option value="colindante" ${rolClean === "colindante" ? "selected" : ""}>📐 Colindante (Soporte)</option>
-              <option value="cancelado" ${rolClean === "cancelado" ? "selected" : ""}>🚫 Cancelado (Histórico)</option>
-            </select>
-          </div>
-        `;
         const rowNode = tablaPrediosDT.row
           .add([
             esc(p.predio_t_id ?? "-"),
@@ -771,12 +785,8 @@ async function cargarDetalle() {
     }
 
     tablaPrediosDT.draw();
-    const elP = document.getElementById("cntPrincipal");
-    const elC = document.getElementById("cntColindante");
-    const elX = document.getElementById("cntCancelado");
-    if (elP) elP.innerHTML = `<i class="fa-solid fa-building me-1"></i> Principales: ${cPrincipal}`;
-    if (elC) elC.innerHTML = `<i class="fa-solid fa-draw-polygon me-1"></i> Colindantes: ${cColindante}`;
-    if (elX) elX.innerHTML = `<i class="fa-solid fa-ban me-1"></i> Cancelados: ${cCancelado}`;
+    updateTopCardsCounters();
+
     syncPredioSelectionUI();
 
     // Initialize map and load assignment scope on details page
@@ -6585,6 +6595,34 @@ document.getElementById("btnConfirmarSincronizarProduccion")?.addEventListener("
 });
 
 
+
+
+function updateTopCardsCounters() {
+  let cntPrincipales = 0;
+  let cntColindantes = 0;
+  let cntCancelados = 0;
+  let cntNuevos = 0;
+
+  $("#tablaPredios tbody tr").each(function () {
+    const $select = $(this).find(".select-rol-predio");
+    if ($select.length) {
+      const val = $select.val();
+      if (val === "colindante") cntColindantes++;
+      else if (val === "principal") cntPrincipales++;
+    } else {
+      const text = $(this).text().toLowerCase();
+      if (text.includes("cancelado")) cntCancelados++;
+      else if (text.includes("nuevo")) cntNuevos++;
+      else cntPrincipales++;
+    }
+  });
+
+  setText("d_asig", cntPrincipales + cntNuevos);
+  setText("d_colindantes", cntColindantes);
+  setText("d_elim", cntCancelados);
+  setText("d_new", cntNuevos);
+}
+
 $(document).on("change", ".select-rol-predio", async function(e) {
   e.stopPropagation();
   const $select = $(this);
@@ -6593,11 +6631,12 @@ $(document).on("change", ".select-rol-predio", async function(e) {
 
   if (nuevoRol === "colindante") {
     $select.css({ "background-color": "#f0fdf4", "color": "#15803d", "border-color": "#86efac" });
-  } else if (nuevoRol === "cancelado") {
-    $select.css({ "background-color": "#fef2f2", "color": "#b91c1c", "border-color": "#fca5a5" });
   } else {
     $select.css({ "background-color": "#e0f2fe", "color": "#0369a1", "border-color": "#7dd3fc" });
   }
+
+  updateTopCardsCounters();
+
   const asignacionId = Number(document.getElementById("asigDetalleId")?.value || new URLSearchParams(window.location.search).get("id"));
   if (!asignacionId || !predioId) return;
 
@@ -6616,7 +6655,7 @@ $(document).on("change", ".select-rol-predio", async function(e) {
         toast: true,
         position: 'top-end',
         icon: 'success',
-        title: `Rol actualizado a ${nuevoRol}`,
+        title: `Rol actualizado a ${nuevoRol === 'colindante' ? 'Colindante (Soporte)' : 'Principal (Trámite)'}`,
         showConfirmButton: false,
         timer: 2000
       });
