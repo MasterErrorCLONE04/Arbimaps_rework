@@ -3840,30 +3840,52 @@
   function formatearResumenDireccion(direccion) {
     if (!direccion) return "-";
 
-    const tipoDireccion = String(direccion?.tipo_direccion ?? "").trim();
-
-    if (tipoDireccion === "248") {
-      const partes = [
-        direccion?.clase_via_principal_nombre ?? direccion?.clase_via_principal,
-        direccion?.valor_via_principal,
-        direccion?.letra_via_principal,
-        direccion?.valor_via_generadora,
-        direccion?.letra_via_generadora,
-        direccion?.complemento,
-      ]
-        .map((valor) => String(valor ?? "").trim())
-        .filter(Boolean);
-
-      return partes.length ? partes.join(" ") : "-";
-    }
-
-    if (tipoDireccion === "247") {
-      const nombrePredio = String(direccion?.nombre_predio ?? "").trim();
-      return nombrePredio || "-";
-    }
-
     const nombrePredio = String(direccion?.nombre_predio ?? "").trim();
-    return nombrePredio || "-";
+    const claseVia = String(
+      direccion?.clase_via_principal_nombre ??
+      direccion?.clase_via_principal_dispname ??
+      direccion?.clase_via_principal ??
+      ""
+    ).trim();
+
+    const valorVia = String(direccion?.valor_via_principal ?? "").trim();
+    const letraVia = String(direccion?.letra_via_principal ?? "").trim();
+    const valorGen = String(direccion?.valor_via_generadora ?? "").trim();
+    const letraGen = String(direccion?.letra_via_generadora ?? "").trim();
+    const numPredio = String(direccion?.numero_predio ?? "").trim();
+    const complemento = String(direccion?.complemento ?? "").trim();
+
+    const tipoDireccion = String(direccion?.tipo_direccion ?? "").trim();
+    const tipoDireccionIli = String(direccion?.tipo_direccion_ilicode ?? direccion?.tipo_direccion_nombre ?? "").trim().toLowerCase();
+
+    // Si es no estructurada explícita y trae nombre del predio
+    const esNoEstructurada =
+      tipoDireccionIli.includes("no_estructurada") ||
+      tipoDireccionIli.includes("no estructurada") ||
+      tipoDireccion === "247" ||
+      tipoDireccion === "1544";
+
+    if (esNoEstructurada && nombrePredio) {
+      return nombrePredio;
+    }
+
+    // Construcción de dirección estructurada
+    const viaPart = [claseVia, valorVia, letraVia].filter(Boolean).join(" ");
+    const genPart = [valorGen, letraGen].filter(Boolean).join("");
+
+    if (viaPart || genPart || numPredio) {
+      let result = viaPart;
+      if (genPart) result += (result ? " # " : "# ") + genPart;
+      if (numPredio) result += (result ? " - " : "- ") + numPredio;
+      if (complemento) result += (result ? " " : "") + complemento;
+      return result.trim();
+    }
+
+    // Fallbacks
+    if (nombrePredio) return nombrePredio;
+    if (complemento) return complemento;
+
+    return "-";
   }
 
   function _setModalFieldByLabel(root, label, value) {
@@ -4191,7 +4213,15 @@
       }
 
       if (resumenPredioDireccion) {
-        const direccionPredio = direcciones[0] || null;
+        const direccionPredio =
+          direcciones.find(
+            (d) =>
+              d.es_direccion_principal === true ||
+              d.es_direccion_principal === "true" ||
+              d.es_direccion_principal === 1
+          ) ||
+          direcciones[0] ||
+          null;
         resumenPredioDireccion.textContent = formatearResumenDireccion(direccionPredio);
       }
 

@@ -750,13 +750,25 @@ def predio_detalle(
                         clase_via_join = f"""
                     LEFT JOIN {_qualified_table(tenant, 'arb_claseviaprincipaltipo')} cvp
                       ON cvp.t_id::text = dx.clase_via_principal::text"""
+                    tipo_dir_join = ""
+                    tipo_dir_select = ""
+                    if _table_exists(cur, schema, "arb_direcciontipo"):
+                        tipo_dir_select = ", dt.dispname AS tipo_direccion_nombre, dt.ilicode AS tipo_direccion_ilicode"
+                        tipo_dir_join = f"""
+                    LEFT JOIN {_qualified_table(tenant, 'arb_direcciontipo')} dt
+                      ON dt.t_id::text = dx.tipo_direccion::text"""
                     sql_direcciones = f"""
                     SELECT
-                      dx.*{geom_select}{clase_via_select}
+                      dx.*{geom_select}{clase_via_select}{tipo_dir_select}
                     FROM {_qualified_table(tenant, 'arb_direccion')} dx
                     {clase_via_join}
+                    {tipo_dir_join}
                     WHERE dx.arb_predio_direccion::text = %s::text
                     ORDER BY
+                      CASE
+                        WHEN dx.es_direccion_principal IS TRUE THEN 0
+                        ELSE 1
+                      END,
                       CASE
                         WHEN NULLIF(BTRIM(COALESCE(dx.nombre_predio::text, '')), '') IS NOT NULL THEN 0
                         ELSE 1
