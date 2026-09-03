@@ -1744,6 +1744,7 @@ def obtener_detalle_asignacion(
         total_nuevos = c_nuevo
     else:
         total_colindantes = 0
+        total_nuevos = max(total_nuevos, c_nuevo)
 
     comentarios: List[AsignacionComentario] = []
     for row in comentarios_rows:
@@ -1817,11 +1818,10 @@ def obtener_scope_geojson_asignacion(
     asignacion = _ensure_assignment_access(conn, tenant, asignacion_id, user)
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         raw_work_ds = str(asignacion.get("work_datasetname") or "").strip()
-        is_completed_state = str(asignacion.get("estado") or "").strip().upper() in {"CERRADA", "SINCRONIZADO", "SINCRONIZADO_PRODUCCION"}
-        has_work_ds = bool(raw_work_ds) and (not is_completed_state) and _dataset_exists_in_work(cur, schema_work, raw_work_ds)
+        has_work_ds = bool(raw_work_ds) and _dataset_exists_in_work(cur, schema_work, raw_work_ds)
         work_datasetname = raw_work_ds if has_work_ds else ""
         source_schema = schema_work if work_datasetname else schema_main
-        include_inactive = not bool(work_datasetname)
+        include_inactive = True
         predio_specs = _table_column_specs(cur, source_schema, "arb_predio")
         if not predio_specs:
             raise HTTPException(
