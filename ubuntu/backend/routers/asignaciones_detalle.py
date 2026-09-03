@@ -1543,6 +1543,17 @@ def obtener_detalle_asignacion(
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(
             f"""
+            SELECT work_datasetname FROM {asignacion_table} WHERE id = %s
+            """,
+            (asignacion_id,),
+        )
+        asig_row = cur.fetchone() or {}
+        w_dataset = str(asig_row.get("work_datasetname") or "").strip()
+        if w_dataset:
+            _auto_sync_asignacion_predio_roles_and_new_predios(conn, tenant, asignacion_id, w_dataset)
+
+        cur.execute(
+            f"""
             SELECT
                 a.id,
                 a.estado,
@@ -3429,7 +3440,6 @@ def _procesar_retorno_xtf(
         with connection_manager.connection(tenant) as conn:
             conn.autocommit = False
             try:
-                _auto_sync_asignacion_predio_roles_and_new_predios(conn, tenant, asignacion_id, retorno_dataset or work_dataset)
                 with conn.cursor() as cur:
                     cur.execute("SELECT pg_advisory_xact_lock(%s)", (asignacion_id,))
 
@@ -3574,6 +3584,13 @@ def _procesar_retorno_xtf(
                     synced_predios = 0
                     synced_predios_preview = []
 
+                stage = "auto_sync_roles_and_new_predios"
+                _auto_sync_asignacion_predio_roles_and_new_predios(
+                    conn,
+                    tenant,
+                    asignacion_id,
+                    target_dataset,
+                )
                 stage = "refresh_workspace_predio_ids"
                 workspace_service.actualizar_predio_ids_desde_workspace(
                     conn,
