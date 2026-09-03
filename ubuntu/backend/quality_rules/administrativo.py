@@ -2857,41 +2857,103 @@ def _rule_1_40(dataset: DatasetReader) -> list[RuleIssue]:
 def _rule_1_41(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
-    # "Únicamente Nombre_Predio" según la descripción oficial.
+    # En una dirección No_Estructurada:
+    # - Nombre_Predio es obligatorio.
+    # - Clase_Via_Principal puede estar diligenciada.
+    # - Los campos numéricos con valor 0 se consideran valores por defecto/no diligenciados.
     forbidden = {
         "complemento": ("complemento", "Complemento"),
         "codigo_postal": ("codigo_postal", "Codigo_Postal"),
-        "clase_via_principal": ("clase_via_principal", "Clase_Via_Principal"),
-        "valor_via_principal": ("valor_via_principal", "Valor_Via_Principal"),
         "letra_via_principal": ("letra_via_principal", "Letra_Via_Principal"),
         "letra_via_generadora": ("letra_via_generadora", "Letra_Via_Generadora"),
         "sector_ciudad": ("sector_ciudad", "Sector_Ciudad"),
-        "valor_via_generadora": ("valor_via_generadora", "Valor_Via_Generadora"),
-        "numero_predio": ("numero_predio", "Numero_Predio"),
         "sector_predio": ("sector_predio", "Sector_Predio"),
     }
+    numeric_default_zero = {
+        "valor_via_principal": ("valor_via_principal", "Valor_Via_Principal"),
+        "valor_via_generadora": ("valor_via_generadora", "Valor_Via_Generadora"),
+        "numero_predio": ("numero_predio", "Numero_Predio"),
+    }
+
+    def tiene_valor_real(valor: object) -> bool:
+        if helper._is_empty(valor):
+            return False
+        texto = str(valor).strip().replace(",", ".")
+        try:
+            return abs(float(texto)) > 1e-12
+        except Exception:
+            return True
+
     for table_name, row in helper.iter_direcciones():
-        tipo_match = helper._extract_field(row, ("tipo_direccion", "Tipo_Direccion"), require_value=False)
+        tipo_match = helper._extract_field(
+            row,
+            ("tipo_direccion", "Tipo_Direccion"),
+            require_value=False
+        )
         tipo_raw = tipo_match[1] if tipo_match else None
         if _normalize_direccion_tipo(tipo_raw) != "NO_ESTRUCTURADA":
             continue
-        nombre_match = helper._extract_field(row, ("nombre_predio", "Nombre_Predio"), require_value=False)
+
+        nombre_match = helper._extract_field(
+            row,
+            ("nombre_predio", "Nombre_Predio"),
+            require_value=False
+        )
         nombre_raw = nombre_match[1] if nombre_match else None
+
+        clase_match = helper._extract_field(
+            row,
+            ("clase_via_principal", "Clase_Via_Principal"),
+            require_value=False
+        )
+        clase_raw = clase_match[1] if clase_match else None
+
         indebidos: list[str] = []
+
         for label, fields in forbidden.items():
             match = helper._extract_field(row, fields, require_value=False)
             if match and not helper._is_empty(match[1]):
                 indebidos.append(label)
+
+        for label, fields in numeric_default_zero.items():
+            match = helper._extract_field(row, fields, require_value=False)
+            if match and tiene_valor_real(match[1]):
+                indebidos.append(label)
+
         if not helper._is_empty(nombre_raw) and not indebidos:
             continue
-        ref = helper.get_relation_value(row, ("arb_predio_direccion", "arb_direccion_arb_predio_direccion_fkey", "predio", "arb_predio"))
-        issues.append(RuleIssue(
-            rule_id="1.41", object_ref=helper.identify(row) or ref,
-            message="Si el tipo de dirección es No_Estructurada, únicamente Nombre_Predio debe estar diligenciado.",
-            details={"tabla": table_name, "class": table_name,
-                     "campo": tipo_match[0] if tipo_match else "tipo_direccion", "tipo_direccion": tipo_raw,
-                     "nombre_predio": nombre_raw, "campos_indebidos": indebidos},
-        ))
+
+        ref = helper.get_relation_value(
+            row,
+            (
+                "arb_predio_direccion",
+                "arb_direccion_arb_predio_direccion_fkey",
+                "predio",
+                "arb_predio"
+            )
+        )
+
+        issues.append(
+            RuleIssue(
+                rule_id="1.41",
+                object_ref=helper.identify(row) or ref,
+                message=(
+                    "Si el tipo de dirección es No_Estructurada, Nombre_Predio debe "
+                    "estar diligenciado. Clase_Via_Principal puede estar diligenciada "
+                    "y los valores numéricos de dirección pueden permanecer en cero."
+                ),
+                details={
+                    "tabla": table_name,
+                    "class": table_name,
+                    "campo": tipo_match[0] if tipo_match else "tipo_direccion",
+                    "tipo_direccion": tipo_raw,
+                    "nombre_predio": nombre_raw,
+                    "clase_via_principal": clase_raw,
+                    "campos_indebidos": indebidos,
+                },
+            )
+        )
+
     return issues
 
 def _rule_1_42(dataset: DatasetReader) -> list[RuleIssue]:
