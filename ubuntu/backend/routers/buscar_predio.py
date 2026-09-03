@@ -414,18 +414,35 @@ def predio_buscar_f_r1_r2_detail(
     conn=Depends(get_tenant_db_connection),
 ):
     try:
-        sql_interesados = """
+        schema_main = getattr(getattr(tenant, "schemas", None), "main", "a_base_principal") or "a_base_principal"
+        r1_cols = set()
+        try:
+            cur_cols = _execute_fetchall(conn, "SELECT column_name FROM information_schema.columns WHERE table_schema = 'f_r1_r2' AND table_name = 'r1_predio_propietario';")
+            r1_cols = {dict(row).get("column_name") for row in cur_cols if dict(row).get("column_name")}
+        except Exception:
+            pass
+
+        has_d_tipo = "d_tipo" in r1_cols
+        has_fa_tipo = "fa_tipo" in r1_cols
+
+        d_select = "COALESCE(dt.dispname, r1.d_tipo::text) AS descripcion_d_tipo" if has_d_tipo else "NULL::text AS descripcion_d_tipo"
+        d_join = f"LEFT JOIN {schema_main}.arb_derechotipo dt ON dt.t_id::text = r1.d_tipo::text" if has_d_tipo else ""
+
+        fa_select = "COALESCE(fat.dispname, r1.fa_tipo::text) AS descripcion_fa_tipo" if has_fa_tipo else "NULL::text AS descripcion_fa_tipo"
+        fa_join = f"LEFT JOIN {schema_main}.arb_fuenteadministrativatipo fat ON fat.t_id::text = r1.fa_tipo::text" if has_fa_tipo else ""
+
+        sql_interesados = f"""
         SELECT r1.*,
               de.descripcion AS descripcion_destino_economico,
               r1.nombre AS propietario,
               r1.area_terreno AS area_terreno_r1,
               r1.area_construida AS area_construida_r1,
-              dt.dispname AS descripcion_d_tipo,
-              fat.dispname AS descripcion_fa_tipo
+              {d_select},
+              {fa_select}
         FROM f_r1_r2.r1_predio_propietario r1
         LEFT JOIN f_r1_r2.destino_economico de ON r1.destino_economico = de.codigo
-        LEFT JOIN f_r1_r2.arb_derechotipo dt ON r1.d_tipo = dt.t_id
-        LEFT JOIN f_r1_r2.arb_fuenteadministrativatipo fat ON r1.fa_tipo = fat.t_id
+        {d_join}
+        {fa_join}
         WHERE RTRIM(r1.numero_predial::text) = BTRIM(%s::text)
         ORDER BY r1.id ASC
         """
