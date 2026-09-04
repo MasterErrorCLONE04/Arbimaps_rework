@@ -1,10 +1,11 @@
 import os
+import json
 import logging
 from decimal import Decimal
 from typing import Any
 
 from fastapi import APIRouter, Form, HTTPException, Request, UploadFile, File
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from core.asignaciones import (
@@ -653,10 +654,83 @@ def panel_sincronizacion_mergin(request: Request):
     return _render_panel(request, user, view="sincronizacion_mergin")
 
 
+def _parse_selected_predios(raw: str | None) -> list[str] | None:
+    if not raw:
+        return None
+    raw_str = str(raw).strip()
+    if not raw_str or raw_str in ("[]", "null", "none"):
+        return None
+    try:
+        data = json.loads(raw_str)
+        if isinstance(data, list):
+            items = []
+            for x in data:
+                if isinstance(x, dict):
+                    cand = str(x.get("tid") or x.get("numero_predial") or x.get("id_operacion") or "").strip()
+                    if cand:
+                        items.append(cand)
+                else:
+                    cand = str(x).strip()
+                    if cand:
+                        items.append(cand)
+            return items if items else None
+    except Exception:
+        pass
+    items = [x.strip() for x in raw_str.split(",") if x.strip()]
+    return items if items else None
+
+
+@router.post("/panel/validacion-xtf/inspeccionar")
+def panel_validacion_xtf_inspeccionar(
+    request: Request,
+    file: UploadFile = File(...),
+):
+    user = get_user(request)
+    if not user:
+        return JSONResponse(
+            status_code=401,
+            content={"success": False, "error": "No autorizado", "predios": [], "total_predios": 0},
+        )
+
+    if not file.filename or not file.filename.lower().endswith(".xtf"):
+        return JSONResponse(
+            status_code=400,
+            content={
+                "success": False,
+                "error": "Solo se permiten archivos con extensión .xtf",
+                "predios": [],
+                "total_predios": 0,
+            },
+        )
+
+    try:
+        predios = xtf_service.extract_predios(file)
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": True,
+                "filename": file.filename,
+                "total_predios": len(predios),
+                "predios": predios,
+            },
+        )
+    except Exception as exc:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": f"Error al inspeccionar el archivo: {exc}",
+                "predios": [],
+                "total_predios": 0,
+            },
+        )
+
+
 @router.post("/panel/validacion-xtf")
 def panel_validacion_xtf_upload(
     request: Request,
     file: UploadFile = File(...),
+    selected_predios: str | None = Form(None),
 ):
 
     user = get_user(request)
@@ -679,9 +753,12 @@ def panel_validacion_xtf_upload(
         status_code = 400
     else:
         try:
+            parsed_predios = _parse_selected_predios(selected_predios)
             result = xtf_service.save_xtf(
                 file,
                 municipality_code=user.get("municipality_code"),
+                selected_predios=parsed_predios,
+                username=user.get("username"),
             )
         except Exception as exc:
             error = f"Error al subir el archivo: {exc}"
