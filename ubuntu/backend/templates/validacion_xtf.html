@@ -6,6 +6,7 @@
 {% if validacion_embed %}
 {% set form_action = (rp if rp else '') + '/panel/validacion-xtf' %}
 {% endif %}
+{% set inspect_action = (rp if rp else '') + ('/panel/validacion-xtf/inspeccionar' if validacion_embed else '/validacion/xtf/inspeccionar') %}
 {% set reload_href = (rp if rp else '') + ('/panel/validacion-xtf' if validacion_embed else '/validacion/xtf') %}
 {% set validation = result.validation if result and result.validation else {} %}
 {% set quality = validation.quality if validation and validation.quality else {} %}
@@ -403,16 +404,15 @@ defined else 0 %}
         }
 
         .uploaded-area {
-            width: min(780px, 100%);
+            width: min(920px, 100%);
             display: none;
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: center;
-            gap: 44px;
+            flex-direction: column;
+            gap: 16px;
             margin-top: 10px;
         }
 
         .upload-form.is-ready .uploaded-area {
-            display: grid;
+            display: flex;
         }
 
         .upload-form.is-ready .dropzone {
@@ -420,12 +420,11 @@ defined else 0 %}
         }
 
         .uploaded-title {
-            grid-column: 1 / -1;
             text-align: center;
             color: var(--validation-navy);
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 800;
-            margin: 0 0 -2px;
+            margin: 0;
         }
 
         .file-card {
@@ -438,6 +437,7 @@ defined else 0 %}
             align-items: center;
             gap: 18px;
             padding: 12px 24px;
+            width: 100%;
         }
 
         .file-ok-icon {
@@ -476,6 +476,242 @@ defined else 0 %}
             color: #ff0016;
             font-size: 1.5rem;
             cursor: pointer;
+        }
+
+        /* SECCIÓN DE PREDIOS DETECTADOS */
+        .xtf-predios-section {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--validation-border);
+            border-radius: 12px;
+            padding: 20px 22px;
+            box-shadow: 0 4px 16px rgba(8, 36, 22, 0.05);
+            margin-top: 4px;
+        }
+
+        .xtf-predios-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 28px 16px;
+            color: var(--validation-navy);
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .predios-spinner {
+            width: 26px;
+            height: 26px;
+            border: 3px solid #dde9e2;
+            border-top-color: var(--validation-navy);
+            border-radius: 50%;
+            animation: ringSpin 0.8s linear infinite;
+        }
+
+        .predios-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .predios-card-title {
+            margin: 0;
+            color: var(--validation-navy);
+            font-size: 1.05rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .predios-selection-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }
+
+        .predios-selection-badge.is-all {
+            background: #eef4f0;
+            color: var(--validation-navy);
+            border: 1px solid var(--validation-border);
+        }
+
+        .predios-selection-badge.is-selected {
+            background: #e2f6e5;
+            color: var(--validation-success);
+            border: 1px solid #94d9a5;
+        }
+
+        .predios-helper-note {
+            margin: 0 0 14px;
+            padding: 10px 14px;
+            background: #f4f8f5;
+            border-left: 3px solid var(--validation-navy);
+            border-radius: 6px;
+            color: #4a5c52;
+            font-size: 0.84rem;
+            line-height: 1.45;
+        }
+
+        .predios-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .predios-search-box {
+            position: relative;
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .predios-search-box .bi-search {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7f8e85;
+            font-size: 0.88rem;
+        }
+
+        .predios-search-input {
+            width: 100%;
+            height: 38px;
+            padding: 0 12px 0 34px;
+            border-radius: 7px;
+            border: 1px solid var(--validation-border);
+            font-size: 0.85rem;
+            color: var(--validation-navy);
+            background: #fff;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .predios-search-input:focus {
+            border-color: var(--validation-navy);
+            box-shadow: 0 0 0 3px rgba(8, 36, 22, 0.08);
+        }
+
+        .predios-actions-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .predios-mini-btn {
+            height: 36px;
+            padding: 0 14px;
+            border-radius: 6px;
+            border: 1px solid var(--validation-border);
+            background: #fff;
+            color: var(--validation-navy);
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .predios-mini-btn:hover {
+            background: #eef4f0;
+            border-color: var(--validation-navy);
+        }
+
+        .predios-table-wrapper {
+            max-height: 340px;
+            overflow-y: auto;
+            border: 1px solid var(--validation-border-soft);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .predios-selection-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.83rem;
+            text-align: left;
+        }
+
+        .predios-selection-table th {
+            background: #eef4f0;
+            color: var(--validation-navy);
+            padding: 10px 12px;
+            font-weight: 800;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            border-bottom: 2px solid var(--validation-border);
+            white-space: nowrap;
+        }
+
+        .predios-selection-table td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #edf3ef;
+            color: var(--validation-navy);
+            vertical-align: middle;
+        }
+
+        .predios-selection-table tbody tr {
+            cursor: pointer;
+            transition: background 0.12s ease;
+        }
+
+        .predios-selection-table tbody tr:hover {
+            background: #f7faf8;
+        }
+
+        .predios-selection-table tbody tr.is-checked {
+            background: #edf7f0;
+        }
+
+        .predio-checkbox {
+            width: 17px;
+            height: 17px;
+            accent-color: var(--validation-navy);
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .npn-badge {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--validation-navy);
+            background: #eef4f0;
+            padding: 3px 7px;
+            border-radius: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .predios-table-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 4px 0;
+            font-size: 0.82rem;
+            color: #7f8e85;
+            font-weight: 600;
+        }
+
+        .predios-empty-search {
+            padding: 28px;
+            text-align: center;
+            color: #7f8e85;
+            font-size: 0.9rem;
         }
 
         .process-view,
@@ -729,13 +965,14 @@ defined else 0 %}
             min-height: 107px;
             background: var(--validation-navy-2);
             color: #fff;
-            border-radius: 12px;
+            border-radius: 18px;
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
             align-items: center;
             gap: 20px;
-            padding: 24px;
-            overflow: hidden;
+            padding: 22px 24px;
+            overflow: visible;
+            position: relative;
         }
 
         .result-hero.is-ok {
@@ -748,13 +985,14 @@ defined else 0 %}
 
         .result-file-meta {
             display: grid;
-            grid-template-columns: 54px minmax(0, 2fr) minmax(150px, .9fr) minmax(180px, 1.1fr);
+            grid-template-columns: 54px minmax(0, 1.25fr) minmax(0, 0.95fr) minmax(0, 1.1fr) minmax(0, 1.5fr);
             align-items: center;
-            gap: 22px;
+            gap: 18px;
             min-width: 0;
         }
 
-        .result-file-meta>span {
+        .result-file-meta>span,
+        .result-file-meta>.hero-predios-item {
             min-width: 0;
         }
 
@@ -767,6 +1005,7 @@ defined else 0 %}
             display: grid;
             place-items: center;
             font-size: 1.7rem;
+            flex-shrink: 0;
         }
 
         .result-hero.is-ok .result-file-icon {
@@ -780,22 +1019,204 @@ defined else 0 %}
         .hero-label {
             display: block;
             font-weight: 800;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             color: #fff;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.86rem;
+            letter-spacing: -0.1px;
+        }
+
+        .hero-value {
+            display: block;
+            color: #fff;
+            font-size: 0.86rem;
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .hero-value {
+        .hero-predios-item {
+            position: relative;
+            min-width: 0;
+        }
+
+        .hero-tooltip-wrapper {
+            position: relative;
+            display: block;
+            max-width: 100%;
+            min-width: 0;
+            cursor: pointer;
+        }
+
+        .hero-predial-value {
             display: block;
             color: #fff;
-            font-size: 0.88rem;
+            font-size: 0.86rem;
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            letter-spacing: -0.2px;
+            background: rgba(0, 0, 0, 0.18);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .hero-tooltip-wrapper:hover .hero-floating-tooltip,
+        .hero-tooltip-wrapper:focus-within .hero-floating-tooltip {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .hero-floating-tooltip {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 380px;
+            max-width: 90vw;
+            background: #111b15;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.65), 0 2px 10px rgba(0, 0, 0, 0.4);
+            padding: 0;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(6px);
+            transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+            pointer-events: auto;
+            text-align: left;
+        }
+
+        .hero-floating-tooltip.hero-tooltip-left {
+            left: 0;
+            right: auto;
+        }
+
+        .hero-floating-tooltip::before {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            right: 48px;
+            border-width: 7px;
+            border-style: solid;
+            border-color: transparent transparent #111b15 transparent;
+        }
+
+        .hero-floating-tooltip.hero-tooltip-left::before {
+            left: 28px;
+            right: auto;
+        }
+
+        .hero-floating-tooltip::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            height: 14px;
+        }
+
+        .tooltip-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 14px;
+            background: rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #e2ede6;
+            border-radius: 12px 12px 0 0;
+            gap: 8px;
+        }
+
+        .tooltip-badge-filtered {
+            background: #0aa36a;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .tooltip-badge-all {
+            background: #2b4c3b;
+            color: #bfe8cf;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .tooltip-body {
+            max-height: 240px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+
+        .tooltip-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .tooltip-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 3px;
+        }
+
+        .tooltip-predio-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.8rem;
+            color: #d1ded6;
+        }
+
+        .tooltip-predio-row:last-child {
+            border-bottom: none;
+        }
+
+        .tooltip-row-idx {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #8da497;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            padding: 1px 6px;
+            min-width: 22px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .tooltip-row-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .tooltip-row-npn {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.78rem;
+            color: #55ef9c;
+            word-break: break-all;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .tooltip-row-meta {
+            font-size: 0.71rem;
+            color: #9eb5a8;
         }
 
         .result-hero .validation-button {
@@ -844,13 +1265,7 @@ defined else 0 %}
         }
 
         .summary-donut {
-            --percent: {
-                    {
-                    validation_percent
-                }
-            }
-
-            ;
+            --percent: {{ validation_percent }};
             width: 164px;
             height: 164px;
             border-radius: 50%;
@@ -858,7 +1273,7 @@ defined else 0 %}
             place-items: center;
             margin: 0 auto 18px;
             background: radial-gradient(circle at center, #fff 0 57%, transparent 58%),
-            conic-gradient(var(--validation-success) 0 calc(var(--percent) * 1%), var(--validation-danger) 0 100%);
+                conic-gradient(var(--validation-success) 0 calc(var(--percent, 0) * 1%), var(--validation-danger) 0 100%);
             transform: rotate(-90deg);
         }
 
@@ -1446,7 +1861,7 @@ defined else 0 %}
                 <div id="upload-step-view" class="upload-step">
                     {{ validation_stepper(1) }}
                     <form id="xtf-upload-form" class="upload-form" action="{{ form_action }}" method="post"
-                        enctype="multipart/form-data">
+                        enctype="multipart/form-data" data-inspect-url="{{ inspect_action }}">
                         <input id="xtf-file-input" class="hidden-file-input" type="file" name="file" accept=".xtf"
                             required>
 
@@ -1465,28 +1880,102 @@ defined else 0 %}
                         <div class="uploaded-area">
                             <h2 class="uploaded-title">Archivo subido</h2>
 
-                            <div class="w-100">
-                                <div class="file-card">
-                                    <span class="file-ok-icon">
-                                        <i class="bi bi-check-lg"></i>
-                                    </span>
+                            <div class="file-card">
+                                <span class="file-ok-icon">
+                                    <i class="bi bi-check-lg"></i>
+                                </span>
 
-                                    <span>
-                                        <span id="xtf-file-name" class="file-name">Archivo XTF</span>
-                                        <span id="xtf-file-meta" class="file-meta">Listo para validar</span>
-                                    </span>
+                                <span>
+                                    <span id="xtf-file-name" class="file-name">Archivo XTF</span>
+                                    <span id="xtf-file-meta" class="file-meta">Listo para validar</span>
+                                </span>
 
-                                    <button id="xtf-remove-btn" class="remove-file" type="button"
-                                        aria-label="Quitar archivo">
-                                        <i class="bi bi-trash3-fill"></i>
-                                    </button>
+                                <button id="xtf-remove-btn" class="remove-file" type="button"
+                                    aria-label="Quitar archivo">
+                                    <i class="bi bi-trash3-fill"></i>
+                                </button>
+                            </div>
+
+                            <!-- SECCIÓN DE PREDIOS DETECTADOS -->
+                            <div id="xtf-predios-section" class="xtf-predios-section" hidden>
+                                <div id="xtf-predios-loading" class="xtf-predios-loading">
+                                    <div class="predios-spinner"></div>
+                                    <span>Analizando predios del archivo XTF...</span>
                                 </div>
 
-                                <div class="d-flex justify-content-center mt-4">
-                                    <button id="xtf-submit-btn" type="submit" class="validation-button blue">
-                                        Aplicar validadores
-                                    </button>
+                                <div id="xtf-predios-content" hidden>
+                                    <div class="predios-card-header">
+                                        <h3 class="predios-card-title">
+                                            <i class="bi bi-houses-fill"></i>
+                                            Predios en el archivo (<span id="predios-total-count">0</span>)
+                                        </h3>
+                                        <span id="predios-selection-badge" class="predios-selection-badge is-all">
+                                            <i class="bi bi-check2-all"></i>
+                                            <span id="predios-badge-text">Todos los predios seleccionados</span>
+                                        </span>
+                                    </div>
+
+                                    <p class="predios-helper-note">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                        Selecciona los predios específicos que deseas validar con las casillas de verificación.
+                                        <strong>Si no seleccionas ninguno</strong>, se correrán los validadores automáticamente a <strong>todos los predios</strong> de este XTF.
+                                    </p>
+
+                                    <div class="predios-toolbar">
+                                        <div class="predios-search-box">
+                                            <i class="bi bi-search"></i>
+                                            <input id="predios-search-input" class="predios-search-input" type="text"
+                                                placeholder="Filtrar por NPN, matrícula, ID..."
+                                                autocomplete="off">
+                                        </div>
+                                        <div class="predios-actions-box">
+                                            <button type="button" id="predios-select-all-btn" class="predios-mini-btn">
+                                                <i class="bi bi-check-square"></i> Seleccionar todos
+                                            </button>
+                                            <button type="button" id="predios-deselect-all-btn" class="predios-mini-btn">
+                                                <i class="bi bi-square"></i> Desmarcar todos
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="predios-table-wrapper">
+                                        <table class="predios-selection-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 42px; text-align: center;">
+                                                        <input type="checkbox" id="master-predio-check" class="predio-checkbox" title="Seleccionar/Deseleccionar todos">
+                                                    </th>
+                                                    <th style="width: 40px; text-align: center;">#</th>
+                                                    <th>Número Predial (NPN)</th>
+                                                    <th>NPN Anterior</th>
+                                                    <th>Matrícula (FMI)</th>
+                                                    <th>Condición / Tipo</th>
+                                                    <th>Destinación</th>
+                                                    <th>ID Operación</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="predios-tbody">
+                                            </tbody>
+                                        </table>
+                                        <div id="predios-no-results" class="predios-empty-search" hidden>
+                                            No se encontraron predios que coincidan con la búsqueda.
+                                        </div>
+                                    </div>
+
+                                    <div class="predios-table-footer">
+                                        <span id="predios-table-counter">Mostrando 0 de 0 predios</span>
+                                        <span id="predios-selected-summary">0 seleccionados (Se validarán todos)</span>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <input type="hidden" name="selected_predios" id="selected-predios-input" value="">
+
+                            <div class="d-flex justify-content-center mt-3">
+                                <button id="xtf-submit-btn" type="submit" class="validation-button blue">
+                                    <i class="bi bi-play-circle-fill"></i>
+                                    <span id="xtf-submit-text">Aplicar validadores (Todos los predios)</span>
+                                </button>
                             </div>
                         </div>
                     </form>
@@ -1638,6 +2127,74 @@ defined else 0 %}
                                 <span class="hero-label">Modelo validado</span>
                                 <span class="hero-value" title="{{ model_display }}">{{ model_display }}</span>
                             </span>
+                            {% set eval_predios = [] %}
+                            {% if result and result.get('predios_catalog') %}
+                                {% if result.get('filtered_by_predios') and result.get('selected_predios') %}
+                                    {% for p in result.predios_catalog %}
+                                        {% if (p.tid and p.tid in result.selected_predios) or (p.numero_predial and p.numero_predial in result.selected_predios) %}
+                                            {% set _ = eval_predios.append(p) %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    {% set eval_predios = result.predios_catalog %}
+                                {% endif %}
+                            {% endif %}
+                            {% if not eval_predios and predio_summary %}
+                                {% for ps in predio_summary %}
+                                    {% set _ = eval_predios.append({'numero_predial': ps.npn or ps.numero_predial or ps.tid or ('Predio ' ~ loop.index), 'tid': ps.tid, 'fmi': ps.fmi or ''}) %}
+                                {% endfor %}
+                            {% endif %}
+                            {% set eval_npns = [] %}
+                            {% for p in eval_predios %}
+                                {% set npn_val = p.numero_predial or p.tid or ('Predio ' ~ loop.index) %}
+                                {% set _ = eval_npns.append(npn_val) %}
+                            {% endfor %}
+                            {% set eval_count = eval_predios|length if eval_predios else (result.get('validation', {}).get('selected_predios_count', 0) if result and result.get('filtered_by_predios') else (total_predios or 1)) %}
+                            {% set npn_display_str = (eval_npns|join(', ')) if eval_npns else (eval_count ~ ' predio' ~ ('s' if eval_count != 1 else '')) %}
+                            <div class="hero-predios-item">
+                                <span class="hero-label">{% if eval_count == 1 %}Número predial{% else %}Números prediales ({{ eval_count }}){% endif %}</span>
+                                <div class="hero-tooltip-wrapper" tabindex="0" title="{{ npn_display_str }}">
+                                    <span class="hero-predial-value">{{ npn_display_str }}</span>
+                                    <div class="hero-floating-tooltip" role="tooltip">
+                                        <div class="tooltip-header">
+                                            <span><i class="bi bi-geo-alt-fill" style="color: #55ef9c;"></i> Predios evaluados ({{ eval_count }})</span>
+                                            {% if result and result.get('filtered_by_predios') %}
+                                            <span class="tooltip-badge-filtered">
+                                                <i class="bi bi-funnel-fill"></i> Filtrado ({{ eval_count }}/{{ result.get('validation', {}).get('total_predios_in_file', eval_count) }})
+                                            </span>
+                                            {% else %}
+                                            <span class="tooltip-badge-all">Todos ({{ eval_count }})</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="tooltip-body">
+                                            {% if eval_predios %}
+                                                {% for p in eval_predios %}
+                                                <div class="tooltip-predio-row">
+                                                    <span class="tooltip-row-idx">#{{ loop.index }}</span>
+                                                    <div class="tooltip-row-info">
+                                                        <span class="tooltip-row-npn">{{ p.numero_predial or p.tid or 'Sin NPN' }}</span>
+                                                        {% if p.fmi or p.condicion or p.destinacion %}
+                                                        <span class="tooltip-row-meta">
+                                                            {% if p.fmi %}FMI: {{ p.fmi }}{% endif %}
+                                                            {% if p.condicion %}{{ ' &bull; ' if p.fmi else '' }}{{ p.condicion }}{% endif %}
+                                                            {% if p.destinacion %}{{ ' &bull; ' if (p.fmi or p.condicion) else '' }}{{ p.destinacion }}{% endif %}
+                                                        </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="tooltip-predio-row">
+                                                    <span class="tooltip-row-idx">#1</span>
+                                                    <div class="tooltip-row-info">
+                                                        <span class="tooltip-row-npn">{{ npn_display_str }}</span>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <a class="validation-button light" href="{{ reload_href }}">
                             <i class="bi bi-arrow-left"></i>
@@ -1649,7 +2206,7 @@ defined else 0 %}
                         <aside class="summary-card {{ result_state_class }}">
                             <div class="summary-card-title">Resumen general de validación</div>
                             <div class="summary-body">
-                                <div class="summary-donut" aria-label="{{ validation_percent }} por ciento">
+                                <div class="summary-donut" style="--percent: {{ validation_percent }};" aria-label="{{ validation_percent }} por ciento">
                                     <div class="summary-donut-inner">
                                         <span class="summary-donut-value">{{ validation_percent }} %</span>
                                         <span class="summary-donut-label">{{ summary_donut_label }}</span>
@@ -1717,11 +2274,10 @@ defined else 0 %}
 
                         <main>
                             <div class="metrics-grid">
-                                <!--
-                        <div class="metric-card">
-                            <span class="metric-label">Predios evaluados</span>
-                            <span class="metric-value">{{ total_predios if total_predios else 'N/D' }}</span>
-                        </div>-->
+                                <div class="metric-card">
+                                    <span class="metric-label">Predios evaluados</span>
+                                    <span class="metric-value">{{ total_predios if total_predios else (result.get('validation', {}).get('selected_predios_count', 'N/D') if result else 'N/D') }}</span>
+                                </div>
                                 <div class="metric-card">
                                     <span class="metric-label">Reglas evaluadas</span>
                                     <span class="metric-value">{{ total_rules }}</span>
@@ -1793,12 +2349,337 @@ defined else 0 %}
                 var dashboard = document.getElementById('results-dashboard');
                 var progressTimer = null;
 
+                var inspectUrl = form ? (form.getAttribute('data-inspect-url') || (form.action.indexOf('/panel/') !== -1 ? '/panel/validacion-xtf/inspeccionar' : '/validacion/xtf/inspeccionar')) : '/validacion/xtf/inspeccionar';
+                var prediosSection = document.getElementById('xtf-predios-section');
+                var prediosLoading = document.getElementById('xtf-predios-loading');
+                var prediosContent = document.getElementById('xtf-predios-content');
+                var prediosTotalCount = document.getElementById('predios-total-count');
+                var prediosSelectionBadge = document.getElementById('predios-selection-badge');
+                var prediosBadgeText = document.getElementById('predios-badge-text');
+                var prediosSearchInput = document.getElementById('predios-search-input');
+                var prediosSelectAllBtn = document.getElementById('predios-select-all-btn');
+                var prediosDeselectAllBtn = document.getElementById('predios-deselect-all-btn');
+                var masterPredioCheck = document.getElementById('master-predio-check');
+                var prediosTbody = document.getElementById('predios-tbody');
+                var prediosNoResults = document.getElementById('predios-no-results');
+                var prediosTableCounter = document.getElementById('predios-table-counter');
+                var prediosSelectedSummary = document.getElementById('predios-selected-summary');
+                var selectedPrediosInput = document.getElementById('selected-predios-input');
+                var submitBtnText = document.getElementById('xtf-submit-text');
+
+                var currentPredios = [];
+                var selectedPredioTids = new Set();
+                var currentSearchFilter = '';
+
                 function formatSize(bytes) {
                     if (!bytes && bytes !== 0) return '';
                     if (bytes < 1024) return bytes + 'B';
                     var kb = bytes / 1024;
                     if (kb < 1024) return kb.toFixed(1) + 'KB';
                     return (kb / 1024).toFixed(1) + 'MB';
+                }
+
+                function clearPredios() {
+                    currentPredios = [];
+                    selectedPredioTids.clear();
+                    currentSearchFilter = '';
+                    if (prediosSection) prediosSection.hidden = true;
+                    if (prediosLoading) prediosLoading.hidden = true;
+                    if (prediosContent) prediosContent.hidden = true;
+                    if (prediosTbody) prediosTbody.innerHTML = '';
+                    if (selectedPrediosInput) selectedPrediosInput.value = '';
+                    if (prediosSearchInput) prediosSearchInput.value = '';
+                    if (masterPredioCheck) {
+                        masterPredioCheck.checked = false;
+                        masterPredioCheck.indeterminate = false;
+                    }
+                    if (submitBtnText) submitBtnText.textContent = 'Aplicar validadores';
+                }
+
+                function inspectFileForPredios(file) {
+                    if (!file || !prediosSection) return;
+                    prediosSection.hidden = false;
+                    if (prediosLoading) prediosLoading.hidden = false;
+                    if (prediosContent) prediosContent.hidden = true;
+                    currentPredios = [];
+                    selectedPredioTids.clear();
+                    currentSearchFilter = '';
+                    if (prediosSearchInput) prediosSearchInput.value = '';
+
+                    var formData = new FormData();
+                    formData.append('file', file);
+
+                    fetch(inspectUrl, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(function (resp) {
+                        if (!resp.ok) throw new Error('Error al inspeccionar archivo');
+                        return resp.json();
+                    })
+                    .then(function (data) {
+                        if (data && data.success && Array.isArray(data.predios) && data.predios.length > 0) {
+                            currentPredios = data.predios;
+                            displayPrediosList();
+                        } else {
+                            fallbackClientSideInspect(file);
+                        }
+                    })
+                    .catch(function (err) {
+                        console.warn('Inspección de endpoint falló, recurriendo a análisis en cliente:', err);
+                        fallbackClientSideInspect(file);
+                    });
+                }
+
+                function fallbackClientSideInspect(file) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var text = e.target.result;
+                        var extracted = [];
+                        try {
+                            var parser = new DOMParser();
+                            var xmlDoc = parser.parseFromString(text, "application/xml");
+                            var nodes = xmlDoc.querySelectorAll("ARB_Predio, arb_predio, ILC_Predio, ilc_predio");
+                            if (nodes.length > 0) {
+                                for (var i = 0; i < nodes.length; i++) {
+                                    var node = nodes[i];
+                                    if (node.getAttribute("REF") || node.getAttribute("ref")) continue;
+                                    var tid = node.getAttribute("TID") || node.getAttribute("t_ili_tid") || node.getAttribute("tid") || ("predio-" + (i + 1));
+                                    function getNodeVal(tag) {
+                                        var el = node.getElementsByTagName(tag)[0];
+                                        return el ? (el.textContent || "").trim() : "";
+                                    }
+                                    var npn = getNodeVal("Numero_Predial") || getNodeVal("numero_predial") || getNodeVal("npn");
+                                    var npnAnt = getNodeVal("Numero_Predial_Anterior") || getNodeVal("numero_predial_anterior");
+                                    var mat = getNodeVal("Matricula_Inmobiliaria") || getNodeVal("matricula_inmobiliaria");
+                                    var orip = getNodeVal("Codigo_ORIP") || getNodeVal("codigo_orip");
+                                    var fmi = (orip && mat) ? (orip + "-" + mat) : (mat || orip || "");
+                                    var cond = getNodeVal("Condicion_Predio") || getNodeVal("condicion_predio");
+                                    var dest = getNodeVal("Destinacion_Economica") || getNodeVal("destinacion_economica");
+                                    var tipo = getNodeVal("Tipo") || getNodeVal("tipo");
+                                    if (tipo.indexOf(".") !== -1) tipo = tipo.split(".").pop();
+                                    var idOp = getNodeVal("Id_Operacion") || getNodeVal("id_operacion");
+                                    var nupre = getNodeVal("codigo_homologado") || getNodeVal("nupre");
+                                    var area = getNodeVal("Area_Catastral_Terreno") || getNodeVal("area_catastral_terreno");
+                                    extracted.push({
+                                        index: i + 1,
+                                        tid: tid,
+                                        numero_predial: npn,
+                                        numero_predial_anterior: npnAnt,
+                                        fmi: fmi,
+                                        matricula: mat,
+                                        codigo_orip: orip,
+                                        condicion: cond,
+                                        destinacion: dest,
+                                        tipo: tipo,
+                                        id_operacion: idOp,
+                                        nupre: nupre,
+                                        area: area
+                                    });
+                                }
+                            }
+                        } catch (err) {
+                            console.error("Fallo lectura XML cliente:", err);
+                        }
+                        currentPredios = extracted;
+                        displayPrediosList();
+                    };
+                    reader.readAsText(file);
+                }
+
+                function displayPrediosList() {
+                    if (prediosLoading) prediosLoading.hidden = true;
+                    if (prediosContent) prediosContent.hidden = false;
+                    if (prediosTotalCount) prediosTotalCount.textContent = String(currentPredios.length);
+                    renderPrediosRows();
+                    updateSelectionUI();
+                }
+
+                function getFilteredPredios() {
+                    if (!currentSearchFilter) return currentPredios;
+                    var q = currentSearchFilter.toLowerCase();
+                    return currentPredios.filter(function (p) {
+                        return (p.numero_predial && p.numero_predial.toLowerCase().indexOf(q) !== -1) ||
+                               (p.numero_predial_anterior && p.numero_predial_anterior.toLowerCase().indexOf(q) !== -1) ||
+                               (p.fmi && p.fmi.toLowerCase().indexOf(q) !== -1) ||
+                               (p.matricula && p.matricula.toLowerCase().indexOf(q) !== -1) ||
+                               (p.id_operacion && p.id_operacion.toLowerCase().indexOf(q) !== -1) ||
+                               (p.nupre && p.nupre.toLowerCase().indexOf(q) !== -1) ||
+                               (p.condicion && p.condicion.toLowerCase().indexOf(q) !== -1) ||
+                               (p.destinacion && p.destinacion.toLowerCase().indexOf(q) !== -1) ||
+                               (p.tid && p.tid.toLowerCase().indexOf(q) !== -1);
+                    });
+                }
+
+                function renderPrediosRows() {
+                    if (!prediosTbody) return;
+                    var filtered = getFilteredPredios();
+                    prediosTbody.innerHTML = '';
+
+                    if (filtered.length === 0) {
+                        if (prediosNoResults) prediosNoResults.hidden = false;
+                    } else {
+                        if (prediosNoResults) prediosNoResults.hidden = true;
+                    }
+
+                    filtered.forEach(function (p) {
+                        var tr = document.createElement('tr');
+                        var isChecked = selectedPredioTids.has(p.tid);
+                        if (isChecked) tr.className = 'is-checked';
+                        tr.setAttribute('data-tid', p.tid);
+
+                        tr.innerHTML =
+                            '<td style="text-align: center;">' +
+                                '<input type="checkbox" class="predio-checkbox row-check" data-tid="' + p.tid + '" ' + (isChecked ? 'checked' : '') + '>' +
+                            '</td>' +
+                            '<td style="text-align: center; color: #7f8e85; font-weight: 600;">' + p.index + '</td>' +
+                            '<td>' +
+                                (p.numero_predial ? '<span class="npn-badge">' + p.numero_predial + '</span>' : '<span style="color: #7f8e85;">No registrado</span>') +
+                            '</td>' +
+                            '<td>' + (p.numero_predial_anterior || '<span style="color: #aebfce;">-</span>') + '</td>' +
+                            '<td>' + (p.fmi || '<span style="color: #aebfce;">-</span>') + '</td>' +
+                            '<td>' + (p.condicion || '') + (p.tipo ? (' · ' + p.tipo) : '') + '</td>' +
+                            '<td>' + (p.destinacion || '<span style="color: #aebfce;">-</span>') + '</td>' +
+                            '<td>' + (p.id_operacion || p.nupre || '<span style="color: #aebfce;">-</span>') + '</td>';
+
+                        tr.addEventListener('click', function (e) {
+                            if (e.target && e.target.classList && e.target.classList.contains('row-check')) {
+                                return;
+                            }
+                            var chk = tr.querySelector('.row-check');
+                            if (chk) {
+                                chk.checked = !chk.checked;
+                                togglePredioSelection(p.tid, chk.checked);
+                            }
+                        });
+
+                        var chkBox = tr.querySelector('.row-check');
+                        if (chkBox) {
+                            chkBox.addEventListener('change', function (e) {
+                                togglePredioSelection(p.tid, e.target.checked);
+                            });
+                        }
+
+                        prediosTbody.appendChild(tr);
+                    });
+
+                    if (prediosTableCounter) {
+                        prediosTableCounter.textContent = 'Mostrando ' + filtered.length + ' de ' + currentPredios.length + ' predios';
+                    }
+                    syncMasterCheck();
+                }
+
+                function togglePredioSelection(tid, isChecked) {
+                    if (isChecked) {
+                        selectedPredioTids.add(tid);
+                    } else {
+                        selectedPredioTids.delete(tid);
+                    }
+                    var tr = prediosTbody.querySelector('tr[data-tid="' + tid + '"]');
+                    if (tr) tr.classList.toggle('is-checked', isChecked);
+                    updateSelectionUI();
+                    syncMasterCheck();
+                }
+
+                function syncMasterCheck() {
+                    if (!masterPredioCheck) return;
+                    var filtered = getFilteredPredios();
+                    if (filtered.length === 0) {
+                        masterPredioCheck.checked = false;
+                        masterPredioCheck.indeterminate = false;
+                        return;
+                    }
+                    var count = 0;
+                    filtered.forEach(function (p) {
+                        if (selectedPredioTids.has(p.tid)) count++;
+                    });
+                    if (count === 0) {
+                        masterPredioCheck.checked = false;
+                        masterPredioCheck.indeterminate = false;
+                    } else if (count === filtered.length) {
+                        masterPredioCheck.checked = true;
+                        masterPredioCheck.indeterminate = false;
+                    } else {
+                        masterPredioCheck.checked = false;
+                        masterPredioCheck.indeterminate = true;
+                    }
+                }
+
+                function updateSelectionUI() {
+                    var count = selectedPredioTids.size;
+                    var total = currentPredios.length;
+
+                    if (count === 0) {
+                        if (selectedPrediosInput) selectedPrediosInput.value = '';
+                        if (prediosSelectionBadge) {
+                            prediosSelectionBadge.className = 'predios-selection-badge is-all';
+                            if (prediosBadgeText) prediosBadgeText.textContent = 'Todos los predios (' + total + ')';
+                        }
+                        if (prediosSelectedSummary) {
+                            prediosSelectedSummary.textContent = '0 seleccionados (Se validarán todos)';
+                        }
+                        if (submitBtnText) {
+                            submitBtnText.textContent = 'Aplicar validadores (Todos los predios - ' + total + ')';
+                        }
+                    } else {
+                        if (selectedPrediosInput) {
+                            selectedPrediosInput.value = JSON.stringify(Array.from(selectedPredioTids));
+                        }
+                        if (prediosSelectionBadge) {
+                            prediosSelectionBadge.className = 'predios-selection-badge is-selected';
+                            if (prediosBadgeText) {
+                                prediosBadgeText.textContent = count + ' de ' + total + ' seleccionados';
+                            }
+                        }
+                        if (prediosSelectedSummary) {
+                            prediosSelectedSummary.textContent = count + ' predio' + (count > 1 ? 's' : '') + ' seleccionado' + (count > 1 ? 's' : '') + ' para validar';
+                        }
+                        if (submitBtnText) {
+                            submitBtnText.textContent = 'Aplicar validadores (' + count + ' predio' + (count > 1 ? 's' : '') + ' seleccionado' + (count > 1 ? 's' : '') + ')';
+                        }
+                    }
+                }
+
+                if (prediosSearchInput) {
+                    prediosSearchInput.addEventListener('input', function (e) {
+                        currentSearchFilter = e.target.value.trim();
+                        renderPrediosRows();
+                    });
+                }
+
+                if (prediosSelectAllBtn) {
+                    prediosSelectAllBtn.addEventListener('click', function () {
+                        currentPredios.forEach(function (p) {
+                            selectedPredioTids.add(p.tid);
+                        });
+                        renderPrediosRows();
+                        updateSelectionUI();
+                    });
+                }
+
+                if (prediosDeselectAllBtn) {
+                    prediosDeselectAllBtn.addEventListener('click', function () {
+                        selectedPredioTids.clear();
+                        renderPrediosRows();
+                        updateSelectionUI();
+                    });
+                }
+
+                if (masterPredioCheck) {
+                    masterPredioCheck.addEventListener('change', function (e) {
+                        var filtered = getFilteredPredios();
+                        if (e.target.checked) {
+                            filtered.forEach(function (p) {
+                                selectedPredioTids.add(p.tid);
+                            });
+                        } else {
+                            filtered.forEach(function (p) {
+                                selectedPredioTids.delete(p.tid);
+                            });
+                        }
+                        renderPrediosRows();
+                        updateSelectionUI();
+                    });
                 }
 
                 function updateSelectedFile() {
@@ -1808,10 +2689,12 @@ defined else 0 %}
                         form.classList.add('is-ready');
                         if (fileName) fileName.textContent = file.name;
                         if (fileMeta) fileMeta.textContent = formatSize(file.size) + ' · Listo para validar';
+                        inspectFileForPredios(file);
                     } else {
                         form.classList.remove('is-ready');
                         if (fileName) fileName.textContent = 'Archivo XTF';
                         if (fileMeta) fileMeta.textContent = 'Listo para validar';
+                        clearPredios();
                     }
                 }
 

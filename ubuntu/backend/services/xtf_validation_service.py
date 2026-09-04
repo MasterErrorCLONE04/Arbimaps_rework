@@ -8,6 +8,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import tempfile
 import unicodedata
 import xml.etree.ElementTree as ET
 from datetime import datetime
@@ -17,6 +18,7 @@ from uuid import uuid4
 
 from quality_rules.runner import run_quality_checks
 from quality_rules.npn_resolver import attach_npns_to_errors, resolve_issue_npn
+from quality_rules.xtf_reader import parse_xtf_tables, TARGET_CLASSES
 from services.validation_excel_report import build_validation_errors_excel, validation_excel_filename
 from services.validation_pdf_report import build_validation_pdf, validation_pdf_filename
 
@@ -63,11 +65,137 @@ class XTFValidationService:
         extra_args = os.getenv("ILIVALIDATOR_EXTRA_ARGS", "")
         self.extra_args = shlex.split(extra_args) if extra_args else []
 
+    def extract_predios(self, target: str | Path | Any) -> list[dict[str, Any]]:
+        path: Path
+        temp_created = False
+        if hasattr(target, "file") and hasattr(target, "filename"):
+            suffix = Path(target.filename or "file.xtf").suffix or ".xtf"
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                if hasattr(target.file, "seek"):
+                    target.file.seek(0)
+                shutil.copyfileobj(target.file, tmp)
+                path = Path(tmp.name)
+                temp_created = True
+                if hasattr(target.file, "seek"):
+                    target.file.seek(0)
+        elif isinstance(target, (str, Path)):
+            path = Path(target)
+        else:
+            return []
+
+        try:
+            if not path.is_file():
+                return []
+            tables = parse_xtf_tables(
+                path,
+                [
+                    "ARB_Predio",
+                    "arb_predio",
+                    "ILC_Predio",
+                    "ilc_predio",
+                ],
+            )
+            predio_rows: list[dict[str, Any]] = []
+            for tbl in ("ARB_Predio", "arb_predio", "ILC_Predio", "ilc_predio"):
+                if tbl in tables:
+                    predio_rows.extend(tables[tbl])
+
+            result: list[dict[str, Any]] = []
+            for idx, row in enumerate(predio_rows, 1):
+                tid = (
+                    row.get("TID")
+                    or row.get("t_ili_tid")
+                    or row.get("tid")
+                    or f"predio-{idx}"
+                )
+                npn = (
+                    row.get("Numero_Predial")
+                    or row.get("numero_predial")
+                    or row.get("npn")
+                    or ""
+                )
+                npn_ant = (
+                    row.get("Numero_Predial_Anterior")
+                    or row.get("numero_predial_anterior")
+                    or ""
+                )
+                mat = (
+                    row.get("Matricula_Inmobiliaria")
+                    or row.get("matricula_inmobiliaria")
+                    or ""
+                )
+                orip = (
+                    row.get("Codigo_ORIP")
+                    or row.get("codigo_orip")
+                    or ""
+                )
+                fmi = f"{orip}-{mat}" if (orip and mat) else (mat or orip or "")
+                condicion = (
+                    row.get("Condicion_Predio")
+                    or row.get("condicion_predio")
+                    or ""
+                )
+                destinacion = (
+                    row.get("Destinacion_Economica")
+                    or row.get("destinacion_economica")
+                    or ""
+                )
+                tipo = row.get("Tipo") or row.get("tipo") or ""
+                if tipo.startswith("Predio."):
+                    tipo = tipo.split(".")[-1]
+                id_op = (
+                    row.get("Id_Operacion")
+                    or row.get("id_operacion")
+                    or ""
+                )
+                nupre = (
+                    row.get("codigo_homologado")
+                    or row.get("nupre")
+                    or ""
+                )
+                area = (
+                    row.get("Area_Catastral_Terreno")
+                    or row.get("area_catastral_terreno")
+                    or ""
+                )
+
+                result.append(
+                    {
+                        "index": idx,
+                        "tid": str(tid).strip(),
+                        "numero_predial": str(npn).strip(),
+                        "numero_predial_anterior": str(npn_ant).strip(),
+                        "fmi": str(fmi).strip(),
+                        "matricula": str(mat).strip(),
+                        "codigo_orip": str(orip).strip(),
+                        "condicion": str(condicion).strip(),
+                        "destinacion": str(destinacion).strip(),
+                        "tipo": str(tipo).strip(),
+                        "id_operacion": str(id_op).strip(),
+                        "nupre": str(nupre).strip(),
+                        "area": str(area).strip(),
+                    }
+                )
+            return result
+        except Exception:
+            return []
+        finally:
+            if temp_created and path.exists():
+                try:
+                    path.unlink()
+                except OSError:
+                    pass
+
+    def extract_predios_from_upload(self, uploaded_file) -> list[dict[str, Any]]:
+        return self.extract_predios(uploaded_file)
+
     def save_xtf(
         self,
         uploaded_file,
         *,
         municipality_code: str | None = None,
+        selected_predios: list[str] | None = None,
+        username: str | None = None,
     ):
         job_id = str(uuid4())
         safe_name = uploaded_file.filename.replace(" ", "_")
@@ -76,10 +204,14 @@ class XTFValidationService:
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(uploaded_file.file, buffer)
 
+        predios_catalog = self.extract_predios(file_path)
+
         validation = self._validate_xtf(
             job_id,
             file_path,
-            municipality_code,
+            municipality_code=municipality_code,
+            selected_predios=selected_predios,
+            predios_catalog=predios_catalog,
         )
 
         result = {
@@ -89,7 +221,11 @@ class XTFValidationService:
             "stored_name": file_path.name,
             "generated_at": datetime.now().isoformat(timespec="seconds"),
             "municipality_code": municipality_code,
+            "username": username or "Usuario",
             "validation": validation,
+            "predios_catalog": predios_catalog,
+            "selected_predios": selected_predios or [],
+            "filtered_by_predios": bool(selected_predios),
         }
         self._write_job_result(job_id, result)
         return result
@@ -100,15 +236,19 @@ class XTFValidationService:
         *,
         municipality_code: str | None = None,
         job_id: str | None = None,
+        selected_predios: list[str] | None = None,
     ) -> dict[str, Any]:
         candidate = Path(file_path).expanduser()
         if not candidate.is_file():
             raise FileNotFoundError(f"No se encontro el archivo XTF {candidate}.")
         validation_job_id = str(job_id or f"path-{uuid4().hex[:8]}")
+        predios_catalog = self.extract_predios(candidate)
         return self._validate_xtf(
             validation_job_id,
             candidate,
             municipality_code=municipality_code,
+            selected_predios=selected_predios,
+            predios_catalog=predios_catalog,
         )
 
     def validate_xtf_path(
@@ -117,11 +257,13 @@ class XTFValidationService:
         *,
         municipality_code: str | None = None,
         job_id: str | None = None,
+        selected_predios: list[str] | None = None,
     ) -> dict[str, Any]:
         return self.validate_file_path(
             file_path,
             municipality_code=municipality_code,
             job_id=job_id,
+            selected_predios=selected_predios,
         )
 
     def build_pdf_report(self, job_id: str, *, component: str | None = None) -> tuple[bytes, str]:
@@ -131,9 +273,17 @@ class XTFValidationService:
         pdf_bytes = build_validation_pdf(result, watermark_path)
         return pdf_bytes, validation_pdf_filename(result)
 
-    def build_excel_report(self, job_id: str, *, component: str | None = None) -> tuple[bytes, str]:
+    def build_excel_report(
+        self,
+        job_id: str,
+        *,
+        component: str | None = None,
+        username: str | None = None,
+    ) -> tuple[bytes, str]:
         result = self.load_job_result(job_id)
         result = self._filter_report_by_component(result, component)
+        if username and not result.get("username"):
+            result["username"] = username
         excel_bytes = build_validation_errors_excel(result)
         return excel_bytes, validation_excel_filename(result)
 
@@ -329,6 +479,8 @@ class XTFValidationService:
         job_id: str,
         file_path: Path,
         municipality_code: str | None = None,
+        selected_predios: list[str] | None = None,
+        predios_catalog: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         log_path = (self.log_dir / f"{job_id}.log").resolve()
         report_path = (self.report_dir / f"{job_id}.xml").resolve()
@@ -458,7 +610,7 @@ class XTFValidationService:
             quality.get("npn_by_object_id") or {},
         )
 
-        return self._build_validation_result(
+        validation_result = self._build_validation_result(
             status=status,
             message=message,
             log_path=str(log_path) if log_path.exists() else None,
@@ -471,6 +623,183 @@ class XTFValidationService:
             quality=quality,
             model_names=model_names,
         )
+
+        if predios_catalog is None:
+            predios_catalog = self.extract_predios(file_path)
+
+        if selected_predios:
+            validation_result = self._filter_validation_by_predios(
+                validation_result,
+                selected_predios=selected_predios,
+                predios_catalog=predios_catalog,
+            )
+        else:
+            validation_result["filtered_by_predios"] = False
+            validation_result["selected_predios"] = []
+            validation_result["total_predios_in_file"] = (
+                len(predios_catalog)
+                if predios_catalog
+                else validation_result.get("quality", {}).get("summary", {}).get("total_predios", 0)
+            )
+
+        return validation_result
+
+    def _filter_validation_by_predios(
+        self,
+        validation: dict[str, Any],
+        selected_predios: list[str],
+        predios_catalog: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        if not selected_predios:
+            validation["filtered_by_predios"] = False
+            validation["selected_predios"] = []
+            return validation
+
+        predios_catalog = predios_catalog or []
+        selected_raw = {str(x).strip() for x in selected_predios if str(x).strip()}
+
+        matched_catalog: list[dict[str, Any]] = []
+        for p in predios_catalog:
+            p_keys = {
+                str(p.get("tid") or "").strip(),
+                str(p.get("numero_predial") or "").strip(),
+                str(p.get("id_operacion") or "").strip(),
+                str(p.get("nupre") or "").strip(),
+                str(p.get("index") or "").strip(),
+            }
+            if p_keys & selected_raw:
+                matched_catalog.append(p)
+
+        selected_tids = {str(p["tid"]).strip() for p in matched_catalog if p.get("tid")}
+        selected_npns = {str(p["numero_predial"]).strip() for p in matched_catalog if p.get("numero_predial")}
+        selected_id_ops = {str(p["id_operacion"]).strip() for p in matched_catalog if p.get("id_operacion")}
+
+        all_selected_identifiers = selected_raw | selected_tids | selected_npns | selected_id_ops
+        selected_count = len(matched_catalog) if matched_catalog else len(selected_raw)
+
+        quality = validation.get("quality") or {}
+        npn_lookup = quality.get("npn_by_object_id") or {}
+
+        def _matches(item: dict[str, Any]) -> bool:
+            item_npn = str(item.get("npn") or "").strip()
+            if item_npn:
+                for part in item_npn.split("|"):
+                    p_clean = part.strip()
+                    if p_clean and (p_clean in selected_npns or p_clean in all_selected_identifiers):
+                        return True
+
+            display_id = str(item.get("display_id") or "").strip()
+            object_id = str(item.get("object_id") or "").strip()
+            tid = str(item.get("tid") or item.get("object_ref") or "").strip()
+
+            for cand in (display_id, object_id, tid):
+                if not cand:
+                    continue
+                if cand in all_selected_identifiers:
+                    return True
+                resolved = npn_lookup.get(cand)
+                if resolved and (resolved in selected_npns or resolved in all_selected_identifiers):
+                    return True
+
+            details = item.get("details")
+            if isinstance(details, dict):
+                predio_ref = str(
+                    details.get("predio")
+                    or details.get("predio_id")
+                    or details.get("id_predio")
+                    or details.get("arb_predio")
+                    or details.get("ilc_predio")
+                    or ""
+                ).strip()
+                if predio_ref:
+                    if predio_ref in all_selected_identifiers:
+                        return True
+                    resolved_predio = npn_lookup.get(predio_ref)
+                    if resolved_predio and (resolved_predio in selected_npns or resolved_predio in all_selected_identifiers):
+                        return True
+
+                for val in details.values():
+                    v_str = str(val or "").strip()
+                    if v_str and v_str in all_selected_identifiers:
+                        return True
+                    if v_str and npn_lookup.get(v_str) in selected_npns:
+                        return True
+
+            return False
+
+        filtered_rule_errors = [
+            e for e in self._as_list(validation.get("rule_errors"))
+            if isinstance(e, dict) and _matches(e)
+        ]
+        filtered_quality_issues = [
+            i for i in self._as_list(quality.get("issues"))
+            if isinstance(i, dict) and _matches(i)
+        ]
+
+        filtered_schema_errors = []
+        for se in self._as_list(validation.get("schema_errors")):
+            if not isinstance(se, dict):
+                continue
+            has_ident = bool(se.get("npn") or se.get("object_id") or se.get("tid") or se.get("display_id"))
+            if _matches(se):
+                filtered_schema_errors.append(se)
+            elif not has_ident:
+                filtered_schema_errors.append(se)
+
+        issues_by_rule: dict[str, int] = {}
+        for issue in filtered_quality_issues:
+            r_id = str(issue.get("rule") or issue.get("rule_id") or "").strip()
+            if r_id:
+                issues_by_rule[r_id] = issues_by_rule.get(r_id, 0) + 1
+
+        all_rules = copy.deepcopy(self._as_list(quality.get("rules")))
+        for r in all_rules:
+            if not isinstance(r, dict):
+                continue
+            r_id = str(r.get("rule") or r.get("rule_id") or "").strip()
+            cnt = issues_by_rule.get(r_id, 0)
+            r["issue_count"] = cnt
+            r["passed"] = (cnt == 0)
+
+        passed_rules = sum(1 for r in all_rules if isinstance(r, dict) and r.get("passed"))
+        failed_rules = sum(1 for r in all_rules if isinstance(r, dict) and not r.get("passed"))
+
+        filtered_predio_summary = self._predio_summary_for_errors(
+            [*filtered_rule_errors, *filtered_schema_errors]
+        )
+        predios_con_errores = min(len(filtered_predio_summary), selected_count)
+        predios_sin_errores = max(selected_count - predios_con_errores, 0)
+
+        previous_summary = quality.get("summary") if isinstance(quality.get("summary"), dict) else {}
+        total_issues = len(filtered_rule_errors) + len(filtered_schema_errors)
+
+        quality["rules"] = all_rules
+        quality["issues"] = filtered_quality_issues
+        quality["predio_summary"] = filtered_predio_summary
+        quality["summary"] = {
+            **previous_summary,
+            "total_predios": selected_count,
+            "predios_con_errores": predios_con_errores,
+            "predios_sin_errores": predios_sin_errores,
+            "total_rules": len(all_rules),
+            "passed_rules": passed_rules,
+            "failed_rules": failed_rules,
+            "total_issues": total_issues,
+        }
+
+        validation["rule_errors"] = filtered_rule_errors
+        validation["schema_errors"] = filtered_schema_errors
+        validation["quality"] = quality
+        validation["filtered_by_predios"] = True
+        validation["selected_predios"] = list(all_selected_identifiers)
+        validation["selected_predios_count"] = selected_count
+        validation["total_predios_in_file"] = len(predios_catalog) if predios_catalog else selected_count
+        validation["matched_predios"] = matched_catalog
+
+        if validation.get("status") not in ["error", "skipped"]:
+            validation["status"] = "success" if (total_issues == 0 and failed_rules == 0) else "invalid"
+
+        return validation
 
     def _empty_quality_result(self) -> dict[str, Any]:
         return {

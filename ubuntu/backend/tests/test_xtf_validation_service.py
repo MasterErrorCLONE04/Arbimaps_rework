@@ -350,18 +350,58 @@ def test_validation_excel_has_consolidated_and_component_sheets():
 
     with ZipFile(BytesIO(xlsx)) as workbook:
         workbook_xml = workbook.read("xl/workbook.xml").decode("utf-8")
-        consolidated_xml = workbook.read("xl/worksheets/sheet1.xml").decode("utf-8")
+        resumen_xml = workbook.read("xl/worksheets/sheet1.xml").decode("utf-8")
+        admin_xml = workbook.read("xl/worksheets/sheet2.xml").decode("utf-8")
 
-    assert 'name="Consolidado"' in workbook_xml
+    assert 'name="Resumen"' in workbook_xml
     assert 'name="Administrativo"' in workbook_xml
     assert 'name="Juridico"' in workbook_xml
-    assert 'name="Estructural XTF"' in workbook_xml
-    assert "Componente" in consolidated_xml
-    assert "NPN" in consolidated_xml
-    assert "415510101000003890019000000000" in consolidated_xml
-    assert "PREDIO-1" in consolidated_xml
-    assert "Administrativo.Predio" in consolidated_xml
-    assert "Falta direccion" in consolidated_xml
+    assert 'name="Estructura"' in workbook_xml
+    assert "VALIDADORES DE CALIDAD" in resumen_xml
+    assert "Módulo de Calidad" in resumen_xml
+    assert "Componente" in admin_xml
+    assert "NPN" in admin_xml
+    assert "415510101000003890019000000000" in admin_xml
+    assert "PREDIO-1" in admin_xml
+    assert "Administrativo.Predio" in admin_xml
+    assert "Falta direccion" in admin_xml
+
+
+def test_validation_excel_single_module_has_only_one_sheet():
+    report = {
+        "generated_at": "2026-05-28T10:30:00",
+        "original_filename": "retorno.xtf",
+        "selected_component": "administrativo",
+        "selected_component_label": "Administrativo",
+        "validation": {
+            "rule_errors": [
+                {
+                    "display_id": "PREDIO-1",
+                    "npn": "415510101000003890019000000000",
+                    "object_class": "Administrativo.Predio",
+                    "rule": "1.1",
+                    "message": "Falta direccion",
+                    "component_label": "Administrativo",
+                }
+            ],
+            "schema_errors": [],
+            "quality": {
+                "rules": [],
+                "rule_catalog": {},
+            },
+        },
+    }
+
+    xlsx = build_validation_errors_excel(report)
+
+    with ZipFile(BytesIO(xlsx)) as workbook:
+        workbook_xml = workbook.read("xl/workbook.xml").decode("utf-8")
+        single_xml = workbook.read("xl/worksheets/sheet1.xml").decode("utf-8")
+
+    assert 'name="Resumen"' not in workbook_xml
+    assert 'name="Administrativo"' in workbook_xml
+    assert "MÓDULO: ADMINISTRATIVO" in single_xml
+    assert "PREDIO-1" in single_xml
 
 
 def test_validation_excel_filename_uses_generation_date():
