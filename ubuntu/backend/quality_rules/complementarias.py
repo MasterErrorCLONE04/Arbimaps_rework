@@ -547,7 +547,7 @@ def rule_10_2(dataset: DatasetReader) -> list[RuleIssue]:
 
     return issues
 
-def rule_10_3(dataset: DatasetReader) -> list[RuleIssue]:
+#def rule_10_3(dataset: DatasetReader) -> list[RuleIssue]:
     helper = ComplementariasHelper(dataset)
     issues: list[RuleIssue] = []
 
@@ -818,6 +818,6 @@ def rule_10_4(dataset: DatasetReader) -> list[RuleIssue]:
 RULE_FUNCTIONS = {
     "10.1": rule_10_1,
     "10.2": rule_10_2,
-    "10.3": rule_10_3,
+    #"10.3": rule_10_3,
     "10.4": rule_10_4,
 }
