@@ -2716,9 +2716,15 @@ const modalXtfPreviewBox = document.getElementById("modalXtfPreviewBox");
 const modalXtfFileName = document.getElementById("modalXtfFileName");
 const modalXtfFileMeta = document.getElementById("modalXtfFileMeta");
 const syncDragDropZone = document.getElementById("syncDragDropZone");
+const syncInspectingZone = document.getElementById("syncInspectingZone");
+const syncInspectErrorBox = document.getElementById("syncInspectErrorBox");
+const syncInspectErrorMessage = document.getElementById("syncInspectErrorMessage");
+const btnRetrySyncSelect = document.getElementById("btnRetrySyncSelect");
+const btnChangeModalXtf = document.getElementById("btnChangeModalXtf");
 const btnTriggerFileSelect = document.getElementById("btnTriggerFileSelect");
 const btnRemoveModalXtf = document.getElementById("btnRemoveModalXtf");
 const btnSubmitSyncModal = document.getElementById("btnSubmitSyncModal");
+const btnSyncFromTable = document.getElementById("btnSyncFromTable");
 const btnCancelSyncModal = document.getElementById("btnCancelSyncModal");
 
 const step1Item = document.getElementById("step1Item");
@@ -2739,9 +2745,11 @@ const syncSuccessMessage = document.getElementById("syncSuccessMessage");
 const syncErrorMessage = document.getElementById("syncErrorMessage");
 
 let selectedModalFile = null;
+let inspectingXtf = false;
 
 function resetModalSyncState() {
   selectedModalFile = null;
+  inspectingXtf = false;
   if (modalXtfFileInput) modalXtfFileInput.value = "";
 
   // Reset Stepper items
@@ -2760,9 +2768,14 @@ function resetModalSyncState() {
   syncResultSuccessState?.classList.add("d-none");
   syncResultErrorState?.classList.add("d-none");
 
-  // Reset File zone
+  // Reset File zone & inspecting zone
   syncDragDropZone?.classList.remove("d-none");
+  syncInspectingZone?.classList.add("d-none");
+  syncInspectErrorBox?.classList.add("d-none");
   modalXtfPreviewBox?.classList.add("d-none");
+
+  const tbody = document.getElementById("modalSyncPrediosTbody");
+  if (tbody) tbody.innerHTML = "";
 
   // Reset buttons
   if (btnCancelSyncModal) {
@@ -2773,20 +2786,132 @@ function resetModalSyncState() {
   btnSubmitSyncModal?.classList.add("d-none");
 }
 
-function displayModalFilePreview(file) {
-  if (!file) {
-    modalXtfPreviewBox?.classList.add("d-none");
-    syncDragDropZone?.classList.remove("d-none");
-    btnSubmitSyncModal?.classList.add("d-none");
+async function inspectModalSyncFile(file) {
+  if (!file || inspectingXtf) return;
+
+  const id = Number(elId?.value || idFromUrl);
+  if (!id || id < 1) {
+    showWarning("Debes indicar un id de asignación válido.");
     return;
   }
 
-  if (modalXtfFileName) modalXtfFileName.textContent = file.name;
-  if (modalXtfFileMeta)
-    modalXtfFileMeta.textContent = formatFileSize(file.size);
+  selectedModalFile = file;
 
-  modalXtfPreviewBox?.classList.remove("d-none");
-  btnSubmitSyncModal?.classList.remove("d-none");
+  // Show inspecting state
+  inspectingXtf = true;
+  syncDragDropZone?.classList.add("d-none");
+  modalXtfPreviewBox?.classList.add("d-none");
+  syncInspectErrorBox?.classList.add("d-none");
+  syncInspectingZone?.classList.remove("d-none");
+  btnSubmitSyncModal?.classList.add("d-none");
+
+  const formData = new FormData();
+  formData.append("archivo", file);
+
+  try {
+    const resp = await fetch(
+      `${rp}/asignaciones/${encodeURIComponent(id)}/inspeccionar-retorno-xtf`,
+      {
+        method: "POST",
+        body: formData,
+        credentials: "same-origin",
+        headers: { Accept: "application/json" },
+      },
+    );
+
+    const rawText = await resp.text().catch(() => "");
+    let data = {};
+    if (rawText) {
+      try {
+        data = JSON.parse(rawText);
+      } catch (_e) {
+        data = {};
+      }
+    }
+
+    if (!resp.ok) {
+      const detail = formatBackendDetail(data?.detail || rawText);
+      throw new Error(detail || "No se pudo inspeccionar el archivo XTF.");
+    }
+
+    // Inspection succeeded
+    syncInspectingZone?.classList.add("d-none");
+
+    if (modalXtfFileName) modalXtfFileName.textContent = file.name;
+    if (modalXtfFileMeta)
+      modalXtfFileMeta.textContent = formatFileSize(file.size);
+
+    const totalPredios = data.total_predios ?? 0;
+    const totalAsignacion = data.total_asignacion ?? 0;
+    const totalColindantes = data.total_colindantes ?? 0;
+
+    const elTotal = document.getElementById("modalSyncTotalPredios");
+    const elAsig = document.getElementById("modalSyncTotalAsignacion");
+    const elCol = document.getElementById("modalSyncTotalColindantes");
+    if (elTotal) elTotal.textContent = totalPredios;
+    if (elAsig) elAsig.textContent = totalAsignacion;
+    if (elCol) elCol.textContent = totalColindantes;
+
+    const tbody = document.getElementById("modalSyncPrediosTbody");
+    if (tbody) {
+      tbody.innerHTML = "";
+      const predios = Array.isArray(data.predios) ? data.predios : [];
+      if (predios.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center text-muted py-3">
+              No se detectaron predios en el archivo XTF.
+            </td>
+          </tr>
+        `;
+      } else {
+        predios.forEach((p, idx) => {
+          let badgeHtml = "";
+          if (p.es_colindante) {
+            badgeHtml = `<span class="sync-badge-colindante"><i class="fa-solid fa-ruler-combined"></i> ${esc(p.rol_display || "Colindante (Soporte)")}</span>`;
+          } else if (p.rol === "cancelado") {
+            badgeHtml = `<span class="sync-badge-cancelado"><i class="fa-solid fa-ban"></i> ${esc(p.rol_display || "Cancelado")}</span>`;
+          } else {
+            badgeHtml = `<span class="sync-badge-principal"><i class="fa-solid fa-building"></i> ${esc(p.rol_display || "Asignación (Principal)")}</span>`;
+          }
+
+          const fmiDisplay = p.fmi && p.fmi !== "-" ? p.fmi : (p.matricula || "-");
+          const tipoDisplay = p.tipo && p.tipo !== "-" ? p.tipo : (p.condicion || "-");
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td style="text-align: center;" class="text-muted fw-bold">${p.index ?? (idx + 1)}</td>
+            <td><code class="text-dark fw-bold" style="font-size:0.83rem;">${esc(p.numero_predial || "-")}</code></td>
+            <td>
+              <div><small class="text-muted">Ant:</small> ${esc(p.numero_predial_anterior || "-")}</div>
+              <div><small class="text-muted">FMI:</small> <span class="fw-semibold">${esc(fmiDisplay)}</span></div>
+            </td>
+            <td>
+              <span class="badge bg-light text-secondary border">${esc(tipoDisplay)}</span>
+            </td>
+            <td style="text-align: center;">
+              ${badgeHtml}
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+    modalXtfPreviewBox?.classList.remove("d-none");
+    btnSubmitSyncModal?.classList.remove("d-none");
+  } catch (err) {
+    console.error("Error inspeccionando XTF:", err);
+    syncInspectingZone?.classList.add("d-none");
+    syncInspectErrorBox?.classList.remove("d-none");
+    if (syncInspectErrorMessage) {
+      syncInspectErrorMessage.textContent = formatBackendDetail(
+        err.message || "Error al inspeccionar el archivo XTF.",
+      );
+    }
+  } finally {
+    inspectingXtf = false;
+  }
 }
 
 async function submitSyncModalFile() {
@@ -2918,8 +3043,7 @@ syncDragDropZone?.addEventListener("drop", (e) => {
       showWarning("El archivo seleccionado no es un .xtf válido.");
       return;
     }
-    selectedModalFile = file;
-    displayModalFilePreview(file);
+    inspectModalSyncFile(file);
   }
 });
 
@@ -2936,17 +3060,25 @@ modalXtfFileInput?.addEventListener("change", (e) => {
       modalXtfFileInput.value = "";
       return;
     }
-    selectedModalFile = file;
-    displayModalFilePreview(file);
+    inspectModalSyncFile(file);
   }
 });
 
-btnRemoveModalXtf?.addEventListener("click", () => {
-  selectedModalFile = null;
-  if (modalXtfFileInput) modalXtfFileInput.value = "";
-  displayModalFilePreview(null);
+btnChangeModalXtf?.addEventListener("click", () => {
+  resetModalSyncState();
+  modalXtfFileInput?.click();
 });
 
+btnRetrySyncSelect?.addEventListener("click", () => {
+  resetModalSyncState();
+  modalXtfFileInput?.click();
+});
+
+btnRemoveModalXtf?.addEventListener("click", () => {
+  resetModalSyncState();
+});
+
+btnSyncFromTable?.addEventListener("click", submitSyncModalFile);
 btnSubmitSyncModal?.addEventListener("click", submitSyncModalFile);
 
 modalSincronizarXtf?.addEventListener("hidden.bs.modal", () => {

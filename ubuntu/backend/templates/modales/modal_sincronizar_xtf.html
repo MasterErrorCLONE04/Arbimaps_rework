@@ -35,11 +35,78 @@
     box-shadow: none !important;
     border: none !important;
   }
+
+  .sync-table-card {
+    border: 1px solid #c7d3cd;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .sync-table-container {
+    max-height: 290px;
+    overflow-y: auto;
+  }
+
+  .sync-badge-principal {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #7dd3fc;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sync-badge-colindante {
+    background-color: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #86efac;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sync-badge-cancelado {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fca5a5;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .sync-notice-box {
+    background-color: #f8fafc;
+    border-left: 4px solid #0A2C1B;
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    color: #334155;
+  }
+
+  .sync-stat-pill {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
 </style>
 <!-- Modal Sincronizar XTF -->
 <div class="modal fade" id="modalSincronizarXtf" tabindex="-1" aria-labelledby="modalSincronizarXtfLabel"
   aria-hidden="true" data-bs-backdrop="static">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content sync-modal-content">
       <!-- Modal Header -->
       <div class="modal-header-sync position-relative p-4">
@@ -55,7 +122,7 @@
         </div>
 
         <button type="button"
-          class="btn-cerrar-sync position-absolute top-0 end-0 mt-5 me-3 d-flex align-items-center justify-content-center"
+          class="btn-cerrar-sync position-absolute top-0 end-0 mt-4 me-3 d-flex align-items-center justify-content-center"
           data-bs-dismiss="modal" aria-label="Cerrar">
           <i class="bi bi-x-lg fs-5"></i>
         </button>
@@ -67,7 +134,7 @@
         <div class="sync-stepper mb-4">
           <div class="step-item active" id="step1Item">
             <span class="step-num">1</span>
-            <span class="step-label">Carga de archivo</span>
+            <span class="step-label">Inspección y Predios</span>
           </div>
           <div class="step-line" id="stepLine1"></div>
           <div class="step-item" id="step2Item">
@@ -82,8 +149,9 @@
         </div>
 
         <!-- Step Contents -->
-        <!-- Step 1: Upload / Drag & Drop -->
+        <!-- Step 1: Upload, Inspection & Predios Table -->
         <div id="syncStep1Content" class="step-content-section">
+          <!-- Drag & Drop Initial Zone -->
           <div class="sync-drag-drop-zone p-5 d-flex flex-column align-items-center justify-content-center text-center"
             id="syncDragDropZone">
             <i class="fa-solid fa-cloud-arrow-up sync-cloud-icon mb-3"></i>
@@ -95,30 +163,101 @@
             <p class="small-format mt-4 mb-0">Formato permitido: .XTF</p>
           </div>
 
-          <!-- Preview file when selected -->
-          <div id="modalXtfPreviewBox" class="sync-file-info-card d-none">
-            <h6 class="sync-file-info-title fw-bold">Información de archivo cargado</h6>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <span class="sync-file-info-label">Nombre del archivo:</span>
-              <span id="modalXtfFileName" class="sync-file-info-value text-truncate" style="max-width: 320px;">-</span>
+          <!-- Loading state during Inspection -->
+          <div id="syncInspectingZone" class="text-center py-5 d-none">
+            <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Inspeccionando...</span>
             </div>
-            <div class="d-flex justify-content-between align-items-center">
-              <span class="sync-file-info-label">Tamaño del archivo:</span>
-              <span id="modalXtfFileMeta" class="sync-file-info-label">-</span>
+            <h5 class="fw-bold text-dark mb-1">Inspeccionando predios del archivo XTF</h5>
+            <p class="text-muted small mb-0">Consultando estructura y cruzando roles con la asignación (Asignación vs Colindantes)...</p>
+          </div>
+
+          <!-- Inspection Error Box -->
+          <div id="syncInspectErrorBox" class="alert alert-danger d-none mt-3" role="alert">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div>
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span id="syncInspectErrorMessage">Error al inspeccionar el archivo XTF.</span>
+              </div>
+              <button type="button" class="btn btn-outline-danger btn-sm fw-bold" id="btnRetrySyncSelect">
+                <i class="fa-solid fa-arrow-rotate-left me-1"></i> Seleccionar otro archivo
+              </button>
             </div>
-            <!-- Keep hidden button for JS references if needed -->
-            <button type="button" class="d-none" id="btnRemoveModalXtf"></button>
+          </div>
+
+          <!-- Preview file & Table of Predios when inspected -->
+          <div id="modalXtfPreviewBox" class="d-none">
+            <!-- File header bar -->
+            <div class="sync-file-info-card p-3 mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                <h6 class="sync-file-info-title fw-bold mb-1">Archivo cargado</h6>
+                <div class="d-flex align-items-center gap-3">
+                  <span class="small text-muted"><i class="fa-regular fa-file-code me-1 text-success fs-6"></i><strong id="modalXtfFileName" class="text-dark">-</strong></span>
+                  <span class="badge bg-light text-secondary border" id="modalXtfFileMeta">-</span>
+                </div>
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" id="btnChangeModalXtf">
+                <i class="fa-solid fa-arrow-rotate-left me-1"></i> Cambiar archivo
+              </button>
+              <button type="button" class="d-none" id="btnRemoveModalXtf"></button>
+            </div>
+
+            <!-- Metric Summary Pills -->
+            <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
+              <span class="sync-stat-pill bg-light text-dark border shadow-sm">
+                Total Predios: <strong id="modalSyncTotalPredios">0</strong>
+              </span>
+              <span class="sync-stat-pill shadow-sm" style="background-color:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;">
+                🏢 Asignación (Principal): <strong id="modalSyncTotalAsignacion">0</strong>
+              </span>
+              <span class="sync-stat-pill shadow-sm" style="background-color:#f0fdf4;color:#15803d;border:1px solid #86efac;">
+                📐 Colindantes (Soporte): <strong id="modalSyncTotalColindantes">0</strong>
+              </span>
+            </div>
+
+            <!-- Informational Notice on Business Rules -->
+            <div class="sync-notice-box mb-3 shadow-sm">
+              <i class="fa-solid fa-circle-info text-success me-1"></i>
+              <strong>Regla de sincronización:</strong> Los predios marcados como <strong>Asignación</strong> seguirán el flujo integral (validación completa, actualización de atributos alfanuméricos e hijas, y Reverse ETL a R1/R2). Para los <strong>Colindantes</strong> únicamente se validará topología y se sincronizará su terreno a la base principal (sin Reverse ETL).
+            </div>
+
+            <!-- Predios Table Container -->
+            <div class="sync-table-card mb-3 shadow-sm">
+              <div class="sync-table-container">
+                <table class="table table-sm table-hover align-middle mb-0" id="modalSyncPrediosTable">
+                  <thead class="table-light sticky-top" style="z-index: 1;">
+                    <tr style="font-size: 0.8rem; color: #475569;">
+                      <th style="width: 45px; text-align: center;">#</th>
+                      <th>Número Predial (NPN)</th>
+                      <th>NPN Anterior / FMI</th>
+                      <th>Tipo / Condición</th>
+                      <th style="text-align: center;">Rol en Asignación</th>
+                    </tr>
+                  </thead>
+                  <tbody id="modalSyncPrediosTbody" style="font-size: 0.82rem;">
+                    <!-- Rows populated dynamically via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Action button directly underneath table -->
+            <div class="d-flex justify-content-center mt-3 pt-2">
+              <button type="button" class="btn btn-success fw-bold px-4 py-2 shadow-sm d-flex align-items-center gap-2" id="btnSyncFromTable">
+                <i class="fa-solid fa-arrows-rotate"></i> Sincronizar
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Step 2: Processing -->
         <div id="syncStep2Content" class="step-content-section d-none">
           <div class="d-flex flex-column align-items-center justify-content-center py-5 text-center">
-            <div class="spinner-border text-primary mb-4" role="status" style="width: 3rem; height: 3rem;">
+            <div class="spinner-border text-success mb-4" role="status" style="width: 3.5rem; height: 3.5rem;">
               <span class="visually-hidden">Procesando...</span>
             </div>
-            <h5 class="fw-bold text-dark">Procesando archivo XTF</h5>
-            <p class="text-muted">Por favor espera un momento, estamos validando y procesando la información.</p>
+            <h5 class="fw-bold text-dark">Sincronizando archivo XTF</h5>
+            <p class="text-muted">Por favor espera un momento, estamos validando reglas y sincronizando la información según el rol de cada predio.</p>
           </div>
         </div>
 
@@ -152,11 +291,12 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="modal-footer sync-modal-footer border-0 p-4 justify-content-center gap -2">
+      <div class="modal-footer sync-modal-footer border-0 p-3 justify-content-center gap-2">
         <button type="button" class="btn btn-cancelar-modal fw-bold" id="btnCancelSyncModal"
           data-bs-dismiss="modal">Cancelar</button>
-        <button type="button" class="btn btn-sync-xtf-modal fw-bold border-0 d-none" id="btnSubmitSyncModal">Ejecutar
-          sincronización</button>
+        <button type="button" class="btn btn-sync-xtf-modal fw-bold border-0 d-none" id="btnSubmitSyncModal">
+          <i class="fa-solid fa-arrows-rotate me-1"></i> Sincronizar
+        </button>
       </div>
     </div>
   </div>

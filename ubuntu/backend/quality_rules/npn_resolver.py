@@ -41,6 +41,12 @@ DIRECT_PREDIO_REFERENCE_FIELDS = {
     "arbpredioderecho",
     "arbprediomarca",
     "arbprediounidadconstruccion",
+    "arbprediotramite",
+    "ilcprediotramite",
+    "arbprediointeresado",
+    "arbpredioinformalidad",
+    "arbpredioestructuramatriculamatriz",
+    "arbpredioestructuramatriculasegregados",
 }
 PARENT_REFERENCE_FIELDS = {
     "construccion",
@@ -54,6 +60,17 @@ PARENT_REFERENCE_FIELDS = {
 REVERSE_OWNED_REFERENCE_FIELDS = {
     "caracteristicasunidadconstruccion",
     "ilccaracteristicasunidadconstruccion",
+    "tramite",
+    "arbtramite",
+    "ilctramite",
+    "estructuramatriculamatriz",
+    "arbestructuramatriculamatriz",
+    "estructuramatriculasegregados",
+    "arbestructuramatriculasegregados",
+    "interesado",
+    "arbinteresado",
+    "fuente",
+    "arbfuente",
 }
 UUID_TEXT = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 UUID_PATTERN = re.compile(rf"(?i)\b{UUID_TEXT}\b")
@@ -130,12 +147,12 @@ def build_npn_lookup(
 
     for table_name, rows in tables.items():
         normalized_table = _normalize_key(table_name)
-        for row in rows:
+        for idx, row in enumerate(rows):
             if not isinstance(row, dict):
                 continue
             object_id = _record_id(row)
             if not object_id:
-                continue
+                object_id = f"{normalized_table}::{idx}"
             records.append((normalized_table, row, object_id))
 
             direct_npn = _row_value(row, NPN_FIELDS)
@@ -174,9 +191,14 @@ def build_npn_lookup(
                 if _normalize_key(key) not in REVERSE_OWNED_REFERENCE_FIELDS:
                     continue
                 child_reference = _clean_value(value)
-                if child_reference and child_reference not in lookup:
-                    lookup[child_reference] = resolved_npn
-                    changed = True
+                if child_reference:
+                    existing_npn = lookup.get(child_reference)
+                    if not existing_npn:
+                        lookup[child_reference] = resolved_npn
+                        changed = True
+                    elif resolved_npn not in existing_npn.split(" | "):
+                        lookup[child_reference] = f"{existing_npn} | {resolved_npn}"
+                        changed = True
 
         if not changed:
             break

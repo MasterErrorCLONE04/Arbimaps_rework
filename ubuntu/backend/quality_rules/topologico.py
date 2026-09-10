@@ -1459,7 +1459,7 @@ def _rule_5_4(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
-#def _rule_5_5(dataset: DatasetReader) -> list[RuleIssue]:
+def _rule_5_5(dataset: DatasetReader) -> list[RuleIssue]:
     helper = TopologicoHelper(dataset)
     issues: list[RuleIssue] = []
 
@@ -1522,7 +1522,7 @@ def _rule_5_4(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
-#def _rule_5_6(dataset: DatasetReader) -> list[RuleIssue]:
+def _rule_5_6(dataset: DatasetReader) -> list[RuleIssue]:
     helper = TopologicoHelper(dataset)
     issues: list[RuleIssue] = []
     alias_index = _predio_alias_index(helper)
@@ -1713,7 +1713,7 @@ RULE_FUNCTIONS = {
     "5.2": _rule_5_2,
     "5.3": _rule_5_3,
     "5.4": _rule_5_4,
-    #"5.5": _rule_5_5,
-    #"5.6": _rule_5_6,
+    "5.5": _rule_5_5,
+    "5.6": _rule_5_6,
     "5.7": _rule_5_7,
 }

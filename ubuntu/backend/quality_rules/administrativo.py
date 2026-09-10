@@ -2020,7 +2020,7 @@ def _rule_1_19(dataset: DatasetReader) -> list[RuleIssue]:
         ))
     return issues
 
-#def _rule_1_20(dataset: DatasetReader) -> list[RuleIssue]:
+def _rule_1_20(dataset: DatasetReader) -> list[RuleIssue]:
     ctx = _build_admin_property_context(dataset)
     helper: NumeroPredialHelper = ctx["helper"]  # type: ignore[assignment]
     issues: list[RuleIssue] = []
@@ -2071,7 +2071,7 @@ def _rule_1_19(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
-#def _rule_1_21(dataset: DatasetReader) -> list[RuleIssue]:
+def _rule_1_21(dataset: DatasetReader) -> list[RuleIssue]:
     """Compara áreas solo cuando todos los insumos necesarios existen."""
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
@@ -2433,7 +2433,7 @@ def _rule_1_28(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
-#def _rule_1_29(dataset: DatasetReader) -> list[RuleIssue]:
+def _rule_1_29(dataset: DatasetReader) -> list[RuleIssue]:
     ctx = _build_admin_property_context(dataset)
     issues: list[RuleIssue] = []
     predios = ctx["predios"]  # type: ignore[assignment]
@@ -2466,7 +2466,7 @@ def _rule_1_28(dataset: DatasetReader) -> list[RuleIssue]:
     return issues
 
 
-#def _rule_1_30(dataset: DatasetReader) -> list[RuleIssue]:
+def _rule_1_30(dataset: DatasetReader) -> list[RuleIssue]:
     ctx = _build_admin_property_context(dataset)
     issues: list[RuleIssue] = []
     predios = ctx["predios"]  # type: ignore[assignment]
@@ -2956,7 +2956,7 @@ def _rule_1_41(dataset: DatasetReader) -> list[RuleIssue]:
 
     return issues
 
-#def _rule_1_42(dataset: DatasetReader) -> list[RuleIssue]:
+def _rule_1_42(dataset: DatasetReader) -> list[RuleIssue]:
     ctx = _build_admin_property_context(dataset)
     helper: NumeroPredialHelper = ctx["helper"]
     aliases = ctx["predio_aliases"]
@@ -3220,8 +3220,8 @@ RULE_FUNCTIONS = {
     "1.17": _rule_1_17,
     "1.18": _rule_1_18,
     "1.19": _rule_1_19,
-    #"1.20": _rule_1_20,
-    #"1.21": _rule_1_21,
+    "1.20": _rule_1_20,
+    "1.21": _rule_1_21,
     "1.22": _rule_1_22,
     "1.23": _rule_1_23,
     "1.24": _rule_1_24,
@@ -3229,8 +3229,8 @@ RULE_FUNCTIONS = {
     "1.26": _rule_1_26,
     "1.27": _rule_1_27,
     "1.28": _rule_1_28,
-    #"1.29": _rule_1_29,
-    #"1.30": _rule_1_30,
+    "1.29": _rule_1_29,
+    "1.30": _rule_1_30,
     "1.31": _rule_1_31,
     "1.32": _rule_1_32,
     "1.33": _rule_1_33,
@@ -3242,7 +3242,7 @@ RULE_FUNCTIONS = {
     "1.39": _rule_1_39,
     "1.40": _rule_1_40,
     "1.41": _rule_1_41,
-    #"1.42": _rule_1_42,
+    "1.42": _rule_1_42,
     "1.43": _rule_1_43,
     "1.44": _rule_1_44,
     "1.45": _rule_1_45,

@@ -1239,8 +1239,9 @@ def _filter_validation_result_for_exempt_npns(result: dict, exempt_npns: set[str
     clean_exempt = {str(n).strip() for n in exempt_npns if n}
 
     def is_exempt_issue(issue: dict) -> bool:
-        comp = str(issue.get("component") or issue.get("rule_group") or "").strip().lower()
-        if comp in ("topologico", "topológico"):
+        comp = str(issue.get("component") or issue.get("rule_group") or (issue.get("details") or {}).get("component") or "").strip().lower()
+        rule_name = str(issue.get("rule") or issue.get("rule_id") or "").strip().lower()
+        if comp in ("topologico", "topológico") or "topolog" in comp or rule_name.startswith("top_") or "topolog" in rule_name:
             return False
 
         issue_npn = str(issue.get("npn") or "").strip()
@@ -3998,6 +3999,111 @@ def _procesar_retorno_xtf(
     }
 
 
+@router.post("/{asignacion_id}/inspeccionar-retorno-xtf")
+def inspeccionar_retorno_xtf(
+    request: Request,
+    asignacion_id: int,
+    archivo: UploadFile = File(...),
+    user: dict = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_current_tenant),
+):
+    _require_assignment_access(user, "admin", "coordinador", "digitalizador", "reconocedor", "lider_reconocimiento", "lider_tecnico", "soporte")
+    if not archivo.filename or not archivo.filename.lower().endswith(".xtf"):
+        raise HTTPException(status_code=400, detail="Solo se permiten archivos con extensión .xtf")
+
+    tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".xtf")
+    tmp_path = tmp_file.name
+    tmp_file.close()
+
+    try:
+        with open(tmp_path, "wb") as buffer:
+            shutil.copyfileobj(archivo.file, buffer)
+
+        raw_predios = []
+        try:
+            raw_predios = xtf_validation_service.extract_predios(tmp_path)
+        except Exception as extract_err:
+            logger.warning("Fallo extract_predios en inspeccionar_retorno_xtf: %s", extract_err)
+
+        roles = {}
+        try:
+            connection_manager = request.app.state.tenant_connection_manager
+            with connection_manager.connection(tenant) as conn:
+                roles = asignaciones_repo.get_asignacion_predio_roles(conn, tenant, asignacion_id)
+        except Exception as repo_err:
+            logger.warning("Fallo get_asignacion_predio_roles en inspeccionar_retorno_xtf: %s", repo_err)
+
+        predios_info = []
+        c_asignacion = 0
+        c_colindante = 0
+
+        norm_roles = {str(k).strip(): str(v).strip().lower() for k, v in roles.items() if k}
+
+        for idx, p in enumerate(raw_predios, 1):
+            npn = str(p.get("numero_predial") or "").strip()
+            rol_clean = norm_roles.get(npn, "")
+
+            if rol_clean == "colindante":
+                rol_tipo = "colindante"
+                rol_display = "Colindante (Soporte)"
+                c_colindante += 1
+            elif rol_clean == "cancelado":
+                rol_tipo = "cancelado"
+                rol_display = "Cancelado"
+                c_asignacion += 1
+            elif rol_clean in ("principal", "nuevo") or (npn and npn in norm_roles):
+                rol_tipo = "asignacion"
+                rol_display = "Asignación (Principal)"
+                c_asignacion += 1
+            else:
+                rol_tipo = "asignacion"
+                rol_display = "Asignación (Nuevo)"
+                c_asignacion += 1
+
+            predios_info.append({
+                "index": idx,
+                "tid": p.get("tid") or f"predio-{idx}",
+                "numero_predial": npn or "Sin NPN",
+                "numero_predial_anterior": p.get("numero_predial_anterior") or "-",
+                "fmi": p.get("fmi") or "-",
+                "matricula": p.get("matricula") or "-",
+                "codigo_orip": p.get("codigo_orip") or "-",
+                "condicion": p.get("condicion") or "-",
+                "destinacion": p.get("destinacion") or "-",
+                "tipo": p.get("tipo") or "-",
+                "id_operacion": p.get("id_operacion") or "-",
+                "area": p.get("area") or "-",
+                "rol": rol_tipo,
+                "rol_display": rol_display,
+                "es_colindante": rol_tipo == "colindante",
+                "es_asignacion": rol_tipo != "colindante",
+            })
+
+        return {
+            "success": True,
+            "filename": archivo.filename,
+            "total_predios": len(predios_info),
+            "total_asignacion": c_asignacion,
+            "total_colindantes": c_colindante,
+            "predios": predios_info,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Error inspeccionando XTF para asignacion %s: %s", asignacion_id, exc)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al inspeccionar el archivo XTF: {exc}"
+        )
+    finally:
+        archivo.file.close()
+        if os.path.exists(tmp_path):
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
+
+
 @router.post("/{asignacion_id}/retorno-xtf")
 def importar_retorno_xtf(
     request: Request,
@@ -4779,14 +4885,22 @@ def sincronizar_produccion(
                 from services.asignaciones_workspace_f_r1_r2_reverse import sincronizar_predios_a_f_r1_r2
                 cur.execute(
                     f"""
-                    SELECT DISTINCT numero_predial_nacional
-                    FROM _arb_sync_selected_predio
+                    SELECT DISTINCT ap.numero_predial_nacional
+                    FROM {asignacion_predio_table} ap
+                    WHERE ap.asignacion_id = %s
+                      AND ap.activo IS DISTINCT FROM FALSE
+                      AND LOWER(COALESCE(ap.rol_predio, 'principal')) NOT IN ('colindante')
                     UNION
-                    SELECT DISTINCT numero_predial_nacional
-                    FROM {asignacion_predio_table}
-                    WHERE asignacion_id = %s;
+                    SELECT DISTINCT sp.numero_predial_nacional
+                    FROM _arb_sync_selected_predio sp
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM {asignacion_predio_table} ap_col
+                        WHERE ap_col.asignacion_id = %s
+                          AND BTRIM(ap_col.numero_predial_nacional::text) = BTRIM(sp.numero_predial_nacional::text)
+                          AND LOWER(COALESCE(ap_col.rol_predio, 'principal')) = 'colindante'
+                    );
                     """,
-                    (asignacion_id,)
+                    (asignacion_id, asignacion_id)
                 )
                 npns = [str(r[0]).strip() for r in (cur.fetchall() or []) if r and r[0]]
                 if npns:

@@ -60,6 +60,12 @@ TARGET_CLASSES = {
     "ARB_Predio_Derecho",
     "ARB_Predio_Terreno",
     "ARB_Predio_Construccion",
+    "ARB_Predio_Tramite",
+    "ARB_Predio_Direccion",
+    "ARB_Predio_Interesado",
+    "ARB_Predio_Informalidad",
+    "ARB_Predio_EstructuraMatriculaMatriz",
+    "ARB_Predio_EstructuraMatriculaSegregados",
 
     # variantes minúsculas
     "ilc_predio",
@@ -112,6 +118,13 @@ TARGET_CLASSES = {
     "arb_predio_derecho",
     "arb_predio_terreno",
     "arb_predio_construccion",
+    "arb_predio_tramite",
+    "arb_predio_direccion",
+    "arb_predio_interesado",
+    "arb_predio_informalidad",
+    "arb_predio_estructuramatriculamatriz",
+    "arb_predio_estructuramatriculasegregados",
+    "ilc_predio_tramite",
 }
 
 
@@ -173,6 +186,13 @@ ALIASES_BY_NORMALIZED = {
     "arbpredioderecho": "arb_predio_derecho",
     "arbpredioterreno": "arb_predio_terreno",
     "arbpredioconstruccion": "arb_predio_construccion",
+    "arbprediotramite": "ARB_Predio_Tramite",
+    "ilcprediotramite": "ILC_Predio_Tramite",
+    "arbprediodireccion": "ARB_Predio_Direccion",
+    "arbprediointeresado": "ARB_Predio_Interesado",
+    "arbpredioinformalidad": "ARB_Predio_Informalidad",
+    "arbpredioestructuramatriculamatriz": "ARB_Predio_EstructuraMatriculaMatriz",
+    "arbpredioestructuramatriculasegregados": "ARB_Predio_EstructuraMatriculaSegregados",
 
     # ILC
     "ilcpredio": "ILC_Predio",
