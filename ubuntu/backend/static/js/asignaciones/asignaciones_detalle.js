@@ -2724,7 +2724,6 @@ const btnChangeModalXtf = document.getElementById("btnChangeModalXtf");
 const btnTriggerFileSelect = document.getElementById("btnTriggerFileSelect");
 const btnRemoveModalXtf = document.getElementById("btnRemoveModalXtf");
 const btnSubmitSyncModal = document.getElementById("btnSubmitSyncModal");
-const btnSyncFromTable = document.getElementById("btnSyncFromTable");
 const btnCancelSyncModal = document.getElementById("btnCancelSyncModal");
 
 const step1Item = document.getElementById("step1Item");
@@ -3078,7 +3077,6 @@ btnRemoveModalXtf?.addEventListener("click", () => {
   resetModalSyncState();
 });
 
-btnSyncFromTable?.addEventListener("click", submitSyncModalFile);
 btnSubmitSyncModal?.addEventListener("click", submitSyncModalFile);
 
 modalSincronizarXtf?.addEventListener("hidden.bs.modal", () => {
