@@ -16,26 +16,241 @@ _ILI_CODE_TO_R1_DOCUMENT_TYPE = {
 }
 
 
+_CLASE_VIA_TO_R1_ABBR = {
+    "CALLE": "C",
+    "C": "C",
+    "CL": "C",
+    "CARRERA": "K",
+    "K": "K",
+    "KR": "K",
+    "CR": "K",
+    "DIAGONAL": "D",
+    "D": "D",
+    "DG": "D",
+    "TRANSVERSAL": "T",
+    "T": "T",
+    "TV": "T",
+    "AVENIDA_CALLE": "A C",
+    "AVENIDA CALLE": "A C",
+    "AC": "A C",
+    "AVENIDA_CARRERA": "A K",
+    "AVENIDA CARRERA": "A K",
+    "AK": "A K",
+    "AVENIDA": "AV",
+    "AV": "AV",
+    "CIRCULAR": "CQ",
+    "CQ": "CQ",
+    "CIRCUNVALAR": "CC",
+    "CC": "CC",
+    "AUTOPISTA": "AU",
+    "AU": "AU",
+}
+
+_CLASE_VIA_TID_TO_ABBR = {
+    114: "CC",
+    115: "CQ",
+    116: "K",
+    117: "D",
+    118: "T",
+    119: "A K",
+    120: "AU",
+    121: "C",
+    122: "AV",
+    123: "A C",
+}
+
+_SECTOR_TO_R1_ABBR = {
+    "SUR": "S",
+    "S": "S",
+    "NORTE": "N",
+    "N": "N",
+    "ESTE": "E",
+    "E": "E",
+    "OESTE": "W",
+    "W": "W",
+    "O": "W",
+}
+
+_SECTOR_TID_TO_ABBR = {
+    1438: "S",
+    1439: "W",
+    1440: "N",
+    1441: "E",
+}
+
+_R1_DEFAULT_COLUMNS = {
+    "departamento",
+    "municipio",
+    "numero_predial",
+    "tipo_registro",
+    "numero_de_orden",
+    "total_registros",
+    "nombre",
+    "participacion",
+    "tipo_documento",
+    "documento_identidad",
+    "direccion",
+    "comuna",
+    "destino_economico",
+    "area_terreno",
+    "area_construida",
+    "avaluo",
+    "vigencia",
+    "numero_predial_anterior",
+    "d_tipo",
+    "d_fecha_inicio_tenencia",
+    "fa_tipo",
+    "fa_numero_fuente",
+    "fa_fecha_documento_fuente",
+    "fa_ente_emisor",
+    "estado",
+}
+
+
 def _get_table_columns(cur, schema: str, table_name: str) -> set[str]:
-    cur.execute(
-        """
-        SELECT column_name
-        FROM information_schema.columns
-        WHERE table_schema = %s
-          AND table_name = %s;
-        """,
-        (schema, table_name),
-    )
-    rows = cur.fetchall() or []
-    cols = set()
-    for r in rows:
-        if isinstance(r, dict):
-            c = r.get("column_name")
-        else:
-            c = r[0] if r else None
-        if c:
-            cols.add(str(c))
-    return cols
+    try:
+        cur.execute(
+            """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = %s
+              AND table_name = %s;
+            """,
+            (schema, table_name),
+        )
+        rows = cur.fetchall() or []
+        cols = set()
+        for r in rows:
+            if isinstance(r, dict):
+                c = r.get("column_name") or r.get("COLUMN_NAME") or (list(r.values())[0] if r else None)
+            elif isinstance(r, (list, tuple)):
+                c = r[0] if r else None
+            else:
+                c = getattr(r, "column_name", str(r))
+            if c:
+                cols.add(str(c))
+        return cols
+    except Exception:
+        return set()
+
+
+def _resolve_clase_via_abbr(cur, clase_via_val: Optional[object], schema_source: str) -> str:
+    if not clase_via_val:
+        return ""
+    val_str = str(clase_via_val).strip()
+    val_upper = val_str.upper()
+    if val_upper in _CLASE_VIA_TO_R1_ABBR:
+        return _CLASE_VIA_TO_R1_ABBR[val_upper]
+    if val_str.isdigit():
+        tid = int(val_str)
+        if tid in _CLASE_VIA_TID_TO_ABBR:
+            return _CLASE_VIA_TID_TO_ABBR[tid]
+        try:
+            cur.execute(
+                f"SELECT ilicode, dispname FROM {schema_source}.arb_claseviaprincipaltipo WHERE t_id = %s LIMIT 1;",
+                (tid,),
+            )
+            r = cur.fetchone()
+            if r:
+                code = str(r.get("ilicode") or r.get("dispname") or "").strip().upper()
+                if code in _CLASE_VIA_TO_R1_ABBR:
+                    return _CLASE_VIA_TO_R1_ABBR[code]
+                return str(r.get("dispname") or r.get("ilicode") or "").strip()
+        except Exception:
+            pass
+    return val_str
+
+
+def _resolve_sector_abbr(cur, sector_val: Optional[object], schema_source: str) -> str:
+    if not sector_val:
+        return ""
+    val_str = str(sector_val).strip()
+    val_upper = val_str.upper()
+    if val_upper in _SECTOR_TO_R1_ABBR:
+        return _SECTOR_TO_R1_ABBR[val_upper]
+    if val_str.isdigit():
+        tid = int(val_str)
+        if tid in _SECTOR_TID_TO_ABBR:
+            return _SECTOR_TID_TO_ABBR[tid]
+        try:
+            cur.execute(
+                f"SELECT ilicode, dispname FROM {schema_source}.arb_sectortipo WHERE t_id = %s LIMIT 1;",
+                (tid,),
+            )
+            r = cur.fetchone()
+            if r:
+                code = str(r.get("ilicode") or r.get("dispname") or "").strip().upper()
+                if code in _SECTOR_TO_R1_ABBR:
+                    return _SECTOR_TO_R1_ABBR[code]
+                return str(r.get("dispname") or r.get("ilicode") or "").strip()
+        except Exception:
+            pass
+    return val_str
+
+
+def _build_structured_direccion(cur, dir_row: Optional[dict], schema_source: str) -> Optional[str]:
+    """
+    Construye la direcci?n para R1.
+    Si nombre_predio viene diligenciado, se utiliza directamente.
+    Si nombre_predio est? vac?o o NULL (caso t?pico de direcci?n Estructurada),
+    reconstruye la nomenclatura urbana concatenando:
+    [Clase V?a] [Valor V?a][Letra V?a][Sector V?a] [Valor Generadora][Letra Generadora] [N?mero Predio][Sector Predio] [Complemento]
+    """
+    if not dir_row:
+        return None
+
+    # 1. Si ya tiene nombre_predio diligenciado, se respeta
+    nombre_predio = _normalize_str(dir_row.get("nombre_predio"))
+    if nombre_predio:
+        return nombre_predio
+
+    # 2. Extraer componentes estructurados
+    clase_via_raw = dir_row.get("clase_via_principal")
+    valor_via = dir_row.get("valor_via_principal")
+    letra_via = _normalize_str(dir_row.get("letra_via_principal"))
+    sector_ciudad_raw = dir_row.get("sector_ciudad")
+
+    valor_gen = dir_row.get("valor_via_generadora")
+    letra_gen = _normalize_str(dir_row.get("letra_via_generadora"))
+
+    num_predio = dir_row.get("numero_predio")
+    sector_predio_raw = dir_row.get("sector_predio")
+    complemento = _normalize_str(dir_row.get("complemento"))
+
+    # Si no hay datos m?nimos para construir una direcci?n estructurada
+    if not clase_via_raw and valor_via is None and valor_gen is None and num_predio is None:
+        return None
+
+    clase_via = _resolve_clase_via_abbr(cur, clase_via_raw, schema_source)
+    sector_ciudad = _resolve_sector_abbr(cur, sector_ciudad_raw, schema_source)
+    sector_predio = _resolve_sector_abbr(cur, sector_predio_raw, schema_source)
+
+    # Armar parte v?a principal: ej. "42B" o "35 S" o "21S"
+    via_ppal_num = str(valor_via).strip() if valor_via is not None else ""
+    via_ppal_letra = letra_via or ""
+    via_ppal_part = f"{via_ppal_num}{via_ppal_letra}".strip()
+    if sector_ciudad:
+        via_ppal_part = f"{via_ppal_part}{sector_ciudad}".strip() if len(sector_ciudad) == 1 else f"{via_ppal_part} {sector_ciudad}".strip()
+
+    # Armar parte v?a generadora: ej. "36", "6W", "1BW", "2C"
+    via_gen_num = str(valor_gen).strip() if valor_gen is not None else ""
+    via_gen_letra = letra_gen or ""
+    via_gen_part = f"{via_gen_num}{via_gen_letra}".strip()
+
+    # Armar n?mero de predio / placa: ej. "68", "51", "15"
+    num_predio_part = str(num_predio).strip() if num_predio is not None else ""
+    if sector_predio:
+        num_predio_part = f"{num_predio_part} {sector_predio}".strip()
+
+    partes = [
+        clase_via,
+        via_ppal_part,
+        via_gen_part,
+        num_predio_part,
+        complemento,
+    ]
+    direccion_res = " ".join([p for p in partes if p]).strip()
+    return direccion_res if direccion_res else None
 
 
 def _normalize_str(val: Optional[object]) -> Optional[str]:
@@ -203,6 +418,11 @@ def sincronizar_predios_a_f_r1_r2(
         else:
             mat_col_expr = "NULL::text"
 
+        # Obtener columnas v?lidas de f_r1_r2.r1_predio_propietario una sola vez
+        r1_cols = _get_table_columns(cur, "f_r1_r2", "r1_predio_propietario")
+        if not r1_cols:
+            r1_cols = _R1_DEFAULT_COLUMNS
+
         synced_count = 0
 
         for npn in clean_npns:
@@ -301,19 +521,42 @@ def sincronizar_predios_a_f_r1_r2(
 
                 # 4. Consultar Dirección
                 direccion = None
-                cur.execute(
-                    f"""
-                    SELECT nombre_predio
-                    FROM {schema_source}.arb_direccion
-                    WHERE arb_predio_direccion = %s
-                    ORDER BY t_id ASC
-                    LIMIT 1;
-                    """,
-                    (id_predio,),
-                )
-                dir_row = cur.fetchone()
-                if dir_row and dir_row.get("nombre_predio"):
-                    direccion = _normalize_str(dir_row["nombre_predio"])
+                try:
+                    cur.execute(
+                        f"""
+                        SELECT nombre_predio, tipo_direccion, es_direccion_principal,
+                               clase_via_principal, valor_via_principal, letra_via_principal,
+                               sector_ciudad, valor_via_generadora, letra_via_generadora,
+                               numero_predio, sector_predio, complemento
+                        FROM {schema_source}.arb_direccion
+                        WHERE arb_predio_direccion = %s
+                        ORDER BY
+                            CASE WHEN es_direccion_principal IS TRUE THEN 0 ELSE 1 END,
+                            t_id ASC
+                        LIMIT 1;
+                        """,
+                        (id_predio,),
+                    )
+                    dir_row = cur.fetchone()
+                    if dir_row:
+                        direccion = _build_structured_direccion(cur, dir_row, schema_source)
+                except Exception:
+                    try:
+                        cur.execute(
+                            f"""
+                            SELECT nombre_predio
+                            FROM {schema_source}.arb_direccion
+                            WHERE arb_predio_direccion = %s
+                            ORDER BY t_id ASC
+                            LIMIT 1;
+                            """,
+                            (id_predio,),
+                        )
+                        dir_row = cur.fetchone()
+                        if dir_row and dir_row.get("nombre_predio"):
+                            direccion = _normalize_str(dir_row["nombre_predio"])
+                    except Exception:
+                        pass
 
                 # 5. Consultar Avalúo y Vigencia
                 avaluo = 0.00
@@ -463,7 +706,6 @@ def sincronizar_predios_a_f_r1_r2(
                         fa_fecha_val = prop.get("fa_fecha_documento_fuente")
                         fa_ente_val = _normalize_str(prop.get("fa_ente_emisor"))
 
-                        r1_cols = set(_get_table_columns(cur, "f_r1_r2", "r1_predio_propietario"))
                         r1_data = {
                             "departamento": dpto,
                             "municipio": mpio,
@@ -502,7 +744,6 @@ def sincronizar_predios_a_f_r1_r2(
                     # Sin propietarios registrados, crear 1 entrada general
                     comuna_val = npn_val[9:11] if len(npn_val) >= 11 else None
                     dest_econ = _resolve_destino_economico_r1(cur, predio_row.get("destino_economico"), schema_source)
-                    r1_cols = set(_get_table_columns(cur, "f_r1_r2", "r1_predio_propietario"))
                     r1_gen_data = {
                         "departamento": dpto,
                         "municipio": mpio,
