@@ -2820,7 +2820,7 @@ def _normalize_direccion_tipo(value: object) -> str:
         return "NO_ESTRUCTURADA"
     return ""
 
-def _rule_1_40(dataset: DatasetReader) -> list[RuleIssue]:
+#def _rule_1_40(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
     required = {
@@ -2854,7 +2854,7 @@ def _rule_1_40(dataset: DatasetReader) -> list[RuleIssue]:
         ))
     return issues
 
-def _rule_1_41(dataset: DatasetReader) -> list[RuleIssue]:
+#def _rule_1_41(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
     # En una dirección No_Estructurada:
@@ -2956,7 +2956,7 @@ def _rule_1_41(dataset: DatasetReader) -> list[RuleIssue]:
 
     return issues
 
-def _rule_1_42(dataset: DatasetReader) -> list[RuleIssue]:
+#def _rule_1_42(dataset: DatasetReader) -> list[RuleIssue]:
     ctx = _build_admin_property_context(dataset)
     helper: NumeroPredialHelper = ctx["helper"]
     aliases = ctx["predio_aliases"]
@@ -2989,7 +2989,7 @@ def _rule_1_42(dataset: DatasetReader) -> list[RuleIssue]:
         ))
     return issues
 
-def _rule_1_43(dataset: DatasetReader) -> list[RuleIssue]:
+#def _rule_1_43(dataset: DatasetReader) -> list[RuleIssue]:
     helper = NumeroPredialHelper(dataset)
     issues: list[RuleIssue] = []
     for table_name, row in helper.iter_direcciones():
@@ -3240,10 +3240,10 @@ RULE_FUNCTIONS = {
     "1.37": _rule_1_37,
     "1.38": _rule_1_38,
     "1.39": _rule_1_39,
-    "1.40": _rule_1_40,
-    "1.41": _rule_1_41,
-    "1.42": _rule_1_42,
-    "1.43": _rule_1_43,
+    #"1.40": _rule_1_40,
+    #"1.41": _rule_1_41,
+    #"1.42": _rule_1_42,
+    #"1.43": _rule_1_43,
     "1.44": _rule_1_44,
     "1.45": _rule_1_45,
     "1.46": _rule_1_46,
